@@ -498,10 +498,14 @@ const KARAKTER_FOTOS = { basis: 'assets/karakters/', cache: {} };
 function laadKarakterAfbeelding(id, cb) {
   const c = KARAKTER_FOTOS.cache;
   if (id in c) { cb(c[id]); return; }
-  const img = new Image();
-  img.onload = () => { c[id] = img; cb(img); };
-  img.onerror = () => { c[id] = null; cb(null); };
-  img.src = KARAKTER_FOTOS.basis + id + '.png';
+  const probeer = (ext, anders) => {
+    const img = new Image();
+    img.onload = () => { c[id] = img; cb(img); };
+    img.onerror = anders;
+    img.src = KARAKTER_FOTOS.basis + id + '.' + ext;
+  };
+  /* webp = de geoptimaliseerde vorm; png = verse drops vóór conversie */
+  probeer('webp', () => probeer('png', () => { c[id] = null; cb(null); }));
 }
 window.laadKarakterAfbeelding = laadKarakterAfbeelding;
 
@@ -519,7 +523,7 @@ function maakArtLader(basis) {
       img.onerror = anders;
       img.src = basis + id + '.' + ext;
     };
-    probeer('png', () => probeer('jpg', () => { cache[id] = null; cb(null); }));
+    probeer('webp', () => probeer('png', () => probeer('jpg', () => { cache[id] = null; cb(null); })));
   };
 }
 window.laadKaartAfbeelding = maakArtLader('assets/kaarten/');
@@ -534,26 +538,26 @@ window.laadDrankAfbeelding = maakArtLader('assets/dranken/');
    ============================================================ */
 const ACHTERGRONDEN = {
   basis: 'assets/achtergronden/',
-  titel: 'Startscherm achtergrond.png',
+  titel: 'Startscherm achtergrond.webp',
   act1: {
-    kaart: 'Act 1 achtergronden/Achtergrond ACT 1.png',
-    rust: 'Act 1 achtergronden/Achtergrondrust1.png',
+    kaart: 'Act 1 achtergronden/Achtergrond ACT 1.webp',
+    rust: 'Act 1 achtergronden/Achtergrondrust1.webp',
     gevecht: [
-      'Act 1 achtergronden/Gevechtstijl1act1.png',
-      'Act 1 achtergronden/Gevechtsijl2act1.png',
-      'Act 1 achtergronden/Gevechtstijl3act1.png'
+      'Act 1 achtergronden/Gevechtstijl1act1.webp',
+      'Act 1 achtergronden/Gevechtsijl2act1.webp',
+      'Act 1 achtergronden/Gevechtstijl3act1.webp'
     ],
     episch: [
-      'Act 1 achtergronden/GevechtstijlEPISCHGEVECHTACT1.png',
-      'Act 1 achtergronden/GevechtstijlEPISCHGEVECHT2ACT1.png'
+      'Act 1 achtergronden/GevechtstijlEPISCHGEVECHTACT1.webp',
+      'Act 1 achtergronden/GevechtstijlEPISCHGEVECHT2ACT1.webp'
     ],
-    winkel: 'Act 1 achtergronden/Achtergrondverkoper1.png',
-    winkelEasterEgg: 'Act 1 achtergronden/Achtergrondverkoper2easteregg.png',
-    event: 'Act 1 achtergronden/Achtergrondvraagtekenrandomencounters.png',
-    eventRelikwie: 'Act 1 achtergronden/Achtergrondvraagtekenrelikwieartefact.png',
-    schat: 'Act 1 achtergronden/Achtergrondschatkist.png',
-    beloning: 'Act 1 achtergronden/Overwinningsachtergrond1gewoon.png',
-    overwinning: 'Act 1 achtergronden/Overwinningsachtergrond1episch.png'
+    winkel: 'Act 1 achtergronden/Achtergrondverkoper1.webp',
+    winkelEasterEgg: 'Act 1 achtergronden/Achtergrondverkoper2easteregg.webp',
+    event: 'Act 1 achtergronden/Achtergrondvraagtekenrandomencounters.webp',
+    eventRelikwie: 'Act 1 achtergronden/Achtergrondvraagtekenrelikwieartefact.webp',
+    schat: 'Act 1 achtergronden/Achtergrondschatkist.webp',
+    beloning: 'Act 1 achtergronden/Overwinningsachtergrond1gewoon.webp',
+    overwinning: 'Act 1 achtergronden/Overwinningsachtergrond1episch.webp'
   }
 };
 window.ACHTERGRONDEN = ACHTERGRONDEN;

@@ -1,7 +1,8 @@
-/* SLAY LIT — service worker: network-first met cache-terugval.
-   Online krijg je altijd de nieuwste versie; offline werkt het spel
-   vanuit de cache. */
-const CACHE = 'slayit-v4';
+/* SLAY LIT — service worker.
+   Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
+   Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
+   laden vrijwel instant. Offline werkt alles vanuit de cache. */
+const CACHE = 'slayit-v5';
 const BESTANDEN = [
   '.',
   'index.html',
@@ -35,6 +36,20 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+
+  /* art is onveranderlijk: cache-first */
+  if (e.request.url.includes('/assets/')) {
+    e.respondWith(
+      caches.match(e.request).then(hit => hit || fetch(e.request).then(antwoord => {
+        const kopie = antwoord.clone();
+        caches.open(CACHE).then(c => c.put(e.request, kopie)).catch(() => {});
+        return antwoord;
+      }))
+    );
+    return;
+  }
+
+  /* code: network-first met cache-terugval */
   e.respondWith(
     fetch(e.request)
       .then(antwoord => {
