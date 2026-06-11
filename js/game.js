@@ -73,13 +73,25 @@ function bewaarInst() { localStorage.setItem('slayit_inst', JSON.stringify(INST)
 /* ---------- de Codex: alles wat je ooit ontdekte, over alle runs heen ---------- */
 const CODEX_SLEUTEL = 'slayit_codex';
 const Codex = Object.assign(
-  { relikwieen: [], dranken: [] },
+  { relikwieen: [], dranken: [], opgeladen: null },
   JSON.parse(localStorage.getItem(CODEX_SLEUTEL) || '{}')
 );
+/* migratie: wie al ontdekkingen had, krijgt ze meteen opgeladen in het Schrijn */
+if (!Array.isArray(Codex.opgeladen)) {
+  Codex.opgeladen = Codex.relikwieen.filter(r => window.RELIKWIEEN && RELIKWIEEN[r] && RELIKWIEEN[r].zeld !== 'start');
+}
+function bewaarCodex() { localStorage.setItem(CODEX_SLEUTEL, JSON.stringify(Codex)); }
 function ontdek(soort, id) {
   if (!id || !Codex[soort] || Codex[soort].includes(id)) return;
   Codex[soort].push(id);
-  localStorage.setItem(CODEX_SLEUTEL, JSON.stringify(Codex));
+  bewaarCodex();
+}
+/* het Schrijn: een in het spel gevonden relikwie laadt zijn schrijn-lading op */
+function laadSchrijnOp(id) {
+  const d = RELIKWIEEN[id];
+  if (!d || d.zeld === 'start' || Codex.opgeladen.includes(id)) return;
+  Codex.opgeladen.push(id);
+  bewaarCodex();
 }
 function pasInstToe() {
   document.body.classList.toggle('lite', INST.lite);
@@ -145,6 +157,15 @@ function nieuwSpel(heldId, seedTekst) {
     gevecht: null
   };
   held.dek.forEach(id => S.dek.push(nieuweKaart(id)));
+
+  /* het Schrijn: het gekozen relikwie gaat mee en verbruikt zijn lading */
+  if (schrijnKeuze && Codex.opgeladen.includes(schrijnKeuze)) {
+    Codex.opgeladen = Codex.opgeladen.filter(r => r !== schrijnKeuze);
+    bewaarCodex();
+    geefRelikwie(schrijnKeuze, true);
+    melding(`🗝️ Uit het Schrijn: ${RELIKWIEEN[schrijnKeuze].naam}`);
+  }
+  schrijnKeuze = null;
 }
 
 function huidigeHeld() { return SPELERS[(S && S.held) || 'slachter'] || SPELERS.slachter; }
@@ -189,10 +210,12 @@ function heeftRelikwie(id) { return S.relikwieen.includes(id); }
 function relikwieSchadeBonus() { return heeftRelikwie('stalen_vuist') ? 1 : 0; }
 function drankSlots() { return heeftRelikwie('veldfles') ? 3 : 2; }
 
-function geefRelikwie(id) {
+function geefRelikwie(id, vanSchrijn) {
   if (!S.relikwieen.includes(id)) S.relikwieen.push(id);
   if (id === 'spaarvarken') S.goud += 100;
   if (id === 'bloedrobijn') { S.maxHp += 8; S.hp += 8; }
+  /* echt gevonden (niet uit het Schrijn meegenomen) = lading herladen */
+  if (!vanSchrijn) laadSchrijnOp(id);
   renderTopbalk();
 }
 /* gewogen op schaarste; geef een eigen weging mee voor rijkere bronnen (elites) */
@@ -1221,7 +1244,10 @@ function toonCodex() {
       if (!Codex.relikwieen.includes(r)) {
         return `<div class="codex-slot leeg" data-tip="??? — nog niet ontdekt">❓</div>`;
       }
-      return `<div class="codex-slot rel-${d.zeld}" data-rart="${r}" data-tip="${d.naam} — klik voor het verhaal" onclick="toonRelikwieBoek('${r}')">${d.icoon}</div>`;
+      const start = d.zeld === 'start';
+      const geladen = !start && Codex.opgeladen.includes(r);
+      const schrijnTip = start ? '' : (geladen ? ' · 🗝️ opgeladen voor het Schrijn' : ' · lading opgebruikt — vind hem opnieuw');
+      return `<div class="codex-slot rel-${d.zeld} ${!start && !geladen ? 'verbruikt' : ''}" data-rart="${r}" data-tip="${d.naam}${schrijnTip} (klik voor het verhaal)" onclick="toonRelikwieBoek('${r}')">${d.icoon}${geladen ? '<span class="codex-lading">🗝️</span>' : ''}</div>`;
     }).join('') + `</div>
     <h3 class="codex-kop">🧪 Drankjes <small>${drOntdekt} / ${dranks.length}</small></h3>
     <div class="codex-rooster">` +
@@ -1232,7 +1258,8 @@ function toonCodex() {
       }
       return `<div class="codex-slot" style="--dkleur:${d.kleur}" data-dart="${id}" data-tip="${d.naam} — klik voor het verhaal" onclick="bekijkDrank(event, '${id}')">${d.icoon}</div>`;
     }).join('') + `</div>
-    <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt === rels.length + dranks.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}</p>`;
+    <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt === rels.length + dranks.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
+    <small>🗝️ = opgeladen: dit relikwie kun je bij een nieuwe run éénmalig meenemen uit het Schrijn.</small></p>`;
   verfraaiItemArt($('#codex-inhoud'));
   $('#overlay-codex').classList.add('open');
   Klank.sfx('klik');
@@ -1266,7 +1293,12 @@ function verfraaiItemArt(wortel) {
   if (window.laadRelikwieAfbeelding) {
     w.querySelectorAll('[data-rart]').forEach(el => {
       laadRelikwieAfbeelding(el.dataset.rart, img => {
-        if (img && !el.querySelector('img')) el.innerHTML = `<img src="${img.src}" alt="">`;
+        if (img && !el.querySelector('img')) {
+          /* badges (zoals het schrijn-sleuteltje) overleven de art-swap */
+          const badge = el.querySelector('.codex-lading');
+          el.innerHTML = `<img src="${img.src}" alt="">`;
+          if (badge) el.appendChild(badge);
+        }
       });
     });
   }
@@ -2299,8 +2331,33 @@ function naarTitel() {
 
 function startNieuw() { toonHeldKeuze(); }
 
+/* ---------- het Schrijn: neem één gevonden relikwie mee ---------- */
+let schrijnKeuze = null;
+
+function schrijnHtml() {
+  const beschikbaar = Codex.opgeladen.filter(r => RELIKWIEEN[r]);
+  if (!beschikbaar.length) {
+    return `<small class="schrijn-leeg">🗝️ Het Schrijn is leeg — relikwieën die je in de diepte vindt, kun je hier éénmalig meenemen in een latere run.</small>`;
+  }
+  return `<div class="schrijn-titel">🗝️ Het Schrijn
+      <small>neem één gevonden relikwie mee — de lading is eenmalig, vind het opnieuw om het te herladen</small></div>
+    <div class="schrijn-rij">` + beschikbaar.map(r => {
+      const d = RELIKWIEEN[r];
+      return `<button class="schrijn-slot rel-${d.zeld} ${schrijnKeuze === r ? 'gekozen' : ''}" data-rart="${r}"
+        data-tip="${d.naam} — ${d.tekst}" onclick="kiesSchrijn('${r}')">${d.icoon}</button>`;
+    }).join('') + `</div>`;
+}
+
+function kiesSchrijn(id) {
+  schrijnKeuze = schrijnKeuze === id ? null : id;
+  const vak = $('#schrijn-vak');
+  if (vak) { vak.innerHTML = schrijnHtml(); verfraaiItemArt(vak); }
+  Klank.sfx('klik');
+}
+
 function toonHeldKeuze() {
   toonScherm('held');
+  schrijnKeuze = null;
   schermAchtergrond('held', ACHTERGRONDEN.titel, 0.55);
   $('#scherm-held').innerHTML = `
     <h2 class="scherm-titel">Kies je held</h2>
@@ -2319,6 +2376,7 @@ function toonHeldKeuze() {
         <span class="knop-stil held-dek-knop" onclick="bekijkStartdek('${id}', event)">Bekijk startdek</span>
       </button>`;
     }).join('') + `</div>
+    <div class="schrijn-vak" id="schrijn-vak">${schrijnHtml()}</div>
     <div class="seed-vak">
       <label>Seed (optioneel, voor een gedeelde run):
         <input id="seed-invoer" placeholder="bv. KRDF-2941" maxlength="20" spellcheck="false"></label>
@@ -2330,6 +2388,7 @@ function toonHeldKeuze() {
       if (img && el) el.innerHTML = `<img src="${img.src}" alt="${h.naam}">`;
     }));
   }
+  verfraaiItemArt($('#schrijn-vak'));
 }
 
 function bekijkStartdek(id, e) {

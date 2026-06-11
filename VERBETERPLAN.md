@@ -160,6 +160,16 @@ Carrousel: in elke focus-weergave (dek, beloningen, galerijen) blader
 je nu met ◀ ▶-knoppen, pijltjestoetsen (Esc = terug) en een teller
 ("3 / 14") door de kaarten.
 
+## ✅ EXTRA — Het Schrijn: meta-progressie via de Codex (GEBOUWD 13-06)
+Elk relikwie dat je in een run vindt, laadt zijn "schrijn-lading" op
+(Codex.opgeladen, persistent). Op het heldenkeuze-scherm staat het
+Schrijn: kies één opgeladen relikwie als startbonus bovenop het
+heldenrelikwie. De lading is eenmalig — vind het relikwie opnieuw in
+een run om het te herladen. Verzamelen → uitgeven → herjagen.
+Codex toont 🗝️ bij opgeladen en dimt opgebruikte. Heldenrelikwieën
+doen niet mee (identiteit). LET OP: bij de daily run (ONTWERP stap 3)
+moet het Schrijn uitgeschakeld worden voor eerlijke vergelijking.
+
 ## Geparkeerd
 - **Seed-uitleg/UX**: wordt pas echt zinvol samen met de daily run en
   uitdaagcodes (ONTWERP.md stap 3-4). Dan: uitleg-tooltip, "kopieer

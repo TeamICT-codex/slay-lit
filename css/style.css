@@ -300,6 +300,71 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   color: var(--perkament-dof);
   margin: 16px 0 4px;
 }
+.codex-slot { position: relative; }
+.codex-slot.verbruikt { filter: grayscale(.55) brightness(.7); }
+.codex-lading {
+  position: absolute;
+  right: -7px; top: -7px;
+  font-size: .85rem;
+  filter: drop-shadow(0 1px 3px #000);
+}
+
+/* ---------- het Schrijn (heldenkeuze) ---------- */
+.schrijn-vak {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 14px 22px;
+  background: rgba(20, 14, 28, .72);
+  border: 1.5px solid rgba(214, 178, 120, .35);
+  border-radius: 16px;
+  max-width: min(720px, 92vw);
+}
+.schrijn-titel {
+  font-family: 'Pirata One', serif;
+  font-size: 1.15rem;
+  color: var(--ember-fel);
+  text-align: center;
+}
+.schrijn-titel small {
+  display: block;
+  font-family: 'Alegreya', serif;
+  font-size: .82rem;
+  font-style: italic;
+  color: var(--perkament-dof);
+}
+.schrijn-leeg { font-style: italic; color: var(--perkament-dof); text-align: center; }
+.schrijn-rij { display: flex; flex-wrap: wrap; gap: 9px; justify-content: center; }
+.schrijn-slot {
+  position: relative;
+  width: 54px; height: 54px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  border-radius: 11px;
+  background: rgba(20, 14, 28, .9);
+  border: 1.5px solid rgba(var(--relk, 174, 180, 194), .6);
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s;
+  overflow: hidden;
+  padding: 0;
+}
+.schrijn-slot img { width: 100%; height: 100%; object-fit: cover; border-radius: 9px; }
+.schrijn-slot:hover { transform: scale(1.12); }
+.schrijn-slot.gekozen {
+  border: 2.5px solid var(--ember);
+  box-shadow: 0 0 18px rgba(255, 156, 63, .75);
+  transform: scale(1.14);
+}
+.schrijn-slot.gekozen::after {
+  content: '✓';
+  position: absolute;
+  right: 2px; bottom: 0;
+  font-size: .95rem;
+  color: var(--ember-fel);
+  text-shadow: 0 1px 3px #000, 0 0 6px #000;
+}
 
 /* carrousel in de focus-weergave */
 .focus-rij { display: flex; align-items: center; gap: 22px; }
