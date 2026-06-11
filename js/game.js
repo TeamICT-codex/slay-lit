@@ -1027,7 +1027,7 @@ function bouwGevechtDom(g) {
       <div class="vijand-art">${art}</div>
       <div class="sprite-ruimte"></div>
       <div class="vijand-naam">${v.naam}</div>
-      <div class="hp-balk"><div class="hp-vulling"></div><span class="hp-tekst"></span><span class="blok-schild" data-tip="Blok: vangt aanvalsschade op, verdwijnt aan het begin van de eigen beurt"><svg viewBox="0 0 24 28" aria-hidden="true"><defs><linearGradient id="blokgrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8e0f7"/><stop offset=".45" stop-color="#5f95bd"/><stop offset="1" stop-color="#23415e"/></linearGradient></defs><path fill="url(#blokgrad)" stroke="#0c1c2e" stroke-width="1.6" d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg><b></b></span></div>
+      <div class="hp-balk"><div class="hp-vulling"></div><span class="hp-tekst"></span><span class="blok-schild" data-tip="Blok: vangt aanvalsschade op, verdwijnt aan het begin van de eigen beurt"><svg viewBox="0 0 24 28" aria-hidden="true"><path fill="url(#blokgrad)" stroke="#0c1c2e" stroke-width="1.6" d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg><b></b></span></div>
       <div class="blok-status"></div>`;
     rij.appendChild(wrap);
     GDOM.vijanden.push({

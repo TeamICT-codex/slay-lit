@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v5';
+const CACHE = 'slayit-v6';
 const BESTANDEN = [
   '.',
   'index.html',
@@ -37,12 +37,15 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
-  /* art is onveranderlijk: cache-first */
+  /* art is onveranderlijk: cache-first — maar bewaar NOOIT mislukte
+     antwoorden (een gecachete 404 zou nieuwe art eeuwig blokkeren) */
   if (e.request.url.includes('/assets/')) {
     e.respondWith(
       caches.match(e.request).then(hit => hit || fetch(e.request).then(antwoord => {
-        const kopie = antwoord.clone();
-        caches.open(CACHE).then(c => c.put(e.request, kopie)).catch(() => {});
+        if (antwoord.ok) {
+          const kopie = antwoord.clone();
+          caches.open(CACHE).then(c => c.put(e.request, kopie)).catch(() => {});
+        }
         return antwoord;
       }))
     );
@@ -53,8 +56,10 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     fetch(e.request)
       .then(antwoord => {
-        const kopie = antwoord.clone();
-        caches.open(CACHE).then(c => c.put(e.request, kopie)).catch(() => {});
+        if (antwoord.ok) {
+          const kopie = antwoord.clone();
+          caches.open(CACHE).then(c => c.put(e.request, kopie)).catch(() => {});
+        }
         return antwoord;
       })
       .catch(() => caches.match(e.request))
