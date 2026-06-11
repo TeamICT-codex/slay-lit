@@ -979,19 +979,27 @@ function gevechtTik(dt) {
     GDOM.bg.style.transform = `translate(${(-zw.x * 30).toFixed(1)}px, ${(zw.y * 30).toFixed(1)}px)`;
   }
   const g = S.gevecht;
+  /* veilige lijn: naam/hp/statussen mogen nooit de handzone in zakken */
+  const lijn = window.innerHeight - 252;
   g.vijanden.forEach((v, i) => {
     const d = GDOM.vijanden[i];
     const p = Vista.schermPos(v);
     if (!d || !p) return;
+    const top = p.topY - 34;
     d.wrap.style.left = p.x + 'px';
-    d.wrap.style.top = (p.topY - 34) + 'px';
-    d.spacer.style.height = Math.max(0, p.voetY - p.topY) + 'px';
+    d.wrap.style.top = top + 'px';
+    const spacerH = Math.max(0, p.voetY - p.topY);
+    const maxSpacer = Math.max(36, lijn - top - (d.infoH || 130));
+    d.spacer.style.height = Math.min(spacerH, maxSpacer) + 'px';
   });
   const ps = Vista.schermPos(g.speler);
   if (ps && GDOM.speler) {
-    GDOM.speler.wrap.style.left = ps.x + 'px';
-    GDOM.speler.wrap.style.top = ps.topY + 'px';
-    GDOM.speler.spacer.style.height = Math.max(0, ps.voetY - ps.topY) + 'px';
+    const ds = GDOM.speler;
+    ds.wrap.style.left = ps.x + 'px';
+    ds.wrap.style.top = ps.topY + 'px';
+    const spacerH = Math.max(0, ps.voetY - ps.topY);
+    const maxSpacer = Math.max(36, lijn - ps.topY - (ds.infoH || 130));
+    ds.spacer.style.height = Math.min(spacerH, maxSpacer) + 'px';
   }
 }
 
@@ -1179,6 +1187,8 @@ function renderGevecht() {
     d.hpT.textContent = `${v.hp}/${v.maxHp}`;
     zetBlokSchild(d.blok, v.blok);
     d.badges.innerHTML = statusBadges(v);
+    /* hoogte van het infoblok (alles behalve de sprite-ruimte) cachen voor de klem */
+    d.infoH = d.wrap.offsetHeight - d.spacer.offsetHeight;
   });
 
   const s = g.speler, ds = GDOM.speler;
@@ -1186,6 +1196,7 @@ function renderGevecht() {
   ds.hpT.textContent = `${S.hp}/${S.maxHp}`;
   zetBlokSchild(ds.blok, s.blok);
   ds.badges.innerHTML = statusBadges(s);
+  ds.infoH = ds.wrap.offsetHeight - ds.spacer.offsetHeight;
   /* status-FX: gifbellen zolang vergiftigd, wond-puls onder 30% HP */
   ds.wrap.classList.toggle('hfx-gif-aan', (s.status.gif || 0) > 0);
   ds.wrap.classList.toggle('hfx-wond-aan', S.hp / S.maxHp < 0.3);
