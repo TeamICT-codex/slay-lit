@@ -170,6 +170,49 @@ Codex toont 🗝️ bij opgeladen en dimt opgebruikte. Heldenrelikwieën
 doen niet mee (identiteit). LET OP: bij de daily run (ONTWERP stap 3)
 moet het Schrijn uitgeschakeld worden voor eerlijke vergelijking.
 
+## SPEELTEST-FEEDBACK RONDE 2 (13-06)
+
+### ✅ R2.1 — Kroon van Sintels/Schaduwkroon pas vanaf beurt 2 (BUG, GEFIXT)
+De energiebonus werd alleen in beginSpelerBeurt toegepast, niet bij de
+gevechtsstart. Nu ook in startGevecht — boost vanaf beurt 1.
+
+### ✅ R2.2 — Schrijn: tot 3 relikwieën meenemen (GEBOUWD)
+schrijnKeuze werd een lijst (max 3), teller in de titel ("2/3").
+Eigen input: de balans bewaakt zichzelf — drie ladingen verbruiken per
+run terwijl je er hooguit een paar terugvindt, dus de voorraad slinkt
+vanzelf en herjagen blijft nodig. Daily blijft zonder Schrijn.
+
+### ✅ R2.3 — Gevallen Avonturier: 35 → 60 goud (GEFIXT)
+Eigen input: 60 maakt het een echte duivelse deal — de vloek Pijn is
+een dode kaart die je hele run meedraagt, dat mag stevig betalen.
+
+### ✅ R2.4 — Rustplaats: held groter + zit-pose (DEELS — art aan Thomas)
+Held op de rustplaats 200 → 256 px. De rest-pose-prompts stonden al
+klaar in STATE-PROMPTS.txt en zijn aangescherpt: de held zit nu op een
+houtblok/boomstam bij het vuur (speler_rest.png / gifmagier_rest.png).
+Zodra gedropt wisselt de scène automatisch naar de zithouding.
+
+### ✅ R2.5 — Block/cast-poses langer (GEFIXT)
+Vijand-blok en -cast: 0.9 s → 1.5 s (elites 1.9 s, bazen 2.6 s).
+Spelerblok 1.3 s, kracht-cast 1.4 s, splijt-cast van de koning 2.6 s.
+
+### ✅ R2.6 — Death/victory screen 2.0 (GEBOUWD)
+Het einde is nu een ceremonie: held groot in death- of victory-pose,
+gestaffeld onthullende reisstatistieken (verdiepingen, gevechten,
+kaarten, schade, goud, relikwieën), een epitaaf/lofregel uit een poel,
+de seed, en bij een dood de schrijn-troost ("je vondsten wachten").
+Dalende as-deeltjes bij verlies, gouden stralen bij winst.
+Knoppen: "Opnieuw afdalen ➤" (direct naar heldenkeuze) + terug.
+
+### 📌 R2.7 — Metgezellen/Familiars (ACT 2-ONTWERP, in ONTWERP.md)
+Permanent gezelschap zodra ontgrendeld, voor een beperkte duur (bv. N
+gevechten of tot het einde van de act). Soorten: goed / neutraal /
+kwaadaardig, gekoppeld aan keuzes en verhaallijn. Eigen input: klein
+hulpje naast de held met één duidelijk per-beurt-effect (schim geeft
+1 Blok, rat steelt goud bij kills, imp 2 schade maar vreet 1 licht per
+beurt...), ontgrendeld via events; alignment stuurt welke events je
+daarna tegenkomt. Volledige schets in ONTWERP.md.
+
 ## Geparkeerd
 - **Seed-uitleg/UX**: wordt pas echt zinvol samen met de daily run en
   uitdaagcodes (ONTWERP.md stap 3-4). Dan: uitleg-tooltip, "kopieer

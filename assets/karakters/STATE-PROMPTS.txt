@@ -374,9 +374,10 @@ Single full-body character, centered, facing RIGHT, isolated on a
 fully transparent background, no ground, no shadow, no text.
 Fills ~85% of a square 1024x1024 canvas.
 
-Pose: sitting on the ground resting, one knee up with his arm
-draped over it, sword laid across his lap, hood pushed half back,
-gazing into an unseen fire to his right, finally at ease.
+Pose: sitting on a fallen log or rough wooden bench, leaning
+forward with his forearms on his knees, sword resting against
+the log beside him, hood pushed half back, gazing into an unseen
+fire to his right, finally at ease.
 
 =================== gifmagier_rest.png ==================
 Use the attached reference image: the EXACT same character, same
@@ -386,7 +387,7 @@ Single full-body character, centered, facing RIGHT, isolated on a
 fully transparent background, no ground, no shadow, no text.
 Fills ~85% of a square 1024x1024 canvas.
 
-Pose: sitting cross-legged on the ground, calmly grinding herbs
-in a small mortar in his lap, vials laid out beside him, beaked
-mask turned toward an unseen fire to his right, green vapors
-curling lazily upward.
+Pose: seated on a low flat rock or wooden bench, calmly grinding
+herbs in a small mortar in his lap, vials laid out on the bench
+beside him, beaked mask turned toward an unseen fire to his
+right, green vapors curling lazily upward.

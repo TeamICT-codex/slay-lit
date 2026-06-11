@@ -79,3 +79,30 @@ een fakkel; licht is tegelijk brandstof, valuta en zicht.
 - Pact-systeem: elites bieden een deal (skip het gevecht: vloek + relikwie).
 - Kaart-evolutie: veelgespeelde kaarten transformeren naar keuzevarianten.
 - "Schimmen": runs van vrienden per verdieping vergelijken op het endscreen.
+
+## Metgezellen & Familiars (Act 2-feature, idee van Thomas 13-06)
+
+Zodra ontgrendeld blijft een metgezel permanent bij je, voor een
+beperkte duur (bv. N gevechten, of tot het einde van de act). Klein
+wezen naast de held op het strijdtoneel, met één duidelijk
+per-beurt-effect — geen tweede held, wel een bondgenoot met smoel.
+
+**Alignment** (gekoppeld aan keuzes en verhaallijn):
+- GOED — bv. de Vuurgeest: +1 licht per beurt, of de Tempelmuis:
+  geneest 1 HP per gevecht. Ontgrendeld via barmhartige keuzes
+  (avonturier laten rusten, altaar weigeren...).
+- NEUTRAAL — bv. de Grotrat: steelt 2 goud per gedode vijand, of
+  de Schim: 1 Blok per beurt. Via handel/events.
+- KWAADAARDIG — bv. de Imp: 2 schade per beurt aan een willekeurige
+  vijand maar vreet 1 licht per beurt, of het Bloedwicht: +1 Kracht,
+  kost 1 HP per gevecht. Via duistere keuzes (offers, plunderen).
+
+**Systeemideeën:**
+- Keuzes tellen een verborgen alignment-score; events tonen andere
+  opties naargelang je reputatie ("de imp ruikt bloed aan je handen").
+- Metgezel = sprite naast de held (Vista heeft voegVijandToe-achtige
+  infrastructuur al; een bondgenoot-acteur is dezelfde techniek).
+- Eigen art-slot: assets/karakters/metgezel_<id>.png + states.
+- Codex-sectie "Metgezellen" met silhouetten -> verzameldoel.
+- Schrijn-interactie: metgezellen NIET via het Schrijn (te sterk),
+  wel her-ontmoetbaar in latere runs zodra eenmaal ontgrendeld.

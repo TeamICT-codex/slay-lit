@@ -158,14 +158,15 @@ function nieuwSpel(heldId, seedTekst) {
   };
   held.dek.forEach(id => S.dek.push(nieuweKaart(id)));
 
-  /* het Schrijn: het gekozen relikwie gaat mee en verbruikt zijn lading */
-  if (schrijnKeuze && Codex.opgeladen.includes(schrijnKeuze)) {
-    Codex.opgeladen = Codex.opgeladen.filter(r => r !== schrijnKeuze);
+  /* het Schrijn: gekozen relikwieën gaan mee en verbruiken hun lading */
+  const meegenomen = schrijnKeuzes.filter(r => Codex.opgeladen.includes(r));
+  if (meegenomen.length) {
+    Codex.opgeladen = Codex.opgeladen.filter(r => !meegenomen.includes(r));
     bewaarCodex();
-    geefRelikwie(schrijnKeuze, true);
-    melding(`🗝️ Uit het Schrijn: ${RELIKWIEEN[schrijnKeuze].naam}`);
+    meegenomen.forEach(r => geefRelikwie(r, true));
+    melding(`🗝️ Uit het Schrijn: ${meegenomen.map(r => RELIKWIEEN[r].naam).join(' · ')}`);
   }
-  schrijnKeuze = null;
+  schrijnKeuzes = [];
 }
 
 function huidigeHeld() { return SPELERS[(S && S.held) || 'slachter'] || SPELERS.slachter; }
@@ -407,7 +408,7 @@ function geefBlok(actor, n) {
   fxNummer(actorEl(actor), `+${n} Blok`, 'fx-blok');
   if (actor.isSpeler) {
     Klank.sfx('blok');
-    if (window.Vista) Vista.pose(actor, 'block', 0.9);
+    if (window.Vista) Vista.pose(actor, 'block', 1.3);
     heldFx('hfx-blok', 1100);
   }
 }
@@ -869,6 +870,10 @@ function startGevecht(samenstelling, soort, rij) {
   if (heeftRelikwie('scherpe_dolk')) g.vijanden.forEach(v => v.status.kwetsbaar = 1);
   if (heeftRelikwie('bottenfluit')) g.vijanden.forEach(v => v.status.zwak = 1);
   if (heeftRelikwie('energiekristal')) g.energie += 1;
+  /* de kronen tellen ook al in de allereerste beurt mee */
+  const lichtStart = lichtNiveau();
+  if (heeftRelikwie('schaduwkroon') && ['duister', 'gedoofd'].includes(lichtStart)) g.energie += 1;
+  if (heeftRelikwie('kroon_van_sintels') && lichtStart === 'helder') g.energie += 1;
   if (heeftRelikwie('slangenamulet')) {
     const n = 2 + (heeftRelikwie('smaragden_ring') ? 1 : 0);
     g.vijanden.forEach(v => v.status.gif = (v.status.gif || 0) + n);
@@ -1455,8 +1460,8 @@ async function speelKaart(c, doel) {
   g.hand = g.hand.filter(k => k.uid !== c.uid);
   Klank.sfx('kaart');
   if (def.type === 'kracht') {
-    if (window.Vista) Vista.pose(sp(), 'cast', 0.8);
-    heldFx('hfx-cast', 1200);
+    if (window.Vista) Vista.pose(sp(), 'cast', 1.4);
+    heldFx('hfx-cast', 1400);
   }
   S.stats.kaarten++;
   const resultaat = def.speel(c, doel);
@@ -1494,7 +1499,7 @@ function checkBaasFase() {
     voegVijandToe('groene_slijm');
     voegVijandToe('groene_slijm');
     geefStatus(b, 'kracht', 1);
-    if (window.Vista) Vista.pose(b, 'cast', 1.2);
+    if (window.Vista) Vista.pose(b, 'cast', 2.6);
   }
   if ((b.fase || 1) < 3 && pct <= 0.25) {
     b.fase = 3;
@@ -1588,9 +1593,9 @@ async function eindBeurt() {
         }
       } else if (it.type === 'blok') {
         geefBlok(v, it.blok);
-        if (window.Vista) Vista.pose(v, 'block', 0.9);
+        if (window.Vista) Vista.pose(v, 'block', VIJANDEN[v.id].baas ? 2.6 : (VIJANDEN[v.id].elite ? 1.9 : 1.5));
       }
-      if ((it.type === 'buff' || it.type === 'debuff') && window.Vista) Vista.pose(v, 'cast', 0.9);
+      if ((it.type === 'buff' || it.type === 'debuff') && window.Vista) Vista.pose(v, 'cast', VIJANDEN[v.id].baas ? 2.6 : (VIJANDEN[v.id].elite ? 1.9 : 1.5));
       if (it.doe) it.doe(v);
       if (gestopt()) return;
     }
@@ -2304,20 +2309,61 @@ function toonEinde(gewonnen) {
   schermAchtergrond('einde', gewonnen ? ACHTERGRONDEN.act1.overwinning : null, 0.45);
   Klank.muziek('stil');
   const st = S.stats;
+  const held = huidigeHeld();
+  /* een epitaaf of lofregel uit de poel (presentationeel) */
+  const epitafen = [
+    'Hier eindigde een afdaling. De diepte telt geen namen.',
+    'Zijn fakkel doofde. Het donker onthield zijn moed.',
+    'De diepte gaf niets terug. Zoals altijd.',
+    'Een held minder. Een legende meer.',
+    'Het slijm vergeet nooit een gezicht.'
+  ];
+  const lofregels = [
+    'De duisternis kent nu jouw naam — en vreest hem.',
+    'Boven brandt de zon. Beneden brandt jouw legende.',
+    'De diepte boog. Voor één keer.'
+  ];
+  const poel = gewonnen ? lofregels : epitafen;
+  const regel = poel[Math.floor(Math.random() * poel.length)];
+  const statRegels = [
+    [S.verdieping, 'verdiepingen'],
+    [st.gevechten, 'gevechten'],
+    [st.kaarten, 'kaarten gespeeld'],
+    [st.schade, 'schade gedaan'],
+    [S.goud, 'goud op zak'],
+    [S.relikwieen.length, 'relikwieën']
+  ];
+  const as = gewonnen ? '' : '<div class="einde-as">' + Array.from({ length: 14 }, () =>
+    `<span class="asje" style="left:${(Math.random() * 100).toFixed(0)}%; animation-duration:${(4 + Math.random() * 5).toFixed(1)}s; animation-delay:${(Math.random() * 4).toFixed(1)}s"></span>`
+  ).join('') + '</div>';
   $('#scherm-einde').innerHTML = `
-    <div class="einde-icoon">${gewonnen ? '🏆' : '💀'}</div>
-    <h2 class="scherm-titel ${gewonnen ? 'goud-tekst' : 'rood-tekst'}">${gewonnen ? 'DE SLIJMKONING IS VERSLAGEN!' : 'JE BENT GEVALLEN...'}</h2>
-    <p class="scherm-sub">${gewonnen
-      ? `De diepte siddert. Het slijm trekt zich terug. Jij — ${huidigeHeld().naam} — hebt het onmogelijke gedaan.`
-      : 'De diepte eist opnieuw een held. Maar helden komen terug...'}</p>
-    <div class="einde-stats">
-      <div><b>${S.verdieping}</b><small>verdiepingen</small></div>
-      <div><b>${st.gevechten}</b><small>gevechten</small></div>
-      <div><b>${st.kaarten}</b><small>kaarten gespeeld</small></div>
-      <div><b>${st.schade}</b><small>schade gedaan</small></div>
+    ${as}
+    <div class="einde-held ${gewonnen ? 'einde-winst' : 'einde-dood'}" id="einde-held">
+      ${gewonnen ? '<div class="schat-stralen einde-stralen"></div>' : ''}
     </div>
-    <button class="knop-groot" onclick="naarTitel()">Terug naar het begin</button>`;
-  if (gewonnen) Klank.sfx('win');
+    <h2 class="scherm-titel einde-titel ${gewonnen ? 'goud-tekst' : 'rood-tekst'}">${gewonnen ? 'DE SLIJMKONING IS VERSLAGEN!' : 'JE BENT GEVALLEN...'}</h2>
+    <p class="scherm-sub einde-regel">„${regel}"</p>
+    <div class="einde-stats einde-onthul">
+      ${statRegels.map(([w, l], i) => `<div style="animation-delay:${(0.7 + i * 0.25).toFixed(2)}s"><b>${w}</b><small>${l}</small></div>`).join('')}
+    </div>
+    ${!gewonnen && Codex.opgeladen.length ? '<p class="einde-troost">🗝️ Je vondsten wachten opgeladen in het Schrijn.</p>' : ''}
+    <p class="einde-seed">Seed: ${S.seed} · ${held.naam}</p>
+    <div class="einde-knoppen">
+      <button class="knop-groot" onclick="startNieuw()">⚔️ Opnieuw afdalen</button>
+      <button class="knop-stil" onclick="naarTitel()">Naar het begin</button>
+    </div>`;
+  /* de held in zijn laatste pose: gevallen of triomferend */
+  if (window.laadKarakterAfbeelding) {
+    const zet = img => {
+      const el = $('#einde-held');
+      if (img && el) el.insertAdjacentHTML('beforeend', `<img src="${img.src}" alt="">`);
+    };
+    laadKarakterAfbeelding(held.art + (gewonnen ? '_victory' : '_death'), img => {
+      if (img) zet(img);
+      else laadKarakterAfbeelding(held.art, zet);
+    });
+  }
+  if (gewonnen) Klank.sfx('win'); else Klank.sfx('dood');
 }
 
 /* ============================================================
@@ -2331,25 +2377,33 @@ function naarTitel() {
 
 function startNieuw() { toonHeldKeuze(); }
 
-/* ---------- het Schrijn: neem één gevonden relikwie mee ---------- */
-let schrijnKeuze = null;
+/* ---------- het Schrijn: neem tot 3 gevonden relikwieën mee ---------- */
+const SCHRIJN_MAX = 3;
+let schrijnKeuzes = [];
 
 function schrijnHtml() {
   const beschikbaar = Codex.opgeladen.filter(r => RELIKWIEEN[r]);
   if (!beschikbaar.length) {
     return `<small class="schrijn-leeg">🗝️ Het Schrijn is leeg — relikwieën die je in de diepte vindt, kun je hier éénmalig meenemen in een latere run.</small>`;
   }
-  return `<div class="schrijn-titel">🗝️ Het Schrijn
-      <small>neem één gevonden relikwie mee — de lading is eenmalig, vind het opnieuw om het te herladen</small></div>
+  return `<div class="schrijn-titel">🗝️ Het Schrijn <span class="schrijn-teller">${schrijnKeuzes.length}/${SCHRIJN_MAX}</span>
+      <small>neem tot ${SCHRIJN_MAX} gevonden relikwieën mee — elke lading is eenmalig, vind het relikwie opnieuw om te herladen</small></div>
     <div class="schrijn-rij">` + beschikbaar.map(r => {
       const d = RELIKWIEEN[r];
-      return `<button class="schrijn-slot rel-${d.zeld} ${schrijnKeuze === r ? 'gekozen' : ''}" data-rart="${r}"
+      return `<button class="schrijn-slot rel-${d.zeld} ${schrijnKeuzes.includes(r) ? 'gekozen' : ''}" data-rart="${r}"
         data-tip="${d.naam} — ${d.tekst}" onclick="kiesSchrijn('${r}')">${d.icoon}</button>`;
     }).join('') + `</div>`;
 }
 
 function kiesSchrijn(id) {
-  schrijnKeuze = schrijnKeuze === id ? null : id;
+  if (schrijnKeuzes.includes(id)) {
+    schrijnKeuzes = schrijnKeuzes.filter(r => r !== id);
+  } else if (schrijnKeuzes.length >= SCHRIJN_MAX) {
+    melding(`Het Schrijn draagt maximaal ${SCHRIJN_MAX} relikwieën per afdaling.`);
+    return;
+  } else {
+    schrijnKeuzes.push(id);
+  }
   const vak = $('#schrijn-vak');
   if (vak) { vak.innerHTML = schrijnHtml(); verfraaiItemArt(vak); }
   Klank.sfx('klik');
@@ -2357,7 +2411,7 @@ function kiesSchrijn(id) {
 
 function toonHeldKeuze() {
   toonScherm('held');
-  schrijnKeuze = null;
+  schrijnKeuzes = [];
   schermAchtergrond('held', ACHTERGRONDEN.titel, 0.55);
   $('#scherm-held').innerHTML = `
     <h2 class="scherm-titel">Kies je held</h2>

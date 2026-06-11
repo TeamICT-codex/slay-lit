@@ -168,6 +168,67 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   box-shadow: 0 0 10px rgba(var(--relk), .4);
 }
 
+/* ---------- het einde: ceremonie van de gevallen of zegevierende held ---------- */
+.einde-held {
+  position: relative;
+  width: 240px; height: 240px;
+  margin-top: 16px;
+  animation: eventOnthul .8s cubic-bezier(.25, 1.2, .4, 1);
+}
+.einde-held img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  position: relative;
+  z-index: 1;
+}
+.einde-held.einde-dood img {
+  filter: grayscale(.45) brightness(.8) drop-shadow(0 0 26px rgba(232, 93, 117, .5));
+}
+.einde-held.einde-winst img {
+  filter: drop-shadow(0 0 30px rgba(245, 197, 66, .55));
+}
+.einde-stralen { top: -55px; }
+.einde-titel { animation: eventOnthul .7s .25s backwards; }
+.einde-regel {
+  font-style: italic;
+  animation: eventOnthul .7s .45s backwards;
+}
+.einde-onthul > div { animation: eventOnthul .55s backwards; }
+.einde-troost {
+  color: var(--ember-fel);
+  font-style: italic;
+  font-size: .95rem;
+  animation: eventOnthul .6s 2.3s backwards;
+  margin: 4px 0 0;
+}
+.einde-seed {
+  color: var(--perkament-dof);
+  font-size: .85rem;
+  font-family: 'Alegreya', serif;
+  animation: eventOnthul .6s 2.5s backwards;
+  margin: 2px 0 0;
+}
+.einde-knoppen {
+  display: flex; gap: 14px; align-items: center;
+  margin-top: 12px;
+  animation: eventOnthul .6s 2.7s backwards;
+}
+/* as die neerdaalt over het verliesscherm */
+.einde-as { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.asje {
+  position: absolute;
+  top: -3vh;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: rgba(200, 170, 150, .5);
+  animation: asVal linear infinite;
+}
+@keyframes asVal {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: .7; }
+  100% { transform: translateY(106vh) translateX(-30px); opacity: 0; }
+}
+
 /* ---------- de schatkist-ceremonie ---------- */
 .schat-toneel {
   position: relative;
@@ -327,6 +388,17 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   font-size: 1.15rem;
   color: var(--ember-fel);
   text-align: center;
+}
+.schrijn-teller {
+  font-family: 'Alegreya', serif;
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--perkament);
+  background: rgba(255, 156, 63, .18);
+  border: 1px solid rgba(255, 156, 63, .5);
+  border-radius: 10px;
+  padding: 1px 9px;
+  vertical-align: middle;
 }
 .schrijn-titel small {
   display: block;
@@ -1604,7 +1676,7 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   38% { opacity: 1; transform: translateX(-50%) scale(1.06); }
   62% { opacity: .8; transform: translateX(-50%) scale(1.02); }
 }
-.kv-held { width: 200px; height: 200px; animation: adem 3.2s ease-in-out infinite; }
+.kv-held { width: 256px; height: 256px; animation: adem 3.2s ease-in-out infinite; }
 .kv-held img {
   width: 100%; height: 100%;
   object-fit: contain;
