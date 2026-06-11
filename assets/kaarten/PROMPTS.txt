@@ -1,0 +1,740 @@
+KAART-ART PROMPTBIBLIOTHEEK
+============================
+Elke prompt is volledig zelfstandig: kopieer het hele blok,
+genereer, sla op onder de bestandsnaam boven het blok, drop in
+assets/kaarten/. PNG of JPG, liggend ~1024x576, geen
+transparantie nodig.
+
+Consistentiesysteem:
+- Identiek stijlanker in elk blok (voor- en achteraan).
+- Kleuraccent per kaarttype, passend bij de framekleur in het
+  spel: AANVAL = karmozijn/ember, VAARDIGHEID = staalblauw/teal,
+  KRACHT = arcane paars.
+- Genereer per reeks in één sessie/chat.
+
+
+############ DE KAARTRUG (één keer — alle gedekte kaarten) ############
+
+========================== rug.png =========================
+Ornate dark fantasy playing card BACK design for a deckbuilder
+game. Perfectly symmetrical composition, portrait orientation
+(3:4). A glowing ember torch emblem in the center, surrounded by
+an ornate gothic filigree border in antique gold on deep
+charcoal-purple, subtle flame motifs woven into the corners.
+Painterly hand-crafted style, NOT photorealistic, no photo, no 3D
+render. No text, no numbers, no logo. Rich but not busy — must
+read clearly at small size.
+
+############ DE SLACHTER — BASIS (startdek) ############
+
+========================= slag.png =========================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a gleaming silver longsword mid-swing, cutting a bright
+arc of light through the dark dungeon air.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== verdediging.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a battered round shield raised against a heavy blow,
+sparks scattering off the steel rim.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+========================= knal.png =========================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: an armored gauntlet smashing into a stone floor, a radial
+shockwave of dust and cracked tiles bursting outward.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+############ DE SLACHTER — AANVALLEN ############
+
+====================== dubbelslag.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: two crossed blades striking simultaneously, leaving an X
+of glowing light trails.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== zware_klap.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a colossal two-handed warhammer at the apex of a crushing
+downward swing, embers trailing behind the head.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== klingenstorm.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a whirling ring of floating swords spinning outward in a
+deadly circle, motion blur on the blade tips.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== ijzeren_golf.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a cresting wave of molten steel rolling across a dungeon
+floor, glowing orange at its crest.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== bloedoffer.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: an open palm with a shallow cut, drops of blood igniting
+into floating embers as they fall.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================== uithaal.png =======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a rising armored uppercut launching a shadowy figure off
+its feet, arcs of force tracing the punch.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================= executie.png =======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: an executioner's greatsword raised high above a kneeling
+shadowy silhouette, torchlight glinting on the edge.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== molensteen.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a massive grinding millstone studded with blades, sparks
+flying where it grinds over stone.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== vampiersbeet.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: pale fangs sinking into glowing red wisps of life force
+being drawn out of the dark.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== wervelwind.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a tornado of steel blades and sparks tearing through a
+dark pillared hall.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== genadeslag.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a blazing comet crashing down like a sword strike, a
+fiery explosion erupting at the point of impact.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+############ DE SLACHTER — KRACHTEN ############
+
+====================== metaalhuid.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with arcane violet
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: a bare forearm transforming into polished segmented steel
+plates, seams glowing faintly.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+================ vlammende_hartstocht.png ==================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with arcane violet
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: a burning heart wreathed in rising embers and curling
+flame, glowing against the dark.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== demonenvorm.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with arcane violet
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: curved glowing demon horns growing out of swirling black
+shadow, two ember eyes igniting beneath them.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+############ NEUTRAAL (beide helden) ############
+
+====================== schildmuur.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a wall of overlapping tower shields locked together into
+an impenetrable barrier.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================= ontwijken.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a cloaked silhouette blurring sideways out of the path of
+a striking blade, afterimages trailing.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== krijgslist.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a parchment battle map with carved figurines, studied by
+candlelight in a dark tent.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== ontwapening.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a sword spinning away through the air, knocked from an
+open gauntleted hand.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================= schokgolf.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: an armored boot stomping the ground, a glowing ring of
+force rippling outward through dust.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== adrenaline.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a small uncorked vial of crackling lightning, energy
+arcing out over the fingers holding it.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== tweede_adem.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a chest drawing a deep breath as swirling golden light
+flows inward like living air.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== offerande.png =======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a black candle whose flame is fed by falling drops of
+blood, each drop flaring bright.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================== bolwerk.png =======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a massive moonlit stone bastion behind rows of
+battlements, banners stirring in the wind.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== zuivering.png =======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: pure white light washing dark smoke and shadow off a
+figure, the darkness peeling away in ribbons.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== doornenhuid.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with arcane violet
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: skin erupting with rows of steel thorn spikes, glinting
+in low torchlight.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== energiekern.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with arcane violet
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: a pulsing crystal orb of orange energy hovering mid-air,
+sparks orbiting around it.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+############ LICHTKAARTEN (neutraal — het fakkelsysteem) ############
+
+======================= vlamstoot.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a torch swung like a weapon, hurling a roaring tongue of
+flame forward through the dark. The fire is the hero of the
+image: huge, alive and violent, its ember glow lighting the
+entire scene.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== verlichting.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a lone candle flaring up like a miniature sun, its blazing
+light revealing floating spectral cards in the darkness around
+it. The flame is the hero of the image, radiant and alive.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+==================== innerlijk_vuur.png ====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with arcane violet
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: a ribcage silhouette with a blazing furnace burning inside
+where the heart should be, embers escaping between the ribs. The
+inner fire is the hero of the image, glowing so fiercely it
+illuminates the bones from within.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+############ DE GIFMAGIËR — BASIS (startdek) ############
+
+========================= prik.png =========================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a slender dagger delivering a quick precise jab, a green
+venom glint on the tip.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+==================== dodelijke_kus.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: poisoned dark lips blowing a kiss of toxic green mist that
+curls into a heart-shaped wisp.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+############ DE GIFMAGIËR — AANVALLEN ############
+
+===================== snelle_steek.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a blur-fast dagger thrust leaving a streaking green motion
+trail through the dark.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== slangenbeet.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a striking emerald serpent with bared fangs dripping
+luminous venom, mid-lunge.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== venijnregen.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a rain of glowing green venom droplets falling over a
+group of shadowy silhouettes.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================= giftand.png ========================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a huge curved venomous fang injecting glowing green poison
+into swirling darkness.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== nachtschade.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a deadly nightshade flower blooming in the dark, petals
+glowing with toxic violet-green light.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+==================== giftige_steek.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a dagger plunging downward with a burst of green poison
+splashing outward from the impact.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+############ DE GIFMAGIËR — VAARDIGHEDEN ############
+
+======================= gifflits.png =======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a dart of glowing green liquid streaking through the air,
+leaving a luminous trail.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== sluiproute.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a hooded figure slipping through a narrow shadowed dungeon
+passage, barely catching the torchlight.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+==================== verlammend_gif.png ====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a glistening spider web strung across the dark, hung with
+paralytic venom droplets that glow faintly green.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================= katalyse.png =======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a boiling alchemical flask erupting with multiplying green
+bubbles, foam spilling over the glass.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================= gifwolk.png ========================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a rolling cloud of toxic green gas engulfing a dark stone
+chamber, tendrils creeping along the floor.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+############ DE GIFMAGIËR — KRACHTEN ############
+
+=================== etterende_wonden.png ===================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with arcane violet
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: a blade coated in virulent green ichor leaving infected
+glowing trails through the air.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== bloedzuiger.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with arcane violet
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: a monstrous mosquito-like creature glowing softly as it
+drains shimmering threads of red light.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================= epidemie.png =======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with arcane violet
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: a cloud of green plague spores rolling over a field of
+fallen shadowy silhouettes.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== gifklieren.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with arcane violet
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: bubbling organic glands oozing luminous green venom in the
+dark.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+############ VLOEK ############
+
+========================= pijn.png =========================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of charcoal and ash with sickly grey-green
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: a twisted crown of black thorns digging into formless
+shadow, weeping a faint sickly light.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+
+==================== NIEUWE FAKKELKAARTEN (12-06) ====================
+
+======================== gloed.png =========================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with golden amber
+accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a torch flaring up from a dying ember to a brilliant
+golden blaze, a hand cupped around it, sparks spiraling upward.
+The reborn flame is the hero of the image, washing the darkness
+back in a warm wave of light.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== lichtbaken.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with warm amber
+and ember orange accents. NOT photorealistic, no photo, no 3D
+render. Landscape composition, subject centered, no text, no
+frame, no UI.
+
+Scene: an ornate standing brazier burning with an eternal golden
+flame in the middle of a dark vault, moths of light drifting
+around it, its steady glow pushing a perfect circle of safety
+into the shadows.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== schaduwdans.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with cold violet
+and midnight blue accents. NOT photorealistic, no photo, no 3D
+render. Landscape composition, subject centered, no text, no
+frame, no UI.
+
+Scene: a cloaked silhouette dissolving into ribbons of living
+shadow mid-spin, barely touched by a single distant candle, the
+darkness itself curling protectively around the figure like a
+cloak.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+=================== omarm_het_duister.png ==================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with cold violet
+accents and one dying ember. NOT photorealistic, no photo, no 3D
+render. Landscape composition, subject centered, no text, no
+frame, no UI.
+
+Scene: two hands deliberately closing around a torch flame,
+snuffing it out; the last spark reflected in glowing eyes that
+open in the darkness behind, veins of shadow-power crawling up
+the arms.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== vlammenkling.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a longsword blade wreathed in roaring fire mid-swing, the
+flames streaming off the edge like a banner. The burning blade is
+the hero of the image, lighting the dark hall around it.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================= gifvlam.png ========================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with toxic green
+and ember orange accents. NOT photorealistic, no photo, no 3D
+render. Landscape composition, subject centered, no text, no
+frame, no UI.
+
+Scene: a torch flame turning sickly green as a vial of venom is
+poured into it, the poisoned fire billowing outward in a wave of
+luminous toxic smoke that rolls toward unseen enemies.
+
+Painted illustration only, rich color, clean readable silhouette.

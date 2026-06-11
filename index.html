@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLAY LIT — een kaartgevecht in de diepte</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>⚔️</text></svg>">
+  <link rel="stylesheet" href="assets/fonts/fonts.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+</head>
+<body>
+
+  <!-- topbalk -->
+  <div id="topbalk">
+    <span class="tb-logo">SLAY LIT</span>
+    <span id="tb-hp"></span>
+    <span id="tb-fakkel"></span>
+    <span id="tb-goud"></span>
+    <span id="tb-verdieping" data-tip="Verdieping: hoe diep je al bent afgedaald"></span>
+    <div id="tb-relikwieen"></div>
+    <div id="tb-dranken"></div>
+    <button class="tb-knop" onclick="toonDek()" data-tip="Bekijk je dek">🃏</button>
+    <button class="tb-knop" onclick="toonInstellingen()" data-tip="Instellingen: geluid, muziek, 3D">⚙️</button>
+  </div>
+
+  <!-- titel -->
+  <div class="scherm" id="scherm-titel">
+    <h1 class="titel-groot">SLAY&nbsp;<span class="titel-lit">LIT</span></h1>
+    <p class="titel-sub">~ voor het licht dooft ~</p>
+    <div class="titel-knoppen">
+      <button class="knop-groot" onclick="startNieuw()">⚔️ Nieuw avontuur</button>
+      <button class="knop-groot" id="knop-doorgaan" onclick="doorgaan()" style="display:none">🗺️ Doorgaan</button>
+      <button class="knop-stil" onclick="toonHelp()">Hoe speel ik?</button>
+      <button class="knop-stil" onclick="toonCodex()">📖 Codex</button>
+    </div>
+    <div class="sintel" style="left:12%; animation-duration:7s; animation-delay:0s"></div>
+    <div class="sintel" style="left:25%; animation-duration:9s; animation-delay:2s"></div>
+    <div class="sintel" style="left:38%; animation-duration:6s; animation-delay:4s"></div>
+    <div class="sintel" style="left:52%; animation-duration:8s; animation-delay:1s"></div>
+    <div class="sintel" style="left:65%; animation-duration:10s; animation-delay:3s"></div>
+    <div class="sintel" style="left:78%; animation-duration:7s; animation-delay:5s"></div>
+    <div class="sintel" style="left:90%; animation-duration:9s; animation-delay:2.5s"></div>
+  </div>
+
+  <!-- heldenkeuze -->
+  <div class="scherm" id="scherm-held"></div>
+
+  <!-- kaart van de diepte -->
+  <div class="scherm" id="scherm-kaart">
+    <div id="kaart-scroll">
+      <div id="kaart-vlak"></div>
+    </div>
+    <div id="seed-label" data-tip="Deel deze seed: iedereen met dezelfde seed speelt exact dezelfde run"></div>
+  </div>
+
+  <!-- gevecht -->
+  <div class="scherm" id="scherm-gevecht">
+    <div id="gevecht-achtergrond"></div>
+    <canvas id="vista-canvas"></canvas>
+    <div id="licht-vignet"></div>
+    <div id="baas-balk" style="display:none"></div>
+    <div id="beurt-label"></div>
+    <div id="strijdveld">
+      <div id="speler-zone"></div>
+      <div id="vijanden-rij"></div>
+    </div>
+    <div id="onderbalk">
+      <div id="energie-orb" data-tip="Energie: elke kaart kost energie om te spelen"></div>
+      <div class="stapel" id="stapel-trek" data-tip="Trekstapel"></div>
+      <div class="stapel" id="stapel-afleg" data-tip="Aflegstapel: wordt opnieuw geschud als je trekstapel leeg is"></div>
+      <button id="knop-eindbeurt" onclick="eindBeurt()">Einde beurt ⏳</button>
+      <div id="hand"></div>
+    </div>
+  </div>
+
+  <!-- overige schermen (worden door JS gevuld) -->
+  <div class="scherm" id="scherm-beloning"></div>
+  <div class="scherm" id="scherm-rust"></div>
+  <div class="scherm" id="scherm-winkel"></div>
+  <div class="scherm" id="scherm-event"></div>
+  <div class="scherm" id="scherm-schat"></div>
+  <div class="scherm" id="scherm-einde"></div>
+
+  <!-- de codex: verzamelboek over alle runs heen -->
+  <div class="overlay" id="overlay-codex">
+    <h2 class="scherm-titel">📖 De Codex</h2>
+    <div id="codex-inhoud"></div>
+    <button class="knop-groot" onclick="document.getElementById('overlay-codex').classList.remove('open')">Sluiten</button>
+  </div>
+
+  <!-- relikwieënboek -->
+  <div class="overlay" id="overlay-relikwie" onclick="if(event.target===this)this.classList.remove('open')">
+    <div id="relikwie-boek"></div>
+  </div>
+
+  <!-- kaartkeuze / dek-overlay -->
+  <div class="overlay" id="overlay-kies">
+    <h2 class="scherm-titel" id="kies-titel"></h2>
+    <p id="kies-hint"></p>
+    <div id="kies-kaarten"></div>
+    <button class="knop-groot" id="kies-overslaan">Sluiten / overslaan</button>
+  </div>
+
+  <!-- help-overlay -->
+  <div class="overlay" id="overlay-help">
+    <h2 class="scherm-titel">Hoe speel ik?</h2>
+    <div class="help-inhoud">
+      <h3>⚔️ Het doel</h3>
+      <p>Daal af door <b>13 verdiepingen</b> vol monsters en versla <b>De Slijmkoning</b>. Sterf je onderweg, dan begint het avontuur opnieuw.</p>
+      <h3>🃏 Gevechten</h3>
+      <p>Elke beurt krijg je <b>3 Energie</b> en trek je <b>5 kaarten</b>. Kaarten kosten energie (het getal linksboven). Aanvalskaarten hebben een doelwit nodig: klik de kaart en daarna de vijand. Boven elke vijand zie je zijn <b>intentie</b> — wat hij van plan is. ⚔️ betekent dat hij gaat aanvallen voor dat getal.</p>
+      <h3>🛡️ Blok &amp; statussen</h3>
+      <p><b>Blok</b> vangt aanvalsschade op, maar verdwijnt aan het begin van je volgende beurt. <b>Kwetsbaar</b> 🎯 = 50% meer schade ontvangen. <b>Zwak</b> 🥀 = 25% minder schade uitdelen. <b>Gif</b> ☠️ negeert blok. Beweeg over een icoon voor uitleg.</p>
+      <h3>🗺️ De kaart</h3>
+      <p>Kies je eigen route: ⚔️ gevecht · 😈 elite (zwaar, maar je krijgt een relikwie) · ❓ onbekend · 🔥 rustplaats (genezen of een kaart smeden) · 💰 winkel · 🎁 schat · 👑 de baas.</p>
+      <h3>🧪 Drankjes &amp; relikwieën</h3>
+      <p>Drankjes (rechtsboven) gebruik je één keer — klik erop tijdens een gevecht. <b>Relikwieën</b> zijn blijvende schatten met een eigen <b>schaarste</b>: <span class="schaarste-chip rel-gewoon">Gewoon</span> <span class="schaarste-chip rel-ongewoon">Ongewoon</span> <span class="schaarste-chip rel-zeldzaam">Zeldzaam</span> <span class="schaarste-chip rel-episch">Episch</span>. Je vindt ze in schatkamers, bij elites (de betere soorten!), in de winkel en bij events. Klik op een relikwie in de balk bovenaan voor het volledige verhaal.</p>
+      <h3>🔥 De fakkel</h3>
+      <p>Elke kamer kost <b>licht</b>, en hoe dieper je komt, hoe duurder. Brandt je fakkel <b>helder (60+)</b>, dan vind je <b>4 kaartkeuzes</b> na elk gevecht; in de schemer 3, in het donker maar 2. Onder de 30 zie je bovendien <b>niet meer hoe hard</b> vijanden gaan toeslaan, en gedoofd (0) vecht je blind tegen fellere vijanden — maar met <b>+50% goud</b> als beloning. Bijvullen: Oppoken bij het kampvuur, Lantaarnolie in de winkel, of geluk onderweg. Sommige kaarten <b>verbranden licht</b> voor extra kracht.</p>
+    </div>
+    <button class="knop-groot" onclick="sluitHelp()">Begrepen!</button>
+  </div>
+
+  <!-- instellingen-overlay -->
+  <div class="overlay" id="overlay-instellingen">
+    <h2 class="scherm-titel">⚙️ Instellingen</h2>
+    <div class="inst-paneel">
+      <label class="inst-rij">Geluid aan
+        <input type="checkbox" id="inst-geluid" onchange="instWijzig()"></label>
+      <label class="inst-rij">🎵 Muziek
+        <input type="range" id="inst-muziek" min="0" max="1" step="0.05" oninput="instWijzig()"></label>
+      <label class="inst-rij">💥 Effecten
+        <input type="range" id="inst-sfx" min="0" max="1" step="0.05" oninput="instWijzig()"></label>
+      <label class="inst-rij">🏰 3D-strijdtoneel
+        <input type="checkbox" id="inst-d3" onchange="instWijzig()"></label>
+      <label class="inst-rij">🪶 Lite-modus
+        <input type="checkbox" id="inst-lite" onchange="instWijzig()"></label>
+      <label class="inst-rij">💬 Stemmen uit de diepte
+        <input type="checkbox" id="inst-spraak" onchange="instWijzig()"></label>
+    </div>
+    <p class="inst-hint">Lite-modus schakelt zware effecten uit — handig op oudere laptops of bij een lege batterij.</p>
+    <button class="knop-groot" onclick="sluitInstellingen()">Klaar</button>
+  </div>
+
+  <div id="meldingen"></div>
+  <div id="tooltip"></div>
+
+  <script src="js/lib/three.min.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/scene3d.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

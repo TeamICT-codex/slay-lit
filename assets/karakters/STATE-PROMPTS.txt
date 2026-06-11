@@ -1,0 +1,392 @@
+STATE-POSES — PROMPTBIBLIOTHEEK
+================================
+BELANGRIJK: voeg bij ELKE generatie de basisafbeelding van het
+personage toe als referentie (speler.png / gifmagier.png /
+slijmkoning.png uit deze map) — dat is dé sleutel tot consistentie.
+Genereer per personage in één sessie. Opslaan onder exact de
+bestandsnaam boven het blok, droppen in assets/karakters/, en bij
+dambord gewoon "ruim op" vragen.
+
+Helden kijken naar RECHTS, de baas naar LINKS — net als hun basis.
+
+
+#################### DE SLACHTER ####################
+
+=================== speler_attack.png ===================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: mid-lunge attack, silver longsword sweeping in a wide
+glowing arc, cape flying behind, weight on the front foot.
+
+==================== speler_hit.png =====================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: recoiling from a heavy blow, torso twisted back, free arm
+raised in defense, cloak whipping from the impact.
+
+=================== speler_death.png ====================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: collapsed onto one knee, sword fallen from his hand, head
+bowed low, hood hiding his face, the ember glow of his eyes
+fading.
+
+=================== speler_poison.png ===================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: hunched and unsteady, one hand clutching his stomach, faint
+sickly green wisps rising off his shoulders, eyes dimmed green.
+
+==================== speler_block.png ===================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: braced defensive stance, sword held horizontally as a
+guard, knees bent, weight low, cloak pulled tight around him.
+
+================== speler_victory.png ===================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: triumphant, sword thrust high above his head, chest open,
+cape billowing, ember glow blazing brighter than ever.
+
+==================== speler_cast.png ====================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: channeling power, free hand raised with glowing ember
+energy swirling around the gauntlet, sword lowered, runes of
+light tracing the air.
+
+================== speler_wounded.png ===================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: battered and exhausted, leaning on his sword like a cane,
+shoulders sagging, cloak torn, breathing heavily but unbroken.
+
+
+#################### DE GIFMAGIËR ####################
+
+================= gifmagier_attack.png ==================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: hurling a glass vial of glowing green poison forward, robe
+swirling, toxic droplets trailing through the air.
+
+=================== gifmagier_hit.png ===================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: staggering backward from a blow, clutching his vial belt
+protectively, beaked mask tilted, green vapors scattering.
+
+================== gifmagier_death.png ==================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: sunk to his knees, the round flask shattered beside him,
+the last green vapors escaping upward, mask bowed to the ground.
+
+================= gifmagier_poison.png ==================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: standing calmly wreathed in his own thick green vapors,
+arms slightly spread, as if the poison is an old friend.
+
+================== gifmagier_block.png ==================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: sweeping his heavy tattered cloak up as a shield, arm
+raised behind it, crouched low.
+
+================= gifmagier_victory.png =================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: raising his bubbling flask high in a toast, green glow
+washing over his mask, posture proud and theatrical.
+
+================== gifmagier_cast.png ===================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: both hands raised conjuring a swirling orb of toxic green
+energy between them, robe lifting in the updraft.
+
+================= gifmagier_wounded.png =================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: hunched over, one hand pressed to his side, vapors around
+him thin and pale, mask drooping but still standing.
+
+
+#################### DE SLIJMKONING (baas) ####################
+
+================ slijmkoning_attack.png =================
+Use the attached reference image: the EXACT same creature, same
+design, colors, crown and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single boss creature, centered, facing LEFT, isolated on a fully
+transparent background, no ground, no shadow, no text. Fills ~90%
+of a square 1024x1024 canvas.
+
+Pose: lunging forward in attack, jelly body stretched toward the
+left, jaws gaping wide, slime trailing behind like a wave.
+
+================== slijmkoning_hit.png ==================
+Use the attached reference image: the EXACT same creature, same
+design, colors, crown and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single boss creature, centered, facing LEFT, isolated on a fully
+transparent background, no ground, no shadow, no text. Fills ~90%
+of a square 1024x1024 canvas.
+
+Pose: splattered sideways by an impact, body deformed and
+wobbling, slime drops flying, the golden crown knocked askew.
+
+================= slijmkoning_death.png =================
+Use the attached reference image: the EXACT same creature, same
+design, colors, crown and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single boss creature, centered, facing LEFT, isolated on a fully
+transparent background, no ground, no shadow, no text. Fills ~90%
+of a square 1024x1024 canvas.
+
+Pose: melting down into a wide collapsing puddle, the golden
+crown sinking into the goo, the pale skull surfacing, eyes
+closing.
+
+================= slijmkoning_block.png =================
+Use the attached reference image: the EXACT same creature, same
+design, colors, crown and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single boss creature, centered, facing LEFT, isolated on a fully
+transparent background, no ground, no shadow, no text. Fills ~90%
+of a square 1024x1024 canvas.
+
+Pose: compressed into a dense hardened dome, surface glossy and
+taut like green glass, crown pulled down low as a helmet.
+
+================= slijmkoning_cast.png ==================
+Use the attached reference image: the EXACT same creature, same
+design, colors, crown and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single boss creature, centered, facing LEFT, isolated on a fully
+transparent background, no ground, no shadow, no text. Fills ~90%
+of a square 1024x1024 canvas.
+
+Pose: rearing up tall and regal, the golden crown glowing with
+power, magical slime bubbling up and orbiting around the body.
+
+
+#################### GROMBAARD (elite) ####################
+(4 states — hij brult en beukt, maar verdedigt nooit)
+
+================= grombaard_attack.png ==================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+full-body creature, centered, facing LEFT, isolated on a fully
+transparent background, no ground, no shadow, no text. Fills ~88%
+of a square 1024x1024 canvas.
+
+Pose: mid-smash attack, massive fist or club swinging down toward
+the left, body lunging, muscles coiled, spit flying from a snarl.
+
+================== grombaard_hit.png ====================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+full-body creature, centered, facing LEFT, isolated on a fully
+transparent background, no ground, no shadow, no text. Fills ~88%
+of a square 1024x1024 canvas.
+
+Pose: head snapped back from a heavy blow, staggering, one foot
+lifted, arms flailing for balance.
+
+================= grombaard_death.png ===================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+full-body creature, centered, facing LEFT, isolated on a fully
+transparent background, no ground, no shadow, no text. Fills ~88%
+of a square 1024x1024 canvas.
+
+Pose: crashed down onto both knees, slumping forward, weapon
+dropped, the rage finally draining from his face.
+
+================== grombaard_cast.png ===================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+full-body creature, centered, facing LEFT, isolated on a fully
+transparent background, no ground, no shadow, no text. Fills ~88%
+of a square 1024x1024 canvas.
+
+Pose: the BRUL — chest puffed, head thrown back mid-roar, fists
+clenched at his sides, red battle-fury radiating off his body.
+
+
+#################### STEENWACHTER (elite) ####################
+(5 states — incl. blok: hij verhardt en herstelt zich)
+
+================ steenwachter_attack.png ================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+full-body creature, centered, facing LEFT, isolated on a fully
+transparent background, no ground, no shadow, no text. Fills ~88%
+of a square 1024x1024 canvas.
+
+Pose: a colossal stone fist driving down toward the left in a
+crushing blow, cracks of light flaring along the arm, rubble
+shaking loose from the shoulders.
+
+================= steenwachter_hit.png ==================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+full-body creature, centered, facing LEFT, isolated on a fully
+transparent background, no ground, no shadow, no text. Fills ~88%
+of a square 1024x1024 canvas.
+
+Pose: chunks of stone breaking off where the blow landed, torso
+twisted back, inner light flickering through fresh cracks.
+
+================ steenwachter_death.png =================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+full-body creature, centered, facing LEFT, isolated on a fully
+transparent background, no ground, no shadow, no text. Fills ~88%
+of a square 1024x1024 canvas.
+
+Pose: collapsing into a heap of rubble, the inner light dying
+out, head toppling forward as the body loses its shape.
+
+================ steenwachter_block.png =================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+full-body creature, centered, facing LEFT, isolated on a fully
+transparent background, no ground, no shadow, no text. Fills ~88%
+of a square 1024x1024 canvas.
+
+Pose: hunkered down into a fortress stance, arms crossed before
+the body like a stone wall, surface plates thickening, immovable.
+
+================ steenwachter_cast.png ==================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+full-body creature, centered, facing LEFT, isolated on a fully
+transparent background, no ground, no shadow, no text. Fills ~88%
+of a square 1024x1024 canvas.
+
+Pose: the VERHARDEN — standing tall and rooted, fists planted
+together before the chest, stone spikes and thorns growing out
+of the shoulders and forearms, inner light blazing bright.
+
+
+#################### RUST-POSES (voor de rustplaats) ####################
+(optioneel maar heerlijk sfeervol: de held zit bij het kampvuur.
+Het vuur staat RECHTS van hem — hij kijkt er dus naartoe.)
+
+==================== speler_rest.png ====================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: sitting on the ground resting, one knee up with his arm
+draped over it, sword laid across his lap, hood pushed half back,
+gazing into an unseen fire to his right, finally at ease.
+
+=================== gifmagier_rest.png ==================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: sitting cross-legged on the ground, calmly grinding herbs
+in a small mortar in his lap, vials laid out beside him, beaked
+mask turned toward an unseen fire to his right, green vapors
+curling lazily upward.

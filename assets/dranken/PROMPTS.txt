@@ -1,0 +1,30 @@
+DRANKJES-ICONEN
+================
+Eén vierkant flesje-icoon per drankje (PNG of JPG, ~512x512).
+Getoond klein in de topbalk en groter in winkel en beloningen.
+Donkere achtergrond hoort erbij, geen transparantie nodig.
+
+SJABLOON (vervang alleen de Item-regel):
+
+  Ornate dark fantasy potion bottle icon, a single glass vial
+  centered on a dark moody background, painterly hand-painted
+  style, glowing liquid as the light source, rich detail. NOT
+  photorealistic, no photo, no 3D render. Square composition,
+  no text, no frame, no UI.
+
+  Item: [BESCHRIJVING]
+
+DE DRANKJES:
+
+heeldrank.png      a round flask of warm rose-red healing liquid,
+                   gentle bubbles rising, soft pink glow
+vuurfles.png       a volatile angular bottle of roiling orange
+                   fire, cork smoking, sparks escaping
+krachtelixer.png   a square heavy bottle of golden elixir with a
+                   clenched-fist emblem, radiating power
+ijzerdrank.png     a stout metal-banded flask of silvery liquid,
+                   surface like molten steel
+gifflacon.png      a slender vial of luminous green poison, a tiny
+                   skull etched in the glass
+energiedrank.png   a twisting spiral bottle of crackling cyan
+                   lightning, sparks dancing on the cork

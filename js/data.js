@@ -1,0 +1,874 @@
+/* ============================================================
+   SLAY LIT — speldata: kaarten, vijanden, relikwieën, drankjes, events
+   ============================================================ */
+
+/* ---------- KAARTEN ----------
+   type: aanval | vaardigheid | kracht | vloek
+   zeld: basis | gewoon | ongewoon | zeldzaam | vloek
+   doel: 'vijand' als de kaart een doelwit nodig heeft
+   pv() = aanvalsschade-preview (incl. Kracht/Zwak), bv() = blokwaarde
+*/
+const KAARTEN = {
+  /* --- basis --- */
+  slag: {
+    naam: 'Slag', type: 'aanval', zeld: 'basis', kost: 1, doel: 'vijand', icoon: '⚔️',
+    dmg: 6, up: { dmg: 9 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); }
+  },
+  verdediging: {
+    naam: 'Verdediging', type: 'vaardigheid', zeld: 'basis', kost: 1, icoon: '🛡️',
+    blok: 5, up: { blok: 8 },
+    tekst: c => `Krijg ${kval(c, 'blok')} Blok.`,
+    speel: c => { geefBlok(sp(), kval(c, 'blok')); }
+  },
+  knal: {
+    naam: 'Knal', type: 'aanval', zeld: 'basis', kost: 2, doel: 'vijand', icoon: '💥',
+    dmg: 8, kw: 2, up: { dmg: 10, kw: 3 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Geef ${kval(c, 'kw')} Kwetsbaar.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefStatus(t, 'kwetsbaar', kval(c, 'kw')); }
+  },
+
+  /* --- gewone aanvallen --- */
+  dubbelslag: {
+    naam: 'Dubbelslag', type: 'aanval', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '⚔️',
+    dmg: 4, up: { dmg: 6 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade, twee keer.`,
+    speel: (c, t) => reeksAanval(t, kval(c, 'dmg'), 2)
+  },
+  zware_klap: {
+    naam: 'Zware Klap', type: 'aanval', zeld: 'gewoon', kost: 2, doel: 'vijand', icoon: '🔨',
+    dmg: 14, up: { dmg: 18 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); }
+  },
+  klingenstorm: {
+    naam: 'Klingenstorm', type: 'aanval', zeld: 'gewoon', kost: 1, icoon: '🌪️',
+    dmg: 4, up: { dmg: 6 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade aan ALLE vijanden.`,
+    speel: c => reeksAanvalAlle(kval(c, 'dmg'))
+  },
+  giftige_steek: {
+    naam: 'Giftige Steek', type: 'aanval', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '🗡️',
+    dmg: 5, gif: 3, up: { dmg: 6, gif: 5 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Geef ${kval(c, 'gif')} Gif.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefGif(t, kval(c, 'gif')); }
+  },
+  ijzeren_golf: {
+    naam: 'IJzeren Golf', type: 'aanval', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '🌊',
+    dmg: 5, blok: 5, up: { dmg: 7, blok: 7 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Krijg ${kval(c, 'blok')} Blok.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefBlok(sp(), kval(c, 'blok')); }
+  },
+  bloedoffer: {
+    naam: 'Bloedoffer', type: 'aanval', zeld: 'ongewoon', kost: 0, doel: 'vijand', icoon: '🩸',
+    dmg: 13, zelf: 2, up: { dmg: 17, zelf: 2 },
+    tekst: c => `Verlies ${kval(c, 'zelf')} HP. Doe ${pv(c, 'dmg')} schade.`,
+    speel: (c, t) => { verliesHp(sp(), kval(c, 'zelf')); aanvalOp(t, kval(c, 'dmg')); }
+  },
+  uithaal: {
+    naam: 'Uithaal', type: 'aanval', zeld: 'ongewoon', kost: 2, doel: 'vijand', icoon: '🥊',
+    dmg: 10, st: 1, up: { dmg: 13, st: 2 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Geef ${kval(c, 'st')} Zwak en ${kval(c, 'st')} Kwetsbaar.`,
+    speel: (c, t) => {
+      aanvalOp(t, kval(c, 'dmg'));
+      geefStatus(t, 'zwak', kval(c, 'st'));
+      geefStatus(t, 'kwetsbaar', kval(c, 'st'));
+    }
+  },
+  executie: {
+    naam: 'Executie', type: 'aanval', zeld: 'ongewoon', kost: 1, doel: 'vijand', icoon: '⚰️',
+    dmg: 7, bonus: 5, up: { dmg: 9, bonus: 7 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Kwetsbare vijanden krijgen ${kval(c, 'bonus')} extra schade.`,
+    speel: (c, t) => {
+      const extra = (t.status.kwetsbaar > 0) ? kval(c, 'bonus') : 0;
+      aanvalOp(t, kval(c, 'dmg') + extra);
+    }
+  },
+  molensteen: {
+    naam: 'Molensteen', type: 'aanval', zeld: 'ongewoon', kost: 1, doel: 'vijand', icoon: '🪨',
+    basis: 2, up: { basis: 4 },
+    tekst: c => `Doe ${kval(c, 'basis')} schade plus 1 per kaart in je aflegstapel.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'basis') + S.gevecht.afleg.length); }
+  },
+  vampiersbeet: {
+    naam: 'Vampiersbeet', type: 'aanval', zeld: 'zeldzaam', kost: 2, doel: 'vijand', icoon: '🧛',
+    dmg: 9, heel: 4, up: { dmg: 12, heel: 6 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Genees ${kval(c, 'heel')} HP.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geneesHp(kval(c, 'heel')); }
+  },
+  wervelwind: {
+    naam: 'Wervelwind', type: 'aanval', zeld: 'zeldzaam', kost: 2, icoon: '🌀',
+    dmg: 8, up: { dmg: 11 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade aan ALLE vijanden.`,
+    speel: c => reeksAanvalAlle(kval(c, 'dmg'))
+  },
+  genadeslag: {
+    naam: 'Genadeslag', type: 'aanval', zeld: 'zeldzaam', kost: 3, doel: 'vijand', icoon: '☄️',
+    dmg: 24, up: { dmg: 32 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); }
+  },
+
+  /* --- vaardigheden --- */
+  schildmuur: {
+    naam: 'Schildmuur', type: 'vaardigheid', zeld: 'gewoon', kost: 1, icoon: '🧱',
+    blok: 8, up: { blok: 11 },
+    tekst: c => `Krijg ${kval(c, 'blok')} Blok. Trek 1 kaart.`,
+    speel: c => { geefBlok(sp(), kval(c, 'blok')); trekKaarten(1); }
+  },
+  ontwijken: {
+    naam: 'Ontwijken', type: 'vaardigheid', zeld: 'gewoon', kost: 0, icoon: '💨',
+    blok: 3, up: { blok: 5 },
+    tekst: c => `Krijg ${kval(c, 'blok')} Blok.`,
+    speel: c => { geefBlok(sp(), kval(c, 'blok')); }
+  },
+  krijgslist: {
+    naam: 'Krijgslist', type: 'vaardigheid', zeld: 'gewoon', kost: 0, icoon: '📜',
+    n: 2, up: { n: 3 },
+    tekst: c => `Trek ${kval(c, 'n')} kaarten.`,
+    speel: c => { trekKaarten(kval(c, 'n')); }
+  },
+  ontwapening: {
+    naam: 'Ontwapening', type: 'vaardigheid', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '🪤',
+    n: 2, up: { n: 3 },
+    tekst: c => `Geef een vijand ${kval(c, 'n')} Zwak.`,
+    speel: (c, t) => { geefStatus(t, 'zwak', kval(c, 'n')); }
+  },
+  gifwolk: {
+    naam: 'Gifwolk', type: 'vaardigheid', zeld: 'ongewoon', kost: 1, icoon: '☁️',
+    gif: 3, up: { gif: 5 },
+    tekst: c => `Geef ALLE vijanden ${kval(c, 'gif')} Gif.`,
+    speel: c => { alleVijanden().forEach(v => geefGif(v, kval(c, 'gif'))); }
+  },
+  schokgolf: {
+    naam: 'Schokgolf', type: 'vaardigheid', zeld: 'ongewoon', kost: 1, icoon: '📣',
+    n: 1, up: { n: 2 },
+    tekst: c => `Geef ALLE vijanden ${kval(c, 'n')} Zwak en ${kval(c, 'n')} Kwetsbaar.`,
+    speel: c => {
+      alleVijanden().forEach(v => {
+        geefStatus(v, 'zwak', kval(c, 'n'));
+        geefStatus(v, 'kwetsbaar', kval(c, 'n'));
+      });
+    }
+  },
+  adrenaline: {
+    naam: 'Adrenaline', type: 'vaardigheid', zeld: 'ongewoon', kost: 0, icoon: '⚡', uitputten: true,
+    e: 1, up: { e: 2 },
+    tekst: c => `Krijg ${kval(c, 'e')} Energie. Trek 1 kaart. Uitputten.`,
+    speel: c => { S.gevecht.energie += kval(c, 'e'); trekKaarten(1); }
+  },
+  tweede_adem: {
+    naam: 'Tweede Adem', type: 'vaardigheid', zeld: 'ongewoon', kost: 1, icoon: '🫁', uitputten: true,
+    heel: 5, up: { heel: 8 },
+    tekst: c => `Genees ${kval(c, 'heel')} HP. Uitputten.`,
+    speel: c => { geneesHp(kval(c, 'heel')); }
+  },
+  offerande: {
+    naam: 'Offerande', type: 'vaardigheid', zeld: 'ongewoon', kost: 0, icoon: '🕯️',
+    zelf: 3, n: 3, up: { zelf: 2, n: 3 },
+    tekst: c => `Verlies ${kval(c, 'zelf')} HP. Trek ${kval(c, 'n')} kaarten.`,
+    speel: c => { verliesHp(sp(), kval(c, 'zelf')); trekKaarten(kval(c, 'n')); }
+  },
+  bolwerk: {
+    naam: 'Bolwerk', type: 'vaardigheid', zeld: 'ongewoon', kost: 2, icoon: '🏰',
+    blok: 13, up: { blok: 17 },
+    tekst: c => `Krijg ${kval(c, 'blok')} Blok.`,
+    speel: c => { geefBlok(sp(), kval(c, 'blok')); }
+  },
+  zuivering: {
+    naam: 'Zuivering', type: 'vaardigheid', zeld: 'zeldzaam', kost: 1, icoon: '✨',
+    blok: 7, up: { blok: 10 },
+    tekst: c => `Krijg ${kval(c, 'blok')} Blok. Verwijder Zwak en Kwetsbaar van jezelf.`,
+    speel: c => {
+      geefBlok(sp(), kval(c, 'blok'));
+      sp().status.zwak = 0; sp().status.kwetsbaar = 0;
+    }
+  },
+
+  /* --- krachten --- */
+  metaalhuid: {
+    naam: 'Metaalhuid', type: 'kracht', zeld: 'gewoon', kost: 1, icoon: '🦾',
+    n: 3, up: { n: 4 },
+    tekst: c => `Krijg aan het einde van elke beurt ${kval(c, 'n')} Blok.`,
+    speel: c => { geefStatus(sp(), 'metaalhuid', kval(c, 'n')); }
+  },
+  vlammende_hartstocht: {
+    naam: 'Vlammende Hartstocht', type: 'kracht', zeld: 'ongewoon', kost: 1, icoon: '🔥',
+    n: 2, up: { n: 3 },
+    tekst: c => `Krijg ${kval(c, 'n')} Kracht.`,
+    speel: c => { geefStatus(sp(), 'kracht', kval(c, 'n')); }
+  },
+  doornenhuid: {
+    naam: 'Doornenhuid', type: 'kracht', zeld: 'ongewoon', kost: 1, icoon: '🌵',
+    n: 3, up: { n: 5 },
+    tekst: c => `Vijanden die je aanvallen krijgen ${kval(c, 'n')} schade.`,
+    speel: c => { geefStatus(sp(), 'doornen', kval(c, 'n')); }
+  },
+  gifklieren: {
+    naam: 'Gifklieren', type: 'kracht', zeld: 'ongewoon', kost: 1, icoon: '🧫',
+    n: 2, up: { n: 3 },
+    tekst: c => `Geef aan het begin van elke beurt ALLE vijanden ${kval(c, 'n')} Gif.`,
+    speel: c => { geefStatus(sp(), 'gifklieren', kval(c, 'n')); }
+  },
+  demonenvorm: {
+    naam: 'Demonenvorm', type: 'kracht', zeld: 'zeldzaam', kost: 3, icoon: '😈',
+    n: 2, up: { n: 3 },
+    tekst: c => `Krijg aan het begin van elke beurt ${kval(c, 'n')} Kracht.`,
+    speel: c => { geefStatus(sp(), 'demonenvorm', kval(c, 'n')); }
+  },
+  energiekern: {
+    naam: 'Energiekern', type: 'kracht', zeld: 'zeldzaam', kost: 3, icoon: '🔋',
+    tekst: () => `Krijg aan het begin van elke beurt 1 extra Energie.`,
+    speel: () => { geefStatus(sp(), 'energiekern', 1); }
+  },
+
+  /* ============ DE GIFMAGIËR — eigen kaartenpool ============ */
+  prik: {
+    naam: 'Prik', type: 'aanval', zeld: 'basis', kost: 1, doel: 'vijand', icoon: '🗡️',
+    dmg: 5, up: { dmg: 8 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); }
+  },
+  dodelijke_kus: {
+    naam: 'Dodelijke Kus', type: 'aanval', zeld: 'basis', kost: 1, doel: 'vijand', icoon: '💋',
+    dmg: 3, gif: 3, up: { dmg: 4, gif: 5 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Geef ${kval(c, 'gif')} Gif.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefGif(t, kval(c, 'gif')); }
+  },
+  snelle_steek: {
+    naam: 'Snelle Steek', type: 'aanval', zeld: 'gewoon', kost: 0, doel: 'vijand', icoon: '⚡',
+    dmg: 4, up: { dmg: 6 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); }
+  },
+  slangenbeet: {
+    naam: 'Slangenbeet', type: 'aanval', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '🐍',
+    dmg: 6, bonus: 4, up: { dmg: 8, bonus: 6 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Vergiftigde vijanden krijgen ${kval(c, 'bonus')} extra schade.`,
+    speel: (c, t) => {
+      const extra = (t.status.gif > 0) ? kval(c, 'bonus') : 0;
+      aanvalOp(t, kval(c, 'dmg') + extra);
+    }
+  },
+  venijnregen: {
+    naam: 'Venijnregen', type: 'aanval', zeld: 'gewoon', kost: 1, icoon: '🌧️',
+    dmg: 3, gif: 2, up: { dmg: 4, gif: 3 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade en geef ${kval(c, 'gif')} Gif aan ALLE vijanden.`,
+    speel: c => reeksAanvalAlle(kval(c, 'dmg'), v => geefGif(v, kval(c, 'gif')))
+  },
+  giftand: {
+    naam: 'Giftand', type: 'aanval', zeld: 'ongewoon', kost: 2, doel: 'vijand', icoon: '🦷',
+    dmg: 9, up: { dmg: 12 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Verdubbel het Gif op het doelwit.`,
+    speel: (c, t) => {
+      aanvalOp(t, kval(c, 'dmg'));
+      if (!t.dood && t.status.gif > 0) geefStatus(t, 'gif', t.status.gif);
+    }
+  },
+  nachtschade: {
+    naam: 'Nachtschade', type: 'aanval', zeld: 'zeldzaam', kost: 2, doel: 'vijand', icoon: '🌑',
+    maal: 3, up: { maal: 4 },
+    tekst: c => `Doe ${kval(c, 'maal')}× het Gif op het doelwit aan schade.`,
+    speel: (c, t) => { aanvalOp(t, (t.status.gif || 0) * kval(c, 'maal')); }
+  },
+  gifflits: {
+    naam: 'Gifflits', type: 'vaardigheid', zeld: 'gewoon', kost: 0, doel: 'vijand', icoon: '💉',
+    gif: 3, up: { gif: 5 },
+    tekst: c => `Geef ${kval(c, 'gif')} Gif.`,
+    speel: (c, t) => { geefGif(t, kval(c, 'gif')); }
+  },
+  sluiproute: {
+    naam: 'Sluiproute', type: 'vaardigheid', zeld: 'gewoon', kost: 1, icoon: '🥾',
+    blok: 6, up: { blok: 9 },
+    tekst: c => `Krijg ${kval(c, 'blok')} Blok. Trek 1 kaart.`,
+    speel: c => { geefBlok(sp(), kval(c, 'blok')); trekKaarten(1); }
+  },
+  verlammend_gif: {
+    naam: 'Verlammend Gif', type: 'vaardigheid', zeld: 'ongewoon', kost: 1, doel: 'vijand', icoon: '🕷️',
+    gif: 2, zwak: 2, up: { gif: 3, zwak: 3 },
+    tekst: c => `Geef ${kval(c, 'gif')} Gif en ${kval(c, 'zwak')} Zwak.`,
+    speel: (c, t) => { geefGif(t, kval(c, 'gif')); geefStatus(t, 'zwak', kval(c, 'zwak')); }
+  },
+  katalyse: {
+    naam: 'Katalyse', type: 'vaardigheid', zeld: 'zeldzaam', kost: 1, doel: 'vijand', icoon: '⚗️', uitputten: true,
+    maal: 3, up: { maal: 4 },
+    tekst: c => `Ver${kval(c, 'maal') === 3 ? 'drie' : 'vier'}voudig het Gif op een vijand. Uitputten.`,
+    speel: (c, t) => {
+      if (t.status.gif > 0) geefStatus(t, 'gif', t.status.gif * (kval(c, 'maal') - 1));
+    }
+  },
+  etterende_wonden: {
+    naam: 'Etterende Wonden', type: 'kracht', zeld: 'ongewoon', kost: 1, icoon: '🩹',
+    n: 1, up: { n: 2 },
+    tekst: c => `Je aanvallen geven ${kval(c, 'n')} Gif.`,
+    speel: c => { geefStatus(sp(), 'etterende', kval(c, 'n')); }
+  },
+  bloedzuiger: {
+    naam: 'Bloedzuiger', type: 'kracht', zeld: 'ongewoon', kost: 1, icoon: '🦟',
+    n: 1, up: { n: 2 },
+    tekst: c => `Genees aan het begin van je beurt ${kval(c, 'n')} HP per vergiftigde vijand.`,
+    speel: c => { geefStatus(sp(), 'bloedzuiger', kval(c, 'n')); }
+  },
+  epidemie: {
+    naam: 'Epidemie', type: 'kracht', zeld: 'zeldzaam', kost: 2, icoon: '☣️',
+    gif: 4, up: { gif: 6 },
+    tekst: c => `Sterft een vijand, dan krijgen alle vijanden ${kval(c, 'gif')} Gif.`,
+    speel: c => { geefStatus(sp(), 'epidemie', kval(c, 'gif')); }
+  },
+
+  /* ============ LICHTKAARTEN (neutraal — verbranden fakkellicht) ============ */
+  vlamstoot: {
+    naam: 'Vlamstoot', type: 'aanval', zeld: 'ongewoon', kost: 1, doel: 'vijand', icoon: '🔥',
+    dmg: 11, licht: 4, up: { dmg: 15 },
+    tekst: c => `Verbrand ${kval(c, 'licht')} licht. Doe ${pv(c, 'dmg')} schade.`,
+    speel: (c, t) => { verbrandLicht(kval(c, 'licht')); aanvalOp(t, kval(c, 'dmg')); }
+  },
+  verlichting: {
+    naam: 'Verlichting', type: 'vaardigheid', zeld: 'gewoon', kost: 0, icoon: '🕯️',
+    n: 2, licht: 3, up: { licht: 2 },
+    tekst: c => `Verbrand ${kval(c, 'licht')} licht. Trek ${kval(c, 'n')} kaarten.`,
+    speel: c => { verbrandLicht(kval(c, 'licht')); trekKaarten(kval(c, 'n')); }
+  },
+  innerlijk_vuur: {
+    naam: 'Innerlijk Vuur', type: 'kracht', zeld: 'zeldzaam', kost: 2, icoon: '🫀',
+    vuur: true,
+    up: { kost: 1 },
+    tekst: () => `Krijg elke beurt +1 Energie, maar verbrand elke beurt 2 licht.`,
+    speel: () => { geefStatus(sp(), 'innerlijkvuur', 1); }
+  },
+  gloed: {
+    naam: 'Gloed', type: 'vaardigheid', zeld: 'gewoon', kost: 1, icoon: '✨',
+    vuur: true, uitputten: true,
+    n: 8, up: { n: 12 },
+    tekst: c => `Je fakkel laait op: +${pv(c, 'n')} licht. Uitputten.`,
+    speel: c => { zetFakkel(kval(c, 'n')); }
+  },
+  lichtbaken: {
+    naam: 'Lichtbaken', type: 'kracht', zeld: 'zeldzaam', kost: 2, icoon: '🏮',
+    vuur: true,
+    up: { kost: 1 },
+    tekst: () => `Aan het begin van elke beurt: +2 licht.`,
+    speel: () => { geefStatus(sp(), 'baken', 1); }
+  },
+  schaduwdans: {
+    naam: 'Schaduwdans', type: 'vaardigheid', zeld: 'ongewoon', kost: 1, icoon: '🌑',
+    blok: 5, donkerBlok: 11, up: { blok: 7, donkerBlok: 14 },
+    tekst: c => `Krijg ${pv(c, 'blok')} Blok. Is je fakkel duister of gedoofd: ${kval(c, 'donkerBlok')} Blok.`,
+    speel: c => {
+      const donker = ['duister', 'gedoofd'].includes(lichtNiveau());
+      geefBlok(sp(), kval(c, donker ? 'donkerBlok' : 'blok'));
+    }
+  },
+  omarm_het_duister: {
+    naam: 'Omarm het Duister', type: 'vaardigheid', zeld: 'zeldzaam', kost: 1, icoon: '🌒',
+    licht: 1, uitputten: true,
+    per: 10, up: { per: 8 },
+    tekst: c => `Verbrand AL je licht. Krijg 1 Kracht per ${pv(c, 'per')} verbrande licht. Uitputten.`,
+    speel: c => {
+      const verbrand = S.fakkel;
+      verbrandLicht(verbrand);
+      const kracht = Math.floor(verbrand / kval(c, 'per'));
+      if (kracht > 0) geefStatus(sp(), 'kracht', kracht);
+    }
+  },
+  vlammenkling: {
+    naam: 'Vlammenkling', type: 'aanval', zeld: 'ongewoon', kost: 1, doel: 'vijand', icoon: '🗡️',
+    dmg: 7, felDmg: 12, licht: 2, up: { dmg: 9, felDmg: 15 },
+    tekst: c => `Verbrand ${kval(c, 'licht')} licht. Doe ${pv(c, 'dmg')} schade; brandt je fakkel helder: ${kval(c, 'felDmg')}.`,
+    speel: (c, t) => {
+      const fel = lichtNiveau() === 'helder';
+      verbrandLicht(kval(c, 'licht'));
+      aanvalOp(t, kval(c, fel ? 'felDmg' : 'dmg'));
+    }
+  },
+  gifvlam: {
+    naam: 'Gifvlam', type: 'vaardigheid', zeld: 'ongewoon', kost: 1, icoon: '☄️',
+    gif: 3, licht: 3, up: { gif: 4 },
+    tekst: c => `Verbrand ${kval(c, 'licht')} licht. Geef ALLE vijanden ${pv(c, 'gif')} Gif.`,
+    speel: c => {
+      verbrandLicht(kval(c, 'licht'));
+      alleVijanden().forEach(v => geefGif(v, kval(c, 'gif')));
+    }
+  },
+
+  /* --- vloeken --- */
+  pijn: {
+    naam: 'Pijn', type: 'vloek', zeld: 'vloek', kost: null, icoon: '💀',
+    tekst: () => `Onbespeelbaar. Neemt ruimte in je hand in.`,
+    speel: () => {}
+  }
+};
+
+/* ---------- kaartpools per held (niet vermeld = neutraal, voor iedereen) ---------- */
+['slag', 'knal', 'dubbelslag', 'zware_klap', 'klingenstorm', 'ijzeren_golf', 'bloedoffer',
+ 'uithaal', 'executie', 'molensteen', 'vampiersbeet', 'wervelwind', 'genadeslag',
+ 'metaalhuid', 'vlammende_hartstocht', 'demonenvorm', 'vlammenkling'
+].forEach(id => KAARTEN[id].held = 'slachter');
+['giftige_steek', 'gifwolk', 'gifklieren', 'prik', 'dodelijke_kus', 'snelle_steek',
+ 'slangenbeet', 'venijnregen', 'giftand', 'nachtschade', 'gifflits', 'sluiproute',
+ 'verlammend_gif', 'katalyse', 'etterende_wonden', 'bloedzuiger', 'epidemie', 'gifvlam'
+].forEach(id => KAARTEN[id].held = 'gifmagier');
+
+/* ---------- SPEELBARE HELDEN ---------- */
+const SPELERS = {
+  slachter: {
+    naam: 'De Slachter', art: 'speler', icoon: '⚔️', hp: 70,
+    kleur: '255, 156, 63',
+    relikwie: 'brandend_bloed',
+    stijl: 'Kracht en staal: hard slaan, blok stapelen en nog harder terugslaan.',
+    dek: ['slag', 'slag', 'slag', 'slag', 'slag',
+          'verdediging', 'verdediging', 'verdediging', 'verdediging', 'knal']
+  },
+  gifmagier: {
+    naam: 'De Gifmagiër', art: 'gifmagier', icoon: '☣️', hp: 62,
+    kleur: '126, 217, 87',
+    relikwie: 'slangenamulet',
+    stijl: 'Gif en geduld: vergiftig alles wat beweegt en zie het langzaam wegteren.',
+    dek: ['prik', 'prik', 'prik', 'prik',
+          'verdediging', 'verdediging', 'verdediging', 'verdediging',
+          'dodelijke_kus', 'gifflits']
+  }
+};
+
+/* ---------- STATUSINFO (voor tooltips/iconen) ---------- */
+const STATUSINFO = {
+  kracht:      { naam: 'Kracht',      icoon: '💪', goed: true,  uitleg: 'Aanvallen doen zoveel extra schade.' },
+  kwetsbaar:   { naam: 'Kwetsbaar',   icoon: '🎯', goed: false, uitleg: 'Ontvangt 50% meer aanvalsschade.' },
+  zwak:        { naam: 'Zwak',        icoon: '🥀', goed: false, uitleg: 'Aanvallen doen 25% minder schade.' },
+  gif:         { naam: 'Gif',         icoon: '☠️', goed: false, uitleg: 'Verliest aan het begin van de beurt zoveel HP (negeert Blok). Neemt elke beurt met 1 af.' },
+  doornen:     { naam: 'Doornen',     icoon: '🌵', goed: true,  uitleg: 'Aanvallers krijgen zoveel schade terug.' },
+  metaalhuid:  { naam: 'Metaalhuid',  icoon: '🦾', goed: true,  uitleg: 'Krijgt aan het einde van elke beurt zoveel Blok.' },
+  demonenvorm: { naam: 'Demonenvorm', icoon: '😈', goed: true,  uitleg: 'Krijgt aan het begin van elke beurt zoveel Kracht.' },
+  gifklieren:  { naam: 'Gifklieren',  icoon: '🧫', goed: true,  uitleg: 'Geeft aan het begin van elke beurt alle vijanden zoveel Gif.' },
+  energiekern: { naam: 'Energiekern', icoon: '🔋', goed: true,  uitleg: 'Geeft elke beurt zoveel extra Energie.' },
+  ritueel:     { naam: 'Ritueel',     icoon: '🕯️', goed: true,  uitleg: 'Krijgt aan het begin van elke beurt zoveel Kracht.' },
+  etterende:   { naam: 'Etterende Wonden', icoon: '🩹', goed: true, uitleg: 'Aanvallen geven zoveel Gif aan het doelwit.' },
+  innerlijkvuur: { naam: 'Innerlijk Vuur', icoon: '🫀', goed: true, uitleg: 'Geeft elke beurt zoveel extra Energie, maar verbrandt 2 licht per stapel.' },
+  baken:       { naam: 'Lichtbaken',  icoon: '🏮', goed: true,  uitleg: 'Vult aan het begin van elke beurt 2 licht per stapel bij.' },
+  bloedzuiger: { naam: 'Bloedzuiger', icoon: '🦟', goed: true,  uitleg: 'Geneest aan het begin van de beurt zoveel HP per vergiftigde vijand.' },
+  epidemie:    { naam: 'Epidemie',    icoon: '☣️', goed: true,  uitleg: 'Sterft een vijand, dan krijgen alle vijanden zoveel Gif.' }
+};
+
+/* ---------- VIJANDEN ----------
+   kies(v, beurt) geeft een intentie terug:
+   { naam, type: aanval|blok|buff|debuff, dmg?, hits?, blok?, doe?(v) }
+*/
+const VIJANDEN = {
+  groene_slijm: {
+    naam: 'Groene Slijm', art: '🦠', hp: [12, 16],
+    kies: v => willekeurig() < 0.6
+      ? { naam: 'Hap', type: 'aanval', dmg: 6 }
+      : { naam: 'Lik', type: 'aanval', dmg: 3, doe: () => geefStatus(sp(), 'zwak', 1) }
+  },
+  blauwe_slijm: {
+    naam: 'Blauwe Slijm', art: '💧', hp: [22, 26],
+    kies: v => {
+      const r = willekeurig();
+      if (r < 0.5) return { naam: 'Beuk', type: 'aanval', dmg: 8 };
+      if (r < 0.8) return { naam: 'Spuug', type: 'aanval', dmg: 4, doe: () => geefStatus(sp(), 'kwetsbaar', 1) };
+      return { naam: 'Verdikken', type: 'blok', blok: 6 };
+    }
+  },
+  grotrat: {
+    naam: 'Grotrat', art: '🐀', hp: [10, 14],
+    kies: v => willekeurig() < 0.65
+      ? { naam: 'Beet', type: 'aanval', dmg: 5 }
+      : { naam: 'Krabben', type: 'aanval', dmg: 3, hits: 2 }
+  },
+  kultist: {
+    naam: 'Kultist', art: '🐦‍⬛', hp: [46, 52],
+    kies: (v, beurt) => beurt === 0
+      ? { naam: 'Ritueel', type: 'buff', doe: () => geefStatus(v, 'ritueel', 3) }
+      : { naam: 'Duistere Slag', type: 'aanval', dmg: 6 }
+  },
+  paddenstoelman: {
+    naam: 'Paddenstoelman', art: '🍄', hp: [24, 28],
+    kies: v => {
+      const r = willekeurig();
+      if (r < 0.5) return { naam: 'Sporenbeet', type: 'aanval', dmg: 5, doe: () => geefGif(sp(), 2) };
+      if (r < 0.8) return { naam: 'Sporenwolk', type: 'debuff', doe: () => geefGif(sp(), 3) };
+      return { naam: 'Verschuilen', type: 'blok', blok: 7 };
+    }
+  },
+  bandiet: {
+    naam: 'Bandiet', art: '🥷', hp: [26, 30],
+    kies: v => willekeurig() < 0.6
+      ? { naam: 'Dolkstoot', type: 'aanval', dmg: 9 }
+      : {
+          naam: 'Zakkenrollen', type: 'aanval', dmg: 5,
+          doe: () => {
+            const buit = Math.min(S.goud, 12);
+            if (buit > 0) { S.goud -= buit; melding(`De bandiet steelt ${buit} goud!`); }
+          }
+        }
+  },
+  steengolem: {
+    naam: 'Steengolem', art: '🗿', hp: [38, 44],
+    kies: (v, beurt) => beurt % 2 === 0
+      ? { naam: 'Verstenen', type: 'blok', blok: 9 }
+      : { naam: 'Verpletter', type: 'aanval', dmg: 12 }
+  },
+  schaduw: {
+    naam: 'Schaduw', art: '👻', hp: [26, 30],
+    kies: v => {
+      const r = willekeurig();
+      if (r < 0.45) return { naam: 'Duistere Greep', type: 'aanval', dmg: 7, doe: () => geefStatus(sp(), 'zwak', 1) };
+      if (r < 0.8) return { naam: 'Schaduwklauw', type: 'aanval', dmg: 9 };
+      return { naam: 'Vervagen', type: 'blok', blok: 8 };
+    }
+  },
+  /* elites */
+  grombaard: {
+    naam: 'Grombaard', art: '👹', hp: [84, 92], elite: true,
+    kies: (v, beurt) => {
+      const stap = beurt % 3;
+      if (stap === 0) return { naam: 'Brul', type: 'buff', doe: () => geefStatus(v, 'kracht', 2) };
+      if (stap === 1) return { naam: 'Beuk', type: 'aanval', dmg: 11 };
+      return { naam: 'Dubbelbeuk', type: 'aanval', dmg: 6, hits: 2 };
+    }
+  },
+  steenwachter: {
+    naam: 'Steenwachter', art: '🧌', hp: [76, 82], elite: true,
+    kies: (v, beurt) => {
+      if (beurt === 0) return {
+        naam: 'Verharden', type: 'buff',
+        doe: () => { geefBlok(v, 10); geefStatus(v, 'doornen', 3); }
+      };
+      const stap = (beurt - 1) % 3;
+      if (stap === 0) return { naam: 'Klap', type: 'aanval', dmg: 9 };
+      if (stap === 1) return { naam: 'Dreun', type: 'aanval', dmg: 14 };
+      return { naam: 'Herstellen', type: 'blok', blok: 12 };
+    }
+  },
+  /* baas — vecht in drie bedrijven (fases via checkBaasFase in game.js) */
+  slijmkoning: {
+    naam: 'De Slijmkoning', art: '🫠', hp: [150, 150], baas: true,
+    titel: 'Heerser van de Diepte',
+    kies: (v, beurt) => {
+      /* fase 3 — Koninklijke Woede: geen verdediging meer, alleen geweld */
+      if ((v.fase || 1) >= 3) {
+        const stap = beurt % 3;
+        if (stap === 0) return { naam: 'Razende Verplettering', type: 'aanval', dmg: 19 };
+        if (stap === 1) return { naam: 'Zure Vloedgolf', type: 'aanval', dmg: 6, hits: 3 };
+        return {
+          naam: 'Kwijlgolf', type: 'debuff',
+          doe: () => { geefStatus(sp(), 'zwak', 2); geefStatus(sp(), 'kwetsbaar', 2); }
+        };
+      }
+      const stap = beurt % 4;
+      if (stap === 0) return {
+        naam: 'Kwijlgolf', type: 'debuff',
+        doe: () => { geefStatus(sp(), 'zwak', 2); geefStatus(sp(), 'kwetsbaar', 2); }
+      };
+      if (stap === 1) return { naam: 'Verpletter', type: 'aanval', dmg: 17 };
+      if (stap === 2) return { naam: 'Slijmregen', type: 'aanval', dmg: 5, hits: 3 };
+      return { naam: 'Verdikken', type: 'blok', blok: 16, doe: () => geefStatus(v, 'kracht', 2) };
+    }
+  }
+};
+
+/* ---------- UITSPRAKEN: fluistertekst in gevechten ----------
+   Per vijand korte poelen (max ~6 woorden per regel). _duister is
+   de gedeelde pool voor gevechten in het donker; _held spreekt
+   zelden en droog; _baas is het script van de Slijmkoning.      */
+const UITSPRAKEN = {
+  groene_slijm:  { start: ['Blub... blub...', 'Glibber... glibber...'], dood: ['Blub...?', '*plets*'] },
+  blauwe_slijm:  { start: ['Brrr... koud vlees...', 'Bevries... met ons...'], dood: ['*smelt weg*'] },
+  grotrat:       { start: ['Piep! Vers vlees!', 'Jouw fakkel ruikt naar angst...'], dood: ['Piiiiep...!'] },
+  kultist:       { start: ['De diepte eist bloed!', 'Kak-kaw! Het ritueel begint!'], dood: ['Het duister... neemt mij...'] },
+  bandiet:       { start: ['Je goud óf je leven.', 'Mooie fakkel. Geef hier.'], dood: ['Hou... het wisselgeld...'] },
+  steengolem:    { start: ['STEEN. BREEKT. BOT.', '*gerommel van rotsen*'], dood: ['*brokkelt af*'] },
+  schaduw:       { start: ['...wij waren hier al...', '...doof het licht...'], dood: ['...eindelijk... rust...'] },
+  grombaard:     { start: ['GRRRAAAH! Wie stoort mijn slaap?!', 'Ik kraak je als een twijgje!'], dood: ['Onmogelijk... zo klein...'] },
+  steenwachter:  { start: ['HALT. Niemand passeert.', 'De wacht eindigt nooit.'], dood: ['De poort... staat open...'] },
+  _duister: ['...wij zien jou wél...', '...kom dichter, lichtje...', '...jouw vlam is bijna op...', '...het donker heeft tanden...'],
+  _held: {
+    overkill: ['Daar. Opgeruimd.', 'Wie volgt?', 'De diepte mag hem houden.'],
+    gedoofd:  ['Ik zie geen hand voor ogen...', 'Blind. Geweldig.'],
+    duister:  ['Mijn fakkel... niet nu.', 'Het wordt te donker. Te stil.']
+  },
+  _baas: {
+    intro: 'WIE WAAGT ZICH IN MIJN TROONZAAL?',
+    fase2: '„Mijn kinderen... VERSCHEUR ZE."',
+    fase3: '„MIJN TROON. MIJN DIEPTE."',
+    dood:  '„De diepte... vergeet... niets..."'
+  }
+};
+
+/* ---------- ONTMOETINGEN per moeilijkheid ---------- */
+/* vier oplopende lagen: ongedierte -> schurken -> zware jongens -> dodelijke combo's */
+const ONTMOETINGEN = {
+  vroeg: [
+    ['groene_slijm'],
+    ['groene_slijm', 'grotrat'],
+    ['grotrat', 'grotrat'],
+    ['blauwe_slijm'],
+    ['groene_slijm', 'groene_slijm']
+  ],
+  midden: [
+    ['paddenstoelman'],
+    ['bandiet'],
+    ['kultist'],
+    ['blauwe_slijm', 'groene_slijm'],
+    ['grotrat', 'grotrat', 'grotrat']
+  ],
+  laat: [
+    ['steengolem'],
+    ['schaduw'],
+    ['bandiet', 'grotrat'],
+    ['paddenstoelman', 'paddenstoelman'],
+    ['kultist', 'groene_slijm']
+  ],
+  zwaar: [
+    ['steengolem', 'schaduw'],
+    ['kultist', 'paddenstoelman'],
+    ['bandiet', 'bandiet'],
+    ['blauwe_slijm', 'blauwe_slijm'],
+    ['schaduw', 'schaduw']
+  ],
+  elite: [['grombaard'], ['steenwachter']],
+  baas: [['slijmkoning']]
+};
+
+/* ---------- RELIKWIEËN ---------- */
+/* ---------- RELIKWIEËN ----------
+   zeld: start | gewoon | ongewoon | zeldzaam | episch
+   lore: één regel sfeer, getoond in het relikwieënboek          */
+const RELIKWIEEN = {
+  /* --- start (held-eigen) --- */
+  brandend_bloed: { naam: 'Brandend Bloed', icoon: '🩸', start: true, zeld: 'start', tekst: 'Genees 6 HP na elk gevecht.',
+    lore: 'Het bloed van De Slachter kookt — en wat kookt, sluit zichzelf.' },
+  slangenamulet:  { naam: 'Slangenamulet', icoon: '🐍', start: true, zeld: 'start', tekst: 'Begin elk gevecht: geef alle vijanden 2 Gif.',
+    lore: 'De slang slaapt nooit. Ze proeft al voordat jij toeslaat.' },
+
+  /* --- gewoon --- */
+  anker:          { naam: 'Het Anker', icoon: '⚓', zeld: 'gewoon', tekst: 'Begin elk gevecht met 10 Blok.',
+    lore: 'Wie dit ooit droeg, ging nooit meer ten onder. Hij verdronk staand.' },
+  klavertje:      { naam: 'Klavertje Vier', icoon: '🍀', zeld: 'gewoon', tekst: 'Trek op je eerste beurt 2 extra kaarten.',
+    lore: 'Geplukt op het enige graf waar ooit iets groeide.' },
+  bronzen_schub:  { naam: 'Bronzen Schub', icoon: '🐉', zeld: 'gewoon', tekst: 'Begin elk gevecht met 3 Doornen.',
+    lore: 'Eén schub maar. Het beest dat ze verloor, mist haar niet.' },
+  gelukspoot:     { naam: 'Gelukspoot', icoon: '🐾', zeld: 'gewoon', tekst: 'Ontvang 25% meer goud uit gevechten.',
+    lore: 'Het konijn had vier. Het had er drie nodig gehad.' },
+  vuurvliegenpot: { naam: 'Vuurvliegenpot', icoon: '✨', zeld: 'gewoon', tekst: 'Bij elke rustplaats: +15 licht.',
+    lore: 'Ze sterven nooit, zolang je ze af en toe iets moois laat zien.' },
+  zwarte_kaars:   { naam: 'Zwarte Kaars', icoon: '🕯️', zeld: 'gewoon', tekst: 'Verbrand je licht met een kaart, dan krijg je per punt 1 Blok.',
+    lore: 'Ze brandt niet vóór je. Ze brandt mét je.' },
+  leren_buidel:   { naam: 'Leren Buidel', icoon: '👝', zeld: 'gewoon', tekst: '+10 goud na elk gevecht.',
+    lore: 'Hij rammelt al als je hem oppakt. Vraag niet van wie het was.' },
+  wetsteen:       { naam: 'Wetsteen', icoon: '🪨', zeld: 'gewoon', tekst: 'Je eerste aanval elk gevecht doet +4 schade.',
+    lore: 'De eerste snede beslist het gevecht. De rest is opruimen.' },
+  warme_mantel:   { naam: 'Warme Mantel', icoon: '🧥', zeld: 'gewoon', tekst: 'Begin je een gevecht zonder heldere fakkel: krijg 6 Blok.',
+    lore: 'Tegen de kou. Tegen het donker. Tegen wat in het donker woont.' },
+
+  /* --- ongewoon --- */
+  krachtsteen:    { naam: 'Krachtsteen', icoon: '💎', zeld: 'ongewoon', tekst: 'Begin elk gevecht met 1 Kracht.',
+    lore: 'Hij is zwaarder dan hij eruitziet. Dat is precies het punt.' },
+  smaragden_ring: { naam: 'Smaragden Ring', icoon: '💍', zeld: 'ongewoon', tekst: 'Wanneer je Gif toedient, dien je 1 extra toe.',
+    lore: 'De steen is niet groen. Dat is wat erin gevangen zit.' },
+  spaarvarken:    { naam: 'Spaarvarken', icoon: '🐷', zeld: 'ongewoon', tekst: 'Bij oppakken: krijg meteen 100 goud.',
+    lore: 'Iemand spaarde een leven lang. De diepte gaf het niet terug.' },
+  veldfles:       { naam: 'Veldfles', icoon: '🎒', zeld: 'ongewoon', tekst: '+1 drankjesvak.',
+    lore: 'Eén vak meer tussen jou en het einde.' },
+  scherpe_dolk:   { naam: 'Scherpe Dolk', icoon: '🗡️', zeld: 'ongewoon', tekst: 'Vijanden beginnen elk gevecht met 1 Kwetsbaar.',
+    lore: 'Ze voelen hem al voor je hem trekt.' },
+  stalen_vuist:   { naam: 'Stalen Vuist', icoon: '🥊', zeld: 'ongewoon', tekst: 'Je aanvallen doen +1 schade.',
+    lore: 'Het ijzer onthoudt elke klap. En het telt mee.' },
+  fluisterende_schedel: { naam: 'Fluisterende Schedel', icoon: '💀', zeld: 'ongewoon', tekst: 'Je leest vijand-intenties zelfs in het donker.',
+    lore: 'Hij ziet niets meer. Maar hij hoort álles, en hij vertelt het jou.' },
+  bloedrobijn:    { naam: 'Bloedrobijn', icoon: '❤️‍🔥', zeld: 'ongewoon', tekst: 'Bij oppakken: +8 Max HP.',
+    lore: 'Hij klopt. Zachtjes. In de maat van jouw hart — net iets vóór.' },
+  eeuwige_lont:   { naam: 'Eeuwige Lont', icoon: '🧵', zeld: 'ongewoon', tekst: 'Je fakkel zakt nooit onder 10 licht.',
+    lore: 'Gevlochten uit het haar van iemand die het duister overleefde.' },
+  oorlogsbanier:  { naam: 'Oorlogsbanier', icoon: '🚩', zeld: 'ongewoon', tekst: 'Begin elite- en baasgevechten met 1 Kracht.',
+    lore: 'Hoe groter de vijand, hoe rechter hij wappert.' },
+  bottenfluit:    { naam: 'Bottenfluit', icoon: '🦴', zeld: 'ongewoon', tekst: 'Vijanden beginnen elk gevecht met 1 Zwak.',
+    lore: 'Eén lange noot, en hun knieën herinneren zich oude angst.' },
+
+  /* --- zeldzaam --- */
+  oorlogstrommel: { naam: 'Oorlogstrommel', icoon: '🥁', zeld: 'zeldzaam', tekst: 'Trek elke beurt 1 extra kaart.',
+    lore: 'Wie hem hoort, vecht sneller dan hij denkt.' },
+  levenskruik:    { naam: 'Levenskruik', icoon: '🏺', zeld: 'zeldzaam', tekst: 'Rusten geneest 10 extra HP.',
+    lore: 'Het water erin is op. Wat er nu in zit, werkt beter.' },
+  gloeiende_lantaarn: { naam: 'Gloeiende Lantaarn', icoon: '🏮', zeld: 'zeldzaam', tekst: 'Kamers kosten 1 licht minder.',
+    lore: 'Ze heeft de eed gezworen die vuur nooit zweert: ik blijf.' },
+  feniksveer:     { naam: 'Feniksveer', icoon: '🪶', zeld: 'zeldzaam', tekst: 'Zou je sterven: blijf op 1 HP. De veer verbrandt.',
+    lore: 'Eén keer. Voor één keer is de dood een misverstand.' },
+  hartsteen:      { naam: 'Hartsteen', icoon: '🫧', zeld: 'zeldzaam', tekst: 'Genees 1 HP aan het begin van elke beurt.',
+    lore: 'Een kiezel uit de rivier waar het leven stroomopwaarts zwemt.' },
+  vijzel_en_stamper: { naam: 'Vijzel en Stamper', icoon: '🥣', zeld: 'zeldzaam', tekst: 'Drankjes werken dubbel.',
+    lore: 'Het geheim is niet het kruid. Het is hoe hard je maalt.' },
+  schaduwkroon:   { naam: 'Schaduwkroon', icoon: '👑', zeld: 'zeldzaam', tekst: 'Is je fakkel duister of gedoofd: +1 Energie elke beurt.',
+    lore: 'In het donker gekroond. Het donker verwacht er iets voor terug.' },
+
+  /* --- episch --- */
+  energiekristal: { naam: 'Energiekristal', icoon: '🔮', zeld: 'episch', tekst: 'Krijg elke beurt 1 extra Energie.',
+    lore: 'Het klopt als een tweede hart dat nooit moe wordt.' },
+  kroon_van_sintels: { naam: 'Kroon van Sintels', icoon: '🔥', zeld: 'episch', tekst: 'Brandt je fakkel helder: +1 Energie elke beurt.',
+    lore: 'Gesmeed uit het eerste vuur dat ooit in deze diepte brandde.' },
+  gebroken_zandloper: { naam: 'Gebroken Zandloper', icoon: '⏳', zeld: 'episch', tekst: 'Ongebruikte Energie neem je mee naar je volgende beurt.',
+    lore: 'Het zand valt omhoog. De tijd heeft het opgegeven.' },
+  levend_vuur:    { naam: 'Levend Vuur', icoon: '🔆', zeld: 'episch', tekst: 'Je licht- en vuurkaarten kosten 1 Energie minder.',
+    lore: 'Het koos jou. Vraag nooit wat er met de vorige drager gebeurde.' }
+};
+
+/* ---------- DRANKJES ---------- */
+const DRANKEN = {
+  heeldrank:    { naam: 'Heeldrank', icoon: '🧪', kleur: '#e0526b', tekst: 'Genees 12 HP.', drink: () => geneesHp(12),
+    lore: 'Smaakt naar kersen. Vraag niet welke kleur de kersen hadden.' },
+  vuurfles:     { naam: 'Vuurfles', icoon: '🧨', kleur: '#ff9046', doel: 'vijand', tekst: 'Doe 20 schade aan een vijand.', drink: t => doeSchade(t, 20, null),
+    lore: 'De kurk rookt al. De brouwer heeft geen wenkbrauwen meer.' },
+  krachtelixer: { naam: 'Krachtelixer', icoon: '⚗️', kleur: '#ffd24a', tekst: 'Krijg 2 Kracht.', drink: () => geefStatus(sp(), 'kracht', 2),
+    lore: 'Eén slok en je hoort je voorouders juichen.' },
+  ijzerdrank:   { naam: 'IJzerdrank', icoon: '🫙', kleur: '#9fb8c8', tekst: 'Krijg 12 Blok.', drink: () => geefBlok(sp(), 12),
+    lore: 'Langzaam drinken. Je tanden tellen vanaf nu mee als pantser.' },
+  gifflacon:    { naam: 'Gifflacon', icoon: '🍶', kleur: '#7ed957', doel: 'vijand', tekst: 'Geef een vijand 6 Gif.', drink: t => geefGif(t, 6),
+    lore: 'De Gifmagiër noemt dit "limonade". Niemand lacht.' },
+  energiedrank: { naam: 'Energiedrank', icoon: '🥤', kleur: '#5ad0e8', tekst: 'Krijg 2 Energie.', drink: () => { S.gevecht.energie += 2; },
+    lore: 'Verboden in drie koninkrijken. Warm aanbevolen door het vierde.' }
+};
+
+/* ---------- EVENTS ---------- */
+const EVENTS = [
+  {
+    id: 'altaar', titel: 'Het Vreemde Altaar', icoon: '🗿',
+    tekst: 'In een nis staat een altaar van zwart steen. Gestold bloed vult de groeven. Een fluisterstem belooft macht — tegen een prijs.',
+    opties: [
+      {
+        label: 'Offer je bloed', hint: 'De stem belooft macht. De prijs: bloed.',
+        kan: () => S.hp > 9,
+        reden: () => 'Je hebt te weinig levenspunten om te offeren.',
+        doe: () => {
+          S.hp -= 6;
+          const r = willekeurigRelikwie();
+          geefRelikwie(r);
+          if (willekeurig() < 0.25) {
+            verliesHpBuitenGevecht(3);
+            return `Het altaar gloeit op... en eist méér dan beloofd (−9 HP totaal). Maar je ontvangt ${RELIKWIEEN[r].naam}!`;
+          }
+          return `Het altaar gloeit op. Je ontvangt ${RELIKWIEEN[r].naam}! (−6 HP)`;
+        }
+      },
+      { label: 'Loop weg', detail: 'Niets gebeurt.', doe: () => 'Je laat het altaar achter je. De fluisterstem sterft weg.' }
+    ]
+  },
+  {
+    id: 'smid', titel: 'De Oude Smid', icoon: '⚒️',
+    tekst: 'Een verweerde smid heeft zijn aambeeld in een grot opgezet. "Ik smeed of ik sloop," gromt hij. "Kies maar."',
+    opties: [
+      {
+        label: 'Smeed', detail: 'Verbeter gratis een kaart.',
+        kan: () => S.dek.some(c => !c.up && KAARTEN[c.id].up),
+        reden: () => 'Al je kaarten zijn al gesmeed.',
+        doe: () => { kiesKaartUitDek('upgrade', 'Kies een kaart om te smeden'); return null; }
+      },
+      {
+        label: 'Sloop (50 goud)', detail: 'Verwijder een kaart uit je dek.',
+        kan: () => S.goud >= 50 && S.dek.length > 5,
+        reden: () => S.goud < 50 ? 'Je hebt niet genoeg goud.' : 'Je dek is al op het minimum (5 kaarten).',
+        doe: () => {
+          /* pas betalen nadat er echt een kaart gekozen is */
+          kiesKaartUitDek('verwijder', 'Kies een kaart om te slopen', c => {
+            if (c) { S.goud -= 50; eventKlaar('De smid slaat je kaart aan gruzelementen. Netjes betaald.'); }
+            else eventKlaar('Je bedenkt je.');
+          });
+          return null;
+        }
+      },
+      { label: 'Loop door', detail: 'Niets gebeurt.', doe: () => 'De smid haalt zijn schouders op en hamert verder.' }
+    ]
+  },
+  {
+    id: 'kist', titel: 'De Verdachte Kist', icoon: '🧰',
+    tekst: 'Midden in de gang staat een kist. Zomaar. Niemand laat zomaar een kist achter in een kerker vol monsters... toch?',
+    opties: [
+      {
+        label: 'Open de kist', hint: 'Wie laat er nu zomaar een kist achter...?',
+        doe: () => {
+          if (willekeurig() < 0.5) { S.goud += 45; return 'De kist zit vol goud! Je vindt 45 goud.'; }
+          verliesHpBuitenGevecht(10); S.goud += 25;
+          return 'Een gifpijl schiet uit het slot! Je verliest 10 HP, maar vindt nog 25 goud.';
+        }
+      },
+      { label: 'Laat dicht', detail: 'Niets gebeurt.', doe: () => 'Je stapt er met een grote boog omheen. Veilig is veilig.' }
+    ]
+  },
+  {
+    id: 'fontein', titel: 'De Bloedfontein', icoon: '⛲',
+    tekst: 'Een fontein van donkerrood vocht borrelt zachtjes. Het ruikt naar ijzer en... aardbeien?',
+    opties: [
+      {
+        label: 'Drink ervan', hint: 'Het ruikt zoet. En gevaarlijk.',
+        doe: () => {
+          const r = willekeurig();
+          if (r < 0.6) { geneesHpBuitenGevecht(15); return 'Warm en zoet. Je wonden sluiten zich — je geneest 15 HP.'; }
+          if (r < 0.85) { S.maxHp += 4; S.hp += 4; return 'Er stroomt iets ouds door je aderen. +4 Max HP!'; }
+          verliesHpBuitenGevecht(6);
+          return 'Het brandt als vloeibaar vuur! Je verliest 6 HP.';
+        }
+      },
+      {
+        label: 'Baad erin', hint: 'Volledig onderdompelen. Durf je?',
+        doe: () => {
+          const r = willekeurig();
+          if (r < 0.55) { S.maxHp += 5; S.hp += 5; return 'Je rijst herboren uit het rood. +5 Max HP!'; }
+          if (r < 0.85) { geneesHpBuitenGevecht(12); return 'Het bloed sluit je wonden — je geneest 12 HP.'; }
+          S.goud += 20;
+          return 'Op de bodem glinstert iets: 20 goud van een vorige durfal. Hij had minder geluk.';
+        }
+      },
+      { label: 'Negeer de fontein', detail: 'Niets gebeurt.', doe: () => 'Wie drinkt er nu uit een bloedfontein? Jij niet.' }
+    ]
+  },
+  {
+    id: 'koopman', titel: 'De Zwervende Koopman', icoon: '🧳',
+    tekst: 'Een gestalte in lompen opent zijn jas. Tientallen flesjes glinsteren. "Vers gebrouwen," knipoogt hij.',
+    opties: [
+      {
+        label: 'Koop een drankje (20 goud)', detail: 'Een willekeurig drankje.',
+        kan: () => S.goud >= 20 && S.dranken.length < drankSlots(),
+        reden: () => S.goud < 20
+          ? 'Je hebt niet genoeg goud.'
+          : 'Je drankjesvakken zitten vol — gebruik er eerst een.',
+        doe: () => { S.goud -= 20; const d = kiesUit(Object.keys(DRANKEN)); S.dranken.push(d); return `Je koopt een ${DRANKEN[d].naam}.`; }
+      },
+      { label: 'Bedank vriendelijk', detail: 'Niets gebeurt.', doe: () => 'De koopman verdwijnt in de schaduwen. Letterlijk.' }
+    ]
+  },
+  {
+    id: 'vuurvliegjes', titel: 'De Vuurvliegjes', icoon: '✨',
+    tekst: 'Een zwerm vuurvliegjes danst door de gang — duizenden warme lichtjes die wervelen alsof ze je ergens heen willen leiden.',
+    opties: [
+      {
+        label: 'Vang ze in je fakkel', detail: '+30 licht.',
+        kan: () => S.fakkel < 100,
+        reden: () => 'Je fakkel is al vol.',
+        doe: () => { zetFakkel(30); return 'Je fakkel zoemt en laait goudgroen op. +30 licht!'; }
+      },
+      {
+        label: 'Volg de zwerm', detail: '50% kans op een relikwie, anders 25 goud.',
+        doe: () => {
+          if (willekeurig() < 0.5) {
+            const r = willekeurigRelikwie();
+            if (r) { geefRelikwie(r); return `De zwerm leidt je naar een verborgen nis: ${RELIKWIEEN[r].naam}!`; }
+          }
+          S.goud += 25;
+          return 'De zwerm verdwijnt in een spleet. Op de grond glinstert 25 goud.';
+        }
+      },
+      { label: 'Laat ze dansen', detail: 'Niets gebeurt.', doe: () => 'Je kijkt nog even, en klimt dan verder. Mooi was het wel.' }
+    ]
+  },
+  {
+    id: 'avonturier', titel: 'De Gevallen Avonturier', icoon: '🪦',
+    tekst: 'Tegen de muur ligt een avonturier die het niet heeft gered. Zijn buidel puilt uit. Zijn ogen lijken je te volgen.',
+    opties: [
+      {
+        label: 'Doorzoek het lijk', detail: 'Krijg 35 goud, maar ook de vloek "Pijn".',
+        doe: () => { S.goud += 35; S.dek.push(nieuweKaart('pijn')); return 'Je vindt 35 goud... maar een kille rilling trekt door je botten. Je dek bevat nu "Pijn".'; }
+      },
+      { label: 'Laat hem rusten', detail: 'Niets gebeurt.', doe: () => 'Je vouwt zijn handen over zijn borst en loopt verder.' }
+    ]
+  }
+];

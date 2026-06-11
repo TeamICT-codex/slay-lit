@@ -1,0 +1,8 @@
+# werkbestanden van de ontwikkelsessies
+.claude/
+
+# distributie-zip (wordt apart gebouwd)
+*.zip
+
+# originelen-backups van het dambord-script (groot, niet nodig in het spel)
+assets/karakters/originelen/

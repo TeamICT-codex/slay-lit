@@ -1,0 +1,278 @@
+KANT-EN-KLARE PROMPTS PER PERSONAGE (v2 — sterker stijlanker)
+==============================================================
+Versie 2: het stijlblok is in elke prompt aangescherpt zodat de
+generator niet kan afdwalen naar fotorealisme (dat gebeurde bij
+de grotrat). Elke prompt opent en sluit nu met dezelfde harde
+stijleisen. Gebruik deze versie voor alle nieuwe generaties.
+
+Werkwijze per personage:
+  1. Kopieer het volledige blok (alles tussen de lijnen).
+  2. Genereer, kies de beste variant.
+  3. Sla op onder EXACT de bestandsnaam boven het blok.
+  4. Drop in assets/karakters/ — vraag Claude daarna eventueel
+     "ruim de nieuwe karakters op" voor de transparantie-check.
+
+Tips:
+- Genereer zoveel mogelijk in dezelfde sessie/chat.
+- Komt er toch een foto-achtig resultaat uit? Re-roll en zet
+  "hand-painted game art, illustration only" vooraan.
+- Dambord of witte achtergrond ingebakken? Geen probleem,
+  Claude poetst het weg.
+
+
+========================= speler.png =========================
+Stylized painterly digital illustration for a dark fantasy card
+game, hand-painted fantasy concept art with expressive visible
+brushwork, rich colors and soft painted shading. NOT
+photorealistic, not a photograph, no photo textures, no 3D
+render. Single full-body character, centered, three-quarter side
+view, facing RIGHT. Warm torchlight rim lighting, palette of deep
+purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Character: a grim hooded swordsman hero in dark indigo robes with
+ember-orange trim, glowing amber eyes barely visible under the
+hood, raising a gleaming silver longsword, a flowing tattered
+cape behind him, a leather belt with a golden buckle.
+
+Painted illustration style only. Isolated on a fully transparent
+background. No ground, no shadow, no text, no frame, no UI, no
+background elements. The character fills about 85% of a square
+1024x1024 canvas, feet near the bottom edge.
+
+======================= gifmagier.png ========================
+Stylized painterly digital illustration for a dark fantasy card
+game, hand-painted fantasy concept art with expressive visible
+brushwork, rich colors and soft painted shading. NOT
+photorealistic, not a photograph, no photo textures, no 3D
+render. Single full-body character, centered, three-quarter side
+view, facing RIGHT. Warm torchlight rim lighting, palette of deep
+purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Character: a plague-doctor-like poison mage hero in dark green
+hooded robes, a bone-white beaked mask with one glowing green
+lens, holding up a round glass flask of bubbling toxic green
+liquid, a belt lined with colorful potion vials, faint wisps of
+green vapor curling around him.
+
+Painted illustration style only. Isolated on a fully transparent
+background. No ground, no shadow, no text, no frame, no UI, no
+background elements. The character fills about 85% of a square
+1024x1024 canvas, feet near the bottom edge.
+
+====================== groene_slijm.png ======================
+Stylized painterly digital illustration for a dark fantasy card
+game, hand-painted fantasy concept art with expressive visible
+brushwork, rich colors and soft painted shading. NOT
+photorealistic, not a photograph, no photo textures, no 3D
+render. Single full-body creature, centered, facing LEFT. Warm
+torchlight rim lighting, palette of deep purples, charcoal and
+ember orange, matching a torchlit dungeon.
+
+Character: a glossy mischievous green slime creature with big
+round eyes and a goofy grin, semi-translucent jelly body with
+small bubbles inside, goo dripping down its sides, a bright
+highlight on its head.
+
+Painted illustration style only. Isolated on a fully transparent
+background. No ground, no shadow, no text, no frame, no UI, no
+background elements. The creature fills about 85% of a square
+1024x1024 canvas, base near the bottom edge.
+
+====================== blauwe_slijm.png ======================
+Stylized painterly digital illustration for a dark fantasy card
+game, hand-painted fantasy concept art with expressive visible
+brushwork, rich colors and soft painted shading. NOT
+photorealistic, not a photograph, no photo textures, no 3D
+render. Single full-body creature, centered, facing LEFT. Warm
+torchlight rim lighting, palette of deep purples, charcoal and
+ember orange, matching a torchlit dungeon.
+
+Character: a taller deep-blue slime creature shaped like a heavy
+water drop with a droplet crest on top, semi-translucent gloomy
+jelly body, a pouty sad mouth, drips of blue ooze sliding off.
+
+Painted illustration style only. Isolated on a fully transparent
+background. No ground, no shadow, no text, no frame, no UI, no
+background elements. The creature fills about 85% of a square
+1024x1024 canvas, base near the bottom edge.
+
+======================== grotrat.png =========================
+Stylized painterly digital illustration for a dark fantasy card
+game, hand-painted fantasy concept art with expressive visible
+brushwork, rich colors and soft painted shading. NOT
+photorealistic, not a photograph, no photo textures, no 3D
+render, NOT a realistic animal photo — a stylized fantasy
+creature design. Single full-body creature, centered,
+three-quarter side view, facing LEFT. Warm torchlight rim
+lighting, palette of deep purples, charcoal and ember orange,
+matching a torchlit dungeon.
+
+Character: a hunched giant dungeon rat with matted grey fur
+painted in loose brush strokes, glowing red eyes, a long scaly
+pink tail curling behind it, yellowed front teeth, twitchy
+whiskers, crouched in an aggressive sneaky pose, slightly
+cartoonish menacing proportions.
+
+Painted illustration style only. Isolated on a fully transparent
+background. No ground, no shadow, no text, no frame, no UI, no
+background elements. The creature fills about 85% of a square
+1024x1024 canvas, paws near the bottom edge.
+
+======================== kultist.png =========================
+Stylized painterly digital illustration for a dark fantasy card
+game, hand-painted fantasy concept art with expressive visible
+brushwork, rich colors and soft painted shading. NOT
+photorealistic, not a photograph, no photo textures, no 3D
+render. Single full-body character, centered, three-quarter side
+view, facing LEFT. Warm torchlight rim lighting, palette of deep
+purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Character: a sinister cultist in flowing dark purple hooded robes
+embroidered with faintly glowing arcane runes, wearing a
+bone-white bird-beak mask, piercing ice-blue glowing eyes, arms
+raised in a dark ritual, a golden eye-shaped amulet on his chest.
+
+Painted illustration style only. Isolated on a fully transparent
+background. No ground, no shadow, no text, no frame, no UI, no
+background elements. The character fills about 85% of a square
+1024x1024 canvas, feet near the bottom edge.
+
+===================== paddenstoelman.png =====================
+Stylized painterly digital illustration for a dark fantasy card
+game, hand-painted fantasy concept art with expressive visible
+brushwork, rich colors and soft painted shading. NOT
+photorealistic, not a photograph, no photo textures, no 3D
+render. Single full-body creature, centered, facing LEFT. Warm
+torchlight rim lighting, palette of deep purples, charcoal and
+ember orange, matching a torchlit dungeon.
+
+Character: a stout mushroom-man with a big red cap covered in
+cream-colored spots, a pale beige stem body with a sleepy face,
+half-closed drowsy eyes, stubby little arms, soft green spores
+drifting off its cap.
+
+Painted illustration style only. Isolated on a fully transparent
+background. No ground, no shadow, no text, no frame, no UI, no
+background elements. The creature fills about 85% of a square
+1024x1024 canvas, base near the bottom edge.
+
+======================== bandiet.png =========================
+Stylized painterly digital illustration for a dark fantasy card
+game, hand-painted fantasy concept art with expressive visible
+brushwork, rich colors and soft painted shading. NOT
+photorealistic, not a photograph, no photo textures, no 3D
+render. Single full-body character, centered, three-quarter side
+view, facing LEFT. Warm torchlight rim lighting, palette of deep
+purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Character: a masked rogue bandit in dark teal garb with a crimson
+sash, a scarf covering the lower half of his face, narrow pale
+glinting eyes, lunging forward with a curved dagger, a bulging
+coin pouch on his hip, a second dagger sheathed on his back.
+
+Painted illustration style only. Isolated on a fully transparent
+background. No ground, no shadow, no text, no frame, no UI, no
+background elements. The character fills about 85% of a square
+1024x1024 canvas, feet near the bottom edge.
+
+======================= steengolem.png =======================
+Stylized painterly digital illustration for a dark fantasy card
+game, hand-painted fantasy concept art with expressive visible
+brushwork, rich colors and soft painted shading. NOT
+photorealistic, not a photograph, no photo textures, no 3D
+render. Single full-body creature, centered, three-quarter side
+view, facing LEFT. Warm torchlight rim lighting, palette of deep
+purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Character: a hulking golem built of stacked mossy grey boulders,
+a glowing molten orange core burning in its chest, cracks across
+its rocky body leaking ember light, a small stone head with two
+glowing amber eyes, massive heavy stone fists.
+
+Painted illustration style only. Isolated on a fully transparent
+background. No ground, no shadow, no text, no frame, no UI, no
+background elements. The creature fills about 85% of a square
+1024x1024 canvas, feet near the bottom edge.
+
+======================== schaduw.png =========================
+Stylized painterly digital illustration for a dark fantasy card
+game, hand-painted fantasy concept art with expressive visible
+brushwork, rich colors and soft painted shading. NOT
+photorealistic, not a photograph, no photo textures, no 3D
+render. Single full-body creature, centered, facing LEFT. Warm
+torchlight rim lighting, palette of deep purples, charcoal and
+ember orange, matching a torchlit dungeon.
+
+Character: a wispy ghostly shade, a glowing translucent figure of
+violet smoke with ragged drifting edges and a trailing vaporous
+lower body instead of legs, a hollow dark face with two piercing
+ice-blue glowing eyes, the whole figure softly luminous.
+
+Painted illustration style only. LET OP — dit personage is de
+uitzondering: zet het op een EFFEN PUUR ZWARTE achtergrond (geen
+dambord, geen transparantie). Doorschijnende wezens gaan mis op
+een transparante achtergrond; vanaf zwart rekent Claude de
+doorschijnendheid zelf uit. No ground, no text, no frame, no UI.
+The creature fills about 85% of a square 1024x1024 canvas, the
+smoke trail fading near the bottom edge.
+
+======================= grombaard.png ========================
+Stylized painterly digital illustration for a dark fantasy card
+game, hand-painted fantasy concept art with expressive visible
+brushwork, rich colors and soft painted shading. NOT
+photorealistic, not a photograph, no photo textures, no 3D
+render. Single full-body character, centered, three-quarter side
+view, facing LEFT, imposing larger-than-life elite enemy. Warm
+torchlight rim lighting, palette of deep purples, charcoal and
+ember orange, matching a torchlit dungeon.
+
+Character: a massive elite ogre brute with ruddy-brown skin,
+curved horns, upward-jutting tusks, an angry heavy brow, a long
+braided grey beard, a leather belt with a skull buckle, resting a
+huge spiked wooden club on his shoulder.
+
+Painted illustration style only. Isolated on a fully transparent
+background. No ground, no shadow, no text, no frame, no UI, no
+background elements. The character fills about 90% of a square
+1024x1024 canvas, feet near the bottom edge.
+
+====================== steenwachter.png ======================
+Stylized painterly digital illustration for a dark fantasy card
+game, hand-painted fantasy concept art with expressive visible
+brushwork, rich colors and soft painted shading. NOT
+photorealistic, not a photograph, no photo textures, no 3D
+render. Single full-body character, centered, three-quarter side
+view, facing LEFT, imposing larger-than-life elite enemy. Warm
+torchlight rim lighting, palette of deep purples, charcoal and
+ember orange, matching a torchlit dungeon.
+
+Character: an ancient animated stone guardian knight in weathered
+grey-blue stone armor covered in cracks, holding a huge tower
+shield with a golden boss, thorn-like spikes on its shoulders, a
+single glowing cyan visor slit for eyes, a heavy stone war hammer
+in its other hand.
+
+Painted illustration style only. Isolated on a fully transparent
+background. No ground, no shadow, no text, no frame, no UI, no
+background elements. The character fills about 90% of a square
+1024x1024 canvas, feet near the bottom edge.
+
+====================== slijmkoning.png =======================
+Stylized painterly digital illustration for a dark fantasy card
+game, hand-painted fantasy concept art with expressive visible
+brushwork, rich colors and soft painted shading. NOT
+photorealistic, not a photograph, no photo textures, no 3D
+render. Single full-body boss creature, centered, facing LEFT,
+epic boss presence. Warm torchlight rim lighting, palette of deep
+purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Character: a colossal smug king slime, glossy green and
+semi-translucent, wearing a golden crown set with red and blue
+jewels, a wide self-satisfied grin with a single fang, gold coins
+and a pale skull suspended inside its jelly body, thick ooze
+dripping down its sides, regal and menacing.
+
+Painted illustration style only. Isolated on a fully transparent
+background. No ground, no shadow, no text, no frame, no UI, no
+background elements. The creature fills about 90% of a square
+1024x1024 canvas, base near the bottom edge.

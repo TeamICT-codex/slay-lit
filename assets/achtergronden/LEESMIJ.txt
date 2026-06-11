@@ -1,0 +1,119 @@
+EIGEN ACHTERGRONDEN VOOR GEVECHTEN
+===================================
+
+Zet hier je eigen achtergrondplaten neer en het spel pakt ze
+automatisch op als achterwand van het 3D-strijdtoneel:
+
+  gevecht.jpg  (of .png)  -> gewone gevechten
+  elite.jpg    (of .png)  -> elite-gevechten
+  baas.jpg     (of .png)  -> het baasgevecht
+
+Tips:
+- Liggend formaat, ca. 1920x1080 (wordt opgerekt naar de wand).
+- Donkere, sfeervolle beelden werken het best: de mist, fakkels
+  en vloer van het 3D-toneel blijven ervoor staan en mengen erin.
+- Het beeld wordt licht gedimd zodat de personages leesbaar blijven.
+- Geen bestand aanwezig? Dan zie je gewoon de ingebouwde kerkermuur.
+
+Promptidee voor AI-beeldgeneratie:
+"dark fantasy dungeon hall interior, torchlit stone walls, deep
+shadows, painterly game background, no characters, wide shot"
+
+
+Basisprompt Act 1:
+
+Create a dark fantasy battle background for ACT 1 of a roguelike game. Landscape format, 16:9, approximately 1920x1080.
+
+Theme: a ruined frontier wilderness at the start of a dangerous journey. Show a dark atmospheric environment with rocky paths, sparse dead trees, scattered ruins, broken stone arches, low cliffs, misty forest edges, and faint signs of forgotten civilization. The setting should feel adventurous but ominous, like the beginning of a descent into danger.
+
+This must be a standalone background plate only: no UI, no text, no icons, no characters, no creatures.
+
+Composition: wide cinematic shot with a clear readable middle ground where gameplay can happen. Keep the center relatively open and not too visually busy. Use environmental framing on the sides with ruins, rock formations, trees, or distant cliffs.
+
+Mood: dark, mysterious, threatening, but less intense than later acts.
+
+Style: painterly dark fantasy game background, wide shot, atmospheric lighting, subtle depth, readable combat backdrop.
+
+Color palette: muted earth tones, dark brown, charcoal, desaturated green, cold blue mist, faint warm ember highlights.
+
+Lighting: dim, moody, slightly foggy, darker vignette around the edges, clearer center for readability.
+
+Keep the center area relatively open and readable so combat characters can stand clearly in front of the background.
+
+The background should feel atmospheric and detailed, but not so busy that gameplay readability is lost.
+
+No text, no UI, no characters, no monsters.
+
+Act 2: 
+
+Create a dark fantasy battle background for ACT 2 of a roguelike game. Landscape format, 16:9, approximately 1920x1080.
+
+Theme: a haunted gothic necropolis. Show a dark threatening environment with graveyard ruins, gothic arches, collapsed chapels, mausoleums, dead trees, broken fences, ravines, worn stone paths, and distant cathedral silhouettes. The setting should feel colder, more cursed, and more oppressive than ACT 1.
+
+This must be a standalone background plate only: no UI, no text, no icons, no characters, no creatures.
+
+Composition: wide cinematic shot with a readable central combat space. Keep the middle area relatively open, such as a ruined courtyard, graveyard clearing, or broken stone plaza. Use strong gothic framing elements on the sides and in the distance.
+
+Mood: dark, cursed, eerie, oppressive, more intense than ACT 1.
+
+Style: painterly dark fantasy game background, wide shot, high-detail gothic atmosphere, readable battle backdrop.
+
+Color palette: deep blue, violet, charcoal grey, muted stone brown, sickly green mist, subtle orange torchlight.
+
+Lighting: moonlit, fog-heavy, cold and dramatic, darker vignette around the edges, readable center for combat visibility.
+
+Keep the center area relatively open and readable so combat characters can stand clearly in front of the background.
+
+The background should feel atmospheric and detailed, but not so busy that gameplay readability is lost.
+
+No text, no UI, no characters, no monsters.
+
+Act 3:
+
+Create a dark fantasy battle background for ACT 3 of a roguelike game. Landscape format, 16:9, approximately 1920x1080.
+
+Theme: an apocalyptic infernal citadel at the end of the journey. Show a grand, intense, fantasy-rich environment with shattered black stone, lava chasms, burning ruins, colossal statues, broken bridges, abyssal cliffs, jagged gothic spires, volcanic smoke, glowing magma, and a towering dark citadel or infernal fortress in the distance. This should feel like the final act and the climax of the game.
+
+This must be a standalone background plate only: no UI, no text, no icons, no characters, no creatures.
+
+Composition: wide cinematic shot with a readable central combat area, such as a cracked stone platform, bridge approach, fortress causeway, or ritual battleground. Keep enough open space in the middle for gameplay readability, while the sides and background carry the epic spectacle.
+
+Mood: maximum intensity, epic, oppressive, catastrophic, climactic, dark and threatening.
+
+Style: fantasy rich epic style, painterly dark fantasy game background, cinematic scale, highly detailed but readable as a combat backdrop.
+
+Environment details: cracked black stone, lavafalls, infernal glow, ruined arches, colossal statues, broken stairs, suspended bridges, fortress walls, jagged spires, abyssal ravines, volcanic smoke, magical blue or violet energy accents, storm clouds, lightning, and a towering final citadel dominating the background.
+
+Color palette: black, charcoal, ash grey, fiery orange, molten red, ember glow, dark violet, with occasional cold blue magical accents.
+
+Lighting: strong contrast, lava-lit from below, ember glow, stormy sky, dramatic highlights, darker edges, slightly clearer center for readability.
+
+Keep the center area relatively open and readable so combat characters can stand clearly in front of the background.
+
+The background should feel atmospheric and detailed, but not so busy that gameplay readability is lost.
+
+No text, no UI, no characters, no monsters.
+==================================================
+HOE DE BESTANDEN GEKOPPELD ZIJN (door Claude)
+==================================================
+De koppeling staat in js/art.js, onderaan, in ACHTERGRONDEN.
+Nieuwe bestanden toevoegen = daar een regel bijzetten.
+
+Huidige koppeling (Act 1):
+- Achtergrond ACT 1.png            -> overzichtskaart (scrollt mee met je route)
+- Gevechtstijl1/2/3act1.png        -> gewone gevechten (willekeurig gekozen)
+- GevechtstijlEPISCH...png (beide) -> elite- en baasgevechten (willekeurig)
+- Achtergrondverkoper1.png         -> winkel
+- Achtergrondverkoper2easteregg    -> winkel (7% kans, easter egg!)
+- Achtergrondvraagteken...counters -> ?-events
+- Achtergrondvraagteken...artefact -> het Vreemde Altaar-event
+- Achtergrondschatkist.png         -> schatkamer
+- Overwinningsachtergrond1gewoon   -> beloningsscherm na een gevecht
+- Overwinningsachtergrond1episch   -> eindoverwinning (baas verslagen)
+- Startscherm achtergrond.png      -> titelscherm
+
+Nog niet gekoppeld (klaar voor later):
+- Act 2- en Act 3-mappen: worden gekoppeld zodra het spel
+  meerdere acts heeft.
+- "Achtergrond verkoper ACT3 easter egg" mist zijn .png-extensie —
+  hernoem dat bestand even, anders kan de browser er niets mee.

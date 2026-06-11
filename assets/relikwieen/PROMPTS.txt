@@ -1,0 +1,124 @@
+RELIKWIE-ICONEN — DE SCHATTEN VAN DE DIEPTE
+=============================================
+Eén vierkant item-icoon per relikwie (PNG of JPG, ~512x512).
+Getoond als rond icoon in de topbalk (klik = het relikwieënboek!),
+en groter in winkel, schat, beloningen en het boek. Geen
+transparantie nodig — de donkere achtergrond hoort erbij.
+
+De schaarste bepaalt hoe episch het beeld mag zijn:
+  GEWOON    — een degelijk voorwerp, mooi belicht, bescheiden
+  ONGEWOON  — er gebeurt iets: een gloed, een beweging, een geheim
+  ZELDZAAM  — het voorwerp ZWEEFT of leeft, magie kringelt eraf
+  EPISCH    — een klein altaarstuk: godenstralen, vonkenregen,
+              energie die van het beeld af spat
+
+SJABLOON (vervang [BESCHRIJVING], kies de intensiteit ernaar):
+
+  Legendary dark fantasy artifact icon for a deckbuilder game,
+  a single treasured object as the centerpiece, hand-painted
+  painterly style, dramatic chiaroscuro lighting on a dark moody
+  background, rich ornate detail, palette of deep purples and
+  charcoal with the object's own glow as the light source. NOT
+  photorealistic, no photo, no 3D render. Square composition,
+  centered, no text, no frame, no UI.
+
+  Item: [BESCHRIJVING]
+
+
+########## HELDENRELIKWIEËN (rood accent) ##########
+
+brandend_bloed.png   a glass vial of crimson blood that BURNS from
+                     within, tiny flames licking the cork, wax seal
+                     shaped like a sword
+slangenamulet.png    a coiled emerald serpent amulet, scales
+                     catching green light, its tiny eyes awake and
+                     following the viewer
+
+########## GEWOON (bescheiden, degelijk) ##########
+
+anker.png            a heavy barnacled iron anchor wrapped in old
+                     rope, faint blue glow in its scars
+klavertje.png        a four-leaf clover pressed in a cracked glass
+                     medallion, one soft mote of green light
+bronzen_schub.png    a single large bronze dragon scale on dark
+                     velvet, edge gleaming like a razor
+gelukspoot.png       a preserved rabbit's paw on a worn golden
+                     chain, a few coins blurred in the shadows
+vuurvliegenpot.png   a corked jar crowded with golden fireflies,
+                     their light dancing on the glass
+zwarte_kaars.png     a black candle burning with a small, defiant
+                     violet flame, wax pooled like armor
+leren_buidel.png     a bulging leather coin pouch, drawstring
+                     straining, one gold coin escaping
+wetsteen.png         a dark whetstone with a glowing groove worn
+                     into it, metal filings sparking faintly
+warme_mantel.png     a heavy fur-lined cloak on a hook, edges
+                     dusted with frost, warmth glowing inside
+
+########## ONGEWOON (er gebeurt iets) ##########
+
+krachtsteen.png      a rough crimson gemstone cracking with veins
+                     of red power, dust lifting off it
+smaragden_ring.png   an emerald ring leaking slow wisps of green
+                     venom that curl into a serpent shape
+spaarvarken.png      a cracked ceramic piggy bank, gold light and
+                     coins spilling from the fracture
+veldfles.png         an adventurer's satchel with potion loops,
+                     each bottle glowing a different color
+scherpe_dolk.png     a wicked curved dagger hovering point-down,
+                     a single drop of light falling from its tip
+stalen_vuist.png     a spiked steel gauntlet clenched mid-strike,
+                     shockwave rings rippling the air around it
+fluisterende_schedel.png  a yellowed skull with faint violet light
+                     in its sockets, whisper-runes drifting from
+                     its jaw like breath
+bloedrobijn.png      a heart-shaped ruby that visibly BEATS, soft
+                     red pulse-light washing outward
+eeuwige_lont.png     a braided cord burning at one end with a
+                     flame that consumes nothing, ash refusing
+                     to fall
+oorlogsbanier.png    a torn war banner on a broken spear, waving
+                     in a wind that isn't there, ember light
+                     catching its threads
+bottenfluit.png      a flute carved from a long bone, a ghostly
+                     note visible as mist spiraling from it
+
+########## ZELDZAAM (het voorwerp leeft of zweeft) ##########
+
+oorlogstrommel.png   a battle-scarred war drum levitating slightly,
+                     drumsticks crossed before it, shock-rings of
+                     sound frozen in the air
+levenskruik.png      a clay amphora wrapped in living herbs that
+                     grow as you watch, golden liquid light seeping
+                     through its cracks
+gloeiende_lantaarn.png  an ornate brass lantern floating above a
+                     pedestal of shadow, its eternal flame shaped
+                     like a tiny sun
+feniksveer.png       a single immense feather of living flame
+                     drifting down, embers rising from it like
+                     reversed rain
+hartsteen.png        a smooth river stone hovering in a halo of
+                     soft golden rings, a slow heartbeat of light
+                     within
+vijzel_en_stamper.png  a stone mortar and pestle grinding on their
+                     own, luminous herbal dust swirling up in a
+                     double spiral
+schaduwkroon.png     a crown of woven darkness levitating above a
+                     dying candle, shadow-tendrils orbiting it like
+                     a slow storm
+
+########## EPISCH (klein altaarstuk, vol drama) ##########
+
+energiekristal.png   a violet crystal levitating in a column of
+                     god-rays, orange lightning arcing to the
+                     ground, the air itself bending around it
+kroon_van_sintels.png  a crown forged of glowing embers floating
+                     above an updraft of sparks, fragments of
+                     flame orbiting it like a tiny solar system
+gebroken_zandloper.png  a shattered hourglass frozen mid-explosion,
+                     the sand falling UPWARD through the crack,
+                     time-light leaking out in golden ribbons
+levend_vuur.png      a small sphere of living fire with a calm eye
+                     at its heart, hovering above scorched stone,
+                     reaching out one thin arm of flame as if in
+                     greeting

@@ -1,0 +1,127 @@
+KARAKTERPLAN — alle personages om te genereren
+================================================
+Werkwijze: gebruik ALTIJD de basisprompt uit LEESMIJ.txt en vervang
+alleen de regel achter "Character:". Genereer per reeks in één
+sessie/chat voor maximale stijlconsistentie. Bestandsnamen exact
+overnemen (kleine letters, underscores) — dan pakt het spel ze
+automatisch op (Reeks 1 nu al; Reeks 2/3 zodra die acts bestaan).
+
+Kijkrichting: helden naar RECHTS, alle vijanden naar LINKS.
+
+
+=====================================================
+REEKS 1 — NU IN HET SPEL (direct zichtbaar na opslaan)
+=====================================================
+12 stuks. Beschrijvingen staan al in LEESMIJ.txt:
+
+  speler.png            held              -> RECHTS
+  groene_slijm.png      gewoon
+  blauwe_slijm.png      gewoon
+  grotrat.png           gewoon
+  kultist.png           gewoon
+  paddenstoelman.png    gewoon
+  bandiet.png           gewoon
+  steengolem.png        gewoon
+  schaduw.png           gewoon
+  grombaard.png         elite (groter/imposanter)
+  steenwachter.png      elite (groter/imposanter)
+  slijmkoning.png       BAAS (episch, met kroon)
+
+Tip: begin met slijmkoning, speler en groene_slijm — die zie je
+het vaakst, dus daar test je je stijl het snelst mee.
+
+
+=====================================================
+REEKS 2 — ACT 2: DE NECROPOLIS (gothisch kerkhof)
+=====================================================
+Stijl-toevoeging voor deze reeks (plak achter de basisprompt):
+  "Act palette accents: cold moonlit blue, violet, bone white and
+   sickly green, fitting a haunted gothic necropolis."
+
+GEWONE VIJANDEN:
+  skeletkrijger.png
+    Character: a skeletal warrior with a rusted sword and a cracked
+    kite shield, glowing blue eye sockets, tattered chainmail
+  grafghoul.png
+    Character: a hunched pale ghoul with sunken eyes, long dirty
+    claws and grave soil on its skin
+  klaagvrouw.png
+    Character: a wailing banshee, a spectral woman in a torn veil,
+    translucent flowing dress, mouth open in a silent scream
+  lijkenpikker.png
+    Character: a giant carrion crow with ragged black feathers,
+    bone trinkets tied to its legs and a piercing white eye
+  gargouille.png
+    Character: a stone gargoyle with folded wings, moss-covered
+    cracked granite skin and glowing green eyes
+  grafheks.png
+    Character: a crooked grave witch with a hooked nose, holding a
+    green glowing lantern and a bundle of poisonous herbs
+
+ELITES (groter, imposanter):
+  grafridder.png
+    Character: an elite undead grave knight in ornate cursed black
+    armor with a greatsword, ghostly blue plume and cape
+  beenderkolos.png
+    Character: an elite colossus constructed of hundreds of fused
+    bones and skulls, towering and broad
+
+BAAS (episch, koninklijk):
+  grafvorst.png
+    Character: a lich king boss in tattered royal burial robes,
+    a spectral crown floating above his skull, holding a scepter
+    with a glowing soul gem
+
+
+=====================================================
+REEKS 3 — ACT 3: DE HELLECITADEL (lava & as)
+=====================================================
+Stijl-toevoeging voor deze reeks:
+  "Act palette accents: molten orange, ember red, ash grey and
+   obsidian black, fitting an apocalyptic infernal citadel."
+
+GEWONE VIJANDEN:
+  helleimp.png
+    Character: a small winged hell imp with a mischievous grin,
+    tiny trident and a whipping pointed tail
+  lavaslijm.png
+    Character: a molten magma slime creature with a cracked black
+    crust and glowing lava seeping through, smug face
+  hellehond.png
+    Character: a burning hellhound with a mane of fire, glowing
+    embers in its fur and molten drool
+  asdemon.png
+    Character: a tall slender demon formed of ash and embers,
+    smouldering body with a horned silhouette
+  verdoemde_ridder.png
+    Character: a damned knight in scorched black armor, glowing
+    molten cracks across the plate, dragging a burning sword
+  vuurheks.png
+    Character: a fire witch pyromancer in charred robes, hands
+    wreathed in flame, embers swirling around her
+
+ELITES (groter, imposanter):
+  beulsdemon.png
+    Character: an elite hulking executioner demon with a colossal
+    axe, a hood of chains and a belt of skulls
+  vlamwachter.png
+    Character: an elite guardian of living flame holding an
+    obsidian tower shield, body of fire within cracked black armor
+
+EINDBAAS (zo episch mogelijk):
+  heer_van_de_diepte.png
+    Character: a colossal demon lord boss, the Lord of the Depths,
+    with a molten crown, massive curved horns, armor of obsidian
+    and magma, and burning eyes
+
+
+=====================================================
+TWEEDE HELD — ZIT NU IN HET SPEL (heldenkeuze-scherm)
+=====================================================
+  gifmagier.png  -> RECHTS (De Gifmagiër, speelbaar met eigen
+                    gif-kaartenpool en het Slangenamulet)
+    Character: a plague-doctor-like poison mage hero in dark green
+    robes with a beaked mask, one glowing green lens, holding a
+    bubbling toxic flask, vials on his belt
+
+TOTAAL: 13 (nu) + 9 (act 2) + 9 (act 3) = 31 stuks.

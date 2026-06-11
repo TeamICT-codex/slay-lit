@@ -1,0 +1,57 @@
+EVENT-SFEERBEELDEN
+===================
+Eén liggend sfeerbeeld per event (PNG of JPG, ~1024x576), getoond
+als groot OMKADERD PANEEL boven de eventtekst — het beeld komt dus
+nooit achter tekst te staan. Personages mógen vol in beeld (de
+smid, de koopman...). Bestandsnaam = event-id.
+
+LET OP: het paneel snijdt de boven- en onderrand van een
+16:9-beeld bij (het venster is een bredere band). Houd het
+onderwerp dus VERTICAAL GECENTREERD; zet niets belangrijks
+helemaal boven- of onderaan.
+
+SJABLOON (vervang alleen de Scene-regel):
+
+  Painterly dark fantasy scene illustration for a deckbuilder
+  game event, hand-painted concept art, dramatic torchlight,
+  palette of deep purples, charcoal and ember orange. NOT
+  photorealistic, no photo, no 3D render. Landscape, cinematic
+  composition, no text, no frame, no UI.
+
+  Scene: [BESCHRIJVING]
+
+DE SCENES:
+
+altaar.png
+  Scene: an ancient black stone altar in a dungeon alcove, dried
+  blood in its carved grooves, a faint whispering purple glow
+  rising from it, candles guttering around its base.
+
+smid.png
+  Scene: a weathered old blacksmith at a glowing forge deep in a
+  cave, hammer resting on an anvil, sparks drifting, weapon racks
+  in the shadows behind him.
+
+kist.png
+  Scene: a single ornate wooden chest standing suspiciously alone
+  in the middle of a torchlit dungeon corridor, faint scratch
+  marks on the floor around it.
+
+fontein.png
+  Scene: a gothic stone fountain bubbling with dark crimson
+  liquid, faint red mist drifting over its rim, candles and bones
+  scattered at its base.
+
+koopman.png
+  Scene: a mysterious merchant in ragged robes opening his coat
+  in a dark archway, dozens of glowing potion vials glinting
+  inside the lining, one eye catching the torchlight.
+
+vuurvliegjes.png
+  Scene: a swarm of golden-green fireflies dancing through a dark
+  dungeon gallery, their tiny lights reflecting on wet stone.
+
+avonturier.png
+  Scene: a fallen adventurer slumped against a dungeon wall,
+  backpack spilled open, a bulging coin pouch at his hip, his
+  empty eyes catching a sliver of torchlight.

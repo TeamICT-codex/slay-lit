@@ -1,0 +1,1987 @@
+/* ============================================================
+   SLAY LIT — stijl: "Sintels in de Diepte"
+   ============================================================ */
+
+:root {
+  --nacht: #0d0a12;
+  --nacht-2: #16111f;
+  --nacht-3: #221a2e;
+  --perkament: #e8d5ae;
+  --perkament-dof: #a8946f;
+  --ember: #ff9c3f;
+  --ember-fel: #ffc46b;
+  --bloed: #c8385a;
+  --bloed-donker: #7e2138;
+  --gifgroen: #7ed957;
+  --staal: #6fb3c4;
+  --paars: #a86fe0;
+  --goud: #f5c542;
+  --rand: rgba(214, 178, 120, .25);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--nacht);
+  color: var(--perkament);
+  font-family: 'Alegreya', Georgia, 'Times New Roman', serif;
+  font-size: 16px;
+}
+
+/* sfeer: vignet + gloed + korrel */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 110%, rgba(255, 120, 40, .13), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(90, 60, 140, .18), transparent 60%),
+    radial-gradient(ellipse 120% 100% at 50% 50%, transparent 55%, rgba(0, 0, 0, .55) 100%);
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 1000; pointer-events: none; opacity: .05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+}
+
+h1, h2, h3, .scherm-titel, .kaart-naam, .vijand-naam, .speler-naam, button {
+  font-family: 'Pirata One', 'Alegreya', Georgia, serif;
+  letter-spacing: .04em;
+}
+
+button { cursor: pointer; color: inherit; background: none; border: none; }
+button:disabled { cursor: not-allowed; opacity: .4; }
+
+/* ---------- schermen ---------- */
+.scherm {
+  display: none;
+  position: fixed; inset: 0; top: 52px;
+  z-index: 1;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+.scherm.actief { display: flex; }
+#scherm-titel { top: 0; }
+
+.scherm-titel {
+  font-size: 2.6rem;
+  color: var(--ember-fel);
+  text-shadow: 0 0 24px rgba(255, 156, 63, .35), 0 2px 0 #000;
+  margin: 18px 0 4px;
+  text-align: center;
+}
+.scherm-sub {
+  color: var(--perkament-dof);
+  font-style: italic;
+  max-width: 560px;
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+.goud-tekst { color: var(--goud); }
+.rood-tekst { color: var(--bloed); }
+
+.knop-groot {
+  font-size: 1.35rem;
+  padding: 12px 40px;
+  margin-top: 18px;
+  color: var(--nacht);
+  background: linear-gradient(180deg, var(--ember-fel), var(--ember));
+  border-radius: 10px;
+  border: 2px solid #5a3413;
+  box-shadow: 0 4px 0 #5a3413, 0 6px 18px rgba(255, 156, 63, .3);
+  transition: transform .12s, box-shadow .12s;
+}
+.knop-groot:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #5a3413, 0 10px 24px rgba(255, 156, 63, .4); }
+.knop-groot:active { transform: translateY(2px); box-shadow: 0 2px 0 #5a3413; }
+
+/* ---------- topbalk ---------- */
+#topbalk {
+  position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 50;
+  display: none; align-items: center; gap: 16px;
+  padding: 0 16px;
+  background: linear-gradient(180deg, rgba(20, 14, 28, .97), rgba(20, 14, 28, .88));
+  border-bottom: 1px solid var(--rand);
+  font-size: 1.05rem;
+}
+#topbalk .tb-logo {
+  font-family: 'Pirata One', serif;
+  font-size: 1.4rem;
+  color: var(--ember);
+  text-shadow: 0 0 12px rgba(255, 156, 63, .4);
+}
+#tb-hp { color: #ff7b8e; }
+#tb-goud { color: var(--goud); }
+#tb-fakkel {
+  cursor: help;
+  transition: color .4s;
+  padding: 2px 9px;
+  border-radius: 10px;
+  border: 1px solid rgba(214, 178, 120, .3);
+}
+#tb-fakkel.licht-helder { color: var(--ember-fel); }
+#tb-fakkel.licht-schemer { color: #d8a64a; }
+#tb-fakkel.licht-duister { color: #c8385a; animation: fakkelpuls 1.6s ease-in-out infinite; }
+#tb-fakkel.licht-gedoofd { color: #6e6878; animation: fakkelpuls .9s ease-in-out infinite; }
+@keyframes fakkelpuls { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+#tb-verdieping { color: var(--perkament-dof); }
+#tb-relikwieen { display: flex; gap: 4px; font-size: 1.25rem; }
+/* ---------- relikwie-schaarste ---------- */
+.rel-start    { --relk: 232, 93, 117; }
+.rel-gewoon   { --relk: 174, 180, 194; }
+.rel-ongewoon { --relk: 90, 208, 232; }
+.rel-zeldzaam { --relk: 245, 197, 66; }
+.rel-episch   { --relk: 199, 125, 255; }
+
+.schaarste-chip {
+  display: inline-block;
+  font-family: 'Alegreya', serif;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 1px 9px;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--relk, 174, 180, 194), .7);
+  color: rgb(var(--relk, 174, 180, 194));
+  background: rgba(var(--relk, 174, 180, 194), .12);
+  vertical-align: middle;
+}
+
+.relikwie {
+  filter: drop-shadow(0 0 6px rgba(255, 200, 100, .35));
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 1px;
+  border: 1.5px solid rgba(var(--relk, 174, 180, 194), .65);
+  box-shadow: 0 0 8px rgba(var(--relk, 174, 180, 194), .45);
+  transition: transform .12s;
+}
+.relikwie:hover { transform: scale(1.18); }
+.relikwie.rel-episch { animation: epischeGloed 2.2s ease-in-out infinite; }
+@keyframes epischeGloed {
+  0%, 100% { box-shadow: 0 0 8px rgba(199, 125, 255, .45); }
+  50% { box-shadow: 0 0 16px rgba(199, 125, 255, .9); }
+}
+.winkel-icoon[class*="rel-"] img, .art-mini[class*="rel-"] img {
+  border-color: rgba(var(--relk), .8);
+  box-shadow: 0 0 10px rgba(var(--relk), .4);
+}
+
+/* ---------- de schatkist-ceremonie ---------- */
+.schat-toneel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  min-height: 420px;
+  width: min(560px, 92vw);
+}
+.schat-open-knop { animation: beloningPuls 1.8s ease-in-out infinite; }
+.schat-flits {
+  position: fixed; inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: radial-gradient(circle at center 42%, rgba(255, 235, 180, .9), rgba(255, 180, 80, .35) 35%, transparent 70%);
+  animation: doodsFlits 1.1s ease-out forwards;
+}
+.schat-buit {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 36px 22px;
+  background: linear-gradient(180deg, rgba(34, 26, 46, .96), rgba(20, 15, 29, .98));
+  border: 2px solid rgba(var(--relk, 174, 180, 194), .85);
+  border-radius: 20px;
+  box-shadow: 0 0 46px rgba(var(--relk, 174, 180, 194), .35), 0 22px 60px rgba(0, 0, 0, .7);
+  cursor: pointer;
+  text-align: center;
+  max-width: 380px;
+  animation: schatRijst .7s cubic-bezier(.25, 1.3, .4, 1) backwards;
+  transition: transform .15s;
+  z-index: 5;
+}
+.schat-buit:hover { transform: scale(1.04); }
+.schat-buit h3 {
+  font-family: 'Pirata One', serif;
+  font-size: 1.8rem;
+  color: var(--ember-fel);
+  margin: 0;
+}
+@keyframes schatRijst {
+  0% { opacity: 0; transform: translateY(70px) scale(.6); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.schat-icoon {
+  position: relative;
+  width: 116px; height: 116px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3.6rem;
+  z-index: 1;
+}
+.schat-icoon img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 2px solid rgba(var(--relk, 174, 180, 194), .75);
+  box-shadow: 0 0 22px rgba(var(--relk, 174, 180, 194), .45);
+}
+/* godenstralen die traag achter de buit draaien */
+.schat-stralen {
+  position: absolute;
+  top: -86px; left: 50%;
+  width: 290px; height: 290px;
+  margin-left: -145px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(rgba(255, 205, 95, .14) 0 9deg, transparent 9deg 26deg);
+  -webkit-mask-image: radial-gradient(circle, #000 25%, transparent 68%);
+  mask-image: radial-gradient(circle, #000 25%, transparent 68%);
+  animation: stralenDraai 16s linear infinite;
+  pointer-events: none;
+}
+@keyframes stralenDraai { to { transform: rotate(360deg); } }
+.schat-verder { animation: eventOnthul .5s .9s backwards; }
+
+/* ---------- de codex ---------- */
+#overlay-relikwie { z-index: 850; } /* het boek opent ook bovenop de codex */
+#codex-inhoud {
+  max-height: 64vh;
+  overflow-y: auto;
+  padding: 4px 14px;
+  max-width: 760px;
+}
+.codex-kop {
+  font-family: 'Pirata One', serif;
+  font-size: 1.4rem;
+  color: var(--ember-fel);
+  margin: 14px 0 10px;
+  text-align: center;
+}
+.codex-kop small { font-family: 'Alegreya', serif; font-size: .95rem; color: var(--perkament-dof); }
+.codex-rooster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  max-width: 720px;
+}
+.codex-slot {
+  width: 64px; height: 64px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem;
+  border-radius: 12px;
+  background: rgba(20, 14, 28, .85);
+  border: 1.5px solid rgba(var(--relk, 174, 180, 194), .6);
+  box-shadow: 0 0 9px rgba(var(--relk, 174, 180, 194), .25);
+  cursor: pointer;
+  transition: transform .12s;
+  overflow: hidden;
+}
+.codex-slot:hover { transform: scale(1.12); }
+.codex-slot img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+.codex-slot[data-dart] {
+  border-color: color-mix(in srgb, var(--dkleur, #d6b278) 65%, transparent);
+  box-shadow: 0 0 9px color-mix(in srgb, var(--dkleur, #d6b278) 35%, transparent);
+}
+.codex-slot.leeg {
+  border: 1.5px dashed rgba(214, 178, 120, .3);
+  box-shadow: none;
+  color: rgba(214, 178, 120, .35);
+  font-size: 1.4rem;
+  cursor: help;
+}
+.codex-voet {
+  text-align: center;
+  font-style: italic;
+  color: var(--perkament-dof);
+  margin: 16px 0 4px;
+}
+
+/* carrousel in de focus-weergave */
+.focus-rij { display: flex; align-items: center; gap: 22px; }
+.focus-pijl {
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  font-size: 1.35rem;
+  color: var(--ember-fel);
+  background: rgba(34, 26, 46, .85);
+  border: 2px solid rgba(214, 178, 120, .5);
+  cursor: pointer;
+  transition: transform .12s, border-color .12s, box-shadow .12s;
+}
+.focus-pijl:hover {
+  border-color: var(--ember);
+  box-shadow: 0 0 16px rgba(255, 156, 63, .45);
+  transform: scale(1.12);
+}
+.focus-teller {
+  font-family: 'Alegreya', serif;
+  color: var(--perkament-dof);
+  font-size: .95rem;
+  letter-spacing: 2px;
+}
+
+/* het relikwieënboek */
+#relikwie-boek .boek-kaart {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  width: min(400px, 88vw);
+  padding: 34px 30px 26px;
+  background: linear-gradient(180deg, rgba(34, 26, 46, .97), rgba(20, 15, 29, .99));
+  border: 2px solid rgba(var(--relk, 174, 180, 194), .85);
+  border-radius: 20px;
+  box-shadow: 0 0 50px rgba(var(--relk, 174, 180, 194), .3), 0 24px 60px rgba(0, 0, 0, .7);
+  text-align: center;
+  animation: eventOnthul .45s cubic-bezier(.3, 1.3, .5, 1);
+}
+#relikwie-boek h3 {
+  font-family: 'Pirata One', serif;
+  font-size: 1.9rem;
+  color: var(--ember-fel);
+  margin: 0;
+}
+.boek-icoon {
+  font-size: 4.2rem;
+  width: 130px; height: 130px;
+  display: flex; align-items: center; justify-content: center;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, .7));
+}
+.boek-icoon img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 2px solid rgba(var(--relk, 174, 180, 194), .7);
+}
+.boek-effect { font-size: 1.05rem; margin: 0; }
+.boek-lore {
+  font-style: italic;
+  color: var(--perkament-dof);
+  font-size: .98rem;
+  margin: 0;
+  max-width: 320px;
+}
+.relikwie img {
+  width: 28px; height: 28px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid rgba(214, 178, 120, .65);
+  display: block;
+}
+.drank img {
+  width: 24px; height: 30px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(214, 178, 120, .5);
+  display: block;
+}
+.winkel-icoon img {
+  width: 50px; height: 50px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(214, 178, 120, .5);
+  display: block;
+}
+/* relikwieën in de winkel: ruim uitgestald */
+.winkel-icoon[data-rart] img {
+  width: 80px; height: 80px;
+  border-radius: 14px;
+}
+/* drankjes pronken groot, gloeiend in de kleur van hun brouwsel */
+.winkel-icoon[data-dart] img {
+  width: 96px; height: 96px;
+  border-radius: 16px;
+  border: 2px solid color-mix(in srgb, var(--dkleur, #d6b278) 75%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--dkleur, #d6b278) 45%, transparent), 0 6px 14px rgba(0, 0, 0, .55);
+  animation: drankPronk 2.6s ease-in-out infinite;
+  transition: transform .15s;
+}
+.winkel-blok:hover .winkel-icoon[data-dart] img { transform: scale(1.08) rotate(-2deg); }
+@keyframes drankPronk {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.18) saturate(1.12); }
+}
+.art-mini { display: inline-flex; vertical-align: middle; }
+.art-mini img {
+  width: 36px; height: 36px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(214, 178, 120, .6);
+}
+.art-mini.art-groot img { width: 84px; height: 84px; border-radius: 14px; }
+#tb-dranken { display: flex; gap: 4px; align-items: center; margin-left: auto; }
+.drank {
+  font-size: 1.3rem;
+  filter: drop-shadow(0 0 6px var(--dkleur, #fff));
+  transition: transform .12s;
+}
+.drank:hover { transform: scale(1.25); }
+.drank-leeg { color: rgba(232, 213, 174, .25); letter-spacing: 4px; }
+.tb-knop { font-size: 1.2rem; opacity: .8; }
+.tb-knop:hover { opacity: 1; }
+
+/* ---------- titelscherm ---------- */
+#scherm-titel {
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 70%, rgba(120, 50, 20, .25), transparent 60%);
+}
+.titel-groot {
+  font-family: 'Pirata One', serif;
+  font-size: clamp(4rem, 13vw, 8.5rem);
+  line-height: .9;
+  color: var(--ember-fel);
+  text-shadow:
+    0 0 40px rgba(255, 130, 40, .55),
+    0 4px 0 #4a1f08,
+    0 8px 24px #000;
+  animation: titelgloed 3.2s ease-in-out infinite alternate;
+}
+@keyframes titelgloed {
+  from { text-shadow: 0 0 28px rgba(255, 130, 40, .4), 0 4px 0 #4a1f08, 0 8px 24px #000; }
+  to   { text-shadow: 0 0 60px rgba(255, 170, 60, .75), 0 4px 0 #4a1f08, 0 8px 24px #000; }
+}
+/* het LIT-deel flakkert als een fakkel */
+.titel-lit {
+  display: inline-block;
+  animation: litFlakker 4.2s ease-in-out infinite;
+}
+@keyframes litFlakker {
+  0%, 100% { opacity: 1; }
+  87% { opacity: 1; }
+  89% { opacity: .55; }
+  91% { opacity: 1; }
+  93% { opacity: .7; }
+  95% { opacity: 1; }
+}
+.titel-sub {
+  font-style: italic;
+  color: var(--perkament-dof);
+  margin: 10px 0 36px;
+  font-size: 1.2rem;
+}
+.titel-knoppen { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.titel-knoppen .knop-groot { margin-top: 0; min-width: 280px; }
+.knop-stil {
+  font-size: 1.1rem;
+  color: var(--perkament-dof);
+  border-bottom: 1px dashed var(--rand);
+  padding: 4px 8px;
+}
+.knop-stil:hover { color: var(--perkament); }
+
+/* zwevende sintels */
+.sintel {
+  position: absolute; bottom: -10px;
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--ember);
+  box-shadow: 0 0 8px 2px rgba(255, 150, 60, .5);
+  animation: stijg linear infinite;
+  pointer-events: none;
+}
+@keyframes stijg {
+  from { transform: translateY(0) translateX(0); opacity: 0; }
+  8%   { opacity: .9; }
+  to   { transform: translateY(-105vh) translateX(40px); opacity: 0; }
+}
+
+/* ---------- heldenkeuze ---------- */
+#scherm-held { justify-content: center; }
+.held-rij {
+  display: flex; gap: 28px; flex-wrap: wrap; justify-content: center;
+  margin: 10px 0 18px;
+}
+.held-kaart {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  width: 400px;
+  margin-top: 90px;
+  padding: 26px 26px 20px;
+  color: var(--perkament);
+  background: linear-gradient(180deg, rgba(34, 26, 46, .92), rgba(22, 17, 31, .96));
+  border: 2px solid var(--rand);
+  border-radius: 20px;
+  transition: transform .18s, border-color .18s, box-shadow .18s;
+}
+.held-kaart:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(var(--held-gloed), .9);
+  box-shadow: 0 20px 50px rgba(var(--held-gloed), .22);
+}
+.held-kaart > b { font-family: 'Pirata One', serif; font-size: 2rem; color: var(--ember-fel); }
+.held-aura {
+  position: absolute; top: -70px; left: 50%;
+  width: 280px; height: 280px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--held-gloed), .35) 0%, transparent 65%);
+  filter: blur(8px);
+  pointer-events: none;
+  animation: auraGloei 3.4s ease-in-out infinite alternate;
+}
+@keyframes auraGloei {
+  from { opacity: .6; transform: translateX(-50%) scale(1); }
+  to { opacity: 1; transform: translateX(-50%) scale(1.08); }
+}
+.held-art {
+  width: 270px; height: 270px;
+  margin-top: -110px;   /* de held torent boven zijn paneel uit */
+  filter: drop-shadow(0 14px 24px rgba(0, 0, 0, .75));
+  animation: adem 3s ease-in-out infinite;
+  transition: transform .2s;
+  z-index: 1;
+}
+.held-kaart:hover .held-art { transform: scale(1.07); }
+.held-art svg, .held-art img { width: 100%; height: 100%; object-fit: contain; }
+.held-dek-knop { font-size: .9rem; margin-top: 2px; }
+/* heldenmoment bij selectie */
+.held-kaart.gekozen-held {
+  animation: heldGekozen .6s cubic-bezier(.3, 1.3, .5, 1) forwards;
+  border-color: rgba(var(--held-gloed), 1);
+  box-shadow: 0 0 60px rgba(var(--held-gloed), .55);
+}
+@keyframes heldGekozen {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.1); }
+  100% { transform: scale(1.05); }
+}
+.held-kaart.afgewezen-held {
+  animation: heldAfgewezen .5s ease forwards;
+  pointer-events: none;
+}
+@keyframes heldAfgewezen { to { opacity: .15; transform: scale(.92); filter: grayscale(1); } }
+.held-stijl { font-family: 'Alegreya', serif; font-style: italic; color: var(--perkament-dof); line-height: 1.35; }
+.held-info { font-family: 'Alegreya', serif; font-size: .88rem; color: var(--perkament-dof); text-align: center; line-height: 1.4; }
+.held-info b { color: var(--goud); font-family: 'Alegreya', serif; }
+.held-kies {
+  margin-top: 8px;
+  padding: 8px 20px;
+  font-size: 1.05rem;
+  color: var(--nacht);
+  background: linear-gradient(180deg, var(--ember-fel), var(--ember));
+  border-radius: 8px;
+  border: 1px solid #5a3413;
+}
+
+/* ---------- seed ---------- */
+.seed-vak {
+  margin: 4px 0 10px;
+  font-family: 'Alegreya', serif;
+  color: var(--perkament-dof);
+  font-size: .95rem;
+}
+.seed-vak input {
+  margin-left: 8px;
+  padding: 6px 12px;
+  font-family: 'Alegreya', serif;
+  font-size: .95rem;
+  color: var(--perkament);
+  background: rgba(0, 0, 0, .4);
+  border: 1px solid var(--rand);
+  border-radius: 8px;
+  width: 160px;
+  text-transform: uppercase;
+}
+.seed-vak input:focus { outline: none; border-color: var(--ember); }
+#seed-label {
+  position: fixed;
+  bottom: 12px; left: 16px;
+  font-family: 'Alegreya', serif;
+  font-size: .85rem;
+  color: var(--perkament-dof);
+  background: rgba(13, 10, 18, .7);
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--rand);
+  cursor: help;
+  z-index: 5;
+}
+
+/* ---------- kaart van de diepte ---------- */
+#kaart-scroll {
+  width: 100%; height: 100%;
+  overflow-y: auto;
+  display: flex; justify-content: center;
+}
+#kaart-vlak { position: relative; width: 700px; flex-shrink: 0; }
+#kaart-vlak svg { position: absolute; inset: 0; }
+
+.knoop {
+  position: absolute;
+  width: 52px; height: 52px;
+  margin: -26px 0 0 -26px;
+  border-radius: 50%;
+  font-size: 1.45rem;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 35% 30%, var(--nacht-3), var(--nacht-2));
+  border: 2px solid rgba(214, 178, 120, .3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .6), inset 0 0 12px rgba(0, 0, 0, .6);
+  transition: transform .15s;
+  opacity: .55;
+}
+.knoop.kan {
+  opacity: 1;
+  border-color: var(--ember);
+  box-shadow: 0 0 16px rgba(255, 156, 63, .45), 0 4px 12px rgba(0, 0, 0, .6);
+  animation: knooppuls 1.6s ease-in-out infinite;
+}
+.knoop.kan:hover { transform: scale(1.25); }
+@keyframes knooppuls {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 156, 63, .35), 0 4px 12px rgba(0, 0, 0, .6); }
+  50% { box-shadow: 0 0 26px rgba(255, 156, 63, .7), 0 4px 12px rgba(0, 0, 0, .6); }
+}
+.knoop.huidig {
+  opacity: 1;
+  border-color: var(--goud);
+  background: radial-gradient(circle at 35% 30%, #4a3a1a, var(--nacht-2));
+}
+.knoop-baas { width: 72px; height: 72px; margin: -36px 0 0 -36px; font-size: 2rem; border-width: 3px; }
+.knoop-elite.kan { border-color: var(--bloed); animation-name: knooppuls-elite; }
+@keyframes knooppuls-elite {
+  0%, 100% { box-shadow: 0 0 10px rgba(200, 56, 90, .4); }
+  50% { box-shadow: 0 0 26px rgba(200, 56, 90, .8); }
+}
+
+/* ---------- gevecht ---------- */
+#scherm-gevecht { overflow: hidden; }
+#scherm-gevecht.beef { animation: beef .35s; }
+@keyframes beef {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-9px, 3px); }
+  40% { transform: translate(8px, -4px); }
+  60% { transform: translate(-6px, 2px); }
+  80% { transform: translate(4px, -2px); }
+}
+
+#beurt-label {
+  margin-top: 8px;
+  color: var(--perkament-dof);
+  font-style: italic;
+  font-size: .95rem;
+}
+/* bij een baasgevecht zweeft de bazenbalk bovenaan: beurt-label eronder */
+#scherm-gevecht.baas-actief #beurt-label { margin-top: 102px; }
+
+#strijdveld {
+  flex: 1;
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 48px 12px;
+}
+
+#speler-zone {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  min-width: 170px;
+}
+.speler-figuur {
+  font-size: 5.5rem;
+  width: 124px; height: 124px;
+  display: flex; align-items: flex-end; justify-content: center;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, .7));
+  animation: adem 3s ease-in-out infinite;
+}
+.speler-figuur.valt-aan { animation: uitval-speler .4s ease; }
+@keyframes uitval-speler {
+  0%, 100% { transform: translateX(0); }
+  35% { transform: translateX(34px) scale(1.06); }
+  65% { transform: translateX(-8px); }
+}
+@keyframes adem {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.015); }
+}
+.speler-naam { font-size: 1.15rem; color: var(--ember-fel); }
+
+#vijanden-rij {
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+}
+.vijand {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  min-width: 130px;
+  padding: 8px;
+  border-radius: 14px;
+  transition: opacity .5s, transform .2s, filter .2s;
+  position: relative;
+}
+.vijand-art {
+  font-size: 4.2rem;
+  width: 108px; height: 108px;
+  display: flex; align-items: flex-end; justify-content: center;
+  position: relative;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .7));
+  animation: adem 2.6s ease-in-out infinite;
+}
+.vijand-art svg, .speler-figuur svg { width: 100%; height: 100%; }
+.vijand-art img, .speler-figuur img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+}
+.is-elite .vijand-art { font-size: 5.2rem; width: 136px; height: 136px; }
+.is-baas .vijand-art { font-size: 6.4rem; width: 176px; height: 176px; }
+.kroon {
+  position: absolute; top: -26px; left: 50%; transform: translateX(-50%) rotate(-8deg);
+  font-size: 2.2rem;
+}
+.vijand-naam { font-size: 1.05rem; color: var(--perkament); }
+.is-elite .vijand-naam { color: var(--bloed); }
+.is-baas .vijand-naam { color: var(--goud); font-size: 1.25rem; }
+.vijand.sterft { opacity: 0; transform: scale(.6) rotate(8deg); pointer-events: none; }
+.vijand.actief .vijand-art { animation: uithaal-anim .4s ease; }
+@keyframes uithaal-anim {
+  0%, 100% { transform: translateX(0); }
+  35% { transform: translateX(-22px) scale(1.08); }
+  65% { transform: translateX(10px); }
+}
+.vijand.doelbaar {
+  cursor: crosshair;
+  background: rgba(200, 56, 90, .12);
+  outline: 2px dashed var(--bloed);
+  outline-offset: 4px;
+  animation: doelpuls 1s ease-in-out infinite;
+}
+@keyframes doelpuls {
+  0%, 100% { outline-color: rgba(200, 56, 90, .5); }
+  50% { outline-color: rgba(255, 120, 150, 1); }
+}
+.raak .vijand-art, #speler-figuur.raak, .vijand.raak .vijand-art {
+  animation: raakflits .35s;
+}
+@keyframes raakflits {
+  0% { filter: drop-shadow(0 0 0 #fff) brightness(3); transform: translateX(6px); }
+  100% { filter: drop-shadow(0 8px 14px rgba(0,0,0,.7)) brightness(1); transform: translateX(0); }
+}
+
+.intent-rij { height: 30px; font-size: 1.05rem; }
+.intent {
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, .5);
+  border: 1px solid var(--rand);
+  cursor: help;
+  animation: zweef 2s ease-in-out infinite;
+}
+@keyframes zweef {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.intent-aanval { color: #ff8d9d; border-color: rgba(255, 100, 120, .5); }
+.intent-blok { color: var(--staal); }
+.intent-buff { color: var(--goud); }
+.intent-debuff { color: var(--paars); }
+.intent-duister { color: #8a8494; border-color: rgba(120, 120, 140, .4); }
+
+/* hp-balken */
+.hp-balk {
+  position: relative;
+  width: 120px; height: 16px;
+  background: #1a0c10;
+  border: 1px solid rgba(0, 0, 0, .8);
+  border-radius: 8px;
+  /* géén overflow:hidden — het blok-schild steekt links uit de balk */
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .8);
+}
+.speler-hp { width: 150px; }
+.hp-vulling {
+  height: 100%;
+  max-width: 100%;
+  background: linear-gradient(180deg, #e85d75, #a8233f);
+  border-radius: 7px;
+  transition: width .4s ease;
+}
+.hp-tekst {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; font-weight: bold;
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+  font-family: 'Alegreya', serif;
+}
+
+.blok-status { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; min-height: 24px; max-width: 180px; }
+
+/* blok = getekend SVG-schild dat links uit de hp-balk steekt */
+.blok-schild {
+  display: none;
+  position: absolute;
+  left: -24px; top: 50%;
+  transform: translateY(-50%);
+  width: 42px; height: 48px;
+  align-items: center; justify-content: center;
+  cursor: help;
+  z-index: 2;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .8)) drop-shadow(0 0 10px rgba(111, 179, 220, .6));
+}
+.blok-schild svg { width: 100%; height: 100%; display: block; }
+.blok-schild b {
+  position: absolute;
+  font-family: 'Alegreya', serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 2px #000, 0 0 5px #000, 0 0 8px rgba(20, 50, 80, .9);
+  top: 46%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+/* zolang er blok staat kleurt de hele hp-balk staalblauw mee */
+.hp-balk.geblokt {
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .8), 0 0 0 2px rgba(140, 200, 240, .75), 0 0 16px rgba(111, 179, 220, .5);
+}
+.hp-balk.geblokt .hp-vulling { filter: saturate(.5) brightness(.75); }
+.blok-schild.blok-plop { animation: blokPlop .35s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes blokPlop {
+  0% { transform: translateY(-50%) scale(.4); }
+  60% { transform: translateY(-50%) scale(1.25); }
+  100% { transform: translateY(-50%) scale(1); }
+}
+.status {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 9px; border-radius: 14px;
+  font-size: 1.05rem; cursor: help;
+  background: rgba(0, 0, 0, .6);
+  border: 1.5px solid var(--rand);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .5);
+}
+.status b {
+  font-family: 'Alegreya', serif;
+  font-size: .95rem;
+  color: #fff;
+}
+.status.s-goed {
+  border-color: rgba(245, 197, 66, .8);
+  background: rgba(120, 90, 20, .35);
+}
+.status.s-slecht {
+  border-color: rgba(255, 110, 140, .8);
+  background: rgba(110, 30, 50, .4);
+}
+
+/* ---------- hand & kaarten ---------- */
+#onderbalk {
+  width: 100%;
+  height: 235px;
+  position: relative;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, transparent, rgba(10, 6, 16, .85) 40%);
+}
+#hand {
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  perspective: 950px;
+}
+.kaart {
+  width: 138px; height: 192px;
+  margin: 0 -14px;
+  padding: 8px 9px;
+  border-radius: 11px;
+  position: relative;
+  display: flex; flex-direction: column; align-items: center;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, .07), transparent 40%),
+    linear-gradient(180deg, var(--nacht-3), var(--nacht-2));
+  border: 2px solid var(--krand, var(--rand));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .65), inset 0 0 0 1px rgba(0, 0, 0, .5);
+  transition: transform .16s ease, box-shadow .16s ease;
+  cursor: pointer;
+  transform: rotate(var(--rot, 0deg)) translateY(var(--til, 0px));
+  transform-style: preserve-3d;
+}
+/* glansreflectie die de muis volgt */
+#hand .kaart::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 9px;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%),
+    rgba(255, 235, 200, .28), rgba(255, 255, 255, .05) 38%, transparent 65%);
+  opacity: 0;
+  transition: opacity .18s;
+  pointer-events: none;
+}
+#hand .kaart:hover::after { opacity: 1; }
+#hand .kaart:hover {
+  transform: translateY(-46px) scale(1.18) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  z-index: 99 !important;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, .8), 0 0 22px var(--kgloed, rgba(255, 156, 63, .25));
+}
+.kaart.gekozen {
+  transform: translateY(-52px) scale(1.18);
+  z-index: 99 !important;
+  box-shadow: 0 0 0 3px var(--ember), 0 18px 38px rgba(0, 0, 0, .8);
+}
+/* nieuwe kaart: 3D-flip het scherm in */
+.kaart.nieuw { animation: kaartflip .45s cubic-bezier(.3,1.3,.5,1); }
+@keyframes kaartflip {
+  0% { transform: rotateY(95deg) translateY(70px) scale(.7); opacity: 0; }
+  60% { opacity: 1; }
+  100% { transform: rotate(var(--rot, 0deg)) translateY(var(--til, 0px)) rotateY(0deg); }
+}
+/* afgelegde kaart valt weg */
+.kaart.weg-kaart {
+  transform: translateY(140px) rotate(14deg) !important;
+  opacity: 0;
+  transition: transform .26s ease-in, opacity .26s ease-in;
+  pointer-events: none;
+}
+.kloon-vlieg { pointer-events: none; }
+.kaart.te-duur { filter: grayscale(.7) brightness(.6); }
+.kaart.groot { width: 158px; height: 218px; margin: 0; cursor: default; }
+.kaart.groot.klikbaar { cursor: pointer; }
+.kaart.groot.klikbaar:hover { transform: translateY(-8px) scale(1.06) !important; }
+
+.ktype-aanval { --krand: rgba(200, 56, 90, .65); --kgloed: rgba(200, 56, 90, .35); }
+.ktype-vaardigheid { --krand: rgba(111, 179, 196, .6); --kgloed: rgba(111, 179, 196, .3); }
+.ktype-kracht { --krand: rgba(168, 111, 224, .65); --kgloed: rgba(168, 111, 224, .35); }
+.ktype-vloek { --krand: rgba(120, 120, 120, .5); filter: saturate(.4); }
+
+/* lichtkaarten: ember-gloed in de rand + aparte 🔥-kostbadge */
+.kaart.kaart-licht { border-color: rgba(255, 156, 63, .8); }
+.kaart.kaart-licht:not(.te-duur) { animation: lichtRand 2.2s ease-in-out infinite; }
+@keyframes lichtRand {
+  0%, 100% { box-shadow: 0 6px 18px rgba(0, 0, 0, .65), 0 0 10px rgba(255, 140, 60, .25), inset 0 0 0 1px rgba(0, 0, 0, .5); }
+  50% { box-shadow: 0 6px 18px rgba(0, 0, 0, .65), 0 0 24px rgba(255, 140, 60, .6), inset 0 0 0 1px rgba(0, 0, 0, .5); }
+}
+.kaart-lichtkost {
+  position: absolute; top: -10px; right: -10px;
+  padding: 3px 9px;
+  border-radius: 14px;
+  font-family: 'Pirata One', serif;
+  font-size: .95rem;
+  color: #fff;
+  background: radial-gradient(circle at 35% 30%, #ff9c3f, #a83a14);
+  border: 2px solid #5a2410;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .6), 0 0 12px rgba(255, 140, 60, .5);
+  cursor: help;
+}
+
+.kaart-kost {
+  position: absolute; top: -10px; left: -10px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Pirata One', serif;
+  font-size: 1.2rem;
+  color: #fff;
+  background: radial-gradient(circle at 35% 30%, #ffd24a, #c87b1b);
+  border: 2px solid #5a3413;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
+}
+.kaart-naam { font-size: 1rem; color: var(--perkament); margin-top: 2px; text-align: center; line-height: 1.05; }
+.kaart-icoon { font-size: 2.3rem; margin: 6px 0 4px; filter: drop-shadow(0 3px 6px rgba(0,0,0,.6)); }
+/* eigen kaart-art: vol-bleed venster in het frame */
+.kaart-icoon img {
+  display: block;
+  width: 116px; height: 62px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, .55);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(255, 255, 255, .08);
+}
+.kaart.groot .kaart-icoon img { width: 134px; height: 74px; }
+.kaart-tekst {
+  font-family: 'Alegreya', serif;
+  font-size: .8rem;
+  text-align: center;
+  line-height: 1.25;
+  color: var(--perkament-dof);
+  flex: 1;
+}
+.kaart-tekst b.plus { color: var(--gifgroen); }
+.kaart-tekst b.min { color: var(--bloed); }
+.kaart-type {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: rgba(232, 213, 174, .4);
+  font-family: 'Alegreya', serif;
+}
+
+/* energie, stapels, eindbeurt */
+#energie-orb {
+  position: absolute; bottom: 96px; left: 36px;
+  width: 74px; height: 74px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Pirata One', serif;
+  font-size: 1.25rem;
+  color: #fff;
+  background: radial-gradient(circle at 35% 30%, #ffae5c, #b3431a 70%);
+  border: 3px solid #5a2410;
+  box-shadow: 0 0 26px rgba(255, 140, 60, .55), inset 0 -8px 16px rgba(0, 0, 0, .35);
+  animation: orbpuls 2.4s ease-in-out infinite;
+}
+#energie-orb b { font-size: 1.9rem; margin-right: 2px; }
+@keyframes orbpuls {
+  0%, 100% { box-shadow: 0 0 18px rgba(255, 140, 60, .4), inset 0 -8px 16px rgba(0,0,0,.35); }
+  50% { box-shadow: 0 0 34px rgba(255, 140, 60, .75), inset 0 -8px 16px rgba(0,0,0,.35); }
+}
+.stapel {
+  position: absolute;
+  font-size: 1rem;
+  color: var(--perkament-dof);
+  background: rgba(0, 0, 0, .4);
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--rand);
+  cursor: help;
+}
+#stapel-trek { bottom: 40px; left: 36px; }
+#stapel-afleg { bottom: 40px; right: 36px; }
+#knop-eindbeurt {
+  position: absolute; bottom: 96px; right: 36px;
+  font-size: 1.25rem;
+  padding: 12px 26px;
+  color: var(--nacht);
+  background: linear-gradient(180deg, #d8c08a, #a8946f);
+  border-radius: 10px;
+  border: 2px solid #4a3a20;
+  box-shadow: 0 4px 0 #4a3a20;
+  transition: transform .1s;
+}
+#knop-eindbeurt:hover:not(:disabled) { transform: translateY(-2px); }
+#knop-eindbeurt:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #4a3a20; }
+
+/* ---------- zwevende getallen & toasts ---------- */
+.fx-nummer {
+  position: fixed;
+  z-index: 900;
+  font-family: 'Pirata One', serif;
+  font-size: 1.9rem;
+  pointer-events: none;
+  animation: fxstijg .9s ease-out forwards;
+  text-shadow: 0 2px 4px #000, 0 0 12px currentColor;
+}
+.fx-schade { color: #ff5d77; }
+.fx-blok { color: var(--staal); font-size: 1.3rem; }
+.fx-genees { color: var(--gifgroen); }
+.fx-buff { color: var(--goud); font-size: 1.3rem; }
+.fx-debuff { color: var(--paars); font-size: 1.3rem; }
+@keyframes fxstijg {
+  0% { transform: translateY(0) scale(.6); opacity: 0; }
+  15% { transform: translateY(-8px) scale(1.15); opacity: 1; }
+  100% { transform: translateY(-58px) scale(1); opacity: 0; }
+}
+
+#meldingen {
+  position: fixed; top: 64px; left: 50%; transform: translateX(-50%);
+  z-index: 950;
+  display: flex; flex-direction: column; gap: 8px; align-items: center;
+  pointer-events: none;
+}
+.toast {
+  background: rgba(20, 14, 28, .95);
+  border: 1px solid var(--ember);
+  color: var(--perkament);
+  padding: 8px 22px;
+  border-radius: 24px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .6);
+  animation: toastin .25s ease;
+  transition: opacity .5s;
+}
+.toast.weg { opacity: 0; }
+@keyframes toastin {
+  from { transform: translateY(-12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ---------- overlays ---------- */
+.overlay {
+  position: fixed; inset: 0; z-index: 800;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(8, 5, 12, .9);
+  backdrop-filter: blur(3px);
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+.overlay.open { display: flex; }
+#kies-kaarten {
+  display: flex; flex-wrap: wrap; gap: 22px; justify-content: center;
+  max-width: 980px;
+  margin: 18px 0;
+}
+.help-inhoud {
+  max-width: 620px;
+  line-height: 1.65;
+  color: var(--perkament-dof);
+}
+.help-inhoud h3 { color: var(--ember-fel); margin: 16px 0 4px; font-size: 1.3rem; }
+.help-inhoud b { color: var(--perkament); }
+
+/* ---------- booster-onthulling & inspectie-zoom ---------- */
+#kies-hint {
+  font-family: 'Alegreya', serif;
+  font-style: italic;
+  color: var(--perkament-dof);
+  margin: -6px 0 4px;
+  min-height: 1.2em;
+}
+.onthul-kaart { perspective: 950px; cursor: pointer; }
+.onthul-kaart.open:hover .onthul-binnen { transform: rotateY(0deg) scale(1.06); }
+.onthul-kaart.open:hover .kaart.groot {
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .75), 0 0 26px var(--kgloed, rgba(255, 156, 63, .3));
+}
+
+/* keuzemomenten (weinig kaarten): groter formaat, laptop-vriendelijk */
+#kies-kaarten.weinig .kaart.groot { width: 212px; height: 292px; padding: 10px 12px; }
+#kies-kaarten.weinig .kaart-naam { font-size: 1.3rem; }
+#kies-kaarten.weinig .kaart.groot .kaart-icoon img { width: 182px; height: 102px; }
+#kies-kaarten.weinig .kaart-icoon { font-size: 3rem; }
+#kies-kaarten.weinig .kaart-tekst { font-size: .98rem; line-height: 1.35; }
+#kies-kaarten.weinig .kaart-kost { width: 38px; height: 38px; font-size: 1.4rem; }
+#kies-kaarten.weinig .kaart-rug::after { font-size: 4.2rem; }
+.onthul-binnen {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform .55s cubic-bezier(.35, 1.3, .55, 1);
+  transform: rotateY(180deg);
+}
+.onthul-kaart.open .onthul-binnen { transform: rotateY(0deg); }
+.onthul-voor { position: relative; backface-visibility: hidden; }
+.onthul-kaart .kaart.groot.klikbaar:hover { transform: none; }
+
+/* kaartrug (vervangbaar door assets/kaarten/rug.png) */
+.kaart-rug {
+  position: absolute; inset: 0;
+  backface-visibility: hidden;
+  transform: rotateY(180deg);
+  border-radius: 11px;
+  border: 2px solid rgba(214, 178, 120, .45);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 156, 63, .3) 0%, transparent 38%),
+    repeating-linear-gradient(45deg, rgba(214, 178, 120, .07) 0 8px, transparent 8px 16px),
+    linear-gradient(180deg, #221a2e, #120d1c);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .65), inset 0 0 24px rgba(0, 0, 0, .7);
+  display: flex; align-items: center; justify-content: center;
+}
+.kaart-rug::after {
+  content: '🔥';
+  font-size: 3.2rem;
+  filter: drop-shadow(0 0 14px rgba(255, 140, 60, .6));
+}
+.kaart-rug.met-art {
+  background-size: cover;
+  background-position: center;
+}
+.kaart-rug.met-art::after { content: ''; }
+
+/* onthul-flits in de kleur van de zeldzaamheid */
+.onthul-voor::before {
+  content: '';
+  position: absolute; inset: -16px;
+  border-radius: 18px;
+  background: radial-gradient(circle, var(--flits, transparent) 0%, transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.onthul-kaart.open .onthul-voor::before { animation: onthulFlits .8s ease-out .3s 1; }
+.zeldglans-gewoon { --flits: rgba(232, 213, 174, .45); }
+.zeldglans-ongewoon { --flits: rgba(111, 179, 236, .7); }
+.zeldglans-zeldzaam { --flits: rgba(245, 197, 66, .95); }
+@keyframes onthulFlits {
+  0% { opacity: 0; transform: scale(.55); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+/* zeldzaamheid in de naamkleur (overal) */
+.zeld-ongewoon .kaart-naam { color: #8fd4ff; }
+.zeld-zeldzaam .kaart-naam { color: var(--goud); text-shadow: 0 0 10px rgba(245, 197, 66, .45); }
+
+/* inspectie-zoom: de kaart in vol ornaat */
+#kies-kaarten.focus-modus { align-items: center; }
+.kaart-focus-houder {
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+  animation: focusIn .3s cubic-bezier(.3, 1.3, .5, 1);
+}
+@keyframes focusIn { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.kaart.groot.kaart-focus {
+  --fschaal: 1.55;
+  width: 300px; height: 425px;
+  cursor: default;
+  padding: 14px 16px;
+  border-width: 3px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, .8), 0 0 38px var(--kgloed, rgba(255, 156, 63, .2));
+  transform-style: preserve-3d;
+  transition: transform .12s ease;
+  transform: scale(var(--fschaal));
+  /* ruimte claimen voor de geschaalde kaart zodat de knoppen niet overlappen */
+  margin: calc(425px * (var(--fschaal) - 1) / 2) calc(300px * (var(--fschaal) - 1) / 2);
+}
+@media (max-height: 860px) { .kaart.groot.kaart-focus { --fschaal: 1.3; } }
+@media (max-height: 720px) { .kaart.groot.kaart-focus { --fschaal: 1.1; } }
+.kaart-focus:hover { transform: scale(var(--fschaal)) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
+.kaart-focus::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 9px;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%),
+    rgba(255, 235, 200, .25), rgba(255, 255, 255, .04) 38%, transparent 65%);
+  pointer-events: none;
+}
+.kaart-focus .kaart-naam { font-size: 1.7rem; margin-top: 6px; }
+.kaart-focus .kaart-icoon { font-size: 4.5rem; margin: 14px 0 10px; }
+.kaart.groot.kaart-focus .kaart-icoon img { width: 262px; height: 185px; border-radius: 8px; }
+.kaart-focus .kaart-tekst {
+  font-size: 1.15rem; line-height: 1.5;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 6px;
+}
+.kaart-focus .kaart-type { font-size: .85rem; }
+.kaart-focus .kaart-kost { width: 46px; height: 46px; font-size: 1.7rem; top: -14px; left: -14px; }
+.kaart-focus .kaart-lichtkost { font-size: 1.2rem; top: -14px; right: -14px; }
+.focus-knoppen { display: flex; gap: 16px; align-items: center; }
+.focus-knoppen .knop-groot { margin-top: 0; }
+
+/* ---------- de smidse ---------- */
+.overlay.smeed-dreun { animation: smeedDreun .4s ease; }
+@keyframes smeedDreun {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-12px, 5px); }
+  45% { transform: translate(10px, -6px); }
+  70% { transform: translate(-6px, 3px); }
+}
+.kaart.gesmeed { animation: gesmeedFlits 1s ease-out; }
+@keyframes gesmeedFlits {
+  0% { filter: brightness(3) drop-shadow(0 0 40px rgba(245, 197, 66, 1)); }
+  100% { filter: brightness(1); }
+}
+.vonk {
+  position: absolute;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff3c4, #f5a83d);
+  box-shadow: 0 0 8px rgba(245, 168, 61, .9);
+  pointer-events: none;
+  animation: vonkVlucht var(--vd, .6s) ease-out forwards;
+}
+@keyframes vonkVlucht {
+  0% { transform: translate(0, 0); opacity: 1; }
+  100% { transform: translate(var(--vx), var(--vy)); opacity: 0; }
+}
+.smeed-diff {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-family: 'Alegreya', serif;
+  font-size: 1.05rem;
+  max-width: 480px;
+  text-align: center;
+}
+.smeed-diff s { color: var(--perkament-dof); opacity: .7; }
+.smeed-pijl { color: var(--goud); font-size: 1.4rem; }
+.smeed-diff b { color: var(--goud); }
+
+/* ---------- beloning ---------- */
+.beloning-lijst {
+  display: flex; flex-direction: column; gap: 12px;
+  min-width: 380px;
+  margin-top: 8px;
+}
+.beloning-item {
+  font-size: 1.25rem;
+  padding: 14px 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: linear-gradient(180deg, var(--nacht-3), var(--nacht-2));
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+  color: var(--perkament);
+  transition: transform .12s, border-color .12s;
+}
+.beloning-item:hover { transform: translateY(-2px); border-color: var(--ember); }
+.beloning-item small { font-family: 'Alegreya', serif; font-size: .85rem; color: var(--perkament-dof); }
+/* de kaartkeuze is de enige échte beslissing: laat hem pulseren */
+.beloning-kaartkeuze {
+  border-color: rgba(255, 156, 63, .6);
+  animation: beloningPuls 1.8s ease-in-out infinite;
+}
+@keyframes beloningPuls {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 156, 63, .15); }
+  50% { box-shadow: 0 0 22px rgba(255, 156, 63, .45); }
+}
+
+/* ---------- rust / event / schat ---------- */
+.kampvuur {
+  font-size: 5rem;
+  margin-top: 40px;
+  filter: drop-shadow(0 0 30px rgba(255, 140, 50, .5));
+  animation: adem 2.4s ease-in-out infinite;
+}
+/* event-sfeerbeeld */
+.event-art {
+  width: min(680px, 86vw);
+  height: 235px;
+  margin-top: 26px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid var(--rand);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, .6);
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, rgba(34, 26, 46, .6), rgba(18, 13, 28, .8));
+}
+.event-art img { width: 100%; height: 100%; object-fit: cover; }
+.event-icoon {
+  font-size: 5rem;
+  filter: drop-shadow(0 0 30px rgba(255, 140, 50, .5));
+  animation: adem 2.4s ease-in-out infinite;
+}
+.event-hint {
+  color: var(--paars) !important;
+  font-style: italic;
+}
+.event-onthul { animation: eventOnthul .6s cubic-bezier(.3, 1.3, .5, 1); }
+@keyframes eventOnthul {
+  from { opacity: 0; transform: translateY(14px) scale(.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.rust-opties, .event-opties {
+  display: flex; gap: 20px; margin-top: 10px;
+  flex-wrap: wrap; justify-content: center;
+  max-width: 720px;
+}
+.event-opties { flex-direction: column; align-items: stretch; min-width: 420px; }
+.rust-knop, .event-knop {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 20px 34px;
+  font-size: 1.3rem;
+  color: var(--perkament);
+  background: linear-gradient(180deg, var(--nacht-3), var(--nacht-2));
+  border: 1px solid var(--rand);
+  border-radius: 14px;
+  transition: transform .12s, border-color .12s, box-shadow .12s;
+}
+.rust-knop:hover:not(:disabled), .event-knop:hover:not(:disabled) {
+  transform: translateY(-3px);
+  border-color: var(--ember);
+  box-shadow: 0 8px 22px rgba(255, 156, 63, .18);
+}
+.rust-knop small, .event-knop small { font-family: 'Alegreya', serif; font-size: .9rem; color: var(--perkament-dof); }
+.reden-uit {
+  color: #ff8d9d !important;
+  font-style: italic;
+  font-size: .82rem !important;
+}
+/* uitgeschakelde keuzeknoppen: inhoud gedimd, maar de reden blijft leesbaar */
+.event-knop:disabled, .rust-knop:disabled {
+  opacity: 1;
+  border-color: rgba(214, 178, 120, .12);
+}
+.event-knop:disabled > b, .event-knop:disabled > small:not(.reden-uit),
+.rust-knop:disabled > b, .rust-knop:disabled > small:not(.reden-uit),
+.rust-knop:disabled .rust-icoon { opacity: .38; }
+.rust-icoon { font-size: 2.6rem; }
+.event-tekst { font-size: 1.1rem; }
+
+/* ---------- winkel ---------- */
+#scherm-winkel { overflow-y: auto; padding-bottom: 40px; }
+.winkel-kaarten {
+  display: flex; gap: 18px; flex-wrap: wrap; justify-content: center;
+  margin: 6px 0 16px;
+}
+.winkel-item { cursor: pointer; text-align: center; transition: transform .12s; }
+.winkel-item:hover { transform: translateY(-5px); }
+.winkel-rij { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; max-width: 940px; }
+.winkel-blok {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  width: 200px;
+  padding: 14px;
+  font-size: 1.1rem;
+  color: var(--perkament);
+  background: linear-gradient(180deg, var(--nacht-3), var(--nacht-2));
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+  transition: transform .12s, border-color .12s;
+}
+.winkel-blok:hover { transform: translateY(-3px); border-color: var(--goud); }
+.winkel-blok small { font-family: 'Alegreya', serif; font-size: .8rem; color: var(--perkament-dof); line-height: 1.3; }
+.winkel-icoon { font-size: 2.2rem; }
+.prijs {
+  margin-top: 6px;
+  color: var(--goud);
+  font-family: 'Pirata One', serif;
+  font-size: 1.05rem;
+}
+.te-duur-item { opacity: .45; }
+
+/* ---------- einde ---------- */
+.einde-icoon { font-size: 6rem; margin-top: 50px; filter: drop-shadow(0 0 30px rgba(255, 200, 80, .4)); }
+.einde-stats {
+  display: flex; gap: 34px; margin: 18px 0;
+}
+.einde-stats div { display: flex; flex-direction: column; align-items: center; }
+.einde-stats b { font-family: 'Pirata One', serif; font-size: 2.2rem; color: var(--ember-fel); }
+.einde-stats small { color: var(--perkament-dof); }
+
+/* ---------- tooltip ---------- */
+#tooltip {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  max-width: 260px;
+  padding: 9px 13px;
+  font-size: .95rem;
+  font-family: 'Alegreya', serif;
+  line-height: 1.4;
+  color: var(--perkament);
+  background: rgba(14, 9, 20, .97);
+  border: 1px solid var(--ember);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .7);
+  pointer-events: none;
+}
+
+/* ---------- 3D-strijdtoneel ---------- */
+/* eigen gevechtsplaat: fullscreen op natuurlijke schaal, met parallax via transform */
+#gevecht-achtergrond {
+  display: none;
+  position: fixed; inset: -28px;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  will-change: transform;
+}
+#gevecht-achtergrond.zichtbaar { display: block; }
+
+#vista-canvas {
+  display: none;
+  position: fixed; inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* ---------- entree: het toneel betreden (2D-modus) ---------- */
+.vijand.entree { animation: vijandEntree .6s cubic-bezier(.2, .9, .35, 1.06) backwards; }
+@keyframes vijandEntree {
+  from { opacity: 0; transform: translateX(110px); }
+  to { opacity: 1; transform: none; }
+}
+#speler-zone.entree-links { animation: heldEntree .55s cubic-bezier(.2, .9, .35, 1.06) backwards; }
+@keyframes heldEntree {
+  from { opacity: 0; transform: translateX(-110px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- de held reist over de kaart ---------- */
+.kaart-held {
+  position: absolute;
+  width: 56px; height: 56px;
+  transform: translate(-50%, -56%);
+  pointer-events: none;
+  z-index: 3;
+  transition: left 1.2s cubic-bezier(.45, .05, .55, .95), top 1.2s cubic-bezier(.45, .05, .55, .95);
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .75));
+}
+.kaart-held img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 50%;
+  border: 2.5px solid var(--ember);
+  background: rgba(20, 14, 28, .92);
+  box-shadow: 0 0 16px rgba(255, 156, 63, .55);
+  animation: khZweef 2.8s ease-in-out infinite;
+}
+.kaart-held.reist img { animation: khStap .42s ease-in-out infinite; }
+@keyframes khZweef {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+@keyframes khStap {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-7px) rotate(3deg); }
+}
+
+/* ---------- de rustplaats: een kampvuur dat leeft ---------- */
+.kv-scene {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 38px;
+  width: min(560px, 92vw);
+  height: 250px;
+  margin-top: 30px;
+}
+/* compositie: vuur en knoppen zakken naar de vloer van de plaat,
+   in plaats van te zweven in het lege midden */
+#scherm-rust .kv-scene { margin-top: auto; }
+#scherm-rust .rust-opties { margin-bottom: 7vh; }
+/* grondschaduwen verankeren held en vuur op de vloer */
+.kv-held { position: relative; }
+.kv-held::after, .kv-vuurplek::after {
+  content: '';
+  position: absolute;
+  bottom: -7px; left: 50%;
+  transform: translateX(-50%);
+  width: 78%; height: 24px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, .6), transparent 70%);
+  pointer-events: none;
+}
+.kv-gloed {
+  position: absolute;
+  bottom: -25px; left: 50%;
+  transform: translateX(-50%);
+  width: 430px; height: 240px;
+  background: radial-gradient(ellipse at 50% 80%, rgba(255, 156, 63, .4) 0%, rgba(226, 84, 44, .16) 45%, transparent 72%);
+  filter: blur(14px);
+  animation: kvGloed 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes kvGloed {
+  0%, 100% { opacity: .65; transform: translateX(-50%) scale(1); }
+  38% { opacity: 1; transform: translateX(-50%) scale(1.06); }
+  62% { opacity: .8; transform: translateX(-50%) scale(1.02); }
+}
+.kv-held { width: 200px; height: 200px; animation: adem 3.2s ease-in-out infinite; }
+.kv-held img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 20px rgba(0, 0, 0, .75)) drop-shadow(0 0 22px rgba(255, 140, 60, .2));
+  transition: filter .5s;
+}
+.kv-vuurplek { position: relative; width: 170px; height: 195px; transition: transform .45s ease; transform-origin: 50% 100%; }
+.kv-vlam {
+  position: absolute;
+  bottom: 24px;
+  transform-origin: 50% 100%;
+  background: linear-gradient(180deg, #fff3c0 0%, #ffd24a 22%, #ff9c3f 52%, #e2542c 82%, #a8233f 100%);
+  border-radius: 50% 50% 42% 42% / 72% 72% 30% 30%;
+  filter: blur(1px);
+  opacity: .96;
+}
+.kvv1 { left: 50%; margin-left: -30px; width: 60px; height: 108px; animation: kvVlam .85s ease-in-out infinite alternate; }
+.kvv2 { left: 50%; margin-left: -54px; width: 36px; height: 64px; animation: kvVlam .68s ease-in-out .2s infinite alternate; }
+.kvv3 { left: 50%; margin-left: 14px; width: 42px; height: 78px; animation: kvVlam 1.05s ease-in-out .45s infinite alternate; }
+@keyframes kvVlam {
+  from { transform: scaleY(1) scaleX(1) skewX(-2deg); }
+  to { transform: scaleY(1.18) scaleX(.88) skewX(3deg); }
+}
+.kv-kern {
+  position: absolute;
+  bottom: 26px; left: 50%;
+  margin-left: -14px;
+  width: 28px; height: 46px;
+  background: radial-gradient(ellipse at 50% 80%, #fffbe8 0%, #ffe28a 60%, transparent 100%);
+  border-radius: 50% 50% 40% 40% / 70% 70% 30% 30%;
+  filter: blur(2px);
+  transform-origin: 50% 100%;
+  animation: kvVlam .6s ease-in-out infinite alternate;
+}
+.kv-hout {
+  position: absolute;
+  width: 122px; height: 17px;
+  background: linear-gradient(180deg, #6b4730, #2f1d12);
+  border-radius: 9px;
+  box-shadow: inset 0 2px 3px rgba(255, 180, 120, .3), 0 3px 6px rgba(0, 0, 0, .6);
+}
+.kvh1 { bottom: 12px; left: 50%; margin-left: -66px; transform: rotate(-9deg); }
+.kvh2 { bottom: 5px; left: 50%; margin-left: -54px; transform: rotate(10deg); }
+.kv-vonk {
+  position: absolute;
+  bottom: 95px;
+  left: calc(50% + var(--vx, 0px));
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #ffd27a;
+  box-shadow: 0 0 7px rgba(255, 190, 90, .9);
+  opacity: 0;
+  animation: kvVonk var(--vd, 2s) linear infinite;
+  pointer-events: none;
+}
+@keyframes kvVonk {
+  0% { opacity: 0; transform: translate(0, 0) scale(1); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--vzw, 0px), -175px) scale(.35); }
+}
+/* oppoken: het hele vuur laait op */
+.kv-scene.opgepookt .kv-vuurplek { transform: scale(1.32); }
+.kv-scene.opgepookt .kv-vlam, .kv-scene.opgepookt .kv-kern { animation-duration: .38s; }
+.kv-scene.opgepookt .kv-gloed { animation-duration: .9s; opacity: 1; }
+.kv-scene.opgepookt .kv-vonk { animation-duration: .8s; }
+/* rusten: helende gloed over de held */
+.kv-scene.heelt .kv-vonk {
+  background: #9fe87a;
+  box-shadow: 0 0 8px rgba(140, 230, 110, .9);
+  animation-duration: 1.1s;
+}
+.kv-scene.heelt .kv-held img {
+  filter: drop-shadow(0 14px 20px rgba(0, 0, 0, .75)) drop-shadow(0 0 30px rgba(140, 230, 110, .85));
+}
+
+/* ---------- fluistertekst: stemmen uit de diepte ---------- */
+.vijand, #speler-zone { position: relative; }
+.spraak {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  width: max-content;
+  max-width: 220px;
+  font-family: 'Alegreya', serif;
+  font-style: italic;
+  font-size: 1.02rem;
+  letter-spacing: .5px;
+  text-align: center;
+  color: #b9a6e0;
+  text-shadow: 0 1px 3px #000, 0 0 12px rgba(20, 12, 32, .95), 0 0 4px #000;
+  pointer-events: none;
+  z-index: 6;
+  animation: spraakZweef 3.6s ease forwards;
+}
+.spraak-held { color: #f2c98e; }
+@keyframes spraakZweef {
+  0% { opacity: 0; transform: translate(-50%, 8px); }
+  12% { opacity: 1; transform: translate(-50%, 0); }
+  75% { opacity: 1; transform: translate(-50%, -14px); }
+  100% { opacity: 0; transform: translate(-50%, -26px); }
+}
+
+/* de koninklijke uitroep */
+.baas-spraak {
+  position: fixed;
+  top: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 56;
+  pointer-events: none;
+  animation: spraakKoning 3.2s ease forwards;
+}
+.baas-spraak span {
+  font-family: 'Pirata One', serif;
+  font-size: clamp(1.5rem, 3.6vw, 2.4rem);
+  letter-spacing: 3px;
+  color: #b6e85d;
+  text-shadow: 0 0 22px rgba(120, 200, 60, .55), 0 4px 12px #000, 0 0 6px #000;
+}
+@keyframes spraakKoning {
+  0% { opacity: 0; transform: translateX(-50%) scale(.9); }
+  12% { opacity: 1; transform: translateX(-50%) scale(1.04); }
+  80% { opacity: 1; transform: translateX(-50%) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) scale(.98); }
+}
+
+/* ---------- het baasgevecht ---------- */
+#baas-balk {
+  position: fixed;
+  top: 52px; left: 50%;
+  transform: translateX(-50%);
+  width: min(620px, 80vw);
+  z-index: 5;
+  text-align: center;
+  pointer-events: none;
+}
+#baas-balk .bb-fases { pointer-events: auto; display: flex; gap: 7px; justify-content: center; margin-top: 5px; cursor: help; }
+.bb-naam {
+  font-family: 'Pirata One', serif;
+  font-size: 1.35rem;
+  line-height: 1.15;
+  color: var(--ember-fel);
+  text-shadow: 0 2px 6px #000, 0 0 18px rgba(255, 156, 63, .4);
+}
+.bb-titel {
+  font-family: 'Alegreya', serif;
+  font-size: .82rem;
+  font-style: italic;
+  letter-spacing: 2px;
+  color: var(--perkament-dof);
+  text-shadow: 0 1px 3px #000;
+  margin: -1px 0 4px;
+}
+.bb-balk {
+  position: relative;
+  height: 20px;
+  background: #15090f;
+  border: 2px solid rgba(214, 178, 120, .55);
+  border-radius: 11px;
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, .85), 0 4px 16px rgba(0, 0, 0, .6);
+  overflow: hidden;
+}
+.bb-vul {
+  height: 100%;
+  background: linear-gradient(180deg, #b6e85d, #5d9b23);
+  border-radius: 9px;
+  transition: width .5s ease;
+}
+.bb-balk.bb-woede { border-color: rgba(232, 93, 117, .9); animation: woedeBalk 1s ease-in-out infinite; }
+.bb-balk.bb-woede .bb-vul { background: linear-gradient(180deg, #ff8c5a, #c2333f); }
+@keyframes woedeBalk {
+  0%, 100% { box-shadow: inset 0 3px 8px rgba(0, 0, 0, .85), 0 0 10px rgba(232, 93, 117, .4); }
+  50% { box-shadow: inset 0 3px 8px rgba(0, 0, 0, .85), 0 0 24px rgba(232, 93, 117, .85); }
+}
+.bb-tekst {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Alegreya', serif;
+  font-size: .8rem; font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px #000;
+}
+.bb-pip {
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(214, 178, 120, .6);
+  background: rgba(0, 0, 0, .5);
+}
+.bb-pip.aan { background: var(--ember); box-shadow: 0 0 8px rgba(255, 156, 63, .8); }
+
+/* bazenintro: titelkaart over het slagveld */
+#baas-intro {
+  position: fixed; inset: 0;
+  z-index: 60;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(10, 6, 14, .55), rgba(10, 6, 14, .92));
+  animation: introVervaag 3.6s ease forwards;
+  pointer-events: none;
+}
+.baas-intro-binnen { text-align: center; animation: introGroei 3.6s cubic-bezier(.2, .8, .3, 1) forwards; }
+.baas-intro-binnen small {
+  font-family: 'Alegreya', serif; font-style: italic;
+  color: var(--perkament-dof); font-size: 1rem;
+  letter-spacing: 3px;
+}
+.baas-intro-binnen h1 {
+  font-family: 'Pirata One', serif;
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  margin: 6px 0;
+  color: var(--ember-fel);
+  text-shadow: 0 0 30px rgba(255, 156, 63, .65), 0 6px 18px #000;
+  letter-spacing: 4px;
+}
+.baas-intro-binnen span {
+  font-family: 'Alegreya', serif;
+  color: #b6e85d;
+  font-size: 1.2rem;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+}
+@keyframes introVervaag { 0% { opacity: 0; } 12% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes introGroei { 0% { transform: scale(.82); } 100% { transform: scale(1.06); } }
+
+/* fase-flits: korte aankondiging midden in het gevecht */
+.baas-flits {
+  position: fixed; inset: 0;
+  z-index: 55;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+  animation: introVervaag 2.4s ease forwards;
+  background: radial-gradient(ellipse at center, rgba(60, 10, 20, .25), rgba(10, 6, 14, .7));
+}
+.baas-flits h2 {
+  font-family: 'Pirata One', serif;
+  font-size: clamp(2.2rem, 6vw, 4rem);
+  color: #ff7a6b;
+  margin: 0;
+  text-shadow: 0 0 26px rgba(232, 93, 117, .8), 0 4px 14px #000;
+  letter-spacing: 3px;
+}
+.baas-flits span { font-family: 'Alegreya', serif; font-style: italic; color: var(--perkament); }
+
+/* woede: de koning gloeit gevaarlijk */
+.vijand.woede .vijand-art { animation: woedeGloei 1.1s ease-in-out infinite; }
+@keyframes woedeGloei {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(232, 93, 117, .5)); }
+  50% { filter: drop-shadow(0 0 26px rgba(232, 93, 117, .95)) brightness(1.15); }
+}
+
+/* de doodsklap van de koning */
+.baas-doodflits {
+  position: fixed; inset: 0;
+  z-index: 70;
+  background: radial-gradient(circle at center, rgba(255, 240, 200, .95), rgba(255, 156, 63, .5) 45%, transparent 75%);
+  animation: doodsFlits 1.4s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes doodsFlits {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* duister-vignet: het donker kruipt vanaf de randen naar binnen */
+#licht-vignet {
+  position: fixed; inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 70% 60% at 50% 45%, transparent 40%, rgba(0, 0, 0, .92) 100%);
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+#scherm-gevecht.d3-actief #vista-canvas { display: block; }
+#scherm-gevecht > #beurt-label,
+#scherm-gevecht > #strijdveld,
+#scherm-gevecht > #onderbalk { position: relative; z-index: 1; }
+#scherm-gevecht > #onderbalk { position: relative; }
+
+.sprite-ruimte { display: none; }
+.d3-actief .sprite-ruimte { display: block; width: 100%; }
+.d3-actief .vijand-art, .d3-actief .speler-figuur { display: none; }
+.d3-actief #strijdveld { pointer-events: none; }
+.d3-actief .vijand {
+  position: fixed;
+  transform: translateX(-50%);
+  margin: 0;
+  width: 178px;
+  min-width: 0;
+  padding: 0;
+  pointer-events: auto;
+  z-index: 2;
+}
+.d3-actief #speler-zone {
+  position: fixed;
+  transform: translateX(-50%);
+  min-width: 0;
+  width: 178px;
+  pointer-events: auto;
+  z-index: 2;
+}
+.d3-actief .vijand.sterft { opacity: 0; transform: translateX(-50%); }
+
+/* ---------- held-FX: effectlagen over de spelersprite ----------
+   (choreografie overgenomen uit het aangeleverde handoff-pakket) */
+#held-fx { position: absolute; inset: 0; pointer-events: none; }
+#held-fx .hfx { position: absolute; inset: 0; display: none; }
+.hfx-blok #held-fx .hfx-schild { display: block; }
+.hfx-cast #held-fx .hfx-cast { display: block; }
+.hfx-victory #held-fx .hfx-victory,
+.hfx-victory #held-fx .hfx-vonken { display: block; }
+.hfx-gif-aan #held-fx .hfx-gif { display: block; }
+.hfx-wond-aan #held-fx .hfx-wond { display: block; }
+
+/* blok: blauw schild-schemer aan de zwaardzijde */
+.hfx-schild::before {
+  content: '';
+  position: absolute; right: -12%; top: 4%;
+  width: 58%; height: 90%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 30% 50%, rgba(127,168,201,0) 42%, rgba(127,168,201,.26) 72%, rgba(205,232,255,.5) 88%, transparent 100%);
+  box-shadow: 0 0 34px rgba(127,168,201,.45), inset -12px 0 26px rgba(127,168,201,.4);
+  mix-blend-mode: screen;
+  animation: schildSchemer 2s ease-in-out infinite, schildPop .3s ease-out 1;
+}
+@keyframes schildSchemer { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes schildPop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* cast: uitdijende arcane ringen bij het zwaard */
+.cast-ring {
+  position: absolute; left: 72%; top: 20%;
+  width: 34%; aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid rgba(208,150,235,.85);
+  box-shadow: 0 0 20px rgba(176,106,224,.55), inset 0 0 20px rgba(176,106,224,.35);
+  transform: translate(-50%, -50%) scale(.4);
+  opacity: 0;
+  mix-blend-mode: screen;
+  animation: ringUitdij 2.4s ease-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes ringUitdij {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(.35); }
+  15%  { opacity: .9; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
+}
+
+/* victory: draaiende gouden stralen */
+.victory-stralen {
+  position: absolute; left: 50%; top: 46%;
+  width: 135%; aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(245,200,77,.16) 0deg 8deg, transparent 8deg 26deg);
+  -webkit-mask-image: radial-gradient(circle, black 18%, transparent 66%);
+  mask-image: radial-gradient(circle, black 18%, transparent 66%);
+  mix-blend-mode: screen;
+  animation: stralenDraai 16s linear infinite;
+}
+@keyframes stralenDraai { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+/* bellen: gif (groen) en victory-vonken (goud) */
+.bel {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #d2f5a8 0%, #6ec85a 45%, rgba(58,122,48,.4) 80%, transparent 100%);
+  box-shadow: 0 0 10px rgba(110,200,90,.6);
+  opacity: 0;
+  animation: belStijg var(--dur, 3s) ease-in infinite;
+  animation-delay: var(--delay, 0s);
+}
+.bel.goud {
+  background: radial-gradient(circle at 35% 30%, #fff3c4 0%, #f5c84d 45%, rgba(201,164,77,.4) 80%, transparent 100%);
+  box-shadow: 0 0 12px rgba(245,200,77,.8);
+}
+@keyframes belStijg {
+  0%   { transform: translate(0, 0) scale(.5); opacity: 0; }
+  12%  { opacity: .9; }
+  70%  { opacity: .7; transform: translate(calc(var(--drift, 0px) * .6), -100px) scale(1); }
+  100% { transform: translate(var(--drift, 0px), -160px) scale(1.2); opacity: 0; }
+}
+
+/* wond-puls: rode gloed onder de 30% HP */
+.hfx-wond::before {
+  content: '';
+  position: absolute; left: 36%; top: 50%;
+  width: 22%; aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(208,90,67,.7) 0%, rgba(184,67,47,.3) 50%, transparent 75%);
+  filter: blur(4px);
+  mix-blend-mode: screen;
+  animation: wondPuls 2.8s ease-in-out infinite;
+}
+@keyframes wondPuls {
+  0%, 100% { opacity: .35; transform: scale(.9); }
+  45%      { opacity: .85; transform: scale(1.1); }
+}
+
+/* ---------- instellingen ---------- */
+.inst-paneel {
+  display: flex; flex-direction: column; gap: 16px;
+  min-width: 340px;
+  margin: 14px 0 6px;
+  padding: 22px 26px;
+  background: linear-gradient(180deg, var(--nacht-3), var(--nacht-2));
+  border: 1px solid var(--rand);
+  border-radius: 14px;
+}
+.inst-rij {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  font-size: 1.05rem;
+}
+.inst-rij input[type=range] {
+  width: 150px;
+  accent-color: var(--ember);
+}
+.inst-rij input[type=checkbox] {
+  width: 20px; height: 20px;
+  accent-color: var(--ember);
+}
+.inst-hint { font-size: .8rem; color: var(--perkament-dof); font-style: italic; max-width: 340px; text-align: center; }
+
+/* ---------- lite-modus (zwakkere hardware / reduced motion) ---------- */
+body.lite::after { display: none; }
+body.lite .sintel { display: none; }
+body.lite .vijand-art,
+body.lite .speler-figuur,
+body.lite .kampvuur,
+body.lite .titel-groot,
+body.lite #energie-orb,
+body.lite .intent,
+body.lite .knoop.kan { animation: none; }
+body.lite .overlay { backdrop-filter: none; }
+body.lite #hand .kaart::after { display: none; }
+
+/* ---------- klein scherm ---------- */
+@media (max-width: 860px) {
+  #strijdveld { padding: 0 14px 8px; }
+  #vijanden-rij { gap: 10px; }
+  .kaart { width: 118px; height: 170px; }
+  #energie-orb { left: 10px; bottom: 110px; transform: scale(.85); }
+  #knop-eindbeurt { right: 10px; bottom: 110px; }
+  #stapel-trek { left: 10px; }
+  #stapel-afleg { right: 10px; }
+}

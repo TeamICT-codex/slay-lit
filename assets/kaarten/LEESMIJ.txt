@@ -1,0 +1,84 @@
+EIGEN KAART-ART
+================
+Zet hier een afbeelding neer met de kaart-id als naam (PNG of JPG)
+en hij verschijnt als art-venster in het kaartframe — in je hand,
+in het dek-overzicht, bij beloningen en in de winkel.
+
+GOED NIEUWS: geen transparantie nodig! Kaart-art is een vol-bleed
+rechthoek in het frame (zoals in Slay the Spire). Gewoon een mooie
+mini-scene genereren en droppen.
+
+TECHNISCH:
+- PNG of JPG, liggend, ca. 1024x576 (16:9) of 4:3. Wordt bijgesneden
+  (cover) naar het venster, dus hou het onderwerp gecentreerd.
+- Geen tekst, geen kader, geen UI in het beeld.
+
+PROMPT-SJABLOON (vervang alleen de scene-beschrijving):
+
+  Painterly dark fantasy card art illustration for a deckbuilder
+  game, hand-painted concept art style with expressive brushwork,
+  rich colors, dramatic lighting, palette of deep purples,
+  charcoal and ember orange. NOT photorealistic, no photo, no 3D
+  render. Landscape composition, subject centered, no text, no
+  frame, no UI, no watermark.
+
+  Scene: [BESCHRIJVING]
+
+==================================================
+DE SLACHTER — bestandsnamen + scene-suggesties
+==================================================
+BASIS (startdek):
+  slag.png          een zilveren zwaard dat een felle horizontale slag maakt
+  verdediging.png   een geheven rond schild dat een klap opvangt, vonken
+  knal.png          een gepantserde vuist die de grond verbrijzelt, schokgolf
+
+AANVALLEN:
+  dubbelslag.png    twee gekruiste klingen die tegelijk toeslaan
+  zware_klap.png    een enorme tweehandige hamer in volle neerwaartse zwaai
+  klingenstorm.png  een wervelende cirkel van rondvliegende zwaarden
+  ijzeren_golf.png  een golf van vloeibaar staal die over de grond rolt
+  bloedoffer.png    een hand met een snee waarvan bloeddruppels in vlammen veranderen
+  uithaal.png       een opwaartse vuistslag die een schaduwfiguur omhoog slaat
+  executie.png      een beulszwaard geheven boven een knielende schim
+  molensteen.png    een ronddraaiende stenen molensteen vol scherpe randen
+  vampiersbeet.png  vampierstanden die rood levenslicht opzuigen
+  wervelwind.png    een tornado van staal en vonken in een donkere zaal
+  genadeslag.png    een komeet van vuur die als zwaardslag inslaat
+
+KRACHTEN:
+  metaalhuid.png            een arm die in glanzend staal verandert
+  vlammende_hartstocht.png  een brandend hart omringd door embers
+  demonenvorm.png           gloeiende demonenhoorns die uit schaduw groeien
+
+==================================================
+NEUTRAAL (zelfde voor beide helden)
+==================================================
+  schildmuur.png    een muur van overlappende schilden
+  ontwijken.png     een vervagende silhouet die opzij stapt
+  krijgslist.png    een perkamenten strijdplan met kandelaar
+  ontwapening.png   een zwaard dat uit een hand wordt geslagen
+  schokgolf.png     een krijger die op de grond stampt, kring van energie
+  adrenaline.png    een flesje bliksem dat wordt leeggedronken
+  tweede_adem.png   een diepe ademteug van gouden licht
+  offerande.png     een kaars die bloeddruppels als vlam verbrandt
+  bolwerk.png       een massieve stenen toren achter kantelen
+  zuivering.png     wit licht dat donkere rook van een figuur wast
+  doornenhuid.png   een huid van uitstekende stalen doornen
+  energiekern.png   een pulserende kristallen energiebol
+
+==================================================
+DE GIFMAGIËR (zelfde systeem, voor later)
+==================================================
+  prik, dodelijke_kus, snelle_steek, slangenbeet, venijnregen,
+  giftand, nachtschade, gifflits, sluiproute, verlammend_gif,
+  katalyse, etterende_wonden, bloedzuiger, epidemie,
+  giftige_steek, gifwolk, gifklieren
+  (+ vloek: pijn.png — een verwrongen doornenkroon)
+
+TIP: genereer per reeks in één sessie met het sjabloon hierboven,
+dan blijft de stijl van alle kaartvensters consistent.
+
+ZIE OOK: PROMPTS.txt in deze map — de volledige promptbibliotheek
+met een kopieer-klaar blok per kaart, inclusief het kleuraccent-
+systeem per kaarttype (aanval = rood, vaardigheid = blauw,
+kracht = paars).

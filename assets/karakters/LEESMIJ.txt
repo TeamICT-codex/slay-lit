@@ -1,0 +1,105 @@
+EIGEN KARAKTERS (AI-gegenereerd of zelf getekend)
+==================================================
+
+Zet hier een PNG neer met exact de juiste bestandsnaam en het spel
+gebruikt hem automatisch in plaats van de ingebouwde tekening —
+in 2D en in 3D. Geen bestand? Dan blijft de ingebouwde versie staan.
+
+BESTANDSNAMEN (exact zo, kleine letters):
+  speler.png          De Slachter (held)        -> kijkt naar RECHTS
+  gifmagier.png       De Gifmagiër (2e held)    -> kijkt naar RECHTS
+  groene_slijm.png    Groene Slijm              -> kijkt naar LINKS
+  blauwe_slijm.png    Blauwe Slijm              -> kijkt naar LINKS
+  grotrat.png         Grotrat                   -> kijkt naar LINKS
+  kultist.png         Kultist (vogelmasker)     -> kijkt naar LINKS
+  paddenstoelman.png  Paddenstoelman            -> kijkt naar LINKS
+  bandiet.png         Bandiet                   -> kijkt naar LINKS
+  steengolem.png      Steengolem                -> kijkt naar LINKS
+  schaduw.png         Schaduw (geest)           -> kijkt naar LINKS
+  grombaard.png       Grombaard (elite, oger)   -> kijkt naar LINKS
+  steenwachter.png    Steenwachter (elite)      -> kijkt naar LINKS
+  slijmkoning.png     De Slijmkoning (baas)     -> kijkt naar LINKS
+
+TECHNISCHE EISEN:
+- PNG met TRANSPARANTE achtergrond (essentieel!).
+- Vierkant, ca. 1024x1024. Figuur vult ~85% van het canvas.
+- Volledige figuur, voeten/onderkant tegen de onderrand.
+- GEEN grondschaduw in het beeld (het spel tekent er zelf een),
+  geen tekst, geen kader, geen achtergrondelementen.
+- Kijkrichting: zie de lijst hierboven. Verkeerde kant op?
+  Spiegel het beeld even in een fotobewerker.
+
+BASISPROMPT (gebruik dit blok voor ELK personage zodat de stijl
+consistent blijft, en vervang alleen de karakterbeschrijving):
+
+  Game character sprite for a dark fantasy deckbuilder roguelike.
+  Single full-body character, centered, three-quarter side view,
+  facing LEFT. Painterly dark fantasy style with warm torchlight
+  rim lighting, palette of deep purples, charcoal and ember orange,
+  matching a torchlit dungeon. Isolated on a fully TRANSPARENT
+  background. No ground, no shadow, no text, no frame, no UI.
+  The character fills about 85% of a square canvas.
+
+  Character: [BESCHRIJVING HIER]
+
+KARAKTERBESCHRIJVINGEN (kopieer achter "Character:"):
+- speler (facing RIGHT!): a hooded swordsman hero in dark indigo
+  robes with ember-orange trim, glowing amber eyes under the hood,
+  raising a silver longsword
+- groene_slijm: a glossy mischievous green slime creature with big
+  eyes and a goofy grin, dripping goo
+- blauwe_slijm: a taller deep-blue slime with a water-drop crest,
+  translucent and gloomy
+- grotrat: a hunched giant dungeon rat with matted grey fur,
+  glowing red eyes and a long pink tail
+- kultist: a sinister cultist in dark purple robes wearing a
+  bone-white bird-beak mask, glowing blue eyes, arms raised
+- paddenstoelman: a stout mushroom-man with a red spotted cap,
+  sleepy eyes and stubby arms, spores drifting
+- bandiet: a masked rogue in dark teal garb with a crimson sash,
+  brandishing a curved dagger
+- steengolem: a hulking stone golem with mossy boulders for a body
+  and a glowing molten core in its chest
+- schaduw: a wispy ghostly shade with trailing smoke, a hollow dark
+  face and piercing ice-blue glowing eyes
+- grombaard: a massive elite ogre with tusks, curved horns, a grey
+  braided beard, skull belt and a spiked club
+- steenwachter: an elite animated stone guardian knight with a huge
+  tower shield, thorned pauldrons and a glowing visor slit
+- slijmkoning: a colossal smug king slime wearing a golden jeweled
+  crown, treasure and a skull suspended inside its green body
+
+TIP: genereer ze allemaal in EEN sessie/chat met dezelfde
+stijlbeschrijving — dat geeft de meest consistente set.
+
+==================================================
+STATE-AFBEELDINGEN (optioneel, per personage)
+==================================================
+Naast de basisafbeelding kun je per personage extra poses leveren.
+Bestaat het bestand, dan toont het spel hem op het juiste moment;
+bestaat het niet, dan blijft de basis met procedurele animatie.
+
+Naamgeving: <personage>_<state>.png — bijvoorbeeld:
+  speler_attack.png   tijdens de uithaal van een aanval
+  speler_hit.png      bij het incasseren van een klap
+  speler_death.png    tijdens het sterven
+  speler_poison.png   zolang het personage vergiftigd is
+  speler_block.png    bij het spelen van een verdedigingskaart
+  speler_victory.png  na het winnen van een gevecht (2,5 sec)
+  speler_cast.png     bij het spelen van een kracht-kaart
+  speler_wounded.png  als idle wanneer HP onder de 30% zakt
+
+Zelfde technische eisen als de basis: transparante PNG, 1024x1024,
+zelfde kijkrichting. BELANGRIJK voor consistentie: genereer states
+met de basisafbeelding als referentie ("same character, now in a
+blocking pose") in dezelfde sessie — anders krijg je neefjes in
+plaats van hetzelfde personage.
+
+De squash & stretch-animatie blijft er gewoon overheen lopen, dus
+één goede pose per state is genoeg — geen sprite-sheets nodig.
+
+ZIE OOK:
+- PROMPTS.txt — volledig uitgeschreven, kopieer-klare prompt per
+  personage dat NU in het spel zit (13 stuks). Begin hier!
+- KARAKTERPLAN.txt — het volledige plan met alle 31 personages,
+  incl. de Act 2- en Act 3-rosters voor de uitbreiding.

@@ -1,0 +1,12 @@
+{
+  "name": "SLAY LIT — een kaartgevecht in de diepte",
+  "short_name": "SLAY LIT",
+  "description": "Nederlandstalige deckbuilder-roguelike: daal af door 13 verdiepingen, bewaak je fakkel en versla De Slijmkoning.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0d0a12",
+  "theme_color": "#16111f",
+  "icons": [
+    { "src": "assets/icoon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

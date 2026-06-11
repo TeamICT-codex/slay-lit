@@ -1,0 +1,106 @@
+ACHTERGROND-PLATES — PROMPTBIBLIOTHEEK
+========================================
+Aanvulling op je bestaande plates (die zijn de stijl-referentie!).
+Voeg waar mogelijk een bestaande plate als referentiebeeld toe bij
+het genereren — dat houdt de sfeer consistent.
+
+Bestandsnamen exact zoals hieronder, in de juiste act-map droppen.
+Nieuwe namen die nog niet in het spel zitten geef je gewoon aan mij
+door ("zet de act 2-kaart erin"), dan wire ik ze in het manifest.
+
+SPECS PER SOORT:
+  Schermen (rust/winkel/event/schat/overwinning):
+    liggend 16:9 (~1920x1080). Het midden wordt deels bedekt door
+    tekst en knoppen en het geheel wordt gedimd — zet het mooiste
+    dus NIET pal in het centrum maar in de randen en de diepte.
+  Gevechtsplaten: liggend 16:9, met een OPEN, rustige middenstrook
+    waar de personages staan; vloer onderaan zichtbaar.
+  Kaart-plates (de afdaling): STAAND en hoog (~1024x1820, 9:16).
+    BELANGRIJK: de kaart daalt af — de BOVENKANT van het beeld is
+    de oppervlakte (ruïnes, schemerlicht), de ONDERKANT de diepste
+    duisternis. De route scrollt van boven naar beneden mee.
+
+ALGEMENE STIJLANKER (voor elk blok):
+
+  Painterly dark fantasy environment art for a deckbuilder game,
+  hand-painted concept art, rich atmospheric depth, dramatic
+  torchlight, palette of deep purples, charcoal and ember orange.
+  NOT photorealistic, no photo, no 3D render. No characters, no
+  text, no UI.
+
+
+==================== NOG ONTBREKEND — ACT 1 ====================
+
+Act 1 achtergronden/Achtergrondrust1.png   (DE RUSTPLAATS — al
+                                            ingebouwd, verschijnt
+                                            zodra je hem dropt)
+  Scene: a sheltered alcove carved into ancient dungeon stone, a
+  safe haven for one night — a worn bedroll, a leaning sword
+  against the wall, old scorch marks of countless campfires on
+  the floor, a crack in the ceiling letting through one thin
+  beam of pale starlight.
+  LET OP: GEEN kampvuur in beeld — het spel tekent zelf een
+  geanimeerd vuur in het midden. Houd de ondergrond daar leeg
+  en donker; warme gloed mag al zachtjes op de wanden hangen.
+
+
+==================== NOG ONTBREKEND — ACT 2 ====================
+(de grafkelders/catacomben, te zien aan je gevechtsplaten)
+
+Act 2 achtergronden/Achtergrond ACT 2.png   (kaart-plate, staand!)
+  Scene: a vast vertical descent through ancient catacombs seen
+  as one towering scene — crumbling burial niches and bone-lined
+  galleries at the TOP fading down past sunken crypts and
+  flooded ossuary halls into a pitch-black necropolis gate at
+  the BOTTOM, a faint winding path connecting the levels.
+
+Act 2 achtergronden/Achtergrondrust2.png
+  Scene: a quiet corner of a crypt claimed as a campsite, a
+  bedroll between two stone sarcophagi, hanging moss, a small
+  shrine niche with melted-down candles, one shaft of cold
+  moonlight from a grate above.
+  LET OP: GEEN kampvuur in beeld (het spel tekent het zelf).
+
+Act 2 achtergronden/Achtergrondschatkist2.png
+  Scene: a burial treasury deep in the catacombs, an ornate
+  sarcophagus lid pushed aside revealing a glint of gold, grave
+  goods piled in the shadows, dust hanging in pale light.
+
+Act 2 achtergronden/Overwinningsachtergrond2gewoon.png
+  Scene: a catacomb gallery falling silent after battle, dust
+  settling in torchlight, broken bones scattered, a doorway
+  deeper down standing open.
+
+
+==================== NOG ONTBREKEND — ACT 3 ====================
+(de vurige diepte, te zien aan je gevechtsplaten)
+
+Act 3 achtergronden/Achtergrond ACT 3.png   (kaart-plate, staand!)
+  Scene: a vast vertical descent into a volcanic underworld seen
+  as one towering scene — obsidian cliffs and cooling lava crusts
+  at the TOP descending past rivers of fire and chained bridges
+  into a colossal infernal throne gate at the BOTTOM, the glow
+  intensifying with depth.
+
+Act 3 achtergronden/Achtergrondrust3.png
+  Scene: a cooled lava pocket forming a natural shelter, a
+  bedroll on black glass stone, heat shimmer in the distance,
+  veins of dim orange light in the walls like sleeping embers.
+  LET OP: GEEN kampvuur in beeld (het spel tekent het zelf).
+
+Act 3 achtergronden/Achtergrondschatkist3.png
+  Scene: a war-hoard chamber in the burning deep, weapons and
+  gold half-melted into the obsidian floor, one intact chest
+  glowing at the edge of a lava fissure.
+
+Act 3 achtergronden/Overwinningsachtergrond3gewoon.png
+  Scene: a scorched arena falling still, embers raining slowly,
+  cracks of light dimming in the floor, a stair of black stone
+  leading further down into the final dark.
+
+
+=================== OPTIONEEL / LATER ===================
+
+Act 2 achtergronden/Achtergrondvuurvliegjes2.png en verder:
+  elk event kan per act een eigen variant krijgen — zeg het me
+  als je dit wil, dan maak ik de slots + promptblokken.
