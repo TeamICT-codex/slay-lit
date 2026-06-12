@@ -339,3 +339,44 @@ kreet. Flame's speel-regel wordt simpelweg:
 `signatuurMoment('flame', 'oranje', 'FLAME.')` — de oranje flits
 (.sf-oranje) zit al in de CSS. Beulswerk (Slachter) en Moederslang
 (Gifmagiër) draaien er al live op.
+
+---
+
+# Heldenontgrendeling & introqueeste (geparkeerd)
+
+Speeltest-wens (Thomas): helden niet allemaal vanaf het begin
+beschikbaar, maar ontgrendelbaar — met lore en eventueel een
+introqueeste die verklaring brengt. Replay-driver + verhaalmoment.
+
+## Schets
+
+- **Start:** alleen De Slachter (de instap-kit). De andere panelen
+  tonen als silhouet met "???" en een cryptische hint — je wéét dat
+  er iets te verdienen valt.
+- **De Gifmagiër — "De Gekooide":** eenmalig event dat verschijnt
+  vanaf verdieping 4-5: een kooi van doornen in een nis, een gestalte
+  met snavelmasker erin. Bevrijden kost iets (HP, goud óf je fakkel
+  deels). Beloning: unlock + hij vecht het lopende gevecht níet mee
+  (Act 2-metgezelsysteem niet voorschaduwen) maar staat bij de
+  volgende run in de heldkeuze, met intro-regel.
+- **Thoverk — "De geur van stoofpot" (introqueeste, 3 stappen):**
+  verspreid over één of meerdere runs: (1) event: een verlaten
+  kampvuur met een dampende pot — proeven geeft een mini-buff en de
+  regel "iemand kookt hier beneden..."; (2) event dieper: borrelende
+  kruiden + een houten-been-spoor; (3) finale: Thoverk gevonden bij
+  zijn kookvuur — hij lacht, deelt stoofpot (genees) en sluit aan.
+  Lore uit zijn backstory (Maxenzele, het cafégevecht, de duivelboom)
+  druppelt mee in de eventteksten.
+- **Opslag:** Codex uitbreiden met `helden: ['slachter', ...]` +
+  queeste-voortgang. Migratie: bestaande spelers (Codex met
+  ontdekkingen) krijgen alles wat ze al speelden ontgrendeld — geen
+  demo-vrienden hun held afpakken.
+- **Daily runs:** alle ontgrendelde helden; de daily kiest er
+  eventueel zelf één voor — beslissen bij de daily-bouw.
+- **Codex-sectie "De Gezellen":** per held het unlock-verhaal
+  herlezen na ontgrendeling.
+
+## Te beslissen bij de bouw
+- Unlock-tempo (Gifmagiër snel = 1e sessie; Thoverk = 2-3 runs?).
+- Of de introqueeste seeded meespeelt of buiten de seed valt
+  (voorstel: queeste-events buiten de daily houden, zoals Schrijn).

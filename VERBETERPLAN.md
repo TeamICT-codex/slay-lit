@@ -322,3 +322,12 @@ standaardvijanden + 2 signature-poses) + 2 kaart-arts, 49 MB → 4 MB.
 Volledig geverifieerd: heldkeuze ×3, alle kaarteffecten exact, alle
 relic-hooks, drankjes, art-loading, geen JS-fouten. Drops (metgezel)
 volgt in Act 2.
+
+### R3.10 — GEPARKEERD: victoriescherm groter + heldenontgrendeling
+1. **Eindoverwinningsscherm**: voelt te klein/bescheiden — held-art
+   en titel groter en centraler, statistieken meer presence, het
+   moment vieren. Oppakken bij de volgende UI-ronde.
+2. **Heldenontgrendeling met introqueeste**: volledige schets in
+   ONTWERP.md (Slachter start, Gifmagiër via "De Gekooide"-event,
+   Thoverk via 3-staps stoofpotqueeste, Codex-migratie zodat
+   bestaande spelers niets verliezen).
