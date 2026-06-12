@@ -305,7 +305,10 @@ const Vista = (() => {
 
     /* optionele state-afbeeldingen: <artId>_<state>.png (bv. speler_attack.png) */
     if (window.laadKarakterAfbeelding) {
-      ['attack', 'hit', 'death', 'poison', 'block', 'victory', 'cast', 'wounded'].forEach(st => {
+      const states = ['attack', 'hit', 'death', 'poison', 'block', 'victory', 'cast', 'wounded'];
+      /* signature-kaarten hebben een eigen pose (alleen helden) */
+      if (sleutel.isSpeler) states.push('beulswerk', 'moederslang', 'flame');
+      states.forEach(st => {
         laadKarakterAfbeelding(artId + '_' + st, img => {
           if (!img || !sprite.parent) return;
           const tex = new THREE.Texture(img);

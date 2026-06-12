@@ -331,3 +331,11 @@ OPGELOST: trekKaartBeloning kent nu `episch: 3` (al live, no-op tot
 de eerste épische kaart bestaat). Wilde Oogst en Hart van de
 Duivelboom blijven dus gewoon episch zoals ontworpen — de eerdere
 R3.3-aantekening (downgraden naar zeldzaam) vervalt.
+
+## Aanvulling Flame: speelmoment-implementatie ligt klaar
+
+signatuurMoment() bestaat nu (game.js) en regisseert pose + flits +
+kreet. Flame's speel-regel wordt simpelweg:
+`signatuurMoment('flame', 'oranje', 'FLAME.')` — de oranje flits
+(.sf-oranje) zit al in de CSS. Beulswerk (Slachter) en Moederslang
+(Gifmagiër) draaien er al live op.

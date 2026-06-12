@@ -442,6 +442,29 @@ const KAARTEN = {
     }
   },
 
+  /* --- signature-klappers: één episch moment per held (zie ook flame, Thoverk) --- */
+  beulswerk: {
+    naam: 'Beulswerk', type: 'aanval', zeld: 'episch', kost: 3, doel: 'vijand', icoon: '🪓',
+    uitputten: true,
+    dmg: 32, zelf: 4, up: { dmg: 38, zelf: 3 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Het beulswerk eist ${kval(c, 'zelf')} van je eigen HP. Uitputten.`,
+    speel: (c, t) => {
+      aanvalOp(t, kval(c, 'dmg'));
+      verliesHp(sp(), kval(c, 'zelf'));
+      signatuurMoment('beulswerk', 'rood', 'Kniel.');
+    }
+  },
+  moederslang: {
+    naam: 'Moederslang', type: 'vaardigheid', zeld: 'episch', kost: 2, icoon: '🐍',
+    uitputten: true,
+    gif: 6, zw: 1, up: { gif: 8, zw: 2 },
+    tekst: c => `Ontbied de Moederslang: ALLE vijanden krijgen ${pv(c, 'gif')} Gif en ${kval(c, 'zw')} Zwak. Uitputten.`,
+    speel: c => {
+      alleVijanden().forEach(v => { geefGif(v, kval(c, 'gif')); geefStatus(v, 'zwak', kval(c, 'zw')); });
+      signatuurMoment('moederslang', 'groen', 'Ssss... zij is wakker.');
+    }
+  },
+
   /* --- vloeken --- */
   pijn: {
     naam: 'Pijn', type: 'vloek', zeld: 'vloek', kost: null, icoon: '💀',
@@ -453,12 +476,13 @@ const KAARTEN = {
 /* ---------- kaartpools per held (niet vermeld = neutraal, voor iedereen) ---------- */
 ['slag', 'knal', 'dubbelslag', 'zware_klap', 'klingenstorm', 'ijzeren_golf', 'bloedoffer',
  'uithaal', 'executie', 'molensteen', 'vampiersbeet', 'wervelwind', 'genadeslag',
- 'metaalhuid', 'vlammende_hartstocht', 'demonenvorm', 'vlammenkling', 'brandmerk'
+ 'metaalhuid', 'vlammende_hartstocht', 'demonenvorm', 'vlammenkling', 'brandmerk',
+ 'beulswerk'
 ].forEach(id => KAARTEN[id].held = 'slachter');
 ['giftige_steek', 'gifwolk', 'gifklieren', 'prik', 'dodelijke_kus', 'snelle_steek',
  'slangenbeet', 'venijnregen', 'giftand', 'nachtschade', 'gifflits', 'sluiproute',
  'verlammend_gif', 'katalyse', 'etterende_wonden', 'bloedzuiger', 'epidemie', 'gifvlam',
- 'lichtrot'
+ 'lichtrot', 'moederslang'
 ].forEach(id => KAARTEN[id].held = 'gifmagier');
 
 /* ---------- SPEELBARE HELDEN ---------- */

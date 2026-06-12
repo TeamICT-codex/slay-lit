@@ -403,6 +403,27 @@ function zetLichtVisueel() {
   if (window.Klank && Klank.zetDuister) Klank.zetDuister(niveau === 'duister' || niveau === 'gedoofd');
 }
 
+/* het signatuurmoment: eigen pose + schermflits + kreet (de epische heldkaarten) */
+function signatuurMoment(poseNaam, kleur, kreet) {
+  const g = S.gevecht;
+  if (!g) return;
+  if (window.Vista && Vista.pose) Vista.pose(g.speler, poseNaam, 2.4);
+  heldFx('hfx-cast', 1400); /* 2D-terugval: gloed op de spelerzone */
+  const flits = document.createElement('div');
+  flits.className = 'signatuur-flits sf-' + kleur;
+  $('#scherm-gevecht').appendChild(flits);
+  setTimeout(() => flits.remove(), 1100);
+  if (typeof schudScherm === 'function') schudScherm();
+  if (INST.spraak !== false && kreet) {
+    const el = document.createElement('div');
+    el.className = 'held-kreet';
+    el.style.setProperty('--hk', huidigeHeld().kleur);
+    el.innerHTML = `<span>${kreet}</span>`;
+    $('#scherm-gevecht').appendChild(el);
+    setTimeout(() => el.remove(), 2600);
+  }
+}
+
 /* tijdelijke FX-klasse op de spelerzone (schild, cast, victory) */
 const heldFxTimers = {};
 function heldFx(klasse, duur) {

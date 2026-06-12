@@ -296,3 +296,15 @@ trekKaartBeloning (al live, no-op tot Thoverk landt) — Wilde Oogst
 en Hart van de Duivelboom blijven daardoor episch; de R3.3-
 downgrade-aantekening vervalt. Prompts voor pose + kaart-art staan
 klaar.
+
+### R3.8 — Signature-moves voor álle helden (KLAAR, 2026-06-12)
+Symmetrie met Flame: elke held één episch kaartmoment met eigen pose,
+schermflits en kreet via nieuw signatuurMoment() (2D-terugval: gloed
+op de spelerzone). LIVE: Beulswerk (Slachter, 3⚡, 32 schade één
+doelwit, kost 4 eigen HP, uitputten — kreet "Kniel.") en Moederslang
+(Gifmagiër, 2⚡, alle vijanden 6 Gif + 1 Zwak, uitputten — kreet
+"Ssss... zij is wakker."). Eerste échte épische kaarten in de pools
+(gewicht 3). Poses speler_beulswerk en gifmagier_moederslang: prompts
+klaar, art verschijnt vanzelf bij drop (state-probe uitgebreid voor
+helden). Geverifieerd: schade/zelfschade/gif/zwak exact, flits +
+kreet aanwezig, geen fouten.

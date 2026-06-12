@@ -646,3 +646,34 @@ skyward, an immense roaring eruption of orange flame bursting up
 from the coal-heart, hair and beard blown back by the heat, his
 tattoos and single eye blazing ember-bright, tail snapped taut,
 mouth open mid-roar.
+
+
+############ SIGNATURE-POSES (kaartgebonden, alle helden) ############
+
+================== speler_beulswerk.png ==================
+(extra pose voor de kaart "Beulswerk")
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: the executioner's stroke — the longsword gripped in both
+hands high overhead at the top of a colossal downward swing, cape
+erupting upward, ember eyes blazing through the hood, crimson
+light running down the blade's edge.
+
+================ gifmagier_moederslang.png ================
+(extra pose voor de kaart "Moederslang")
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: the summoning — the flask raised high and overflowing, an
+enormous serpent of luminous green venom coiling up out of it and
+rearing above his head, his beak mask tilted back, the glowing
+lens flaring bright green.
