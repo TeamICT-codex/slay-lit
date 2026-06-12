@@ -211,3 +211,22 @@ De drie niet-startrelikwieën zijn voor ALLE helden vindbaar.
 6. Balanstest: fakkel-verbrand-tempo (vonkenbeet/asadem/kolengloed +
    hart) mag een run niet structureel donker duwen; smeulbuidel is de
    ventiel.
+
+---
+
+# Designprincipe: held-gekleurde relikwieën (cross-character synergie)
+
+Speeltest-observatie (Thomas): een relikwie vinden dat niet bij je
+HUIDIGE held past maar wél bij een andere, voelt heerlijk — het zaait
+meteen een volgende run. Het Schrijn is daarvoor de motor: je neemt
+zo'n vondst mee als startbonus voor precies dié andere held.
+
+**Principe vanaf nu:** bij elke nieuwe lichting relikwieën bewust een
+paar held-gekleurde stuks toevoegen — universeel droppend, maar met
+asymmetrische waarde (bv. een gif-relikwie is goud voor de Gifmagiër
+en hoogstens aardig voor de Slachter; een verbrand-relikwie zingt pas
+echt bij Thoverk). GEEN "past bij held X"-hints in de UI: de
+ontdekking en het plannetje smeden ("dit bewaar ik in het Schrijn
+voor...") zijn nu net de magie. Bestaat al organisch (Slangenamulet,
+Vuurvreter, Mottenkroon...); vanaf Thoverk-implementatie bewust
+doseren: per lichting ±1 per held + meerderheid universeel.

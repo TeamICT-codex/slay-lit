@@ -255,3 +255,20 @@ BEVINDING voor Thoverk-implementatie: trekKaartBeloning weegt enkel
 gewoon/ongewoon/zeldzaam — épische KAARTEN droppen nooit. Wilde Oogst
 en Hart van de Duivelboom dus als zeldzaam implementeren, óf een
 episch-gewicht (~3) toevoegen aan de weging.
+
+### R3.4 — Drie zaadjes geplant (2026-06-12)
+1. **Held-gekleurde relikwieën als designprincipe** — vastgelegd in
+   ONTWERP.md: universeel droppend, asymmetrisch waardevol, het
+   Schrijn als doorgeefluik; geen UI-hints, ontdekking = de magie.
+2. **Death-art standaardvijanden** — prompts voor alle 8 staan klaar
+   in STATE-PROMPTS.txt (alleen _death, eigen kijkrichting, niet
+   spiegelen). Werkt zonder code zodra gedropt; andere states kunnen
+   later altijd nog per vijand.
+3. **GEPARKEERD: emoji → echte UI-iconen.** Aanpak t.z.t. zoals alle
+   art: drop-zone assets/ui/ + lader met emoji-terugval, dus iconen
+   vervangen emoji vanzelf per drop. Inventaris (grootste effect
+   eerst): rustknoppen (🛏️⚒️🔥), kaart-nodes (⚔️😈❓🔥💰🎁👑),
+   statusiconen, intentiehints, topbalk (❤️🔥🪙🏔️), energie-orb,
+   stapels. Promptbibliotheek schrijven we wanneer Thomas eraan
+   begint — vaste stijl: klein leesbaar op 24px, donkere rand, warm
+   palet.

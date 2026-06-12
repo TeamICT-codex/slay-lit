@@ -533,3 +533,100 @@ RIGHT toward an unseen campfire, stirring a small steaming copper
 pot with a wooden spoon, staff leaning against his shoulder, a
 content crooked smile. The log is part of the character art; no
 other ground.
+
+
+############ STANDAARDVIJANDEN — ALLEEN DEATH ############
+
+Werkt zonder code-aanpassing: droppen in assets/karakters/ en het
+spel pikt <naam>_death automatisch op (zoals bij Grombaard). Vijanden
+behouden hun EIGEN kijkrichting — gebruik telkens de basisafbeelding
+als referentie en spiegel niets. (Zichtbaar in 3D-modus, de standaard.)
+
+================= groene_slijm_death.png =================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+creature, centered, same facing as the reference, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: collapsing into a flattening puddle of goo, bubbles popping
+at the edges, the light in its eyes going out.
+
+================= blauwe_slijm_death.png =================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+creature, centered, same facing as the reference, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: losing its teardrop shape, sagging sideways into a thin
+watery pool, the little crown-droplet toppling off.
+
+=================== grotrat_death.png ====================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+creature, centered, same facing as the reference, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: keeled over on its side, paws curled in, long tail lying
+flat, the red glow of its eye gone dark.
+
+=================== kultist_death.png ====================
+Use the attached reference image: the EXACT same character, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+character, centered, same facing as the reference, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: crumpling to the ground in a heap of dark robes, the pale
+bird mask slipping loose, the eye-amulet cracked and dim.
+
+================ paddenstoelman_death.png ================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+creature, centered, same facing as the reference, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: wilting like a dying plant, the great red cap drooping down
+over its face, releasing one last soft puff of glowing spores.
+
+=================== bandiet_death.png ====================
+Use the attached reference image: the EXACT same character, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+character, centered, same facing as the reference, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: slumped backward onto the ground, both daggers fallen from
+open hands, the mask torn half loose, coin pouch spilled.
+
+================== steengolem_death.png ==================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+creature, centered, same facing as the reference, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: crumbling apart mid-collapse, its molten core gone dark,
+deep cracks spreading, the upper half sliding off in broken
+slabs of stone.
+
+=================== schaduw_death.png ====================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+creature, centered, same facing as the reference, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: unraveling into wisps of smoke from the edges inward, arms
+already dissolved, the two glowing eyes the very last to fade.
