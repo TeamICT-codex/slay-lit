@@ -1774,7 +1774,7 @@ function heldPool() {
 
 function trekKaartBeloning() {
   const pool = heldPool();
-  const gewicht = id => ({ gewoon: 60, ongewoon: 32, zeldzaam: 8 })[KAARTEN[id].zeld] || 0;
+  const gewicht = id => ({ gewoon: 60, ongewoon: 32, zeldzaam: 8, episch: 3 })[KAARTEN[id].zeld] || 0;
   /* licht = opties: bij helder zie je méér van de buit, in het donker minder */
   const niveau = lichtNiveau();
   const aantal = niveau === 'helder' ? 4 : (niveau === 'schemer' ? 3 : 2);

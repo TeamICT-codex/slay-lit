@@ -287,3 +287,47 @@ zwaarste, meest memorabele beslissingen van het spel zijn.
 - Offer 2 vast, of 2-3 met groter budget (voorstel: vast 2, strak).
 - Art: het Slachtblok verdient een eigen plaat + event-art (prompts
   schrijven we bij de Act 3-batch).
+
+---
+
+# Flame — Thoverks inside-classic (20e kaart, episch)
+
+De epiek zit in de presentatie, de balans in de prijs. Engelse naam
+bewust behouden (inside joke inner circle).
+
+## Kaartspec (bij Thoverk-implementatie mee)
+
+| veld | waarde |
+|---|---|
+| id | `flame` |
+| naam | Flame |
+| held | thoverk |
+| type / zeld | aanval / **episch** |
+| kost | 3 ⚡ (je hele beurt) |
+| licht | verbrand 5 |
+| effect | 18 schade aan ALLE vijanden + 2 Kracht. Uitputten. |
+| upgrade | 22 schade, verbrand 4 |
+| icoon | 🔥 |
+
+Waarom dit weinig impact heeft: 3 energie + 5 licht + uitputten =
+één keer per gevecht, tegen een echte prijs. Vergelijkbare waarde
+als Wilde Oogst, maar als klapstuk. Dropt op episch-gewicht 3
+(≈3% per beloningsslot, alleen in Thoverks pool) — zeldzaam genoeg
+dat het een gebeurtenis is als hij verschijnt.
+
+## Het speelmoment (hier woont de epiek)
+
+1. Eigen pose: `thoverk_flame` (2.6s) — prompt staat klaar in
+   STATE-PROMPTS.txt; gewoon meedroppen met de states-batch.
+2. Oranje schermflits + schudScherm (zelfde familie als de
+   baas-flits, maar ember-oranje).
+3. Thoverk roept gegarandeerd zijn kreet — groot in beeld via het
+   spraaksysteem, kans 1: **"FLAME."** (Eén woord. Punt erachter.
+   De inner circle weet genoeg.)
+
+## Status episch-gewicht
+
+OPGELOST: trekKaartBeloning kent nu `episch: 3` (al live, no-op tot
+de eerste épische kaart bestaat). Wilde Oogst en Hart van de
+Duivelboom blijven dus gewoon episch zoals ontworpen — de eerdere
+R3.3-aantekening (downgraden naar zeldzaam) vervalt.

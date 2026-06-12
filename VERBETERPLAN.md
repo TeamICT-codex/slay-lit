@@ -286,3 +286,13 @@ vernietigen om één zelfgenoemde kaart te smeden. Twee momenten: het
 Act 3-altaar (levend, vóór de eindbaas) en de dood in de diepte
 (kaart wacht in de Codex). Volledig ontwerp in ONTWERP.md; bouwen bij
 Act 3, samen met de Slachtblok-art.
+
+### R3.7 — Flame: Thoverks inside-classic (ONTWORPEN, 2026-06-12)
+20e Thoverk-kaart, episch: 3 energie + verbrand 5 licht + uitputten
+voor 18 schade aan alles + 2 Kracht. Epiek in de presentatie (eigen
+pose thoverk_flame, oranje flits, gegarandeerde kreet "FLAME."),
+balans in de prijs. Episch-dropgewicht 3 toegevoegd aan
+trekKaartBeloning (al live, no-op tot Thoverk landt) — Wilde Oogst
+en Hart van de Duivelboom blijven daardoor episch; de R3.3-
+downgrade-aantekening vervalt. Prompts voor pose + kaart-art staan
+klaar.

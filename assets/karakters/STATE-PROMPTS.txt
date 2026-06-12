@@ -630,3 +630,19 @@ Fills ~85% of a square 1024x1024 canvas.
 
 Pose: unraveling into wisps of smoke from the edges inward, arms
 already dissolved, the two glowing eyes the very last to fade.
+
+
+=================== thoverk_flame.png ====================
+(extra pose voor de kaart "Flame" — meedroppen met de states-batch)
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: the ultimate unleashing — both hands thrusting the staff
+skyward, an immense roaring eruption of orange flame bursting up
+from the coal-heart, hair and beard blown back by the heat, his
+tattoos and single eye blazing ember-bright, tail snapped taut,
+mouth open mid-roar.
