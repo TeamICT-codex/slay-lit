@@ -104,3 +104,52 @@ Act 3 achtergronden/Overwinningsachtergrond3gewoon.png
 Act 2 achtergronden/Achtergrondvuurvliegjes2.png en verder:
   elk event kan per act een eigen variant krijgen — zeg het me
   als je dit wil, dan maak ik de slots + promptblokken.
+
+
+================ DE NEDERLAAG-PLATEN (eindscherm bij sterven) ================
+
+Liggend 16:9 (~1920x1080). LET OP: de gevallen held, titel, statistieken
+en knoppen staan in het MIDDEN van het scherm — houd het centrum rustig
+en extra donker, leg de drama in de randen en de diepte. GEEN personages
+in beeld (de held-art wordt er los bovenop getoond). Act 1 is al
+ingebouwd; act 2/3 wire ik zodra die acts gebouwd worden.
+
+--- Act 1 achtergronden/Achtergrond nederlaag ACT1.png ---
+Painterly dark fantasy environment art for a deckbuilder game,
+hand-painted concept art, rich atmospheric depth, dramatic
+torchlight, palette of deep purples, charcoal and ember orange.
+NOT photorealistic, no photo, no 3D render. No characters, no
+text, no UI.
+
+Scene: the silent aftermath deep in the caves — a fallen torch
+guttering out on wet stone at the lower left, its last embers
+mirrored in a black pool, a cracked shield sunk at the water's
+edge, faint slime-sheen glinting on distant rocks, dust sinking
+through one pale shaft of light. Center of frame nearly black
+and empty.
+
+--- Act 2 achtergronden/Achtergrond nederlaag ACT2.png ---
+Painterly dark fantasy environment art for a deckbuilder game,
+hand-painted concept art, rich atmospheric depth, dramatic
+torchlight, palette of deep purples, charcoal and ember orange.
+NOT photorealistic, no photo, no 3D render. No characters, no
+text, no UI.
+
+Scene: a long catacomb gallery of bone niches where the votive
+candles are dying one by one, thin threads of smoke rising, an
+empty stone bier at the far end, cold blue-grey gloom with one
+last warm flame surviving at the frame's edge. Center of frame
+nearly black and empty.
+
+--- Act 3 achtergronden/Achtergrond nederlaag ACT3.png ---
+Painterly dark fantasy environment art for a deckbuilder game,
+hand-painted concept art, rich atmospheric depth, dramatic
+torchlight, palette of deep purples, charcoal and ember orange.
+NOT photorealistic, no photo, no 3D render. No characters, no
+text, no UI.
+
+Scene: the very bottom of the world — the broken edge of a stone
+bridge jutting over a vast abyss, a slow spiral of dying embers
+drifting down into the void, colossal charred roots vanishing
+into the dark above, the last light failing at the rim. Center
+of frame nearly black and empty.

@@ -557,7 +557,8 @@ const ACHTERGRONDEN = {
     eventRelikwie: 'Act 1 achtergronden/Achtergrondvraagtekenrelikwieartefact.webp',
     schat: 'Act 1 achtergronden/Achtergrondschatkist.webp',
     beloning: 'Act 1 achtergronden/Overwinningsachtergrond1gewoon.webp',
-    overwinning: 'Act 1 achtergronden/Overwinningsachtergrond1episch.webp'
+    overwinning: 'Act 1 achtergronden/Overwinningsachtergrond1episch.webp',
+    nederlaag: 'Act 1 achtergronden/Achtergrond nederlaag ACT1.webp'
   }
 };
 window.ACHTERGRONDEN = ACHTERGRONDEN;

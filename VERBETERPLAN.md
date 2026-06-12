@@ -272,3 +272,10 @@ episch-gewicht (~3) toevoegen aan de weging.
    stapels. Promptbibliotheek schrijven we wanneer Thomas eraan
    begint — vaste stijl: klein leesbaar op 24px, donkere rand, warm
    palet.
+
+### R3.5 — Eindscherm-achtergronden (KLAAR, 2026-06-12)
+Winst toont nu de epische overwinningsplaat (bestond al); verlies is
+bedraad op "Achtergrond nederlaag ACT1" en verschijnt vanzelf zodra
+de plaat gedropt wordt. Prompts voor nederlaag-platen act 1/2/3 staan
+in achtergronden/PROMPTS.txt (centrum donker/rustig houden — daar
+staan held, titel en knoppen).

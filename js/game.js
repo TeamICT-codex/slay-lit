@@ -2349,7 +2349,9 @@ function eventKlaar(tekst) {
 
 function toonEinde(gewonnen) {
   toonScherm('einde');
-  schermAchtergrond('einde', gewonnen ? ACHTERGRONDEN.act1.overwinning : null, 0.45);
+  /* winst = de epische plaat, verlies = de nederlaag-plaat (per act) */
+  schermAchtergrond('einde', gewonnen ? ACHTERGRONDEN.act1.overwinning : ACHTERGRONDEN.act1.nederlaag,
+    gewonnen ? 0.45 : 0.5);
   Klank.muziek('stil');
   const st = S.stats;
   const held = huidigeHeld();
