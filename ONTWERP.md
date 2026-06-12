@@ -230,3 +230,60 @@ ontdekking en het plannetje smeden ("dit bewaar ik in het Schrijn
 voor...") zijn nu net de magie. Bestaat al organisch (Slangenamulet,
 Vuurvreter, Mottenkroon...); vanaf Thoverk-implementatie bewust
 doseren: per lichting ±1 per held + meerderheid universeel.
+
+---
+
+# Het Slachtblok — je eigen kaart smeden (Act 3, geparkeerd)
+
+Inscryption-knipoog, maar met een eigen twist: kaartcreatie kost je
+geliefde kaarten. Het Schrijn onthoudt vondsten; het Slachtblok
+onthoudt OFFERS. Héél uitzonderlijk houden — dit moet één van de
+zwaarste, meest memorabele beslissingen van het spel zijn.
+
+## De twee momenten
+
+1. **Het altaar (Act 3, levend).** Eén vast Slachtblok-moment vóór de
+   eindbaas. Je legt 2 kaarten uit je dek op het blok — ze worden
+   VERNIETIGD voor de rest van de run (dat is de echte prijs: je
+   loopt verzwakt de finale in). In ruil smeed je één eigen kaart die
+   meteen meespeelt. Win je de run, dan wordt de kaart "gebrandmerkt"
+   in de Codex.
+2. **De dood in de diepte (Inscryption-moment).** Sterf je in Act 3
+   (of voorbij verdieping X), dan verschijnt het Slachtblok eenmalig
+   op het doodsscherm: "De diepte biedt een laatste ruil." Je offert
+   2 kaarten uit je gevallen dek en smeedt een kaart die in de Codex
+   WACHT op een volgende run. De dood wordt zo een begin.
+
+## Het smeden (compositie uit modules)
+
+- **Offerbudget** = waarde van de 2 geofferde kaarten (zeld-tier in
+  punten: gewoon 1 / ongewoon 2 / zeldzaam 4; +1 per upgrade). Hoe
+  meer je koestert, hoe meer je mag bouwen.
+- Kies: type (aanval/vaardigheid) → 1-2 effectmodules uit bestaande
+  bouwstenen (schade, blok, multi-hit, Zwak/Kwetsbaar/Gif/Doornen,
+  verbrand licht, win licht, trek kaart, genees klein) → energiekost
+  (lager = duurder in budget).
+- **Eigen naam typen** + icoon kiezen — dít is de ziel van de
+  mechaniek. ("Vlammenkras", "Moederslag", noem maar op.)
+- Budget begrenst alles: een gesmede kaart mag goed zijn, nooit
+  gebroken. Richtlijn: max ~125% waarde van één zeldzame kaart.
+
+## Codex-regels (balans)
+
+- De Codex onthoudt er **maar één** — een nieuwe smeden laat de oude
+  vergaan ("de diepte onthoudt slechts één naam"). Per held één slot.
+- Meenemen in een nieuwe run: de kaart VERVANGT een startkaart (een
+  Slag/Prik eruit), zodat het basisdek nooit groeit. Eventueel via
+  een Schrijn-achtige lading: opnieuw verdienen na gebruik.
+- In daily runs/uitdaagcodes: uitgeschakeld, net als het Schrijn
+  (eerlijkheid van de seed).
+- Eigen Codex-sectie "Het Slachtblok" met de kaart, de namen van de
+  geofferde kaarten en de datum — kleine grafsteen-vibe.
+
+## Open keuzes (bij implementatie beslissen)
+
+- Alleen Act 3-altaar, alleen doods-smeden, of beide (voorstel: beide,
+  zelfde UI, ander vervolg).
+- Offer 2 vast, of 2-3 met groter budget (voorstel: vast 2, strak).
+- Art: het Slachtblok verdient een eigen plaat + event-art (prompts
+  schrijven we bij de Act 3-batch).

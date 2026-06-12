@@ -279,3 +279,10 @@ bedraad op "Achtergrond nederlaag ACT1" en verschijnt vanzelf zodra
 de plaat gedropt wordt. Prompts voor nederlaag-platen act 1/2/3 staan
 in achtergronden/PROMPTS.txt (centrum donker/rustig houden — daar
 staan held, titel en knoppen).
+
+### R3.6 — GEPARKEERD: Het Slachtblok (eigen kaart smeden, Act 3)
+Inscryption-achtige kaartcreatie met offer-twist: 2 geliefde kaarten
+vernietigen om één zelfgenoemde kaart te smeden. Twee momenten: het
+Act 3-altaar (levend, vóór de eindbaas) en de dood in de diepte
+(kaart wacht in de Codex). Volledig ontwerp in ONTWERP.md; bouwen bij
+Act 3, samen met de Slachtblok-art.
