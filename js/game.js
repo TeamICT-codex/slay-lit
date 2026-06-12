@@ -207,7 +207,8 @@ function pv(c, veld) {
   return `${d}`;
 }
 
-function heeftRelikwie(id) { return S.relikwieen.includes(id); }
+/* null-veilig: wordt ook vóór een run aangeroepen (startdek bekijken) */
+function heeftRelikwie(id) { return !!(S && S.relikwieen && S.relikwieen.includes(id)); }
 function relikwieSchadeBonus() { return heeftRelikwie('stalen_vuist') ? 1 : 0; }
 function drankSlots() { return heeftRelikwie('veldfles') ? 3 : 2; }
 

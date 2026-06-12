@@ -341,3 +341,9 @@ rand aan transparantie = wegsnijden; interieur-highlights blijven).
 Alle 20 nieuwste beelden herverwerkt vanaf de originelen en opnieuw
 naar WebP. SW-cache v6→v7 zodat bestaande spelers de schone art ook
 echt te zien krijgen (eenmalige hercache).
+
+### R3.12 — Fix: startdek Kolendruïde was onklikbaar (KLAAR, 2026-06-12)
+heeftRelikwie() las blind S.relikwieen, maar vóór een run bestaat die
+lijst niet. Alleen Thoverks startdek raakte die route (lichtkaart
+Vonkenbeet → Levend Vuur-korting in kkost). Nu null-veilig; alle drie
+de startdekken geverifieerd (10 kaarten, geen fouten).
