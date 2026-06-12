@@ -28,3 +28,19 @@ gifflacon.png      a slender vial of luminous green poison, a tiny
                    skull etched in the glass
 energiedrank.png   a twisting spiral bottle of crackling cyan
                    lightning, sparks dancing on the cork
+
+THOVERK — DE KOLENDRUÏDE (nieuwe drankjes):
+
+maxenzeelse_stoofpot.png
+                   a stout corked clay jar of golden mushroom stew,
+                   warm light leaking from under the lid, a tiny
+                   mushroom charm tied to the neck
+
+magische_sigaar.png
+                   not a bottle: a single ornate cigar in an open
+                   glass tube, rune-stamped band, its tip already
+                   glowing a dangerous white-hot orange
+
+duivelshars.png    a gnarled wooden phial of thick amber tree-resin
+                   with a thorn suspended inside, faint violet
+                   shimmer over the surface

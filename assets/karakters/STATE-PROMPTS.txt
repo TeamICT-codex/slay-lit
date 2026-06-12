@@ -391,3 +391,145 @@ Pose: seated on a low flat rock or wooden bench, calmly grinding
 herbs in a small mortar in his lap, vials laid out on the bench
 beside him, beaked mask turned toward an unseen fire to his
 right, green vapors curling lazily upward.
+
+
+#################### THOVERK RACHT — DE KOLENDRUÏDE ####################
+
+LET OP — Thoverk is ASYMMETRISCH (ooglapje rechts, houten linkerbeen):
+NOOIT spiegelen in de pipeline. Genereer hem meteen naar RECHTS kijkend.
+Genereer EERST thoverk.png met het basisblok hieronder; gebruik daarna
+dat bestand als referentie bij elke state. Het oude miniatuurplaatje mag
+als losse inspiratie mee, maar de stijlzin is leidend (géén fotorealisme,
+géén 3D-render, géén sokkel).
+
+====================== thoverk.png ======================
+Stylized hand-painted fantasy game art, NOT photorealistic, no photo,
+no 3D render, no miniature, no base or pedestal. Single full-body
+character, centered, facing RIGHT, isolated on a fully transparent
+background, no ground, no shadow, no text. Fills ~85% of a square
+1024x1024 canvas.
+
+A weathered tiefling druid with brick-red skin covered in dark
+swirling tattoos. Two large curling ram horns, long wild black hair
+and a full black beard. A black leather eyepatch covers his right eye
+(the eye facing the viewer); his remaining eye glows ember-orange.
+A long red tail. His left lower leg is living carved wood with clawed
+wooden toes; his right foot is a dark cloven hoof. He wears earthy
+brown travel clothes, a leather chest harness, one bandaged forearm,
+a ragged moss-green hooded half-cape and a deep-green embroidered
+apron with gold thread; a small copper cooking pot, herb pouches and
+wooden vials hang from his belt. In his hand a tall gnarled wooden
+staff wrapped in twine and moss, with a knot of SMOLDERING ORANGE
+COALS glowing at its heart. Confident crooked grin. Palette: warm
+russet skin, charcoal black hair, forest green and earth brown
+clothing, ember-orange glow as the light accent.
+
+=================== thoverk_attack.png ===================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: mid-swing attack, the gnarled staff sweeping a wide arc, the
+coal-heart flaring bright with a trail of embers, tail whipping,
+weight on the front hoof.
+
+==================== thoverk_hit.png =====================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: recoiling from a heavy blow, torso twisted back, gripping the
+staff for balance, embers scattering from the coal-heart, teeth
+clenched.
+
+=================== thoverk_death.png ====================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: sunk to his knees, the staff toppled beside him with its
+coal-heart gone cold and grey, head bowed, the glow of his eye
+fading, tail limp.
+
+=================== thoverk_poison.png ===================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: hunched and unsteady, one hand clutching his stomach, faint
+sickly green wisps rising off his shoulders, his ember eye dimmed
+to a pale green.
+
+=================== thoverk_block.png ====================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: braced low behind the staff held crosswise, gnarled roots
+coiling up from his wooden leg and curling around his body like a
+living shield of bark.
+
+================== thoverk_victory.png ===================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: staff thrust high in triumph, coal-heart blazing like a
+torch, head thrown back in a roaring laugh, tail curled upward,
+free fist clenched.
+
+==================== thoverk_cast.png ====================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: channeling magic, both hands cupped around the staff, a
+spiral of green leaves and orange embers swirling upward around
+him, his eye and tattoos glowing faintly.
+
+================== thoverk_wounded.png ===================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, facing RIGHT, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: battered but standing, leaning heavily on the staff with
+both hands, shoulders sagging, breathing hard, a torn cape and a
+cracked horn tip, eye still defiant.
+
+==================== thoverk_rest.png ====================
+Use the attached reference image: the EXACT same character, same
+design, colors, outfit and painterly style. Stylized hand-painted
+fantasy game art, NOT photorealistic, no photo, no 3D render.
+Single full-body character, centered, isolated on a fully
+transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: sitting relaxed on a fallen mossy log, body and gaze facing
+RIGHT toward an unseen campfire, stirring a small steaming copper
+pot with a wooden spoon, staff leaning against his shoulder, a
+content crooked smile. The log is part of the character art; no
+other ground.

@@ -228,3 +228,11 @@ onderaan uitgemaskeerd zodat hand en knoppen vrij blijven.
 ## Werkwijze
 Per stap: bouwen → Playwright-verificatie → screenshot ter goedkeuring.
 Stappen 1, 2 en 4 zijn klein-middelgroot; 3 en 5 zijn grotere brokken.
+
+### R3.2 — Thoverk Racht, derde held: ONTWORPEN (2026-06-12)
+Volledig ontwerp in ONTWERP.md: De Kolendruïde (fakkel-economie +
+wortels/doornen + risico), 19 eigen kaarten, 5 relikwieën, 3 drankjes.
+Promptbibliotheek volledig aangevuld (STATE-PROMPTS + kaarten +
+relikwieen + dranken). Drops geparkeerd als eerste Act 2-metgezel.
+Wacht op art-drop van Thomas; implementatie daarna (checklist in
+ONTWERP.md).

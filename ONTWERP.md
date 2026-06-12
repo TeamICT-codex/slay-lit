@@ -106,3 +106,108 @@ per-beurt-effect — geen tweede held, wel een bondgenoot met smoel.
 - Codex-sectie "Metgezellen" met silhouetten -> verzameldoel.
 - Schrijn-interactie: metgezellen NIET via het Schrijn (te sterk),
   wel her-ontmoetbaar in latere runs zodra eenmaal ontgrendeld.
+
+
+---
+
+# Thoverk Racht — De Kolendruïde (derde speelbare held)
+
+Tiefling-druïde uit Maxenzele. Verloor een oog aan een ontplofte
+magische sigaar, ruilde een been met een pratende duivelboom in een
+andere dimensie — en kreeg er zijn druïdische krachten voor terug.
+Lokale legende dankzij één paddenstoelenstoofpot die een compleet
+cafégevecht beëindigde. Het ludieke is in de game gedoseerd: hij is
+een gehavende, sluwe natuurmagiër; de humor zit in kaartnamen en lore.
+
+**Drops** (magische zwarte labrador, verschijnt/verdwijnt op commando)
+is bewust GEPARKEERD: wordt de eerste vindbare metgezel/familiar in
+Act 2 (zie sectie Metgezellen & Familiars — alignment: goed).
+
+## Speldefinitie (SPELERS-entry)
+
+| veld | waarde |
+|---|---|
+| id | `thoverk` |
+| naam | De Kolendruïde |
+| art | `thoverk` |
+| icoon | 🌿 |
+| hp | 66 (tussen Slachter 70 en Gifmagiër 62) |
+| kleur | `214, 150, 86` (koperbrons) |
+| relikwie | `houten_been` |
+| stijl | "Wortels en smeulende kolen: voed het vuur met je fakkel, wurg wat overblijft." |
+| dek | takkenslag ×4, verdediging ×4, vonkenbeet, stoofpotje |
+
+Identiteit t.o.v. de anderen: Slachter = kracht/staal, Gifmagiër =
+gif/geduld, **Thoverk = fakkel-economie + wortels/doornen + een snuif
+risico**. Hij is dé held die licht als brandstof gebruikt (meerdere
+verbrand-kaarten + relikwieën die dat verzachten) en de enige met
+(bescheiden!) genezing in het dek — gebalanceerd door lage getallen.
+
+## Eigen kaarten (19 — `KAARTEN[id].held = 'thoverk'`)
+
+| id | naam | type | zeld | kost | effect (up) |
+|---|---|---|---|---|---|
+| takkenslag | Takkenslag | aanval | basis | 1 | 6 schade (9) |
+| vonkenbeet | Vonkenbeet | aanval | gewoon | 1 | verbrand 1 licht; 8 schade (11) |
+| stoofpotje | Stoofpotje | vaardigheid | gewoon | 1 | 4 Blok + genees 1 (6 + 2) |
+| wortelgreep | Wortelgreep | aanval | gewoon | 1 | 5 schade + 1 Zwak (7 + 2) |
+| doornzweep | Doornzweep | aanval | gewoon | 1 | 3× 3 schade, reeksAanval (3× 4) |
+| bastvel | Bastvel | vaardigheid | gewoon | 1 | 7 Blok + 1 Doornen (9 + 2) |
+| sporenstoot | Sporenstoot | aanval | gewoon | 1 | 6 schade; +4 als doelwit Zwak of Kwetsbaar is (8; +5) |
+| stoofgeur | Stoofgeur | vaardigheid | ongewoon | 1 | ALLE vijanden 2 Zwak (3) |
+| wurgwortels | Wurgwortels | aanval | ongewoon | 2 | 11 schade + 2 Kwetsbaar (14 + 2) |
+| kolengloed | Kolengloed | vaardigheid | ongewoon | 1 | verbrand 3 licht; +2 Kracht (verbrand 2) |
+| paddenstoelenstoofpot | Paddenstoelenstoofpot | vaardigheid | ongewoon | 2 | genees 5 (7) |
+| asadem | Asadem | aanval | ongewoon | 1 | verbrand 2 licht; 5 schade aan ALLE vijanden (7) |
+| eikenhuid | Eikenhuid | vaardigheid | ongewoon | 2 | 12 Blok (16) |
+| doornmantel | Doornmantel | kracht | zeldzaam | 1 | 3 Doornen (5) |
+| duivelspact | Duivelspact | kracht | zeldzaam | 1 | +3 Kracht, jij krijgt 1 Kwetsbaar (+4 Kracht) |
+| knalsigaar | Knalsigaar | aanval | zeldzaam | 0 | 14 schade; 30% kans: ontploft, 4 schade aan jezelf (18; 20% kans) — Toeval.kans, seeded |
+| sporenkring | Sporenkring | kracht | zeldzaam | 1 | begin van elke beurt: alle vijanden 1 Zwak (2 Zwak) |
+| wilde_oogst | Wilde Oogst | aanval | episch | 2 | 3× 5 schade op ALLE vijanden, reeksAanvalAlle (3× 6) |
+| hart_van_de_duivelboom | Hart van de Duivelboom | kracht | episch | 2 | elke beurt: +1 Kracht én verbrand 1 licht (+1 Kracht + 2 Blok, verbrand 1) |
+
+Bouwstenen bestaan al: reeksAanval(Alle), verbrandLicht, Doornen-status,
+Toeval.kans. Enige nieuwe speel-logica: conditionele bonus (sporenstoot),
+zelf-Kwetsbaar (duivelspact), begin-beurt-hook voor sporenkring en
+hart_van_de_duivelboom (analoog aan demonenvorm/gifklieren).
+
+## Nieuwe relikwieën
+
+| id | zeld | effect |
+|---|---|---|
+| houten_been | start (Thoverk) | Aan het begin van elk gevecht: 4 Blok + 1 Doornen — het been wortelt zich vast. |
+| smeulbuidel | gewoon | Kaarten die licht verbranden, verbranden 1 minder (minimum 1). |
+| kookpot_van_maxenzele | ongewoon | Na elk gevecht: genees 3 HP. |
+| mosamulet | zeldzaam | Begin je je beurt zonder Blok: krijg 3 Blok. |
+| duivelboomtak | episch | +2 Kracht aan het begin van elk gevecht, maar elke kamer kost +1 licht. |
+
+Lore-hints: houten_been = de ruil met de duivelboom; smeulbuidel = de
+kolen van zijn staf; kookpot = het cafégevecht van Maxenzele;
+duivelboomtak = het pact zelf, voor wie de prijs durft te betalen.
+De drie niet-startrelikwieën zijn voor ALLE helden vindbaar.
+
+## Nieuwe drankjes
+
+| id | effect |
+|---|---|
+| maxenzeelse_stoofpot | Genees 10 HP en verwijder Zwak & Kwetsbaar. |
+| magische_sigaar | 16 schade aan één vijand; 25% kans dat hij in jouw gezicht ontploft: 4 schade aan jezelf (Toeval.kans, seeded). |
+| duivelshars | 10 Blok + 2 Doornen. |
+
+## Implementatie-checklist (volgende sessie)
+
+1. data.js: 19 kaarten + held-toewijzing, SPELERS.thoverk, 5
+   RELIKWIEEN (incl. lore), 3 DRANKEN (incl. lore).
+2. game.js: begin-beurt-hooks (sporenkring, hart_van_de_duivelboom,
+   mosamulet), smeulbuidel-hook in verbrandLicht, duivelboomtak in
+   startGevecht + fakkelKost, kookpot na wonGevecht, houten_been in
+   startGevecht.
+3. UITSPRAKEN-pool voor thoverk (data.js) — culinair/droog: "Riekt
+   naar stoofpot.", "M'n been jeukt. Slecht teken.", enz.
+4. kiesHeld-scherm: derde paneel; codex/schrijn werken automatisch.
+5. Art-drop: thoverk (+9 states, NIET spiegelen!), 19 kaarten, 5
+   relikwieën, 3 drankjes → dambord (alleen karakters) + WebP + check.
+6. Balanstest: fakkel-verbrand-tempo (vonkenbeet/asadem/kolengloed +
+   hart) mag een run niet structureel donker duwen; smeulbuidel is de
+   ventiel.

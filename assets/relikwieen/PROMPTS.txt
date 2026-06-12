@@ -122,3 +122,32 @@ levend_vuur.png      a small sphere of living fire with a calm eye
                      at its heart, hovering above scorched stone,
                      reaching out one thin arm of flame as if in
                      greeting
+
+
+########## THOVERK — DE KOLENDRUÏDE (nieuwe relikwieën) ##########
+
+houten_been.png      START — a carved wooden lower leg, living grain
+                     with tiny green sprouts and moss in the joints,
+                     faint ember-orange glow in the deepest knots,
+                     leather straps; bescheiden maar levend
+
+smeulbuidel.png      GEWOON — a small scorched leather pouch, half
+                     open, filled with dim smoldering coals, a thin
+                     curl of smoke escaping the drawstring
+
+kookpot_van_maxenzele.png
+                     ONGEWOON — a dented copper cooking pot polished
+                     by years of use, golden steam rising from under
+                     its lid in a warm inviting swirl, a wooden
+                     spoon hooked on the rim
+
+mosamulet.png        ZELDZAAM — a FLOATING amulet of woven roots
+                     around a heart of living moss, slowly breathing
+                     light, tiny spores drifting off it like dust in
+                     a sunbeam
+
+duivelboomtak.png    EPISCH — a black branch of the devil-tree held
+                     upright like a sceptre, violet fire seeping from
+                     its cracks, carved faces screaming in the bark,
+                     embers and splinters spiraling off it in a
+                     slow vortex
