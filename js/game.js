@@ -300,6 +300,8 @@ function fakkelKost(type, rij) {
     else if (rij >= 7) kost += 1;
   }
   if (kost > 0 && heeftRelikwie('gloeiende_lantaarn')) kost = Math.max(0, kost - 1);
+  /* de Tak van de Duivelboom eist zijn deel van het licht */
+  if (kost > 0 && heeftRelikwie('duivelboomtak')) kost += 1;
   return kost;
 }
 
@@ -344,6 +346,8 @@ function verbrandLicht(n) {
     fxNummer($('#speler-zone') || $('#topbalk'), '🤹 0', 'fx-buff');
     return;
   }
+  /* Smeulbuidel: de kolen vangen een deel van de brand op */
+  if (heeftRelikwie('smeulbuidel')) n = Math.max(1, n - 1);
   fxNummer($('#speler-zone') || $('#topbalk'), '🔥-' + n, 'fx-debuff');
   zetFakkel(-n);
   /* Zwarte Kaars: verbrand licht wordt bescherming */
@@ -923,6 +927,8 @@ function startGevecht(samenstelling, soort, rij) {
   const lichtStart = lichtNiveau();
   if (heeftRelikwie('schaduwkroon') && ['duister', 'gedoofd'].includes(lichtStart)) g.energie += 1;
   if (heeftRelikwie('kroon_van_sintels') && lichtStart === 'helder') g.energie += 1;
+  if (heeftRelikwie('houten_been')) g.speler.status.doornen = (g.speler.status.doornen || 0) + 1;
+  if (heeftRelikwie('duivelboomtak')) g.speler.status.kracht = (g.speler.status.kracht || 0) + 2;
   if (heeftRelikwie('slangenamulet')) {
     const n = 2 + (heeftRelikwie('smaragden_ring') ? 1 : 0);
     g.vijanden.forEach(v => v.status.gif = (v.status.gif || 0) + n);
@@ -1692,6 +1698,17 @@ function beginSpelerBeurt() {
   if ((s.status.zwak || 0) > 0) s.status.zwak--;
   if ((s.status.demonenvorm || 0) > 0) geefStatus(s, 'kracht', s.status.demonenvorm);
   if ((s.status.gifklieren || 0) > 0) alleVijanden().forEach(v => geefGif(v, s.status.gifklieren));
+  if ((s.status.sporenkring || 0) > 0) alleVijanden().forEach(v => geefStatus(v, 'zwak', s.status.sporenkring));
+  if ((s.status.duivelhart || 0) > 0) {
+    geefStatus(s, 'kracht', s.status.duivelhart);
+    /* het hart vreet rechtstreeks uit de fakkel (géén kaart-verbranding,
+       dus jongleur/smeulbuidel/vuurvreter blijven erbuiten) */
+    zetFakkel(-s.status.duivelhart);
+    fxNummer($('#speler-zone'), '🔥-' + s.status.duivelhart, 'fx-debuff');
+  }
+  if (heeftRelikwie('mosamulet')) geefBlok(s, 3);
+  /* het Houten Been wortelt zich vast — ná de blok-reset van beurt 1 */
+  if (g.beurt === 1 && heeftRelikwie('houten_been')) geefBlok(s, 4);
   if ((s.status.bloedzuiger || 0) > 0) {
     const vergiftigd = alleVijanden().filter(v => (v.status.gif || 0) > 0).length;
     if (vergiftigd > 0) geneesHp(s.status.bloedzuiger * vergiftigd);
@@ -1738,6 +1755,7 @@ async function gevechtGewonnen() {
   stopGevechtLus();
 
   if (heeftRelikwie('brandend_bloed')) geneesHpBuitenGevecht(6);
+  if (heeftRelikwie('kookpot_van_maxenzele')) geneesHpBuitenGevecht(3);
 
   if (g.soort === 'baas') {
     /* de doodsklap van een koning verdient een flits en een stilte */

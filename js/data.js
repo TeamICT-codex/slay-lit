@@ -442,6 +442,148 @@ const KAARTEN = {
     }
   },
 
+  /* --- Thoverk, de Kolendruïde: wortels, kolen en keukenmagie --- */
+  takkenslag: {
+    naam: 'Takkenslag', type: 'aanval', zeld: 'basis', kost: 1, doel: 'vijand', icoon: '🌳',
+    dmg: 6, up: { dmg: 9 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); }
+  },
+  vonkenbeet: {
+    naam: 'Vonkenbeet', type: 'aanval', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '💥',
+    licht: 1, dmg: 8, up: { dmg: 11 },
+    tekst: c => `Verbrand ${kval(c, 'licht')} licht. Doe ${pv(c, 'dmg')} schade.`,
+    speel: (c, t) => { verbrandLicht(kval(c, 'licht')); aanvalOp(t, kval(c, 'dmg')); }
+  },
+  stoofpotje: {
+    naam: 'Stoofpotje', type: 'vaardigheid', zeld: 'gewoon', kost: 1, icoon: '🍲',
+    blok: 4, heel: 1, up: { blok: 6, heel: 2 },
+    tekst: c => `Krijg ${pv(c, 'blok')} Blok en genees ${kval(c, 'heel')} HP.`,
+    speel: c => { geefBlok(sp(), kval(c, 'blok')); geneesHp(kval(c, 'heel')); }
+  },
+  wortelgreep: {
+    naam: 'Wortelgreep', type: 'aanval', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '🌿',
+    dmg: 5, zw: 1, up: { dmg: 7, zw: 2 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade en geef ${kval(c, 'zw')} Zwak.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefStatus(t, 'zwak', kval(c, 'zw')); }
+  },
+  doornzweep: {
+    naam: 'Doornzweep', type: 'aanval', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '🌵',
+    dmg: 3, up: { dmg: 4 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade, drie keer.`,
+    speel: (c, t) => reeksAanval(t, kval(c, 'dmg'), 3)
+  },
+  bastvel: {
+    naam: 'Bastvel', type: 'vaardigheid', zeld: 'gewoon', kost: 1, icoon: '🪵',
+    blok: 7, dr: 1, up: { blok: 9, dr: 2 },
+    tekst: c => `Krijg ${pv(c, 'blok')} Blok en ${kval(c, 'dr')} Doornen.`,
+    speel: c => { geefBlok(sp(), kval(c, 'blok')); geefStatus(sp(), 'doornen', kval(c, 'dr')); }
+  },
+  sporenstoot: {
+    naam: 'Sporenstoot', type: 'aanval', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '🍄',
+    dmg: 6, bonus: 4, up: { dmg: 8, bonus: 5 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade; +${kval(c, 'bonus')} als het doelwit Zwak of Kwetsbaar is.`,
+    speel: (c, t) => {
+      const raak = ((t.status.zwak || 0) > 0 || (t.status.kwetsbaar || 0) > 0);
+      aanvalOp(t, kval(c, 'dmg') + (raak ? kval(c, 'bonus') : 0));
+    }
+  },
+  stoofgeur: {
+    naam: 'Stoofgeur', type: 'vaardigheid', zeld: 'ongewoon', kost: 1, icoon: '🍜',
+    zw: 2, up: { zw: 3 },
+    tekst: c => `De geur leidt af: ALLE vijanden krijgen ${pv(c, 'zw')} Zwak.`,
+    speel: c => { alleVijanden().forEach(v => geefStatus(v, 'zwak', kval(c, 'zw'))); }
+  },
+  wurgwortels: {
+    naam: 'Wurgwortels', type: 'aanval', zeld: 'ongewoon', kost: 2, doel: 'vijand', icoon: '🪢',
+    dmg: 11, kw: 2, up: { dmg: 14, kw: 2 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade en geef ${kval(c, 'kw')} Kwetsbaar.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefStatus(t, 'kwetsbaar', kval(c, 'kw')); }
+  },
+  kolengloed: {
+    naam: 'Kolengloed', type: 'vaardigheid', zeld: 'ongewoon', kost: 1, icoon: '♨️',
+    licht: 3, kr: 2, up: { licht: 2 },
+    tekst: c => `Verbrand ${kval(c, 'licht')} licht: krijg ${pv(c, 'kr')} Kracht.`,
+    speel: c => { verbrandLicht(kval(c, 'licht')); geefStatus(sp(), 'kracht', kval(c, 'kr')); }
+  },
+  paddenstoelenstoofpot: {
+    naam: 'Paddenstoelenstoofpot', type: 'vaardigheid', zeld: 'ongewoon', kost: 2, icoon: '🥘',
+    heel: 5, up: { heel: 7 },
+    tekst: c => `De legendarische stoofpot van Maxenzele: genees ${pv(c, 'heel')} HP.`,
+    speel: c => { geneesHp(kval(c, 'heel')); }
+  },
+  asadem: {
+    naam: 'Asadem', type: 'aanval', zeld: 'ongewoon', kost: 1, icoon: '🌪️',
+    licht: 2, dmg: 5, up: { dmg: 7 },
+    tekst: c => `Verbrand ${kval(c, 'licht')} licht. Doe ${pv(c, 'dmg')} schade aan ALLE vijanden.`,
+    speel: c => { verbrandLicht(kval(c, 'licht')); reeksAanvalAlle(kval(c, 'dmg')); }
+  },
+  eikenhuid: {
+    naam: 'Eikenhuid', type: 'vaardigheid', zeld: 'ongewoon', kost: 2, icoon: '🌰',
+    blok: 12, up: { blok: 16 },
+    tekst: c => `Je huid wordt bast: krijg ${pv(c, 'blok')} Blok.`,
+    speel: c => { geefBlok(sp(), kval(c, 'blok')); }
+  },
+  doornmantel: {
+    naam: 'Doornmantel', type: 'kracht', zeld: 'zeldzaam', kost: 1, icoon: '🧥',
+    dr: 3, up: { dr: 5 },
+    tekst: c => `Krijg ${pv(c, 'dr')} Doornen.`,
+    speel: c => { geefStatus(sp(), 'doornen', kval(c, 'dr')); }
+  },
+  duivelspact: {
+    naam: 'Duivelspact', type: 'kracht', zeld: 'zeldzaam', kost: 1, icoon: '🤝',
+    kr: 3, up: { kr: 4 },
+    tekst: c => `De boom eist zijn prijs: krijg ${pv(c, 'kr')} Kracht én 1 Kwetsbaar.`,
+    speel: c => { geefStatus(sp(), 'kracht', kval(c, 'kr')); geefStatus(sp(), 'kwetsbaar', 1); }
+  },
+  knalsigaar: {
+    naam: 'Knalsigaar', type: 'aanval', zeld: 'zeldzaam', kost: 0, doel: 'vijand', icoon: '🚬',
+    dmg: 14, kans: 30, up: { dmg: 18, kans: 20 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. ${kval(c, 'kans')}% kans dat hij in jouw gezicht ontploft: 4 schade.`,
+    speel: (c, t) => {
+      aanvalOp(t, kval(c, 'dmg'));
+      if (Toeval.volgende() < kval(c, 'kans') / 100) {
+        verliesHp(sp(), 4);
+        melding('💥 De sigaar ontploft in je gezicht!');
+      }
+    }
+  },
+  sporenkring: {
+    naam: 'Sporenkring', type: 'kracht', zeld: 'zeldzaam', kost: 1, icoon: '💫',
+    n: 1, up: { n: 2 },
+    tekst: c => `Aan het begin van elke beurt: ALLE vijanden krijgen ${pv(c, 'n')} Zwak.`,
+    speel: c => { geefStatus(sp(), 'sporenkring', kval(c, 'n')); }
+  },
+  wilde_oogst: {
+    naam: 'Wilde Oogst', type: 'aanval', zeld: 'episch', kost: 2, icoon: '🌾',
+    dmg: 5, up: { dmg: 6 },
+    tekst: c => `De oogststorm: doe ${pv(c, 'dmg')} schade aan ALLE vijanden, drie keer.`,
+    speel: async c => {
+      for (let i = 0; i < 3; i++) {
+        await reeksAanvalAlle(kval(c, 'dmg'));
+        if (i < 2) await slaap(180);
+      }
+    }
+  },
+  hart_van_de_duivelboom: {
+    naam: 'Hart van de Duivelboom', type: 'kracht', zeld: 'episch', kost: 2, icoon: '🌳',
+    up: { kost: 1 },
+    tekst: () => `Aan het begin van elke beurt: +1 Kracht, maar verbrand 1 licht.`,
+    speel: () => { geefStatus(sp(), 'duivelhart', 1); }
+  },
+  flame: {
+    naam: 'Flame', type: 'aanval', zeld: 'episch', kost: 3, icoon: '🔥',
+    licht: 5, uitputten: true,
+    dmg: 18, up: { dmg: 22, licht: 4 },
+    tekst: c => `Verbrand ${kval(c, 'licht')} licht. Doe ${pv(c, 'dmg')} schade aan ALLE vijanden en krijg 2 Kracht. Uitputten.`,
+    speel: async c => {
+      verbrandLicht(kval(c, 'licht'));
+      geefStatus(sp(), 'kracht', 2);
+      signatuurMoment('flame', 'oranje', 'FLAME.');
+      await reeksAanvalAlle(kval(c, 'dmg'));
+    }
+  },
+
   /* --- signature-klappers: één episch moment per held (zie ook flame, Thoverk) --- */
   beulswerk: {
     naam: 'Beulswerk', type: 'aanval', zeld: 'episch', kost: 3, doel: 'vijand', icoon: '🪓',
@@ -484,6 +626,11 @@ const KAARTEN = {
  'verlammend_gif', 'katalyse', 'etterende_wonden', 'bloedzuiger', 'epidemie', 'gifvlam',
  'lichtrot', 'moederslang'
 ].forEach(id => KAARTEN[id].held = 'gifmagier');
+['takkenslag', 'vonkenbeet', 'stoofpotje', 'wortelgreep', 'doornzweep', 'bastvel',
+ 'sporenstoot', 'stoofgeur', 'wurgwortels', 'kolengloed', 'paddenstoelenstoofpot',
+ 'asadem', 'eikenhuid', 'doornmantel', 'duivelspact', 'knalsigaar', 'sporenkring',
+ 'wilde_oogst', 'hart_van_de_duivelboom', 'flame'
+].forEach(id => KAARTEN[id].held = 'thoverk');
 
 /* ---------- SPEELBARE HELDEN ---------- */
 const SPELERS = {
@@ -503,6 +650,15 @@ const SPELERS = {
     dek: ['prik', 'prik', 'prik', 'prik',
           'verdediging', 'verdediging', 'verdediging', 'verdediging',
           'dodelijke_kus', 'gifflits']
+  },
+  thoverk: {
+    naam: 'De Kolendruïde', art: 'thoverk', icoon: '🌿', hp: 66,
+    kleur: '214, 150, 86',
+    relikwie: 'houten_been',
+    stijl: 'Wortels en smeulende kolen: voed het vuur met je fakkel, wurg wat overblijft.',
+    dek: ['takkenslag', 'takkenslag', 'takkenslag', 'takkenslag',
+          'verdediging', 'verdediging', 'verdediging', 'verdediging',
+          'vonkenbeet', 'stoofpotje']
   }
 };
 
@@ -515,6 +671,8 @@ const STATUSINFO = {
   doornen:     { naam: 'Doornen',     icoon: '🌵', goed: true,  uitleg: 'Aanvallers krijgen zoveel schade terug.' },
   metaalhuid:  { naam: 'Metaalhuid',  icoon: '🦾', goed: true,  uitleg: 'Krijgt aan het einde van elke beurt zoveel Blok.' },
   demonenvorm: { naam: 'Demonenvorm', icoon: '😈', goed: true,  uitleg: 'Krijgt aan het begin van elke beurt zoveel Kracht.' },
+  sporenkring: { naam: 'Sporenkring', icoon: '🍄', goed: true,  uitleg: 'Geeft aan het begin van elke beurt alle vijanden zoveel Zwak.' },
+  duivelhart:  { naam: 'Duivelhart',  icoon: '🌳', goed: true,  uitleg: 'Geeft aan het begin van elke beurt zoveel Kracht, maar verbrandt evenveel licht.' },
   gifklieren:  { naam: 'Gifklieren',  icoon: '🧫', goed: true,  uitleg: 'Geeft aan het begin van elke beurt alle vijanden zoveel Gif.' },
   energiekern: { naam: 'Energiekern', icoon: '🔋', goed: true,  uitleg: 'Geeft elke beurt zoveel extra Energie.' },
   ritueel:     { naam: 'Ritueel',     icoon: '🕯️', goed: true,  uitleg: 'Krijgt aan het begin van elke beurt zoveel Kracht.' },
@@ -775,6 +933,18 @@ const RELIKWIEEN = {
   laatste_lucifer: { naam: 'De Laatste Lucifer', icoon: '🎇', zeld: 'episch', tekst: 'Dooft je fakkel, dan vlamt hij één keer per run weer op naar 50 licht.',
     lore: 'Voor het állerdonkerste moment. Strijk hem niet te vroeg af.' },
 
+  /* --- Thoverk, de Kolendruïde --- */
+  houten_been:    { naam: 'Het Houten Been', icoon: '🦵', zeld: 'start', tekst: 'Aan het begin van elk gevecht: 4 Blok en 1 Doornen — het been wortelt zich vast.',
+    lore: 'Geruild met een pratende duivelboom, in een dimensie die hij liever vergeet. De boom denkt nog steeds dat hij won.' },
+  smeulbuidel:    { naam: 'Smeulbuidel', icoon: '👝', zeld: 'gewoon', tekst: 'Kaarten die licht verbranden, verbranden er 1 minder (minimum 1).',
+    lore: 'De kolen van zijn staf slapen erin. Ze snurken vonkjes.' },
+  kookpot_van_maxenzele: { naam: 'Kookpot van Maxenzele', icoon: '🍯', zeld: 'ongewoon', tekst: 'Na elk gevecht: genees 3 HP.',
+    lore: 'De pot die een compleet cafégevecht beëindigde. De deuken zitten er nog in.' },
+  mosamulet:      { naam: 'Mosamulet', icoon: '🧿', zeld: 'zeldzaam', tekst: 'Aan het begin van je beurt: 3 Blok.',
+    lore: 'Mos haast zich nooit. Mos komt toch wel.' },
+  duivelboomtak:  { naam: 'Tak van de Duivelboom', icoon: '🌳', zeld: 'episch', tekst: '+2 Kracht aan het begin van elk gevecht, maar elke kamer kost +1 licht.',
+    lore: 'Hij fluistert nog steeds ruilvoorstellen. Niet luisteren. Wel vasthouden.' },
+
   /* --- zeldzaam --- */
   oorlogstrommel: { naam: 'Oorlogstrommel', icoon: '🥁', zeld: 'zeldzaam', tekst: 'Trek elke beurt 1 extra kaart.',
     lore: 'Wie hem hoort, vecht sneller dan hij denkt.' },
@@ -815,7 +985,19 @@ const DRANKEN = {
   gifflacon:    { naam: 'Gifflacon', icoon: '🍶', kleur: '#7ed957', doel: 'vijand', tekst: 'Geef een vijand 6 Gif.', drink: t => geefGif(t, 6),
     lore: 'De Gifmagiër noemt dit "limonade". Niemand lacht.' },
   energiedrank: { naam: 'Energiedrank', icoon: '🥤', kleur: '#5ad0e8', tekst: 'Krijg 2 Energie.', drink: () => { S.gevecht.energie += 2; },
-    lore: 'Verboden in drie koninkrijken. Warm aanbevolen door het vierde.' }
+    lore: 'Verboden in drie koninkrijken. Warm aanbevolen door het vierde.' },
+  maxenzeelse_stoofpot: { naam: 'Maxenzeelse Stoofpot', icoon: '🍲', kleur: '#e0a64a', tekst: 'Genees 10 HP en verwijder Zwak en Kwetsbaar.',
+    drink: () => { geneesHp(10); sp().status.zwak = 0; sp().status.kwetsbaar = 0; },
+    lore: 'Eén hap en het cafégevecht in je hoofd valt stil.' },
+  magische_sigaar: { naam: 'Magische Sigaar', icoon: '🚬', kleur: '#ff7a46', doel: 'vijand', tekst: 'Doe 16 schade aan een vijand. 25% kans dat hij in jouw gezicht ontploft: 4 schade.',
+    drink: t => {
+      doeSchade(t, 16, null);
+      if (Toeval.volgende() < 0.25) { verliesHp(sp(), 4); melding('💥 In je gezicht!'); }
+    },
+    lore: 'Thoverk zweert dat deze partij wél stabiel is. Zijn ooglapje zwijgt.' },
+  duivelshars: { naam: 'Duivelshars', icoon: '🫙', kleur: '#b8864a', tekst: 'Krijg 10 Blok en 2 Doornen.',
+    drink: () => { geefBlok(sp(), 10); geefStatus(sp(), 'doornen', 2); },
+    lore: 'Plakt aan je ribben. En aan alles wat je raakt.' }
 };
 
 /* ---------- EVENTS ---------- */

@@ -308,3 +308,17 @@ doelwit, kost 4 eigen HP, uitputten — kreet "Kniel.") en Moederslang
 klaar, art verschijnt vanzelf bij drop (state-probe uitgebreid voor
 helden). Geverifieerd: schade/zelfschade/gif/zwak exact, flits +
 kreet aanwezig, geen fouten.
+
+### R3.9 — THOVERK LIVE: derde speelbare held (KLAAR, 2026-06-12)
+Act 1 is compleet met 3 helden. De Kolendruïde (66 HP, koperbrons):
+20 eigen kaarten (incl. Flame met signatuurmoment), startrelikwie Het
+Houten Been (1 Doornen + 4 Blok op beurt 1), 4 vindbare relikwieën
+(Smeulbuidel, Kookpot van Maxenzele, Mosamulet, Tak van de
+Duivelboom) en 3 drankjes (Maxenzeelse Stoofpot, Magische Sigaar,
+Duivelshars). Nieuwe statussen Sporenkring en Duivelhart (het hart
+vreet rechtstreeks uit de fakkel, bewust buiten jongleur/smeulbuidel
+om). Art-drop verwerkt: 21 karakterbeelden (incl. 8 death-states
+standaardvijanden + 2 signature-poses) + 2 kaart-arts, 49 MB → 4 MB.
+Volledig geverifieerd: heldkeuze ×3, alle kaarteffecten exact, alle
+relic-hooks, drankjes, art-loading, geen JS-fouten. Drops (metgezel)
+volgt in Act 2.
