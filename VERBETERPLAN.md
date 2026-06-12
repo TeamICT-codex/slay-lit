@@ -331,3 +331,13 @@ volgt in Act 2.
    ONTWERP.md (Slachter start, Gifmagiër via "De Gekooide"-event,
    Thoverk via 3-staps stoofpotqueeste, Codex-migratie zodat
    bestaande spelers niets verliezen).
+
+### R3.11 — Witresten uit de karakter-art (KLAAR, 2026-06-12)
+Feedback: wit oogt slordig, vooral aan Thoverks staf. Dambordscript
+uitgebreid met drie regels: kleine ingesloten wit-zakjes (één
+ruittint volstaat nu), verweesde witte eilandjes (half opgegeten
+rookflarden los van de figuur) en uitstekende witte brokken (veel
+rand aan transparantie = wegsnijden; interieur-highlights blijven).
+Alle 20 nieuwste beelden herverwerkt vanaf de originelen en opnieuw
+naar WebP. SW-cache v6→v7 zodat bestaande spelers de schone art ook
+echt te zien krijgen (eenmalige hercache).
