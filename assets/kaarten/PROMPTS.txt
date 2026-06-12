@@ -978,3 +978,84 @@ coals beating between wooden ribs, each pulse sending a ring of
 violet light through the grain.
 
 Painted illustration only, rich color, clean readable silhouette.
+
+
+############ HET LICHTVERHAAL (neutraal + held-signatuur) ############
+
+===================== lichtdief.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a gloved hand snatching a ribbon of living torchlight out
+of the dark mid-strike, the stolen flame curling around the
+fingers like silk.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== vlamschild.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a translucent shield of pure firelight blooming open like
+a fan, brightest at its blazing center, sparks deflecting off
+its surface.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+==================== duisterklauw.png ====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a massive claw of solid shadow raking out of an unlit
+corner, its talons sharpest where the darkness is deepest, the
+last torch in the frame guttering.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== offervlam.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: two cupped hands offering a small flame upward where it
+transforms into radiant motes of pure energy, the surrounding
+torches dimming in tribute.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+================ brandmerk.png (Slachter) =================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a white-hot brand in the shape of a torch sigil pressed
+hissing into dark armor, embers exploding from the contact
+point.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+================ lichtrot.png (Gifmagiër) =================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue
+and teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: luminous toxic fungus devouring a dying torch, sickly
+green rot crawling up the shaft as the flame fades, glowing
+spores drifting into the dark.
+
+Painted illustration only, rich color, clean readable silhouette.

@@ -151,3 +151,33 @@ duivelboomtak.png    EPISCH — a black branch of the devil-tree held
                      its cracks, carved faces screaming in the bark,
                      embers and splinters spiraling off it in a
                      slow vortex
+
+
+########## HET LICHTVERHAAL (fakkel-relikwieën) ##########
+
+kaarsenstomp.png     GEWOON — a stubby candle stump drowning in its
+                     own wax, the wick still defiantly alight with a
+                     small steady flame
+
+vonkenkluis.png      ONGEWOON — a small iron-banded urn with its lid
+                     ajar, live sparks rattling and leaping inside
+                     like fireflies in a jar
+
+vuurvreter.png       ZELDZAAM — a cracked iron fire-eater's mask
+                     FLOATING upright, mouth open mid-swallow with a
+                     whole flame disappearing inside, heat shimmer
+                     rising off the metal
+
+fakkeljongleur.png   ZELDZAAM — three small torches juggling
+                     THEMSELVES in a slow floating orbit, trails of
+                     flame connecting them in a perfect circle
+
+mottenkroon.png      EPISCH — a dark regal crown orbited by glowing
+                     white moths leaving dusty trails of light,
+                     godrays breaking through, wing-scales drifting
+                     down like snow
+
+laatste_lucifer.png  EPISCH — one single oversized match resting on
+                     a velvet altar cushion, its red head faintly
+                     pulsing as if holding its breath, a halo of
+                     suspended sparks waiting around it

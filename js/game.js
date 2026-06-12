@@ -305,9 +305,17 @@ function fakkelKost(type, rij) {
 
 function zetFakkel(delta) {
   const voor = lichtNiveau();
+  /* Vonkenkluis: elke lichtwinst klettert er dubbel uit */
+  if (delta > 0 && heeftRelikwie('vonkenkluis')) delta += 1;
   S.fakkel = Math.max(0, Math.min(100, S.fakkel + delta));
   /* de Eeuwige Lont weigert te doven */
   if (delta < 0 && S.fakkel < 10 && heeftRelikwie('eeuwige_lont')) S.fakkel = 10;
+  /* De Laatste Lucifer: één keer per run vlamt het donker weer op */
+  if (S.fakkel === 0 && delta < 0 && heeftRelikwie('laatste_lucifer') && !S.luciferOp) {
+    S.luciferOp = true;
+    S.fakkel = 50;
+    melding('🎇 De Laatste Lucifer vlamt op!');
+  }
   const na = lichtNiveau();
   if (voor !== na) {
     const teksten = {
@@ -329,10 +337,19 @@ function zetFakkel(delta) {
 
 function verbrandLicht(n) {
   if (n <= 0) return;
+  /* Fakkeljongleur: de eerste verbrand-kaart per beurt kost niets */
+  const g = S.gevecht;
+  if (g && !g.voorbij && heeftRelikwie('fakkeljongleur') && !g.jongleurOp) {
+    g.jongleurOp = true;
+    fxNummer($('#speler-zone') || $('#topbalk'), '🤹 0', 'fx-buff');
+    return;
+  }
   fxNummer($('#speler-zone') || $('#topbalk'), '🔥-' + n, 'fx-debuff');
   zetFakkel(-n);
   /* Zwarte Kaars: verbrand licht wordt bescherming */
   if (inGevecht() && heeftRelikwie('zwarte_kaars')) geefBlok(sp(), n);
+  /* Vuurvreter: de vlam spuwt de pijn door naar alle vijanden */
+  if (inGevecht() && heeftRelikwie('vuurvreter')) alleVijanden().forEach(v => verliesHp(v, 2));
 }
 
 /* ---------- fluistertekst: stemmen uit de diepte ----------
@@ -1676,6 +1693,9 @@ function beginSpelerBeurt() {
     g.bewaardeEnergie = 0;
   }
   trekKaarten(5 + (heeftRelikwie('oorlogstrommel') ? 1 : 0));
+  /* Mottenkroon: de motten brengen nieuws zolang het licht brandt */
+  if (heeftRelikwie('mottenkroon') && lichtNu === 'helder') trekKaarten(1);
+  g.jongleurOp = false; /* Fakkeljongleur is weer klaar voor zijn act */
 
   if (alleVijanden().length === 0) { gevechtGewonnen(); return; }
   g.bezig = false;
@@ -1718,6 +1738,7 @@ async function gevechtGewonnen() {
   if (g.gedoofd) goud = Math.floor(goud * 1.5);
   if (heeftRelikwie('gelukspoot')) goud = Math.floor(goud * 1.25);
   if (heeftRelikwie('leren_buidel')) goud += 10;
+  if (heeftRelikwie('kaarsenstomp')) zetFakkel(3);
 
   S.beloning = {
     goud,

@@ -392,6 +392,56 @@ const KAARTEN = {
     }
   },
 
+  /* --- het lichtverhaal: kaarten die de fakkel terugbetalen --- */
+  lichtdief: {
+    naam: 'Lichtdief', type: 'aanval', zeld: 'ongewoon', kost: 1, doel: 'vijand', icoon: '🥷',
+    vuur: true,
+    dmg: 6, winst: 2, up: { dmg: 8, winst: 3 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade en steel ${kval(c, 'winst')} licht uit de schaduwen.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); zetFakkel(kval(c, 'winst')); }
+  },
+  vlamschild: {
+    naam: 'Vlamschild', type: 'vaardigheid', zeld: 'ongewoon', kost: 1, icoon: '🔆',
+    vuur: true,
+    blok: 6, felBlok: 10, up: { blok: 8, felBlok: 13 },
+    tekst: c => `Krijg ${pv(c, 'blok')} Blok; brandt je fakkel helder: ${kval(c, 'felBlok')}.`,
+    speel: c => { geefBlok(sp(), kval(c, lichtNiveau() === 'helder' ? 'felBlok' : 'blok')); }
+  },
+  duisterklauw: {
+    naam: 'Duisterklauw', type: 'aanval', zeld: 'zeldzaam', kost: 1, doel: 'vijand', icoon: '🌘',
+    vuur: true,
+    dmg: 7, schemerDmg: 10, duisterDmg: 14, gedoofdDmg: 19,
+    up: { dmg: 9, schemerDmg: 13, duisterDmg: 17, gedoofdDmg: 23 },
+    tekst: c => `Hoe donkerder, hoe harder: ${pv(c, 'dmg')}/${kval(c, 'schemerDmg')}/${kval(c, 'duisterDmg')}/${kval(c, 'gedoofdDmg')} schade (helder → gedoofd).`,
+    speel: (c, t) => {
+      const veld = { helder: 'dmg', schemer: 'schemerDmg', duister: 'duisterDmg', gedoofd: 'gedoofdDmg' }[lichtNiveau()];
+      aanvalOp(t, kval(c, veld));
+    }
+  },
+  offervlam: {
+    naam: 'Offervlam', type: 'vaardigheid', zeld: 'zeldzaam', kost: 0, icoon: '🔥',
+    licht: 4, uitputten: true, up: { licht: 3 },
+    tekst: c => `Verbrand ${kval(c, 'licht')} licht: +1 Energie en trek 1 kaart. Uitputten.`,
+    speel: c => { verbrandLicht(kval(c, 'licht')); S.gevecht.energie += 1; trekKaarten(1); }
+  },
+  brandmerk: {
+    naam: 'Brandmerk', type: 'aanval', zeld: 'zeldzaam', kost: 2, doel: 'vijand', icoon: '🔱',
+    licht: 3, dmg: 11, kw: 2, up: { dmg: 14, licht: 2 },
+    tekst: c => `Verbrand ${kval(c, 'licht')} licht. Doe ${pv(c, 'dmg')} schade en geef ${kval(c, 'kw')} Kwetsbaar.`,
+    speel: (c, t) => { verbrandLicht(kval(c, 'licht')); aanvalOp(t, kval(c, 'dmg')); geefStatus(t, 'kwetsbaar', kval(c, 'kw')); }
+  },
+  lichtrot: {
+    naam: 'Lichtrot', type: 'vaardigheid', zeld: 'zeldzaam', kost: 1, icoon: '🍄',
+    vuur: true,
+    gif: 2, schemerGif: 3, duisterGif: 5, gedoofdGif: 7,
+    up: { gif: 3, schemerGif: 4, duisterGif: 6, gedoofdGif: 8 },
+    tekst: c => `Het gif gedijt in het donker: geef ALLE vijanden ${pv(c, 'gif')}/${kval(c, 'schemerGif')}/${kval(c, 'duisterGif')}/${kval(c, 'gedoofdGif')} Gif (helder → gedoofd).`,
+    speel: c => {
+      const veld = { helder: 'gif', schemer: 'schemerGif', duister: 'duisterGif', gedoofd: 'gedoofdGif' }[lichtNiveau()];
+      alleVijanden().forEach(v => geefGif(v, kval(c, veld)));
+    }
+  },
+
   /* --- vloeken --- */
   pijn: {
     naam: 'Pijn', type: 'vloek', zeld: 'vloek', kost: null, icoon: '💀',
@@ -403,11 +453,12 @@ const KAARTEN = {
 /* ---------- kaartpools per held (niet vermeld = neutraal, voor iedereen) ---------- */
 ['slag', 'knal', 'dubbelslag', 'zware_klap', 'klingenstorm', 'ijzeren_golf', 'bloedoffer',
  'uithaal', 'executie', 'molensteen', 'vampiersbeet', 'wervelwind', 'genadeslag',
- 'metaalhuid', 'vlammende_hartstocht', 'demonenvorm', 'vlammenkling'
+ 'metaalhuid', 'vlammende_hartstocht', 'demonenvorm', 'vlammenkling', 'brandmerk'
 ].forEach(id => KAARTEN[id].held = 'slachter');
 ['giftige_steek', 'gifwolk', 'gifklieren', 'prik', 'dodelijke_kus', 'snelle_steek',
  'slangenbeet', 'venijnregen', 'giftand', 'nachtschade', 'gifflits', 'sluiproute',
- 'verlammend_gif', 'katalyse', 'etterende_wonden', 'bloedzuiger', 'epidemie', 'gifvlam'
+ 'verlammend_gif', 'katalyse', 'etterende_wonden', 'bloedzuiger', 'epidemie', 'gifvlam',
+ 'lichtrot'
 ].forEach(id => KAARTEN[id].held = 'gifmagier');
 
 /* ---------- SPEELBARE HELDEN ---------- */
@@ -685,6 +736,20 @@ const RELIKWIEEN = {
     lore: 'Hoe groter de vijand, hoe rechter hij wappert.' },
   bottenfluit:    { naam: 'Bottenfluit', icoon: '🦴', zeld: 'ongewoon', tekst: 'Vijanden beginnen elk gevecht met 1 Zwak.',
     lore: 'Eén lange noot, en hun knieën herinneren zich oude angst.' },
+
+  /* --- het lichtverhaal: de fakkel als bondgenoot --- */
+  kaarsenstomp:   { naam: 'Kaarsenstomp', icoon: '🕯️', zeld: 'gewoon', tekst: 'Na elk gevecht: +3 licht.',
+    lore: 'Het laatste restje van duizend avonden. Het weigert op te branden.' },
+  vonkenkluis:    { naam: 'Vonkenkluis', icoon: '⚱️', zeld: 'ongewoon', tekst: 'Telkens je licht wint, win je er 1 extra.',
+    lore: 'Wat erin valt, klettert er dubbel weer uit.' },
+  vuurvreter:     { naam: 'Vuurvreter', icoon: '🌋', zeld: 'zeldzaam', tekst: 'Verbrandt een kaart van jou licht, dan krijgen alle vijanden 2 schade.',
+    lore: 'Hij slikt de vlam in — en spuwt de pijn naar wie te dichtbij staat.' },
+  fakkeljongleur: { naam: 'Fakkeljongleur', icoon: '🤹', zeld: 'zeldzaam', tekst: 'De eerste kaart per beurt die licht verbrandt, verbrandt niets.',
+    lore: 'Drie fakkels in de lucht, en geen één raakt ooit de grond.' },
+  mottenkroon:    { naam: 'Mottenkroon', icoon: '🦋', zeld: 'episch', tekst: 'Begin je je beurt terwijl je fakkel helder brandt: trek 1 extra kaart.',
+    lore: 'De motten fluisteren wat ze in het licht zagen.' },
+  laatste_lucifer: { naam: 'De Laatste Lucifer', icoon: '🎇', zeld: 'episch', tekst: 'Dooft je fakkel, dan vlamt hij één keer per run weer op naar 50 licht.',
+    lore: 'Voor het állerdonkerste moment. Strijk hem niet te vroeg af.' },
 
   /* --- zeldzaam --- */
   oorlogstrommel: { naam: 'Oorlogstrommel', icoon: '🥁', zeld: 'zeldzaam', tekst: 'Trek elke beurt 1 extra kaart.',

@@ -236,3 +236,22 @@ Promptbibliotheek volledig aangevuld (STATE-PROMPTS + kaarten +
 relikwieen + dranken). Drops geparkeerd als eerste Act 2-metgezel.
 Wacht op art-drop van Thomas; implementatie daarna (checklist in
 ONTWERP.md).
+
+### R3.3 — Het lichtverhaal: 6 kaarten + 6 relikwieën (KLAAR, 2026-06-12)
+Feedback: "kaarten die zaken combineren met het lichtverhaal + zotte
+relikwieën". De fakkel betaalde alleen; nu betaalt hij ook terug.
+Kaarten: Lichtdief (steelt licht), Vlamschild (helder-bonus),
+Duisterklauw (schaalt op duisternis), Offervlam (licht → energie +
+kaart), Brandmerk (Slachter), Lichtrot (Gifmagiër, gif schaalt op
+duisternis). Relikwieën: Kaarsenstomp (+3 licht na gevecht),
+Vonkenkluis (lichtwinst +1), Vuurvreter (verbranden = 2 schade aan
+alles), Fakkeljongleur (1e verbrand-kaart per beurt gratis),
+Mottenkroon (helder = +1 kaart per beurt), De Laatste Lucifer
+(eenmalig: gedoofd → 50). Bewuste zotte combo: Fakkeljongleur +
+Omarm het Duister (kracht zonder lichtverlies, 1×/beurt) — feature,
+geen bug. Alles Playwright-geverifieerd op exacte getallen.
+
+BEVINDING voor Thoverk-implementatie: trekKaartBeloning weegt enkel
+gewoon/ongewoon/zeldzaam — épische KAARTEN droppen nooit. Wilde Oogst
+en Hart van de Duivelboom dus als zeldzaam implementeren, óf een
+episch-gewicht (~3) toevoegen aan de weging.
