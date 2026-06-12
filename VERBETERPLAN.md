@@ -1,4 +1,4 @@
-# SLAY LIT — Verbeterplan (speeltest-feedback 11-06-2026)
+﻿# SLAY LIT — Verbeterplan (speeltest-feedback 11-06-2026)
 
 *Feedback uit de eerste echte speelronden van Thomas. Stap voor stap
 afwerken; het spel blijft na elke stap speelbaar. Volgorde = prioriteit.*
@@ -212,6 +212,13 @@ hulpje naast de held met één duidelijk per-beurt-effect (schim geeft
 1 Blok, rat steelt goud bij kills, imp 2 schade maar vreet 1 licht per
 beurt...), ontgrendeld via events; alignment stuurt welke events je
 daarna tegenkomt. Volledige schets in ONTWERP.md.
+
+### R3.1 — Fakkel-vignet 2.0 (KLAAR, 2026-06-12)
+Feedback: "het effect van de fakkel meer laten zien aan de zijkanten,
+subtiel, niet gameplay-storend". Vignet van gevecht-only naar
+body-niveau (kaart/rust/winkel/event/gevecht), glijdende sterkte per
+fakkelpunt, nadruk op de zijkanten, naflakkeren bij duister/gedoofd,
+onderaan uitgemaskeerd zodat hand en knoppen vrij blijven.
 
 ## Geparkeerd
 - **Seed-uitleg/UX**: wordt pas echt zinvol samen met de daily run en
