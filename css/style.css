@@ -1942,15 +1942,46 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   100% { opacity: 0; }
 }
 
-/* duister-vignet: het donker kruipt vanaf de randen naar binnen */
+/* duister-vignet: het donker kruipt vanaf de schermranden naar binnen,
+   met nadruk op de zijkanten. Boven de schermen (z 1), onder topbalk (50),
+   overlays (800) en meldingen (950). Onderaan uitgemaskeerd zodat hand en
+   knoppen altijd vrij blijven. */
 #licht-vignet {
   position: fixed; inset: 0;
-  z-index: 0;
+  z-index: 40;
   pointer-events: none;
-  background: radial-gradient(ellipse 70% 60% at 50% 45%, transparent 40%, rgba(0, 0, 0, .92) 100%);
+  background:
+    linear-gradient(90deg, rgba(2, 1, 6, .96), transparent 21%),
+    linear-gradient(270deg, rgba(2, 1, 6, .96), transparent 21%),
+    radial-gradient(ellipse 76% 62% at 50% 44%, transparent 38%, rgba(2, 1, 6, .96) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 60%, rgba(0, 0, 0, .35) 80%, transparent 94%);
+  mask-image: linear-gradient(to bottom, #000 0, #000 60%, rgba(0, 0, 0, .35) 80%, transparent 94%);
   opacity: 0;
   transition: opacity 1.2s ease;
 }
+/* sputterende fakkel: onregelmatig naflakkeren bij duister/gedoofd */
+#licht-vignet::after {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(90deg, rgba(2, 1, 6, .6), transparent 16%),
+    linear-gradient(270deg, rgba(2, 1, 6, .6), transparent 16%),
+    radial-gradient(ellipse 70% 56% at 50% 44%, transparent 34%, rgba(2, 1, 6, .6) 100%);
+  opacity: 0;
+}
+#licht-vignet.flikker::after { animation: vignetFlikker 3.2s ease-in-out infinite; }
+@keyframes vignetFlikker {
+  0%, 100% { opacity: 0; }
+  16% { opacity: .34; }
+  31% { opacity: .1; }
+  49% { opacity: .42; }
+  66% { opacity: .16; }
+  84% { opacity: .36; }
+}
+/* buiten de run heeft de fakkel niets te vertellen */
+body[data-scherm="titel"] #licht-vignet,
+body[data-scherm="held"] #licht-vignet,
+body[data-scherm="einde"] #licht-vignet { opacity: 0 !important; }
 #scherm-gevecht.d3-actief #vista-canvas { display: block; }
 #scherm-gevecht > #beurt-label,
 #scherm-gevecht > #strijdveld,
@@ -2112,6 +2143,7 @@ body.lite .intent,
 body.lite .knoop.kan { animation: none; }
 body.lite .overlay { backdrop-filter: none; }
 body.lite #hand .kaart::after { display: none; }
+body.lite #licht-vignet.flikker::after { animation: none; }
 
 /* ---------- klein scherm ---------- */
 @media (max-width: 860px) {

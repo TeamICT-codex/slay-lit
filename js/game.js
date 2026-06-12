@@ -372,7 +372,16 @@ function zetLichtVisueel() {
   if (bg) bg.style.filter = `brightness(${(0.45 + 0.55 * f).toFixed(2)})`;
   const vignet = $('#licht-vignet');
   if (vignet) {
-    vignet.style.opacity = { helder: 0, schemer: 0.28, duister: 0.58, gedoofd: 0.78 }[niveau];
+    /* glijdend met de fakkelstand mee: elk verloren punt licht schuift
+       het donker een tikje verder naar binnen (niet in trappen) */
+    const fk = (S && S.fakkel !== undefined) ? S.fakkel : 100;
+    let sterkte;
+    if (fk >= 60) sterkte = 0.2 * (100 - fk) / 40;
+    else if (fk >= 30) sterkte = 0.26 + 0.24 * (60 - fk) / 30;
+    else if (fk >= 1) sterkte = 0.56 + 0.24 * (30 - fk) / 29;
+    else sterkte = 0.92;
+    vignet.style.opacity = sterkte.toFixed(2);
+    vignet.classList.toggle('flikker', fk < 30);
   }
   if (window.Klank && Klank.zetDuister) Klank.zetDuister(niveau === 'duister' || niveau === 'gedoofd');
 }
@@ -569,6 +578,8 @@ function toonScherm(naam) {
   $$('.scherm').forEach(el => el.classList.remove('actief'));
   $('#scherm-' + naam).classList.add('actief');
   $('#topbalk').style.display = (naam === 'titel') ? 'none' : 'flex';
+  document.body.dataset.scherm = naam;   /* o.a. voor het fakkel-vignet */
+  zetLichtVisueel();
   if (S) S.scherm = naam;
   if (SCHERM_MUZIEK[naam]) Klank.muziek(SCHERM_MUZIEK[naam]);
 }
