@@ -2229,12 +2229,12 @@ body.lite #licht-vignet.flikker::after { animation: none; }
 @media (pointer: coarse) {
   #tooltip { max-width: min(280px, 92vw); }
 
-  /* beginscherm fors leesbaar */
-  .titel-groot { font-size: min(17vw, 6.5rem); }
-  .titel-sub { font-size: 1.4rem; margin: 14px 0 28px; }
-  .titel-knoppen { gap: 16px; }
-  .titel-knoppen .knop-groot { min-width: min(330px, 86vw); font-size: 1.5rem; padding: 18px 30px; }
-  .knop-stil { font-size: 1.3rem; padding: 10px 16px; }
+  /* beginscherm: titel vult ~85% van de breedte (was ~52% → voelde klein) */
+  .titel-groot { font-size: min(28vw, 8.5rem); }
+  .titel-sub { font-size: 1.5rem; margin: 16px 0 30px; }
+  .titel-knoppen { gap: 18px; }
+  .titel-knoppen .knop-groot { min-width: min(360px, 90vw); font-size: 1.6rem; padding: 20px 30px; }
+  .knop-stil { font-size: 1.35rem; padding: 12px 16px; }
   .scherm-titel { font-size: 1.9rem; }
 
   /* --- topbalk: compact, transparant, overlappend. In battle telt het scherm;
