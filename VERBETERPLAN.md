@@ -355,3 +355,16 @@ gefaseerd plan in ONTWERP.md. Kern: doable, ~80% media-query-only dus
 laptop blijft ongemoeid. 4 blokkers (afdaalkaart 700px, kaarthand te
 breed, 3D default-aan op touch, tooltips muis-only). Aanrader startpunt:
 Fase 1 (3D uit + lite aan op touch, 4 regels game.js, nul desktoprisico).
+
+### R3.14 — Mobiel-optimalisatie UITGEVOERD: alle 6 fasen (KLAAR, 2026-06-13)
+Het R3.13-plan volledig uitgevoerd, elke fase Playwright-geverifieerd
+op telefoon (Pixel 5-emulatie) én desktop, met de laptopervaring bewezen
+ongewijzigd. Commits: Fase 1 (3D uit + lite aan op touch), Fase 2
+(480px-breakpoint + viewport-fit), Fase 3 (afdaalkaart swipebaar +
+kaarthand/HUD passen — de blokkers), Fase 4 (touch-tooltips + drank-
+long-press + tik-feedback), Fase 5 (schermen reflowen/scrollen + 2D-klem
+koppelt onderbalk), Fase 6 (safe-area via env() + app-iconen + PWA-meta).
+Desktop-veiligheid: media-query-only (≤480px) of @media(hover:none),
+feature-detect (pointer:coarse), min()/clamp() en env() (=0 op desktop).
+SW-cache bewust op v7 gehouden (geen art-wipe). Eindregressie desktop:
+volledige run-flow zonder fouten. Mobiel nu speelbaar + installeerbaar.
