@@ -851,6 +851,10 @@ function renderKaartScherm() {
 
   const doelY = S.pos ? nodePositie(S.kaart[S.pos]).y : 0;
   scroller.scrollTop = Math.max(0, doelY - scroller.clientHeight * 0.45);
+  /* horizontaal centreren op de huidige knoop (telefoon: vlak is breder dan
+     het scherm en swipebaar). Op desktop is er geen horizontale overloop,
+     dus dit is daar een no-op. */
+  if (S.pos) scroller.scrollLeft = Math.max(0, nodePositie(S.kaart[S.pos]).x - scroller.clientWidth * 0.5);
   $('#seed-label').textContent = 'Seed: ' + (S.seed || '—');
   zetLichtVisueel();
   renderTopbalk();
@@ -869,7 +873,11 @@ function kiesNode(id) {
   held.style.left = doel.x + 'px';
   held.style.top = doel.y + 'px';
   const scroller = $('#kaart-scroll');
-  if (scroller) scroller.scrollTo({ top: Math.max(0, doel.y - scroller.clientHeight * 0.45), behavior: 'smooth' });
+  if (scroller) scroller.scrollTo({
+    top: Math.max(0, doel.y - scroller.clientHeight * 0.45),
+    left: Math.max(0, doel.x - scroller.clientWidth * 0.5),  /* no-op op desktop */
+    behavior: 'smooth'
+  });
   Klank.sfx('stap');
   setTimeout(() => Klank.sfx('stap'), 450);
   setTimeout(() => Klank.sfx('stap'), 880);
