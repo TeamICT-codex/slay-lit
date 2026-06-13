@@ -682,7 +682,7 @@ function renderTopbalk() {
   }).join('');
   $('#tb-dranken').innerHTML = S.dranken.map((d, i) => {
     const def = DRANKEN[d];
-    return `<button class="drank" data-dart="${d}" data-tip="${def.naam} — ${def.tekst} (klik = gebruiken · rechtsklik = het verhaal)"
+    return `<button class="drank" data-dart="${d}" data-tip="${def.naam} — ${def.tekst} (gebruiken: tik · verhaal: vasthouden of rechtsklik)"
       style="--dkleur:${def.kleur}" onclick="gebruikDrank(${i})" oncontextmenu="return bekijkDrank(event, '${d}')">${def.icoon}</button>`;
   }).join('') + `<span class="drank-leeg">${'◌'.repeat(Math.max(0, drankSlots() - S.dranken.length))}</span>`;
   verfraaiItemArt($('#topbalk'));
@@ -2633,6 +2633,57 @@ document.addEventListener('mouseover', e => {
   tip.style.left = Math.max(8, Math.min(window.innerWidth - 268, r.left + r.width / 2 - 130)) + 'px';
   tip.style.top = Math.max(8, top) + 'px';
 });
+
+/* touch: een tik op een uitleg-icoon toont dezelfde tip (hover bestaat niet op
+   een vinger). Auto-verbergen na ~2.8s of bij een tik elders. De klik wordt
+   NIET geblokkeerd, dus tikbare elementen blijven gewoon werken. De offsets
+   leiden we af van de echte tip-breedte zodat hij op een smal scherm past. */
+let _tipTouchTimer = null;
+document.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'touch') return;
+  const t = e.target.closest('[data-tip]');
+  const tip = $('#tooltip');
+  if (!tip) return;
+  if (!t) { tip.style.display = 'none'; return; }
+  tip.textContent = t.dataset.tip;
+  tip.style.display = 'block';
+  const r = t.getBoundingClientRect();
+  const tipW = tip.offsetWidth, tipH = tip.offsetHeight;
+  let top = r.bottom + 8;
+  if (top + tipH > window.innerHeight - 8) top = r.top - tipH - 8;
+  tip.style.left = Math.max(8, Math.min(window.innerWidth - tipW - 8, r.left + r.width / 2 - tipW / 2)) + 'px';
+  tip.style.top = Math.max(8, top) + 'px';
+  clearTimeout(_tipTouchTimer);
+  _tipTouchTimer = setTimeout(() => { tip.style.display = 'none'; }, 2800);
+});
+
+/* touch: een drankje lang vasthouden toont het verhaal zonder te verbruiken
+   (rechtsklik bestaat niet op een gsm). Een korte tik verbruikt zoals altijd.
+   Desktop blijft op de oncontextmenu-route — deze takken zijn touch-only. */
+(() => {
+  let timer = null, langIngedrukt = false, doel = null;
+  const annuleer = () => { clearTimeout(timer); doel = null; };
+  document.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch') return;
+    const knop = e.target.closest('.drank');
+    if (!knop) return;
+    langIngedrukt = false; doel = knop;
+    timer = setTimeout(() => {
+      langIngedrukt = true;
+      if (knop.dataset.dart) bekijkDrank(null, knop.dataset.dart);
+    }, 450);
+  });
+  document.addEventListener('pointerup', annuleer);
+  document.addEventListener('pointermove', () => { if (doel) annuleer(); });
+  /* de klik die ná een long-press komt onderdrukken, anders verbruik je het
+     drankje toch. Capture-fase: vóór de inline onclick van de knop. */
+  document.addEventListener('click', e => {
+    if (langIngedrukt && e.target.closest('.drank')) {
+      e.preventDefault(); e.stopPropagation();
+      langIngedrukt = false;
+    }
+  }, true);
+})();
 
 /* ---------- 2.5D: kaart-tilt + glans ---------- */
 (() => {

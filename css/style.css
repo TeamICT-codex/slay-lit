@@ -2183,6 +2183,22 @@ body.lite #licht-vignet.flikker::after { animation: none; }
   #stapel-afleg { right: 10px; }
 }
 
+/* ---------- touch-gedrag (raakt muisinvoer niet) ---------- */
+/* dubbeltik-zoom onderdrukken op de speelvlakken; pan/scroll blijft behouden */
+#topbalk, #hand, #onderbalk, #strijdveld, #vijanden-rij, #kaart-scroll, .overlay {
+  touch-action: manipulation;
+}
+/* op een vinger bestaat :hover niet → een ingedrukt-puls als tikbevestiging */
+@media (hover: none) {
+  .knoop.kan:active, .relikwie:active, .drank:active, .held-kaart:active,
+  .winkel-blok:active, .beloning-kaart:active, .schat-buit:active,
+  .codex-slot:active, .boek-kaart:active, .rust-knop:active, .event-knop:active {
+    transform: scale(.94);
+    filter: brightness(1.15);
+    transition: transform .08s ease, filter .08s ease;
+  }
+}
+
 /* ---------- telefoon (≤480px) ----------
    ALLE regels hieronder gelden uitsluitend op smalle schermen; de laptop
    (>480px) ziet ze nooit. Raak hier geen basiswaarden aan, override alleen.
@@ -2190,6 +2206,9 @@ body.lite #licht-vignet.flikker::after { animation: none; }
    zonder de globale 16px (regel 30) te wijzigen. */
 @media (max-width: 480px) {
   html { font-size: 14px; }
+
+  /* tooltip mag de smalle breedte niet overschrijden */
+  #tooltip { max-width: min(260px, 90vw); }
 
   /* --- afdaalkaart: het 700px-vlak blijft intact maar wordt swipebaar
      i.p.v. afgeknipt (px-knoopposities blijven zo kloppen) --- */
