@@ -2172,7 +2172,7 @@ body.lite .overlay { backdrop-filter: none; }
 body.lite #hand .kaart::after { display: none; }
 body.lite #licht-vignet.flikker::after { animation: none; }
 
-/* ---------- klein scherm ---------- */
+/* ---------- klein scherm (tablet) ---------- */
 @media (max-width: 860px) {
   #strijdveld { padding: 0 14px 8px; }
   #vijanden-rij { gap: 10px; }
@@ -2181,4 +2181,13 @@ body.lite #licht-vignet.flikker::after { animation: none; }
   #knop-eindbeurt { right: 10px; bottom: 110px; }
   #stapel-trek { left: 10px; }
   #stapel-afleg { right: 10px; }
+}
+
+/* ---------- telefoon (≤480px) ----------
+   ALLE regels hieronder gelden uitsluitend op smalle schermen; de laptop
+   (>480px) ziet ze nooit. Raak hier geen basiswaarden aan, override alleen.
+   De rem-basis krimpt zodat bestaande rem-maten (titels, knoppen) meeschalen
+   zonder de globale 16px (regel 30) te wijzigen. */
+@media (max-width: 480px) {
+  html { font-size: 14px; }
 }
