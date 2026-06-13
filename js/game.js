@@ -920,6 +920,17 @@ function maakVijand(id, rij) {
   return { id, naam: def.naam, art: def.art, hp, maxHp: hp, blok: 0, status: {}, dood: false, beurtTeller: 0, intent: null };
 }
 
+/* eenmalige, vrijblijvende tip: liggend speelt comfortabeler. Geen blokkade —
+   alleen een toast, en enkel op een touch-toestel in staande stand. */
+let rotatieHintGetoond = false;
+function draaiHint() {
+  if (rotatieHintGetoond || !window.mobiel) return;
+  if (window.matchMedia && matchMedia('(orientation: portrait)').matches) {
+    rotatieHintGetoond = true;
+    setTimeout(() => { if (inGevecht()) melding('↻ Tip: draai je toestel — liggend speelt groter'); }, 700);
+  }
+}
+
 function startGevecht(samenstelling, soort, rij) {
   const g = {
     soort,
@@ -1006,6 +1017,7 @@ function startGevecht(samenstelling, soort, rij) {
   zetLichtVisueel();
   renderGevecht();
   if (soort === 'baas') toonBaasIntro(g);
+  draaiHint();
 
   /* openingswoorden: in het donker fluistert de diepte, anders sneert een vijand */
   if (soort !== 'baas') {

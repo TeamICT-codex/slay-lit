@@ -377,3 +377,17 @@ kaart gaat dan naar de richt-stand. window.mobiel-gated → desktop speelt
 en bij een vijand-tik zonder selectie. CSS-lift in @media(hover:none)
 (telefoon + touch-tablet). Geverifieerd: touch preview→spelen (skill +
 gerichte kaart, 6 schade), desktop direct spelen, geen fouten.
+
+### R3.16 — Mobiel groter: liggend gepolijst + staand vergroot (KLAAR, 2026-06-13)
+Speeltest: "alles te klein op mobiel, gevechten amper zichtbaar, kaarten
+onleesbaar". Klopte — het spel is breed van opzet (rij personages +
+kaartwaaier), staand propte alles te klein. Keuze "allebei":
+- LIGGEND (aanrader): nieuwe @media(orientation:landscape) and
+  (max-height:500px) and (pointer:coarse) comprimeert verticaal
+  (onderbalk 150px, kaarten 100x140, HUD weer naast de hand) zodat de
+  volle tablet-breedte past zonder afgekapte hand → speelt als op laptop.
+- STAAND groter: vijanden wrappen naar 2 rijen (fors i.p.v. samengeperst),
+  sprites + kaarten groter (104→116px), strijdveld verticaal gecentreerd.
+- Vrijblijvende eenmalige rotatie-tip (toast, géén blokkade), enkel touch
+  + portrait. Geverifieerd: desktop ongewijzigd (138px/235px/nowrap, geen
+  toast), geen fouten.
