@@ -2224,6 +2224,13 @@ body.lite #licht-vignet.flikker::after { animation: none; }
   /* tooltip mag de smalle breedte niet overschrijden */
   #tooltip { max-width: min(260px, 90vw); }
 
+  /* --- beginscherm groter & beter leesbaar (counteren van de 14px-basis) --- */
+  .titel-groot { font-size: min(20vw, 7.5rem); }
+  .titel-sub { font-size: 1.6rem; margin: 14px 0 30px; }
+  .titel-knoppen { gap: 18px; }
+  .titel-knoppen .knop-groot { min-width: min(330px, 88vw); font-size: 1.7rem; padding: 18px 30px; }
+  .knop-stil { font-size: 1.5rem; padding: 10px 16px; }
+
   /* --- afdaalkaart: het 700px-vlak blijft intact maar wordt swipebaar
      i.p.v. afgeknipt (px-knoopposities blijven zo kloppen) --- */
   #kaart-scroll { overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
