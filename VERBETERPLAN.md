@@ -421,3 +421,18 @@ Globale 14px-tekstverkleining verwijderd (maakte alles klein) → 16px-basis,
 grotere kaarttekst + titel. Geverifieerd op 360/412/540 staand + liggend
 (allemaal de mobiele layout) en desktop (ongewijzigd: flex-end, 235px,
 138px kaart, 16px). Nog open: muziek kraakt op gsm (apart na te kijken).
+
+### R3.19 — Leven op mobiel: 2D-poses + animaties terug (KLAAR, 2026-06-14)
+Speeltest: "geen enkele beweging of pose-verandering op mobiel, voelt dood".
+Twee oorzaken: (1) ik forceerde lite-modus op mobiel, en lite zet via CSS
+animation:none op de figuren → álle beweging dood; (2) de pose-art
+(attack/cast/hit/block/death/victory) zat alleen in het 3D-systeem (Vista),
+in 2D werd het basisplaatje nooit verwisseld. Fix: (1) lite niet meer
+geforceerd op mobiel (alleen bij echt zwakke hardware) + migratie die de
+eerder geforceerde lite weer uitzet op capabele toestellen → ademhaling,
+lunge, hit-flits, death-fade werken weer; (2) nieuwe pose2D() verwisselt het
+DOM-figuurplaatje tijdelijk naar <art>_<state> in 2D, ingehaakt bij blok,
+speler/vijand-aanval, hit, death, cast, victory en signatuurmomenten; plus
+een 2D-lunge voor vijand-aanvallen. Geverifieerd op mobiel: lite uit,
+adem-animatie actief, attack-pose wisselt + lunge + keert terug, death-pose
+blijft staan; geen fouten; cast-pose visueel bevestigd.

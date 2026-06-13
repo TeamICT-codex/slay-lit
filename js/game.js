@@ -74,17 +74,19 @@ const mobiel =
 window.mobiel = mobiel;
 
 const INST = Object.assign(
-  /* op mobiel standaard lite AAN en 3D UIT (opt-in via instellingen);
-     op laptop ongewijzigd want mobiel=false */
-  { lite: standaardLite || mobiel, d3: !standaardLite && !mobiel, spraak: true },
+  /* op mobiel standaard 3D UIT (onspeelbaar daar), maar lite NIET geforceerd:
+     lite dooft de animaties, en juist die geven het spel leven. Lite alleen
+     bij echt zwakke hardware. Op laptop ongewijzigd want mobiel=false. */
+  { lite: standaardLite, d3: !standaardLite && !mobiel, spraak: true },
   JSON.parse(localStorage.getItem('slayit_inst') || '{}')
 );
-/* migratie: wie vóór de mobiel-update al speelde, heeft op een telefoon vaak
-   een opgeslagen 3D=AAN (de oude default) — en 3D is daar onspeelbaar. Forceer
-   3D uit en lite aan, eenmalig, zodat de opgeslagen voorkeur de fix niet blokkeert. */
-if (mobiel && INST.d3) {
+/* eenmalige mobiel-migratie: forceer 3D uit (onspeelbaar op telefoon) en zet de
+   eerder geforceerde lite-modus weer uit op capabele toestellen — anders blijven
+   alle gevechtsanimaties dood. Vlag zodat het maar één keer ingrijpt. */
+if (mobiel && !INST.mobielHersteld) {
+  INST.mobielHersteld = true;
   INST.d3 = false;
-  INST.lite = true;
+  if (!standaardLite) INST.lite = false;
   try { localStorage.setItem('slayit_inst', JSON.stringify(INST)); } catch (e) {}
 }
 function bewaarInst() { localStorage.setItem('slayit_inst', JSON.stringify(INST)); }
@@ -433,6 +435,7 @@ function signatuurMoment(poseNaam, kleur, kreet) {
   const g = S.gevecht;
   if (!g) return;
   if (window.Vista && Vista.pose) Vista.pose(g.speler, poseNaam, 2.4);
+  pose2D(g.speler, poseNaam, 2.4);
   heldFx('hfx-cast', 1400); /* 2D-terugval: gloed op de spelerzone */
   const flits = document.createElement('div');
   flits.className = 'signatuur-flits sf-' + kleur;
@@ -459,6 +462,38 @@ function heldFx(klasse, duur) {
   heldFxTimers[klasse] = setTimeout(() => zone.classList.remove(klasse), duur);
 }
 
+/* ---------- 2D-poses (mobiel/2D) ----------
+   In 3D wisselt Vista de billboard-textuur naar de toestand-pose. In 2D deden
+   we dat niet → figuren stonden roerloos. pose2D verwisselt het DOM-plaatje
+   tijdelijk naar <art>_<state> (attack/cast/hit/block/death/victory) en zet het
+   daarna terug. Bestaat de pose-art niet (veel gewone vijanden), dan gebeurt er
+   niets met het beeld — de beweging (lunge/schud) speelt sowieso. */
+function pose2DArtEl(actor) {
+  if (!actor) return null;
+  if (actor.isSpeler) return $('#speler-figuur');
+  const i = S.gevecht ? S.gevecht.vijanden.indexOf(actor) : -1;
+  return (i >= 0 && GDOM.vijanden[i]) ? GDOM.vijanden[i].wrap.querySelector('.vijand-art') : null;
+}
+const pose2DTimers = new WeakMap();
+function pose2D(actor, state, duur) {
+  if (!actor || d3Actief() || !window.laadKarakterAfbeelding) return;
+  const el = pose2DArtEl(actor); if (!el) return;
+  const basis = actor.isSpeler ? huidigeHeld().art : actor.id;
+  laadKarakterAfbeelding(basis + '_' + state, img => {
+    const im = el.querySelector('img');
+    if (!img || !im) return;             /* geen pose-art voor dit figuur */
+    im.src = img.src;
+    clearTimeout(pose2DTimers.get(actor));
+    pose2DTimers.set(actor, setTimeout(() => {
+      if (actor.dood) return;            /* dood blijft op de death-pose */
+      laadKarakterAfbeelding(basis, terug => {
+        const i2 = el.querySelector('img');
+        if (i2 && terug) i2.src = terug.src;
+      });
+    }, (duur || 0.8) * 1000));
+  });
+}
+
 /* ---------- statussen, schade, blok ---------- */
 function geefStatus(actor, naam, n) {
   actor.status[naam] = (actor.status[naam] || 0) + n;
@@ -481,6 +516,7 @@ function geefBlok(actor, n) {
   if (actor.isSpeler) {
     Klank.sfx('blok');
     if (window.Vista) Vista.pose(actor, 'block', 1.3);
+    pose2D(actor, 'block', 1.3);
     heldFx('hfx-blok', 1100);
   }
 }
@@ -489,6 +525,7 @@ function geefBlok(actor, n) {
 function aanvalOp(doel, basis) {
   if (doel.dood) return;
   if (window.Vista) Vista.aanval(sp(), doel);
+  pose2D(sp(), 'attack', 0.5);
   const fig = $('#speler-figuur');
   if (fig && !d3Actief()) {
     fig.classList.remove('valt-aan'); void fig.offsetWidth; fig.classList.add('valt-aan');
@@ -535,6 +572,12 @@ async function reeksAanvalAlle(dmg, naSlag) {
 /* vijand valt speler aan */
 function vijandAanval(v, basis) {
   if (window.Vista) Vista.aanval(v, sp());
+  pose2D(v, 'attack', 0.5);
+  /* 2D-lunge: de vijand schiet even naar de speler toe (naar links) */
+  if (!d3Actief()) {
+    const evf = pose2DArtEl(v);
+    if (evf) { evf.classList.remove('valt-aan-v'); void evf.offsetWidth; evf.classList.add('valt-aan-v'); }
+  }
   let dmg = basis + (v.status.kracht || 0);
   if ((v.status.zwak || 0) > 0) dmg = Math.floor(dmg * 0.75);
   if ((sp().status.kwetsbaar || 0) > 0) dmg = Math.floor(dmg * 1.5);
@@ -563,6 +606,7 @@ function verliesHp(doel, n) {
   fxNummer(actorEl(doel), '-' + n, 'fx-schade');
   Klank.sfx(n >= 8 ? 'zwareklap' : 'klap');
   if (window.Vista) Vista.raak(doel, n >= 8);
+  pose2D(doel, 'hit', 0.45);
   const el = actorEl(doel);
   if (el) { el.classList.remove('raak'); void el.offsetWidth; el.classList.add('raak'); }
   if (doel.isSpeler) {
@@ -585,6 +629,7 @@ function verliesHp(doel, n) {
       Klank.sfx('dood');
       if (UITSPRAKEN[doel.id]) spreek(doel, UITSPRAKEN[doel.id].dood, 0.4);
       if (window.Vista) Vista.sterf(doel);
+      pose2D(doel, 'death', 3);
       if (el) el.classList.add('sterft');
       /* Epidemie: een sterfgeval verspreidt gif onder de rest */
       if (inGevecht() && (sp().status.epidemie || 0) > 0) {
@@ -1593,6 +1638,7 @@ async function speelKaart(c, doel) {
   Klank.sfx('kaart');
   if (def.type === 'kracht') {
     if (window.Vista) Vista.pose(sp(), 'cast', 1.4);
+    pose2D(sp(), 'cast', 1.4);
     heldFx('hfx-cast', 1400);
   }
   S.stats.kaarten++;
@@ -1632,6 +1678,7 @@ function checkBaasFase() {
     voegVijandToe('groene_slijm');
     geefStatus(b, 'kracht', 1);
     if (window.Vista) Vista.pose(b, 'cast', 2.6);
+    pose2D(b, 'cast', 2.6);
   }
   if ((b.fase || 1) < 3 && pct <= 0.25) {
     b.fase = 3;
@@ -1725,9 +1772,15 @@ async function eindBeurt() {
         }
       } else if (it.type === 'blok') {
         geefBlok(v, it.blok);
-        if (window.Vista) Vista.pose(v, 'block', VIJANDEN[v.id].baas ? 2.6 : (VIJANDEN[v.id].elite ? 1.9 : 1.5));
+        const bd = VIJANDEN[v.id].baas ? 2.6 : (VIJANDEN[v.id].elite ? 1.9 : 1.5);
+        if (window.Vista) Vista.pose(v, 'block', bd);
+        pose2D(v, 'block', bd);
       }
-      if ((it.type === 'buff' || it.type === 'debuff') && window.Vista) Vista.pose(v, 'cast', VIJANDEN[v.id].baas ? 2.6 : (VIJANDEN[v.id].elite ? 1.9 : 1.5));
+      if (it.type === 'buff' || it.type === 'debuff') {
+        const cd = VIJANDEN[v.id].baas ? 2.6 : (VIJANDEN[v.id].elite ? 1.9 : 1.5);
+        if (window.Vista) Vista.pose(v, 'cast', cd);
+        pose2D(v, 'cast', cd);
+      }
       if (it.doe) it.doe(v);
       if (gestopt()) return;
     }
@@ -1812,6 +1865,7 @@ async function gevechtGewonnen() {
   if (!g || g.voorbij) return;
   g.voorbij = true;
   if (window.Vista) Vista.pose(g.speler, 'victory', 2.5);
+  pose2D(g.speler, 'victory', 2.5);
   heldFx('hfx-victory', 2500);
   renderGevecht();
   await slaap(700);

@@ -833,6 +833,13 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   35% { transform: translateX(34px) scale(1.06); }
   65% { transform: translateX(-8px); }
 }
+/* vijand schiet naar de speler toe (naar links) bij een 2D-aanval */
+.vijand-art.valt-aan-v { animation: uitval-vijand .42s ease; }
+@keyframes uitval-vijand {
+  0%, 100% { transform: translateX(0); }
+  35% { transform: translateX(-30px) scale(1.07); }
+  65% { transform: translateX(8px); }
+}
 @keyframes adem {
   0%, 100% { transform: translateY(0) scale(1); }
   50% { transform: translateY(-5px) scale(1.015); }
