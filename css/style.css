@@ -56,7 +56,10 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 /* ---------- schermen ---------- */
 .scherm {
   display: none;
-  position: fixed; inset: 0; top: 52px;
+  /* top zakt onder een notch; padding-bottom houdt inhoud boven de home-indicator.
+     env(safe-area-inset-*) is 0 op desktop → daar exact 52px / geen padding. */
+  position: fixed; inset: 0; top: calc(52px + env(safe-area-inset-top));
+  padding-bottom: env(safe-area-inset-bottom);
   z-index: 1;
   flex-direction: column;
   align-items: center;
@@ -99,9 +102,12 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 
 /* ---------- topbalk ---------- */
 #topbalk {
-  position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 50;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  /* groeit mee met een notch en respecteert de zijranden in landscape;
+     op desktop is env(...) 0 → gewoon 52px hoog met 0/16px padding zoals voorheen */
+  height: calc(52px + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) calc(16px + env(safe-area-inset-right)) 0 calc(16px + env(safe-area-inset-left));
   display: none; align-items: center; gap: 16px;
-  padding: 0 16px;
   background: linear-gradient(180deg, rgba(20, 14, 28, .97), rgba(20, 14, 28, .88));
   border-bottom: 1px solid var(--rand);
   font-size: 1.05rem;

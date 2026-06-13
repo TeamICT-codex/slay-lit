@@ -19,8 +19,15 @@ const BESTANDEN = [
   'assets/fonts/Alegreya-700-normal.woff2',
   'assets/fonts/Alegreya-400-italic.woff2',
   'assets/icoon.svg',
+  'assets/icoon-180.png',
+  'assets/icoon-192.png',
+  'assets/icoon-512.png',
+  'assets/icoon-512-maskable.png',
   'manifest.webmanifest'
 ];
+/* NB: CACHE bewust op v7 gehouden — een gewijzigde sw.js her-installeert en
+   voegt de nieuwe iconen aan de bestaande cache toe; een versiebump zou de
+   hele art-cache wissen (onnodige her-download voor elke speler). */
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(BESTANDEN)).then(() => self.skipWaiting()));
