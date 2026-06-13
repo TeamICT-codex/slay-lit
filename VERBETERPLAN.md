@@ -462,3 +462,14 @@ verborgen, kleinere iconen. Het gevechtscherm krijgt de VOLLE hoogte
 vijand 122, baas 178) met de gewonnen ruimte. Geverifieerd: kaarten niet
 afgekapt (staand+liggend, 6 kaarten/3 vijanden), gevecht-top 0, desktop
 ongewijzigd (52px balk, logo zichtbaar), geen fouten.
+
+### R3.22 — Gevechten dwingen liggend af (KLAAR, 2026-06-14)
+Op verzoek: gevechten zijn voor dit spel echt een liggend-ervaring, dus
+afdwingen. In staande stand tijdens een gevecht verschijnt nu een
+schermvullende draai-prompt (pulserend ↻ + "Draai je toestel"); zodra je
+draait verdwijnt hij (pure CSS-orientatiequery, robuust). Menu's/map/titel
+blijven gewoon in portret. Vluchtweg "Toch staand spelen" (sessie) voor wie
+zijn scherm vergrendeld heeft. Drankjes blijven in de (transparante) topbalk
+beschikbaar in liggend. Vervangt de oude wegklikbare suggestie-banner.
+Geverifieerd: prompt toont enkel bij staand+gevecht+touch, weg in
+liggend/map/desktop, escape werkt, 2 drankjes zichtbaar in liggend, geen fouten.

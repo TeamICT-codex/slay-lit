@@ -162,9 +162,15 @@
   <!-- fakkel-vignet: het donker kruipt vanaf de schermranden naar binnen -->
   <div id="licht-vignet"></div>
 
-  <!-- draai-wenk: alleen zichtbaar in staande stand op touch, wegklikbaar -->
-  <div id="draai-wenk">↻ Draai je toestel — liggend speelt een stuk groter
-    <button class="dw-sluit" onclick="sluitDraaiWenk()" aria-label="sluiten">✕</button>
+  <!-- draai-blok: gevechten speel je liggend. Vult het scherm in staande stand
+       tijdens een gevecht; verdwijnt zodra je draait. -->
+  <div id="draai-blok">
+    <div class="db-binnen">
+      <div class="db-icoon">↻</div>
+      <h2>Draai je toestel</h2>
+      <p>Gevechten speel je liggend — zo zie je het slagveld en je kaarten groot en duidelijk.</p>
+      <button class="knop-stil" onclick="speelTochStaand()">Toch staand spelen</button>
+    </div>
   </div>
 
   <div id="meldingen"></div>

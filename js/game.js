@@ -976,18 +976,11 @@ function maakVijand(id, rij) {
 
 /* eenmalige, vrijblijvende tip: liggend speelt comfortabeler. Geen blokkade —
    alleen een toast, en enkel op een touch-toestel in staande stand. */
-/* de draai-wenk is een wegklikbare banner (CSS toont 'm in staande stand);
-   onthoud de keuze zodat hij niet blijft terugkomen. */
-function sluitDraaiWenk() {
-  const el = document.getElementById('draai-wenk');
+/* gevechten dwingen liggend af (CSS toont de draai-prompt in staande stand).
+   Een vluchtweg voor wie zijn scherm vergrendeld heeft: deze sessie toch staand. */
+function speelTochStaand() {
+  const el = document.getElementById('draai-blok');
   if (el) el.classList.add('weg');
-  try { localStorage.setItem('slayit_draai_weg', '1'); } catch (e) {}
-}
-if (localStorage.getItem('slayit_draai_weg')) {
-  window.addEventListener('DOMContentLoaded', () => {
-    const el = document.getElementById('draai-wenk');
-    if (el) el.classList.add('weg');
-  });
 }
 
 function startGevecht(samenstelling, soort, rij) {

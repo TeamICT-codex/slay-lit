@@ -2284,27 +2284,23 @@ body.lite #licht-vignet.flikker::after { animation: none; }
   .codex-slot { width: 60px; height: 60px; }
 }
 
-/* draai-wenk: standaard verborgen; alleen in staande stand op touch tijdens
-   een gevecht, tenzij weggeklikt */
-#draai-wenk { display: none; }
+/* draai-blok: gevechten dwingen liggend af. Vult het scherm in staande stand
+   tijdens een gevecht; in liggend matcht de query niet → weg. */
+#draai-blok { display: none; }
 @media (pointer: coarse) and (orientation: portrait) {
-  body[data-scherm="gevecht"] #draai-wenk:not(.weg) {
-    display: flex; align-items: center; gap: 10px;
-    position: fixed; left: 50%; transform: translateX(-50%);
-    top: calc(60px + env(safe-area-inset-top));
-    z-index: 60; pointer-events: auto;
-    padding: 7px 8px 7px 16px; border-radius: 22px;
-    background: rgba(20, 14, 28, .94);
-    border: 1px solid var(--ember);
-    box-shadow: 0 4px 18px rgba(0, 0, 0, .6);
-    color: var(--perkament); font-size: 1rem; max-width: 92vw;
-    animation: toastin .3s ease;
+  body[data-scherm="gevecht"] #draai-blok:not(.weg) {
+    display: flex; position: fixed; inset: 0; z-index: 2000;
+    flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 30px;
+    background: radial-gradient(ellipse at center, rgba(28, 18, 40, .98), rgba(10, 7, 14, .99));
   }
 }
-#draai-wenk .dw-sluit {
-  font-size: 1.05rem; line-height: 1; color: var(--perkament-dof);
-  padding: 6px 8px; border-radius: 50%;
-}
+.db-binnen { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 340px; }
+.db-icoon { font-size: 5rem; color: var(--ember); animation: draaiPuls 1.8s ease-in-out infinite; }
+@keyframes draaiPuls { 0%, 100% { transform: rotate(-14deg); } 50% { transform: rotate(20deg); } }
+.db-binnen h2 { font-family: 'Pirata One', serif; font-size: 2.1rem; color: var(--ember-fel); }
+.db-binnen p { color: var(--perkament); font-size: 1.15rem; line-height: 1.4; }
+.db-binnen .knop-stil { margin-top: 20px; font-size: 1.05rem; }
 
 /* ---------- B. staand gevecht (telefoon, alle breedtes) ----------
    Vijanden wrappen zodat ze fors kunnen blijven; strijdveld verticaal
