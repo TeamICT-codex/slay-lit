@@ -20,7 +20,11 @@ const Klank = (() => {
   function init() {
     if (klaar) return;
     try {
-      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const AC = window.AudioContext || window.webkitAudioContext;
+      /* op mobiel een grotere audiobuffer ('playback') → veel minder kans op
+         kraken/underruns als de hoofdthread even druk is. De extra latency is
+         in een turn-based spel onmerkbaar. Desktop blijft laag-latent. */
+      ctx = window.mobiel ? new AC({ latencyHint: 'playback' }) : new AC();
     } catch (e) { return; }
     comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -18; comp.ratio.value = 6;
