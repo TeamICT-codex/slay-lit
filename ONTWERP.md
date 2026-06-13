@@ -380,3 +380,80 @@ introqueeste die verklaring brengt. Replay-driver + verhaalmoment.
 - Unlock-tempo (Gifmagiër snel = 1e sessie; Thoverk = 2-3 runs?).
 - Of de introqueeste seeded meespeelt of buiten de seed valt
   (voorstel: queeste-events buiten de daily houden, zoals Schrijn).
+
+---
+
+# Mobiel-optimalisatie — verkenning & gefaseerd plan (geparkeerd)
+
+Grondige codebase-verkenning (12 juni 2026) naar mobiel-gereedheid,
+met als harde eis: de laptopversie mag NIET verslechteren.
+
+## Kernoordeel
+Doable, niet triviaal. De kernlus werkt al op touch (kaart klikken →
+doelwit klikken, geen drag). Vier echte blokkers, los van elkaar te
+fixen. ~80% van het werk kan in media-queries die de laptop nooit ziet.
+
+## Desktop-veiligheid (de strategie)
+1. **Media-query-only** (meeste werk): fixes in het BESTAANDE
+   @media(max-width:860px)-blok óf een NIEUW @media(max-width:480px)
+   eronder. Boven 860px = laptop = ziet die regels nooit. Harde regel:
+   bestaande basiswaarden (700px map, 138px kaart, 400px held-kaart,
+   min-width 420/170/130) NOOIT aanraken, enkel overriden in een query.
+2. **Progressive enhancement** via min()/clamp(): vaste min-widths op
+   de rand → min(420px,100%). Desktop kiest altijd de px-waarde =
+   byte-identiek; mobiel krimpt. Titel-/eind-/schat-scherm doen dit al.
+3. **Feature-detect** in gedeelde code (enige plekken die álle schermen
+   raken): scheiden via matchMedia('(pointer: coarse)') /
+   pointerType==='touch'. Op laptop false → lite/d3 blijven gelijk;
+   touch-listeners NAAST de muis-listeners, nooit ter vervanging.
+Risico-checklist na elke fase: open op laptop een gevecht met 1 baas +
+3 vijanden, de map, de heldenkeuze en het eindscherm.
+
+## De vier blokkers
+- **Afdaalkaart** keihard 700px breed (#kaart-vlak, style.css:744) +
+  body overflow:hidden → rechterhelft van het pad onbereikbaar op gsm.
+- **Kaarthand** breder dan het scherm (5 kaarten ≈478px op 390px) →
+  buitenste kaarten buiten beeld, overlappen orb + eindbeurt-knop.
+- **3D staat standaard AAN op gsm**: standaardLite (game.js:62-65) mist
+  touch-detectie → gemiddelde telefoon draait vol 3D (hapert/heet/leeg).
+- **Tooltips** hangen aan één mouseover-listener (game.js:2603) die op
+  touch nooit vuurt → je vecht blind (geen uitleg bij iconen/statussen).
+
+## Gefaseerd plan
+- **Fase 1 — 3D uit + lite aan op touch** (klein, risico laag). 4 regels
+  in game.js:62-68 achter een mobiel-vlag. Grootste winst, nul desktop-
+  risico. AANRADEN STARTPUNT.
+- **Fase 2 — viewport-overflow + 480px-breakpoint** (klein, laag). Nieuw
+  @media(max-width:480px)-blok als fundament; html{font-size:14px} erin;
+  viewport-fit=cover in index.html.
+- **Fase 3 — de twee speelbaarheidsblokkers** (middel, middel). Afdaal-
+  kaart swipebaar (#kaart-scroll overflow-x:auto — géén transform:scale,
+  dat breekt de scroll-rekenkunde); kaarthand agressievere overlap
+  (104px, margin -30px); orb + eindbeurt-knop bóven de hand.
+- **Fase 4 — touch-uitleg** (middel, laag). Tooltips op pointerdown
+  (touch) naast mouseover; drank-lore via long-press naast rechtsklik;
+  :active-feedback naast :hover; touch-action:manipulation.
+- **Fase 5 — overige schermen + 2D-klem** (middel, laag). Heldenkeuze/
+  event/einde reflow in de query; gevechtTik-klem (game.js:1039) koppelen
+  aan onderbalk.offsetHeight i.p.v. magische 252.
+- **Fase 6 — nette installeerbare PWA** (middel, geen). Safe-area via
+  env(); theme-color + apple-meta; 192/512/maskable PNG-iconen;
+  orientation bewust (aanrader: 'any', staand speelbaar maken); sw.js
+  CACHE → v8.
+
+## Effort
+Een paar avonden voor "ruw speelbaar op gsm" (Fase 1-3); een week+ voor
+"gepolijst + nette app" (Fase 4-6). Enige grotere brokken: kaarthand-
+herindeling en (optioneel, polish) een tap-to-inspect voor handkaarten.
+
+## Valkuilen
+- Afdaalkaart: kies SCROLL, niet transform:scale (px-knoopposities).
+- 2D-klem (252) is desktop-afgestemd → koppel aan offsetHeight, test op
+  laptop.
+- Long-press (lore) vs click (verbruik) mogen elkaar niet hinderen.
+- GEEN user-scalable=no (toegankelijkheid); touch-action:manipulation.
+- status-bar-style black-translucent vereist de safe-area-fix samen.
+- Elk nieuw icoon/metabestand → sw.js CACHE bumpen én in BESTANDEN.
+- Tap-to-inspect handkaart = polish, niet nodig voor "ruw speelbaar";
+  strikt achter @media(hover:none)/(pointer:coarse), klikKaart-gedrag
+  op desktop ongemoeid laten.

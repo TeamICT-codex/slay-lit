@@ -347,3 +347,11 @@ heeftRelikwie() las blind S.relikwieen, maar vóór een run bestaat die
 lijst niet. Alleen Thoverks startdek raakte die route (lichtkaart
 Vonkenbeet → Levend Vuur-korting in kkost). Nu null-veilig; alle drie
 de startdekken geverifieerd (10 kaarten, geen fouten).
+
+### R3.13 — GEPARKEERD: mobiel-optimalisatie (verkenning + 6-fasenplan)
+Grondige codebase-verkenning gedaan (6 dimensies: viewport/responsive,
+touch-input, gevecht-UI, 3D/perf, overige schermen, PWA). Volledig
+gefaseerd plan in ONTWERP.md. Kern: doable, ~80% media-query-only dus
+laptop blijft ongemoeid. 4 blokkers (afdaalkaart 700px, kaarthand te
+breed, 3D default-aan op touch, tooltips muis-only). Aanrader startpunt:
+Fase 1 (3D uit + lite aan op touch, 4 regels game.js, nul desktoprisico).
