@@ -451,3 +451,14 @@ zichtbaar/leesbaar op alle telefoon-afmetingen, art binnen de kaart.
 Plus een wegklikbare draai-banner die in staande stand verschijnt (onthoudt
 de keuze) i.p.v. de gemiste toast. Geverifieerd op alle dims + desktop
 ongewijzigd, geen fouten.
+
+### R3.21 — Mobiel: transparante compacte topbalk + volle-hoogte gevecht (KLAAR, 2026-06-14)
+Speeltest: de topbalk pakt te veel plaats in battle; in portrait moet het hele
+scherm bruikbaar zijn; de header is bijzaak. Aangepakt op touch: topbalk
+compact (40px) en transparant (fade i.p.v. massieve balk), logo + diepte
+verborgen, kleinere iconen. Het gevechtscherm krijgt de VOLLE hoogte
+(#scherm-gevecht top:safe-area) met de topbalk er transparant overheen →
+~52px extra voor het strijdtoneel. Figuren in staand vergroot (speler 140,
+vijand 122, baas 178) met de gewonnen ruimte. Geverifieerd: kaarten niet
+afgekapt (staand+liggend, 6 kaarten/3 vijanden), gevecht-top 0, desktop
+ongewijzigd (52px balk, logo zichtbaar), geen fouten.

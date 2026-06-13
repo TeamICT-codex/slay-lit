@@ -2237,6 +2237,27 @@ body.lite #licht-vignet.flikker::after { animation: none; }
   .knop-stil { font-size: 1.3rem; padding: 10px 16px; }
   .scherm-titel { font-size: 1.9rem; }
 
+  /* --- topbalk: compact, transparant, overlappend. In battle telt het scherm;
+     de header is bijzaak. Logo weg, kleinere iconen, fade i.p.v. massieve balk.
+     Het gevecht krijgt de VOLLE hoogte (topbalk drijft erover). --- */
+  #topbalk {
+    height: calc(40px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) calc(8px + env(safe-area-inset-right)) 0 calc(8px + env(safe-area-inset-left));
+    gap: 8px; font-size: .92rem; border-bottom: none;
+    background: linear-gradient(180deg, rgba(13, 10, 18, .8), rgba(13, 10, 18, .32) 72%, transparent);
+  }
+  #topbalk .tb-logo { display: none; }
+  #tb-verdieping { display: none; }       /* diepte niet nodig tijdens battle */
+  #tb-relikwieen { font-size: 1.05rem; gap: 3px; }
+  .drank { font-size: 1.15rem; }
+  .tb-knop { font-size: 1.1rem; }
+
+  /* schermen sluiten aan op de compacte balk; het gevecht gaat tot de rand */
+  .scherm { top: calc(40px + env(safe-area-inset-top)); }
+  #scherm-gevecht { top: env(safe-area-inset-top); }
+  #scherm-gevecht #beurt-label { margin-top: calc(42px + env(safe-area-inset-top)); }
+  #baas-balk { top: calc(38px + env(safe-area-inset-top)); }
+
   /* afdaalkaart swipebaar (700px-vlak blijft intact, px-knoopposities kloppen) */
   #kaart-scroll { overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
   #kaart-vlak { margin: 0 auto; }
@@ -2294,12 +2315,12 @@ body.lite #licht-vignet.flikker::after { animation: none; }
      de onderbalk staat fixed aan de schermrand zodat de hand NOOIT wordt afgekapt */
   #strijdveld { padding: 0 8px 296px; align-items: center; justify-content: space-evenly; gap: 8px; min-height: 0; }
   #speler-zone { min-width: 0; }
-  .speler-figuur { width: 128px; height: 128px; }
-  #vijanden-rij { gap: 10px 14px; flex-wrap: wrap; justify-content: center; max-width: min(58vw, 320px); }
+  .speler-figuur { width: 140px; height: 140px; }
+  #vijanden-rij { gap: 12px 16px; flex-wrap: wrap; justify-content: center; max-width: min(60vw, 340px); }
   .vijand { min-width: 0; padding: 4px; }
-  .vijand-art { width: 112px; height: 112px; }
-  .is-elite .vijand-art { width: 130px; height: 130px; }
-  .is-baas .vijand-art { width: 164px; height: 164px; }
+  .vijand-art { width: 122px; height: 122px; }
+  .is-elite .vijand-art { width: 140px; height: 140px; }
+  .is-baas .vijand-art { width: 178px; height: 178px; }
 
   #onderbalk { height: 292px; position: fixed; left: 0; right: 0; bottom: 0; }
   #hand { bottom: calc(10px + env(safe-area-inset-bottom)); }
