@@ -1054,8 +1054,10 @@ function gevechtTik(dt) {
     GDOM.bg.style.transform = `translate(${(-zw.x * 30).toFixed(1)}px, ${(zw.y * 30).toFixed(1)}px)`;
   }
   const g = S.gevecht;
-  /* veilige lijn: naam/hp/statussen mogen nooit de handzone in zakken */
-  const lijn = window.innerHeight - 252;
+  /* veilige lijn: naam/hp/statussen mogen nooit de handzone in zakken.
+     Afgeleid van de werkelijke onderbalk-hoogte (235px desktop = 252 zoals
+     voorheen; 270px telefoon → klopt mee) i.p.v. een vaste 252. */
+  const lijn = window.innerHeight - ((GDOM.onderbalkH || 235) + 17);
   g.vijanden.forEach((v, i) => {
     const d = GDOM.vijanden[i];
     const p = Vista.schermPos(v);
@@ -1272,6 +1274,10 @@ function renderGevecht() {
   zetBlokSchild(ds.blok, s.blok);
   ds.badges.innerHTML = statusBadges(s);
   ds.infoH = ds.wrap.offsetHeight - ds.spacer.offsetHeight;
+  /* onderbalk-hoogte cachen voor de 3D-klem (hier, niet per frame, om reflow
+     in de tik-lus te vermijden); op telefoon is de onderbalk hoger (270px) */
+  const ob = $('#onderbalk');
+  if (ob) GDOM.onderbalkH = ob.offsetHeight;
   /* status-FX: gifbellen zolang vergiftigd, wond-puls onder 30% HP */
   ds.wrap.classList.toggle('hfx-gif-aan', (s.status.gif || 0) > 0);
   ds.wrap.classList.toggle('hfx-wond-aan', S.hp / S.maxHp < 0.3);

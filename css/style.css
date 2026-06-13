@@ -1418,7 +1418,7 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 /* ---------- beloning ---------- */
 .beloning-lijst {
   display: flex; flex-direction: column; gap: 12px;
-  min-width: 380px;
+  min-width: min(380px, 100%);  /* desktop = 380, smal scherm krimpt */
   margin-top: 8px;
 }
 .beloning-item {
@@ -1483,7 +1483,8 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   flex-wrap: wrap; justify-content: center;
   max-width: 720px;
 }
-.event-opties { flex-direction: column; align-items: stretch; min-width: 420px; }
+/* min() i.p.v. vaste 420px: desktop kiest altijd 420 (ongewijzigd), smal scherm krimpt */
+.event-opties { flex-direction: column; align-items: stretch; min-width: min(420px, 100%); }
 .rust-knop, .event-knop {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   padding: 20px 34px;
@@ -2237,4 +2238,35 @@ body.lite #licht-vignet.flikker::after { animation: none; }
   #knop-eindbeurt { right: 8px; bottom: 206px; min-height: 44px; padding: 10px 18px; font-size: 1.05rem; }
   #stapel-trek { left: 10px; bottom: 240px; }
   #stapel-afleg { right: 10px; bottom: 240px; }
+
+  /* --- overlays: minder padding zodat de inhoud meer breedte/hoogte krijgt --- */
+  .overlay { padding: 20px 10px; }
+  .scherm-titel { font-size: 1.85rem; }
+
+  /* schermen met veel verticale inhoud moeten kunnen scrollen op telefoon
+     (.scherm is standaard overflow:hidden; heldenkeuze centreert bovendien
+     verticaal — op een gsm top-uitlijnen zodat alles bereikbaar blijft) --- */
+  #scherm-held, #scherm-event, #scherm-rust, #scherm-beloning, #scherm-einde {
+    overflow-y: auto; justify-content: flex-start;
+  }
+  #scherm-held { padding-bottom: 24px; }
+
+  /* --- heldenkeuze: kaart binnen de viewport, held torent minder ver uit --- */
+  .held-kaart { width: min(400px, 92vw); margin-top: 64px; padding: 20px 16px 16px; }
+  .held-kaart > b { font-size: 1.7rem; }
+  .held-art { width: 200px; height: 200px; margin-top: -80px; }
+  .held-aura { width: 210px; height: 210px; top: -50px; }
+
+  /* --- event/rust: knopkolom past op smal scherm --- */
+  .event-opties { width: 100%; max-width: 92vw; }
+  .rust-knop, .event-knop { padding: 16px 18px; font-size: 1.15rem; }
+
+  /* --- eindscherm: stats wrappen, knoppen onder elkaar (scroll via regel boven) --- */
+  .einde-stats { gap: 12px 20px; flex-wrap: wrap; justify-content: center; margin: 12px 0; }
+  .einde-stats b { font-size: 1.7rem; }
+  .einde-held { width: 170px; height: 170px; }
+  .einde-knoppen { flex-direction: column; width: 92vw; }
+
+  /* --- codex/boek: iets compacter --- */
+  .codex-slot { width: 54px; height: 54px; }
 }
