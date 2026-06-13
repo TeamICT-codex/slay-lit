@@ -2256,7 +2256,15 @@ body.lite #licht-vignet.flikker::after { animation: none; }
   .scherm { top: calc(40px + env(safe-area-inset-top)); }
   #scherm-gevecht { top: env(safe-area-inset-top); }
   #scherm-gevecht #beurt-label { margin-top: calc(42px + env(safe-area-inset-top)); }
-  #baas-balk { top: calc(38px + env(safe-area-inset-top)); }
+  /* baasgevecht: het Beurt-label botste met de bazenbalk → weg op mobiel.
+     De bazenbalk compacter zodat hij in de krappe (liggende) hoogte past. */
+  #scherm-gevecht.baas-actief #beurt-label { display: none; }
+  #baas-balk { top: calc(38px + env(safe-area-inset-top)); width: min(560px, 94vw); }
+  #baas-balk .bb-naam { font-size: 1.15rem; }
+  #baas-balk .bb-titel { font-size: .68rem; letter-spacing: 1px; margin: -1px 0 3px; }
+  #baas-balk .bb-balk { height: 15px; }
+  #baas-balk .bb-fases { margin-top: 3px; gap: 5px; }
+  #baas-balk .bb-pip { width: 9px; height: 9px; }
 
   /* afdaalkaart swipebaar (700px-vlak blijft intact, px-knoopposities kloppen) */
   #kaart-scroll { overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; }

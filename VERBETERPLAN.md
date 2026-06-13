@@ -504,3 +504,13 @@ nu in HOOGTE (height:auto) + wordt breder (172px) zodat de VOLLEDIGE tekst
 leesbaar binnen de kaart past. Preview-transform van schaal naar pure lift
 (de grootte komt nu uit width/auto-height). Geverifieerd: volledige tekst
 binnen de kaart + kaart volledig op het scherm, staand én liggend, geen fouten.
+
+### R3.26 — Mobiel baasgevecht: bazenbalk botste met Beurt-label (KLAAR, 2026-06-14)
+Speeltest: in het baasgevecht liep het "Beurt"-label dwars door de bazenbalk
+(De Slijmkoning-titel) — op laptop ok, op mobiel vloekte het. Oorzaak: de
+fullscreen-wijziging zette #scherm-gevecht op top:0, waardoor de margin-top van
+het Beurt-label niet meer onder de bazenbalk uitkwam. Fix op touch: Beurt-label
+verbergen in baasgevechten (de bazenbalk ís de focus), en de bazenbalk compacter
+(naam 1.15rem, dunne 15px-balk, kleinere pips, 65px i.p.v. ~110) zodat hij in de
+krappe liggende hoogte past. Geverifieerd: label weg, balk compact, speler +
+baas zichtbaar, geen fouten.
