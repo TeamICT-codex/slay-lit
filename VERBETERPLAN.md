@@ -473,3 +473,15 @@ zijn scherm vergrendeld heeft. Drankjes blijven in de (transparante) topbalk
 beschikbaar in liggend. Vervangt de oude wegklikbare suggestie-banner.
 Geverifieerd: prompt toont enkel bij staand+gevecht+touch, weg in
 liggend/map/desktop, escape werkt, 2 drankjes zichtbaar in liggend, geen fouten.
+
+### R3.23 — Mobiel: figuren onzichtbaar in liggend gevecht (gefixt) (KLAAR, 2026-06-14)
+Speeltest: in liggend gevecht zag je wel de namen+HP maar NIET de speler/
+vijand-sprites. Gediagnosticeerd via DOM-inspectie: de figuren stonden op
+y −91..5 (vrijwel volledig boven de schermrand). Oorzaak: mijn eigen
+overcomplicatie uit R3.20 — padding-bottom:160 (liggend) / 296 (staand) op
+#strijdveld kneep de figuren in een strookje van ~34px, en met align flex-end
+schoten ze omhoog buiten beeld. De onderbalk stond bovendien al gewoon in de
+flow, dus de padding (en de position:fixed) reserveerden dubbel. Fix:
+padding-bottom + position:fixed weggehaald; de min-height:0 (die het afkappen
+oploste) volstaat. Geverifieerd: speler én vijand-sprites volledig zichtbaar
+in liggend (71–168) én staand, kaarten niet afgekapt, geen fouten.

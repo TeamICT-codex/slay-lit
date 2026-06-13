@@ -2307,9 +2307,9 @@ body.lite #licht-vignet.flikker::after { animation: none; }
    gecentreerd; HUD boven de hand i.p.v. ernaast. max-width sluit alleen
    brede desktop-vensters met touchscreen uit. */
 @media (pointer: coarse) and (orientation: portrait) and (max-width: 900px) {
-  /* min-height:0 + padding-bottom houden de figuren boven de vaste onderbalk;
-     de onderbalk staat fixed aan de schermrand zodat de hand NOOIT wordt afgekapt */
-  #strijdveld { padding: 0 8px 296px; align-items: center; justify-content: space-evenly; gap: 8px; min-height: 0; }
+  /* min-height:0 laat het strijdveld krimpen zodat de in-flow onderbalk + hand
+     onderaan blijven (geen afkapping); de figuren vullen de ruimte erboven */
+  #strijdveld { padding: 0 8px 6px; align-items: center; justify-content: space-evenly; gap: 8px; min-height: 0; }
   #speler-zone { min-width: 0; }
   .speler-figuur { width: 140px; height: 140px; }
   #vijanden-rij { gap: 12px 16px; flex-wrap: wrap; justify-content: center; max-width: min(60vw, 340px); }
@@ -2318,7 +2318,7 @@ body.lite #licht-vignet.flikker::after { animation: none; }
   .is-elite .vijand-art { width: 140px; height: 140px; }
   .is-baas .vijand-art { width: 178px; height: 178px; }
 
-  #onderbalk { height: 292px; position: fixed; left: 0; right: 0; bottom: 0; }
+  #onderbalk { height: 292px; }
   #hand { bottom: calc(10px + env(safe-area-inset-bottom)); }
   .kaart { width: 120px; height: 168px; margin: 0 -32px; }
   /* kaart-art schaalt mee met de smallere mobiele kaart (liep anders over) */
@@ -2336,15 +2336,16 @@ body.lite #licht-vignet.flikker::after { animation: none; }
    Breedte is comfortabel; hoogte is krap → verticaal comprimeren zodat de
    hand niet wordt afgekapt. max-height sluit tablets/laptops (veel hoger) uit. */
 @media (pointer: coarse) and (orientation: landscape) and (max-height: 600px) {
-  /* onderbalk fixed aan de schermrand; figuren erboven via padding-bottom */
-  #strijdveld { padding: 0 16px 160px; align-items: flex-end; justify-content: space-evenly; min-height: 0; }
+  /* in-flow onderbalk onderaan; strijdveld krimpt (min-height:0) en houdt de
+     figuren zichtbaar erboven */
+  #strijdveld { padding: 0 16px 4px; align-items: flex-end; justify-content: space-evenly; min-height: 0; }
   .speler-figuur { width: 96px; height: 96px; }
   .vijand-art { width: 90px; height: 90px; }
   .is-elite .vijand-art { width: 106px; height: 106px; }
   .is-baas .vijand-art { width: 134px; height: 134px; }
   #vijanden-rij { gap: 18px; flex-wrap: nowrap; max-width: none; }
 
-  #onderbalk { height: 156px; position: fixed; left: 0; right: 0; bottom: 0; }
+  #onderbalk { height: 150px; }
   #hand { bottom: calc(6px + env(safe-area-inset-bottom)); }
   .kaart { width: 104px; height: 146px; margin: 0 -16px; }
   .kaart-icoon img { width: 84px; height: 46px; }
