@@ -2213,108 +2213,93 @@ body.lite #licht-vignet.flikker::after { animation: none; }
   }
 }
 
-/* ---------- telefoon (≤480px) ----------
-   ALLE regels hieronder gelden uitsluitend op smalle schermen; de laptop
-   (>480px) ziet ze nooit. Raak hier geen basiswaarden aan, override alleen.
-   De rem-basis krimpt zodat bestaande rem-maten (titels, knoppen) meeschalen
-   zonder de globale 16px (regel 30) te wijzigen. */
-@media (max-width: 480px) {
-  html { font-size: 14px; }
+/* ================= MOBIEL / TOUCH =================
+   Gekoppeld aan (pointer: coarse) i.p.v. een vaste breedte — telefoons
+   rapporteren uiteenlopende CSS-breedtes (390–540px), dus een px-grens
+   miste bredere toestellen. Desktop (pointer: fine) ziet niets hiervan. */
 
-  /* tooltip mag de smalle breedte niet overschrijden */
-  #tooltip { max-width: min(260px, 90vw); }
+/* ---------- A. universeel-touch (beide oriëntaties) ---------- */
+@media (pointer: coarse) {
+  #tooltip { max-width: min(280px, 92vw); }
 
-  /* --- beginscherm groter & beter leesbaar (counteren van de 14px-basis) --- */
-  .titel-groot { font-size: min(20vw, 7.5rem); }
-  .titel-sub { font-size: 1.6rem; margin: 14px 0 30px; }
-  .titel-knoppen { gap: 18px; }
-  .titel-knoppen .knop-groot { min-width: min(330px, 88vw); font-size: 1.7rem; padding: 18px 30px; }
-  .knop-stil { font-size: 1.5rem; padding: 10px 16px; }
+  /* beginscherm fors leesbaar */
+  .titel-groot { font-size: min(17vw, 6.5rem); }
+  .titel-sub { font-size: 1.4rem; margin: 14px 0 28px; }
+  .titel-knoppen { gap: 16px; }
+  .titel-knoppen .knop-groot { min-width: min(330px, 86vw); font-size: 1.5rem; padding: 18px 30px; }
+  .knop-stil { font-size: 1.3rem; padding: 10px 16px; }
+  .scherm-titel { font-size: 1.9rem; }
 
-  /* --- afdaalkaart: het 700px-vlak blijft intact maar wordt swipebaar
-     i.p.v. afgeknipt (px-knoopposities blijven zo kloppen) --- */
+  /* afdaalkaart swipebaar (700px-vlak blijft intact, px-knoopposities kloppen) */
   #kaart-scroll { overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
   #kaart-vlak { margin: 0 auto; }
 
-  /* --- gevechtsveld: GROTER en de verticale ruimte benutten. Vijanden
-     wrappen naar 2 rijen zodat ze fors kunnen blijven op smal scherm; het
-     strijdveld centreert verticaal i.p.v. een lege band bovenaan. --- */
-  #strijdveld { padding: 0 8px 6px; align-items: center; }
-  #speler-zone { min-width: 84px; }
-  .speler-figuur { width: 122px; height: 122px; }
-  #vijanden-rij { gap: 10px 12px; flex-wrap: wrap; justify-content: center; max-width: 270px; }
-  .vijand { min-width: 0; padding: 4px; }
-  .vijand-art { width: 106px; height: 106px; }
-  .is-elite .vijand-art { width: 124px; height: 124px; }
-  .is-baas .vijand-art { width: 158px; height: 158px; }
-
-  /* --- onderbalk: HUD-rij (orb, einde-beurt, stapels) BOVEN de hand,
-     niet ernaast, want op een telefoon overlapt de hand de hoeken. Grotere
-     kaarten (beter leesbaar; tweede tik = tap-to-inspect maakt 'm nog groter). */
-  #onderbalk { height: 288px; }
-  #hand { bottom: 6px; }
-  .kaart { width: 116px; height: 162px; margin: 0 -32px; }
-  /* zachtere lift op touch zodat een opgetilde/gekozen kaart de HUD niet raakt */
-  #hand .kaart:hover, #hand .kaart.gekozen { transform: translateY(-30px) scale(1.08); }
-
-  #energie-orb { left: 8px; bottom: 216px; transform: scale(.82); }
-  #knop-eindbeurt { right: 8px; bottom: 220px; min-height: 44px; padding: 10px 18px; font-size: 1.05rem; }
-  #stapel-trek { left: 10px; bottom: 254px; }
-  #stapel-afleg { right: 10px; bottom: 254px; }
-
-  /* --- overlays: minder padding zodat de inhoud meer breedte/hoogte krijgt --- */
+  /* overlays + scrollbare schermen (.scherm is standaard overflow:hidden) */
   .overlay { padding: 20px 10px; }
-  .scherm-titel { font-size: 1.85rem; }
-
-  /* schermen met veel verticale inhoud moeten kunnen scrollen op telefoon
-     (.scherm is standaard overflow:hidden; heldenkeuze centreert bovendien
-     verticaal — op een gsm top-uitlijnen zodat alles bereikbaar blijft) --- */
   #scherm-held, #scherm-event, #scherm-rust, #scherm-beloning, #scherm-einde {
     overflow-y: auto; justify-content: flex-start;
   }
   #scherm-held { padding-bottom: 24px; }
 
-  /* --- heldenkeuze: kaart binnen de viewport, held torent minder ver uit --- */
   .held-kaart { width: min(400px, 92vw); margin-top: 64px; padding: 20px 16px 16px; }
   .held-kaart > b { font-size: 1.7rem; }
   .held-art { width: 200px; height: 200px; margin-top: -80px; }
   .held-aura { width: 210px; height: 210px; top: -50px; }
 
-  /* --- event/rust: knopkolom past op smal scherm --- */
   .event-opties { width: 100%; max-width: 92vw; }
   .rust-knop, .event-knop { padding: 16px 18px; font-size: 1.15rem; }
 
-  /* --- eindscherm: stats wrappen, knoppen onder elkaar (scroll via regel boven) --- */
   .einde-stats { gap: 12px 20px; flex-wrap: wrap; justify-content: center; margin: 12px 0; }
   .einde-stats b { font-size: 1.7rem; }
   .einde-held { width: 170px; height: 170px; }
   .einde-knoppen { flex-direction: column; width: 92vw; }
-
-  /* --- codex/boek: iets compacter --- */
-  .codex-slot { width: 54px; height: 54px; }
+  .codex-slot { width: 60px; height: 60px; }
 }
 
-/* ---------- liggend op telefoon (kort & breed = de aanbevolen modus) ----------
-   De breedte is comfortabel (tablet-layout pakt vanzelf), maar de hoogte is
-   krap. We comprimeren verticaal zodat strijdveld + hand samen passen en de
-   hand niet onderaan afgekapt wordt. Alleen op touch-toestellen, zodat een
-   kort/breed desktop-venster ongemoeid blijft. */
-@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
-  #strijdveld { padding: 0 16px 4px; align-items: flex-end; }
-  .speler-figuur { width: 92px; height: 92px; }
-  .vijand-art { width: 86px; height: 86px; }
-  .is-elite .vijand-art { width: 102px; height: 102px; }
-  .is-baas .vijand-art { width: 130px; height: 130px; }
-  #vijanden-rij { gap: 16px; flex-wrap: nowrap; }
+/* ---------- B. staand gevecht (telefoon, alle breedtes) ----------
+   Vijanden wrappen zodat ze fors kunnen blijven; strijdveld verticaal
+   gecentreerd; HUD boven de hand i.p.v. ernaast. max-width sluit alleen
+   brede desktop-vensters met touchscreen uit. */
+@media (pointer: coarse) and (orientation: portrait) and (max-width: 900px) {
+  #strijdveld { padding: 0 8px 6px; align-items: center; justify-content: space-evenly; gap: 8px; }
+  #speler-zone { min-width: 0; }
+  .speler-figuur { width: 124px; height: 124px; }
+  #vijanden-rij { gap: 10px 14px; flex-wrap: wrap; justify-content: center; max-width: min(58vw, 320px); }
+  .vijand { min-width: 0; padding: 4px; }
+  .vijand-art { width: 108px; height: 108px; }
+  .is-elite .vijand-art { width: 126px; height: 126px; }
+  .is-baas .vijand-art { width: 160px; height: 160px; }
 
-  #onderbalk { height: 150px; }
+  #onderbalk { height: 292px; }
+  #hand { bottom: 8px; }
+  .kaart { width: 120px; height: 168px; margin: 0 -32px; }
+  #hand .kaart:hover, #hand .kaart.gekozen { transform: translateY(-32px) scale(1.08); }
+
+  #energie-orb { left: 10px; bottom: 220px; transform: scale(.85); }
+  #knop-eindbeurt { right: 10px; bottom: 224px; min-height: 46px; padding: 11px 20px; font-size: 1.05rem; }
+  #stapel-trek { left: 12px; bottom: 260px; }
+  #stapel-afleg { right: 12px; bottom: 260px; }
+}
+
+/* ---------- C. liggend gevecht (telefoon, korte hoogte) ----------
+   Breedte is comfortabel; hoogte is krap → verticaal comprimeren zodat de
+   hand niet wordt afgekapt. max-height sluit tablets/laptops (veel hoger) uit. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 600px) {
+  #strijdveld { padding: 0 16px 4px; align-items: flex-end; justify-content: space-evenly; }
+  .speler-figuur { width: 96px; height: 96px; }
+  .vijand-art { width: 90px; height: 90px; }
+  .is-elite .vijand-art { width: 106px; height: 106px; }
+  .is-baas .vijand-art { width: 134px; height: 134px; }
+  #vijanden-rij { gap: 18px; flex-wrap: nowrap; max-width: none; }
+
+  #onderbalk { height: 156px; }
   #hand { bottom: 4px; }
-  .kaart { width: 100px; height: 140px; margin: 0 -18px; }
-  #hand .kaart:hover, #hand .kaart.gekozen { transform: translateY(-26px) scale(1.1); }
-  /* breed zat: HUD weer NAAST de hand (zoals desktop), niet erboven */
-  #energie-orb { left: 12px; bottom: 86px; transform: scale(.8); }
-  #knop-eindbeurt { right: 12px; bottom: 90px; min-height: 40px; padding: 8px 16px; }
-  #stapel-trek { left: 12px; bottom: 16px; }
-  #stapel-afleg { right: 12px; bottom: 16px; }
-  #scherm-gevecht.baas-actief #beurt-label { margin-top: 60px; }
+  .kaart { width: 104px; height: 146px; margin: 0 -16px; }
+  #hand .kaart:hover, #hand .kaart.gekozen { transform: translateY(-28px) scale(1.1); }
+  /* breed zat: HUD weer NAAST de hand */
+  #energie-orb { left: 14px; bottom: 88px; transform: scale(.82); }
+  #knop-eindbeurt { right: 14px; bottom: 92px; min-height: 42px; padding: 9px 18px; }
+  #stapel-trek { left: 14px; bottom: 16px; }
+  #stapel-afleg { right: 14px; bottom: 16px; }
+  #scherm-gevecht.baas-actief #beurt-label { margin-top: 58px; }
 }

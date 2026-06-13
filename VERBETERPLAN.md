@@ -405,3 +405,19 @@ opgeslagen d3=true op mobiel naar false + lite aan. Geverifieerd met een
 gesimuleerde oude INST: mobiel → 2D-gevecht, desktop → INST onaangeroerd
 (blijft 3D). 2D-layout op telefoon nu speelbaar (speler + vijanden +
 kaarten leesbaar).
+
+### R3.18 — KERNBUG: mobiele CSS op breedte i.p.v. touch (gemist op bredere gsm's) (KLAAR, 2026-06-14)
+Speeltest op echt toestel: "alles klein, gevechten onspeelbaar, desktop-
+indeling op gsm". Oorzaak: alle mobiele CSS hing aan @media(max-width:480px),
+maar telefoons rapporteren uiteenlopende CSS-breedtes (390–540px). Een gsm
+van ~500–540px viel buiten 480 → kreeg de DESKTOP-indeling (figuren ver
+uiteen, lege ruimte, kleine titel). Mijn emulatie draaide op 390px en zat
+nét binnen de grens → nooit gezien. Gereproduceerd op 540px (flex-end,
+nowrap, onderbalk 235 = desktop). Fix: mobiele CSS herstructureerd naar
+(pointer: coarse)-queries i.p.v. breedte: A) universeel-touch (titel,
+overlays, scrollbare schermen, map-swipe), B) staand-gevecht (wrap,
+gecentreerd, HUD boven hand), C) liggend-gevecht (verticaal compact).
+Globale 14px-tekstverkleining verwijderd (maakte alles klein) → 16px-basis,
+grotere kaarttekst + titel. Geverifieerd op 360/412/540 staand + liggend
+(allemaal de mobiele layout) en desktop (ongewijzigd: flex-end, 235px,
+138px kaart, 16px). Nog open: muziek kraakt op gsm (apart na te kijken).
