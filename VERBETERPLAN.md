@@ -391,3 +391,17 @@ kaartwaaier), staand propte alles te klein. Keuze "allebei":
 - Vrijblijvende eenmalige rotatie-tip (toast, géén blokkade), enkel touch
   + portrait. Geverifieerd: desktop ongewijzigd (138px/235px/nowrap, geen
   toast), geen fouten.
+
+### R3.17 — KRITIEKE FIX: 3D bleef aan op mobiel (onspeelbaar) (KLAAR, 2026-06-14)
+Speeltest op echt toestel: gevecht onspeelbaar — reuze 3D-billboards,
+kaarten zweefden over de scène. Oorzaak: bestaande spelers hadden een
+OPGESLAGEN INST met d3=true (de oude default vóór de mobiel-update); die
+saved-waarde overschreef de nieuwe mobiele default, dus 3D bleef aan —
+verversen hielp niet (geen cache-, maar localStorage-kwestie). Mijn
+emulatietests misten dit omdat een verse context geen oude INST heeft.
+Fix: (1) d3Gewenst() geeft op window.mobiel altijd false → 3D hard uit op
+telefoon, ongeacht instellingen; (2) eenmalige migratie forceert een
+opgeslagen d3=true op mobiel naar false + lite aan. Geverifieerd met een
+gesimuleerde oude INST: mobiel → 2D-gevecht, desktop → INST onaangeroerd
+(blijft 3D). 2D-layout op telefoon nu speelbaar (speler + vijanden +
+kaarten leesbaar).

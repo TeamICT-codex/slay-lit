@@ -79,6 +79,14 @@ const INST = Object.assign(
   { lite: standaardLite || mobiel, d3: !standaardLite && !mobiel, spraak: true },
   JSON.parse(localStorage.getItem('slayit_inst') || '{}')
 );
+/* migratie: wie vóór de mobiel-update al speelde, heeft op een telefoon vaak
+   een opgeslagen 3D=AAN (de oude default) — en 3D is daar onspeelbaar. Forceer
+   3D uit en lite aan, eenmalig, zodat de opgeslagen voorkeur de fix niet blokkeert. */
+if (mobiel && INST.d3) {
+  INST.d3 = false;
+  INST.lite = true;
+  try { localStorage.setItem('slayit_inst', JSON.stringify(INST)); } catch (e) {}
+}
 function bewaarInst() { localStorage.setItem('slayit_inst', JSON.stringify(INST)); }
 
 /* ---------- de Codex: alles wat je ooit ontdekte, over alle runs heen ---------- */
@@ -251,6 +259,7 @@ function willekeurigRelikwie(weging) {
    dus daar draait het spel in de volwaardige 2D-modus */
 function d3Gewenst() {
   if (location.protocol === 'file:') return false;
+  if (window.mobiel) return false;   /* 3D is op een telefoon onspeelbaar — altijd 2D */
   return INST.d3 && window.Vista && Vista.beschikbaar();
 }
 function d3Actief() { return $('#scherm-gevecht').classList.contains('d3-actief'); }
