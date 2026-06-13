@@ -2204,6 +2204,13 @@ body.lite #licht-vignet.flikker::after { animation: none; }
     filter: brightness(1.15);
     transition: transform .08s ease, filter .08s ease;
   }
+  /* tap-to-inspect: de eerst aangetikte handkaart groot tonen om te lezen
+     (tweede tik speelt 'm). Werkt op telefoon én touch-tablet. */
+  #hand .kaart.voorbeeld {
+    transform: translateY(-34px) scale(1.18);
+    z-index: 100;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .85), 0 0 24px var(--kgloed, rgba(255, 156, 63, .32));
+  }
 }
 
 /* ---------- telefoon (≤480px) ----------

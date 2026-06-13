@@ -1432,6 +1432,7 @@ function bijwerkKaartEl(el, c, klikbaar) {
     + (def.licht || def.vuur ? ' kaart-licht' : '')
     + (g && ((kost !== null && kost > g.energie) || lichtTekort) ? ' te-duur' : '')
     + (g && g.gekozenKaart === c.uid ? ' gekozen' : '')
+    + (g && g.voorbeeldKaart === c.uid ? ' voorbeeld' : '')
     + (el.classList.contains('nieuw') ? ' nieuw' : '');
   el.querySelector('.kaart-kost').textContent = kost === null ? '✕' : kost;
   const lichtEl = el.querySelector('.kaart-lichtkost');
@@ -1500,6 +1501,19 @@ function klikKaart(uid) {
   if (!g || g.bezig || g.voorbij) return;
   const c = g.hand.find(k => k.uid === uid);
   if (!c) return;
+
+  /* TOUCH: kaarten overlappen sterk op een smal scherm. De eerste tik tilt de
+     kaart groot omhoog om te lezen; pas de tweede tik op dezelfde kaart speelt
+     'm. Een doelwit-kaart die al geselecteerd is (gekozenKaart) heeft zijn
+     leesmoment gehad. Desktop (muis) speelt zoals altijd meteen. */
+  if (window.mobiel && g.gekozenKaart !== uid && g.voorbeeldKaart !== uid) {
+    g.voorbeeldKaart = uid;
+    renderHand();
+    Klank.sfx('klik');
+    return;
+  }
+  g.voorbeeldKaart = null;
+
   const def = kdef(c);
 
   if (def.type === 'vloek') { melding('Onbespeelbaar!'); Klank.sfx('fout'); return; }
@@ -1527,6 +1541,11 @@ function klikVijand(i) {
   if (!g || g.bezig || g.voorbij) return;
   const v = g.vijanden[i];
   if (!v || v.dood) return;
+  /* een lopende kaart-voorbeschouwing (touch) wegtikken door op een vijand te
+     tikken zonder dat er een kaart/drank gericht wordt */
+  if (g.voorbeeldKaart != null && g.gekozenKaart === null && g.gekozenDrank === null) {
+    g.voorbeeldKaart = null; renderHand(); return;
+  }
   if (g.gekozenDrank !== null) {
     const di = g.gekozenDrank;
     g.gekozenDrank = null;
@@ -1641,7 +1660,7 @@ async function eindBeurt() {
   /* gestopt(): dit gevecht is intussen voorbij of vervangen door een nieuw */
   const gestopt = () => S.gevecht !== g || g.voorbij;
   g.bezig = true;
-  g.gekozenKaart = null; g.gekozenDrank = null;
+  g.gekozenKaart = null; g.gekozenDrank = null; g.voorbeeldKaart = null;
 
   /* Gebroken Zandloper: het zand valt omhoog, energie blijft */
   if (heeftRelikwie('gebroken_zandloper') && g.energie > 0) g.bewaardeEnergie = g.energie;

@@ -368,3 +368,12 @@ Desktop-veiligheid: media-query-only (≤480px) of @media(hover:none),
 feature-detect (pointer:coarse), min()/clamp() en env() (=0 op desktop).
 SW-cache bewust op v7 gehouden (geen art-wipe). Eindregressie desktop:
 volledige run-flow zonder fouten. Mobiel nu speelbaar + installeerbaar.
+
+### R3.15 — Mobiel-polish: tap-to-inspect handkaart (KLAAR, 2026-06-13)
+Op touch tilt de eerste tik een handkaart groot omhoog (lezen, bij sterke
+overlap), pas de tweede tik op dezelfde kaart speelt 'm; een gerichte
+kaart gaat dan naar de richt-stand. window.mobiel-gated → desktop speelt
+één klik = direct, ongewijzigd. Voorbeeld wordt gewist bij nieuwe beurt
+en bij een vijand-tik zonder selectie. CSS-lift in @media(hover:none)
+(telefoon + touch-tablet). Geverifieerd: touch preview→spelen (skill +
+gerichte kaart, 6 schade), desktop direct spelen, geen fouten.
