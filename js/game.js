@@ -64,8 +64,19 @@ const standaardLite =
   (navigator.deviceMemory || 8) <= 4 ||
   (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
+/* mobiel/touch staat los van de hardware-heuristiek: een coarse pointer
+   (vinger) of een mobiele user-agent. Op een laptop is dit false, dus de
+   defaults hieronder blijven exact zoals voorheen. Globaal beschikbaar zodat
+   scene3d zijn renderer kan verzachten en latere touch-fixes hem hergebruiken. */
+const mobiel =
+  (window.matchMedia && matchMedia('(pointer: coarse)').matches) ||
+  /Android|iPhone|iPad|iPod|Mobile|Silk/i.test(navigator.userAgent || '');
+window.mobiel = mobiel;
+
 const INST = Object.assign(
-  { lite: standaardLite, d3: !standaardLite, spraak: true },
+  /* op mobiel standaard lite AAN en 3D UIT (opt-in via instellingen);
+     op laptop ongewijzigd want mobiel=false */
+  { lite: standaardLite || mobiel, d3: !standaardLite && !mobiel, spraak: true },
   JSON.parse(localStorage.getItem('slayit_inst') || '{}')
 );
 function bewaarInst() { localStorage.setItem('slayit_inst', JSON.stringify(INST)); }

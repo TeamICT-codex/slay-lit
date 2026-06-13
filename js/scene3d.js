@@ -28,7 +28,9 @@ const Vista = (() => {
   /* ---------- opbouw van de zaal ---------- */
   function start(canvas) {
     if (klaar || !beschikbaar()) return klaar;
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    /* antialias is duur op mobiele GPU's en alleen bij creatie instelbaar;
+       op laptop (window.mobiel=false) blijft het gewoon aan */
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: !window.mobiel, alpha: true });
     renderer.setClearColor(0x0d0a12, 1);
 
     scene = new THREE.Scene();
@@ -116,8 +118,10 @@ const Vista = (() => {
   function resize() {
     if (!renderer) return;
     const w = Math.max(1, window.innerWidth), h = Math.max(1, window.innerHeight);
-    /* pixelratio kan wijzigen (ander scherm / zoom); CSS bepaalt de weergavegrootte */
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    /* pixelratio kan wijzigen (ander scherm / zoom); CSS bepaalt de weergavegrootte.
+       Op mobiel cappen we strakker (1.0) — fillrate is daar de grootste kost. */
+    const ratioCap = window.mobiel ? 1 : 1.5;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, ratioCap));
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
