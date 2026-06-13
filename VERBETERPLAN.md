@@ -485,3 +485,12 @@ flow, dus de padding (en de position:fixed) reserveerden dubbel. Fix:
 padding-bottom + position:fixed weggehaald; de min-height:0 (die het afkappen
 oploste) volstaat. Geverifieerd: speler én vijand-sprites volledig zichtbaar
 in liggend (71–168) én staand, kaarten niet afgekapt, geen fouten.
+
+### R3.24 — Fullscreen op mobiel (statusbalk/klok weg) (KLAAR, 2026-06-14)
+Twee sporen samen: (1) manifest display:fullscreen + display_override →
+geïnstalleerde PWA start in echte fullscreen, geen statusbalk; (2) in de
+browser roept de eerste-tik-handler (eersteGebaar, het audio-ontgrendelgebaar)
+document.documentElement.requestFullscreen() aan, mobiel-gated, try/catch.
+Android-browsers honoreren dit; iOS-browsers steunen de Fullscreen-API niet
+voor pagina's → daar dekt de PWA-installatie het. Geverifieerd: geen JS-fouten
+bij de eerste tik, mobiel-vlag actief, desktop ongemoeid (niet-mobiel = no-op).

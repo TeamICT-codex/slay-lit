@@ -2822,9 +2822,21 @@ window.addEventListener('DOMContentLoaded', () => {
     if (el) klikVijand(parseInt(el.dataset.i, 10));
   });
 
+  /* fullscreen op mobiel: weg met de statusbalk/klok tijdens het spelen.
+     Vereist een gebruikersgebaar (vandaar hier). Android-browsers steunen dit;
+     iOS-browsers niet — daar dekt de PWA-installatie (manifest display:fullscreen)
+     het. Geïnstalleerd als app start het sowieso fullscreen. */
+  function gaFullscreen() {
+    if (!window.mobiel || document.fullscreenElement) return;
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (req) { try { req.call(el); } catch (e) {} }
+  }
+
   /* audio mag pas starten na een gebruikersgebaar */
   const eersteGebaar = () => {
     Klank.init();
+    gaFullscreen();
     const naam = (S && S.scherm) || 'titel';
     Klank.muziek(SCHERM_MUZIEK[naam] || 'titel');
     document.removeEventListener('pointerdown', eersteGebaar);
