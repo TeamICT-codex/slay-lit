@@ -436,3 +436,18 @@ speler/vijand-aanval, hit, death, cast, victory en signatuurmomenten; plus
 een 2D-lunge voor vijand-aanvallen. Geverifieerd op mobiel: lite uit,
 adem-animatie actief, attack-pose wisselt + lunge + keert terug, death-pose
 blijft staan; geen fouten; cast-pose visueel bevestigd.
+
+### R3.20 — Mobiel: kaarten niet meer afgekapt + art-overloop + draai-banner (KLAAR, 2026-06-14)
+Speeltest: kaarten onderaan afgekapt (tekst onleesbaar), kaart-artwork loopt
+over de rand, geen draai-indicatie. Gereproduceerd op 412/540/640px hoog
+(liggend) + 430px (staand): kaart-onderkant viel 11–62px onder de schermrand.
+Oorzaken + fixes: (1) flexbox min-height:auto duwde de onderbalk van het
+scherm → onderbalk nu position:fixed aan de schermrand + #strijdveld
+min-height:0 + padding-bottom (figuren erboven); (2) de waaier-vorm (--til)
+spreidde de buitenste kaarten naar beneden → op mobiel een VLAKKE hand
+(--til 0, nauwelijks rotatie); (3) kaart-art was vaste 116px breed = breder
+dan de mobiele kaart → mee geschaald (84/98px). Resultaat: kaarten volledig
+zichtbaar/leesbaar op alle telefoon-afmetingen, art binnen de kaart.
+Plus een wegklikbare draai-banner die in staande stand verschijnt (onthoudt
+de keuze) i.p.v. de gemiste toast. Geverifieerd op alle dims + desktop
+ongewijzigd, geen fouten.

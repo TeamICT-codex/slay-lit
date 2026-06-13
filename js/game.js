@@ -976,13 +976,18 @@ function maakVijand(id, rij) {
 
 /* eenmalige, vrijblijvende tip: liggend speelt comfortabeler. Geen blokkade —
    alleen een toast, en enkel op een touch-toestel in staande stand. */
-let rotatieHintGetoond = false;
-function draaiHint() {
-  if (rotatieHintGetoond || !window.mobiel) return;
-  if (window.matchMedia && matchMedia('(orientation: portrait)').matches) {
-    rotatieHintGetoond = true;
-    setTimeout(() => { if (inGevecht()) melding('↻ Tip: draai je toestel — liggend speelt groter'); }, 700);
-  }
+/* de draai-wenk is een wegklikbare banner (CSS toont 'm in staande stand);
+   onthoud de keuze zodat hij niet blijft terugkomen. */
+function sluitDraaiWenk() {
+  const el = document.getElementById('draai-wenk');
+  if (el) el.classList.add('weg');
+  try { localStorage.setItem('slayit_draai_weg', '1'); } catch (e) {}
+}
+if (localStorage.getItem('slayit_draai_weg')) {
+  window.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('draai-wenk');
+    if (el) el.classList.add('weg');
+  });
 }
 
 function startGevecht(samenstelling, soort, rij) {
@@ -1071,7 +1076,6 @@ function startGevecht(samenstelling, soort, rij) {
   zetLichtVisueel();
   renderGevecht();
   if (soort === 'baas') toonBaasIntro(g);
-  draaiHint();
 
   /* openingswoorden: in het donker fluistert de diepte, anders sneert een vijand */
   if (soort !== 'baas') {
@@ -1530,8 +1534,12 @@ function renderHand() {
       houder.appendChild(el);
     }
     bijwerkKaartEl(el, c);
-    el.style.setProperty('--rot', ((i - mid) * 4) + 'deg');
-    el.style.setProperty('--til', (Math.abs(i - mid) * 7) + 'px');
+    /* op mobiel een VLAKKE hand: geen verticale spreiding (--til), nauwelijks
+       rotatie — anders splayen de buitenste kaarten onder de schermrand */
+    const fanRot = window.mobiel ? 1.5 : 4;
+    const fanTil = window.mobiel ? 0 : 7;
+    el.style.setProperty('--rot', ((i - mid) * fanRot) + 'deg');
+    el.style.setProperty('--til', (Math.abs(i - mid) * fanTil) + 'px');
     el.style.zIndex = i + 1;
   });
   /* volgorde herstellen; wegvliegende (afgelegde) kaarten tellen niet mee */
