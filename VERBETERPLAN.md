@@ -494,3 +494,13 @@ document.documentElement.requestFullscreen() aan, mobiel-gated, try/catch.
 Android-browsers honoreren dit; iOS-browsers steunen de Fullscreen-API niet
 voor pagina's → daar dekt de PWA-installatie het. Geverifieerd: geen JS-fouten
 bij de eerste tik, mobiel-vlag actief, desktop ongemoeid (niet-mobiel = no-op).
+
+### R3.25 — Mobiel: lange kaarttekst bloedt niet meer uit + leesbaar bij aantikken (KLAAR, 2026-06-14)
+Speeltest: kaarten met meer tekst dan de basiskaarten (bv. Omarm het Duister)
+lieten de tekst uit de kaart bloeden/afkappen — lelijk en onleesbaar. Fix
+(idee van Thomas): op de kleine rustende handkaart de tekst netjes afknippen
+met een zachte mask-fade (geen bleed); de aangetikte (voorbeeld) kaart groeit
+nu in HOOGTE (height:auto) + wordt breder (172px) zodat de VOLLEDIGE tekst
+leesbaar binnen de kaart past. Preview-transform van schaal naar pure lift
+(de grootte komt nu uit width/auto-height). Geverifieerd: volledige tekst
+binnen de kaart + kaart volledig op het scherm, staand én liggend, geen fouten.
