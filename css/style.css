@@ -2367,9 +2367,11 @@ body.lite #licht-vignet.flikker::after { animation: none; }
    Breedte is comfortabel; hoogte is krap → verticaal comprimeren zodat de
    hand niet wordt afgekapt. max-height sluit tablets/laptops (veel hoger) uit. */
 @media (pointer: coarse) and (orientation: landscape) and (max-height: 600px) {
-  /* in-flow onderbalk onderaan; strijdveld krimpt (min-height:0) en houdt de
-     figuren zichtbaar erboven */
-  #strijdveld { padding: 0 16px 4px; align-items: flex-end; justify-content: space-evenly; min-height: 0; }
+  /* in-flow onderbalk onderaan; strijdveld krimpt (min-height:0). Figuren
+     VERTICAAL GECENTREERD zodat hun bovenkant (intentie-icoon) op elke
+     schermhoogte vrij van de topbalk blijft — anders schoot 'ie er bij meer
+     hoogte (fullscreen) anders doorheen dan zonder. */
+  #strijdveld { padding: 4px 16px; align-items: center; justify-content: space-evenly; min-height: 0; }
   .speler-figuur { width: 96px; height: 96px; }
   .vijand-art { width: 90px; height: 90px; }
   .is-elite .vijand-art { width: 106px; height: 106px; }

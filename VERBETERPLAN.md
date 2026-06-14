@@ -524,3 +524,13 @@ fullscreen-staat (fullscreenchange) en toont de juiste stand bij openen.
 requestFullscreen/exitFullscreen geven een promise terug die kan afwijzen →
 nu netjes afgevangen (.catch) + staat-guards. Geverifieerd: rij zichtbaar op
 mobiel/verborgen op desktop, geen fouten.
+
+### R3.28 — Liggend gevecht: vijanden/intent klipten achter de topbalk bij meer hoogte (KLAAR, 2026-06-14)
+Speeltest: in fullscreen zag je de vijanden "slechter" dan zonder — onlogisch.
+Oorzaak: liggende figuren stonden align:flex-end (onderaan); bij een kortere
+viewport schoot hun bovenkant (intentie-icoon) achter de transparante topbalk
+(gemeten: intent op y=28 < topbalk-bottom 40), en het verschilde per
+schermhoogte (fullscreen = ~30px meer hoogte) → inconsistent. Fix: figuren in
+liggend VERTICAAL CENTREREN (align:center, zoals staand al deed). Geverifieerd
+op 392px én 420px: intent nu vrij van de topbalk (51/65) en consistent tussen
+de hoogtes; vijanden volledig zichtbaar.
