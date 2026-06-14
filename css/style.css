@@ -2311,6 +2311,10 @@ body.lite #licht-vignet.flikker::after { animation: none; }
   }
 }
 
+/* volledig-scherm-schakelaar enkel op touch tonen (desktop heeft F11) */
+.inst-mobiel { display: none; }
+@media (pointer: coarse) { .inst-mobiel { display: flex; } }
+
 /* draai-blok: gevechten dwingen liggend af. Vult het scherm in staande stand
    tijdens een gevecht; in liggend matcht de query niet → weg. */
 #draai-blok { display: none; }

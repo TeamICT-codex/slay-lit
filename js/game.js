@@ -2691,9 +2691,28 @@ function toonInstellingen() {
   $('#inst-d3').checked = INST.d3;
   $('#inst-lite').checked = INST.lite;
   if ($('#inst-spraak')) $('#inst-spraak').checked = INST.spraak !== false;
+  if ($('#inst-fullscreen')) $('#inst-fullscreen').checked = !!document.fullscreenElement;
   $('#overlay-instellingen').classList.add('open');
 }
 function sluitInstellingen() { $('#overlay-instellingen').classList.remove('open'); }
+
+/* volledig scherm aan/uit (statusbalk/klok weg). Werkt betrouwbaar omdat de
+   speler de schakelaar zelf aantikt = direct gebruikersgebaar. */
+function wisselFullscreen(aan) {
+  const el = document.documentElement;
+  if (aan && !document.fullscreenElement) {
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (req) { try { const r = req.call(el); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+  } else if (!aan && document.fullscreenElement) {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+    if (exit) { try { const r = exit.call(document); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+  }
+}
+/* checkbox in sync houden als de gebruiker via een veeg fullscreen verlaat */
+document.addEventListener('fullscreenchange', () => {
+  const cb = document.getElementById('inst-fullscreen');
+  if (cb) cb.checked = !!document.fullscreenElement;
+});
 function instWijzig() {
   Klank.zet('aan', $('#inst-geluid').checked);
   Klank.zet('muziek', parseFloat($('#inst-muziek').value));
@@ -2830,7 +2849,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!window.mobiel || document.fullscreenElement) return;
     const el = document.documentElement;
     const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-    if (req) { try { req.call(el); } catch (e) {} }
+    if (req) { try { const r = req.call(el); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
   }
 
   /* audio mag pas starten na een gebruikersgebaar */

@@ -514,3 +514,13 @@ verbergen in baasgevechten (de bazenbalk ís de focus), en de bazenbalk compacte
 (naam 1.15rem, dunne 15px-balk, kleinere pips, 65px i.p.v. ~110) zodat hij in de
 krappe liggende hoogte past. Geverifieerd: label weg, balk compact, speler +
 baas zichtbaar, geen fouten.
+
+### R3.27 — Fullscreen-schakelaar in instellingen (KLAAR, 2026-06-14)
+De auto-fullscreen-bij-eerste-tik pakt niet op elke browser. Daarom een
+expliciete "📲 Volledig scherm"-schakelaar toegevoegd in de instellingen
+(⚙️), enkel zichtbaar op touch (desktop heeft F11). Werkt betrouwbaar want de
+speler tikt 'm zelf aan = direct gebruikersgebaar. Checkbox synct met de echte
+fullscreen-staat (fullscreenchange) en toont de juiste stand bij openen.
+requestFullscreen/exitFullscreen geven een promise terug die kan afwijzen →
+nu netjes afgevangen (.catch) + staat-guards. Geverifieerd: rij zichtbaar op
+mobiel/verborgen op desktop, geen fouten.
