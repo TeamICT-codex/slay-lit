@@ -52,6 +52,14 @@ const Klank = (() => {
     setInterval(plan, 200);
     klaar = true;
     pasVolumesToe();
+    hervat();
+  }
+
+  /* iOS/Safari (en het keydown-pad) kunnen de AudioContext 'suspended' starten of
+     na backgrounding opnieuw suspenden → dan blijft alles stil terwijl 'geluid
+     aan' staat. Expliciet hervatten binnen een gebruikersgebaar lost dat op. */
+  function hervat() {
+    if (ctx && ctx.state === 'suspended' && ctx.resume) ctx.resume().catch(() => {});
   }
 
   function pasVolumesToe() {
@@ -275,7 +283,7 @@ const Klank = (() => {
 
   /* ---------- publiek ---------- */
   return {
-    init, sfx, muziek, duck, zetDuister,
+    init, hervat, sfx, muziek, duck, zetDuister,
     get klaar() { return klaar; },
     get vol() { return vol; },
     zet(sleutel, waarde) { vol[sleutel] = waarde; bewaar(); pasVolumesToe(); },

@@ -579,3 +579,29 @@ vijand, herstel bij loslaten, klik onderdrukt na peek (0 aanvallen), snelle tik
 telt wél (aanval intact), muis-hold doet niets (desktop onaangeroerd); settled
 opacity exact .14. Screenshots voor/na bevestigen dat de onderste figuur-zone +
 statussen leesbaar worden.
+
+### R3.31 — Diepe audit: 5 bevestigde bugs gefixt (KLAAR, 2026-06-14)
+Supergrondige audit via twee ultracode-workflows (9 facet-finders + adversariële
+verificatie, 30 agents; + een strategiepanel van 5 lenzen). 10 bugs bevestigd,
+11 verworpen (verzonnen ids/onbereikbaar). De 5 echte gedrags-/veiligheidsbugs
+gefixt en in de preview geverifieerd:
+1. **pv()-preview** (game.js:221) paste Kracht/Zwak/Stalen-Vuist toe op ALLE
+   kaartvelden i.p.v. enkel 'dmg' → blok/gif/heel/kracht-gain toonden opgeblazen
+   (of bij Zwak te lage) getallen in de hand, terwijl het effect wél klopte. Fix:
+   `if (veld !== 'dmg' || !inGevecht()) return rauw`. Geverifieerd: Verdediging
+   toont 5 blok (rauw) bij +3 Kracht; Slag toont 9 (6+3, terecht groen).
+2. **Gevechts-HUD onder de notch** in liggende stand (css blok B+C): energie-orb/
+   stapels/eindbeurt negeerden env(safe-area-inset-left/right). Fix: left/right
+   via calc(.. + env(..)). Desktop env=0 → onveranderd.
+3. **Toasts onhoorbaar** voor screenreaders: #meldingen had geen live-region. Fix:
+   role="status" aria-live="polite" in index.html.
+4. **Audio soms stil**: AudioContext werd nooit ge-resume't → bij suspended-start
+   (iOS/keydown-pad) bleef alles stil terwijl 'geluid aan' stond. Fix: Klank.hervat()
+   (ctx.resume) aan einde init + bij elk gebaar (iOS re-suspend na backgrounding).
+5. **Seed-injectie** (self-XSS): de seed werd ongefilterd in innerHTML gezet op het
+   eindescherm. Fix: whitelist [A-Z0-9-] bij de bron (nieuwSpel én laadSpel, dekt
+   ook getamperde saves). Geverifieerd: `<IMG SRC=x>` → "IMGSRCX...".
+Niet-bug bevestigd: doornen kaatst terug ook door volledig blok heen — dat is
+bewust (Slay-the-Spire-conventie). De perf-/balans-/architectuur-bevindingen
+(Three.js lui laden, renderTopbalk splitsen, save-versionering, PWA-offline-cache,
+diepere a11y) staan als VOORSTELLEN in het strategie-/optimalisatierapport.

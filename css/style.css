@@ -2363,10 +2363,10 @@ body.lite #licht-vignet.flikker::after { animation: none; }
   #hand .kaart:hover, #hand .kaart.gekozen { transform: translateY(-30px) scale(1.08); }
   #hand .kaart.voorbeeld { transform: translateY(-34px); }
 
-  #energie-orb { left: 10px; bottom: 226px; transform: scale(.85); }
-  #knop-eindbeurt { right: 10px; bottom: 230px; min-height: 46px; padding: 11px 20px; font-size: 1.05rem; }
-  #stapel-trek { left: 12px; bottom: 266px; }
-  #stapel-afleg { right: 12px; bottom: 266px; }
+  #energie-orb { left: calc(10px + env(safe-area-inset-left)); bottom: 226px; transform: scale(.85); }
+  #knop-eindbeurt { right: calc(10px + env(safe-area-inset-right)); bottom: 230px; min-height: 46px; padding: 11px 20px; font-size: 1.05rem; }
+  #stapel-trek { left: calc(12px + env(safe-area-inset-left)); bottom: 266px; }
+  #stapel-afleg { right: calc(12px + env(safe-area-inset-right)); bottom: 266px; }
 }
 
 /* ---------- C. liggend gevecht (telefoon, korte hoogte) ----------
@@ -2391,9 +2391,9 @@ body.lite #licht-vignet.flikker::after { animation: none; }
   #hand .kaart:hover, #hand .kaart.gekozen { transform: translateY(-26px) scale(1.1); }
   #hand .kaart.voorbeeld { transform: translateY(-26px); }
   /* breed zat: HUD weer NAAST de hand */
-  #energie-orb { left: 14px; bottom: 88px; transform: scale(.82); }
-  #knop-eindbeurt { right: 14px; bottom: 92px; min-height: 42px; padding: 9px 18px; }
-  #stapel-trek { left: 14px; bottom: 16px; }
-  #stapel-afleg { right: 14px; bottom: 16px; }
+  #energie-orb { left: calc(14px + env(safe-area-inset-left)); bottom: 88px; transform: scale(.82); }
+  #knop-eindbeurt { right: calc(14px + env(safe-area-inset-right)); bottom: 92px; min-height: 42px; padding: 9px 18px; }
+  #stapel-trek { left: calc(14px + env(safe-area-inset-left)); bottom: 16px; }
+  #stapel-afleg { right: calc(14px + env(safe-area-inset-right)); bottom: 16px; }
   #scherm-gevecht.baas-actief #beurt-label { margin-top: 58px; }
 }

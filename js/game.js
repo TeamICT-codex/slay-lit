@@ -157,8 +157,10 @@ let S = null;
 function nieuwSpel(heldId, seedTekst) {
   if (!SPELERS[heldId]) heldId = 'slachter';
   const held = SPELERS[heldId];
+  /* whitelist: alleen A-Z 0-9 en '-'. Voorkomt dat een getypte seed HTML/JS
+     injecteert wanneer de seed later in innerHTML belandt (eindescherm). */
   const seed = (seedTekst && String(seedTekst).trim())
-    ? String(seedTekst).trim().toUpperCase()
+    ? (String(seedTekst).trim().toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20) || maakSeedTekst())
     : maakSeedTekst();
   Toeval.zetZaad(zaadVanTekst(seed));
   S = {
@@ -217,10 +219,14 @@ function inGevecht() { return S && S.gevecht && !S.gevecht.voorbij; }
 function sp() { return S.gevecht.speler; }
 function alleVijanden() { return S.gevecht ? S.gevecht.vijanden.filter(v => !v.dood) : []; }
 
-/* schade-preview voor kaartteksten (incl. Kracht, Zwak, relikwie) */
+/* schade-preview voor kaartteksten (incl. Kracht, Zwak, relikwie).
+   LET OP: Kracht/Zwak/Stalen Vuist beïnvloeden ALLEEN echte aanvalsschade ('dmg').
+   Voor blok/gif/kracht-gain/doornen/zwak/heel/licht (de overige velden) is dat
+   onjuist en toonde de kaarttekst opgeblazen of te lage getallen — geef daar de
+   rauwe waarde. De licht-schadekaarten gebruiken óók 'dmg', dus geen regressie. */
 function pv(c, veld) {
   const basis = kval(c, veld);
-  if (!inGevecht()) return `${basis}`;
+  if (veld !== 'dmg' || !inGevecht()) return `${basis}`;
   let d = basis + (sp().status.kracht || 0) + relikwieSchadeBonus();
   if ((sp().status.zwak || 0) > 0) d = Math.floor(d * 0.75);
   if (d > basis) return `<b class="plus">${d}</b>`;
@@ -707,7 +713,9 @@ function laadSpel() {
     S.gevecht = null;
     if (!S.held) S.held = 'slachter';            /* oudere saves */
     if (S.fakkel === undefined) S.fakkel = 100;
-    if (!S.seed) S.seed = '—';
+    /* saniteer de seed óók bij laden: een getamperde save kan hier HTML smokkelen
+       (de seed wordt op het eindescherm via innerHTML getoond). */
+    S.seed = (typeof S.seed === 'string' ? S.seed : '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '') || '—';
     if (S.toevalStaat !== undefined) Toeval.zetStaat(S.toevalStaat);
     return true;
   } catch (e) { return false; }
@@ -2911,6 +2919,9 @@ window.addEventListener('DOMContentLoaded', () => {
   };
   document.addEventListener('pointerdown', eersteGebaar);
   document.addEventListener('keydown', eersteGebaar);
+  /* iOS kan de audio na backgrounding opnieuw 'suspenden' → bij elk later gebaar
+     opnieuw hervatten (lichtgewicht: checkt enkel de context-state). */
+  document.addEventListener('pointerdown', () => { if (window.Klank && Klank.hervat) Klank.hervat(); });
 
   /* PWA: alleen via http(s), file:// kan geen service worker */
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
