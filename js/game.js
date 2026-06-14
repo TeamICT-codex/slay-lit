@@ -105,6 +105,14 @@ if (!Array.isArray(Codex.opgeladen)) {
   Codex.opgeladen = Codex.relikwieen.filter(r => window.RELIKWIEEN && RELIKWIEEN[r] && RELIKWIEEN[r].zeld !== 'start');
 }
 function bewaarCodex() { localStorage.setItem(CODEX_SLEUTEL, JSON.stringify(Codex)); }
+
+/* ---------- de Dagelijkse afdaling: iedereen speelt dezelfde dag-run ---------- */
+const DAILY_SLEUTEL = 'slayit_daily';
+const Daily = Object.assign(
+  { laatsteVoltooid: null, laatsteScore: 0, besteScore: 0, reeks: 0, besteReeks: 0, gesch: [] },
+  JSON.parse(localStorage.getItem(DAILY_SLEUTEL) || '{}')
+);
+function bewaarDaily() { localStorage.setItem(DAILY_SLEUTEL, JSON.stringify(Daily)); }
 function ontdek(soort, id) {
   if (!id || !Codex[soort] || Codex[soort].includes(id)) return;
   Codex[soort].push(id);
@@ -169,6 +177,49 @@ function pasAscensieToe() {
   if (a >= 1) S.fakkel = Math.max(1, S.fakkel - 10);
   if (a >= 5) S.dek.push(nieuweKaart('pijn'));
   if (a >= 6) { S.maxHp = Math.max(1, S.maxHp - 6); S.hp = Math.max(1, S.hp - 6); }
+}
+
+/* ---------- daily-helpers: datum, dag-seed, held van de dag, score ---------- */
+function datumSleutel(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function vandaagSleutel() { return datumSleutel(new Date()); }
+function vorigeDag(sleutel) {
+  const [y, m, d] = sleutel.split('-').map(Number);
+  const dt = new Date(y, m - 1, d); dt.setDate(dt.getDate() - 1);
+  return datumSleutel(dt);
+}
+function dagSeed() { return 'DAILY-' + vandaagSleutel().replace(/-/g, ''); }
+/* held van de dag: deterministisch uit de datum → voor iedereen dezelfde */
+function heldVanDag() {
+  const ids = Object.keys(SPELERS);
+  return ids[zaadVanTekst(vandaagSleutel()) % ids.length];
+}
+function dailyAlGespeeld() { return Daily.laatsteVoltooid === vandaagSleutel(); }
+/* transparante scoreformule (op het eindescherm uitgesplitst) */
+function dagscore(gewonnen) {
+  const diepte = (S.verdieping || 0) * 10;
+  const winst = gewonnen ? 150 : 0;
+  const relikwieen = (S.relikwieen || []).length * 8;
+  const goud = Math.floor((S.goud || 0) / 5);
+  return { diepte, winst, relikwieen, goud, totaal: diepte + winst + relikwieen + goud };
+}
+function registreerDaily(gewonnen) {
+  const dag = S.dailyDag || vandaagSleutel();
+  const totaal = dagscore(gewonnen).totaal;
+  const nieuweTop = totaal > (Daily.besteScore || 0);
+  if (Daily.laatsteVoltooid !== dag) {
+    Daily.reeks = (Daily.laatsteVoltooid === vorigeDag(dag)) ? (Daily.reeks || 0) + 1 : 1;
+    Daily.besteReeks = Math.max(Daily.besteReeks || 0, Daily.reeks);
+    Daily.laatsteVoltooid = dag;
+  }
+  Daily.laatsteScore = totaal;
+  Daily.besteScore = Math.max(Daily.besteScore || 0, totaal);
+  Daily.gesch = Array.isArray(Daily.gesch) ? Daily.gesch : [];
+  Daily.gesch.unshift({ dag, score: totaal, gewonnen: !!gewonnen, diepte: S.verdieping || 0 });
+  Daily.gesch = Daily.gesch.slice(0, 10);
+  bewaarDaily();
+  return { totaal, reeks: Daily.reeks, besteReeks: Daily.besteReeks, nieuweTop };
 }
 function pasInstToe() {
   document.body.classList.toggle('lite', INST.lite);
@@ -2610,8 +2661,13 @@ function toonEinde(gewonnen) {
   const held = huidigeHeld();
   /* loopbaan bijwerken — exact één keer per run (guard op S) */
   let uitslag = { nieuwRecord: false, beste: 0 };
-  if (!S.runGeregistreerd) { uitslag = registreerRun(gewonnen); S.runGeregistreerd = true; }
+  if (!S.runGeregistreerd) {
+    uitslag = registreerRun(gewonnen);
+    if (S.daily) { const du = registreerDaily(gewonnen); S.dailyNieuweTop = du.nieuweTop; }
+    S.runGeregistreerd = true;
+  }
   const besteHeld = (Codex.bestDiepte && Codex.bestDiepte[S.held]) || 0;
+  const dScore = S.daily ? dagscore(gewonnen) : null;
   /* een epitaaf of lofregel uit de poel (presentationeel) */
   const epitafen = [
     'Hier eindigde een afdaling. De diepte telt geen namen.',
@@ -2649,10 +2705,22 @@ function toonEinde(gewonnen) {
       ${statRegels.map(([w, l], i) => `<div style="animation-delay:${(0.7 + i * 0.25).toFixed(2)}s"><b>${w}</b><small>${l}</small></div>`).join('')}
     </div>
     ${!gewonnen && Codex.opgeladen.length ? '<p class="einde-troost">🗝️ Je vondsten wachten opgeladen in het Schrijn.</p>' : ''}
+    ${dScore ? `
+    <div class="daily-paneel">
+      <h3 class="daily-kop">🗓️ Dagelijkse afdaling — score ${dScore.totaal}${S.dailyNieuweTop ? ' <span class="einde-record">🏆 nieuwe topscore!</span>' : ''}</h3>
+      <div class="daily-breakdown">
+        <span>diepte ${S.verdieping} × 10</span><b>${dScore.diepte}</b>
+        ${gewonnen ? `<span>overwinning</span><b>${dScore.winst}</b>` : ''}
+        <span>relikwieën ${S.relikwieen.length} × 8</span><b>${dScore.relikwieen}</b>
+        <span>goud ${S.goud} ÷ 5</span><b>${dScore.goud}</b>
+      </div>
+      <p class="daily-reeks">🔥 Speelreeks: ${Daily.reeks} dag${Daily.reeks === 1 ? '' : 'en'}${Daily.besteReeks > Daily.reeks ? ` · beste: ${Daily.besteReeks}` : ''}</p>
+    </div>` : ''}
     <p class="einde-loopbaan">${loopbaanRegel()}${uitslag.nieuwRecord ? ' <span class="einde-record">🏆 nieuw diepterecord!</span>' : ''}</p>
     <p class="einde-seed">Seed: ${S.seed} · ${held.naam}</p>
     <div class="einde-knoppen">
-      <button class="knop-groot" onclick="startNieuw()">⚔️ Opnieuw afdalen</button>
+      ${S.daily ? '' : '<button class="knop-groot" onclick="startNieuw()">⚔️ Opnieuw afdalen</button>'}
+      <button class="knop-stil" onclick="kopieerUitdaagcode()" data-tip="Deel deze seed — speel dezelfde run">📋 Uitdaagcode</button>
       <button class="knop-stil" onclick="naarTitel()">Naar het begin</button>
     </div>
     ${besteHeld ? `<p class="einde-doel">Diepste val met ${held.naam}: rij ${besteHeld}${!gewonnen ? ' — versla de baas op rij 13' : ''}</p>` : ''}`;
@@ -2679,9 +2747,44 @@ function naarTitel() {
   $('#knop-doorgaan').style.display = localStorage.getItem(SAVE_SLEUTEL) ? 'inline-block' : 'none';
   const ts = $('#titel-stats');
   if (ts) ts.textContent = loopbaanRegel();   /* textContent = injectie-veilig */
+  const db = $('#knop-daily');
+  if (db) {
+    const klaar = dailyAlGespeeld();
+    db.textContent = klaar ? `🗓️ Dagelijks voltooid · score ${Daily.laatsteScore}` : '🗓️ Dagelijkse afdaling';
+    db.classList.toggle('daily-klaar', klaar);
+    if (Daily.reeks > 0) db.setAttribute('data-tip', `🔥 Speelreeks: ${Daily.reeks} dag${Daily.reeks === 1 ? '' : 'en'}${Daily.besteReeks > Daily.reeks ? ` · beste: ${Daily.besteReeks}` : ''}`);
+  }
 }
 
 function startNieuw() { toonHeldKeuze(); }
+
+/* ---------- de Dagelijkse afdaling: vaste dag-seed, held van de dag, Schrijn UIT,
+   score telt mee. Eén scorende poging per dag. ---------- */
+function startDaily() {
+  if (dailyAlGespeeld()) {
+    melding(`🗓️ Je maakte de afdaling van vandaag al — score ${Daily.laatsteScore}. Morgen wacht een nieuwe.`);
+    return;
+  }
+  Klank.sfx('klik');
+  wisSave();
+  schrijnKeuzes = [];                       /* geen Schrijn-meeneem in de daily */
+  const held = heldVanDag();
+  nieuwSpel(held, dagSeed(), 0);            /* vaste seed, ascensie 0 → eerlijk veld */
+  S.daily = true;
+  S.dailyDag = vandaagSleutel();
+  melding(`🗓️ Dagelijkse afdaling — held van de dag: ${SPELERS[held].naam}. Geen Schrijn; je score telt mee.`);
+  renderKaartScherm();
+}
+
+function kopieerUitdaagcode() {
+  const code = (S && S.seed) || '';
+  const klaar = () => melding('📋 Uitdaagcode gekopieerd: ' + code + ' — deel hem en speel dezelfde run!');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code).then(klaar).catch(() => melding('Uitdaagcode: ' + code));
+  } else {
+    melding('Uitdaagcode: ' + code);
+  }
+}
 
 /* ---------- het Schrijn: neem tot 3 gevonden relikwieën mee ---------- */
 const SCHRIJN_MAX = 3;

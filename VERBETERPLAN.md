@@ -630,3 +630,25 @@ ontgrendeld heeft) + een "🔥 ontgrendeld tot A·N"-badge per held; de map toon
 Alles geverifieerd in de preview: telling/record/titel/codex (laag A), en de
 stepper + clamp + elke modifier numeriek (fakkel 70, maxHP 64, Pijn in dek,
 fakkelkost 6 vs 5, vijand-HP 16→18) (laag B). Volgende retentie-stap: daily run.
+
+### R3.33 — Dagelijkse afdaling (daily run) (KLAAR, 2026-06-14)
+Het terugkeer-anker uit het strategierapport, nu zinvol omdat de loopbaan (R3.32)
+er een context omheen geeft. Mechaniek:
+- **Vaste dag-seed** `DAILY-JJJJMMDD` + **held van de dag** (beide deterministisch
+  uit de datum via zaadVanTekst) → iederéén speelt vandaag exact dezelfde run.
+- **Schrijn UIT** en **ascensie 0** → eerlijk speelveld voor vergelijkbare scores.
+- **Transparante scoreformule**, uitgesplitst op het eindscherm: diepte×10 +
+  150 (winst) + relikwieën×8 + goud÷5. (Voorbeeld: rij 13 + win + 4 rel + 240 goud
+  = 360.)
+- **Eén scorende poging per dag**: na voltooien blokkeert startDaily met een
+  melding; de titelknop toont "Dagelijks voltooid · score N".
+- **Speelreeks-teller** (🔥 N dagen, + beste): +1 als je gisteren ook speelde,
+  reset naar 1 na een gat — beloont terugkeer zónder te straffen (geen FOMO).
+- **Uitdaagcode**: knop op het eindscherm kopieert de seed (Fase 1, geen server);
+  vrienden spelen dezelfde run en vergelijken scores.
+Opslag in nieuwe localStorage-sleutel `slayit_daily` (Daily-object, los van Codex).
+Daily-runs voeden ook de gewone loopbaan (runs/wins/bestDiepte/ascensie-unlock).
+Alles geverifieerd in de preview: helpers deterministisch, startDaily-staat,
+score 314/360, eindpaneel + reeks, blokkering na voltooien, titelknop, en de
+streak-logica (+1 na gisteren, reset na een gat). Volgende: leaderboard/Act 2,
+of een van de optimalisatie-tracks (perf / standalone / a11y).

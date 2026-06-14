@@ -251,6 +251,24 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 }
 .codex-run.gewonnen { border-left-color: #ffcf5a; }
 .codex-run small { color: var(--perkament-dof); font-size: .78rem; }
+/* daily-afdaling: scorepaneel op het eindscherm + knopstaat op de titel */
+.daily-paneel {
+  margin: 10px auto 0; padding: 12px 20px; max-width: min(440px, 92vw);
+  background: rgba(20, 14, 28, .6);
+  border: 1.5px solid rgba(214, 178, 120, .35); border-radius: 14px;
+  animation: eventOnthul .6s 2.3s backwards;
+}
+.daily-kop {
+  font-family: 'Pirata One', serif; font-size: 1.2rem; color: var(--ember-fel);
+  text-align: center; margin: 0 0 8px;
+}
+.daily-breakdown {
+  display: grid; grid-template-columns: 1fr auto; gap: 2px 16px;
+  font-size: .85rem; color: var(--perkament-dof); max-width: 300px; margin: 0 auto;
+}
+.daily-breakdown b { color: var(--perkament); font-variant-numeric: tabular-nums; }
+.daily-reeks { text-align: center; color: #ffcf5a; font-size: .9rem; margin: 8px 0 0; }
+.knop-stil.daily-klaar { color: #8fd17a; opacity: .92; }
 .einde-knoppen {
   display: flex; gap: 14px; align-items: center;
   margin-top: 12px;
