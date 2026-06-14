@@ -690,6 +690,9 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   display: flex; gap: 28px; flex-wrap: wrap; justify-content: center;
   margin: 10px 0 18px;
 }
+/* wrapper: held-kaart (button) + losse 'Bekijk startdek'-knop eronder, zodat die
+   knop een eigen tabstop heeft i.p.v. genest in de held-button te zitten */
+.held-kaart-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .held-kaart {
   position: relative;
   display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -808,6 +811,11 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   font-size: .72rem; font-weight: 700; color: #ff8a5c;
   background: rgba(255, 100, 70, .14); border: 1px solid rgba(255, 100, 70, .4);
   border-radius: 8px; padding: 1px 7px;
+}
+/* op touch een grotere raakzone voor de ascensie-stepper (44/48px-richtlijn) */
+@media (pointer: coarse) {
+  .asc-knop { width: 48px; height: 48px; font-size: 1.6rem; }
+  .ascensie-stepper { gap: 20px; }
 }
 
 /* ---------- seed ---------- */
@@ -2294,6 +2302,34 @@ body.lite .knoop.kan { animation: none; }
 body.lite .overlay { backdrop-filter: none; }
 body.lite #hand .kaart::after { display: none; }
 body.lite #licht-vignet.flikker::after { animation: none; }
+/* eindscherm-/daily-paneel + knoppenrij meteen tonen in lite (geen reveal-vertraging) */
+body.lite .einde-onthul > div, body.lite .einde-titel, body.lite .einde-regel,
+body.lite .einde-troost, body.lite .einde-seed, body.lite .einde-loopbaan,
+body.lite .einde-doel, body.lite .daily-paneel, body.lite .einde-knoppen {
+  animation: none; opacity: 1; transform: none;
+}
+/* OS-reduced-motion respecteren los van de lite-toggle: eindpaneel direct zichtbaar */
+@media (prefers-reduced-motion: reduce) {
+  .einde-onthul > div, .einde-titel, .einde-regel, .einde-troost, .einde-seed,
+  .einde-loopbaan, .einde-doel, .daily-paneel, .einde-knoppen {
+    animation: none !important; opacity: 1 !important; transform: none !important;
+  }
+  .sintel { display: none; }
+  .titel-groot, .intent, .knoop.kan, #energie-orb { animation: none !important; }
+}
+/* titelscherm in liggende stand op een korte telefoon: scrollbaar + gecomprimeerd,
+   zodat titel/knoppen/loopbaan-regel altijd bereikbaar zijn (overliep eerder). */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 600px) {
+  #scherm-titel {
+    overflow-y: auto; justify-content: flex-start;
+    padding: 12px 12px calc(16px + env(safe-area-inset-bottom));
+  }
+  #scherm-titel .titel-groot { font-size: clamp(2.2rem, 13vh, 5rem); }
+  #scherm-titel .titel-sub { margin: 4px 0 10px; }
+  #scherm-titel .titel-knoppen { gap: 8px; }
+  #scherm-titel .titel-knoppen .knop-groot { padding: 12px 22px; font-size: 1.25rem; }
+  #scherm-titel .titel-stats { margin-top: 8px; }
+}
 
 /* ---------- klein scherm (tablet) ---------- */
 @media (max-width: 860px) {

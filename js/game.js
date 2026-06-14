@@ -73,6 +73,18 @@ const mobiel =
   /Android|iPhone|iPad|iPod|Mobile|Silk/i.test(navigator.userAgent || '');
 window.mobiel = mobiel;
 
+/* Three.js (~600 KB) alleen laden waar 3D überhaupt kán draaien: desktop op http.
+   Op mobiel en file:// is 3D altijd uit (zie d3Gewenst), dus daar nooit de
+   download+parse betalen. Async geïnjecteerd → blokkeert de eerste render niet en
+   is ruim vóór het eerste gevecht klaar; lukt het toch niet op tijd, dan valt dat
+   ene gevecht netjes terug op 2D (Vista.beschikbaar checkt window.THREE op call-time). */
+if (location.protocol !== 'file:' && !window.mobiel) {
+  const _three = document.createElement('script');
+  _three.src = 'js/lib/three.min.js';
+  _three.async = true;
+  document.head.appendChild(_three);
+}
+
 const INST = Object.assign(
   /* op mobiel standaard 3D UIT (onspeelbaar daar), maar lite NIET geforceerd:
      lite dooft de animaties, en juist die geven het spel leven. Lite alleen
@@ -114,6 +126,13 @@ Codex.gesch = (Array.isArray(Codex.gesch) ? Codex.gesch : []).map(g => ({
   gewonnen: !!(g && g.gewonnen),
   asc: +(g && g.asc) || 0
 }));
+/* numerieke loopbaan-velden coërceren → geen 'rij NaN' / 'niveau NaN' bij een
+   getamperde of oude codex (alleen bestaande helden behouden). */
+const _geldigeHeld = k => typeof SPELERS !== 'undefined' && SPELERS[k];
+Codex.runs = +Codex.runs || 0;
+Codex.wins = +Codex.wins || 0;
+Codex.ascensie = Object.fromEntries(Object.entries(Codex.ascensie || {}).filter(([k]) => _geldigeHeld(k)).map(([k, v]) => [k, Math.max(0, +v || 0)]));
+Codex.bestDiepte = Object.fromEntries(Object.entries(Codex.bestDiepte || {}).filter(([k]) => _geldigeHeld(k)).map(([k, v]) => [k, Math.max(0, +v || 0)]));
 function bewaarCodex() { localStorage.setItem(CODEX_SLEUTEL, JSON.stringify(Codex)); }
 
 /* ---------- de Dagelijkse afdaling: iedereen speelt dezelfde dag-run ---------- */
@@ -225,7 +244,7 @@ function dagscore(gewonnen) {
   return { diepte, winst, relikwieen, goud, totaal: diepte + winst + relikwieen + goud };
 }
 function registreerDaily(gewonnen) {
-  const dag = S.dailyDag || vandaagSleutel();
+  const dag = vandaagSleutel();   /* anker op de echte kalenderdag (niet de opgeslagen startdag) */
   /* al gescoord vandaag? dan niet opnieuw (beschermt tegen hervat-en-herscoren) */
   if (Daily.laatsteVoltooid === dag) {
     return { totaal: Daily.laatsteScore, reeks: Daily.reeks, besteReeks: Daily.besteReeks, nieuweTop: false };
@@ -286,6 +305,7 @@ function slaap(ms) {
 let S = null;
 
 function nieuwSpel(heldId, seedTekst, ascensie) {
+  _tbBezitSig = null;   /* nieuwe run → topbalk-bezit zeker opnieuw opbouwen */
   if (!SPELERS[heldId]) heldId = 'slachter';
   const held = SPELERS[heldId];
   /* whitelist: alleen A-Z 0-9 en '-'. Voorkomt dat een getypte seed HTML/JS
@@ -853,6 +873,23 @@ function laadSpel() {
     /* saniteer de seed óók bij laden: een getamperde save kan hier HTML smokkelen
        (de seed wordt op het eindescherm via innerHTML getoond). */
     S.seed = (typeof S.seed === 'string' ? S.seed : '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '') || '—';
+    /* over-nacht meegesleepte daily? behandel als gewone, niet-scorende run —
+       anders scoort hij op de verkeerde dag of dubbel. */
+    if (S.daily && S.dailyDag && S.dailyDag !== vandaagSleutel()) S.daily = false;
+    /* structurele integriteit: een corrupte/oude save mag renderKaartScherm niet
+       laten crashen. Ontbreekt de kern-shape → veilig falen (doorgaan() vangt
+       false op met een melding + terug naar de titel). */
+    const kaartOk = S.kaart && typeof S.kaart === 'object' && !Array.isArray(S.kaart) && Object.keys(S.kaart).length > 0;
+    if (!kaartOk || !Array.isArray(S.dek) || !Array.isArray(S.relikwieen) || !Array.isArray(S.dranken)) {
+      wisSave(); return false;
+    }
+    if (S.pos === undefined) S.pos = null;
+    if (typeof S.hp !== 'number') S.hp = huidigeHeld().hp;
+    if (typeof S.maxHp !== 'number') S.maxHp = S.hp;
+    if (typeof S.goud !== 'number') S.goud = 0;
+    if (typeof S.verdieping !== 'number') S.verdieping = 0;
+    if (!S.stats) S.stats = { gevechten: 0, kaarten: 0, schade: 0 };
+    if (typeof S.uid !== 'number') S.uid = 0;
     if (S.toevalStaat !== undefined) Toeval.zetStaat(S.toevalStaat);
     return true;
   } catch (e) { return false; }
@@ -860,6 +897,7 @@ function laadSpel() {
 function wisSave() { try { localStorage.removeItem(SAVE_SLEUTEL); } catch (e) {} }
 
 /* ---------- topbalk ---------- */
+let _tbBezitSig = null;   /* dirty-guard: bezit-rijen alleen herbouwen bij wijziging */
 function renderTopbalk() {
   if (!S || !S.dek) return;
   $('#tb-hp').innerHTML = `❤️ ${S.hp}/${S.maxHp}`;
@@ -875,16 +913,22 @@ function renderTopbalk() {
   /* alles wat je bezit is ontdekt — dekt elke verwervingsroute */
   S.relikwieen.forEach(r => ontdek('relikwieen', r));
   S.dranken.forEach(d => ontdek('dranken', d));
-  $('#tb-relikwieen').innerHTML = S.relikwieen.map(r => {
-    const d = RELIKWIEEN[r];
-    return `<span class="relikwie rel-${d.zeld || 'gewoon'}" data-rart="${r}" data-tip="${d.naam} — ${d.tekst} (klik voor het verhaal)" onclick="toonRelikwieBoek('${r}')">${d.icoon}</span>`;
-  }).join('');
-  $('#tb-dranken').innerHTML = S.dranken.map((d, i) => {
-    const def = DRANKEN[d];
-    return `<button class="drank" data-dart="${d}" data-tip="${def.naam} — ${def.tekst} (gebruiken: tik · verhaal: vasthouden of rechtsklik)"
-      style="--dkleur:${def.kleur}" onclick="gebruikDrank(${i})" oncontextmenu="return bekijkDrank(event, '${d}')">${def.icoon}</button>`;
-  }).join('') + `<span class="drank-leeg">${'◌'.repeat(Math.max(0, drankSlots() - S.dranken.length))}</span>`;
-  verfraaiItemArt($('#topbalk'));
+  /* de relikwie-/drankrijen alleen herbouwen als het bezit écht wijzigde — anders
+     sloopt elke render (per klap in een gevecht!) de img's en zwapt ze opnieuw. */
+  const sig = S.relikwieen.join(',') + '|' + S.dranken.join(',') + '|' + drankSlots();
+  if (sig !== _tbBezitSig) {
+    _tbBezitSig = sig;
+    $('#tb-relikwieen').innerHTML = S.relikwieen.map(r => {
+      const d = RELIKWIEEN[r];
+      return `<span class="relikwie rel-${d.zeld || 'gewoon'}" data-rart="${r}" data-tip="${d.naam} — ${d.tekst} (klik voor het verhaal)" onclick="toonRelikwieBoek('${r}')">${d.icoon}</span>`;
+    }).join('');
+    $('#tb-dranken').innerHTML = S.dranken.map((d, i) => {
+      const def = DRANKEN[d];
+      return `<button class="drank" data-dart="${d}" data-tip="${def.naam} — ${def.tekst} (gebruiken: tik · verhaal: vasthouden of rechtsklik)"
+        style="--dkleur:${def.kleur}" onclick="gebruikDrank(${i})" oncontextmenu="return bekijkDrank(event, '${d}')">${def.icoon}</button>`;
+    }).join('') + `<span class="drank-leeg">${'◌'.repeat(Math.max(0, drankSlots() - S.dranken.length))}</span>`;
+    verfraaiItemArt($('#topbalk'));
+  }
 }
 
 /* Vijzel en Stamper: elk drankje werkt dubbel */
@@ -1017,6 +1061,7 @@ function renderKaartScherm() {
     knoppen += `<button class="knoop knoop-${n.type} ${kan ? 'kan' : ''} ${isHuidig ? 'huidig' : ''}"
       style="left:${p.x}px; top:${p.y}px"
       data-tip="${NODE_NAMEN[n.type]}${kost > 0 ? ` (−${kost} 🔥)` : ''}"
+      aria-label="${NODE_NAMEN[n.type]}${kost > 0 ? `, kost ${kost} licht` : ''}"
       ${kan ? `onclick="kiesNode('${n.id}')"` : 'disabled'}>${NODE_ICONEN[n.type]}</button>`;
   }
   vlak.innerHTML = svg + knoppen;
@@ -1483,8 +1528,6 @@ function renderGevecht() {
     d.hpT.textContent = `${v.hp}/${v.maxHp}`;
     zetBlokSchild(d.blok, v.blok);
     d.badges.innerHTML = statusBadges(v);
-    /* hoogte van het infoblok (alles behalve de sprite-ruimte) cachen voor de klem */
-    d.infoH = d.wrap.offsetHeight - d.spacer.offsetHeight;
   });
 
   const s = g.speler, ds = GDOM.speler;
@@ -1492,14 +1535,20 @@ function renderGevecht() {
   ds.hpT.textContent = `${S.hp}/${S.maxHp}`;
   zetBlokSchild(ds.blok, s.blok);
   ds.badges.innerHTML = statusBadges(s);
-  ds.infoH = ds.wrap.offsetHeight - ds.spacer.offsetHeight;
-  /* onderbalk-hoogte cachen voor de 3D-klem (hier, niet per frame, om reflow
-     in de tik-lus te vermijden); op telefoon is de onderbalk hoger (270px) */
-  const ob = $('#onderbalk');
-  if (ob) GDOM.onderbalkH = ob.offsetHeight;
   /* status-FX: gifbellen zolang vergiftigd, wond-puls onder 30% HP */
   ds.wrap.classList.toggle('hfx-gif-aan', (s.status.gif || 0) > 0);
   ds.wrap.classList.toggle('hfx-wond-aan', S.hp / S.maxHp < 0.3);
+
+  /* LEES-fase: pas NA alle DOM-schrijfacties de hoogtes meten — zo dwingt de
+     infoblok-/onderbalk-meting hoogstens één layout-flush af i.p.v. een reflow
+     per vijand. infoH voedt de 2D-spacer-klem (gelezen in positioneerActors). */
+  g.vijanden.forEach((v, i) => {
+    const d = GDOM.vijanden[i];
+    if (d) d.infoH = d.wrap.offsetHeight - d.spacer.offsetHeight;
+  });
+  ds.infoH = ds.wrap.offsetHeight - ds.spacer.offsetHeight;
+  const ob = $('#onderbalk');
+  if (ob) GDOM.onderbalkH = ob.offsetHeight;
 
   renderHand();
 
@@ -2883,7 +2932,8 @@ function toonHeldKeuze() {
     Object.entries(SPELERS).map(([id, h]) => {
       const rel = RELIKWIEEN[h.relikwie];
       const art = (window.karakterSvg && karakterSvg(h.art)) || h.icoon;
-      return `<button class="held-kaart" data-held="${id}" style="--held-gloed:${h.kleur || '255,156,63'}" onclick="kiesHeld('${id}')">
+      return `<div class="held-kaart-wrap">
+        <button class="held-kaart" data-held="${id}" style="--held-gloed:${h.kleur || '255,156,63'}" onclick="kiesHeld('${id}')">
         <div class="held-aura"></div>
         <div class="held-art" data-art="${h.art}">${art}</div>
         <b>${h.naam}</b>
@@ -2892,8 +2942,9 @@ function toonHeldKeuze() {
         <div class="held-info">❤️ ${h.hp} HP &nbsp;·&nbsp; 🃏 ${h.dek.length} startkaarten</div>
         <div class="held-info">${rel.icoon} <b>${rel.naam}</b><br><i>${rel.tekst}</i></div>
         <span class="held-kies">Speel als ${h.naam} ➤</span>
-        <span class="knop-stil held-dek-knop" onclick="bekijkStartdek('${id}', event)">Bekijk startdek</span>
-      </button>`;
+      </button>
+        <button type="button" class="knop-stil held-dek-knop" onclick="bekijkStartdek('${id}', event)">Bekijk startdek</button>
+      </div>`;
     }).join('') + `</div>
     <div class="schrijn-vak" id="schrijn-vak">${schrijnHtml()}</div>
     ${maxOnt >= 1 ? `<div class="ascensie-vak" id="ascensie-vak">${ascensieHtml(maxOnt)}</div>` : ''}
@@ -2931,9 +2982,19 @@ function kiesHeld(id) {
 }
 
 function kiesHeldEcht(id) {
+  /* deze nieuwe run clobbert de save; was dat een onafgemaakte daily, rol dan de
+     daily-claim terug zodat de speler 'm later vers kan herstarten (geen brick). */
+  try {
+    const oud = JSON.parse(localStorage.getItem(SAVE_SLEUTEL) || 'null');
+    if (oud && oud.daily && Daily.laatsteVoltooid !== oud.dailyDag) { Daily.laatsteStart = null; bewaarDaily(); }
+  } catch (e) {}
   wisSave();
   const invoer = $('#seed-invoer');
-  nieuwSpel(id, invoer ? invoer.value : '', gekozenAscensie);
+  /* klem de gekozen ascensie op wat DEZE held ontgrendeld heeft (de stepper toont
+     het globale max) en zeg het als het verlaagd wordt — geen stille downgrade. */
+  const asc = Math.max(0, Math.min(gekozenAscensie, ontgrendeldNiveau(id)));
+  if (asc < gekozenAscensie) melding(`🔥 ${SPELERS[id].naam} heeft Ascensie ${gekozenAscensie} nog niet ontgrendeld — gestart op niveau ${asc}.`);
+  nieuwSpel(id, invoer ? invoer.value : '', asc);
   renderKaartScherm();
 }
 
@@ -3000,10 +3061,9 @@ function instWijzig() {
 }
 
 /* ---------- tooltips (data-tip) ---------- */
-document.addEventListener('mouseover', e => {
-  const t = e.target.closest('[data-tip]');
+function _plaatsTip(t) {
   const tip = $('#tooltip');
-  if (!t) { tip.style.display = 'none'; return; }
+  if (!tip) return;
   tip.textContent = t.dataset.tip;
   tip.style.display = 'block';
   const r = t.getBoundingClientRect();
@@ -3013,7 +3073,20 @@ document.addEventListener('mouseover', e => {
   if (top + tipH > window.innerHeight - 8) top = r.top - tipH - 8;
   tip.style.left = Math.max(8, Math.min(window.innerWidth - 268, r.left + r.width / 2 - 130)) + 'px';
   tip.style.top = Math.max(8, top) + 'px';
+}
+function _verbergTip() { const tip = $('#tooltip'); if (tip) tip.style.display = 'none'; }
+document.addEventListener('mouseover', e => {
+  const t = e.target.closest('[data-tip]');
+  if (!t) { _verbergTip(); return; }
+  _plaatsTip(t);
 });
+/* toetsenbord/screenreader: dezelfde tip bij focus zodat tab-navigatie de uitleg
+   óók krijgt (muis-hover bestaat niet voor een toetsenbordgebruiker). */
+document.addEventListener('focusin', e => {
+  const t = e.target.closest && e.target.closest('[data-tip]');
+  if (t) _plaatsTip(t);
+});
+document.addEventListener('focusout', _verbergTip);
 
 /* touch: een tik op een uitleg-icoon toont dezelfde tip (hover bestaat niet op
    een vinger). Auto-verbergen na ~2.8s of bij een tik elders. De klik wordt

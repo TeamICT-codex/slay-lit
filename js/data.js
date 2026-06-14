@@ -519,7 +519,7 @@ const KAARTEN = {
     naam: 'Asadem', type: 'aanval', zeld: 'ongewoon', kost: 1, icoon: '🌪️',
     licht: 2, dmg: 5, up: { dmg: 7 },
     tekst: c => `Verbrand ${kval(c, 'licht')} licht. Doe ${pv(c, 'dmg')} schade aan ALLE vijanden.`,
-    speel: c => { verbrandLicht(kval(c, 'licht')); reeksAanvalAlle(kval(c, 'dmg')); }
+    speel: c => { verbrandLicht(kval(c, 'licht')); return reeksAanvalAlle(kval(c, 'dmg')); }
   },
   eikenhuid: {
     naam: 'Eikenhuid', type: 'vaardigheid', zeld: 'ongewoon', kost: 2, icoon: '🌰',

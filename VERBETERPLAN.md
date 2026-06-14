@@ -675,3 +675,37 @@ Belangrijke optimalisatie-voorstellen uit de audit (nog te doen): daily-grendel
 (✓ gedaan), ascension-curve herordenen (A1 te licht, A6 zwaar), goud-multipliers
 begrenzen, winkelprijzen vs inkomsten herijken, centrale esc()-helper, Three.js
 lui laden, renderTopbalk splitsen.
+
+### R3.35 — Megaronde herronde: 14 bevestigde bugs gefixt (KLAAR, 2026-06-14)
+De 8 facetten die in R3.34 door rate-limiting uitvielen, opnieuw gedraaid (volledig
+deze keer). 16 bevestigd, 14 gefixt + geverifieerd (1 dubbel, 1 bewust overgeslagen):
+- **Titelscherm liep over in liggende stand** (hoog): #scherm-titel scrollbaar +
+  gecomprimeerd in de landscape-blok.
+- **Stille ascensie-verlaging** (middel): de stepper toont het globale max maar
+  nieuwSpel klemt per held → kiesHeldEcht klemt nu zelf + toont een melding.
+- **Over-nacht daily scoorde op de verkeerde dag** (middel): laadSpel zet S.daily
+  uit als S.dailyDag !== vandaag; registreerDaily ankert op de echte kalenderdag.
+- **Daily gebrickt door een gewoon avontuur** (middel): kiesHeldEcht rolt de
+  daily-claim (laatsteStart) terug als het een onafgemaakte daily-save clobbert.
+- **laadSpel valideerde niets** → crash op een corrupte/oude save (middel): nu
+  structuurcheck + veilig falen (wisSave + terug naar titel) + defensieve velden.
+- **Ascension-stepperknoppen <44px** (middel): 48px op touch.
+- **three.min.js (~600KB) synchroon geladen, óók op mobiel** (middel): nu lui
+  async geïnjecteerd, alleen op desktop-http (mobiel/file:// betalen niets meer).
+- **Tooltips niet bij toetsenbordfocus** (middel): focusin/focusout-tak + aria-
+  labels op de map-knopen + role=tooltip.
+- **Eindpaneel/knoppen 2,3-2,7s onzichtbaar in lite/reduced-motion** (middel):
+  lite- én @media(prefers-reduced-motion)-overrides tonen ze meteen.
+- **'Bekijk startdek' zat als <span> IN de held-<button>** (middel, ongeldige HTML
+  + toetsenbord-onbereikbaar): nu een aparte zusterknop in een .held-kaart-wrap.
+- **Streak-inflatie** bij dagen-later-hervatten (laag): streak ankert op de echte
+  kalenderdag (volgt uit de daily-fix).
+- **Asadem vergrendelde de invoer niet** tijdens de AOE-animatie (laag): promise
+  teruggegeven.
+- **renderGevecht forceerde reflow per vijand** (laag): schrijf/lees-fase gesplitst.
+- **renderTopbalk herbouwde bezit-HTML per hit** (laag): dirty-guard op een
+  bezit-signatuur.
+- Plus Codex-loopbaanvelden numeriek gesaniteerd (geen 'rij NaN' bij tamperen).
+BEWUST NIET gedaan: de voorgestelde renderHand-O(n²)-"fix" was incorrect (een
+statische children-snapshot kan na insertBefore de kaartvolgorde verkeerd zetten);
+over max. 10 kaarten is de winst nul. Alles geverifieerd in de browser-preview.
