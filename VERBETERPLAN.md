@@ -652,3 +652,26 @@ Alles geverifieerd in de preview: helpers deterministisch, startDaily-staat,
 score 314/360, eindpaneel + reeks, blokkering na voltooien, titelknop, en de
 streak-logica (+1 na gisteren, reset na een gat). Volgende: leaderboard/Act 2,
 of een van de optimalisatie-tracks (perf / standalone / a11y).
+
+### R3.34 — Megaronde: 4 bevestigde bugs gefixt (KLAAR, 2026-06-14)
+Tweede diepe audit (11 facetten, adversarieel; 8 facetten vielen uit door API-rate-
+limiting → in een herronde opnieuw gedraaid). 4 bevestigde bugs gefixt + geverifieerd:
+1. **Dode vijand maakte zijn multi-hit af** nadat Doornen hem mid-reeks doodde
+   (middel). Fix: `if (v.dood) return` boven vijandAanval + `if (v.dood) break`
+   in de multi-hit-lus (eindBeurt). Geverifieerd: een dode vijand doet 0 schade.
+2. **Daily oneindig herspeelbaar** = score-farmen (middel, eigen retentie-code):
+   afbreken vóór het eind liet dezelfde dag-seed opnieuw starten met voorkennis.
+   Fix: Daily.laatsteStart bij de START; dailyAlGespeeld checkt start ÓF voltooid;
+   registreerDaily idempotent; wisSave bij een afgemaakte daily. Hervatten kan nog
+   via Doorgaan. Geverifieerd: herstart start geen nieuwe run, geen herscoren.
+3. **Stored XSS** via getamperde slayit_codex: Codex.gesch[].seed/held belandden
+   ongefilterd in het Codex-boek (innerHTML) (middel, eigen code). Fix: gesch wordt
+   bij het laden gesaniteerd (zelfde whitelist als de seed); idem Daily.gesch.
+   Geverifieerd: `<img onerror>` wordt gestript, geen alert.
+4. **Omarm het Duister** gaf Kracht op het BEDOELDE i.p.v. het FEITELIJK verbrande
+   licht (laag) → te veel Kracht met Fakkeljongleur/Eeuwige Lont/Smeulbuidel. Fix:
+   voor/na-meting van S.fakkel. Geverifieerd: jongleur (verbrandt 0) → 0 Kracht.
+Belangrijke optimalisatie-voorstellen uit de audit (nog te doen): daily-grendel
+(✓ gedaan), ascension-curve herordenen (A1 te licht, A6 zwaar), goud-multipliers
+begrenzen, winkelprijzen vs inkomsten herijken, centrale esc()-helper, Three.js
+lui laden, renderTopbalk splitsen.

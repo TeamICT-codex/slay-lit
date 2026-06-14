@@ -104,14 +104,29 @@ const Codex = Object.assign(
 if (!Array.isArray(Codex.opgeladen)) {
   Codex.opgeladen = Codex.relikwieen.filter(r => window.RELIKWIEEN && RELIKWIEEN[r] && RELIKWIEEN[r].zeld !== 'start');
 }
+/* saniteer de opgeslagen loopbaan-gesch: held/seed komen in het Codex-boek in
+   innerHTML, dus een getamperde slayit_codex mag daar niets kunnen injecteren
+   (zelfde whitelist-aanpak als de seed). */
+Codex.gesch = (Array.isArray(Codex.gesch) ? Codex.gesch : []).map(g => ({
+  held: String((g && g.held) || '').replace(/[^a-z]/g, '') || 'slachter',
+  seed: String((g && g.seed) || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20) || '—',
+  diepte: +(g && g.diepte) || 0,
+  gewonnen: !!(g && g.gewonnen),
+  asc: +(g && g.asc) || 0
+}));
 function bewaarCodex() { localStorage.setItem(CODEX_SLEUTEL, JSON.stringify(Codex)); }
 
 /* ---------- de Dagelijkse afdaling: iedereen speelt dezelfde dag-run ---------- */
 const DAILY_SLEUTEL = 'slayit_daily';
 const Daily = Object.assign(
-  { laatsteVoltooid: null, laatsteScore: 0, besteScore: 0, reeks: 0, besteReeks: 0, gesch: [] },
+  { laatsteVoltooid: null, laatsteStart: null, laatsteScore: 0, besteScore: 0, reeks: 0, besteReeks: 0, gesch: [] },
   JSON.parse(localStorage.getItem(DAILY_SLEUTEL) || '{}')
 );
+/* saniteer opgeslagen gesch (defensief — getamperde slayit_daily mag niets injecteren) */
+Daily.gesch = (Array.isArray(Daily.gesch) ? Daily.gesch : []).map(g => ({
+  dag: String((g && g.dag) || '').replace(/[^0-9-]/g, ''),
+  score: +(g && g.score) || 0, gewonnen: !!(g && g.gewonnen), diepte: +(g && g.diepte) || 0
+}));
 function bewaarDaily() { localStorage.setItem(DAILY_SLEUTEL, JSON.stringify(Daily)); }
 function ontdek(soort, id) {
   if (!id || !Codex[soort] || Codex[soort].includes(id)) return;
@@ -195,7 +210,12 @@ function heldVanDag() {
   const ids = Object.keys(SPELERS);
   return ids[zaadVanTekst(vandaagSleutel()) % ids.length];
 }
-function dailyAlGespeeld() { return Daily.laatsteVoltooid === vandaagSleutel(); }
+/* vandaag al voltooid OF al begonnen (een afgebroken poging blokkeert een verse
+   herstart met dezelfde seed → geen score-farmen; hervatten kan via Doorgaan). */
+function dailyAlGespeeld() {
+  const v = vandaagSleutel();
+  return Daily.laatsteVoltooid === v || Daily.laatsteStart === v;
+}
 /* transparante scoreformule (op het eindescherm uitgesplitst) */
 function dagscore(gewonnen) {
   const diepte = (S.verdieping || 0) * 10;
@@ -206,6 +226,10 @@ function dagscore(gewonnen) {
 }
 function registreerDaily(gewonnen) {
   const dag = S.dailyDag || vandaagSleutel();
+  /* al gescoord vandaag? dan niet opnieuw (beschermt tegen hervat-en-herscoren) */
+  if (Daily.laatsteVoltooid === dag) {
+    return { totaal: Daily.laatsteScore, reeks: Daily.reeks, besteReeks: Daily.besteReeks, nieuweTop: false };
+  }
   const totaal = dagscore(gewonnen).totaal;
   const nieuweTop = totaal > (Daily.besteScore || 0);
   if (Daily.laatsteVoltooid !== dag) {
@@ -689,6 +713,7 @@ async function reeksAanvalAlle(dmg, naSlag) {
 
 /* vijand valt speler aan */
 function vijandAanval(v, basis) {
+  if (v.dood) return;   /* een aan Doornen gesneuvelde vijand slaat niet meer */
   if (window.Vista) Vista.aanval(v, sp());
   pose2D(v, 'attack', 0.5);
   /* 2D-lunge: de vijand schiet even naar de speler toe (naar links) */
@@ -1908,6 +1933,7 @@ async function eindBeurt() {
           vijandAanval(v, it.dmg);
           renderGevecht();
           if (gestopt()) return;
+          if (v.dood) break;                 /* doodgegaan aan Doornen mid-reeks → stop de reeks */
           if (h < slagen - 1) await slaap(260);
           if (gestopt()) return;
         }
@@ -2663,7 +2689,7 @@ function toonEinde(gewonnen) {
   let uitslag = { nieuwRecord: false, beste: 0 };
   if (!S.runGeregistreerd) {
     uitslag = registreerRun(gewonnen);
-    if (S.daily) { const du = registreerDaily(gewonnen); S.dailyNieuweTop = du.nieuweTop; }
+    if (S.daily) { const du = registreerDaily(gewonnen); S.dailyNieuweTop = du.nieuweTop; wisSave(); }
     S.runGeregistreerd = true;
   }
   const besteHeld = (Codex.bestDiepte && Codex.bestDiepte[S.held]) || 0;
@@ -2749,7 +2775,7 @@ function naarTitel() {
   if (ts) ts.textContent = loopbaanRegel();   /* textContent = injectie-veilig */
   const db = $('#knop-daily');
   if (db) {
-    const klaar = dailyAlGespeeld();
+    const klaar = Daily.laatsteVoltooid === vandaagSleutel();
     db.textContent = klaar ? `🗓️ Dagelijks voltooid · score ${Daily.laatsteScore}` : '🗓️ Dagelijkse afdaling';
     db.classList.toggle('daily-klaar', klaar);
     if (Daily.reeks > 0) db.setAttribute('data-tip', `🔥 Speelreeks: ${Daily.reeks} dag${Daily.reeks === 1 ? '' : 'en'}${Daily.besteReeks > Daily.reeks ? ` · beste: ${Daily.besteReeks}` : ''}`);
@@ -2762,11 +2788,15 @@ function startNieuw() { toonHeldKeuze(); }
    score telt mee. Eén scorende poging per dag. ---------- */
 function startDaily() {
   if (dailyAlGespeeld()) {
-    melding(`🗓️ Je maakte de afdaling van vandaag al — score ${Daily.laatsteScore}. Morgen wacht een nieuwe.`);
+    if (Daily.laatsteVoltooid === vandaagSleutel())
+      melding(`🗓️ Je maakte de afdaling van vandaag al — score ${Daily.laatsteScore}. Morgen wacht een nieuwe.`);
+    else
+      melding(`🗓️ Je bent vandaag al begonnen — hervat 'm via 🗺️ Doorgaan. Een nieuwe afdaling wacht morgen.`);
     return;
   }
   Klank.sfx('klik');
   wisSave();
+  Daily.laatsteStart = vandaagSleutel(); bewaarDaily();   /* poging verbruikt bij START → geen farmen */
   schrijnKeuzes = [];                       /* geen Schrijn-meeneem in de daily */
   const held = heldVanDag();
   nieuwSpel(held, dagSeed(), 0);            /* vaste seed, ascensie 0 → eerlijk veld */

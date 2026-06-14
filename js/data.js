@@ -366,9 +366,12 @@ const KAARTEN = {
     per: 10, up: { per: 8 },
     tekst: c => `Verbrand AL je licht. Krijg 1 Kracht per ${pv(c, 'per')} verbrande licht. Uitputten.`,
     speel: c => {
-      const verbrand = S.fakkel;
-      verbrandLicht(verbrand);
-      const kracht = Math.floor(verbrand / kval(c, 'per'));
+      /* Kracht uit het FEITELIJK verloren licht — zo tellen Fakkeljongleur (0),
+         Eeuwige Lont (stopt bij 10) en Smeulbuidel (−1) eerlijk mee. */
+      const voor = S.fakkel;
+      verbrandLicht(S.fakkel);
+      const echtVerbrand = Math.max(0, voor - S.fakkel);
+      const kracht = Math.floor(echtVerbrand / kval(c, 'per'));
       if (kracht > 0) geefStatus(sp(), 'kracht', kracht);
     }
   },
