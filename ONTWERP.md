@@ -457,3 +457,33 @@ herindeling en (optioneel, polish) een tap-to-inspect voor handkaarten.
 - Tap-to-inspect handkaart = polish, niet nodig voor "ruw speelbaar";
   strikt achter @media(hover:none)/(pointer:coarse), klikKaart-gedrag
   op desktop ongemoeid laten.
+
+# De Proloog — "Een Productief Leven" (geparkeerd, ontwerp 14-06)
+
+Volledig ontwerp in **`PROLOOG.md`** (brainstorm Thomas + Claude). Een proloog
+vóór de afdaling: droge, tragische, absurde satire op de rat race in een
+198X-AI-setting (de mainframe **B.A.A.S.**, "billability" als kernmotor), met de
+afdaling als een **ontsnapping die geen ontsnapping is** (escapisme = illusie;
+beneden = dezelfde rat race met zwaarden). Doel: opvallen en het stereotype
+"burn-out vlucht naar fantasy" juist DOORBREKEN, en de bestaande deckbuilder
+thematisch herladen.
+
+**De spine (zie PROLOOG.md voor alles):**
+- Opening (60s) → **Het Functioneringsgesprek** (de tutorial = de gevechtsengine
+  herskind; B.A.A.S. is onverslaanbaar ∞ — je kunt de rat race niet winnen, enkel
+  eruit vallen) → de **Eindafrekening** (factuur-van-je-leven) → de **Val**
+  (wachtmuziek zakt) → het **Breekpunt** (split in 3 = heldenkeuze) → drie-
+  gekleurde landing.
+- **Bazenladder** (klimt de corruptie ín): Act 1 Slijmkoning (asskisser), Act 2
+  Onterechte Leidinggevende (nepo-baby), Act 3 **De DICKtator**. B.A.A.S. =
+  systeem/stem, NIET de eindbaas.
+- **Heldenkeuze = 3 verdrongen delen** van één protagonist (Slachter = kapotmaken,
+  Gifmagiër = plooien/overleven, Thoverk = het kind dat nog speelt).
+- Hergebruikt de hele engine (combat/seed/save/audio/scanline); office-kaarten
+  re-skinnen 1-op-1 naar kerkerkaarten — de re-skin ís de boodschap.
+- **Gouden regel:** volledige proloog één keer (firstRun-vlag), daarna
+  "⏭ Direct afdalen". Geen kantoorsim per run.
+
+Past op de bouwvolgorde NA de retentie-trits (loopbaan/ascension/daily, ✓ gedaan)
+en kan parallel met Act 2; de tutorial-encounter is goedkoop want het is de
+bestaande engine met andere art + woorden.
