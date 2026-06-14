@@ -534,3 +534,48 @@ schermhoogte (fullscreen = ~30px meer hoogte) → inconsistent. Fix: figuren in
 liggend VERTICAAL CENTREREN (align:center, zoals staand al deed). Geverifieerd
 op 392px én 420px: intent nu vrij van de topbalk (51/65) en consistent tussen
 de hoogtes; vijanden volledig zichtbaar.
+
+### R3.29 — Winkel liep soms vast op de map + codebase-sweep op dezelfde bugklasse (KLAAR, 2026-06-14)
+Bugmelding Thomas: soms bleef je op de map "hangen/bouncen" bij het gaan naar
+een winkel — de held reist erheen maar er gebeurt niets, de winkel opent niet.
+Niet altijd, meestal wel. Oorzaak (geen toeval dat het intermittent was): in
+toonWinkel() miste de kaart-prijstabel de zeldzaamheid 'episch'
+(`const prijs = { gewoon, ongewoon, zeldzaam }`). heldPool() bevat WÉL épische
+kaarten (flame, hart_van_de_duivelboom, wilde_oogst, beulswerk, moederslang).
+Rolde de winkel toevallig een épische kaart, dan was `prijs['episch']` undefined
+→ `undefined()` → TypeError vóór het scherm wisselde → S.pos stond al op de
+winkel-node → de map toonde nog de oude (nu geblokkeerde) nodes → eindeloos
+"bouncen". Niet mobiel-specifiek; puur afhankelijk van de willekeurige
+winkelrol (zou ook op laptop gebeuren). AANPAK (drie lagen):
+1. 'episch' toegevoegd aan de prijstabel + `|| prijs.ongewoon`-fallback (net als
+   de relikwie-tabel al had). Geverifieerd: winkel met 5 épische kaarten opent
+   nu zonder fout (prijzen 151–172).
+2. Vangnet in kiesNodeEcht: het kamer-openen in try/catch; gooit het toch ooit,
+   dan renderen we de map opnieuw ("kamer overgeslagen, spel gaat door") i.p.v.
+   een harde freeze. Geverifieerd met gesimuleerde crash → map herstelt met
+   klikbare nodes.
+3. Een ultracode-workflow scande de hele codebase (14 agents, adversariële
+   verificatie) op dezelfde bugklasse: een lookup-tabel die een later toegevoegde
+   sleutel mist. Eén echte extra crash gevonden: het Altaar-event
+   (data.js, 'Offer je bloed') deed `RELIKWIEEN[r].naam` met r uit
+   willekeurigRelikwie(), die `null` geeft als je álle niet-start relikwieën al
+   bezit → TypeError. Gefixt met null-guard + 60 goud-compensatie (zoals de
+   schat- en mottenzwerm-events al deden). De andere 3 call sites van
+   willekeurigRelikwie() guarden null al correct. Geverifieerd: lege pool → geen
+   crash, +60 goud; volle pool → gewoon een relikwie.
+
+### R3.30 — Status-peek: held/vijand vasthouden vervaagt de hand (KLAAR, 2026-06-14)
+Idee van Thomas: op een smal gsm-scherm dekken de handkaarten soms de statussen
+van speler/vijanden af. Niet oplossen met groter/kleiner, maar: op de held of een
+vijand "tikken/vasthouden" zodat de kaarten in de hand doorzichtig worden en je de
+statussen (indien gewenst) duidelijk ziet. GEKOZEN: press-and-hold (touch-only,
+drempel 240ms) op #speler-zone of een .vijand → #scherm-gevecht krijgt klasse
+`statuskijk` → #hand vervaagt naar opacity .14 (+ pointer-events:none) met zachte
+transitie; loslaten herstelt meteen. Conflictvrij ingebouwd naar het bestaande
+drank-long-press-patroon: een SNELLE tik blijft "richten/aanvallen", en de klik ná
+een peek op een vijand wordt onderdrukt (capture-fase) zodat je niet per ongeluk
+een kaart speelt. Geverifieerd met gesimuleerde touch-events: fade op held én
+vijand, herstel bij loslaten, klik onderdrukt na peek (0 aanvallen), snelle tik
+telt wél (aanval intact), muis-hold doet niets (desktop onaangeroerd); settled
+opacity exact .14. Screenshots voor/na bevestigen dat de onderste figuur-zone +
+statussen leesbaar worden.

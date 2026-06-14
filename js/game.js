@@ -946,18 +946,28 @@ function kiesNodeEcht(id) {
   const kost = fakkelKost(n.type, n.r);
   if (kost > 0) zetFakkel(-kost);
   if (n.type === 'rust' && heeftRelikwie('vuurvliegenpot')) zetFakkel(15);
-  switch (n.type) {
-    case 'gevecht': {
-      const moeilijkheid = n.r < 3 ? 'vroeg' : (n.r < 6 ? 'midden' : (n.r < 9 ? 'laat' : 'zwaar'));
-      startGevecht(kiesUit(ONTMOETINGEN[moeilijkheid]), 'gevecht', n.r);
-      break;
+  /* vangnet: gooit het openen van een kamer onverwacht, dan is S.pos al verzet
+     maar wisselt het scherm niet → de map toont nog de oude (nu geblokkeerde)
+     nodes en de speler 'hangt' eindeloos. We renderen dan de map opnieuw zodat
+     de nu-beschikbare nodes klikbaar worden: kamer overgeslagen i.p.v. freeze. */
+  try {
+    switch (n.type) {
+      case 'gevecht': {
+        const moeilijkheid = n.r < 3 ? 'vroeg' : (n.r < 6 ? 'midden' : (n.r < 9 ? 'laat' : 'zwaar'));
+        startGevecht(kiesUit(ONTMOETINGEN[moeilijkheid]), 'gevecht', n.r);
+        break;
+      }
+      case 'elite': startGevecht(kiesUit(ONTMOETINGEN.elite), 'elite', n.r); break;
+      case 'baas': startGevecht(ONTMOETINGEN.baas[0], 'baas', n.r); break;
+      case 'rust': toonRust(); break;
+      case 'winkel': toonWinkel(); break;
+      case 'schat': toonSchat(); break;
+      case 'event': toonEvent(); break;
     }
-    case 'elite': startGevecht(kiesUit(ONTMOETINGEN.elite), 'elite', n.r); break;
-    case 'baas': startGevecht(ONTMOETINGEN.baas[0], 'baas', n.r); break;
-    case 'rust': toonRust(); break;
-    case 'winkel': toonWinkel(); break;
-    case 'schat': toonSchat(); break;
-    case 'event': toonEvent(); break;
+  } catch (e) {
+    console.error('Kamer openen mislukte:', n.type, e);
+    melding('Er ging iets mis bij het betreden van de kamer — je gaat verder.');
+    renderKaartScherm();
   }
 }
 
@@ -2332,10 +2342,13 @@ function onthulSchat() {
 }
 
 function toonWinkel() {
-  const prijs = { gewoon: () => rnd(45, 55), ongewoon: () => rnd(65, 80), zeldzaam: () => rnd(90, 110) };
+  /* let op: 'episch' MOET erin — épische kaarten zitten in heldPool(); zonder
+     deze regel was prijs[zeld] undefined → crash → winkel opende niet. Fallback
+     voor de zekerheid bij toekomstige zeldzaamheden. */
+  const prijs = { gewoon: () => rnd(45, 55), ongewoon: () => rnd(65, 80), zeldzaam: () => rnd(90, 110), episch: () => rnd(135, 175) };
   const kaarten = schud(heldPool()).slice(0, 5).map(id => ({
     kaart: nieuweKaart(id),
-    prijs: prijs[KAARTEN[id].zeld]()
+    prijs: (prijs[KAARTEN[id].zeld] || prijs.ongewoon)()
   }));
   const relPool = Object.keys(RELIKWIEEN).filter(r => !RELIKWIEEN[r].start && !heeftRelikwie(r));
   const relPrijs = { gewoon: () => rnd(75, 95), ongewoon: () => rnd(110, 140), zeldzaam: () => rnd(155, 185), episch: () => rnd(215, 255) };
@@ -2802,6 +2815,41 @@ document.addEventListener('pointerdown', e => {
       e.preventDefault(); e.stopPropagation();
       langIngedrukt = false;
     }
+  }, true);
+})();
+
+/* touch: je held of een vijand VASTHOUDEN maakt de kaarthand even doorzichtig,
+   zodat je de statussen, hp en intenties eronder duidelijk ziet (op een smal
+   gsm-scherm dekken de kaarten die soms af). Loslaten herstelt meteen. Een korte
+   tik blijft gewoon 'richten/aanvallen' (vandaar de hold-drempel); een peek op
+   een vijand mag dus géén kaart spelen — de klik erna onderdrukken we. */
+(() => {
+  let timer = null, actief = false, gekeken = false;
+  const scherm = () => $('#scherm-gevecht');
+  const opFiguur = t => t && t.closest && t.closest('#speler-zone, #vijanden-rij .vijand');
+  const toon = () => { const s = scherm(); if (s) { s.classList.add('statuskijk'); actief = true; gekeken = true; } };
+  const verberg = () => {
+    clearTimeout(timer); timer = null; actief = false;
+    const s = scherm(); if (s) s.classList.remove('statuskijk');
+  };
+  document.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch') return;
+    if (!opFiguur(e.target)) return;
+    gekeken = false;
+    clearTimeout(timer);
+    timer = setTimeout(toon, 240);
+  });
+  document.addEventListener('pointerup', verberg);
+  document.addEventListener('pointercancel', verberg);
+  /* beweegt de vinger vóór de peek begint, dan was het een swipe → afbreken;
+     is de peek al actief, dan laten we 'm staan tot loslaten */
+  document.addEventListener('pointermove', () => { if (!actief && timer) { clearTimeout(timer); timer = null; } });
+  /* capture-fase, vóór de #vijanden-rij-klik: na een peek geen aanval triggeren */
+  document.addEventListener('click', e => {
+    if (gekeken && e.target.closest('#vijanden-rij .vijand')) {
+      e.preventDefault(); e.stopPropagation();
+    }
+    gekeken = false;
   }, true);
 })();
 

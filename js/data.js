@@ -1013,6 +1013,13 @@ const EVENTS = [
         doe: () => {
           S.hp -= 6;
           const r = willekeurigRelikwie();
+          /* pool leeg (je bezit al elk niet-start relikwie)? willekeurigRelikwie()
+             geeft dan null → niet dereferentiëren. Compenseer met goud, zoals de
+             schat- en mottenzwerm-events ook doen. */
+          if (!r) {
+            S.goud += 60;
+            return 'Het altaar gloeit op... maar je draagt al elke schat die het kent. Het stort 60 goud uit in ruil voor je bloed.';
+          }
           geefRelikwie(r);
           if (willekeurig() < 0.25) {
             verliesHpBuitenGevecht(3);
