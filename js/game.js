@@ -94,7 +94,10 @@ function bewaarInst() { localStorage.setItem('slayit_inst', JSON.stringify(INST)
 /* ---------- de Codex: alles wat je ooit ontdekte, over alle runs heen ---------- */
 const CODEX_SLEUTEL = 'slayit_codex';
 const Codex = Object.assign(
-  { relikwieen: [], dranken: [], opgeladen: null },
+  /* loopbaan over alle runs heen: runs/wins/diepterecord per held, laatste runs,
+     en het hoogst-ontgrendelde ascensieniveau per held. Bestaande saves missen
+     deze sleutels → Object.assign houdt dan deze defaults aan (migratie). */
+  { relikwieen: [], dranken: [], opgeladen: null, runs: 0, wins: 0, bestDiepte: {}, gesch: [], ascensie: {} },
   JSON.parse(localStorage.getItem(CODEX_SLEUTEL) || '{}')
 );
 /* migratie: wie al ontdekkingen had, krijgt ze meteen opgeladen in het Schrijn */
@@ -113,6 +116,59 @@ function laadSchrijnOp(id) {
   if (!d || d.zeld === 'start' || Codex.opgeladen.includes(id)) return;
   Codex.opgeladen.push(id);
   bewaarCodex();
+}
+
+/* ---------- loopbaan: het spoor dat élke run achterlaat (retentiemotor) ---------- */
+const HELDNAAM = id => (window.SPELERS && SPELERS[id] && SPELERS[id].naam) || id;
+function registreerRun(gewonnen) {
+  const h = (S && S.held) || 'slachter';
+  const diepte = (S && S.verdieping) || 0;
+  Codex.runs = (Codex.runs || 0) + 1;
+  if (gewonnen) Codex.wins = (Codex.wins || 0) + 1;
+  Codex.bestDiepte = Codex.bestDiepte || {};
+  const nieuwRecord = diepte > (Codex.bestDiepte[h] || 0);
+  if (nieuwRecord) Codex.bestDiepte[h] = diepte;
+  /* ascension-ladder: een win op het huidige niveau ontgrendelt het volgende */
+  Codex.ascensie = Codex.ascensie || {};
+  if (gewonnen) {
+    const niv = (S && S.ascensie) || 0;
+    if (niv >= (Codex.ascensie[h] || 0)) Codex.ascensie[h] = Math.min(ASCENSIE_MAX, niv + 1);
+  }
+  Codex.gesch = Array.isArray(Codex.gesch) ? Codex.gesch : [];
+  Codex.gesch.unshift({ held: h, seed: (S && S.seed) || '—', diepte, gewonnen: !!gewonnen, asc: (S && S.ascensie) || 0 });
+  Codex.gesch = Codex.gesch.slice(0, 10);
+  bewaarCodex();
+  return { nieuwRecord, beste: Codex.bestDiepte[h] || 0 };
+}
+function loopbaanRegel() {
+  const runs = Codex.runs || 0;
+  if (!runs) return '';
+  const wins = Codex.wins || 0;
+  const best = Codex.bestDiepte ? Math.max(0, ...Object.values(Codex.bestDiepte)) : 0;
+  return `🗺️ ${runs} afdaling${runs === 1 ? '' : 'en'} · 👑 ${wins} overwinning${wins === 1 ? '' : 'en'}${best ? ` · ⛏️ diepste val: rij ${best}` : ''}`;
+}
+
+/* ---------- ascension: gestapelde uitdaagmodifiers per held (de herspeelmotor).
+   Win op niveau N → niveau N+1 ontgrendelt (geregistreerd in registreerRun).
+   Puur skill-gated, geen tijd/geld: ethisch zuiver. ---------- */
+const ASCENSIE_MAX = 6;
+const ASCENSIE = [
+  { n: 1, naam: 'Krapper licht',    tekst: 'Je begint met 10 minder fakkel.' },
+  { n: 2, naam: 'Taaiere vijanden', tekst: 'Vijanden hebben ~12% meer HP.' },
+  { n: 3, naam: 'Duurdere diepte',  tekst: 'Elke kamer kost 1 extra licht.' },
+  { n: 4, naam: 'Schrale buit',     tekst: 'Gevechten geven 25% minder goud.' },
+  { n: 5, naam: 'Belast begin',     tekst: 'Je start met de vloek "Pijn" in je dek.' },
+  { n: 6, naam: 'Het ware donker',  tekst: 'Je start met 6 minder max-HP.' },
+];
+function asc() { return (S && S.ascensie) || 0; }
+function ontgrendeldNiveau(heldId) { return Math.min(ASCENSIE_MAX, (Codex.ascensie && Codex.ascensie[heldId]) || 0); }
+function maxOntgrendeld() { return Math.min(ASCENSIE_MAX, Math.max(0, ...Object.values(Codex.ascensie || {}), 0)); }
+/* past de startstaat-modifiers toe; S.ascensie moet al gezet zijn, S.dek gevuld */
+function pasAscensieToe() {
+  const a = asc();
+  if (a >= 1) S.fakkel = Math.max(1, S.fakkel - 10);
+  if (a >= 5) S.dek.push(nieuweKaart('pijn'));
+  if (a >= 6) { S.maxHp = Math.max(1, S.maxHp - 6); S.hp = Math.max(1, S.hp - 6); }
 }
 function pasInstToe() {
   document.body.classList.toggle('lite', INST.lite);
@@ -154,7 +210,7 @@ function slaap(ms) {
 /* ---------- globale staat ---------- */
 let S = null;
 
-function nieuwSpel(heldId, seedTekst) {
+function nieuwSpel(heldId, seedTekst, ascensie) {
   if (!SPELERS[heldId]) heldId = 'slachter';
   const held = SPELERS[heldId];
   /* whitelist: alleen A-Z 0-9 en '-'. Voorkomt dat een getypte seed HTML/JS
@@ -189,6 +245,10 @@ function nieuwSpel(heldId, seedTekst) {
     meegenomen.forEach(r => geefRelikwie(r, true));
     melding(`🗝️ Uit het Schrijn: ${meegenomen.map(r => RELIKWIEEN[r].naam).join(' · ')}`);
   }
+  /* ascension: klem op wat déze held ontgrendeld heeft, dan de modifiers toepassen */
+  S.ascensie = Math.max(0, Math.min(ascensie || 0, ontgrendeldNiveau(heldId)));
+  pasAscensieToe();
+  if (S.ascensie > 0) melding(`🔥 Ascensie ${S.ascensie} — de diepte is genadelozer.`);
   schrijnKeuzes = [];
 }
 
@@ -328,6 +388,7 @@ function fakkelKost(type, rij) {
     if (rij >= 10) kost += 2;
     else if (rij >= 7) kost += 1;
   }
+  if (kost > 0 && asc() >= 3) kost += 1;   /* ascension 3: duurdere diepte */
   if (kost > 0 && heeftRelikwie('gloeiende_lantaarn')) kost = Math.max(0, kost - 1);
   /* de Tak van de Duivelboom eist zijn deel van het licht */
   if (kost > 0 && heeftRelikwie('duivelboomtak')) kost += 1;
@@ -917,7 +978,7 @@ function renderKaartScherm() {
      het scherm en swipebaar). Op desktop is er geen horizontale overloop,
      dus dit is daar een no-op. */
   if (S.pos) scroller.scrollLeft = Math.max(0, nodePositie(S.kaart[S.pos]).x - scroller.clientWidth * 0.5);
-  $('#seed-label').textContent = 'Seed: ' + (S.seed || '—');
+  $('#seed-label').textContent = 'Seed: ' + (S.seed || '—') + (S.ascensie ? ' · Ascensie ' + S.ascensie : '');
   zetLichtVisueel();
   renderTopbalk();
 }
@@ -989,6 +1050,7 @@ function maakVijand(id, rij) {
   const def = VIJANDEN[id];
   let hp = rnd(def.hp[0], def.hp[1]);
   if (!def.elite && !def.baas) hp += Math.floor(rij * 0.8);
+  if (asc() >= 2 && !def.baas) hp = Math.ceil(hp * 1.12);   /* ascension 2: taaiere vijanden */
   return { id, naam: def.naam, art: def.art, hp, maxHp: hp, blok: 0, status: {}, dood: false, beurtTeller: 0, intent: null };
 }
 
@@ -1414,7 +1476,16 @@ function toonCodex() {
   const relOntdekt = rels.filter(r => Codex.relikwieen.includes(r)).length;
   const dranks = Object.keys(DRANKEN);
   const drOntdekt = dranks.filter(d => Codex.dranken.includes(d)).length;
-  $('#codex-inhoud').innerHTML = `
+  /* loopbaan-blok: totalen + de laatste afdalingen (het opstapelende spoor) */
+  const loop = loopbaanRegel();
+  const gesch = (Codex.gesch || []).slice(0, 5);
+  const loopbaanBlok = loop ? `
+    <h3 class="codex-kop">🗺️ Loopbaan</h3>
+    <p class="codex-loopbaan">${loop}</p>` +
+    (gesch.length ? `<div class="codex-runs">` + gesch.map(g =>
+      `<div class="codex-run ${g.gewonnen ? 'gewonnen' : ''}"><span>${g.gewonnen ? '👑' : '💀'} ${HELDNAAM(g.held)}</span><small>rij ${g.diepte}${g.asc ? ` · A${g.asc}` : ''} · ${g.seed}</small></div>`
+    ).join('') + `</div>` : '') : '';
+  $('#codex-inhoud').innerHTML = loopbaanBlok + `
     <h3 class="codex-kop">🏺 Relikwieën <small>${relOntdekt} / ${rels.length}</small></h3>
     <div class="codex-rooster">` +
     rels.map(r => {
@@ -1913,6 +1984,7 @@ async function gevechtGewonnen() {
   }
 
   let goud = g.soort === 'elite' ? rnd(28, 40) : rnd(12, 22);
+  if (asc() >= 4) goud = Math.floor(goud * 0.75);   /* ascension 4: schrale buit */
   if (g.gedoofd) goud = Math.floor(goud * 1.5);
   if (heeftRelikwie('gelukspoot')) goud = Math.floor(goud * 1.25);
   if (heeftRelikwie('leren_buidel')) goud += 10;
@@ -2536,6 +2608,10 @@ function toonEinde(gewonnen) {
   Klank.muziek('stil');
   const st = S.stats;
   const held = huidigeHeld();
+  /* loopbaan bijwerken — exact één keer per run (guard op S) */
+  let uitslag = { nieuwRecord: false, beste: 0 };
+  if (!S.runGeregistreerd) { uitslag = registreerRun(gewonnen); S.runGeregistreerd = true; }
+  const besteHeld = (Codex.bestDiepte && Codex.bestDiepte[S.held]) || 0;
   /* een epitaaf of lofregel uit de poel (presentationeel) */
   const epitafen = [
     'Hier eindigde een afdaling. De diepte telt geen namen.',
@@ -2573,11 +2649,13 @@ function toonEinde(gewonnen) {
       ${statRegels.map(([w, l], i) => `<div style="animation-delay:${(0.7 + i * 0.25).toFixed(2)}s"><b>${w}</b><small>${l}</small></div>`).join('')}
     </div>
     ${!gewonnen && Codex.opgeladen.length ? '<p class="einde-troost">🗝️ Je vondsten wachten opgeladen in het Schrijn.</p>' : ''}
+    <p class="einde-loopbaan">${loopbaanRegel()}${uitslag.nieuwRecord ? ' <span class="einde-record">🏆 nieuw diepterecord!</span>' : ''}</p>
     <p class="einde-seed">Seed: ${S.seed} · ${held.naam}</p>
     <div class="einde-knoppen">
       <button class="knop-groot" onclick="startNieuw()">⚔️ Opnieuw afdalen</button>
       <button class="knop-stil" onclick="naarTitel()">Naar het begin</button>
-    </div>`;
+    </div>
+    ${besteHeld ? `<p class="einde-doel">Diepste val met ${held.naam}: rij ${besteHeld}${!gewonnen ? ' — versla de baas op rij 13' : ''}</p>` : ''}`;
   /* de held in zijn laatste pose: gevallen of triomferend */
   if (window.laadKarakterAfbeelding) {
     const zet = img => {
@@ -2599,6 +2677,8 @@ function naarTitel() {
   toonScherm('titel');
   schermAchtergrond('titel', ACHTERGRONDEN.titel, 0.32);
   $('#knop-doorgaan').style.display = localStorage.getItem(SAVE_SLEUTEL) ? 'inline-block' : 'none';
+  const ts = $('#titel-stats');
+  if (ts) ts.textContent = loopbaanRegel();   /* textContent = injectie-veilig */
 }
 
 function startNieuw() { toonHeldKeuze(); }
@@ -2635,9 +2715,34 @@ function kiesSchrijn(id) {
   Klank.sfx('klik');
 }
 
+let gekozenAscensie = 0;
+function ascensieHtml(maxOnt) {
+  const a = gekozenAscensie;
+  const actief = ASCENSIE.filter(m => a >= m.n);
+  return `<div class="ascensie-kop">🔥 Ascensie <span class="ascensie-niveau">niveau ${a} / ${maxOnt}</span>
+      <small>gestapelde uitdaging — elke gewonnen run ontgrendelt het volgende niveau</small></div>
+    <div class="ascensie-stepper">
+      <button class="asc-knop" onclick="wijzigAscensie(-1)" ${a <= 0 ? 'disabled' : ''} aria-label="Ascensie omlaag">−</button>
+      <span class="asc-getal">${a}</span>
+      <button class="asc-knop" onclick="wijzigAscensie(1)" ${a >= maxOnt ? 'disabled' : ''} aria-label="Ascensie omhoog">+</button>
+    </div>` +
+    (actief.length
+      ? `<ul class="ascensie-lijst">` + actief.map(m => `<li><b>A${m.n} · ${m.naam}</b> — ${m.tekst}</li>`).join('') + `</ul>`
+      : `<p class="ascensie-geen">Niveau 0 — de gewone afdaling.</p>`);
+}
+function wijzigAscensie(delta) {
+  const maxOnt = maxOntgrendeld();
+  gekozenAscensie = Math.max(0, Math.min(gekozenAscensie + delta, maxOnt));
+  const vak = $('#ascensie-vak');
+  if (vak) vak.innerHTML = ascensieHtml(maxOnt);
+  Klank.sfx('klik');
+}
+
 function toonHeldKeuze() {
   toonScherm('held');
   schrijnKeuzes = [];
+  const maxOnt = maxOntgrendeld();
+  gekozenAscensie = Math.max(0, Math.min(gekozenAscensie, maxOnt));
   schermAchtergrond('held', ACHTERGRONDEN.titel, 0.55);
   $('#scherm-held').innerHTML = `
     <h2 class="scherm-titel">Kies je held</h2>
@@ -2650,6 +2755,7 @@ function toonHeldKeuze() {
         <div class="held-art" data-art="${h.art}">${art}</div>
         <b>${h.naam}</b>
         <small class="held-stijl">${h.stijl}</small>
+        ${ontgrendeldNiveau(id) >= 1 ? `<span class="held-asc">🔥 ontgrendeld tot A${ontgrendeldNiveau(id)}</span>` : ''}
         <div class="held-info">❤️ ${h.hp} HP &nbsp;·&nbsp; 🃏 ${h.dek.length} startkaarten</div>
         <div class="held-info">${rel.icoon} <b>${rel.naam}</b><br><i>${rel.tekst}</i></div>
         <span class="held-kies">Speel als ${h.naam} ➤</span>
@@ -2657,6 +2763,7 @@ function toonHeldKeuze() {
       </button>`;
     }).join('') + `</div>
     <div class="schrijn-vak" id="schrijn-vak">${schrijnHtml()}</div>
+    ${maxOnt >= 1 ? `<div class="ascensie-vak" id="ascensie-vak">${ascensieHtml(maxOnt)}</div>` : ''}
     <div class="seed-vak">
       <label>Seed (optioneel, voor een gedeelde run):
         <input id="seed-invoer" placeholder="bv. KRDF-2941" maxlength="20" spellcheck="false"></label>
@@ -2693,7 +2800,7 @@ function kiesHeld(id) {
 function kiesHeldEcht(id) {
   wisSave();
   const invoer = $('#seed-invoer');
-  nieuwSpel(id, invoer ? invoer.value : '');
+  nieuwSpel(id, invoer ? invoer.value : '', gekozenAscensie);
   renderKaartScherm();
 }
 

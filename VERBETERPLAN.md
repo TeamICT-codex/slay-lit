@@ -605,3 +605,28 @@ Niet-bug bevestigd: doornen kaatst terug ook door volledig blok heen — dat is
 bewust (Slay-the-Spire-conventie). De perf-/balans-/architectuur-bevindingen
 (Three.js lui laden, renderTopbalk splitsen, save-versionering, PWA-offline-cache,
 diepere a11y) staan als VOORSTELLEN in het strategie-/optimalisatierapport.
+
+### R3.32 — Retentiemotor: loopbaan + ascension-ladder (KLAAR, 2026-06-14)
+Eerste echte retentie-feature (uit het strategierapport: "het mechanische skelet
+stond er, maar er was geen reden om opnieuw te beginnen"). In twee lagen:
+
+**Laag A — loopbaan / het opstapelende spoor.** Codex bewaart nu runs, wins,
+bestDiepte[held] en de laatste 10 afdalingen (held/seed/diepte/uitkomst/ascensie).
+registreerRun() draait exact één keer per run-einde (guard op S.runGeregistreerd).
+Getoond: een stat-regel op het TITELSCHERM ("🗺️ N afdalingen · 👑 M overwinningen
+· ⛏️ diepste val: rij X"), een loopbaan-regel + "🏆 nieuw diepterecord!"-badge +
+diepte-doel op het EINDESCHERM, en een Loopbaan-blok met de laatste 5 runs in het
+Codex-boek. Bestaande saves migreren vanzelf (Object.assign-defaults).
+
+**Laag B — ascension-ladder (de herspeelmotor).** Per held een gestapelde
+uitdaagladder (A1-A6); een win op niveau N ontgrendelt N+1 (geregistreerd in
+registreerRun, gecapt op ASCENSIE_MAX). Modifiers: A1 −10 fakkel · A2 vijanden
+~12% HP · A3 +1 fakkelkost/kamer · A4 −25% gevechtsgoud · A5 start met vloek "Pijn"
+· A6 −6 max-HP. Toegepast via pasAscensieToe() (startstaat) + drie kleine in-run
+hooks (fakkelKost, maakVijand, gevechtGewonnen-goud), elk met een simpele
+asc()-check. Heldenkeuze kreeg een ascension-stepper (klemt op wat díé held
+ontgrendeld heeft) + een "🔥 ontgrendeld tot A·N"-badge per held; de map toont
+"· Ascensie N" naast de seed. Puur skill-gated, geen tijd/geld (ethisch).
+Alles geverifieerd in de preview: telling/record/titel/codex (laag A), en de
+stepper + clamp + elke modifier numeriek (fakkel 70, maxHP 64, Pijn in dek,
+fakkelkost 6 vs 5, vijand-HP 16→18) (laag B). Volgende retentie-stap: daily run.

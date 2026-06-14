@@ -214,6 +214,43 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   animation: eventOnthul .6s 2.5s backwards;
   margin: 2px 0 0;
 }
+/* ---------- loopbaan (retentiemotor): titel, einde & codex ---------- */
+.einde-loopbaan {
+  color: var(--perkament-dof);
+  font-size: .9rem;
+  margin: 8px 0 0;
+  animation: eventOnthul .6s 2.4s backwards;
+}
+.einde-record { color: #ffcf5a; font-weight: 700; margin-left: 6px; }
+.einde-doel {
+  color: var(--perkament-dof);
+  font-size: .8rem; font-style: italic; opacity: .82;
+  margin: 10px 0 0;
+  animation: eventOnthul .6s 2.9s backwards;
+}
+.titel-stats {
+  margin-top: 18px;
+  color: var(--perkament-dof);
+  font-size: .95rem; letter-spacing: .3px; text-align: center;
+  min-height: 1.2em;
+}
+.codex-loopbaan {
+  text-align: center; color: var(--ember-fel);
+  font-size: 1rem; margin: 0 0 10px;
+}
+.codex-runs {
+  display: flex; flex-direction: column; gap: 5px;
+  max-width: 380px; margin: 0 auto 6px;
+}
+.codex-run {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+  padding: 5px 11px; border-radius: 8px;
+  background: rgba(0, 0, 0, .28);
+  border-left: 3px solid var(--rand);
+  font-size: .88rem;
+}
+.codex-run.gewonnen { border-left-color: #ffcf5a; }
+.codex-run small { color: var(--perkament-dof); font-size: .78rem; }
 .einde-knoppen {
   display: flex; gap: 14px; align-items: center;
   margin-top: 12px;
@@ -705,6 +742,54 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   background: linear-gradient(180deg, var(--ember-fel), var(--ember));
   border-radius: 8px;
   border: 1px solid #5a3413;
+}
+
+/* ---------- ascension-ladder (heldenkeuze) ---------- */
+.ascensie-vak {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  margin-top: 14px; padding: 14px 22px;
+  background: rgba(34, 14, 14, .72);
+  border: 1.5px solid rgba(220, 110, 70, .42);
+  border-radius: 16px;
+  max-width: min(720px, 92vw);
+}
+.ascensie-kop {
+  font-family: 'Pirata One', serif; font-size: 1.15rem;
+  color: #ff8a5c; text-align: center;
+}
+.ascensie-kop small {
+  display: block; font-family: 'Alegreya', serif;
+  font-size: .82rem; font-weight: 400; color: var(--perkament-dof); margin-top: 2px;
+}
+.ascensie-niveau {
+  font-family: 'Alegreya', serif; font-size: .85rem; font-weight: 700;
+  color: var(--perkament);
+  background: rgba(255, 100, 70, .18); border: 1px solid rgba(255, 100, 70, .5);
+  border-radius: 10px; padding: 1px 9px; vertical-align: middle;
+}
+.ascensie-stepper { display: flex; align-items: center; gap: 16px; }
+.asc-knop {
+  width: 40px; height: 40px; border-radius: 50%;
+  font-size: 1.4rem; line-height: 1; cursor: pointer; color: var(--perkament);
+  background: rgba(255, 120, 70, .14); border: 1.5px solid rgba(255, 120, 70, .55);
+  transition: background .15s, transform .1s;
+}
+.asc-knop:hover:not(:disabled) { background: rgba(255, 120, 70, .32); }
+.asc-knop:active:not(:disabled) { transform: scale(.92); }
+.asc-knop:disabled { opacity: .32; cursor: default; }
+.asc-getal { font-family: 'Pirata One', serif; font-size: 1.8rem; color: #ff8a5c; min-width: 30px; text-align: center; }
+.ascensie-lijst {
+  list-style: none; margin: 4px 0 0; padding: 0;
+  display: flex; flex-direction: column; gap: 3px;
+  font-size: .84rem; color: var(--perkament-dof); max-width: 460px; text-align: left;
+}
+.ascensie-lijst b { color: var(--perkament); }
+.ascensie-geen { font-size: .85rem; color: var(--perkament-dof); font-style: italic; margin: 2px 0 0; }
+.held-asc {
+  display: inline-block; margin: 2px 0;
+  font-size: .72rem; font-weight: 700; color: #ff8a5c;
+  background: rgba(255, 100, 70, .14); border: 1px solid rgba(255, 100, 70, .4);
+  border-radius: 8px; padding: 1px 7px;
 }
 
 /* ---------- seed ---------- */
