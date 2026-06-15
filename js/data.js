@@ -805,14 +805,39 @@ const VIJANDEN = {
   /* Act 2-baas (VOORLOPIG, emoji-art; de echte baas + interlock met Drops komt in
      Fase B). Geen meerfasen-script — checkBaasFase guard't op de slijmkoning. */
   de_erfprins: {
-    naam: 'De Erfprins', art: '🤴', hp: [210, 210], baas: true,
+    naam: 'De Erfprins', art: '🤴', hp: [210, 210], baas: true, aegis: 15,
     titel: 'Erfgenaam zonder verdienste',
+    /* PAPPIES INVLOED: een gouden aegis maakt de Erfprins ONAANTASTBAAR — gewone
+       aanvallen en gif ketsen af. Alleen Drops' vuur vreet eraan (zie METGEZELLEN
+       .drops.beurt). Pappies koopt nieuw goud ("Pappies Geld") en probeert Drops
+       weg te wuiven ("Wegwuiven", gericht). Zónder Drops blijft hij onaantastbaar
+       (trage mercy-decay in beginSpelerBeurt). Verbrijzel het goud → je venster. */
     kies: (v, beurt) => {
-      const stap = beurt % 4;
-      if (stap === 0) return { naam: 'Bevel', type: 'aanval', dmg: 16 };
-      if (stap === 1) return { naam: 'Pappies Geld', type: 'blok', blok: 14, doe: () => geefStatus(v, 'kracht', 1) };
-      if (stap === 2) return { naam: 'Minachting', type: 'aanval', dmg: 7, hits: 2, doe: () => geefStatus(sp(), 'zwak', 1) };
-      return { naam: 'Driftbui', type: 'aanval', dmg: 22 };
+      const fase = v.fase || 1;
+      const m = gMet();
+      /* aegis op? Pappies koopt nieuw goud (meer in latere fases) */
+      if ((v.aegis || 0) <= 0) {
+        return {
+          naam: 'Pappies Geld', type: 'buff',
+          doe: vv => { vv.aegis = (vv.aegis || 0) + (fase >= 3 ? 13 : 10); fxNummer(actorEl(vv), '🟡 Pappies Invloed', 'fx-buff'); }
+        };
+      }
+      /* Drops in beeld? hem af en toe wegwuiven (vaker naarmate hij wanhopiger wordt) */
+      if (m && !m.dood && beurt % (fase >= 2 ? 2 : 3) === 1) {
+        return {
+          naam: 'Wegwuiven', type: 'aanval', dmg: fase >= 3 ? 15 : 11, doelMetgezel: true,
+          doe: () => baasSpreekt(UITSPRAKEN._erfprins.banish)
+        };
+      }
+      const stap = beurt % 3;
+      if (fase >= 3) {
+        if (stap === 0) return { naam: 'Driftbui', type: 'aanval', dmg: 22 };
+        if (stap === 1) return { naam: 'Minachting', type: 'aanval', dmg: 8, hits: 2, doe: () => geefStatus(sp(), 'zwak', 1) };
+        return { naam: 'Bevel', type: 'aanval', dmg: 17 };
+      }
+      if (stap === 0) return { naam: 'Bevel', type: 'aanval', dmg: 15 };
+      if (stap === 1) return { naam: 'Minachting', type: 'aanval', dmg: 7, hits: 2, doe: () => geefStatus(sp(), 'zwak', 1) };
+      return { naam: 'Driftbui', type: 'aanval', dmg: 20 };
     }
   }
 };
@@ -832,11 +857,56 @@ const VIJANDEN = {
 const METGEZELLEN = {
   drops: {
     naam: 'Drops', art: 'drops', icoon: '🔥', zeld: 'episch', maxHp: 26,
-    tekst: 'Begin van je beurt: schroeit een vijand voor 5. Vangt soms een klap voor je op. Vlucht als zijn licht dooft — vind hem terug.',
+    tekst: 'Begin van je beurt: schroeit een vijand voor 5. Vreet door de Pappies Invloed van de Erfprins (6/beurt) — zónder hem is de baas onaantastbaar. Vangt soms een klap op; vlucht als zijn licht dooft.',
     lore: 'Een vonk die wéigerde te doven. Uit het herrezen licht kroop iets kleins, warms en koppigs — en het bleef bij je.',
     doelbaar: true, dreiging: 0.22,
-    beurt(m) { const d = kiesUit(alleVijanden()); if (d) metgezelAanval(m, d, 5); },
-    intent: () => alleVijanden().length ? { type: 'aanval', dmg: 5 } : null
+    beurt(m) {
+      /* tegen de Erfprins met aegis: vreet aan het goud i.p.v. te schroeien */
+      const baas = (S.gevecht.vijanden || []).find(v => v.id === 'de_erfprins' && !v.dood);
+      if (baas && (baas.aegis || 0) > 0) {
+        const af = Math.min(baas.aegis, 6);
+        baas.aegis -= af;
+        pose2D(m, 'attack', 0.5);
+        fxNummer(actorEl(baas), `🔥 Pappies Invloed −${af}`, 'fx-schade');
+        Klank.sfx('klap');
+        return;
+      }
+      const d = kiesUit(alleVijanden());
+      if (d) metgezelAanval(m, d, 5);
+    },
+    intent(m) {
+      const baas = (S.gevecht.vijanden || []).find(v => v.id === 'de_erfprins' && !v.dood);
+      if (baas && (baas.aegis || 0) > 0) return { type: 'aegis', n: Math.min(baas.aegis, 6) };
+      return alleVijanden().length ? { type: 'aanval', dmg: 5 } : null;
+    },
+    /* DE LAATSTE VONK — bewuste, PERMANENTE opoffering (climax tegen een baas).
+       Verbrijzelt alle Pappies Invloed, ramt de baas en schildt jou; Drops is
+       daarna voorgoed weg. Het opoffering-haakje is generiek: latere verhaal-
+       metgezellen kunnen hun eigen offer krijgen door dit blok in te vullen. */
+    opoffering: {
+      naam: 'De Laatste Vonk',
+      tekst: 'Drops brandt zichzelf volledig op: verbrijzelt alle Pappies Invloed, 40 schade aan de baas, en jij krijgt 15 Blok.',
+      /* pas beschikbaar op het wanhopige moment — niet vanaf beurt 1 (anders gooi
+         je per ongeluk je enige aegis-vreter weg). Verschijnt als de baas onder 60%
+         zakt, óf als Drops zelf kritiek laag staat (offer hem vóór hij verbannen wordt). */
+      beschikbaar: g => {
+        if (g.soort !== 'baas') return false;
+        const baas = g.vijanden.find(v => VIJANDEN[v.id].baas && !v.dood);
+        const mg = g.metgezel;
+        return (baas && baas.hp / baas.maxHp <= 0.6) || (mg && !mg.dood && mg.hp / mg.maxHp <= 0.35);
+      },
+      doe(m, g) {
+        const baas = g.vijanden.find(v => VIJANDEN[v.id].baas && !v.dood) || alleVijanden()[0];
+        if (baas) {
+          baas.aegis = 0;                 /* het goud smelt weg */
+          fxNummer(actorEl(baas), '🟡 verbrijzeld!', 'fx-schade');
+          doeSchade(baas, 40, m);         /* aegis is 0 → raakt nu HP */
+        }
+        geefBlok(sp(), 15);
+        schudScherm();
+        Klank.sfx('schitter');
+      }
+    }
   },
   vlamwachter: {
     naam: 'De Vlamwacht', art: 'vlamwachter', icoon: '🛡️', zeld: 'zeldzaam', maxHp: 34,
@@ -881,6 +951,15 @@ const UITSPRAKEN = {
     fase2: '„Mijn kinderen... VERSCHEUR ZE."',
     fase3: '„MIJN TROON. MIJN DIEPTE."',
     dood:  '„De diepte... vergeet... niets..."'
+  },
+  /* De Erfprins: nepotisme & onverdiende macht — Pappies Invloed beschermt hem,
+     en hij verafschuwt Drops, het kleine wezen dat z'n goud wegvreet. */
+  _erfprins: {
+    intro:  'EINDELIJK. PERSONEEL OM TEGEN TE SCHREEUWEN.',
+    fase2:  '„Wéét je wel wie mijn váder is?!"',
+    fase3:  '„Dit is ONRECHTVAARDIG! Ik VERDIEN dit!"',
+    dood:   '„Maar... dit heb ik niet... verdíend..."',
+    banish: '„Wég, ongedierte! Jij hoort hier niet!"'
   }
 };
 

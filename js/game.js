@@ -126,7 +126,7 @@ const Codex = Object.assign(
   /* loopbaan over alle runs heen: runs/wins/diepterecord per held, laatste runs,
      en het hoogst-ontgrendelde ascensieniveau per held. Bestaande saves missen
      deze sleutels → Object.assign houdt dan deze defaults aan (migratie). */
-  { relikwieen: [], dranken: [], metgezellen: [], opgeladen: null, runs: 0, wins: 0, bestDiepte: {}, gesch: [], ascensie: {} },
+  { relikwieen: [], dranken: [], metgezellen: [], gevallen: [], opgeladen: null, runs: 0, wins: 0, bestDiepte: {}, gesch: [], ascensie: {} },
   JSON.parse(localStorage.getItem(CODEX_SLEUTEL) || '{}')
 );
 /* migratie: wie al ontdekkingen had, krijgt ze meteen opgeladen in het Schrijn */
@@ -151,6 +151,7 @@ Codex.wins = +Codex.wins || 0;
 Codex.ascensie = Object.fromEntries(Object.entries(Codex.ascensie || {}).filter(([k]) => _geldigeHeld(k)).map(([k, v]) => [k, Math.max(0, +v || 0)]));
 Codex.bestDiepte = Object.fromEntries(Object.entries(Codex.bestDiepte || {}).filter(([k]) => _geldigeHeld(k)).map(([k, v]) => [k, Math.max(0, +v || 0)]));
 if (!Array.isArray(Codex.metgezellen)) Codex.metgezellen = [];   /* migratie: oude codex mist deze sleutel */
+if (!Array.isArray(Codex.gevallen)) Codex.gevallen = [];         /* metgezellen die zich opofferden (gedenkplek) */
 function bewaarCodex() { localStorage.setItem(CODEX_SLEUTEL, JSON.stringify(Codex)); }
 
 /* ---------- de Dagelijkse afdaling: iedereen speelt dezelfde dag-run ---------- */
@@ -593,6 +594,8 @@ function baasSpreekt(tekst) {
   $('#scherm-gevecht').appendChild(el);
   setTimeout(() => el.remove(), 3200);
 }
+/* het juiste baas-script (per baas een eigen stem) */
+function baasUitspraken(id) { return (id === 'de_erfprins') ? UITSPRAKEN._erfprins : UITSPRAKEN._baas; }
 
 function zetLichtVisueel() {
   const niveau = lichtNiveau();
@@ -762,11 +765,13 @@ async function reeksAanvalAlle(dmg, naSlag) {
   }
 }
 
-/* vijand valt aan — meestal de speler, soms vangt de metgezel de klap op */
-function vijandAanval(v, basis) {
+/* vijand valt aan — meestal de speler, soms vangt de metgezel de klap op.
+   gedwongenDoel: een intent kan een doelwit afdwingen (bv. de Erfprins die
+   gericht Drops wegwuift). */
+function vijandAanval(v, basis, gedwongenDoel) {
   if (v.dood) return;   /* een aan Doornen gesneuvelde vijand slaat niet meer */
   if (huidigeAct() > 1) basis = Math.ceil(basis * (1 + 0.15 * (huidigeAct() - 1)));   /* latere acts: hardere klappen */
-  const doel = kiesAanvalDoel(v);
+  const doel = (gedwongenDoel && !gedwongenDoel.dood) ? gedwongenDoel : kiesAanvalDoel(v);
   if (window.Vista) Vista.aanval(v, sp());   /* visueel altijd richting het heldenvak (de metgezel staat ernaast) */
   pose2D(v, 'attack', 0.5);
   /* 2D-lunge: de vijand schiet even naar de speler toe (naar links) */
@@ -826,6 +831,14 @@ function verliesHp(doel, n) {
     renderTopbalk();
     if (S.hp <= 0 && inGevecht()) nederlaag();
   } else {
+    /* Pappies Invloed: zolang de gouden aegis staat is de baas ONAANTASTBAAR —
+       aanvallen én gif ketsen af. Alleen Drops' vuur vreet aan de aegis zelf
+       (dat loopt niet via verliesHp). */
+    if ((doel.aegis || 0) > 0) {
+      fxNummer(actorEl(doel), '✨ afgeweerd', 'fx-blok');
+      Klank.sfx('blok');
+      return;
+    }
     doel.hp = Math.max(0, doel.hp - n);
     if (doel.hp <= 0 && !doel.dood) {
       doel.dood = true;
@@ -918,7 +931,53 @@ function metgezelIntentTekst(m) {
   }
   if (it.type === 'blok') return `<span class="intent intent-blok" data-tip="${def.naam} geeft je ${it.blok} Blok">🛡️ ${it.blok}</span>`;
   if (it.type === 'heal') return `<span class="intent intent-buff" data-tip="${def.naam} geneest je ${it.n} HP">❤️ +${it.n}</span>`;
+  if (it.type === 'aegis') return `<span class="intent intent-aegis" data-tip="${def.naam} vreet ${it.n} Pappies Invloed weg">🔥 −${it.n}🟡</span>`;
   return '';
+}
+
+/* generieke bevestig-dialoog — voor onomkeerbare keuzes (zoals de opoffering) */
+function bevestig(tekst, onJa, jaLabel) {
+  const ov = document.createElement('div');
+  ov.className = 'overlay open bevestig-overlay';
+  ov.innerHTML = `<div class="bevestig-kaart">
+      <p>${tekst}</p>
+      <div class="bevestig-knoppen">
+        <button class="knop-stil" type="button" data-nee>Annuleer</button>
+        <button class="knop-groot bevestig-ja" type="button" data-ja>${jaLabel || 'Ja'}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  const sluit = () => ov.remove();
+  ov.querySelector('[data-nee]').onclick = sluit;
+  ov.querySelector('[data-ja]').onclick = () => { sluit(); onJa(); };
+  ov.onclick = e => { if (e.target === ov) sluit(); };
+  Klank.sfx('klik');
+}
+
+/* DE OPOFFERING — bewuste, PERMANENTE keuze (geen vlucht; voorgoed weg).
+   Generiek: elke metgezel met een opoffering-blok kan dit. */
+function metgezelOpoffering() {
+  const g = S.gevecht, m = gMet();
+  if (!g || g.voorbij || g.bezig || !m || m.dood) return;
+  const def = METGEZELLEN[m.id];
+  if (!def.opoffering || !def.opoffering.beschikbaar(g)) return;
+  bevestig(
+    `<b>${def.naam} — ${def.opoffering.naam}</b><br><br>${def.opoffering.tekst}<br><br>Hierna is ${def.naam} <b>VOORGOED</b> weg. Geen terugkeer.`,
+    () => {
+      if (S.gevecht !== g || g.voorbij || !gMet() || gMet().dood) return;
+      def.opoffering.doe(m, g);
+      m.dood = true;
+      S.metgezel = null;                       /* permanent — niet 'vluchtig' */
+      Codex.gevallen = Array.isArray(Codex.gevallen) ? Codex.gevallen : [];
+      if (!Codex.gevallen.includes(m.id)) { Codex.gevallen.push(m.id); bewaarCodex(); }
+      baasFaseMoment('DE LAATSTE VONK', `${def.naam} offert zich op — de diepte onthoudt zijn moed.`);
+      melding(`✝ ${def.naam} is voorgoed heengegaan.`);
+      const el = actorEl(m); if (el) el.classList.add('gevlucht');
+      renderGevecht();
+      if (alleVijanden().length === 0) gevechtGewonnen();
+    },
+    'Offer op 🔥'
+  );
 }
 
 /* ---------- schermachtergronden (eigen platen, gedimd voor leesbaarheid) ---------- */
@@ -1284,7 +1343,7 @@ function maakVijand(id, rij) {
   if (!def.elite && !def.baas) hp += Math.floor(rij * 0.8);
   if (!def.baas && huidigeAct() > 1) hp = Math.ceil(hp * (1 + 0.30 * (huidigeAct() - 1)));   /* latere acts: taaier */
   if (asc() >= 2 && !def.baas) hp = Math.ceil(hp * 1.12);   /* ascension 2: taaiere vijanden */
-  return { id, naam: def.naam, art: def.art, hp, maxHp: hp, blok: 0, status: {}, dood: false, beurtTeller: 0, intent: null };
+  return { id, naam: def.naam, art: def.art, hp, maxHp: hp, blok: 0, status: {}, dood: false, beurtTeller: 0, intent: null, aegis: def.aegis || 0 };
 }
 
 /* eenmalige, vrijblijvende tip: liggend speelt comfortabeler. Geen blokkade —
@@ -1438,7 +1497,7 @@ function toonBaasIntro(g) {
   Klank.sfx('zwareklap');
   setTimeout(() => { Klank.sfx('dood'); schudScherm(); }, 700);
   setTimeout(() => el.remove(), 3600);
-  setTimeout(() => { if (S.gevecht === g && !g.voorbij && b.id === 'slijmkoning') baasSpreekt(UITSPRAKEN._baas.intro); }, 3900);
+  setTimeout(() => { if (S.gevecht === g && !g.voorbij && VIJANDEN[b.id].baas) baasSpreekt(baasUitspraken(b.id).intro); }, 3900);
 }
 
 /* per frame: 3D renderen + DOM-overlays op spriteposities zetten */
@@ -1569,14 +1628,16 @@ function bouwGevechtDom(g) {
         <div class="metgezel-art" data-tip="${md.naam} — ${md.tekst}">${md.icoon}</div>
         <div class="metgezel-naam">${md.naam}</div>
         <div class="hp-balk metgezel-hp"><div class="hp-vulling"></div><span class="hp-tekst"></span><span class="blok-schild" data-tip="Blok: vangt aanvalsschade op"><svg viewBox="0 0 24 28" aria-hidden="true"><path fill="url(#blokgrad)" stroke="#0c1c2e" stroke-width="1.6" d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg><b></b></span></div>
-        <div class="blok-status"></div>`;
+        <div class="blok-status"></div>
+        <button class="metgezel-offer" type="button" onclick="metgezelOpoffering()" hidden></button>`;
       GDOM.metgezel = {
         wrap: mz,
         intent: mz.querySelector('.metgezel-intent'),
         hpV: mz.querySelector('.hp-vulling'),
         hpT: mz.querySelector('.hp-tekst'),
         blok: mz.querySelector('.blok-schild'),
-        badges: mz.querySelector('.blok-status')
+        badges: mz.querySelector('.blok-status'),
+        offer: mz.querySelector('.metgezel-offer')
       };
       if (window.laadMetgezelAfbeelding) {
         laadMetgezelAfbeelding(md.art, img => {
@@ -1623,10 +1684,14 @@ function intentTekst(v) {
     if (verborgen) {
       return `<span class="intent intent-aanval" data-tip="${it.naam}: valt aan — te donker om te zien hoe hard">⚔️ ?</span>`;
     }
+    const mDoel = it.doelMetgezel ? gMet() : null;
+    const richtMet = !!(mDoel && !mDoel.dood);   /* viseert de metgezel (bv. Wegwuiven → Drops) */
     let dmg = it.dmg + (v.status.kracht || 0);
     if ((v.status.zwak || 0) > 0) dmg = Math.floor(dmg * 0.75);
-    if ((sp().status.kwetsbaar || 0) > 0) dmg = Math.floor(dmg * 1.5);
-    return `<span class="intent intent-aanval" data-tip="${it.naam}: valt aan voor ${dmg}${it.hits ? '×' + it.hits : ''} schade">⚔️ ${dmg}${it.hits ? '×' + it.hits : ''}</span>`;
+    if (((richtMet ? mDoel : sp()).status.kwetsbaar || 0) > 0) dmg = Math.floor(dmg * 1.5);
+    const merk = richtMet ? ` → ${METGEZELLEN[mDoel.id].icoon}` : '';
+    const tipWie = richtMet ? METGEZELLEN[mDoel.id].naam : 'jou';
+    return `<span class="intent intent-aanval${richtMet ? ' intent-viseert-mg' : ''}" data-tip="${it.naam}: valt ${tipWie} aan voor ${dmg}${it.hits ? '×' + it.hits : ''} schade">⚔️ ${dmg}${it.hits ? '×' + it.hits : ''}${merk}</span>`;
   }
   if (it.type === 'blok') {
     return `<span class="intent intent-blok" data-tip="${it.naam}: verdedigt zich">🛡️ ${verborgen ? '?' : it.blok}</span>`;
@@ -1663,9 +1728,10 @@ function renderGevecht() {
           <div class="bb-vul" style="width:${Math.max(0, b.hp / b.maxHp * 100)}%"></div>
           <span class="bb-tekst">${b.hp}/${b.maxHp}</span>
         </div>
-        <div class="bb-fases" data-tip="De koning vecht in drie bedrijven — verzwak hem en zie wat er gebeurt...">
+        <div class="bb-fases" data-tip="De baas vecht in drie bedrijven — verzwak hem en zie wat er gebeurt...">
           ${[1, 2, 3].map(f => `<span class="bb-pip ${(b.fase || 1) >= f ? 'aan' : ''}"></span>`).join('')}
-        </div>`;
+        </div>
+        ${(b.aegis || 0) > 0 ? `<div class="bb-aegis" data-tip="Pappies Invloed: de Erfprins is ONAANTASTBAAR tot Drops dit goud heeft weggevreten. Gewone aanvallen en gif ketsen af.">🟡 Pappies Invloed · ${b.aegis}</div>` : ''}`;
     } else {
       bb.style.display = 'none';
     }
@@ -1706,7 +1772,7 @@ function renderGevecht() {
   ds.wrap.classList.toggle('hfx-gif-aan', (s.status.gif || 0) > 0);
   ds.wrap.classList.toggle('hfx-wond-aan', S.hp / S.maxHp < 0.3);
 
-  /* metgezel: eigen HP-balk, blok, statussen en intentie-hint */
+  /* metgezel: eigen HP-balk, blok, statussen, intentie-hint en opoffer-knop */
   if (g.metgezel && GDOM.metgezel) {
     const m = g.metgezel, dm = GDOM.metgezel;
     dm.wrap.classList.toggle('gevlucht', m.dood);
@@ -1715,6 +1781,15 @@ function renderGevecht() {
     zetBlokSchild(dm.blok, m.blok);
     dm.badges.innerHTML = statusBadges(m);
     dm.intent.innerHTML = m.dood ? '' : metgezelIntentTekst(m);
+    if (dm.offer) {
+      const def = METGEZELLEN[m.id];
+      const kan = !m.dood && def.opoffering && def.opoffering.beschikbaar(g);
+      dm.offer.hidden = !kan;
+      if (kan && !dm.offer.textContent) {
+        dm.offer.textContent = '🔥 ' + def.opoffering.naam;
+        dm.offer.dataset.tip = def.opoffering.tekst + ' Hierna is ' + def.naam + ' VOORGOED weg.';
+      }
+    }
   }
 
   /* LEES-fase: pas NA alle DOM-schrijfacties de hoogtes meten — zo dwingt de
@@ -1820,7 +1895,8 @@ function toonCodex() {
       if (!Codex.metgezellen.includes(id)) {
         return `<div class="codex-slot leeg" data-tip="??? — nog niet ontmoet">❓</div>`;
       }
-      return `<div class="codex-slot rel-${d.zeld}" data-mgart="${id}" data-tip="${d.naam} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${d.icoon}</div>`;
+      const gevallen = Codex.gevallen.includes(id);
+      return `<div class="codex-slot rel-${d.zeld} ${gevallen ? 'gevallen' : ''}" data-mgart="${id}" data-tip="${d.naam}${gevallen ? ' · ✝ offerde zich op' : ''} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${d.icoon}${gevallen ? '<span class="codex-kruis">✝</span>' : ''}</div>`;
     }).join('') + `</div>
     <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt + mgOntdekt === rels.length + dranks.length + mgs.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
     <small>🗝️ = opgeladen: dit relikwie kun je bij een nieuwe run éénmalig meenemen uit het Schrijn.</small></p>`;
@@ -1863,6 +1939,7 @@ function toonMetgezelBoek(id) {
       <h3>${d.naam}</h3>
       <p class="boek-effect">${d.tekst}</p>
       ${d.lore ? `<p class="boek-lore">„${d.lore}"</p>` : ''}
+      ${(Codex.gevallen || []).includes(id) ? '<p class="boek-gevallen">✝ Offerde zich op. Voorgoed heen — de diepte onthield zijn moed.</p>' : ''}
       <button class="knop-groot" onclick="$('#overlay-relikwie').classList.remove('open')">Sluit</button>
     </div>`;
   verfraaiItemArt($('#relikwie-boek'));
@@ -2111,7 +2188,8 @@ function checkBaasFase() {
   if (!g || g.voorbij || g.soort !== 'baas') return;
   const b = g.vijanden.find(v => VIJANDEN[v.id].baas && !v.dood);
   if (!b) return;
-  if (b.id !== 'slijmkoning') return;   /* slijm-fases zijn baas-specifiek; andere bazen krijgen eigen script (Fase B) */
+  if (b.id === 'de_erfprins') { checkErfprinsFase(b, g); return; }
+  if (b.id !== 'slijmkoning') return;   /* andere bazen: (nog) geen fase-script */
   const pct = b.hp / b.maxHp;
   if ((b.fase || 1) < 2 && pct <= 0.5) {
     b.fase = 2;
@@ -2127,6 +2205,27 @@ function checkBaasFase() {
     baasFaseMoment('KONINKLIJKE WOEDE', UITSPRAKEN._baas.fase3);
     geefStatus(b, 'kracht', 2);
     b.intent = VIJANDEN[b.id].kies(b, g.beurt); /* nieuw aanvalspatroon meteen tonen */
+    const el = actorEl(b);
+    if (el) el.classList.add('woede');
+  }
+}
+
+/* De Erfprins escaleert in drie bedrijven (geen splitsing zoals de slijmkoning,
+   maar fellere klappen + vaker Drops wegwuiven; de aegis-puzzel blijft de kern). */
+function checkErfprinsFase(b, g) {
+  const pct = b.hp / b.maxHp;
+  if ((b.fase || 1) < 2 && pct <= 0.6) {
+    b.fase = 2;
+    baasFaseMoment('PAPPIE WORDT GEBELD', UITSPRAKEN._erfprins.fase2);
+    geefStatus(b, 'kracht', 1);
+    if (window.Vista) Vista.pose(b, 'cast', 2.6);
+    pose2D(b, 'cast', 2.6);
+  }
+  if ((b.fase || 1) < 3 && pct <= 0.3) {
+    b.fase = 3;
+    baasFaseMoment('VERWENDE WOEDE', UITSPRAKEN._erfprins.fase3);
+    geefStatus(b, 'kracht', 2);
+    b.intent = VIJANDEN[b.id].kies(b, g.beurt);
     const el = actorEl(b);
     if (el) el.classList.add('woede');
   }
@@ -2205,8 +2304,9 @@ async function eindBeurt() {
     if (it) {
       if (it.type === 'aanval') {
         const slagen = it.hits || 1;
+        const gericht = it.doelMetgezel ? gMet() : null;   /* bv. de Erfprins die Drops wegwuift */
         for (let h = 0; h < slagen; h++) {
-          vijandAanval(v, it.dmg);
+          vijandAanval(v, it.dmg, gericht);
           renderGevecht();
           if (gestopt()) return;
           if (v.dood) break;                 /* doodgegaan aan Doornen mid-reeks → stop de reeks */
@@ -2284,6 +2384,11 @@ function beginSpelerBeurt() {
 
   metgezelBeurt();   /* de bondgenoot handelt aan het begin van je beurt (kan de laatste vijand vellen → onderstaande check vangt dat) */
 
+  /* Zónder Drops vreet niets aan de Pappies Invloed — een trage mercy-decay houdt
+     de Erfprins winbaar (maar bestraffend) i.p.v. een softlock als Drops weg is. */
+  const _ep = g.vijanden.find(v => v.id === 'de_erfprins' && !v.dood);
+  if (_ep && (_ep.aegis || 0) > 0 && (!gMet() || gMet().dood)) _ep.aegis = Math.max(0, _ep.aegis - 1);
+
   const lichtNu = lichtNiveau();
   g.energie = g.maxEnergie + (s.status.energiekern || 0) + (s.status.innerlijkvuur || 0)
     + (heeftRelikwie('energiekristal') ? 1 : 0)
@@ -2327,7 +2432,7 @@ async function gevechtGewonnen() {
   if (g.soort === 'baas') {
     /* de doodsklap van een baas verdient een flits en een stilte */
     const verslagenBaas = huidigeBaas().naam;
-    if (huidigeBaas().id === 'slijmkoning') baasSpreekt(UITSPRAKEN._baas.dood);
+    baasSpreekt(baasUitspraken(huidigeBaas().id).dood);
     const flits = document.createElement('div');
     flits.className = 'baas-doodflits';
     $('#scherm-gevecht').appendChild(flits);
