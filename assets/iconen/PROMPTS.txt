@@ -32,6 +32,14 @@ oppoken.png    a torch/brazier flame flaring brightly upward, rich
                sparks rising, a hint of charred logs at the base —
                stoking the light
 
+OVERIGE UI-ICONEN:
+
+codex.png      an ornate leather-bound spellbook/tome with brass
+               corners and a glowing ember-orange rune or clasp on
+               the cover, a faint warm glow at the page edges — a
+               collector's grimoire of knowledge (klein getoond,
+               naast de titel "De Codex")
+
 LATERE UI-ICONEN (zelfde aanpak):
 Voeg gewoon een nieuw bestand toe (assets/iconen/<naam>.webp) en een
 <span data-icoon="<naam>"> in de UI. Vraag het even als de art-swap nog

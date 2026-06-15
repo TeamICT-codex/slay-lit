@@ -1662,7 +1662,7 @@ function toonCodex() {
     }).join('') + `</div>
     <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt === rels.length + dranks.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
     <small>🗝️ = opgeladen: dit relikwie kun je bij een nieuwe run éénmalig meenemen uit het Schrijn.</small></p>`;
-  verfraaiItemArt($('#codex-inhoud'));
+  verfraaiItemArt($('#overlay-codex'));   /* incl. het Codex-titelicoon (data-icoon) */
   $('#overlay-codex').classList.add('open');
   Klank.sfx('klik');
 }
@@ -2887,6 +2887,7 @@ function naarTitel() {
   toonScherm('titel');
   schermAchtergrond('titel', ACHTERGRONDEN.titel, 0.32);
   $('#knop-doorgaan').style.display = localStorage.getItem(SAVE_SLEUTEL) ? 'inline-block' : 'none';
+  if (window.verfraaiItemArt) verfraaiItemArt($('#scherm-titel'));   /* Codex-knopicoon (data-icoon) */
   const ts = $('#titel-stats');
   if (ts) ts.textContent = loopbaanRegel();   /* textContent = injectie-veilig */
   const db = $('#knop-daily');

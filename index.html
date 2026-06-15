@@ -50,7 +50,7 @@
       <button class="knop-groot" id="knop-doorgaan" onclick="doorgaan()" style="display:none">🗺️ Doorgaan</button>
       <button class="knop-stil" id="knop-daily" onclick="startDaily()">🗓️ Dagelijkse afdaling</button>
       <button class="knop-stil" onclick="toonHelp()">Hoe speel ik?</button>
-      <button class="knop-stil" onclick="toonCodex()">📖 Codex</button>
+      <button class="knop-stil" onclick="toonCodex()"><span data-icoon="codex">📖</span> Codex</button>
     </div>
     <div id="titel-stats" class="titel-stats"></div>
     <div class="sintel" style="left:12%; animation-duration:7s; animation-delay:0s"></div>
@@ -102,7 +102,7 @@
 
   <!-- de codex: verzamelboek over alle runs heen -->
   <div class="overlay" id="overlay-codex">
-    <h2 class="scherm-titel">📖 De Codex</h2>
+    <h2 class="scherm-titel"><span data-icoon="codex">📖</span> De Codex</h2>
     <div id="codex-inhoud"></div>
     <button class="knop-groot" onclick="document.getElementById('overlay-codex').classList.remove('open')">Sluiten</button>
   </div>
