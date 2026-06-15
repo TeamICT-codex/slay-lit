@@ -801,6 +801,19 @@ const VIJANDEN = {
       if (stap === 2) return { naam: 'Slijmregen', type: 'aanval', dmg: 5, hits: 3 };
       return { naam: 'Verdikken', type: 'blok', blok: 16, doe: () => geefStatus(v, 'kracht', 2) };
     }
+  },
+  /* Act 2-baas (VOORLOPIG, emoji-art; de echte baas + interlock met Drops komt in
+     Fase B). Geen meerfasen-script — checkBaasFase guard't op de slijmkoning. */
+  de_erfprins: {
+    naam: 'De Erfprins', art: '🤴', hp: [210, 210], baas: true,
+    titel: 'Erfgenaam zonder verdienste',
+    kies: (v, beurt) => {
+      const stap = beurt % 4;
+      if (stap === 0) return { naam: 'Bevel', type: 'aanval', dmg: 16 };
+      if (stap === 1) return { naam: 'Pappies Geld', type: 'blok', blok: 14, doe: () => geefStatus(v, 'kracht', 1) };
+      if (stap === 2) return { naam: 'Minachting', type: 'aanval', dmg: 7, hits: 2, doe: () => geefStatus(sp(), 'zwak', 1) };
+      return { naam: 'Driftbui', type: 'aanval', dmg: 22 };
+    }
   }
 };
 

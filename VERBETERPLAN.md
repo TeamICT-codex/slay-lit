@@ -709,3 +709,26 @@ deze keer). 16 bevestigd, 14 gefixt + geverifieerd (1 dubbel, 1 bewust overgesla
 BEWUST NIET gedaan: de voorgestelde renderHand-O(n²)-"fix" was incorrect (een
 statische children-snapshot kan na insertBefore de kaartvolgorde verkeerd zetten);
 over max. 10 kaarten is de winst nul. Alles geverifieerd in de browser-preview.
+
+### R3.36 — Act 2, Fase A: de act-motor (KLAAR, 2026-06-14)
+Eerste echte tweede act. Keuzes Thomas: overdracht StS-stijl + verse fakkel
+(episch: je trekt het laatste licht uit de verslagen baas → fakkel laait op);
+Act 2-content voorlopig opgeschaalde Act 1; metgezel Drops komt in Fase B (en wordt
+mechanisch bepalend voor de Act 2-baas). Gebouwd (art-onafhankelijk):
+- **Act-concept** `S.act` (default 1, ACTS_MAX=2; Act 3 later). `huidigeAct()`,
+  `huidigeBaas()` (BAAS_PER_ACT), `actBg(slot)` (act-bewuste achtergrond met
+  fallback naar act1). Alle 8 `ACHTERGRONDEN.act1.x`-aanroepen + de gevecht-bg +
+  map-bg omgezet. `ACHTERGRONDEN.act2` toegevoegd (Thomas' Act 2-platen; ontbrekende
+  slots vallen terug op act1).
+- **Baas per act**: map-node + baas-intro + naam dynamisch; `de_erfprins` (VOORLOPIGE
+  Act 2-baas, emoji 🤴, 210 HP) in data.js; `checkBaasFase` guard't op de slijmkoning;
+  slijm-specifieke baas-spraak (intro/dood) ook geguard.
+- **Baas-winst → volgende act**: `volgendeAct()` (fakkel→100, pos reset, nieuwe map,
+  dek/relikwieën/goud/HP blijven) + een overgangsscène (hergebruikt het einde-scherm).
+  Laatste act → `toonEinde(true)` (echte winst, loopbaan 1x geregistreerd).
+- **Schaling**: maakVijand-HP ×(1+0.30·(act−1)), vijandAanval-schade ×(1+0.15·(act−1)),
+  en de moeilijkheidstier schuift per act omhoog (Act 2 start al in 'midden').
+Geverifieerd in de preview: overgang + overdracht, act-bewuste art (Act 2-map rendert
+met Act 2-plaat), HP-schaling 17→23, de_erfprins zonder crash, geen console-fouten.
+**Volgende: Fase B** (metgezel Drops + de echte Act 2-baas die om Drops draait) en
+later Fase C-art. Oude saves zonder S.act werken (huidigeAct() valt terug op 1).

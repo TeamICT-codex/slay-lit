@@ -58,6 +58,23 @@ function schud(arr) {
 const RIJEN = 13, KOLS = 7;
 const SAVE_SLEUTEL = 'slayit_save_v1';
 
+/* ---------- acts (meerdere verdiepingen-ladders na elkaar) ---------- */
+const ACTS_MAX = 2;                       /* verhoog naar 3 zodra Act 3 klaar is */
+const ACT_NAMEN = { 1: 'De Diepte', 2: 'De Catacomben', 3: 'Het Slachtblok' };
+const BAAS_PER_ACT = {
+  1: { id: 'slijmkoning', naam: 'De Slijmkoning' },
+  2: { id: 'de_erfprins', naam: 'De Erfprins' }
+};
+function huidigeAct() { return (S && S.act) || 1; }
+function huidigeBaas() { return BAAS_PER_ACT[huidigeAct()] || BAAS_PER_ACT[1]; }
+/* act-bewuste achtergrond: pak de plaat van de huidige act, val terug op act1 */
+function actBg(slot) {
+  const A = window.ACHTERGRONDEN;
+  if (!A) return null;
+  const set = A['act' + huidigeAct()] || A.act1;
+  return (set && set[slot]) || (A.act1 && A.act1[slot]) || null;
+}
+
 /* ---------- instellingen ---------- */
 const standaardLite =
   (navigator.hardwareConcurrency || 8) <= 4 ||
@@ -324,6 +341,7 @@ function nieuwSpel(heldId, seedTekst, ascensie) {
     dranken: [],
     kaart: genereerKaart(),
     pos: null,
+    act: 1,
     verdieping: 0,
     gebruikteEvents: [],
     stats: { gevechten: 0, kaarten: 0, schade: 0 },
@@ -734,6 +752,7 @@ async function reeksAanvalAlle(dmg, naSlag) {
 /* vijand valt speler aan */
 function vijandAanval(v, basis) {
   if (v.dood) return;   /* een aan Doornen gesneuvelde vijand slaat niet meer */
+  if (huidigeAct() > 1) basis = Math.ceil(basis * (1 + 0.15 * (huidigeAct() - 1)));   /* latere acts: hardere klappen */
   if (window.Vista) Vista.aanval(v, sp());
   pose2D(v, 'attack', 0.5);
   /* 2D-lunge: de vijand schiet even naar de speler toe (naar links) */
@@ -833,9 +852,10 @@ function schermAchtergrond(naam, pad, donker = 0.55, positie = 'center') {
 
 /* gevechtsplaat kiezen (willekeurige variant; episch voor elite/baas) */
 function kiesGevechtAchtergrond(soort) {
-  const A = window.ACHTERGRONDEN && ACHTERGRONDEN.act1;
+  const A = window.ACHTERGRONDEN;
   if (!A) return null;
-  const pool = (soort === 'elite' || soort === 'baas') ? A.episch : A.gevecht;
+  const set = A['act' + huidigeAct()] || A.act1;
+  const pool = (soort === 'elite' || soort === 'baas') ? set.episch : set.gevecht;
   if (!pool || !pool.length) return null;
   return ACHTERGRONDEN.basis + kiesUit(pool);
 }
@@ -1058,10 +1078,11 @@ function renderKaartScherm() {
     const isHuidig = n.id === S.pos;
     const kan = beschikbaar.includes(n.id);
     const kost = fakkelKost(n.type, n.r);
+    const naam = n.type === 'baas' ? huidigeBaas().naam : NODE_NAMEN[n.type];
     knoppen += `<button class="knoop knoop-${n.type} ${kan ? 'kan' : ''} ${isHuidig ? 'huidig' : ''}"
       style="left:${p.x}px; top:${p.y}px"
-      data-tip="${NODE_NAMEN[n.type]}${kost > 0 ? ` (−${kost} 🔥)` : ''}"
-      aria-label="${NODE_NAMEN[n.type]}${kost > 0 ? `, kost ${kost} licht` : ''}"
+      data-tip="${naam}${kost > 0 ? ` (−${kost} 🔥)` : ''}"
+      aria-label="${naam}${kost > 0 ? `, kost ${kost} licht` : ''}"
       ${kan ? `onclick="kiesNode('${n.id}')"` : 'disabled'}>${NODE_ICONEN[n.type]}</button>`;
   }
   vlak.innerHTML = svg + knoppen;
@@ -1080,9 +1101,9 @@ function renderKaartScherm() {
   /* act-overzichtsplaat scrollt mee met de route: onderaan de vallei, bovenaan de baas */
   const scroller = $('#kaart-scroll');
   const schermEl = $('#scherm-kaart');
-  if (window.ACHTERGRONDEN && ACHTERGRONDEN.act1.kaart) {
+  if (window.ACHTERGRONDEN && actBg('kaart')) {
     schermEl.style.backgroundImage =
-      `linear-gradient(rgba(13,10,18,.40), rgba(13,10,18,.55)), url("${ACHTERGRONDEN.basis + ACHTERGRONDEN.act1.kaart}")`;
+      `linear-gradient(rgba(13,10,18,.40), rgba(13,10,18,.55)), url("${ACHTERGRONDEN.basis + actBg('kaart')}")`;
     schermEl.style.backgroundSize = 'cover';
     const zetPlaatPositie = () => {
       const max = scroller.scrollHeight - scroller.clientHeight;
@@ -1143,12 +1164,14 @@ function kiesNodeEcht(id) {
   try {
     switch (n.type) {
       case 'gevecht': {
-        const moeilijkheid = n.r < 3 ? 'vroeg' : (n.r < 6 ? 'midden' : (n.r < 9 ? 'laat' : 'zwaar'));
+        /* latere acts schuiven de moeilijkheidstier omhoog (Act 2 begint al in 'midden') */
+        const er = n.r + (huidigeAct() - 1) * 5;
+        const moeilijkheid = er < 3 ? 'vroeg' : (er < 6 ? 'midden' : (er < 9 ? 'laat' : 'zwaar'));
         startGevecht(kiesUit(ONTMOETINGEN[moeilijkheid]), 'gevecht', n.r);
         break;
       }
       case 'elite': startGevecht(kiesUit(ONTMOETINGEN.elite), 'elite', n.r); break;
-      case 'baas': startGevecht(ONTMOETINGEN.baas[0], 'baas', n.r); break;
+      case 'baas': startGevecht([huidigeBaas().id], 'baas', n.r); break;
       case 'rust': toonRust(); break;
       case 'winkel': toonWinkel(); break;
       case 'schat': toonSchat(); break;
@@ -1171,6 +1194,7 @@ function maakVijand(id, rij) {
   const def = VIJANDEN[id];
   let hp = rnd(def.hp[0], def.hp[1]);
   if (!def.elite && !def.baas) hp += Math.floor(rij * 0.8);
+  if (!def.baas && huidigeAct() > 1) hp = Math.ceil(hp * (1 + 0.30 * (huidigeAct() - 1)));   /* latere acts: taaier */
   if (asc() >= 2 && !def.baas) hp = Math.ceil(hp * 1.12);   /* ascension 2: taaiere vijanden */
   return { id, naam: def.naam, art: def.art, hp, maxHp: hp, blok: 0, status: {}, dood: false, beurtTeller: 0, intent: null };
 }
@@ -1296,7 +1320,7 @@ function toonBaasIntro(g) {
   const el = document.createElement('div');
   el.id = 'baas-intro';
   el.innerHTML = `<div class="baas-intro-binnen">
-    <small>verdieping 13 — de troonzaal</small>
+    <small>Act ${huidigeAct()} — ${ACT_NAMEN[huidigeAct()] || 'De Diepte'}</small>
     <h1>${b.naam}</h1>
     <span>${VIJANDEN[b.id].titel || ''}</span>
   </div>`;
@@ -1304,7 +1328,7 @@ function toonBaasIntro(g) {
   Klank.sfx('zwareklap');
   setTimeout(() => { Klank.sfx('dood'); schudScherm(); }, 700);
   setTimeout(() => el.remove(), 3600);
-  setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(UITSPRAKEN._baas.intro); }, 3900);
+  setTimeout(() => { if (S.gevecht === g && !g.voorbij && b.id === 'slijmkoning') baasSpreekt(UITSPRAKEN._baas.intro); }, 3900);
 }
 
 /* per frame: 3D renderen + DOM-overlays op spriteposities zetten */
@@ -1885,6 +1909,7 @@ function checkBaasFase() {
   if (!g || g.voorbij || g.soort !== 'baas') return;
   const b = g.vijanden.find(v => VIJANDEN[v.id].baas && !v.dood);
   if (!b) return;
+  if (b.id !== 'slijmkoning') return;   /* slijm-fases zijn baas-specifiek; andere bazen krijgen eigen script (Fase B) */
   const pct = b.hp / b.maxHp;
   if ((b.fase || 1) < 2 && pct <= 0.5) {
     b.fase = 2;
@@ -2094,8 +2119,9 @@ async function gevechtGewonnen() {
   if (heeftRelikwie('kookpot_van_maxenzele')) geneesHpBuitenGevecht(3);
 
   if (g.soort === 'baas') {
-    /* de doodsklap van een koning verdient een flits en een stilte */
-    baasSpreekt(UITSPRAKEN._baas.dood);
+    /* de doodsklap van een baas verdient een flits en een stilte */
+    const verslagenBaas = huidigeBaas().naam;
+    if (huidigeBaas().id === 'slijmkoning') baasSpreekt(UITSPRAKEN._baas.dood);
     const flits = document.createElement('div');
     flits.className = 'baas-doodflits';
     $('#scherm-gevecht').appendChild(flits);
@@ -2104,8 +2130,12 @@ async function gevechtGewonnen() {
     flits.remove();
     if (S.gevecht !== g) return;
     S.gevecht = null;
-    wisSave();
-    toonEinde(true);
+    if (huidigeAct() < ACTS_MAX) {
+      volgendeAct(verslagenBaas);   /* nog een act → episch verder afdalen */
+    } else {
+      wisSave();
+      toonEinde(true);             /* laatste act verslagen → echte overwinning */
+    }
     return;
   }
 
@@ -2169,7 +2199,7 @@ function trekKaartBeloning() {
 /* ---------- beloningscherm ---------- */
 function renderBeloning() {
   toonScherm('beloning');
-  schermAchtergrond('beloning', ACHTERGRONDEN.act1.beloning, 0.5);
+  schermAchtergrond('beloning', actBg('beloning'), 0.5);
   const b = S.beloning;
   let html = `<h2 class="scherm-titel">Overwinning!</h2>
     <p class="scherm-sub">De buit neem je automatisch mee — alleen de kaartkeuze is aan jou.</p>
@@ -2412,7 +2442,7 @@ function toonRust() {
   toonScherm('rust');
   rustKlaar = false;
   /* de vloer van de plaat onderin houden, zodat het vuur erop staat */
-  schermAchtergrond('rust', ACHTERGRONDEN.act1.rust, 0.42, 'center bottom');
+  schermAchtergrond('rust', actBg('rust'), 0.42, 'center bottom');
   const heel = Math.floor(S.maxHp * 0.3) + (heeftRelikwie('levenskruik') ? 10 : 0);
   const kanSmeden = S.dek.some(c => !c.up && kdef(c).up);
   const kanPoken = S.fakkel < 100;
@@ -2491,7 +2521,7 @@ function rustSmeed() {
 let schatBuit = null;
 function toonSchat() {
   toonScherm('schat');
-  schermAchtergrond('schat', ACHTERGRONDEN.act1.schat, 0.45);
+  schermAchtergrond('schat', actBg('schat'), 0.45);
   schatBuit = willekeurigRelikwie();   /* vooraf bepaald — seeded volgorde blijft gelijk */
   $('#scherm-schat').innerHTML = `
     <h2 class="scherm-titel">Een schatkist!</h2>
@@ -2573,7 +2603,7 @@ function toonWinkel() {
 function renderWinkel() {
   toonScherm('winkel');
   const w = S.winkel;
-  schermAchtergrond('winkel', w.ei ? ACHTERGRONDEN.act1.winkelEasterEgg : ACHTERGRONDEN.act1.winkel, 0.62);
+  schermAchtergrond('winkel', w.ei ? actBg('winkelEasterEgg') : actBg('winkel'), 0.62);
   let html = `<h2 class="scherm-titel">💰 De Winkel</h2>
     <p class="scherm-sub">"Alles te koop, niets te geef," grijnst de koopman.</p>`;
 
@@ -2671,7 +2701,7 @@ function toonEvent() {
   S.huidigEvent = ev.id;
   toonScherm('event');
   schermAchtergrond('event',
-    ev.id === 'altaar' ? ACHTERGRONDEN.act1.eventRelikwie : ACHTERGRONDEN.act1.event, 0.5);
+    ev.id === 'altaar' ? actBg('eventRelikwie') : actBg('event'), 0.5);
   renderEvent(ev);
 }
 
@@ -2726,10 +2756,34 @@ function eventKlaar(tekst) {
   renderTopbalk();
 }
 
+/* ---------- act-overgang: de verslagen baas levert het licht voor de volgende afdaling ---------- */
+function volgendeAct(verslagenBaas) {
+  S.act = huidigeAct() + 1;
+  S.fakkel = 100;                 /* episch: het laatste licht van de baas → je fakkel laait op */
+  S.pos = null;
+  S.kaart = genereerKaart();      /* nieuwe ladder, act-bewust; de verdieping-teller loopt door */
+  delete S.beloning; delete S.winkel; delete S.huidigEvent;
+  toonActOvergang(verslagenBaas);
+}
+function toonActOvergang(verslagenBaas) {
+  toonScherm('einde');            /* hergebruik het lege einde-scherm als overgangsdoek */
+  schermAchtergrond('einde', actBg('kaart'), 0.42);
+  Klank.sfx('schitter'); setTimeout(() => Klank.sfx('win'), 250);
+  const naam = ACT_NAMEN[S.act] || ('Act ' + S.act);
+  $('#scherm-einde').innerHTML = `
+    <div class="einde-held einde-winst"><div class="schat-stralen einde-stralen"></div></div>
+    <h2 class="scherm-titel einde-titel goud-tekst">ACT ${S.act} — ${naam}</h2>
+    <p class="scherm-sub einde-regel">Je trekt het laatste licht uit ${verslagenBaas}. Het stroomt je fakkel in — die laait wonderbaarlijk op. 🔥</p>
+    <p class="einde-loopbaan">Je dek, je relikwieën en je littekens dalen met je mee. De diepte wordt killer.</p>
+    <div class="einde-knoppen">
+      <button class="knop-groot" onclick="renderKaartScherm()">⬇️ Daal dieper af</button>
+    </div>`;
+}
+
 function toonEinde(gewonnen) {
   toonScherm('einde');
   /* winst = de epische plaat, verlies = de nederlaag-plaat (per act) */
-  schermAchtergrond('einde', gewonnen ? ACHTERGRONDEN.act1.overwinning : ACHTERGRONDEN.act1.nederlaag,
+  schermAchtergrond('einde', gewonnen ? actBg('overwinning') : actBg('nederlaag'),
     gewonnen ? 0.45 : 0.5);
   Klank.muziek('stil');
   const st = S.stats;

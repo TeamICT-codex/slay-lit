@@ -559,6 +559,27 @@ const ACHTERGRONDEN = {
     beloning: 'Act 1 achtergronden/Overwinningsachtergrond1gewoon.webp',
     overwinning: 'Act 1 achtergronden/Overwinningsachtergrond1episch.webp',
     nederlaag: 'Act 1 achtergronden/Achtergrond nederlaag ACT1.webp'
+  },
+  /* Act 2 — De Catacomben. Ontbrekende slots (rust/schat/beloning/overwinning/
+     nederlaag) vallen via actBg() terug op act1. */
+  act2: {
+    kaart: 'Act 2 achtergronden/Startscherm ACT 2 achtergrond.webp',
+    gevecht: [
+      'Act 2 achtergronden/Gevechtstijl1act2.webp',
+      'Act 2 achtergronden/Gevechtstijl2act2.webp',
+      'Act 2 achtergronden/Gevechtstijl3act2.webp',
+      'Act 2 achtergronden/Gevechtstijl4act2.webp',
+      'Act 2 achtergronden/Gevechtstijl5act2.webp'
+    ],
+    episch: [
+      'Act 2 achtergronden/Gevechtstijl act2 EPISCH 1.webp',
+      'Act 2 achtergronden/Gevechtstijl act2 EPISCH 2.webp',
+      'Act 2 achtergronden/Gevechtstijl act2 EPISCH 3.webp'
+    ],
+    winkel: 'Act 2 achtergronden/Achtergrondverkoper ACT2.webp',
+    winkelEasterEgg: 'Act 2 achtergronden/Achtergrondverkoper ACT2 easter egg.webp',
+    event: 'Act 2 achtergronden/Achtergrondvraagtekenencounter ACT2.webp',
+    eventRelikwie: 'Act 2 achtergronden/Achtergrondvraagtekenrelikwieartefact ACT2.webp'
   }
 };
 window.ACHTERGRONDEN = ACHTERGRONDEN;
