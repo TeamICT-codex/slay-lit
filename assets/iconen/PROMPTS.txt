@@ -8,8 +8,9 @@ ogen.
 
 PIJPLIJN NA ELKE DROP — VOLGORDE TELT:
   1) python .claude/verwijder_dambord.py   (haalt het ingebakken
-     transparantie-dambord / witte vlak weg; iconen draaien in de ZACHTE
-     modus zodat glow + vonken blijven)
+     transparantie-dambord / witte vlak weg; iconen draaien in de
+     'icoon'-modus die warm-witte 'wattenwolkjes' wegpelt maar gekleurde
+     glow + grote lichte massa's spaart)
   2) python .claude/converteer_webp.py     (PNG -> WebP, alpha blijft behouden)
 Dambord ALTIJD vóór WebP. Andersom wordt het witte raster een dichte
 achtergrond in de WebP en zie je een wit blok achter het icoon.
@@ -25,20 +26,39 @@ SJABLOON (vervang alleen de Item-regel):
 
   Item: [BESCHRIJVING]
 
+BELANGRIJK — VERMIJD WIT 'BLOOM' (les van 15 juni 2026):
+Iconen met glow/vuur/vonken kreeg de generator op een transparantie-DAMBORD,
+en bakte de half-transparante glow als OPAAK WIT vast. Op de donkere kaart
+zie je dan witte 'wattenwolkjes' die niet schoon weg te halen zijn zonder de
+vlam/vonken te beschadigen. Codex (harde randen, geen bloom) sneed wél perfect
+uit. Dus voor glow-iconen in de prompt expliciet sturen op:
+  - "crisp, sharply defined edges, hard clean silhouette"
+  - "NO white glow, NO hazy bloom, NO misty halo, NO smoke"
+  - vonken = "a few SMALL CRISP saturated-orange spark dots" (geen witte bursts)
+  - vuur = "richly COLOURED orange/gold flame, core bright yellow but not pure
+    white"  (puur wit = onverwijderbaar tegen het witte dambord)
+Controleer ELKE drop op een DONKERE achtergrond, niet op het lichte
+viewer-raster (dat camoufleert juist het witte pluis).
+
 DE RUST-OPTIES (de drie kaarten op de rustplaats):
 
 rusten.png     a cozy rolled-out bedroll with a plump pillow and a
                folded blanket, a soft warm glow resting over it, a
                faint crescent moon above — calm, restful, inviting
 
-smeden.png     two crossed blacksmith hammers over a small dark
-               anvil, a handful of bright orange forge-sparks flying,
-               glowing hot edges on the metal — craft and repair
+smeden.png     two crossed blacksmith hammers over a small dark anvil,
+               molten-orange glowing edges on the metal, just a FEW
+               SMALL CRISP saturated-orange spark dots close to the
+               metal. Hard clean silhouette. NO white glow, NO hazy
+               bloom, NO misty/white spark clouds — sparks are sharp
+               coloured dots, never white puffs. (craft and repair)
 
-oppoken.png    a torch/brazier flame flaring brightly upward, rich
-               orange-gold fire with a white-hot core, embers and
-               sparks rising, a hint of charred logs at the base —
-               stoking the light
+oppoken.png    a torch/brazier flame flaring upward, richly COLOURED
+               orange-and-gold fire with crisp defined flame tongues,
+               charred logs at the base. Core may be bright yellow but
+               stays COLOURED, not pure white. NO white-hot wash, NO
+               hazy outer glow/bloom, NO floating misty embers — clean
+               readable flame silhouette. (stoking the light)
 
 OVERIGE UI-ICONEN:
 
