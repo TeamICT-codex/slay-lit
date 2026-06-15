@@ -1,0 +1,38 @@
+UI-ICONEN
+=========
+Eén vierkant icoon per UI-knop (PNG, ~512x512). Getoond klein (~50px) bovenaan
+een keuzekaart, ter vervanging van een emoji. Dus: TRANSPARANTE achtergrond
+(losgesneden object), geen scène, geen tegel. Houd de set onderling consistent
+(zelfde stijl, belichting en zwaarte) zodat de drie rust-kaarten als één familie
+ogen. Draai erna converteer_webp.py (+ verwijder_dambord.py tegen witrandjes).
+
+SJABLOON (vervang alleen de Item-regel):
+
+  Dark-fantasy game UI icon, a single object centered on a fully
+  TRANSPARENT background (isolated, cut-out, no scene), painterly
+  hand-painted style, warm ember light as the glow, parchment-and-
+  coal palette, bold and readable at small size, soft inner light.
+  NOT photorealistic, no photo, no 3D render. Square composition,
+  isolated subject, no text, no frame, no UI, no background.
+
+  Item: [BESCHRIJVING]
+
+DE RUST-OPTIES (de drie kaarten op de rustplaats):
+
+rusten.png     a cozy rolled-out bedroll with a plump pillow and a
+               folded blanket, a soft warm glow resting over it, a
+               faint crescent moon above — calm, restful, inviting
+
+smeden.png     two crossed blacksmith hammers over a small dark
+               anvil, a handful of bright orange forge-sparks flying,
+               glowing hot edges on the metal — craft and repair
+
+oppoken.png    a torch/brazier flame flaring brightly upward, rich
+               orange-gold fire with a white-hot core, embers and
+               sparks rising, a hint of charred logs at the base —
+               stoking the light
+
+LATERE UI-ICONEN (zelfde aanpak):
+Voeg gewoon een nieuw bestand toe (assets/iconen/<naam>.webp) en een
+<span data-icoon="<naam>"> in de UI. Vraag het even als de art-swap nog
+ergens gewired moet worden.
