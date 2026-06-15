@@ -276,3 +276,29 @@ Painted illustration style only. Isolated on a fully transparent
 background. No ground, no shadow, no text, no frame, no UI, no
 background elements. The creature fills about 90% of a square
 1024x1024 canvas, base near the bottom edge.
+
+======================= de_erfprins.png ======================
+(Act 2-baas — "De Erfprins": de onverdiende erfgenaam / nepo-baby
+als catacomben-vorst. Hint naar zijn schild "Pappies Invloed".)
+Stylized painterly digital illustration for a dark fantasy card
+game, hand-painted fantasy concept art with expressive visible
+brushwork, rich colors and soft painted shading. NOT
+photorealistic, not a photograph, no photo textures, no 3D
+render. Single full-body boss character, centered, facing LEFT,
+epic boss presence with a pathetic edge. Warm torchlight rim
+lighting, palette of deep purples, charcoal and ember orange,
+matching a torchlit catacomb.
+
+Character: a petulant spoiled boy-prince who never earned his
+crown, drowning in oversized ornate golden armor that clearly
+isn't his, an over-large jeweled crown slipping down over his
+eyes, a bratty entitled sneer, clutching a too-big golden
+scepter, far too much gold everywhere; a faint shimmering golden
+aegis/barrier of floating coins and flattery wraps around him
+like a shield; small cowering sycophant shadows grovel at his
+feet. Entitled, smug and menacing yet faintly pathetic.
+
+Painted illustration style only. Isolated on a fully transparent
+background. No ground, no shadow, no text, no frame, no UI, no
+background elements. The character fills about 90% of a square
+1024x1024 canvas, feet near the bottom edge.

@@ -1671,7 +1671,10 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 .event-knop:disabled > b, .event-knop:disabled > small:not(.reden-uit),
 .rust-knop:disabled > b, .rust-knop:disabled > small:not(.reden-uit),
 .rust-knop:disabled .rust-icoon { opacity: .38; }
-.rust-icoon { font-size: 2.6rem; }
+.rust-icoon { font-size: 2.6rem; line-height: 1; }
+/* eigen icoon-art (assets/iconen/) op icoonmaat houden — een <img> erft de
+   font-size niet, dus zonder dit rendert hij op zijn volle pixelmaat */
+.rust-icoon img { width: 3.4rem; height: 3.4rem; object-fit: contain; display: block; }
 .event-tekst { font-size: 1.1rem; }
 
 /* ---------- winkel ---------- */
