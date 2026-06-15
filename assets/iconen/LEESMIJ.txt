@@ -1,0 +1,23 @@
+SLAY LIT — UI-iconen (assets/iconen/)
+=====================================
+
+Eigen iconen voor UI-knoppen. Wordt AUTOMATISCH ingeladen in plaats van de emoji
+zodra het bestand bestaat; ontbreekt het, dan blijft de emoji als nette terugval.
+(Zelfde mechaniek als de relikwie-/drank-art: een <span data-icoon="x"> in de UI
+laadt assets/iconen/x — lader probeert .webp > .png > .jpg.)
+
+Rust-opties (de drie kaarten op de rustplaats):
+  rusten.webp    — "Rusten"  (genezen)        | terugval-emoji: 🛌
+  smeden.webp    — "Smeden"  (kaart smeden)   | terugval-emoji: ⚒️
+  oppoken.webp   — "Oppoken" (fakkel bijvullen)| terugval-emoji: 🔥
+
+Werkwijze (zoals de rest van de art):
+  1. Maak/genereer een vierkante plaat, liefst met TRANSPARANTE achtergrond.
+     ~256x256 px is ruim zat (het toont op ~50 px).
+  2. Drop de PNG hier (bv. rusten.png) — de lader pakt webp boven png boven jpg.
+  3. Draai .claude/converteer_webp.py voor nette .webp + payload-check, en evt.
+     .claude/verwijder_dambord.py tegen transparantie-/witrandjes.
+
+Meer UI-iconen later? Zelfde aanpak: <span data-icoon="<naam>"> in de UI +
+assets/iconen/<naam>.webp. (Roept dit niet vanzelf verfraaiItemArt aan op dat
+scherm, vraag het dan even — dan wire ik de swap erbij.)

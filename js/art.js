@@ -530,6 +530,7 @@ window.laadKaartAfbeelding = maakArtLader('assets/kaarten/');
 window.laadEventAfbeelding = maakArtLader('assets/events/');
 window.laadRelikwieAfbeelding = maakArtLader('assets/relikwieen/');
 window.laadDrankAfbeelding = maakArtLader('assets/dranken/');
+window.laadIcoonAfbeelding = maakArtLader('assets/iconen/');   /* UI-iconen (rust-opties enz.) */
 
 /* ============================================================
    Achtergrond-manifest — verwijst naar de platen in

@@ -1711,6 +1711,14 @@ function verfraaiItemArt(wortel) {
       });
     });
   }
+  /* UI-iconen (rust-opties enz.): eigen plaat uit assets/iconen/ waar die bestaat */
+  if (window.laadIcoonAfbeelding) {
+    w.querySelectorAll('[data-icoon]').forEach(el => {
+      laadIcoonAfbeelding(el.dataset.icoon, img => {
+        if (img && !el.querySelector('img')) el.innerHTML = `<img src="${img.src}" alt="">`;
+      });
+    });
+  }
 }
 
 function maakKaartEl(c) {
@@ -2441,27 +2449,6 @@ function smeedCeremonie(c, daarna) {
 /* ============================================================
    RUSTPLAATS / SCHAT / WINKEL / EVENTS / EINDE
    ============================================================ */
-/* eigen, simpele inline-SVG-iconen voor de rustplaats (i.p.v. emoji) */
-const RUST_ICONEN = {
-  rust: `<svg viewBox="0 0 48 48" width="50" height="50" aria-hidden="true">
-    <defs><linearGradient id="ri-dek" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7d97d6"/><stop offset="1" stop-color="#4d63a0"/></linearGradient></defs>
-    <path d="M39 6a9 9 0 1 0 2 17 11 11 0 0 1-2-17z" fill="#ffd97a"/>
-    <rect x="5" y="29" width="38" height="11" rx="5.5" fill="url(#ri-dek)"/>
-    <rect x="5" y="29" width="15" height="11" rx="5.5" fill="#ece1c6"/>
-    <line x1="20" y1="30" x2="20" y2="39" stroke="#3c4f80" stroke-width="1.6" opacity=".55"/>
-    <rect x="7" y="39" width="3" height="6" rx="1.5" fill="#6a4a2a"/><rect x="38" y="39" width="3" height="6" rx="1.5" fill="#6a4a2a"/>
-  </svg>`,
-  smeden: `<svg viewBox="0 0 48 48" width="50" height="50" aria-hidden="true">
-    <defs><linearGradient id="ri-staal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfd8e6"/><stop offset="1" stop-color="#7f8da3"/></linearGradient></defs>
-    <g transform="rotate(45 24 24)"><rect x="21.5" y="14" width="5" height="26" rx="2.5" fill="#8a5a32"/><rect x="14" y="8" width="20" height="10" rx="3" fill="url(#ri-staal)" stroke="#2a3340" stroke-width="1.4"/></g>
-    <g transform="rotate(-45 24 24)"><rect x="21.5" y="14" width="5" height="26" rx="2.5" fill="#9a6638"/><rect x="14" y="8" width="20" height="10" rx="3" fill="url(#ri-staal)" stroke="#2a3340" stroke-width="1.4"/></g>
-  </svg>`,
-  poken: `<svg viewBox="0 0 48 48" width="50" height="50" aria-hidden="true">
-    <defs><linearGradient id="ri-vlam" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff6a1f"/><stop offset=".55" stop-color="#ff9c3f"/><stop offset="1" stop-color="#ffe07a"/></linearGradient></defs>
-    <path d="M24 3c3 9-7 11-7 19a7 7 0 0 0 14 0c0-2-.6-4-.6-4 3.5 2.8 6 7 6 12a16 16 0 1 1-32 0C4.4 20 16 17 17 7c1.4 3 3 4.5 3 4.5C21 8 21.5 5.5 24 3z" fill="url(#ri-vlam)"/>
-    <path d="M24 24c1.5 4-3 5.5-3 9.5a3 3 0 0 0 6 0c0-2.5-1.5-4-3-9.5z" fill="#fff4d6"/>
-  </svg>`
-};
 let rustKlaar = false;
 function toonRust() {
   toonScherm('rust');
@@ -2493,14 +2480,15 @@ function toonRust() {
     </div>
     <div class="rust-opties">
       <button class="rust-knop" onclick="rustGenees(${heel})">
-        <span class="rust-icoon">${RUST_ICONEN.rust}</span><b>Rusten</b><small>Genees ${heel} HP</small></button>
+        <span class="rust-icoon" data-icoon="rusten">🛌</span><b>Rusten</b><small>Genees ${heel} HP</small></button>
       <button class="rust-knop" ${kanSmeden ? 'onclick="rustSmeed()"' : 'disabled'}>
-        <span class="rust-icoon">${RUST_ICONEN.smeden}</span><b>Smeden</b><small>Verbeter een kaart</small>
+        <span class="rust-icoon" data-icoon="smeden">⚒️</span><b>Smeden</b><small>Verbeter een kaart</small>
         ${kanSmeden ? '' : '<small class="reden-uit">✕ Al je kaarten zijn al gesmeed.</small>'}</button>
       <button class="rust-knop" ${kanPoken ? 'onclick="rustPook()"' : 'disabled'}>
-        <span class="rust-icoon">${RUST_ICONEN.poken}</span><b>Oppoken</b><small>+20 licht voor je fakkel</small>
+        <span class="rust-icoon" data-icoon="oppoken">🔥</span><b>Oppoken</b><small>+20 licht voor je fakkel</small>
         ${kanPoken ? '' : '<small class="reden-uit">✕ Je fakkel is al vol.</small>'}</button>
     </div>`;
+  verfraaiItemArt($('#scherm-rust'));   /* eigen iconen-art uit assets/iconen/ inladen (emoji blijft als terugval) */
   if (window.laadKarakterAfbeelding) {
     /* zit er een rust-pose (<held>_rest.png)? die eerst, anders de basis */
     const zet = img => {
