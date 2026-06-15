@@ -817,6 +817,45 @@ const VIJANDEN = {
   }
 };
 
+/* ---------- METGEZELLEN: bondgenoten met eigen HP en een per-beurt-effect ----------
+   Data-gestuurd register (zoals VIJANDEN/RELIKWIEEN), zodat er moeiteloos méér
+   soorten metgezellen bij kunnen. Eén metgezel = data + hooks:
+     maxHp, zeld, art (assets/metgezellen/<art>.webp), icoon, tekst, lore
+     doelbaar : mogen vijanden hem raken?  dreiging = kans dat een klap op hém belandt
+                (hij vangt de klap dan voor je op — handig, tot zijn HP op is)
+     beurt(m) : wat hij doet aan het begin van ELKE spelersbeurt (m = de gevecht-actor,
+                zelfde vorm als een vijand/speler: status{}, blok, hp, maxHp, dood)
+     intent(m): optionele UI-hint van wat hij gaat doen
+                {type:'aanval', dmg} | {type:'blok', blok} | {type:'heal', n}
+   Sterft zijn HP in een gevecht, dan VLUCHT hij (S.metgezel.vluchtig = true) i.p.v.
+   te sterven — terug te vinden via een latere queeste/event. */
+const METGEZELLEN = {
+  drops: {
+    naam: 'Drops', art: 'drops', icoon: '🔥', zeld: 'episch', maxHp: 26,
+    tekst: 'Begin van je beurt: schroeit een vijand voor 5. Vangt soms een klap voor je op. Vlucht als zijn licht dooft — vind hem terug.',
+    lore: 'Een vonk die wéigerde te doven. Uit het herrezen licht kroop iets kleins, warms en koppigs — en het bleef bij je.',
+    doelbaar: true, dreiging: 0.22,
+    beurt(m) { const d = kiesUit(alleVijanden()); if (d) metgezelAanval(m, d, 5); },
+    intent: () => alleVijanden().length ? { type: 'aanval', dmg: 5 } : null
+  },
+  vlamwachter: {
+    naam: 'De Vlamwacht', art: 'vlamwachter', icoon: '🛡️', zeld: 'zeldzaam', maxHp: 34,
+    tekst: 'Begin van je beurt: geeft je 5 Blok. Een stille schilddrager die de klappen graag zelf opvangt.',
+    lore: 'Hij sprak nooit. Hij stond gewoon tussen jou en wat kwam — telkens opnieuw.',
+    doelbaar: true, dreiging: 0.32,
+    beurt() { geefBlok(sp(), 5); },
+    intent: () => ({ type: 'blok', blok: 5 })
+  },
+  mosgeest: {
+    naam: 'De Mosgeest', art: 'mosgeest', icoon: '🍃', zeld: 'zeldzaam', maxHp: 22,
+    tekst: 'Begin van je beurt: geneest je 4 HP. Breekbaar maar trouw.',
+    lore: 'Waar zij loopt, sluit de aarde je wonden. Vraag niet wat ze er ooit voor terugneemt.',
+    doelbaar: true, dreiging: 0.16,
+    beurt() { geneesHp(4); },
+    intent: () => ({ type: 'heal', n: 4 })
+  }
+};
+
 /* ---------- UITSPRAKEN: fluistertekst in gevechten ----------
    Per vijand korte poelen (max ~6 woorden per regel). _duister is
    de gedeelde pool voor gevechten in het donker; _held spreekt

@@ -1,0 +1,53 @@
+METGEZELLEN — bondgenoten die naast de held meevechten
+======================================================
+Eén figuur per metgezel (PNG, transparante achtergrond), getoond ~88px naast
+de held in het gevecht. Stijl = exact die van de andere personages
+(zie ../karakters/PROMPTS.txt): dark-fantasy, painterly, warm ember-licht.
+
+RICHTING: de metgezel staat AAN DE ZIJDE van de held en kijkt naar RECHTS
+(richting de vijanden), net als de held. (Vijanden kijken links; de held en
+zijn metgezellen kijken rechts.)
+
+Bestandsnaam = exact de 'art'-id uit METGEZELLEN in js/data.js.
+Pose-states (optioneel, net als personages): <art>_attack / <art>_hit / <art>_death.
+
+PIJPLIJN NA ELKE DROP (volgorde telt, zoals personages):
+  1) python .claude/verwijder_dambord.py   (haalt dambord/witte achtergrond weg)
+  2) python .claude/converteer_webp.py     (PNG -> WebP, alpha blijft behouden)
+CONTROLEER op een DONKERE achtergrond (zie ../iconen/PROMPTS.txt "VERMIJD WIT
+BLOOM"): fire-/glow-metgezellen die de generator op een dambord levert, bakken
+hun glow als opaak wit vast. Stuur in de prompt dus op "crisp coloured edges,
+NO white glow / bloom / haze".
+
+SJABLOON (vervang alleen de Item-regel):
+
+  Dark-fantasy game character, a single small companion creature, full body,
+  facing RIGHT, painterly hand-painted style, warm ember light, parchment-and-
+  coal palette, fully TRANSPARENT background (isolated cut-out, no scene, no
+  tile). Crisp clean edges, NO white glow, NO hazy bloom, NO misty halo.
+  NOT photorealistic, no photo, no 3D render. Readable at small size,
+  no text, no frame, no UI, no background.
+
+  Item: [BESCHRIJVING]
+
+DE METGEZELLEN (bestandsnaam = art-id):
+
+drops.png        a small, plucky living flame-sprite — a curl of warm orange
+                 fire shaped like a tiny creature with two bright eyes and
+                 little stubby ember-arms, a glowing coal core, mischievous and
+                 loyal. CRISP coloured flame, sharp edges, NO white wash/halo.
+                 (geboren uit de heraangestoken fakkel — verschijnt in Act 2)
+
+vlamwachter.png  a small stoic guardian: a squat armoured figure holding a
+                 round ember-lit shield almost as big as itself, a glowing rune
+                 on the shield, a silent protector. Heavy, grounded, warm
+                 battered metal, crisp silhouette.
+
+mosgeest.png     a gentle little moss-spirit: a small humanoid woven of moss,
+                 leaves and soft green-amber light, a few glowing motes drifting
+                 close around it, frail and kind. Crisp silhouette, soft glow
+                 kept COLOURED (no white bloom).
+
+LATERE METGEZELLEN (zelfde aanpak): voeg een nieuw blok hier toe, zet de
+definitie in METGEZELLEN (js/data.js) met dezelfde 'art'-naam, en drop
+assets/metgezellen/<art>.png.

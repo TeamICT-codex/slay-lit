@@ -1,0 +1,6 @@
+assets/metgezellen/ — art voor de bondgenoten (het METGEZELLEN-register in
+js/data.js). Bestandsnaam = de 'art'-id van de metgezel (bv. drops.webp).
+
+Zie PROMPTS.txt voor de prompts en de pijplijn (verwijder_dambord.py ->
+converteer_webp.py). Tot er art staat, toont het spel de emoji-terugval (het
+'icoon'-veld), dus het spel werkt ook zonder deze bestanden.

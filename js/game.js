@@ -126,7 +126,7 @@ const Codex = Object.assign(
   /* loopbaan over alle runs heen: runs/wins/diepterecord per held, laatste runs,
      en het hoogst-ontgrendelde ascensieniveau per held. Bestaande saves missen
      deze sleutels → Object.assign houdt dan deze defaults aan (migratie). */
-  { relikwieen: [], dranken: [], opgeladen: null, runs: 0, wins: 0, bestDiepte: {}, gesch: [], ascensie: {} },
+  { relikwieen: [], dranken: [], metgezellen: [], opgeladen: null, runs: 0, wins: 0, bestDiepte: {}, gesch: [], ascensie: {} },
   JSON.parse(localStorage.getItem(CODEX_SLEUTEL) || '{}')
 );
 /* migratie: wie al ontdekkingen had, krijgt ze meteen opgeladen in het Schrijn */
@@ -150,6 +150,7 @@ Codex.runs = +Codex.runs || 0;
 Codex.wins = +Codex.wins || 0;
 Codex.ascensie = Object.fromEntries(Object.entries(Codex.ascensie || {}).filter(([k]) => _geldigeHeld(k)).map(([k, v]) => [k, Math.max(0, +v || 0)]));
 Codex.bestDiepte = Object.fromEntries(Object.entries(Codex.bestDiepte || {}).filter(([k]) => _geldigeHeld(k)).map(([k, v]) => [k, Math.max(0, +v || 0)]));
+if (!Array.isArray(Codex.metgezellen)) Codex.metgezellen = [];   /* migratie: oude codex mist deze sleutel */
 function bewaarCodex() { localStorage.setItem(CODEX_SLEUTEL, JSON.stringify(Codex)); }
 
 /* ---------- de Dagelijkse afdaling: iedereen speelt dezelfde dag-run ---------- */
@@ -391,6 +392,10 @@ function kkost(c) {
 function inGevecht() { return S && S.gevecht && !S.gevecht.voorbij; }
 function sp() { return S.gevecht.speler; }
 function alleVijanden() { return S.gevecht ? S.gevecht.vijanden.filter(v => !v.dood) : []; }
+/* de metgezel-actor in het huidige gevecht (of null), en run-niveau-checks */
+function gMet() { return S.gevecht ? S.gevecht.metgezel : null; }
+function metgezelDef() { return (S && S.metgezel && METGEZELLEN[S.metgezel.id]) || null; }
+function heeftMetgezel() { return !!(S && S.metgezel && !S.metgezel.vluchtig && METGEZELLEN[S.metgezel.id]); }
 
 /* schade-preview voor kaartteksten (incl. Kracht, Zwak, relikwie).
    LET OP: Kracht/Zwak/Stalen Vuist beïnvloeden ALLEEN echte aanvalsschade ('dmg').
@@ -476,6 +481,7 @@ function schudScherm() {
 function actorEl(actor) {
   if (!S.gevecht) return null;
   if (actor.isSpeler) return $('#speler-zone');
+  if (actor.isMetgezel) return GDOM.metgezel ? GDOM.metgezel.wrap : null;
   const i = S.gevecht.vijanden.indexOf(actor);
   return GDOM.vijanden[i] ? GDOM.vijanden[i].wrap : null;
 }
@@ -651,6 +657,7 @@ function heldFx(klasse, duur) {
 function pose2DArtEl(actor) {
   if (!actor) return null;
   if (actor.isSpeler) return $('#speler-figuur');
+  if (actor.isMetgezel) return GDOM.metgezel ? GDOM.metgezel.wrap.querySelector('.metgezel-art') : null;
   const i = S.gevecht ? S.gevecht.vijanden.indexOf(actor) : -1;
   return (i >= 0 && GDOM.vijanden[i]) ? GDOM.vijanden[i].wrap.querySelector('.vijand-art') : null;
 }
@@ -658,8 +665,10 @@ const pose2DTimers = new WeakMap();
 function pose2D(actor, state, duur) {
   if (!actor || d3Actief() || !window.laadKarakterAfbeelding) return;
   const el = pose2DArtEl(actor); if (!el) return;
-  const basis = actor.isSpeler ? huidigeHeld().art : actor.id;
-  laadKarakterAfbeelding(basis + '_' + state, img => {
+  const basis = actor.isSpeler ? huidigeHeld().art
+    : (actor.isMetgezel ? METGEZELLEN[actor.id].art : actor.id);
+  const lader = actor.isMetgezel && window.laadMetgezelAfbeelding ? laadMetgezelAfbeelding : laadKarakterAfbeelding;
+  lader(basis + '_' + state, img => {
     const im = el.querySelector('img');
     if (!img || !im) return;             /* geen pose-art voor dit figuur */
     im.src = img.src;
@@ -670,7 +679,7 @@ function pose2D(actor, state, duur) {
     if (state === 'block') return;
     pose2DTimers.set(actor, setTimeout(() => {
       if (actor.dood) return;            /* dood blijft op de death-pose */
-      laadKarakterAfbeelding(basis, terug => {
+      lader(basis, terug => {
         const i2 = el.querySelector('img');
         if (i2 && terug) i2.src = terug.src;
       });
@@ -753,11 +762,12 @@ async function reeksAanvalAlle(dmg, naSlag) {
   }
 }
 
-/* vijand valt speler aan */
+/* vijand valt aan — meestal de speler, soms vangt de metgezel de klap op */
 function vijandAanval(v, basis) {
   if (v.dood) return;   /* een aan Doornen gesneuvelde vijand slaat niet meer */
   if (huidigeAct() > 1) basis = Math.ceil(basis * (1 + 0.15 * (huidigeAct() - 1)));   /* latere acts: hardere klappen */
-  if (window.Vista) Vista.aanval(v, sp());
+  const doel = kiesAanvalDoel(v);
+  if (window.Vista) Vista.aanval(v, sp());   /* visueel altijd richting het heldenvak (de metgezel staat ernaast) */
   pose2D(v, 'attack', 0.5);
   /* 2D-lunge: de vijand schiet even naar de speler toe (naar links) */
   if (!d3Actief()) {
@@ -766,8 +776,9 @@ function vijandAanval(v, basis) {
   }
   let dmg = basis + (v.status.kracht || 0);
   if ((v.status.zwak || 0) > 0) dmg = Math.floor(dmg * 0.75);
-  if ((sp().status.kwetsbaar || 0) > 0) dmg = Math.floor(dmg * 1.5);
-  doeSchade(sp(), Math.max(0, dmg), v);
+  if ((doel.status.kwetsbaar || 0) > 0) dmg = Math.floor(dmg * 1.5);
+  if (doel.isMetgezel) melding(`🛡️ ${METGEZELLEN[doel.id].naam} vangt de klap voor je op!`);
+  doeSchade(doel, Math.max(0, dmg), v);
 }
 
 /* aanvalsschade toepassen: blok absorbeert, doornen kaatsen terug */
@@ -791,10 +802,16 @@ function verliesHp(doel, n) {
   if (n <= 0) return;
   fxNummer(actorEl(doel), '-' + n, 'fx-schade');
   Klank.sfx(n >= 8 ? 'zwareklap' : 'klap');
-  if (window.Vista) Vista.raak(doel, n >= 8);
+  if (window.Vista && !doel.isMetgezel) Vista.raak(doel, n >= 8);   /* de metgezel is DOM-only, niet in de 3D-scène */
   pose2D(doel, 'hit', 0.45);
   const el = actorEl(doel);
   if (el) { el.classList.remove('raak'); void el.offsetWidth; el.classList.add('raak'); }
+  if (doel.isMetgezel) {
+    doel.hp = Math.max(0, doel.hp - n);
+    if (S.metgezel) S.metgezel.hp = doel.hp;
+    if (doel.hp <= 0 && !doel.dood) { doel.dood = true; metgezelVlucht(doel); }
+    return;
+  }
   if (doel.isSpeler) {
     S.hp = Math.max(0, S.hp - n);
     /* Feniksveer: één keer is de dood een misverstand */
@@ -838,6 +855,70 @@ function geneesHpBuitenGevecht(n) { S.hp = Math.min(S.maxHp, S.hp + n); renderTo
 function verliesHpBuitenGevecht(n) {
   S.hp = Math.max(1, S.hp - n); // buiten gevechten kun je niet sterven
   renderTopbalk();
+}
+
+/* ---------- metgezellen (bondgenoten met eigen HP) ---------- */
+/* werf een metgezel voor de rest van de run (HP gaat mee tussen gevechten) */
+function geefMetgezel(id) {
+  const def = METGEZELLEN[id];
+  if (!def) return;
+  S.metgezel = { id, hp: def.maxHp, maxHp: def.maxHp, vluchtig: false };
+  ontdek('metgezellen', id);
+  renderTopbalk();
+}
+/* de metgezel haalt uit naar een vijand (zelfde modifiers als een spelersaanval) */
+function metgezelAanval(m, doel, basis) {
+  if (!doel || doel.dood) return;
+  pose2D(m, 'attack', 0.5);
+  if (!d3Actief()) {
+    const el = pose2DArtEl(m);
+    if (el) { el.classList.remove('uithaal'); void el.offsetWidth; el.classList.add('uithaal'); }
+  }
+  let dmg = basis + (m.status.kracht || 0);
+  if ((m.status.zwak || 0) > 0) dmg = Math.floor(dmg * 0.75);
+  if ((doel.status.kwetsbaar || 0) > 0) dmg = Math.floor(dmg * 1.5);
+  doeSchade(doel, Math.max(0, dmg), m);
+}
+/* aan het begin van elke spelersbeurt: blok reset, status-afname, dan zijn effect */
+function metgezelBeurt() {
+  const m = gMet();
+  if (!m || m.dood) return;
+  m.blok = 0;
+  if ((m.status.gif || 0) > 0) { verliesHp(m, m.status.gif); m.status.gif--; if (m.dood) return; }
+  if ((m.status.kwetsbaar || 0) > 0) m.status.kwetsbaar--;
+  if ((m.status.zwak || 0) > 0) m.status.zwak--;
+  const def = METGEZELLEN[m.id];
+  if (def && def.beurt) def.beurt(m);
+}
+/* HP op → de metgezel vlucht het donker in (geen echte dood; later terug te vinden) */
+function metgezelVlucht(m) {
+  if (S.metgezel) S.metgezel.vluchtig = true;
+  Klank.sfx('dood');
+  pose2D(m, 'death', 2);
+  const el = actorEl(m);
+  if (el) el.classList.add('gevlucht');
+  melding(`💨 ${METGEZELLEN[m.id].naam} vlucht het donker in — je kunt hem later terugvinden.`);
+}
+/* wie krijgt de klap: meestal de speler, soms de metgezel (hij vangt 'm op) */
+function kiesAanvalDoel(v) {
+  const m = gMet();
+  if (m && !m.dood && METGEZELLEN[m.id].doelbaar
+      && willekeurig() < (METGEZELLEN[m.id].dreiging || 0.22)) return m;
+  return sp();
+}
+/* intentie-hint van de metgezel voor de UI */
+function metgezelIntentTekst(m) {
+  const def = METGEZELLEN[m.id];
+  const it = def && def.intent && def.intent(m);
+  if (!it) return '';
+  if (it.type === 'aanval') {
+    let dmg = it.dmg + (m.status.kracht || 0);
+    if ((m.status.zwak || 0) > 0) dmg = Math.floor(dmg * 0.75);
+    return `<span class="intent intent-aanval" data-tip="${def.naam} schroeit een vijand voor ${dmg}">⚔️ ${dmg}</span>`;
+  }
+  if (it.type === 'blok') return `<span class="intent intent-blok" data-tip="${def.naam} geeft je ${it.blok} Blok">🛡️ ${it.blok}</span>`;
+  if (it.type === 'heal') return `<span class="intent intent-buff" data-tip="${def.naam} geneest je ${it.n} HP">❤️ +${it.n}</span>`;
+  return '';
 }
 
 /* ---------- schermachtergronden (eigen platen, gedimd voor leesbaarheid) ---------- */
@@ -914,6 +995,9 @@ function laadSpel() {
     if (typeof S.verdieping !== 'number') S.verdieping = 0;
     if (!S.stats) S.stats = { gevechten: 0, kaarten: 0, schade: 0 };
     if (typeof S.uid !== 'number') S.uid = 0;
+    /* metgezel-state: oude saves missen 'm (→ undefined, ok); een corrupte/onbekende
+       metgezel neutraliseren zodat heeftMetgezel() veilig false geeft */
+    if (S.metgezel && (typeof S.metgezel !== 'object' || !METGEZELLEN[S.metgezel.id] || typeof S.metgezel.hp !== 'number')) S.metgezel = null;
     if (S.toevalStaat !== undefined) Toeval.zetStaat(S.toevalStaat);
     return true;
   } catch (e) { return false; }
@@ -1191,7 +1275,7 @@ function kiesNodeEcht(id) {
 /* ============================================================
    GEVECHT — opbouw (eenmalig) en gerichte updates
    ============================================================ */
-let GDOM = { vijanden: [], speler: null, hand: new Map() };
+let GDOM = { vijanden: [], speler: null, metgezel: null, hand: new Map() };
 let gevechtTikAf = null;
 
 function maakVijand(id, rij) {
@@ -1224,6 +1308,19 @@ function startGevecht(samenstelling, soort, rij) {
     gekozenKaart: null, gekozenDrank: null
   };
   S.gevecht = g;
+
+  /* metgezel mee het gevecht in: eigen HP uit de run-state, verse blok/status */
+  if (heeftMetgezel()) {
+    const md = METGEZELLEN[S.metgezel.id];
+    g.metgezel = {
+      id: S.metgezel.id, naam: md.naam, isMetgezel: true,
+      hp: Math.max(1, Math.min(S.metgezel.hp, md.maxHp)), maxHp: md.maxHp,
+      blok: 0, status: {}, dood: false
+    };
+    g.metgezel.intent = md.intent ? md.intent(g.metgezel) : null;
+  } else {
+    g.metgezel = null;
+  }
 
   if (heeftRelikwie('anker')) g.speler.blok = 10;
   if (heeftRelikwie('warme_mantel') && lichtNiveau() !== 'helder') g.speler.blok += 6;
@@ -1298,6 +1395,15 @@ function startGevecht(samenstelling, soort, rij) {
   zetLichtVisueel();
   renderGevecht();
   if (soort === 'baas') toonBaasIntro(g);
+
+  /* de metgezel handelt ook op de éérste beurt — even na de entree, zodat
+     je 'm ziet binnenkomen voordat hij toeslaat/schildt/geneest */
+  if (g.metgezel) setTimeout(() => {
+    if (S.gevecht !== g || g.voorbij) return;
+    metgezelBeurt();
+    if (alleVijanden().length === 0) { gevechtGewonnen(); return; }
+    renderGevecht();
+  }, 650);
 
   /* openingswoorden: in het donker fluistert de diepte, anders sneert een vijand */
   if (soort !== 'baas') {
@@ -1380,7 +1486,7 @@ function stopGevechtLus() {
 
 /* eenmalige opbouw van de gevechts-DOM */
 function bouwGevechtDom(g) {
-  GDOM = { vijanden: [], speler: null, hand: new Map(), bg: $('#gevecht-achtergrond') };
+  GDOM = { vijanden: [], speler: null, metgezel: null, hand: new Map(), bg: $('#gevecht-achtergrond') };
 
   const rij = $('#vijanden-rij');
   rij.innerHTML = '';
@@ -1450,6 +1556,39 @@ function bouwGevechtDom(g) {
       const fig = $('#speler-figuur');
       if (img && fig) fig.innerHTML = `<img src="${img.src}" alt="${heldDef.naam}">`;
     });
+  }
+
+  /* metgezel-zone: staat naast de held. Alleen opgebouwd als er een metgezel meevecht. */
+  const mz = $('#metgezel-zone');
+  if (mz) {
+    if (g.metgezel) {
+      const md = METGEZELLEN[g.metgezel.id];
+      mz.hidden = false;
+      mz.innerHTML = `
+        <div class="metgezel-intent"></div>
+        <div class="metgezel-art" data-tip="${md.naam} — ${md.tekst}">${md.icoon}</div>
+        <div class="metgezel-naam">${md.naam}</div>
+        <div class="hp-balk metgezel-hp"><div class="hp-vulling"></div><span class="hp-tekst"></span><span class="blok-schild" data-tip="Blok: vangt aanvalsschade op"><svg viewBox="0 0 24 28" aria-hidden="true"><path fill="url(#blokgrad)" stroke="#0c1c2e" stroke-width="1.6" d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg><b></b></span></div>
+        <div class="blok-status"></div>`;
+      GDOM.metgezel = {
+        wrap: mz,
+        intent: mz.querySelector('.metgezel-intent'),
+        hpV: mz.querySelector('.hp-vulling'),
+        hpT: mz.querySelector('.hp-tekst'),
+        blok: mz.querySelector('.blok-schild'),
+        badges: mz.querySelector('.blok-status')
+      };
+      if (window.laadMetgezelAfbeelding) {
+        laadMetgezelAfbeelding(md.art, img => {
+          const a = mz.querySelector('.metgezel-art');
+          if (img && a) a.innerHTML = `<img src="${img.src}" alt="${md.naam}">`;
+        });
+      }
+    } else {
+      mz.hidden = true;
+      mz.innerHTML = '';
+      GDOM.metgezel = null;
+    }
   }
 
   $('#hand').innerHTML = '';
@@ -1567,6 +1706,17 @@ function renderGevecht() {
   ds.wrap.classList.toggle('hfx-gif-aan', (s.status.gif || 0) > 0);
   ds.wrap.classList.toggle('hfx-wond-aan', S.hp / S.maxHp < 0.3);
 
+  /* metgezel: eigen HP-balk, blok, statussen en intentie-hint */
+  if (g.metgezel && GDOM.metgezel) {
+    const m = g.metgezel, dm = GDOM.metgezel;
+    dm.wrap.classList.toggle('gevlucht', m.dood);
+    dm.hpV.style.width = Math.max(0, m.hp / m.maxHp * 100) + '%';
+    dm.hpT.textContent = `${m.hp}/${m.maxHp}`;
+    zetBlokSchild(dm.blok, m.blok);
+    dm.badges.innerHTML = statusBadges(m);
+    dm.intent.innerHTML = m.dood ? '' : metgezelIntentTekst(m);
+  }
+
   /* LEES-fase: pas NA alle DOM-schrijfacties de hoogtes meten — zo dwingt de
      infoblok-/onderbalk-meting hoogstens één layout-flush af i.p.v. een reflow
      per vijand. infoH voedt de 2D-spacer-klem (gelezen in positioneerActors). */
@@ -1629,6 +1779,9 @@ function toonCodex() {
   const relOntdekt = rels.filter(r => Codex.relikwieen.includes(r)).length;
   const dranks = Object.keys(DRANKEN);
   const drOntdekt = dranks.filter(d => Codex.dranken.includes(d)).length;
+  const mgs = Object.keys(METGEZELLEN).sort((a, b) =>
+    volgorde.indexOf(METGEZELLEN[a].zeld) - volgorde.indexOf(METGEZELLEN[b].zeld));
+  const mgOntdekt = mgs.filter(m => Codex.metgezellen.includes(m)).length;
   /* loopbaan-blok: totalen + de laatste afdalingen (het opstapelende spoor) */
   const loop = loopbaanRegel();
   const gesch = (Codex.gesch || []).slice(0, 5);
@@ -1660,7 +1813,16 @@ function toonCodex() {
       }
       return `<div class="codex-slot" style="--dkleur:${d.kleur}" data-dart="${id}" data-tip="${d.naam} — klik voor het verhaal" onclick="bekijkDrank(event, '${id}')">${d.icoon}</div>`;
     }).join('') + `</div>
-    <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt === rels.length + dranks.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
+    <h3 class="codex-kop">🐾 Metgezellen <small>${mgOntdekt} / ${mgs.length}</small></h3>
+    <div class="codex-rooster">` +
+    mgs.map(id => {
+      const d = METGEZELLEN[id];
+      if (!Codex.metgezellen.includes(id)) {
+        return `<div class="codex-slot leeg" data-tip="??? — nog niet ontmoet">❓</div>`;
+      }
+      return `<div class="codex-slot rel-${d.zeld}" data-mgart="${id}" data-tip="${d.naam} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${d.icoon}</div>`;
+    }).join('') + `</div>
+    <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt + mgOntdekt === rels.length + dranks.length + mgs.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
     <small>🗝️ = opgeladen: dit relikwie kun je bij een nieuwe run éénmalig meenemen uit het Schrijn.</small></p>`;
   verfraaiItemArt($('#overlay-codex'));   /* incl. het Codex-titelicoon (data-icoon) */
   $('#overlay-codex').classList.add('open');
@@ -1689,6 +1851,25 @@ function bekijkDrank(e, id) {
   return false;
 }
 
+/* het metgezelboek: portret, effect en het verhaal erachter */
+function toonMetgezelBoek(id) {
+  const d = METGEZELLEN[id];
+  if (!d) return;
+  const rgb = '255, 156, 63';   /* ember */
+  $('#relikwie-boek').innerHTML = `
+    <div class="boek-kaart" style="--relk:${rgb}">
+      <div class="boek-icoon" data-mgart="${id}">${d.icoon}</div>
+      <span class="schaarste-chip" style="--relk:${rgb}">${SCHAARSTE_LABEL[d.zeld] || 'Metgezel'}</span>
+      <h3>${d.naam}</h3>
+      <p class="boek-effect">${d.tekst}</p>
+      ${d.lore ? `<p class="boek-lore">„${d.lore}"</p>` : ''}
+      <button class="knop-groot" onclick="$('#overlay-relikwie').classList.remove('open')">Sluit</button>
+    </div>`;
+  verfraaiItemArt($('#relikwie-boek'));
+  $('#overlay-relikwie').classList.add('open');
+  Klank.sfx('klik');
+}
+
 /* relikwie-/drankjes-art: vervang emoji's door eigen afbeeldingen waar die bestaan */
 function verfraaiItemArt(wortel) {
   const w = wortel || document;
@@ -1715,6 +1896,15 @@ function verfraaiItemArt(wortel) {
   if (window.laadIcoonAfbeelding) {
     w.querySelectorAll('[data-icoon]').forEach(el => {
       laadIcoonAfbeelding(el.dataset.icoon, img => {
+        if (img && !el.querySelector('img')) el.innerHTML = `<img src="${img.src}" alt="">`;
+      });
+    });
+  }
+  /* metgezel-art uit assets/metgezellen/ (Codex-roster + detailboek) */
+  if (window.laadMetgezelAfbeelding) {
+    w.querySelectorAll('[data-mgart]').forEach(el => {
+      const art = (METGEZELLEN[el.dataset.mgart] && METGEZELLEN[el.dataset.mgart].art) || el.dataset.mgart;
+      laadMetgezelAfbeelding(art, img => {
         if (img && !el.querySelector('img')) el.innerHTML = `<img src="${img.src}" alt="">`;
       });
     });
@@ -2092,6 +2282,8 @@ function beginSpelerBeurt() {
   }
   if (heeftRelikwie('hartsteen')) geneesHp(1);
 
+  metgezelBeurt();   /* de bondgenoot handelt aan het begin van je beurt (kan de laatste vijand vellen → onderstaande check vangt dat) */
+
   const lichtNu = lichtNiveau();
   g.energie = g.maxEnergie + (s.status.energiekern || 0) + (s.status.innerlijkvuur || 0)
     + (heeftRelikwie('energiekristal') ? 1 : 0)
@@ -2117,6 +2309,8 @@ async function gevechtGewonnen() {
   const g = S.gevecht;
   if (!g || g.voorbij) return;
   g.voorbij = true;
+  /* metgezel-HP uit dit gevecht meenemen naar de run-state (gaat mee naar het volgende) */
+  if (g.metgezel && !g.metgezel.dood && S.metgezel && !S.metgezel.vluchtig) S.metgezel.hp = g.metgezel.hp;
   if (window.Vista) Vista.pose(g.speler, 'victory', 2.5);
   pose2D(g.speler, 'victory', 2.5);
   heldFx('hfx-victory', 2500);
@@ -2518,6 +2712,12 @@ function rustGenees(n) {
   if (rustKlaar) return;
   rustKlaar = true;
   geneesHpBuitenGevecht(n);
+  /* je metgezel komt mee op adem aan het vuur */
+  if (heeftMetgezel() && S.metgezel.hp < S.metgezel.maxHp) {
+    const m = Math.ceil(S.metgezel.maxHp * 0.5);
+    S.metgezel.hp = Math.min(S.metgezel.maxHp, S.metgezel.hp + m);
+    melding(`${metgezelDef().naam} rust mee uit (+${m} HP).`);
+  }
   melding(`Je geneest ${n} HP.`);
   Klank.sfx('genees');
   const scene = $('#kv-scene');
@@ -2773,6 +2973,11 @@ function eventKlaar(tekst) {
 function volgendeAct(verslagenBaas) {
   S.act = huidigeAct() + 1;
   S.fakkel = 100;                 /* episch: het laatste licht van de baas → je fakkel laait op */
+  /* uit het herrezen licht kruipt Drops — je eerste metgezel (alleen als je er nog geen hebt) */
+  if (!heeftMetgezel() && (!S.metgezel || !S.metgezel.vluchtig)) {
+    geefMetgezel('drops');
+    melding('🔥 Uit het herrezen licht vormt zich Drops — een metgezel sluit zich bij je aan!');
+  }
   S.pos = null;
   S.kaart = genereerKaart();      /* nieuwe ladder, act-bewust; de verdieping-teller loopt door */
   delete S.beloning; delete S.winkel; delete S.huidigEvent;
