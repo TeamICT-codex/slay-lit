@@ -2922,7 +2922,7 @@ function renderWinkel() {
   toonScherm('winkel');
   const w = S.winkel;
   schermAchtergrond('winkel', w.ei ? actBg('winkelEasterEgg') : actBg('winkel'), 0.62);
-  let html = `<h2 class="scherm-titel">💰 De Winkel</h2>
+  let html = `<h2 class="scherm-titel"><span data-icoon="winkel">💰</span> De Winkel</h2>
     <p class="scherm-sub">"Alles te koop, niets te geef," grijnst de koopman.</p>`;
 
   html += `<div class="winkel-kaarten">` + w.kaarten.map((item, i) => {
@@ -2950,12 +2950,12 @@ function renderWinkel() {
   if (w.olie && !w.olie.gekocht) {
     const kan = S.goud >= w.olie.prijs;
     html += `<button class="winkel-blok ${kan ? '' : 'te-duur-item'}" onclick="koopOlie()">
-      <span class="winkel-icoon">🛢️</span><b>Lantaarnolie</b><small>+20 licht voor je fakkel</small><div class="prijs">🪙 ${w.olie.prijs}</div></button>`;
+      <span class="winkel-icoon" data-icoon="lantaarnolie">🛢️</span><b>Lantaarnolie</b><small>+20 licht voor je fakkel</small><div class="prijs">🪙 ${w.olie.prijs}</div></button>`;
   }
   if (!w.verwijderd) {
     const kan = S.goud >= w.verwijderPrijs && S.dek.length > 5;
     html += `<button class="winkel-blok ${kan ? '' : 'te-duur-item'}" onclick="koopVerwijdering()">
-      <span class="winkel-icoon">✂️</span><b>Kaart verwijderen</b><small>Haal een kaart uit je dek</small><div class="prijs">🪙 ${w.verwijderPrijs}</div></button>`;
+      <span class="winkel-icoon" data-icoon="kaart_verwijderen">✂️</span><b>Kaart verwijderen</b><small>Haal een kaart uit je dek</small><div class="prijs">🪙 ${w.verwijderPrijs}</div></button>`;
   }
   html += `</div><button class="knop-groot" onclick="renderKaartScherm()">Verlaat winkel ➤</button>`;
   $('#scherm-winkel').innerHTML = html;

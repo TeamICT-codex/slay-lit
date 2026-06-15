@@ -68,6 +68,24 @@ codex.png      an ornate leather-bound spellbook/tome with brass
                collector's grimoire of knowledge (klein getoond,
                naast de titel "De Codex")
 
+DE WINKEL (titel-icoon + de twee diensten):
+
+winkel.png     a plump leather coin-purse with a drawstring, a few
+               gold coins spilling out and a warm glint on the metal —
+               the merchant's purse (klein getoond, naast de titel
+               "De Winkel"). Crisp edges, NO white glow/bloom.
+
+lantaarnolie.png  a small stout oil flask / little barrel with a short
+               spout and a cork, filled with glowing amber lantern-oil,
+               a tiny warm flame or wick hint — fuel for your torch.
+               Crisp silhouette, coloured glow (no white wash).
+
+kaart_verwijderen.png
+               a pair of ornate iron scissors snipping a tattered
+               parchment playing-card in two, a clean cut down the
+               middle — removing a card from your deck. Crisp edges,
+               readable at small size.
+
 LATERE UI-ICONEN (zelfde aanpak):
 Voeg gewoon een nieuw bestand toe (assets/iconen/<naam>.webp) en een
 <span data-icoon="<naam>"> in de UI. Vraag het even als de art-swap nog
