@@ -5,7 +5,7 @@
 *.zip
 
 # originelen-backups van het dambord-script (groot, niet nodig in het spel)
-assets/karakters/originelen/
+assets/*/originelen/
 
 # bron-PNG's van vóór de WebP-conversie (lokaal archief)
 assets-bron/

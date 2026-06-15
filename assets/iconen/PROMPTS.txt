@@ -4,7 +4,15 @@ Eén vierkant icoon per UI-knop (PNG, ~512x512). Getoond klein (~50px) bovenaan
 een keuzekaart, ter vervanging van een emoji. Dus: TRANSPARANTE achtergrond
 (losgesneden object), geen scène, geen tegel. Houd de set onderling consistent
 (zelfde stijl, belichting en zwaarte) zodat de drie rust-kaarten als één familie
-ogen. Draai erna converteer_webp.py (+ verwijder_dambord.py tegen witrandjes).
+ogen.
+
+PIJPLIJN NA ELKE DROP — VOLGORDE TELT:
+  1) python .claude/verwijder_dambord.py   (haalt het ingebakken
+     transparantie-dambord / witte vlak weg; iconen draaien in de ZACHTE
+     modus zodat glow + vonken blijven)
+  2) python .claude/converteer_webp.py     (PNG -> WebP, alpha blijft behouden)
+Dambord ALTIJD vóór WebP. Andersom wordt het witte raster een dichte
+achtergrond in de WebP en zie je een wit blok achter het icoon.
 
 SJABLOON (vervang alleen de Item-regel):
 
