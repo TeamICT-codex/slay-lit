@@ -926,6 +926,29 @@ const METGEZELLEN = {
   }
 };
 
+/* ---------- MYSTERIES: hoe je een metgezel VRIJSPEELT (cross-run) ----------
+   "You were meant to fail": een metgezel wordt niet gegeven maar ontrafeld over
+   runs heen. Data-gestuurd TEMPLATE — elke metgezel krijgt een eigen mysterie:
+     vereist   : welke scherf-id's nodig zijn (tunebaar; bepaalt de lengte)
+     scherven  : per scherf {bron, codexTekst} (de cryptische regel in de Codex)
+     eindreveal: de tekst van het ontwaak-moment
+   De rite (de onverwachte sleutel) zit in de engine per mysterie (Drops = je
+   fakkel DOVEN bij de Erfprins). De voortgang (scherven/rijp/voltooid) leeft op
+   de Codex (persistent over runs). Zie ONTWERP.md. */
+const MYSTERIES = {
+  drops: {
+    metgezel: 'drops', baasId: 'de_erfprins',
+    vereist: ['drops_baas', 'drops_figuur', 'drops_episch'],
+    scherven: {
+      drops_baas:   { bron: 'baas',   codexTekst: '„Wat uit zichzelf brandt, kun je niet kopen."' },
+      drops_figuur: { bron: 'figuur', codexTekst: '„Het kwam pas toen ik het durfde te doven."' },
+      drops_episch: { bron: 'episch', codexTekst: '„Die ene vlam snuit zichzelf — als jij durft."' },
+    },
+    eindreveal: { titel: 'UIT HET GEDOOFDE LICHT', kreet: 'Waar je fakkel stierf, ontwaakt een levende vlam.' },
+  },
+};
+window.MYSTERIES = MYSTERIES;   /* expliciet op window: de helpers in game.js guarden op window.MYSTERIES */
+
 /* ---------- UITSPRAKEN: fluistertekst in gevechten ----------
    Per vijand korte poelen (max ~6 woorden per regel). _duister is
    de gedeelde pool voor gevechten in het donker; _held spreekt
@@ -959,7 +982,17 @@ const UITSPRAKEN = {
     fase2:  '„Wéét je wel wie mijn váder is?!"',
     fase3:  '„Dit is ONRECHTVAARDIG! Ik VERDIEN dit!"',
     dood:   '„Maar... dit heb ik niet... verdíend..."',
-    banish: '„Wég, ongedierte! Jij hoort hier niet!"'
+    banish: '„Wég, ongedierte! Jij hoort hier niet!"',
+    /* ORAKEL: over opeenvolgende ontmoetingen verklapt hij cryptisch het geheim
+       (geïndexeerd op Codex.erfprinsOntmoetingen). Grootspraak die omslaat in paniek. */
+    orakel: [
+      '„Pappies goud koopt álles. Zélfs jouw nederlaag."',
+      '„Eén ding koopt Pappie niet: wat uit zichzélf brandt."',
+      '„Wacht — waarom klem je dat lichtje zo vast? Bang in het donker?"',
+      '„...het slaapt in jouw vlam. Houd haar brandend en het blijft slapen. Slím van Pappie."',
+    ],
+    /* sist hij op het moment dat jij in zijn zaal je fakkel laat DOVEN (de rite) */
+    gedoofd: '„Wat... WÁT DOE JE? Het wordt wakker! BEWAKING! BE—"',
   }
 };
 

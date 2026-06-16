@@ -126,7 +126,7 @@ const Codex = Object.assign(
   /* loopbaan over alle runs heen: runs/wins/diepterecord per held, laatste runs,
      en het hoogst-ontgrendelde ascensieniveau per held. Bestaande saves missen
      deze sleutels → Object.assign houdt dan deze defaults aan (migratie). */
-  { relikwieen: [], dranken: [], metgezellen: [], gevallen: [], opgeladen: null, runs: 0, wins: 0, bestDiepte: {}, gesch: [], ascensie: {} },
+  { relikwieen: [], dranken: [], metgezellen: [], gevallen: [], opgeladen: null, runs: 0, wins: 0, bestDiepte: {}, gesch: [], ascensie: {}, mysteries: {}, erfprinsOntmoetingen: 0 },
   JSON.parse(localStorage.getItem(CODEX_SLEUTEL) || '{}')
 );
 /* migratie: wie al ontdekkingen had, krijgt ze meteen opgeladen in het Schrijn */
@@ -152,6 +152,9 @@ Codex.ascensie = Object.fromEntries(Object.entries(Codex.ascensie || {}).filter(
 Codex.bestDiepte = Object.fromEntries(Object.entries(Codex.bestDiepte || {}).filter(([k]) => _geldigeHeld(k)).map(([k, v]) => [k, Math.max(0, +v || 0)]));
 if (!Array.isArray(Codex.metgezellen)) Codex.metgezellen = [];   /* migratie: oude codex mist deze sleutel */
 if (!Array.isArray(Codex.gevallen)) Codex.gevallen = [];         /* metgezellen die zich opofferden (gedenkplek) */
+/* het Metgezel-Mysterie: per-metgezel voortgang (scherven/rijp/voltooid) + baas-teller */
+if (typeof Codex.mysteries !== 'object' || !Codex.mysteries || Array.isArray(Codex.mysteries)) Codex.mysteries = {};
+Codex.erfprinsOntmoetingen = Math.max(0, +Codex.erfprinsOntmoetingen || 0);
 function bewaarCodex() { localStorage.setItem(CODEX_SLEUTEL, JSON.stringify(Codex)); }
 
 /* ---------- de Dagelijkse afdaling: iedereen speelt dezelfde dag-run ---------- */
@@ -178,6 +181,33 @@ function laadSchrijnOp(id) {
   Codex.opgeladen.push(id);
   bewaarCodex();
 }
+
+/* ---------- Het Metgezel-Mysterie (cross-run unlock; generiek over 'mid') ---------- */
+/* null-veilige toegang tot de voortgang van één mysterie op de Codex */
+function mys(mid) {
+  const M = Codex.mysteries || (Codex.mysteries = {});
+  if (!M[mid] || typeof M[mid] !== 'object') M[mid] = {};
+  const m = M[mid];
+  if (!Array.isArray(m.scherven)) m.scherven = [];
+  if (typeof m.rite !== 'object' || !m.rite) m.rite = {};
+  m.rijp = !!m.rijp; m.voltooid = !!m.voltooid;
+  return m;
+}
+function mysterieRijp(mid) { return !!mys(mid).rijp; }
+function isOntgrendeld(mid) { return !!mys(mid).voltooid; }
+/* commit een gevonden scherf (idempotent); markeert 'rijp' zodra alle vereiste binnen zijn */
+function noteerScherf(mid, sid) {
+  const def = window.MYSTERIES && MYSTERIES[mid];
+  if (!def || !def.scherven || !def.scherven[sid]) return;   /* onbekend mysterie/scherf → veilig niets */
+  const m = mys(mid);
+  if (m.voltooid || m.scherven.includes(sid)) return;
+  m.scherven.push(sid);
+  if ((def.vereist || []).every(s => m.scherven.includes(s))) m.rijp = true;
+  bewaarCodex();
+  melding('🜂 Een scherf van een groter geheim brandt zich in je geheugen...');
+}
+function noteerRite(mid, vlag) { mys(mid).rite[vlag] = true; bewaarCodex(); }
+function ontgrendelMetgezel(mid) { mys(mid).voltooid = true; bewaarCodex(); }
 
 /* ---------- loopbaan: het spoor dat élke run achterlaat (retentiemotor) ---------- */
 const HELDNAAM = id => (window.SPELERS && SPELERS[id] && SPELERS[id].naam) || id;
@@ -348,7 +378,8 @@ function nieuwSpel(heldId, seedTekst, ascensie) {
     gebruikteEvents: [],
     stats: { gevechten: 0, kaarten: 0, schade: 0 },
     uid: 0,
-    gevecht: null
+    gevecht: null,
+    dropsOntwaakt: false   /* het Metgezel-Mysterie: dark-twist reveal-guard, eenmalig per run */
   };
   held.dek.forEach(id => S.dek.push(nieuweKaart(id)));
 
@@ -543,6 +574,7 @@ function zetFakkel(delta) {
     }
     if (inGevecht()) renderGevecht(); /* intent-weergave kan veranderen */
   }
+  if (typeof checkDropsOntwaak === 'function') checkDropsOntwaak();   /* dark-twist: doof je je fakkel bij de Erfprins? */
   zetLichtVisueel();
   renderTopbalk();
 }
@@ -978,6 +1010,44 @@ function metgezelOpoffering() {
     },
     'Offer op 🔥'
   );
+}
+
+/* ---------- DARK TWIST: Drops ontwaakt uit het gedoofde licht ----------
+   Mysterie rijp + je laat je fakkel DOVEN in de Erfprins-zaal (de rite) →
+   Drops ontwaakt midden in het gevecht. Eenmalig per run. Aangeroepen waar het
+   licht verandert (zetFakkel) en aan het begin van je beurt. */
+function checkDropsOntwaak() {
+  if (!inGevecht() || S.dropsOntwaakt || heeftMetgezel() || isOntgrendeld('drops')) return;
+  if (!mysterieRijp('drops')) return;
+  const g = S.gevecht;
+  const ep = g.vijanden.find(v => v.id === 'de_erfprins' && !v.dood);
+  if (!ep) return;
+  const niveau = lichtNiveau();
+  /* gedoofd = de zuivere rite; met Eeuwige Lont (klemt op 10) telt 'duister' ook,
+     zodat die build de unlock niet permanent blokkeert */
+  const riteOk = niveau === 'gedoofd' || (niveau === 'duister' && heeftRelikwie('eeuwige_lont'));
+  if (!riteOk) return;
+  S.dropsOntwaakt = true;
+  noteerRite('drops', 'fakkel_gedoofd_bij_erfprins');
+  revealDrops(g);
+}
+function revealDrops(g) {
+  const rev = (window.MYSTERIES && MYSTERIES.drops.eindreveal) || { titel: 'UIT HET GEDOOFDE LICHT', kreet: 'Een levende vlam ontwaakt.' };
+  baasFaseMoment(rev.titel, 'Iets in het donker haalt adem. En kiest jou.');
+  baasSpreekt(UITSPRAKEN._erfprins.gedoofd);
+  Klank.sfx('schitter');
+  geefMetgezel('drops');            /* run-state + Codex.ontdek */
+  ontgrendelMetgezel('drops');      /* voortaan komt hij gewoon mee — de grind is eenmalig */
+  /* injecteer hem MIDDEN in het lopende gevecht (zelfde vorm als startGevecht) */
+  const def = METGEZELLEN.drops;
+  g.metgezel = {
+    id: 'drops', naam: def.naam, isMetgezel: true,
+    hp: def.maxHp, maxHp: def.maxHp, blok: 0, status: {}, dood: false,
+  };
+  g.metgezel.intent = def.intent ? def.intent(g.metgezel) : null;
+  bouwGevechtDom(g);                /* herbouw de gevecht-DOM incl. de metgezel-zone */
+  renderGevecht();
+  melding(`🔥 ${rev.kreet} Drops klimt uit de duisternis — en hij blijft.`);
 }
 
 /* ---------- schermachtergronden (eigen platen, gedimd voor leesbaarheid) ---------- */
@@ -1453,6 +1523,12 @@ function startGevecht(samenstelling, soort, rij) {
   toonScherm('gevecht');
   zetLichtVisueel();
   renderGevecht();
+  /* Het Metgezel-Mysterie: de Erfprins-ontmoeting telt mee (cross-run escalatie)
+     en levert gegarandeerd de baas-scherf — zo is zelfs een verloren run progressie. */
+  if (soort === 'baas' && g.vijanden.some(v => v.id === 'de_erfprins')) {
+    if (!S.daily) { Codex.erfprinsOntmoetingen = (Codex.erfprinsOntmoetingen || 0) + 1; bewaarCodex(); }
+    noteerScherf('drops', 'drops_baas');
+  }
   if (soort === 'baas') toonBaasIntro(g);
 
   /* de metgezel handelt ook op de éérste beurt — even na de entree, zodat
@@ -1498,6 +1574,12 @@ function toonBaasIntro(g) {
   setTimeout(() => { Klank.sfx('dood'); schudScherm(); }, 700);
   setTimeout(() => el.remove(), 3600);
   setTimeout(() => { if (S.gevecht === g && !g.voorbij && VIJANDEN[b.id].baas) baasSpreekt(baasUitspraken(b.id).intro); }, 3900);
+  /* de Erfprins verklapt cryptisch méér naarmate je hem vaker ontmoette (mysterie-escalatie) */
+  if (b.id === 'de_erfprins' && UITSPRAKEN._erfprins.orakel && !isOntgrendeld('drops')) {
+    const ork = UITSPRAKEN._erfprins.orakel;
+    const idx = Math.max(0, Math.min((Codex.erfprinsOntmoetingen || 1) - 1, ork.length - 1));
+    setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(ork[idx]); }, 6400);
+  }
 }
 
 /* per frame: 3D renderen + DOM-overlays op spriteposities zetten */
@@ -2382,6 +2464,7 @@ function beginSpelerBeurt() {
   }
   if (heeftRelikwie('hartsteen')) geneesHp(1);
 
+  checkDropsOntwaak();   /* dark-twist: kwam je gedoofd de beurt in bij de Erfprins? */
   metgezelBeurt();   /* de bondgenoot handelt aan het begin van je beurt (kan de laatste vijand vellen → onderstaande check vangt dat) */
 
   /* Zónder Drops vreet niets aan de Pappies Invloed — een trage mercy-decay houdt
@@ -3090,19 +3173,26 @@ function devSprongAct2() {
   S.pos = null;
   delete S.beloning; delete S.winkel; delete S.huidigEvent;
   S.kaart = genereerKaart();   /* act-bewust → de Act 2-ladder */
-  if (!heeftMetgezel() && (!S.metgezel || !S.metgezel.vluchtig)) geefMetgezel('drops');
+  /* DEV: zet het Drops-mysterie 'rijp' (alle scherven) maar NIET voltooid + geen
+     metgezel, zodat je de dark-twist meteen kunt oefenen: doof je fakkel bij de Erfprins. */
+  S.metgezel = null; S.dropsOntwaakt = false;
+  const _m = mys('drops');
+  _m.scherven = (window.MYSTERIES && MYSTERIES.drops.vereist || []).slice();
+  _m.rijp = true; _m.voltooid = false;
+  bewaarCodex();
   saveSpel();
-  melding('⚡ DEV: gesprongen naar Act 2-begin');
+  melding('⚡ DEV: Act 2 + Drops-mysterie RIJP — doof je fakkel bij de Erfprins');
   renderKaartScherm();
 }
 
 function volgendeAct(verslagenBaas) {
   S.act = huidigeAct() + 1;
   S.fakkel = 100;                 /* episch: het laatste licht van de baas → je fakkel laait op */
-  /* uit het herrezen licht kruipt Drops — je eerste metgezel (alleen als je er nog geen hebt) */
-  if (!heeftMetgezel() && (!S.metgezel || !S.metgezel.vluchtig)) {
+  /* Drops komt alleen mee als je 'm al hebt VRIJGESPEELD (zie het Metgezel-Mysterie).
+     De eerste keren ontrafel je zijn raadsel in Act 2 i.p.v. hem cadeau te krijgen. */
+  if (isOntgrendeld('drops') && !heeftMetgezel() && (!S.metgezel || !S.metgezel.vluchtig)) {
     geefMetgezel('drops');
-    melding('🔥 Uit het herrezen licht vormt zich Drops — een metgezel sluit zich bij je aan!');
+    melding('🔥 Drops daalt met je mee de Catacomben in.');
   }
   S.pos = null;
   S.kaart = genereerKaart();      /* nieuwe ladder, act-bewust; de verdieping-teller loopt door */
