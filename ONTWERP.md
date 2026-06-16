@@ -460,6 +460,11 @@ herindeling en (optioneel, polish) een tap-to-inspect voor handkaarten.
 
 # De Proloog — "Een Productief Leven" (geparkeerd, ontwerp 14-06)
 
+> **16-06 ingeweven (zie PROLOOG.md "De rode draad"):** de **opoffer-draad** —
+> fakkel = de kiem van Drops; de proloog zaait de levende sintel, Act 2 oogst
+> (het Mysterie wékt hem, de Laatste Vonk **offert** hem). Het enige onfactureerbare
+> is ook het enige dat je ooit vrijwillig weggeeft — spiegel van "jíj werd weggegooid".
+
 Volledig ontwerp in **`PROLOOG.md`** (brainstorm Thomas + Claude). Een proloog
 vóór de afdaling: droge, tragische, absurde satire op de rat race in een
 198X-AI-setting (de mainframe **B.A.A.S.**, "billability" als kernmotor), met de
