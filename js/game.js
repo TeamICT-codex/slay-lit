@@ -3075,6 +3075,27 @@ function eventKlaar(tekst) {
 }
 
 /* ---------- act-overgang: de verslagen baas levert het licht voor de volgende afdaling ---------- */
+/* ============================================================
+   DEV-SHORTCUT — VOORLOPIG. Verwijderen vóór release.
+   Klik op het logo (linksboven) → spring meteen naar het begin van Act 2,
+   zodat testen geen volledige Act 1-run kost. Zoek 'DEV-SHORTCUT' om alles
+   (deze functie + de onclick op .tb-logo in index.html) in één keer te wissen.
+   ============================================================ */
+function devSprongAct2() {
+  if (!S) nieuwSpel('slachter');
+  if (inGevecht()) stopGevechtLus();
+  S.gevecht = null;
+  S.act = 2;
+  S.fakkel = 100;
+  S.pos = null;
+  delete S.beloning; delete S.winkel; delete S.huidigEvent;
+  S.kaart = genereerKaart();   /* act-bewust → de Act 2-ladder */
+  if (!heeftMetgezel() && (!S.metgezel || !S.metgezel.vluchtig)) geefMetgezel('drops');
+  saveSpel();
+  melding('⚡ DEV: gesprongen naar Act 2-begin');
+  renderKaartScherm();
+}
+
 function volgendeAct(verslagenBaas) {
   S.act = huidigeAct() + 1;
   S.fakkel = 100;                 /* episch: het laatste licht van de baas → je fakkel laait op */
