@@ -1944,6 +1944,64 @@ function toonRelikwieBoek(id) {
 }
 
 /* ---------- het Codex-scherm: verzamel ze allemaal ---------- */
+/* ---------- Fase 4: signposting van het Metgezel-Mysterie ----------
+   Maakt zichtbaar dat verliezen/ontmoeten progressie is: een Codex-sectie met de
+   gevonden scherven (of een bron-gelabelde ❓) en een duiding-regel op het
+   nederlaagscherm. Generiek over alle MYSTERIES; toont een mysterie pas zodra je
+   er minstens één scherf van vond, en verbergt het zodra het is opgelost. */
+function mysterieBronLabel(bron) {
+  return bron === 'baas' ? 'nog te horen uit de mond van de baas'
+    : bron === 'figuur' ? 'nog te vinden bij een mysterieuze figuur'
+    : bron === 'episch' ? 'nog te winnen van een epische vijand'
+    : 'nog ergens in het donker';
+}
+/* het sterkst gevorderde nog-open mysterie (of null) */
+function meestGevorderdeMysterie() {
+  const M = window.MYSTERIES; if (!M) return null;
+  let best = null;
+  Object.keys(M).forEach(mid => {
+    const m = Codex.mysteries && Codex.mysteries[mid];
+    if (!m || m.voltooid || !Array.isArray(m.scherven) || !m.scherven.length) return;
+    if (!best || m.scherven.length > best.aantal) best = { mid, aantal: m.scherven.length, rijp: !!m.rijp };
+  });
+  return best;
+}
+/* de Codex-sectie "Onopgeloste Mysteries" (lege string als er niets te tonen is) */
+function mysterieCodexBlok() {
+  const M = window.MYSTERIES; if (!M) return '';
+  const blokken = [];
+  Object.keys(M).forEach(mid => {
+    const def = M[mid];
+    const m = Codex.mysteries && Codex.mysteries[mid];
+    const gevonden = (m && Array.isArray(m.scherven)) ? m.scherven : [];
+    if (!gevonden.length || (m && m.voltooid)) return;   /* toon enkel met ≥1 scherf en nog niet opgelost */
+    const vereist = def.vereist || [];
+    const slots = vereist.map(sid => {
+      const sdef = (def.scherven && def.scherven[sid]) || {};
+      return gevonden.includes(sid)
+        ? `<div class="mys-scherf gevonden">🜂 <i>${sdef.codexTekst || '…'}</i></div>`
+        : `<div class="mys-scherf"><span class="mys-vraag">❓</span> <small>${mysterieBronLabel(sdef.bron)}</small></div>`;
+    }).join('');
+    const staart = (m && m.rijp)
+      ? `<p class="mys-rijp">De scherven passen samen. Maar het antwoord voelt verkeerd — alsof het iets van je vráágt…</p>`
+      : `<p class="mys-rest">${gevonden.length} / ${vereist.length} scherven. <i>Verlies wás progressie.</i></p>`;
+    blokken.push(`<div class="mys-blok ${(m && m.rijp) ? 'rijp' : ''}"><h4 class="mys-titel">🜂 Een onopgelost mysterie</h4>${slots}${staart}</div>`);
+  });
+  if (!blokken.length) return '';
+  return `<h3 class="codex-kop">🜂 Onopgeloste Mysteries</h3><div class="mys-lijst">${blokken.join('')}</div>`;
+}
+/* de duiding-regel op het nederlaagscherm (Act 2+, bij een open mysterie) */
+function mysterieDuiding() {
+  if (typeof huidigeAct === 'function' && huidigeAct() < 2) return '';
+  const best = meestGevorderdeMysterie();
+  if (!best) return '';
+  const totaal = ((window.MYSTERIES[best.mid].vereist) || []).length;
+  const regel = best.rijp
+    ? 'De scherven passen samen — maar het antwoord wacht in het donker dat je niet dúrft te maken.'
+    : 'Je zag iets in het donker. Dit was geen einde, maar een scherf.';
+  return `<p class="einde-mysterie">🜂 ${regel} <b>(${best.aantal}/${totaal})</b></p>`;
+}
+
 function toonCodex() {
   const volgorde = ['start', 'gewoon', 'ongewoon', 'zeldzaam', 'episch'];
   const rels = Object.keys(RELIKWIEEN).sort((a, b) =>
@@ -1994,7 +2052,7 @@ function toonCodex() {
       }
       const gevallen = Codex.gevallen.includes(id);
       return `<div class="codex-slot rel-${d.zeld} ${gevallen ? 'gevallen' : ''}" data-mgart="${id}" data-tip="${d.naam}${gevallen ? ' · ✝ offerde zich op' : ''} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${d.icoon}${gevallen ? '<span class="codex-kruis">✝</span>' : ''}</div>`;
-    }).join('') + `</div>
+    }).join('') + `</div>` + mysterieCodexBlok() + `
     <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt + mgOntdekt === rels.length + dranks.length + mgs.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
     <small>🗝️ = opgeladen: dit relikwie kun je bij een nieuwe run éénmalig meenemen uit het Schrijn.</small></p>`;
   verfraaiItemArt($('#overlay-codex'));   /* incl. het Codex-titelicoon (data-icoon) */
@@ -3490,6 +3548,7 @@ function toonEinde(gewonnen) {
     </div>
     <h2 class="scherm-titel einde-titel ${gewonnen ? 'goud-tekst' : 'rood-tekst'}">${gewonnen ? 'DE SLIJMKONING IS VERSLAGEN!' : 'JE BENT GEVALLEN...'}</h2>
     <p class="scherm-sub einde-regel">„${regel}"</p>
+    ${!gewonnen ? mysterieDuiding() : ''}
     <div class="einde-stats einde-onthul">
       ${statRegels.map(([w, l], i) => `<div style="animation-delay:${(0.7 + i * 0.25).toFixed(2)}s"><b>${w}</b><small>${l}</small></div>`).join('')}
     </div>

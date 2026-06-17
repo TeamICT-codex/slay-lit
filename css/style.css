@@ -434,6 +434,25 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   margin: 9px 0 2px;
   font-size: .9rem;
 }
+/* Fase 4: Onopgeloste Mysteries (Codex) + nederlaag-duiding */
+.mys-lijst { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 2px; }
+.mys-blok {
+  border: 1px solid rgba(160, 130, 255, .35);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(40, 30, 60, .5), rgba(20, 16, 30, .45));
+  padding: 10px 13px;
+}
+.mys-blok.rijp { border-color: rgba(255, 180, 90, .6); box-shadow: 0 0 16px rgba(255, 170, 70, .25); }
+.mys-titel { margin: 0 0 7px; font-size: 1rem; color: #c9b3ff; letter-spacing: .03em; }
+.mys-blok.rijp .mys-titel { color: #ffce8a; }
+.mys-scherf { padding: 4px 0; font-size: .92rem; line-height: 1.35; border-bottom: 1px dashed rgba(200, 190, 220, .12); }
+.mys-scherf.gevonden i { color: var(--perkament); }
+.mys-scherf .mys-vraag { color: #8a8494; font-size: 1.05rem; }
+.mys-scherf small { color: var(--perkament-dof); font-style: italic; }
+.mys-rest { margin: 8px 0 0; font-size: .85rem; color: var(--perkament-dof); }
+.mys-rijp { margin: 8px 0 0; font-size: .9rem; color: #ffce8a; font-style: italic; }
+.einde-mysterie { text-align: center; margin: 6px auto 2px; max-width: 32em; color: #c9b3ff; font-style: italic; font-size: .95rem; }
+.einde-mysterie b { color: #ffce8a; font-style: normal; }
 .codex-slot { position: relative; }
 .codex-slot.verbruikt { filter: grayscale(.55) brightness(.7); }
 .codex-lading {
