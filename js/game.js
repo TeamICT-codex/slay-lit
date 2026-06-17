@@ -766,6 +766,7 @@ function aanvalOp(doel, basis) {
   }
   if ((sp().status.zwak || 0) > 0) dmg = Math.floor(dmg * 0.75);
   if ((doel.status.kwetsbaar || 0) > 0) dmg = Math.floor(dmg * 1.5);
+  if (S.gevecht) S.gevecht.laatsteSpelerDmg = dmg;   /* Het Origineel kaatst dit terug */
   const echt = doeSchade(doel, Math.max(0, dmg), sp());
   S.stats.schade += echt;
   if (echt >= 18) spreek(sp(), UITSPRAKEN._held.overkill, 0.5);
@@ -1253,6 +1254,14 @@ function genereerKaart() {
     if (n.r >= 4 && huidigeAct() >= 2) opties.push(['episch', 8]);
     n.type = gewogenKeuze(opties);
   }
+  /* garandeer ≥1 episch-node zolang het Drops-mysterie open is — anders is de derde
+     scherf (drops_episch) een mapseed-loterij die de unlock kan blokkeren */
+  if (huidigeAct() >= 2 && typeof mys === 'function'
+      && !isOntgrendeld('drops') && !(mys('drops').scherven || []).includes('drops_episch')
+      && !Object.values(nodes).some(n => n.type === 'episch')) {
+    const kand = Object.values(nodes).filter(n => n.r >= 4 && n.r < RIJEN - 1 && (n.type === 'gevecht' || n.type === 'event'));
+    if (kand.length) kiesUit(kand).type = 'episch';
+  }
   return nodes;
 }
 
@@ -1604,6 +1613,11 @@ function toonBaasIntro(g) {
     const ork = UITSPRAKEN._erfprins.orakel;
     const idx = Math.max(0, Math.min((Codex.erfprinsOntmoetingen || 1) - 1, ork.length - 1));
     setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(ork[idx]); }, 6400);
+    /* mysterie rijp maar nog niet ontgrendeld? één omkerende verbod-regel maakt de
+       doof-rite leesbaar zonder een knop te tonen (reverse psychology) */
+    if (mysterieRijp('drops')) {
+      setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt('„En blijf van dat lichtje AF. Het hóórt te branden. NIET DOVEN. Begrepen?"'); }, 9200);
+    }
   }
 }
 
@@ -2018,7 +2032,9 @@ function mysterieDuiding() {
   const totaal = ((window.MYSTERIES[best.mid].vereist) || []).length;
   const regel = best.rijp
     ? 'De scherven passen samen — maar het antwoord wacht in het donker dat je niet dúrft te maken.'
-    : 'Je zag iets in het donker. Dit was geen einde, maar een scherf.';
+    : best.aantal >= 2
+      ? 'Twee scherven nu. Het beeld wordt scherper — en vreemder.'
+      : 'Je zag iets in het donker. Dit was geen einde, maar een scherf.';
   return `<p class="einde-mysterie">🜂 ${regel} <b>(${best.aantal}/${totaal})</b></p>`;
 }
 
@@ -2479,7 +2495,6 @@ function copycatSpeelTerug(v, g, plan) {
   if ((plan || []).length >= 2 && !g.copycatDubbelGezien) {
     g.copycatDubbelGezien = true;
     baasFaseMoment('JOUW BESTE ZET', '„Kijk — JOUW beste zet. Nu is het MÍJN beste zet."');
-    if (!isOntgrendeld('drops')) noteerScherf('drops', 'drops_figuur');
   }
   renderGevecht();
 }
@@ -2830,7 +2845,8 @@ async function gevechtGewonnen() {
   if (g.soort === 'baas') {
     /* de doodsklap van een baas verdient een flits en een stilte */
     const verslagenBaas = huidigeBaas().naam;
-    baasSpreekt(baasUitspraken(huidigeBaas().id).dood);
+    const _du = baasUitspraken(huidigeBaas().id);
+    baasSpreekt(g.copycatGebroken && _du.doodGebroken ? _du.doodGebroken : _du.dood);
     const flits = document.createElement('div');
     flits.className = 'baas-doodflits';
     $('#scherm-gevecht').appendChild(flits);

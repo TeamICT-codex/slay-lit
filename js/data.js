@@ -850,6 +850,9 @@ const VIJANDEN = {
       const stap = beurt % 3;
       if (stap === 0) return { naam: 'Perfectioneren', type: 'buff', doe: () => geefStatus(v, 'kracht', 2) };
       if (stap === 1) return { naam: 'Spiegelslag', type: 'aanval', dmg: 11 };
+      /* mini-plagiaat (Copycat-foreshadow): kaatst JOUW laatste klap terug */
+      const echo = Math.min(16, (S.gevecht && S.gevecht.laatsteSpelerDmg) || 0);
+      if (echo >= 6) return { naam: 'Namaak', type: 'aanval', dmg: echo, doe: () => melding('🪞 Het Origineel kaatst je eigen klap terug!') };
       return { naam: 'Origineel Vonnis', type: 'aanval', dmg: 7, hits: 2 };
     }
   },
@@ -1038,6 +1041,7 @@ const UITSPRAKEN = {
     fase2:  '„Wéét je wel wie mijn váder is?! Ik hóéf niks zelf te maken."',
     fase3:  '„ALLES wat jij kan, kan ik óók — ik kopieer het gewoon!"',
     dood:   '„Maar... ik kopieerde alles... waarom verlies ík...?"',
+    doodGebroken: '„Trouw... dát stond niet in mijn catalogus... dát kon ik niet kopiëren..."',
     /* ORAKEL: over opeenvolgende ontmoetingen verklapt hij cryptisch het geheim
        (geïndexeerd op Codex.erfprinsOntmoetingen). Twee assen: het kopieer-thema
        (1, 4) én de fakkel-doof-rite die Drops wekt (2, 3). */
