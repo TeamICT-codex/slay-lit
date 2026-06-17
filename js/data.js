@@ -983,6 +983,35 @@ const VIJANDEN = {
       return echo >= 5 ? { naam: 'Weerkaatsing', type: 'aanval', dmg: echo } : { naam: 'Glasscherf', type: 'aanval', dmg: 7 };
     }
   },
+  /* nog meer kopieerhel-types (extra variatie) */
+  de_deadline: {
+    naam: 'De Deadline', art: '⏳', hp: [26, 32],
+    /* de billability-klok: z'n klap escaleert elke beurt (deadline-druk) */
+    kies: (v, beurt) => beurt % 4 === 3
+      ? { naam: 'Verlengen', type: 'buff', doe: () => geefStatus(v, 'kracht', 1) }
+      : { naam: 'Termijn', type: 'aanval', dmg: 6 + Math.min(beurt, 6) * 2 }
+  },
+  de_inktvlek: {
+    naam: 'De Inktvlek', art: '🩸', hp: [20, 25],
+    /* gif-bron: inkt die je dossier (en jou) wegvreet */
+    kies: v => willekeurig() < 0.55
+      ? { naam: 'Inktspat', type: 'aanval', dmg: 5, doe: () => geefGif(sp(), 3) }
+      : { naam: 'Uitvloeien', type: 'debuff', doe: () => geefGif(sp(), 4) }
+  },
+  de_redacteur: {
+    naam: 'De Redacteur', art: '✂️', hp: [24, 29],
+    /* censureert je verdediging: streept je Blok weg */
+    kies: v => willekeurig() < 0.5
+      ? { naam: 'Wegstrepen', type: 'aanval', dmg: 6, doe: () => { sp().blok = Math.max(0, (sp().blok || 0) - 6); } }
+      : { naam: 'Censuur', type: 'aanval', dmg: 9 }
+  },
+  /* elite — De Archivaris: compoundt elke beurt (de bureaucratie die onafwendbaar groeit) */
+  de_archivaris: {
+    naam: 'De Archivaris', art: '📚', hp: [80, 88], elite: true,
+    kies: (v, beurt) => beurt % 2 === 0
+      ? { naam: 'Bijwerken', type: 'buff', doe: () => geefStatus(v, 'kracht', 2) }
+      : (willekeurig() < 0.6 ? { naam: 'Dossier-dreun', type: 'aanval', dmg: 12 } : { naam: 'Indexeren', type: 'blok', blok: 10 })
+  },
   /* baas — vecht in drie bedrijven (fases via checkBaasFase in game.js) */
   slijmkoning: {
     naam: 'De Slijmkoning', art: '🫠', hp: [150, 150], baas: true,
@@ -1152,6 +1181,10 @@ const UITSPRAKEN = {
   stempelaar:     { start: ['Even afstempelen, graag.', 'In drievoud. Met merk.'], dood: ['...het zegel... breekt...'] },
   dossierwurm:    { start: ['Geregistreerd. Geklasseerd.', 'Jouw blad ontbreekt nog.'], dood: ['...uit... het... archief...'] },
   spiegelwachter: { start: ['Ik geef enkel terug.', 'Sla mij — sla jezelf.'], dood: ['...het glas... barst...'] },
+  de_deadline:    { start: ['De termijn verstreek. Lang geleden.', 'Tik. Tik. Tik.'], dood: ['...eindelijk... uitstel...'] },
+  de_inktvlek:    { start: ['Alles wordt vlek.', 'Ik kruip in je dossier.'], dood: ['...opdrogen...'] },
+  de_redacteur:   { start: ['Dat keuren we niet goed.', 'Doorgehaald. Volgende.'], dood: ['...geschrapt... ikzelf...'] },
+  de_archivaris:  { start: ['Ik vergeet NIETS.', 'Elke regel telt mee.'], dood: ['Mijn... archief... brandt...'] },
   _duister: ['...wij zien jou wél...', '...kom dichter, lichtje...', '...jouw vlam is bijna op...', '...het donker heeft tanden...'],
   _held: {
     overkill: ['Daar. Opgeruimd.', 'Wie volgt?', 'De diepte mag hem houden.'],
@@ -1221,10 +1254,10 @@ const ONTMOETINGEN = {
   baas: [['slijmkoning']],
   /* Act 2 — de kopieerhel: eigen tiers (kiesNodeEcht kiest deze bij huidigeAct()>=2) */
   act2: {
-    midden: [['echo'], ['naaper'], ['inktklerk'], ['echo', 'echo'], ['stempelaar'], ['spiegelwachter']],
-    laat:   [['doorslag'], ['naaper', 'inktklerk'], ['echo', 'inktklerk'], ['doorslag', 'echo'], ['stempelaar', 'echo'], ['dossierwurm']],
-    zwaar:  [['doorslag', 'naaper'], ['echo', 'echo', 'inktklerk'], ['doorslag', 'inktklerk'], ['naaper', 'naaper'], ['dossierwurm', 'spiegelwachter'], ['stempelaar', 'naaper']],
-    elite:  [['de_mal'], ['de_mal', 'echo']]
+    midden: [['echo'], ['naaper'], ['inktklerk'], ['echo', 'echo'], ['stempelaar'], ['spiegelwachter'], ['de_inktvlek'], ['de_redacteur']],
+    laat:   [['doorslag'], ['naaper', 'inktklerk'], ['echo', 'inktklerk'], ['doorslag', 'echo'], ['stempelaar', 'echo'], ['dossierwurm'], ['de_deadline'], ['de_inktvlek', 'echo']],
+    zwaar:  [['doorslag', 'naaper'], ['echo', 'echo', 'inktklerk'], ['doorslag', 'inktklerk'], ['naaper', 'naaper'], ['dossierwurm', 'spiegelwachter'], ['stempelaar', 'naaper'], ['de_deadline', 'de_redacteur'], ['de_inktvlek', 'de_inktvlek']],
+    elite:  [['de_mal'], ['de_mal', 'echo'], ['de_archivaris'], ['de_archivaris', 'echo']]
   },
   /* episch-node (Act 2): de mysterie-vijand die de drops_episch-scherf laat vallen */
   episch: [['het_origineel']]

@@ -263,6 +263,31 @@ spiegelwachter.png  (doorschijnend glas — EFFEN ZWARTE achtergrond) a tall
                  orbiting it each showing a different stolen pose, a single cold
                  blue-grey glow behind the glass where a face should be, sharp
                  glass edges. Reflective, hollow, derivative.
+
+de_deadline.png  a gaunt clock-tower creature, a hunched figure whose torso is a
+                 cracked iron hourglass leaking black sand, clock-hands for
+                 fingers, a face of a stopped clock, overdue red stamps and frayed
+                 calendar pages fluttering off it, cold blue-grey light.
+                 Relentless, oppressive — time running out.
+
+de_inktvlek.png  a low crawling ink-blot ooze given malice, a spreading puddle of
+                 glistening black-and-sickly-green ink rising into a vaguely
+                 reaching shape, dripping corrosive droplets, smeared signatures
+                 dissolving in its body, cold light on the wet sheen. Formless,
+                 corrosive, derivative.
+
+de_redacteur.png a stern censor-construct in ink-stained clerical robes, one hand
+                 a giant pair of black redaction-shears, the other a dripping
+                 black marker, its own face half blacked-out with redaction bars,
+                 strips of censored paper hanging off it, cold blue-grey light.
+                 Cold, controlling, bureaucratic.
+
+de_archivaris.png  (elite) a towering head-archivist, a tall robed figure buried
+                 under and fused with endless shelves of tagged bone-files and
+                 ledgers growing from its back like a mountain, spectacles stacked
+                 over its eyes and a stamp in each hand, cold authoritative
+                 blue-grey light, index-tabs and wax seals orbiting. Inevitable,
+                 all-remembering — the bureaucracy made flesh.
 ```
 
 ### Bouw-data vijanden (voor `data.js VIJANDEN`, in het kopieerhel-blok)
@@ -272,6 +297,10 @@ spiegelwachter.png  (doorschijnend glas — EFFEN ZWARTE achtergrond) a tall
 | `stempelaar` | De Stempelaar | 🖋️ | [25,30] | beurt 0 = 'Goedkeuringsstempel' (`geefStatus(sp(),'kwetsbaar',2)`); daarna 60% 'Tegendruk' (dmg 7 + Kwetsbaar 1) anders 'Inktstapel' (blok 8) | start: „Even afstempelen, graag." / „In drievoud. Met merk." · dood: „...het zegel... breekt..." |
 | `dossierwurm` | De Dossierwurm | 🐛 | [28,34] | elke 2e beurt 'Inrollen' (+Kracht 1 +Doornen 2); anders 55% 'Papierbeet' (dmg 6 ×2) anders 'Bladsnede' (dmg 10) | start: „Geregistreerd. Geklasseerd." / „Jouw blad ontbreekt nog." · dood: „...uit... het... archief..." |
 | `spiegelwachter` | De Spiegelwachter | 🔮 | [24,29] | beurt 0 = 'Oppoetsen' (blok 9); daarna `echo=min(10,laatsteSpelerDmg)`; ≥5 → 'Weerkaatsing' (dmg echo) anders 'Glasscherf' (dmg 7) | start: „Ik geef enkel terug." / „Sla mij — sla jezelf." · dood: „...het glas... barst..." |
+| `de_deadline` | De Deadline | ⏳ | [26,32] | escaleert: elke 4e beurt 'Verlengen' (+Kracht 1), anders 'Termijn' (dmg 6 + min(beurt,6)·2) | start: „De termijn verstreek. Lang geleden." / „Tik. Tik. Tik." · dood: „...eindelijk... uitstel..." |
+| `de_inktvlek` | De Inktvlek | 🩸 | [20,25] | 55% 'Inktspat' (dmg 5 + Gif 3), anders 'Uitvloeien' (Gif 4) | start: „Alles wordt vlek." / „Ik kruip in je dossier." · dood: „...opdrogen..." |
+| `de_redacteur` | De Redacteur | ✂️ | [24,29] | 50% 'Wegstrepen' (dmg 6 + verwijder 6 Blok), anders 'Censuur' (dmg 9) | start: „Dat keuren we niet goed." / „Doorgehaald. Volgende." · dood: „...geschrapt... ikzelf..." |
+| `de_archivaris` (elite) | De Archivaris | 📚 | [80,88] | elke 2e beurt 'Bijwerken' (+Kracht 2); anders 60% 'Dossier-dreun' (dmg 12), anders 'Indexeren' (blok 10) | start: „Ik vergeet NIETS." / „Elke regel telt mee." · dood: „Mijn... archief... brandt..." |
 
 *Alle gewone-tier, leunen op bestaande haken (`S.gevecht.laatsteSpelerDmg` leest
 `het_origineel` al). Voeg toe aan `ONTMOETINGEN.act2`: stempelaar→midden+laat;
