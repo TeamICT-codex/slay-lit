@@ -828,7 +828,9 @@ const VIJANDEN = {
   de_mal: {
     naam: 'De Mal', art: '🖨️', hp: [82, 90], elite: true,
     kies: (v, beurt) => {
-      if (beurt % 2 === 0) return { naam: 'Gieten', type: 'buff', doe: () => {
+      /* niet "Gieten" verspillen als het toneel al vol is (voegVijandToe no-opt bij 4) */
+      const vol = (S.gevecht.vijanden || []).filter(x => !x.dood).length >= 4;
+      if (beurt % 2 === 0 && !vol) return { naam: 'Gieten', type: 'buff', doe: () => {
         voegVijandToe('mal_gietsel'); melding('🖨️ De Mal perst er een gietsel uit!');
       } };
       return willekeurig() < 0.6 ? { naam: 'Persen', type: 'aanval', dmg: 13 }

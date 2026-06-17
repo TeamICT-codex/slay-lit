@@ -797,12 +797,17 @@ async function reeksAanvalAlle(dmg, naSlag) {
   }
 }
 
+/* act-schaling op rauwe aanvalsschade — ÉÉN bron van waarheid voor de echte klap
+   (vijandAanval) én de telegraaf (intentTekst), zodat het getal nooit liegt */
+function actDmg(basis) {
+  return huidigeAct() > 1 ? Math.ceil(basis * (1 + 0.15 * (huidigeAct() - 1))) : basis;
+}
 /* vijand valt aan — meestal de speler, soms vangt de metgezel de klap op.
    gedwongenDoel: een intent kan een doelwit afdwingen (bv. de Erfprins die
    gericht Drops wegwuift). */
 function vijandAanval(v, basis, gedwongenDoel) {
   if (v.dood) return;   /* een aan Doornen gesneuvelde vijand slaat niet meer */
-  if (huidigeAct() > 1) basis = Math.ceil(basis * (1 + 0.15 * (huidigeAct() - 1)));   /* latere acts: hardere klappen */
+  basis = actDmg(basis);   /* latere acts: hardere klappen (zelfde bron als de telegraaf) */
   const doel = (gedwongenDoel && !gedwongenDoel.dood) ? gedwongenDoel : kiesAanvalDoel(v);
   if (window.Vista) Vista.aanval(v, sp());   /* visueel altijd richting het heldenvak (de metgezel staat ernaast) */
   pose2D(v, 'attack', 0.5);
@@ -1421,7 +1426,7 @@ let gevechtTikAf = null;
 function maakVijand(id, rij) {
   const def = VIJANDEN[id];
   let hp = rnd(def.hp[0], def.hp[1]);
-  if (!def.elite && !def.baas) hp += Math.floor(rij * 0.8);
+  if (!def.elite && !def.baas && !def.episch) hp += Math.floor(rij * 0.8);   /* episch krijgt geen rij-bonus bovenop ×act */
   if (!def.baas && huidigeAct() > 1) hp = Math.ceil(hp * (1 + 0.30 * (huidigeAct() - 1)));   /* latere acts: taaier */
   if (asc() >= 2 && !def.baas) hp = Math.ceil(hp * 1.12);   /* ascension 2: taaiere vijanden */
   const v = { id, naam: def.naam, art: def.art, hp, maxHp: hp, blok: 0, status: {}, dood: false, beurtTeller: 0, intent: null, aegis: def.aegis || 0 };
@@ -1788,7 +1793,7 @@ function intentTekst(v) {
     }
     const mDoel = it.doelMetgezel ? gMet() : null;
     const richtMet = !!(mDoel && !mDoel.dood);   /* een intent kan de metgezel viseren (it.doelMetgezel) */
-    let dmg = it.dmg + (v.status.kracht || 0);
+    let dmg = actDmg(it.dmg) + (v.status.kracht || 0);   /* zelfde act-schaling als de echte klap */
     if ((v.status.zwak || 0) > 0) dmg = Math.floor(dmg * 0.75);
     if (((richtMet ? mDoel : sp()).status.kwetsbaar || 0) > 0) dmg = Math.floor(dmg * 1.5);
     const merk = richtMet ? ` → ${METGEZELLEN[mDoel.id].icoon}` : '';
@@ -1799,6 +1804,7 @@ function intentTekst(v) {
     return `<span class="intent intent-steel" data-tip="De Copycat kijkt je sterkste recente kaart af om die te stelen">👀 steelt</span>`;
   }
   if (it.type === 'plagiaat') {
+    if (verborgen) return `<span class="intent intent-debuff" data-tip="Plagiaat — te donker om te zien wát hij terugspeelt">🎭 ?</span>`;
     const pips = (it.plan || []).map(k => k.soort === 'aanval'
       ? `<span class="intent intent-aanval" data-tip="Plagiaat — JOUW ${k.naam} voor ${k.eindDmg} schade">🎭 ${k.eindDmg}</span>`
       : `<span class="intent intent-debuff" data-tip="Plagiaat — JOUW ${k.naam}">🎭 ${k.naam}</span>`).join(' ');
@@ -2519,7 +2525,7 @@ function copycatKies(v, beurt) {
     const plan = copycatPlagiaatPlan(v, aantal);
     return { type: 'plagiaat', naam: 'Plagiaat', plan, doe: vv => copycatSpeelTerug(vv, g, plan) };
   };
-  const steel = { type: 'steel', naam: 'Afkijken', doe: vv => copycatSteel(vv, g) };
+  const steel = { type: 'steel', naam: 'Afkijken', doe: vv => { if (!copycatSteel(vv, g)) doeSchade(sp(), 4 + (fase >= 3 ? 2 : 0), vv); } };
   const pathetisch = { type: 'aanval', naam: fase >= 2 ? 'Geschreeuw' : 'Pappie Bellen', dmg: 6 + (fase >= 3 ? 2 : 0) };
   if (g.copycatGebroken) return { type: 'aanval', naam: 'Wanhoopsklap', dmg: 6 + (fase >= 3 ? 2 : 0) };
   if (fase >= 3 && arsenaal > 0) {
@@ -2597,6 +2603,8 @@ function copycatAntiSoftlock(g) {
     const kaart = nieuweKaart(terug.id); kaart.up = false;
     g.trek.push(kaart); trekKaarten(1);
     melding('↩️ Je grist een kaart terug uit de leegte.');
+  } else if (g.afleg.length) {
+    g.trek = schud(g.afleg); g.afleg = []; trekKaarten(1);   /* nog kaarten in de afleg → herschud */
   } else {
     g.energie += 1;
   }
