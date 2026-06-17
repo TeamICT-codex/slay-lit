@@ -521,7 +521,7 @@ function actorEl(actor) {
 /* ============================================================
    DE FAKKEL — licht als zicht en valuta
    ============================================================ */
-const FAKKEL_KOST = { gevecht: 5, elite: 7, event: 4, schat: 5, winkel: 3, rust: 3, baas: 0 };
+const FAKKEL_KOST = { gevecht: 5, elite: 7, event: 4, schat: 5, winkel: 3, rust: 3, baas: 0, episch: 6 };
 const LICHT_FACTOR = { helder: 1, schemer: 0.62, duister: 0.34, gedoofd: 0.16 };
 
 function lichtNiveau() {
@@ -1244,13 +1244,15 @@ function genereerKaart() {
     if (n.r >= 2) opties.push(['event', 22]);
     if (n.r >= 3) opties.push(['rust', 12], ['winkel', 10]);
     if (n.r >= 4) opties.push(['elite', 11]);
+    /* Act 2+: een zeldzame episch-node (mysterie-vijand "Het Origineel") */
+    if (n.r >= 4 && huidigeAct() >= 2) opties.push(['episch', 8]);
     n.type = gewogenKeuze(opties);
   }
   return nodes;
 }
 
-const NODE_ICONEN = { gevecht: '⚔️', elite: '😈', rust: '🔥', winkel: '💰', event: '❓', schat: '🎁', baas: '👑' };
-const NODE_NAMEN = { gevecht: 'Gevecht', elite: 'Elite', rust: 'Rustplaats', winkel: 'Winkel', event: 'Onbekend', schat: 'Schat', baas: 'De Slijmkoning' };
+const NODE_ICONEN = { gevecht: '⚔️', elite: '😈', rust: '🔥', winkel: '💰', event: '❓', schat: '🎁', baas: '👑', episch: '🜂' };
+const NODE_NAMEN = { gevecht: 'Gevecht', elite: 'Elite', rust: 'Rustplaats', winkel: 'Winkel', event: 'Onbekend', schat: 'Schat', baas: 'De Slijmkoning', episch: 'Epische Vijand' };
 
 function beschikbareNodes() {
   if (S.pos === null) return Object.values(S.kaart).filter(n => n.r === 0).map(n => n.id);
@@ -1389,6 +1391,12 @@ function kiesNodeEcht(id) {
       case 'elite': {
         const eliteTabel = (huidigeAct() >= 2 && ONTMOETINGEN.act2 && ONTMOETINGEN.act2.elite) ? ONTMOETINGEN.act2.elite : ONTMOETINGEN.elite;
         startGevecht(kiesUit(eliteTabel), 'elite', n.r);
+        break;
+      }
+      case 'episch': {
+        /* de mysterie-vijand; bij winst valt z'n scherf (zie gevechtGewonnen) */
+        startGevecht(kiesUit(ONTMOETINGEN.episch || [['het_origineel']]), 'elite', n.r);
+        if (S.gevecht && !isOntgrendeld('drops')) S.gevecht.scherfDrop = { mid: 'drops', sid: 'drops_episch' };
         break;
       }
       case 'baas': startGevecht([huidigeBaas().id], 'baas', n.r); break;
@@ -2787,6 +2795,10 @@ async function gevechtGewonnen() {
   const g = S.gevecht;
   if (!g || g.voorbij) return;
   g.voorbij = true;
+  /* Fase 5: een episch-vijand-gevecht laat bij winst zijn mysterie-scherf vallen */
+  if (g.scherfDrop && typeof noteerScherf === 'function' && !isOntgrendeld(g.scherfDrop.mid)) {
+    noteerScherf(g.scherfDrop.mid, g.scherfDrop.sid);
+  }
   /* metgezel-HP uit dit gevecht meenemen naar de run-state (gaat mee naar het volgende) */
   if (g.metgezel && !g.metgezel.dood && S.metgezel && !S.metgezel.vluchtig) S.metgezel.hp = g.metgezel.hp;
   if (window.Vista) Vista.pose(g.speler, 'victory', 2.5);
@@ -3385,8 +3397,8 @@ function koopVerwijdering() {
 }
 
 function toonEvent() {
-  let pool = EVENTS.filter(e => !S.gebruikteEvents.includes(e.id));
-  if (pool.length === 0) { S.gebruikteEvents = []; pool = EVENTS; }
+  let pool = EVENTS.filter(e => !S.gebruikteEvents.includes(e.id) && (!e.toon || e.toon()));
+  if (pool.length === 0) { S.gebruikteEvents = []; pool = EVENTS.filter(e => !e.toon || e.toon()); }
   const ev = kiesUit(pool);
   S.gebruikteEvents.push(ev.id);
   S.huidigEvent = ev.id;

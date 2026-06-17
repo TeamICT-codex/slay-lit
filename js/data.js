@@ -839,6 +839,18 @@ const VIJANDEN = {
     naam: 'Gietsel', art: '🫥', hp: [9, 12],
     kies: () => ({ naam: 'Holle klap', type: 'aanval', dmg: 5 })
   },
+  /* episch — Het Origineel: "jij bent maar een kopie van mij" (Copycat-foreshadow).
+     Verschijnt op een episch-node in Act 2 en laat bij verlies de drops_episch-scherf
+     vallen. Perfectioneert zichzelf en spiegelt je klap terug. */
+  het_origineel: {
+    naam: 'Het Origineel', art: '🪞', hp: [72, 80], episch: true,
+    kies: (v, beurt) => {
+      const stap = beurt % 3;
+      if (stap === 0) return { naam: 'Perfectioneren', type: 'buff', doe: () => geefStatus(v, 'kracht', 2) };
+      if (stap === 1) return { naam: 'Spiegelslag', type: 'aanval', dmg: 11 };
+      return { naam: 'Origineel Vonnis', type: 'aanval', dmg: 7, hits: 2 };
+    }
+  },
   /* baas — vecht in drie bedrijven (fases via checkBaasFase in game.js) */
   slijmkoning: {
     naam: 'De Slijmkoning', art: '🫠', hp: [150, 150], baas: true,
@@ -1004,6 +1016,7 @@ const UITSPRAKEN = {
   naaper:        { start: ['Wat jij kan, kan ik óók!', 'Kijk — precies zoals jij.'], dood: ['Na... ge... aapt...'] },
   inktklerk:     { start: ['In drievoud, graag.', 'Ik stempel je af.'], dood: ['De inkt... vloeit uit...'] },
   de_mal:        { start: ['UIT DE MAL KOMT ALLES.', 'Ik giet de diepte vol.'], dood: ['De vorm... breekt...'] },
+  het_origineel: { start: ['Jij bent maar een kopie van mij.', 'Het origineel verslaat de namaak.'], dood: ['Maar ik wás... het echte...'] },
   _duister: ['...wij zien jou wél...', '...kom dichter, lichtje...', '...jouw vlam is bijna op...', '...het donker heeft tanden...'],
   _held: {
     overkill: ['Daar. Opgeruimd.', 'Wie volgt?', 'De diepte mag hem houden.'],
@@ -1076,7 +1089,9 @@ const ONTMOETINGEN = {
     laat:   [['doorslag'], ['naaper', 'inktklerk'], ['echo', 'inktklerk'], ['doorslag', 'echo']],
     zwaar:  [['doorslag', 'naaper'], ['echo', 'echo', 'inktklerk'], ['doorslag', 'inktklerk'], ['naaper', 'naaper']],
     elite:  [['de_mal'], ['de_mal', 'echo']]
-  }
+  },
+  /* episch-node (Act 2): de mysterie-vijand die de drops_episch-scherf laat vallen */
+  episch: [['het_origineel']]
 };
 
 /* ---------- RELIKWIEËN ---------- */
@@ -1244,6 +1259,32 @@ const EVENTS = [
         }
       },
       { label: 'Loop weg', detail: 'Niets gebeurt.', doe: () => 'Je laat het altaar achter je. De fluisterstem sterft weg.' }
+    ]
+  },
+  /* Fase 5 — mysterieuze-figuur-events: alleen in Act 2, alleen zolang het Drops-
+     mysterie open is én de figuur-scherf nog niet gevonden. Bron van drops_figuur. */
+  {
+    id: 'lantaarndrager', titel: 'De Gedoofde Lantaarndrager', icoon: '🏮',
+    toon: () => huidigeAct() >= 2 && !isOntgrendeld('drops') && !mys('drops').scherven.includes('drops_figuur'),
+    tekst: 'Een gebogen figuur zit in het donker, een dóófde lantaarn in de hand. „Ik liet mijn licht uitgaan," fluistert hij. „Pas toen vond het mij — wat altijd al meeliep. Vraag je je af wat?"',
+    opties: [
+      {
+        label: 'Luister naar zijn raadsel', detail: 'Een scherf van een groter geheim.',
+        doe: () => { noteerScherf('drops', 'drops_figuur'); return '„Het kwam pas toen ik mijn licht dúrfde te doven," herhaalt hij. Zijn woorden branden zich in je geheugen. 🜂'; }
+      },
+      { label: 'Loop door', detail: 'Het donker heeft genoeg geheimen.', doe: () => 'Je laat de figuur in zijn duister achter.' }
+    ]
+  },
+  {
+    id: 'spiegelaar', titel: 'De Naamloze Spiegelaar', icoon: '🪞',
+    toon: () => huidigeAct() >= 2 && !isOntgrendeld('drops') && !mys('drops').scherven.includes('drops_figuur'),
+    tekst: 'Een gestalte houdt je een blinde spiegel voor. „Alles hierbeneden is na te maken," zegt ze. „Op één ding na. Weet jij wat een dief nóóit kan stelen?"',
+    opties: [
+      {
+        label: 'Antwoord: trouw', detail: 'Een scherf van een groter geheim.',
+        doe: () => { noteerScherf('drops', 'drops_figuur'); return 'Ze glimlacht dun. „Wat trouw blíjft zonder loon — dát kun je niet namaken." Heel even toont de spiegel iets warms in het zwart. 🜂'; }
+      },
+      { label: 'Zeg niets', detail: 'Je vertrouwt het niet.', doe: () => 'Je zwijgt. De spiegelaar vervaagt in het donker.' }
     ]
   },
   {
