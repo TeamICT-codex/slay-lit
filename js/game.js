@@ -864,7 +864,7 @@ function verliesHp(doel, n) {
     if (S.hp <= 0 && inGevecht()) nederlaag();
   } else {
     /* Pappies Invloed: zolang de gouden aegis staat is de baas ONAANTASTBAAR —
-       aanvallen én gif ketsen af. Alleen Drops' vuur vreet aan de aegis zelf
+       aanvallen én gif ketsen af. Alleen Drops knaagt aan de aegis zelf
        (dat loopt niet via verliesHp). */
     if ((doel.aegis || 0) > 0) {
       fxNummer(actorEl(doel), '✨ afgeweerd', 'fx-blok');
@@ -959,11 +959,11 @@ function metgezelIntentTekst(m) {
   if (it.type === 'aanval') {
     let dmg = it.dmg + (m.status.kracht || 0);
     if ((m.status.zwak || 0) > 0) dmg = Math.floor(dmg * 0.75);
-    return `<span class="intent intent-aanval" data-tip="${def.naam} schroeit een vijand voor ${dmg}">⚔️ ${dmg}</span>`;
+    return `<span class="intent intent-aanval" data-tip="${def.naam} valt een vijand aan voor ${dmg}">⚔️ ${dmg}</span>`;
   }
   if (it.type === 'blok') return `<span class="intent intent-blok" data-tip="${def.naam} geeft je ${it.blok} Blok">🛡️ ${it.blok}</span>`;
   if (it.type === 'heal') return `<span class="intent intent-buff" data-tip="${def.naam} geneest je ${it.n} HP">❤️ +${it.n}</span>`;
-  if (it.type === 'aegis') return `<span class="intent intent-aegis" data-tip="${def.naam} vreet ${it.n} Pappies Invloed weg">🔥 −${it.n}🟡</span>`;
+  if (it.type === 'aegis') return `<span class="intent intent-aegis" data-tip="${def.naam} knaagt ${it.n} Pappies Invloed weg">🐾 −${it.n}🟡</span>`;
   return '';
 }
 
@@ -1002,13 +1002,13 @@ function metgezelOpoffering() {
       S.metgezel = null;                       /* permanent — niet 'vluchtig' */
       Codex.gevallen = Array.isArray(Codex.gevallen) ? Codex.gevallen : [];
       if (!Codex.gevallen.includes(m.id)) { Codex.gevallen.push(m.id); bewaarCodex(); }
-      baasFaseMoment('DE LAATSTE VONK', `${def.naam} offert zich op — de diepte onthoudt zijn moed.`);
+      baasFaseMoment('DE LAATSTE SPRONG', `${def.naam} offert zich op — de diepte onthoudt zijn moed.`);
       melding(`✝ ${def.naam} is voorgoed heengegaan.`);
       const el = actorEl(m); if (el) el.classList.add('gevlucht');
       renderGevecht();
       if (alleVijanden().length === 0) gevechtGewonnen();
     },
-    'Offer op 🔥'
+    'Offer op 🐾'
   );
 }
 
@@ -1032,7 +1032,7 @@ function checkDropsOntwaak() {
   revealDrops(g);
 }
 function revealDrops(g) {
-  const rev = (window.MYSTERIES && MYSTERIES.drops.eindreveal) || { titel: 'UIT HET GEDOOFDE LICHT', kreet: 'Een levende vlam ontwaakt.' };
+  const rev = (window.MYSTERIES && MYSTERIES.drops.eindreveal) || { titel: 'UIT HET GEDOOFDE LICHT', kreet: 'Iets warms kruipt uit het zwart.' };
   baasFaseMoment(rev.titel, 'Iets in het donker haalt adem. En kiest jou.');
   baasSpreekt(UITSPRAKEN._erfprins.gedoofd);
   Klank.sfx('schitter');
@@ -1047,7 +1047,7 @@ function revealDrops(g) {
   g.metgezel.intent = def.intent ? def.intent(g.metgezel) : null;
   bouwGevechtDom(g);                /* herbouw de gevecht-DOM incl. de metgezel-zone */
   renderGevecht();
-  melding(`🔥 ${rev.kreet} Drops klimt uit de duisternis — en hij blijft.`);
+  melding(`🐾 ${rev.kreet} Drops kruipt uit de duisternis — en hij wijkt niet meer van je zij.`);
 }
 
 /* ---------- schermachtergronden (eigen platen, gedimd voor leesbaarheid) ---------- */
@@ -1813,7 +1813,7 @@ function renderGevecht() {
         <div class="bb-fases" data-tip="De baas vecht in drie bedrijven — verzwak hem en zie wat er gebeurt...">
           ${[1, 2, 3].map(f => `<span class="bb-pip ${(b.fase || 1) >= f ? 'aan' : ''}"></span>`).join('')}
         </div>
-        ${(b.aegis || 0) > 0 ? `<div class="bb-aegis" data-tip="Pappies Invloed: de Erfprins is ONAANTASTBAAR tot Drops dit goud heeft weggevreten. Gewone aanvallen en gif ketsen af.">🟡 Pappies Invloed · ${b.aegis}</div>` : ''}`;
+        ${(b.aegis || 0) > 0 ? `<div class="bb-aegis" data-tip="Pappies Invloed: de Erfprins is ONAANTASTBAAR tot Drops dit goud heeft weggeknaagd. Gewone aanvallen en gif ketsen af.">🟡 Pappies Invloed · ${b.aegis}</div>` : ''}`;
     } else {
       bb.style.display = 'none';
     }
@@ -3192,7 +3192,7 @@ function volgendeAct(verslagenBaas) {
      De eerste keren ontrafel je zijn raadsel in Act 2 i.p.v. hem cadeau te krijgen. */
   if (isOntgrendeld('drops') && !heeftMetgezel() && (!S.metgezel || !S.metgezel.vluchtig)) {
     geefMetgezel('drops');
-    melding('🔥 Drops daalt met je mee de Catacomben in.');
+    melding('🐾 Drops daalt met je mee de Catacomben in.');
   }
   S.pos = null;
   S.kaart = genereerKaart();      /* nieuwe ladder, act-bewust; de verdieping-teller loopt door */

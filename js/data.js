@@ -808,7 +808,7 @@ const VIJANDEN = {
     naam: 'De Erfprins', art: '🤴', hp: [210, 210], baas: true, aegis: 15,
     titel: 'Erfgenaam zonder verdienste',
     /* PAPPIES INVLOED: een gouden aegis maakt de Erfprins ONAANTASTBAAR — gewone
-       aanvallen en gif ketsen af. Alleen Drops' vuur vreet eraan (zie METGEZELLEN
+       aanvallen en gif ketsen af. Alleen Drops knaagt eraan (zie METGEZELLEN
        .drops.beurt). Pappies koopt nieuw goud ("Pappies Geld") en probeert Drops
        weg te wuiven ("Wegwuiven", gericht). Zónder Drops blijft hij onaantastbaar
        (trage mercy-decay in beginSpelerBeurt). Verbrijzel het goud → je venster. */
@@ -856,18 +856,18 @@ const VIJANDEN = {
    te sterven — terug te vinden via een latere queeste/event. */
 const METGEZELLEN = {
   drops: {
-    naam: 'Drops', art: 'drops', icoon: '🔥', zeld: 'episch', maxHp: 26,
-    tekst: 'Begin van je beurt: schroeit een vijand voor 5. Vreet door de Pappies Invloed van de Erfprins (6/beurt) — zónder hem is de baas onaantastbaar. Vangt soms een klap op; vlucht als zijn licht dooft.',
-    lore: 'Een vonk die wéigerde te doven. Uit het herrezen licht kroop iets kleins, warms en koppigs — en het bleef bij je.',
+    naam: 'Drops', art: 'drops', icoon: '🐕', zeld: 'episch', maxHp: 26,
+    tekst: 'Begin van je beurt: bijt een vijand voor 5. Knaagt door de Pappies Invloed van de Erfprins (6/beurt) — zónder hem is de baas onaantastbaar. Vangt soms een klap op; vlucht als het te zwaar wordt.',
+    lore: 'Geen fakkel kon het wekken — het donker wel. Uit het diepste zwart kroop iets kleins, warms en koppigs, met trouwe ogen. Het had jouw licht nooit nodig. Het bleef.',
     doelbaar: true, dreiging: 0.22,
     beurt(m) {
-      /* tegen de Erfprins met aegis: vreet aan het goud i.p.v. te schroeien */
+      /* tegen de Erfprins met aegis: knaagt aan het goud i.p.v. te bijten */
       const baas = (S.gevecht.vijanden || []).find(v => v.id === 'de_erfprins' && !v.dood);
       if (baas && (baas.aegis || 0) > 0) {
         const af = Math.min(baas.aegis, 6);
         baas.aegis -= af;
         pose2D(m, 'attack', 0.5);
-        fxNummer(actorEl(baas), `🔥 Pappies Invloed −${af}`, 'fx-schade');
+        fxNummer(actorEl(baas), `🐾 Pappies Invloed −${af}`, 'fx-schade');
         Klank.sfx('klap');
         return;
       }
@@ -879,13 +879,13 @@ const METGEZELLEN = {
       if (baas && (baas.aegis || 0) > 0) return { type: 'aegis', n: Math.min(baas.aegis, 6) };
       return alleVijanden().length ? { type: 'aanval', dmg: 5 } : null;
     },
-    /* DE LAATSTE VONK — bewuste, PERMANENTE opoffering (climax tegen een baas).
+    /* DE LAATSTE SPRONG — bewuste, PERMANENTE opoffering (climax tegen een baas).
        Verbrijzelt alle Pappies Invloed, ramt de baas en schildt jou; Drops is
        daarna voorgoed weg. Het opoffering-haakje is generiek: latere verhaal-
        metgezellen kunnen hun eigen offer krijgen door dit blok in te vullen. */
     opoffering: {
-      naam: 'De Laatste Vonk',
-      tekst: 'Drops brandt zichzelf volledig op: verbrijzelt alle Pappies Invloed, 40 schade aan de baas, en jij krijgt 15 Blok.',
+      naam: 'De Laatste Sprong',
+      tekst: 'Drops springt één laatste keer — recht door de Pappies Invloed heen: hij verbrijzelt al het goud, 40 schade aan de baas, en jij krijgt 15 Blok.',
       /* pas beschikbaar op het wanhopige moment — niet vanaf beurt 1 (anders gooi
          je per ongeluk je enige aegis-vreter weg). Verschijnt als de baas onder 60%
          zakt, óf als Drops zelf kritiek laag staat (offer hem vóór hij verbannen wordt). */
@@ -940,11 +940,11 @@ const MYSTERIES = {
     metgezel: 'drops', baasId: 'de_erfprins',
     vereist: ['drops_baas', 'drops_figuur', 'drops_episch'],
     scherven: {
-      drops_baas:   { bron: 'baas',   codexTekst: '„Wat uit zichzelf brandt, kun je niet kopen."' },
-      drops_figuur: { bron: 'figuur', codexTekst: '„Het kwam pas toen ik het durfde te doven."' },
-      drops_episch: { bron: 'episch', codexTekst: '„Die ene vlam snuit zichzelf — als jij durft."' },
+      drops_baas:   { bron: 'baas',   codexTekst: '„Wat trouw blijft zonder loon, kun je niet kopen — en niet namaken."' },
+      drops_figuur: { bron: 'figuur', codexTekst: '„Het kwam pas toen ik mijn licht dúrfde te doven."' },
+      drops_episch: { bron: 'episch', codexTekst: '„Doof alles. In het zwart wacht wat altijd al meeliep."' },
     },
-    eindreveal: { titel: 'UIT HET GEDOOFDE LICHT', kreet: 'Waar je fakkel stierf, ontwaakt een levende vlam.' },
+    eindreveal: { titel: 'UIT HET GEDOOFDE LICHT', kreet: 'Waar je fakkel stierf, kroop iets warms uit het zwart — en het week niet meer van je zij.' },
   },
 };
 window.MYSTERIES = MYSTERIES;   /* expliciet op window: de helpers in game.js guarden op window.MYSTERIES */
@@ -987,9 +987,9 @@ const UITSPRAKEN = {
        (geïndexeerd op Codex.erfprinsOntmoetingen). Grootspraak die omslaat in paniek. */
     orakel: [
       '„Pappies goud koopt álles. Zélfs jouw nederlaag."',
-      '„Eén ding koopt Pappie niet: wat uit zichzélf brandt."',
-      '„Wacht — waarom klem je dat lichtje zo vast? Bang in het donker?"',
-      '„...het slaapt in jouw vlam. Houd haar brandend en het blijft slapen. Slím van Pappie."',
+      '„Eén ding koopt Pappie niet — en námaken lukt hem ook niet: wat trouw blíjft zonder loon."',
+      '„Wacht — waarom klem je dat lichtje zo vast? Bang voor wat in het donker meeloopt?"',
+      '„...het volgt je al, in het zwart dat jij niet dúrft te maken. Houd je fakkel maar brandend. Slím van Pappie."',
     ],
     /* sist hij op het moment dat jij in zijn zaal je fakkel laat DOVEN (de rite) */
     gedoofd: '„Wat... WÁT DOE JE? Het wordt wakker! BEWAKING! BE—"',

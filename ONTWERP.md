@@ -460,10 +460,12 @@ herindeling en (optioneel, polish) een tap-to-inspect voor handkaarten.
 
 # De Proloog — "Een Productief Leven" (geparkeerd, ontwerp 14-06)
 
-> **16-06 ingeweven (zie PROLOOG.md "De rode draad"):** de **opoffer-draad** —
-> fakkel = de kiem van Drops; de proloog zaait de levende sintel, Act 2 oogst
-> (het Mysterie wékt hem, de Laatste Vonk **offert** hem). Het enige onfactureerbare
-> is ook het enige dat je ooit vrijwillig weggeeft — spiegel van "jíj werd weggegooid".
+> **16-06 ingeweven (zie PROLOOG.md "De rode draad"); 17-06 herzien naar de hond:**
+> de **opoffer-draad** — fakkel = de onkopieerbare warmte; **Drops = de trouw (een
+> hond) die ze in het donker wékt** (niet langer een levende vlam). De proloog zaait
+> die warmte, Act 2 oogst (het Mysterie wékt hem, de **Laatste Sprong** **offert**
+> hem). Het enige onfactureerbare is ook het enige dat je ooit vrijwillig weggeeft —
+> spiegel van "jíj werd weggegooid".
 
 Volledig ontwerp in **`PROLOOG.md`** (brainstorm Thomas + Claude). Een proloog
 vóór de afdaling: droge, tragische, absurde satire op de rat race in een
@@ -501,6 +503,24 @@ bestaande engine met andere art + woorden.
 <!-- ============================================================ -->
 
 # Het Metgezel-Mysterie (Act 2+)
+
+> **⚠️ HERZIEN 17-06-2026 — lees met `WERKCONCEPT.md` ernaast.** De mysterie-
+> *engine* hieronder blijft volledig geldig (MYSTERIES-template, scherven, rite,
+> cross-run-unlock). Twee dingen zijn ge-her-thematiseerd en moeten bij het lezen
+> mentaal vervangen worden:
+> 1. **Drops = een hond-achtig wezen, géén levende vlam.** Overal waar hieronder
+>    "levende vlam / vuurwezen / Drops ontwaakt uit het licht" staat: lees *trouw
+>    wezen dat je in het tótale donker vindt*. De fakkel blijft de onfactureerbare
+>    ruggengraat; de scherf-/orakel-/revealteksten draaien nu om **onkopieerbare
+>    trouw** ("wat je niet kunt namaken") i.p.v. "wat uit zichzelf brandt". De
+>    code (`js/data.js`, `js/game.js`) is al omgezet; de citaten hieronder tonen
+>    nog de oude vlam-versie.
+> 2. **Act 2-baas wordt The Copycat (kopieer-mechaniek), niet de gouden aegis.**
+>    De "Pappies Invloed"-aegis + de aegis-vretende companion-rol zijn een
+>    *placeholder* tot de Copycat-baas zijn eigen design+build krijgt (Track B).
+>    Lees aegis-passages als "de huidige tijdelijke baasmechaniek".
+>
+> De **opoffering** heet nu **De Laatste Sprong** (was: De Laatste Vonk).
 
 ## 1. Visie (3 zinnen)
 Metgezellen worden niet langer geschonken maar **ontrafeld over runs heen**: de eerste Act 2-runs hóór je te verliezen tegen de Erfprins, en élk verlies laat een leesbare scherf van een groter raadsel achter. Drie bronnen — de Erfprins die zijn eigen geheim uit grootspraak en paniek verklapt, mysterieuze figuren met raadsels, en eigen epische Catacomben-vijanden — sturen je naar de **dark twist**: tegen alles in wat het spel je leerde doof je op het juiste moment bewust je fakkel, en uit het totale duister ontwaakt de levende vlam (Drops). Het geheel is een data-gestuurd `MYSTERIES`-register dat als template dient, zodat elke toekomstige zeldzame metgezel zijn eigen mysterie en eigen "rite" krijgt — falen is nooit verlies, alleen kennis die de reset overleeft.

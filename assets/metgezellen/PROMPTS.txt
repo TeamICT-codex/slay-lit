@@ -32,11 +32,18 @@ SJABLOON (vervang alleen de Item-regel):
 
 DE METGEZELLEN (bestandsnaam = art-id):
 
-drops.png        a small, plucky living flame-sprite — a curl of warm orange
-                 fire shaped like a tiny creature with two bright eyes and
-                 little stubby ember-arms, a glowing coal core, mischievous and
-                 loyal. CRISP coloured flame, sharp edges, NO white wash/halo.
-                 (geboren uit de heraangestoken fakkel — verschijnt in Act 2)
+drops.png        a small, scruffy, loyal hound — a stray dog-creature with shaggy
+                 dark fur, soulful warm-glowing eyes and a single faint ember-spark
+                 caught deep in its coat (a coal that never went out), alert and
+                 devoted, ears up, looking back at its master. Dark-fantasy,
+                 painterly, warm ember rim-light, NOT cute-cartoon. CRISP coloured
+                 edges, NO white wash/halo/bloom.
+                 (geen vlam meer — het trouwe wezen dat je in het TOTALE DONKER vindt
+                  als je fakkel dooft; verschijnt in Act 2. De ember in z'n vacht is
+                  de stille knipoog naar de fakkel-rode-draad.)
+                 POSES: drops_attack = lunging bite, low and forward; drops_hit =
+                 flinching recoil, ears back; drops_death = a final mid-air leap,
+                 body stretched forward (de Laatste Sprong — het offer).
 
 vlamwachter.png  a small stoic guardian: a squat armoured figure holding a
                  round ember-lit shield almost as big as itself, a glowing rune

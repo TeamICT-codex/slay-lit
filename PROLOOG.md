@@ -19,10 +19,13 @@ race, journaal) en is **beneden** de vlucht. Maar — beslist — **escapisme is
 een illusie**: beneden is dezelfde rat race met zwaarden. Je ontsnapt niet, je
 verandert de wallpaper van je cel. De **fakkel** is het enige onfactureerbare
 dat overblijft: *"voor het licht dooft" = voor je laatste niet-factureerbare
-minuut wordt wegbezuinigd.* En dat warme licht *leeft*: het is de naamloze kiem
-van **Drops**. De wrede pointe die pas in Act 2 oogst — het énige dat het systeem
-nooit van je kon factureren, is óók het enige dat je ooit **vrijwillig** zult
-weggeven (niet voor winst, uit liefde). Zie *De rode draad* onderaan.
+minuut wordt wegbezuinigd.* En dat warme licht *leeft* — niet als vlam, maar als
+de trouw die het systeem nooit kon factureren én nooit kon namaken. Pas in Act 2,
+in het diepste donker, **wékt** die warmte een levend wezen: **Drops**, de hond
+die je vindt waar je fakkel sterft. De wrede pointe die pas dán oogst — het énige
+dat het systeem nooit van je kon factureren, is óók het enige dat je ooit
+**vrijwillig** zult weggeven (niet voor winst, uit liefde). Zie *De rode draad*
+onderaan.
 
 ## Toon & de lat
 Droog, tragisch, absurd, zelfspot. **Stereotype-doorbrekend** is de harde lat.
@@ -85,8 +88,9 @@ verandert.)
 - De factuur-van-je-leven wordt deels door de speler ingevuld.
 - De getypte jeugddroom + de seed (= medewerker-nummer) worden bewaard en komen
   terug (op de factuur, op het startwapen, en bij de DICKtator in Act 3).
-- **De fakkel = de kiem van Drops** (16-06 ingeweven): de proloog zaait de levende
-  sintel, Act 2 oogst — het Mysterie wékt hem, de Laatste Vonk **offert** hem. Het
+- **De fakkel = de onkopieerbare warmte; Drops = de trouw die ze wékt** (16-06,
+  herzien naar de hond): de proloog zaait die warmte, Act 2 oogst — het Mysterie
+  wékt in het donker een trouw wezen (Drops), de Laatste Sprong **offert** hem. Het
   enige onfactureerbare is ook het enige dat je ooit vrijwillig weggeeft. Zie
   *De rode draad*.
 
@@ -170,7 +174,8 @@ jingle, trager) zakt en buigt mee naar beneden; het TL-plafond wijkt omhoog als
 een neonhemel. Het laatste lichtpunt is de meter → VERBINDING VERBROKEN →
 bevriest → stopt. **Voor het eerst in 25 jaar wordt er niets gefactureerd.
 Stilte.** En in je borstzak: iets warms — de fakkel. En het *ademt*. Niet zomaar
-een vlam: een sintel, levend, nog naamloos, nog niet wakker. Je draagt iets mee.
+een vlam: een warmte die *leeft* — het enige dat ze nooit konden factureren of
+namaken. Je draagt iets mee dat in het donker ooit antwoord krijgt.
 
 ## SCÈNE 5 — Het Breekpunt (= heldenkeuze)
 Vallend in het donker komt het "ik" dat 25 jaar performde uit elkaar. Drie
@@ -194,9 +199,10 @@ kamer, drie zielen — zelfde botten, andere intro + tint:
 - **🔥 Thoverk** — landt zacht; hier brandt de fakkel het felst. "Een grot. Een
   ÉCHTE grot." Openingsregel = de getypte jeugddroom: "Ik wou ___ worden.
   Misschien… hier wel?" De sintel in je borstzak *flikkert* op bij het eerste
-  wezen — een glimp van iets levends (de kiem van **Drops**; de échte ontwaakt
-  pas in Act 2 via het Mysterie, en wat hij je dán zal vrágen, weet het kind nog
-  niet). Tint: start met extra fakkel/licht. Het hartverscheurendste pad — het
+  wezen — een glimp dat wat je draagt *leeft* op een manier die het systeem nooit
+  was (een voorbode van **Drops**; het trouwe wezen zélf komt pas in Act 2 via het
+  Mysterie — je vindt het waar je licht sterft — en wat het je dán zal vrágen, weet
+  het kind nog niet). Tint: start met extra fakkel/licht. Het hartverscheurendste pad — het
   kind weet niet dat dit de hel is.
 
 > **De vondst:** één keuze (welk masker) herkleurt de hele afdaling. Dat maakt de
@@ -206,29 +212,32 @@ kamer, drie zielen — zelfde botten, andere intro + tint:
 ---
 
 ## De rode draad: de fakkel → Drops → de opoffering
-Het lichtmotief loopt door van de proloog tot diep in Act 2 — één warm ding, drie
-gedaanten. De proloog hóéft dit niet uit te leggen; het is de onderstroom. Hij
-zaait, Act 2 oogst.
+Het warmtemotief loopt door van de proloog tot diep in Act 2 — één onkopieerbaar
+ding (de niet-declarabele warmte) dat onderweg een gezicht krijgt. De proloog
+hóéft dit niet uit te leggen; het is de onderstroom. Hij zaait, Act 2 oogst.
 
-1. **De proloog zaait de sintel.** De fakkel is het enige dat B.A.A.S. nooit kon
-   factureren: jouw laatste niet-declarabele warmte. In Scène 4 draag je 'm mee in
-   je borstzak — en hij *ademt*. Een levende sintel, nog naamloos, nog niet wakker.
-   In het **Thoverk-pad** (het deel van jou dat nog acht is en het licht vasthoudt)
+1. **De proloog zaait de warmte.** De fakkel is het enige dat B.A.A.S. nooit kon
+   factureren én nooit kon namaken: jouw laatste niet-declarabele warmte. In Scène 4
+   draag je 'm mee in je borstzak — en hij *ademt*. Niet Drops zélf (Drops is een
+   wézen, geen vlam) — wél de trouw die hem later in het donker zal wekken. In het
+   **Thoverk-pad** (het deel van jou dat nog acht is en het licht vasthoudt)
    flikkert hij het felst — een eerste glimp.
-2. **Act 2 wekt hem.** Je draagt die vlam de hele afdaling mee (het fakkelsysteem).
-   Pas in de Catacomben leer je dat hij *leeft* en een naam heeft: **Drops**. En je
-   krijgt hem niet cadeau — je moet ontdekken hóé je hem wekt (het **Metgezel-
-   Mysterie**: "you were meant to fail" → de dark twist: je fakkel bewust DOVEN, het
-   grootste taboe van het spel). Het kind hield het licht vast; nu leer je het echt
-   kennen — door het even los te laten.
-3. **De opoffering sluit de cirkel.** Liefhebben wat uit jezelf brandt, betekent
-   ooit kiezen om het te laten branden — vóór jou. Drops' **Laatste Vonk**: een
+2. **Act 2 wekt hem.** Je draagt die warmte de hele afdaling mee (het fakkelsysteem).
+   Pas in de Catacomben ontdek je dat ze niet alleen is: in het diepste donker komt
+   er een trouw wezen op af — **Drops**, een hond. En je krijgt hem niet cadeau — je
+   moet ontdekken hóé je hem wekt (het **Metgezel-Mysterie**: "you were meant to
+   fail" → de dark twist: je fakkel bewust DOVEN, het grootste taboe van het spel).
+   De clou: trouw heeft het systeem-licht niet nódig — je vindt haar net wáár je
+   licht sterft. Het kind hield de fakkel vast; nu leer je dat je hem even moet
+   durven loslaten.
+3. **De opoffering sluit de cirkel.** Liefhebben wat trouw bij je blijft, betekent
+   ooit kiezen om het — vóór jou — te laten gaan. Drops' **Laatste Sprong**: een
    bewuste, permanente opoffering om net de baas te kunnen vellen. De wrede rijm met
-   de proloog: het énige dat het systeem nooit van je kon factureren, geef jij
-   uiteindelijk **vrijwillig** weg — niet voor winst, uit liefde. En omdat Drops de
-   kiem is van het deel-dat-nog-acht-is, is hem opofferen = het onschuldige,
-   hoopvolle stuk van jezelf opbranden om verder te kunnen. *Let it burn — maar nu
-   met een gezicht.*
+   de proloog: het énige dat het systeem nooit van je kon factureren of namaken,
+   geef jij uiteindelijk **vrijwillig** weg — niet voor winst, uit liefde. En omdat
+   Drops belichaamt wat het kind in je nog onbevangen liefhad — trouw zonder
+   rendement — is hem opofferen het zwaarste én het zuiverste wat het spel je vraagt.
+   *Let it burn — maar nu met een gezicht.* (Letterlijk: nu kíjkt het je aan.)
 
 > Spiegel met de proloog: dáár werd jíj weggegooid (afgedankt, geïtemiseerd,
 > afgeschreven). Hier kies jíj om iets trouws weg te geven. Zelfde bijl, andere
