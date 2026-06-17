@@ -815,3 +815,249 @@ Thomas levert PNG's in `assets/karakters/`, `assets/events/`, `assets/metgezelle
 - **Multi-metgezel is leidend (NIET enkel Drops):** de "aegis-vreter" is een ROL/capability, geen hardcoded id==="drops". Meerdere metgezellen kunnen de Erfprins counteren (elk op hun manier); Drops is de eerste invulling. => de aegis-erosie uit B2 generiek maken (companion-capability i.p.v. Drops-specifiek), en de baas-gate check op "heeft een geschikte counter-metgezel OF genoeg skill".
 - **Elke metgezel een eigen, lichter mysterie met eigen rite** (bv. Vlamwacht ontwaakt door je fakkel net HELDER te houden — spiegelbeeld van Drops dark twist). De MYSTERIES-template draagt dit (verschil = vereist.length + #bronnen).
 - **Geparkeerd:** Erfprins-herbalans NA unlock + 2e Act 2-elite (wasgolem) — later.
+
+
+---
+
+# The Copycat — Act 2-eindbaasmechaniek (ontwerp 17-06-2026)
+
+> **Bouwklaar ontwerp uit de multi-agent ontwerp-pass** (16 agenten: 4 engine-recon
+> · 4 ontwerptheses · 3 juryleden — unaniem "De Dief" — · synthese · 3 adversariële
+> lenzen die 30 problemen vonden, 8 hoog · revisie). Vervangt de gouden "Pappies
+> Invloed"-aegis uit de B2-plak. Alle regelverwijzingen geverifieerd tegen de
+> huidige `js/game.js` en `js/data.js`. Hangt samen met `WERKCONCEPT.md` (gelockte
+> keuzes) en het Metgezel-Mysterie hierboven. **Nog bij te schaven door Thomas —
+> zie de gemarkeerde smaakpunten onderaan deze sessie.**
+
+## TL;DR
+THE COPYCAT is de Erfprins (nepo-baby): hij steelt letterlijk jouw kaarten uit de
+gevecht-kopie van je dek, waardeert ze op, en kaatst je eigen werk tegen je terug —
+en hij groeit naarmate jij optimaler speelt (de DICKtator-foreshadow). De gouden
+"Pappies Invloed"-aegis verdwijnt volledig; hij is gewoon aantastbaar maar voedt
+zich met jouw vlijt. Drops (onkopieerbare hond-trouw) breekt de machine één keer
+bij je first-clear omdat hij nooit langs `speelKaart()` komt en dus mechanisch
+onindexeerbaar is. De review legde drie bouw-blokkers bloot, nu hard opgelost:
+stelen werkt uitsluitend op de gevecht-kopie (S.dek blijft heilig, geen cross-run-
+corruptie), alleen een handvol expliciet `kopie:`-gevlagde kaarten is stelbaar
+(geen NaN/multi-hit-ravage), en gif voedt nu óók via `verliesHp` (de Gifmagiër kan
+de baas niet meer omzeilen). Fase-escalatie loopt puur op voeding (geen HP-vangnet),
+de teruggekaatste klap is na álle scaling gecapt en volledig getelegrafeerd, en een
+bewezen-in-code speelbare-hand-bodem sluit de softlock uit.
+
+## 1. Kernidee
+THE COPYCAT is de Erfprins, het zoontje van de baas: hij maakte **nóóit iets zelf**.
+Eerst leefde hij van pappies geld — nu dat op is, **steelt hij jouw kaarten** (uit
+de speelpool van dít gevecht), waardeert ze op, en speelt jouw eigen beste werk
+tegen je terug. De mechaniek *is* het argument: hoe optimaler jij speelt, hoe
+gevaarlijker zijn arsenaal — de directe foreshadow van de Act 3-these "goed spelen
+voedt de baas". De gouden aegis verdwijnt volledig: hij is gewoon aantastbaar, maar
+hij **groeit met jouw vlijt** in plaats van zich te verstoppen. Cruciaal: hij is
+**leeg zonder jou** — heeft hij niets gestolen, dan is zijn enige eigen zet
+pathetisch zwak. Al zijn echte schade komt uit *jouw* kaarten. Dat maakt "hij maakt
+nooit iets zelf" mechanisch waar (geen eigen 22-dmg Driftbui meer).
+
+## 2. De kopieer-mechaniek (beurt voor beurt)
+Eén **Plagiaat-lus** in drie kanalen (drie-kanaals voorraad-patroon: init in
+`maakVijand` / aangroei in `speelKaart`+`doe()` / correctie in `beginSpelerBeurt`).
+
+**KANAAL 1 — Observeren** (`baasZietKaart(c)`, één regel in `speelKaart` ná
+`def.speel`, game.js:2245). Filter = **expliciete whitelist-vlag op de kaart-def**:
+- Stelbaar ⇔ `kdef(c).kopie` bestaat. `kopie` = genormaliseerd snapshot-recept, bv.
+  `{soort:'aanval', dmg:12}`, `{soort:'blok', blok:8}`, `{soort:'gif', gif:5}`.
+- We taggen **6-8 single-target, single-effect basiskaarten** met `kopie:{…}` (Slag,
+  Verdediging, een paar held-aanvallen/vaardigheden). Multi-hit, alle-vijand,
+  conditionele bonus en `signatuurMoment` krijgen **géén** vlag → onstealbaar.
+- `g.laatstGespeeld` (ringbuffer, max 3) bewaart **alleen het snapshot** `{id, kopie}`
+  — nooit een referentie naar een levend deck-object.
+
+**KANAAL 2 — Stelen** (STEEL-intent → `doe(v)`, ná de baasaanval): pakt de sterkste
+kaart uit `g.laatstGespeeld`, zoekt **één instance op `uid` in `g.trek` óf `g.afleg`**
+(NOOIT `S.dek`), verwijdert die, pusht het ge-cap'te snapshot in `v.gestolen[]`. Geen
+uid-match (kaart in hand) → steelt niet → terugval op basis-zet. Lege buffer → STEEL
+wordt nooit gekozen.
+
+**KANAAL 3 — Terugspelen** (PLAGIAAT-intent zodra `v.gestolen.length > 0`): via een
+**vertaallaag** die alleen het snapshot leest (nooit `def.speel`):
+- `aanval` → **`doeSchade(sp(), dmg, v)` rechtstreeks** (gedwongen op de speler, niet
+  via `kiesAanvalDoel` dat de hond zou raken). Scaling+krachten in de vertaallaag,
+  daarna gecapt op de uitkomst (§8).
+- `blok` → `geefBlok(v,n)`; `gif/zwak/kwetsbaar` → `geefGif/geefStatus(sp(),…)`.
+
+**TERUGWINNEN** (`geefTerugwin(b,n,bron)`): elke **14 echte schade** ploft de
+**onderste** gestolen kaart terug als **verse `nieuweKaart(id)` (nieuwe uid) in
+`g.trek`** — kaal (`up:false`), thematisch én breekt de high-roll-loop.
+
+## 3. Groeit met jouw optimalisatie (DICKtator-foreshadow)
+Alle voeding loopt via **`verliesHp`** (de échte chokepoint, game.js:838) zodat geen
+schadebron de spiraal omzeilt — inclusief gif. `geefVoeding(b,bron,c)` en
+`geefTerugwin` zijn de enige schrijvers. Drie assen:
+1. **Arsenaal-tempo:** combo's geven hem sneller een dodelijk arsenaal; chip voedt traag.
+2. **Voeding-teller `v.gevoed`** (de enige fase-trigger): bij stelen `+= kkost`; bij
+   observatie `+= round((kval(c,'dmg')||0)/max(1,kkost(c)||1))` — `||0`/`||1`-guards.
+3. **Piek-voeding** (in `verliesHp`, alleen bron = speler-held): nieuwe piek →
+   `v.gevoed += floor((n - v.maxKlap)/4); v.maxKlap = n`.
+
+**Gif-voeding:** staande gif voedt óók (gif-tik game.js:2370-2372 → `+= round(gifTik/2)`
++ `geefTerugwin(b,gifTik,'gif')`). Gif blijft wincon (terugwint je dek), geen I-win-knop.
+
+**Herhalings-bonus op ENERGIE i.p.v. kaart-id:** dezelfde dure bom (`kkost>=2`) 2+
+beurten na elkaar → +50% voeding. Goedkope wegwerp-spam (Slag/Verdediging) wordt
+nóóit extra bestraft — dat is de bedoelde "veilige voer"-counterplay.
+
+> **Kracht-boekhouding:** `v.copyKracht` apart van fase-buffs; telt mee vóór de
+> eind-cap zodat de breuk (`copyKracht=0`) de teruggespeelde schade meetbaar verlaagt.
+> Eind-dmg = `cap(basis + v.status.kracht + v.copyKracht, na act-scaling, ≤30)`.
+> **Breker voedt niet:** `geefVoeding`/piek gaten op `bron===g.speler`; de companion
+> telt alleen voor `terugwinMeter`. Trouw voedt de dief niet.
+
+## 4. Fases (puur voedings-gedreven)
+Escalatie op **`v.gevoed` alleen** (geen HP-vangnet — dat ontkoppelt de these).
+**Eenrichting via sticky `v.fase`-flag** (alle gedrag leest fase, nooit rauw
+`v.gevoed`); `b.fase=N` vóór de kracht-buff (idempotentie). Tegen stall: voeding
+koelt af tot **bodem = huidige fase-drempel**, plus passieve straf: elke beurt 0
+schade op de baas → `v.gevoed += 1`. Uitwachten verliest op de klok.
+
+- **Fase 1 — DE GRIJPER** (`gevoed < 8`): steelt 1/beurt, speelt ≤1/2 beurten terug.
+  Lege zet = pathetische 6-8 dmg "Pappie Bellen". *intro:* „EINDELIJK — IEMAND OM VAN
+  AF TE KIJKEN." · *steelt:* „Mooi gespeeld. Ik neem het."
+- **Fase 2 — DE VERZAMELAAR** (`gevoed >= 8`, +1 Kracht): grist de duurste uit je
+  laatste 2 zetten; speelt elke beurt terug. „Wéét je wel wie mijn váder is?! Ik
+  hóéf niks zelf te maken."
+- **Fase 3 — DE PLAGIATOR** (`gevoed >= 18`, +2 Kracht, `.woede`): speelt **TWEE**
+  gestolen kaarten/beurt, grist uit je laatste 3 zetten. „ALLES wat jij kan, kan ik
+  óók — ik kopieer het gewoon!" · *dood:* „Maar... ik kopieerde alles... waarom
+  verlies ík...?"
+
+> Voetnoot-vloek (derde verschralingsbron) **geschrapt** — diefstal + cap + herhaling
+> is genoeg druk op een 10-kaart-starterdek.
+
+## 5. Counterplay zónder companion (het "meant to fail"-pad)
+Extreem moeilijk maar bewezen-in-code winbaar, nooit softlock/crash.
+1. **Terugwinnen door te raken** — elke 14 schade (incl. gif) geeft een kaart terug.
+2. **Kies wat je voert** — hij pakt de duurste recente *stelbare* kaart; voer hem
+   goedkope wegwerpkaarten en bewaar je bommen. Skill = tempo en volgorde.
+3. **Stall verliest** — afkoeling tot fase-bodem + passieve stall-straf.
+
+**Getelegrafeerde, gefaseerde ontlading:** de ge-cap'te dmg staat in `it.dmg` vóór de
+intent rendert, zodat `intentTekst` (game.js:1756) het exacte getal toont. In fase 3
+twee aparte rode "PLAGIAAT GELADEN"-pips met elk hun getal. De arsenaalmeter-telegraaf
+fade't pas in **ná het eerste besef-moment** (eerste herkende kaart terug, met JOUW
+kaartnaam) — eerst de schok, dán de fair-play telegraaf.
+
+**Mercy-vangnet** (vervangt de aegis-decay, game.js:2472-2473): in `beginSpelerBeurt`
+één keer `const breker = levendeBrekerCompanion()` en kies dan **óf** mercy-lek **óf**
+breker-terugwin, nooit beide. Zonder breker: `v.gestolen` lekt 1/beurt terug, voeding
+koelt af, **harde cap `v.gestolen.length <= 5`**.
+
+**Anti-softlock-invariant (in code):** eind `beginSpelerBeurt`, ná trekken — 0
+speelbare kaarten in hand → lek extra 1 terug + trek door, of geef 1 energie. Je houdt
+altijd ≥1 speelbare kaart. Plus **per-gevecht steel-cap (≤12 totaal)**. Diefstal werkt
+alléén op de gevecht-kopie → verloren run laat `S.dek` volledig intact.
+
+## 6. Drops' offer "De Laatste Sprong" (breekt de machine)
+Drops = HOND = onkopieerbare trouw. **Waaróm een companion de machine breekt:** hij
+staat niet in je dek, passeert `speelKaart()` nooit, komt nooit langs het
+observatiepunt — *mechanisch onindexeerbaar*. **Generiek, rol-gebaseerd** (NIET
+`id==='drops'`): companion-def krijgt `rol:'breker'`; engine zoekt via
+`levendeBrekerCompanion()`. Per-beurt: Drops bijt voor 6 én voedt `terugwinMeter`
+(`geefTerugwin(b,6,'breker')`), voedt `v.gevoed` níét.
+
+**Offer `doe(m,g)`** (van `aegis=0` herschreven): (1) `g.copycatGebroken=true` →
+observeren/stelen/plagiaat worden no-op; (2) leeg `v.gestolen`, plof alles als verse
+`nieuweKaart(id)` in `g.trek`; (3) trek `v.copyKracht` terug (fase-Kracht blijft); (4)
+40 schade + 15 blok.
+
+**First-clear vs. herhaalbaar:** volledige breuk = first-clear-only (Codex-vlag). Latere
+runs: 40+15 maar **géén permanente no-op** — de machine **herstelt na 3 beurten**. Gate:
+**baas < 50% HP OF `v.fase >= 3`** (breekknop er precies wanneer hij 't gevaarlijkst is).
+
+## 7. Mysterie-coherentie & orakel
+`noteerScherf` is idempotent; de baas levert maar **1 van 3** scherven (`drops_baas`).
+Voorbij run 1 geeft verliezen géén nieuwe baas-scherf — daarom vuurt de **eerste
+DUBBELE TERUGKAATSING** een aparte `noteerScherf('drops','drops_figuur')`: de
+mechaniek zelf voedt het mysterie. **Orakel (data.js:988-993) herschreven over twee
+assen:**
+1. *(kopieer)* „Ik hóéf niks zelf te maken — ik kijk gewoon af."
+2. *(fakkel-rite, behouden)* „Eén ding namaken lukt me niet: wat trouw blíjft zonder loon."
+3. *(fakkel-rite, behouden)* „Wacht — waarom klem je dat lichtje zo vast? Bang voor wat in het zwart meeloopt?"
+4. *(synthese)* „Hoe beter jij speelt, hoe sterker ík word... maar het zwart dat jij niet dúrft te maken, daar leeft wat ik nooit kan kopiëren."
+
+> ⚠️ Let op: deze orakel-herschrijving **wijkt af** van de huidige (in Track A al
+> herthematiseerde) regels in data.js. Niet automatisch overnemen — Thomas kiest.
+
+## 8. Startgetallen voor balans
+
+| Knop | Startwaarde |
+|---|---|
+| Baas HP | **210** (behoud) |
+| Stelbare kaarten | alleen `kopie:{…}`-gevlagd (6-8 stuks) |
+| Steel-diepte (sticky fase) | laatste 1 / 2 / 3 zet |
+| Opwaardering teruggespeeld | +50% op snapshot, **eind-dmg na ÁLLE scaling ≤ 30** |
+| Terugwin-drempel | **14** schade (incl. gif) = 1 kaart terug |
+| Teruggewonnen kaart | **kaal** (`up:false`), verse uid in `g.trek` |
+| Fase-drempels (enige trigger) | `gevoed >= 8` → f2; `>= 18` → f3 (sticky) |
+| Voeding-afkoeling | tot fase-bodem, nooit eronder |
+| Stall-straf | +1 `gevoed`/beurt dat jij 0 schade doet |
+| Fase-buffs | f2 +1, f3 +2 Kracht (in `v.copyKracht`) |
+| Eigen zet (leeg arsenaal) | pathetisch 6-8 dmg |
+| Arsenaal harde cap | **5** gelijktijdig |
+| Per-gevecht steel-cap | **12** totaal ooit |
+| Mercy-lek (geen breker) | 1 kaart/beurt terug + afkoeling |
+| Herhalingsbonus | alleen `kkost>=2`, zelfde id 2+ beurten: ×1.5 |
+| Drops bijt | 6/beurt (telt voor terugwin, NIET voor voeding); maxHp 26 |
+| Laatste Sprong (first-clear) | 40 + 15 blok + permanente breuk + heel arsenaal terug |
+| Laatste Sprong (herhaling) | 40 + 15 blok, breuk **herstelt na 3 beurten** |
+| Offer-gate | baas < 50% HP **OF** `v.fase >= 3` |
+| Plagiaat-cadans (sticky fase) | f1: 1/2 beurten · f2: 1/beurt · f3: 2/beurt |
+
+> **Kritische CAP-noot:** `vijandAanval` bakt act-scaling in (`×(1+0.15·(act-1))`,
+> game.js:805). Daarom kaatst de vertaallaag **niet via `vijandAanval`** maar via
+> `doeSchade(sp(),dmg,v)` rechtstreeks, met eigen berekening (`basis + kracht +
+> copyKracht`, act-scaling, **dán clamp op 30**). Cap op de **uitkomst**, niet de basis.
+
+## 9. Het wow-moment
+**DE DUBBELE TERUGKAATSING** (fase 3, eerste keer): twee gestolen kaarten achter
+elkaar, met de naam van JOUW kaart in zijn intent. `baasFaseMoment`-flits: „Kijk —
+JOUW beste zet. Nu is het MÍJN beste zet." Vuurt tegelijk de `drops_figuur`-scherf.
+Besef: *hij vecht met mijn deck.*
+
+**Tweede beat (offer):** de eerste "De Laatste Sprong" — de machine probeert de
+hondensprong te classificeren en faalt: `CLASSIFICEREN... ONINDEXEERBAAR — TROUW: GEEN
+PRECEDENT`, doorgestreepte arsenaalbalk, vlak vóór Drops je hele arsenaal terugrist.
+
+## 10. Engine-bouwplan (per bestand, geverifieerd)
+**Te slopen:** `data.js:808` `aegis:15`; `:818-824` Pappies Geld; `:826-831`
+Wegwuiven · `game.js:866-873` aegis-afweer in `verliesHp` (volledig weg; Copycat
+aantastbaar) · `2297-2314` `checkErfprinsFase`→`checkCopycatFase` (voeding, sticky) ·
+`2472-2473` aegis-decay → Copycat-mercy-lek · `data.js:863-881` `drops.beurt` aegis-
+knaag → `rol:'breker'`-bijt · `:898-909` `opoffering.doe` → breekt de machine ·
+`game.js:1816` Pappies-badge → arsenaalmeter · Erfprins multi-hit eigen-aanvallen →
+pathetische lege-zet; orakel herschreven.
+
+**Nieuwe state (`maakVijand`, game.js:1416):** `if (def.copycat) { v.gestolen=[];
+v.gevoed=0; v.terugwinMeter=0; v.maxKlap=0; v.copyKracht=0; v.totaalGestolen=0;
+v.brokenTeller=0; }` — **lui guarden op élke leesplek** (`(v.gestolen||[])`) tegen
+de mid-fight Drops-injectie (zie [[lookup-bugklasse]]).
+**Nieuwe `g`-velden (`startGevecht`, 1428):** `g.laatstGespeeld=[]`, `g.vorigeId=null`,
+`g.copycatGebroken=false`.
+
+**Hooks:** `speelKaart`:2245 `baasZietKaart(c)` · `verliesHp`:838 voeding/terugwin/piek
+(bron-gegate) · gif-tik:2370-2372 copycat-tak · dispatch:2273 `if (VIJANDEN[b.id].copycat)
+checkCopycatFase` · `data.js` `de_erfprins` `copycat:true`, `kies()` puur (mutatie in
+`doe()`) · **migreer ALLE `de_erfprins`-id-checks naar de copycat-vlag** (checkDropsOntwaak
+:1023, mercy:2472, scherf:1528-1530, baasUitspraken:630, orakel-render:1578) + grep-
+verificatie; `MYSTERIES.drops.baasId` blijft als **data** · `revealDrops`:1034 zet
+`rol:'breker'` op de geïnjecteerde metgezel. Copycat-art-prompt in PROMPTS.txt.
+
+## 11. Reviewfixes (samenvatting)
+**Hoog (8):** steel uit gevecht-kopie i.p.v. `S.dek` (geen cross-run-corruptie) ·
+whitelist `kopie:`-vlag (geen multi-hit-vertaal) · breker één-pad-per-beurt + lui
+guarden (geen null-crash/flip) · gif voedt via `verliesHp` (mono-poison dicht) ·
+per-gevecht netto-druk (steel niet kosmetisch) · HP-vangnet weg (these intact) ·
+orakel behoudt fakkel-signposting · mysterie-progressie eerlijk (`drops_figuur` op de
+mechaniek). **Midden:** gedwongen speler-doel + eind-cap + telegraaf · speelbare-hand-
+bodem in code · sticky fase (geen oscillatie) · volledige id-migratie · één
+`geefTerugwin`-bron · NaN-guards · `copyKracht` toegepast · first-clear vs.
+herhaalbaar (geen cakewalk) · stall-straf · max twee verschralingsbronnen. **Laag:**
+offer-gate `<50% OF f3` · herhalingsbonus op energie · kale terugwin · breker voedt
+niet · lege-buffer-guard + pure `kies()`.
