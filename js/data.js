@@ -957,6 +957,32 @@ const VIJANDEN = {
       return { naam: 'Origineel Vonnis', type: 'aanval', dmg: 7, hits: 2 };
     }
   },
+  /* extra kopieerhel-vijanden (Act 2-promptbib) */
+  stempelaar: {
+    naam: 'De Stempelaar', art: '🖋️', hp: [25, 30],
+    kies: (v, beurt) => beurt === 0
+      ? { naam: 'Goedkeuringsstempel', type: 'debuff', doe: () => geefStatus(sp(), 'kwetsbaar', 2) }
+      : (willekeurig() < 0.6
+          ? { naam: 'Tegendruk', type: 'aanval', dmg: 7, doe: () => geefStatus(sp(), 'kwetsbaar', 1) }
+          : { naam: 'Inktstapel', type: 'blok', blok: 8 })
+  },
+  dossierwurm: {
+    naam: 'De Dossierwurm', art: '🐛', hp: [28, 34],
+    kies: (v, beurt) => beurt % 2 === 1
+      ? { naam: 'Inrollen', type: 'buff', doe: () => { geefStatus(v, 'kracht', 1); geefStatus(v, 'doornen', 2); } }
+      : (willekeurig() < 0.55
+          ? { naam: 'Papierbeet', type: 'aanval', dmg: 6, hits: 2 }
+          : { naam: 'Bladsnede', type: 'aanval', dmg: 10 })
+  },
+  spiegelwachter: {
+    naam: 'De Spiegelwachter', art: '🔮', hp: [24, 29],
+    /* kaatst je eigen klap terug — leest dezelfde laatsteSpelerDmg als Het Origineel */
+    kies: (v, beurt) => {
+      if (beurt === 0) return { naam: 'Oppoetsen', type: 'blok', blok: 9 };
+      const echo = Math.min(10, (S.gevecht && S.gevecht.laatsteSpelerDmg) || 0);
+      return echo >= 5 ? { naam: 'Weerkaatsing', type: 'aanval', dmg: echo } : { naam: 'Glasscherf', type: 'aanval', dmg: 7 };
+    }
+  },
   /* baas — vecht in drie bedrijven (fases via checkBaasFase in game.js) */
   slijmkoning: {
     naam: 'De Slijmkoning', art: '🫠', hp: [150, 150], baas: true,
@@ -1123,6 +1149,9 @@ const UITSPRAKEN = {
   inktklerk:     { start: ['In drievoud, graag.', 'Ik stempel je af.'], dood: ['De inkt... vloeit uit...'] },
   de_mal:        { start: ['UIT DE MAL KOMT ALLES.', 'Ik giet de diepte vol.'], dood: ['De vorm... breekt...'] },
   het_origineel: { start: ['Jij bent maar een kopie van mij.', 'Het origineel verslaat de namaak.'], dood: ['Maar ik wás... het echte...'] },
+  stempelaar:     { start: ['Even afstempelen, graag.', 'In drievoud. Met merk.'], dood: ['...het zegel... breekt...'] },
+  dossierwurm:    { start: ['Geregistreerd. Geklasseerd.', 'Jouw blad ontbreekt nog.'], dood: ['...uit... het... archief...'] },
+  spiegelwachter: { start: ['Ik geef enkel terug.', 'Sla mij — sla jezelf.'], dood: ['...het glas... barst...'] },
   _duister: ['...wij zien jou wél...', '...kom dichter, lichtje...', '...jouw vlam is bijna op...', '...het donker heeft tanden...'],
   _held: {
     overkill: ['Daar. Opgeruimd.', 'Wie volgt?', 'De diepte mag hem houden.'],
@@ -1192,9 +1221,9 @@ const ONTMOETINGEN = {
   baas: [['slijmkoning']],
   /* Act 2 — de kopieerhel: eigen tiers (kiesNodeEcht kiest deze bij huidigeAct()>=2) */
   act2: {
-    midden: [['echo'], ['naaper'], ['inktklerk'], ['echo', 'echo']],
-    laat:   [['doorslag'], ['naaper', 'inktklerk'], ['echo', 'inktklerk'], ['doorslag', 'echo']],
-    zwaar:  [['doorslag', 'naaper'], ['echo', 'echo', 'inktklerk'], ['doorslag', 'inktklerk'], ['naaper', 'naaper']],
+    midden: [['echo'], ['naaper'], ['inktklerk'], ['echo', 'echo'], ['stempelaar'], ['spiegelwachter']],
+    laat:   [['doorslag'], ['naaper', 'inktklerk'], ['echo', 'inktklerk'], ['doorslag', 'echo'], ['stempelaar', 'echo'], ['dossierwurm']],
+    zwaar:  [['doorslag', 'naaper'], ['echo', 'echo', 'inktklerk'], ['doorslag', 'inktklerk'], ['naaper', 'naaper'], ['dossierwurm', 'spiegelwachter'], ['stempelaar', 'naaper']],
     elite:  [['de_mal'], ['de_mal', 'echo']]
   },
   /* episch-node (Act 2): de mysterie-vijand die de drops_episch-scherf laat vallen */
@@ -1531,6 +1560,80 @@ const EVENTS = [
         doe: () => { S.goud += 60; S.dek.push(nieuweKaart('pijn')); return 'Je vindt 60 goud... maar een kille rilling trekt door je botten. Je dek bevat nu "Pijn".'; }
       },
       { label: 'Laat hem rusten', detail: 'Niets gebeurt.', doe: () => 'Je vouwt zijn handen over zijn borst en loopt verder.' }
+    ]
+  },
+
+  /* ===== Act 2 — Het Archief (alleen Act 2+) ===== */
+  {
+    id: 'onafgewerkte_dossier', titel: 'Het Onafgewerkte Dossier', icoon: '📂',
+    toon: () => huidigeAct() >= 2,
+    tekst: 'Op een stenen lessenaar ligt een half-ingevuld dossier — jóuw naam staat er bovenaan, in een vreemde hand. De onderste helft is nog leeg.',
+    opties: [
+      {
+        label: 'Teken het af', detail: 'Krijg 25 goud. Maar wie tekent, bindt zich.',
+        doe: () => { S.goud += 25; if (willekeurig() < 0.5) { S.dek.push(nieuweKaart('pijn')); return 'Je zet je krabbel. 25 goud glijdt over de tafel... en een kille clausule kruipt je dek in: "Pijn".'; } return 'Je zet je krabbel. 25 goud glijdt over de tafel. De inkt droogt verdacht snel.'; }
+      },
+      {
+        label: 'Wis je naam uit', detail: 'Verlies 7 HP, maar je fakkel laait op (+20 licht).',
+        kan: () => S.hp > 8,
+        reden: () => 'Je bent te zwak om jezelf uit te wissen.',
+        doe: () => { verliesHpBuitenGevecht(7); zetFakkel(20); return 'Je krast je eigen naam weg tot het bloedt. Maar ongeregistreerd brandt je fakkel feller. (+20 licht)'; }
+      },
+      { label: 'Laat het liggen', detail: 'Niets gebeurt.', doe: () => 'Je laat het dossier onafgewerkt. Ergens klinkt een zucht.' }
+    ]
+  },
+  {
+    id: 'kopieermachine', titel: 'De Kopieermachine', icoon: '🖨️',
+    toon: () => huidigeAct() >= 2,
+    tekst: 'Een rammelend monster van tandwielen en inktrollen staat te draaien in een nis. Stop er iets in, en het perst er een doorslag van uit.',
+    opties: [
+      {
+        label: 'Dupliceer een kaart', detail: 'Voeg een kopie van een willekeurige kaart uit je dek toe.',
+        kan: () => S.dek.length < 30,
+        reden: () => 'Je dek is al overvol.',
+        doe: () => { const c = kiesUit(S.dek); if (c) { S.dek.push(nieuweKaart(c.id)); return `De machine ratelt en spuwt een doorslag van "${KAARTEN[c.id].naam}" uit. Je dek groeit.`; } return 'De machine ratelt, maar er komt niets uit.'; }
+      },
+      {
+        label: 'Dupliceer je goud', detail: 'Riskant: meestal +40%, soms −25%.',
+        kan: () => S.goud >= 20,
+        reden: () => 'Te weinig goud om te riskeren.',
+        doe: () => { if (willekeurig() < 0.7) { const w = Math.floor(S.goud * 0.4); S.goud += w; return `De machine kopieert je beurs: +${w} goud!`; } const v = Math.floor(S.goud * 0.25); S.goud -= v; return `De machine eet je munten op i.p.v. ze te kopiëren: −${v} goud.`; }
+      },
+      { label: 'Laat het rammelen', detail: 'Niets gebeurt.', doe: () => 'Je laat de machine zichzelf herhalen, eindeloos.' }
+    ]
+  },
+  {
+    id: 'naamloze_klerk', titel: 'De Naamloze Klerk', icoon: '🖋️',
+    toon: () => huidigeAct() >= 2,
+    tekst: 'Achter een stenen loket zit een klerk zonder gezicht — waar een gelaat hoort, alleen glad perkament. Hij heft een stempel en wacht.',
+    opties: [
+      {
+        label: 'Laat je stempelen', detail: 'Genees 14 HP en smeed een kaart.',
+        doe: () => { geneesHpBuitenGevecht(14); if (S.dek.some(c => !c.up && KAARTEN[c.id].up)) { kiesKaartUitDek('upgrade', 'De klerk stempelt je dossier — kies een kaart om te smeden'); return null; } return 'De klerk drukt zijn zegel op je voorhoofd. Je voelt je geheeld (+14 HP).'; }
+      },
+      {
+        label: 'Vraag om je dossier', detail: 'Misschien een relikwie — of een berisping.',
+        doe: () => { if (willekeurig() < 0.55) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `De klerk schuift je dossier door het loket. Erin: ${RELIKWIEEN[r].naam}!`; } S.goud += 50; return 'Je dossier is leeg op 50 goud aan onkostenvergoeding na.'; } verliesHpBuitenGevecht(5); S.dek.push(nieuweKaart('pijn')); return 'De klerk stempelt AFGEKEURD op je verzoek. −5 HP en een clausule "Pijn" erbij.'; }
+      },
+      { label: 'Loop weg', detail: 'Niets gebeurt.', doe: () => 'Je laat de gezichtloze klerk wachten. Hij zal je naam onthouden.' }
+    ]
+  },
+  {
+    id: 'verloren_origineel', titel: 'Het Verloren Origineel', icoon: '📜',
+    toon: () => huidigeAct() >= 2,
+    tekst: 'Tussen oneindige bleke doorslagen gloeit één enkel vel warm en goudkleurig — een origineel, levend, dat aan één hoek oplicht alsof het ademt.',
+    opties: [
+      {
+        label: 'Neem het origineel', detail: 'Een relikwie — of, als het al van iemand was, een snee.',
+        doe: () => { if (willekeurig() < 0.55) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `Je grijpt het echte vel. Het verzegelt zich tot ${RELIKWIEEN[r].naam}!`; } } if (willekeurig() < 0.7) { S.maxHp += 4; S.hp += 4; return 'Het origineel lost op in je handen en schrijft je sterker. (+4 Max HP)'; } verliesHpBuitenGevecht(8); return 'Het vel was al van iemand anders. De rand snijdt diep. (−8 HP)'; }
+      },
+      {
+        label: 'Brand het in je fakkel', detail: 'Je fakkel laait op (+30 licht).',
+        kan: () => S.fakkel < 100,
+        reden: () => 'Je fakkel is al vol.',
+        doe: () => { zetFakkel(30); return 'Je houdt het warme vel bij je fakkel. Het enige onfactureerbare licht voedt het andere. (+30 licht)'; }
+      },
+      { label: 'Laat het waar het hoort', detail: 'Niets gebeurt.', doe: () => 'Je laat het origineel gloeien tussen zijn kopieën.' }
     ]
   }
 ];
