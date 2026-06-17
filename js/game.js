@@ -60,7 +60,7 @@ const SAVE_SLEUTEL = 'slayit_save_v1';
 
 /* ---------- acts (meerdere verdiepingen-ladders na elkaar) ---------- */
 const ACTS_MAX = 2;                       /* verhoog naar 3 zodra Act 3 klaar is */
-const ACT_NAMEN = { 1: 'De Diepte', 2: 'De Catacomben', 3: 'Het Slachtblok' };
+const ACT_NAMEN = { 1: 'De Diepte', 2: 'Het Archief', 3: 'Het Slachtblok' };
 const BAAS_PER_ACT = {
   1: { id: 'slijmkoning', naam: 'De Slijmkoning' },
   2: { id: 'de_erfprins', naam: 'De Erfprins' }
@@ -3177,6 +3177,7 @@ function toonRust() {
   ).join('');
   $('#scherm-rust').innerHTML = `
     <h2 class="scherm-titel">Rustplaats</h2>
+    ${S.act === 2 ? '<p class="scherm-sub">De enige minuut die niemand archiveert.</p>' : ''}
     <p class="scherm-sub">Het vuur knettert zachtjes. Even op adem komen.</p>
     <div class="kv-scene" id="kv-scene">
       <div class="kv-gloed"></div>
@@ -3523,7 +3524,7 @@ function volgendeAct(verslagenBaas) {
      De eerste keren ontrafel je zijn raadsel in Act 2 i.p.v. hem cadeau te krijgen. */
   if (isOntgrendeld('drops') && !heeftMetgezel() && (!S.metgezel || !S.metgezel.vluchtig)) {
     geefMetgezel('drops');
-    melding('🐾 Drops daalt met je mee de Catacomben in.');
+    melding('🐾 Drops daalt met je mee het Archief in.');
   }
   S.pos = null;
   S.kaart = genereerKaart();      /* nieuwe ladder, act-bewust; de verdieping-teller loopt door */

@@ -562,8 +562,8 @@ const ACHTERGRONDEN = {
     overwinning: 'Act 1 achtergronden/Overwinningsachtergrond1episch.webp',
     nederlaag: 'Act 1 achtergronden/Achtergrond nederlaag ACT1.webp'
   },
-  /* Act 2 — De Catacomben. Ontbrekende slots (rust/schat/beloning/overwinning/
-     nederlaag) vallen via actBg() terug op act1. */
+  /* Act 2 — Het Archief (de catacombe als bureaucratisch dodenarchief). Ontbrekende
+     slots (rust/schat/beloning/overwinning/nederlaag) vallen via actBg() terug op act1. */
   act2: {
     kaart: 'Act 2 achtergronden/Startscherm ACT 2 achtergrond.webp',
     gevecht: [

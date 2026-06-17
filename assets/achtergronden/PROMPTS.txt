@@ -44,32 +44,42 @@ Act 1 achtergronden/Achtergrondrust1.png   (DE RUSTPLAATS — al
   en donker; warme gloed mag al zachtjes op de wanden hangen.
 
 
-==================== NOG ONTBREKEND — ACT 2 ====================
-(de grafkelders/catacomben, te zien aan je gevechtsplaten)
+============= NOG ONTBREKEND — ACT 2: HET ARCHIEF =============
+(de catacombe HERKADERD als een verrotte bureaucratische onderwereld —
+een oneindig dodenarchief. Thema: NAMAAK & INDEXERING. Palet kantelt naar
+KOUD blauw-grijs "systeem-licht"; jouw warme fakkel is het enige warme,
+onkopieerbare licht in beeld. Identieke, gedupliceerde, gespiegelde
+architectuur foreshadowt The Copycat. Voeg gerust een Act 1-plate als
+stijl-referentie toe, maar stuur het palet KOELER.)
 
 Act 2 achtergronden/Achtergrond ACT 2.png   (kaart-plate, staand!)
-  Scene: a vast vertical descent through ancient catacombs seen
-  as one towering scene — crumbling burial niches and bone-lined
-  galleries at the TOP fading down past sunken crypts and
-  flooded ossuary halls into a pitch-black necropolis gate at
-  the BOTTOM, a faint winding path connecting the levels.
+  Scene: a vast vertical descent through an endless bureaucratic
+  ossuary-ARCHIVE seen as one towering scene — at the TOP, burial
+  niches packed with rotting ledgers and yellowed sealed contracts,
+  bones stacked and TAGGED like files; descending past identical
+  filing-galleries repeating in mirror-image rows (unsettlingly the
+  same, copied over and over) into a pitch-black gate of bricked-up
+  filing cabinets at the BOTTOM. Cold blue-grey clerical light, with
+  one faint WARM path-light threading down the middle.
 
 Act 2 achtergronden/Achtergrondrust2.png
-  Scene: a quiet corner of a crypt claimed as a campsite, a
-  bedroll between two stone sarcophagi, hanging moss, a small
-  shrine niche with melted-down candles, one shaft of cold
-  moonlight from a grate above.
+  Scene: a quiet dead-records nook claimed as a campsite — a bedroll
+  between two stacked stone filing-sarcophagi, hanging cobweb and
+  curled paper, a small niche-shrine of melted-down candle stubs over
+  a defaced nameplate, one shaft of cold blue-grey light from a grate
+  above. Cold palette so the game-drawn warm fire stands out.
   LET OP: GEEN kampvuur in beeld (het spel tekent het zelf).
 
 Act 2 achtergronden/Achtergrondschatkist2.png
-  Scene: a burial treasury deep in the catacombs, an ornate
-  sarcophagus lid pushed aside revealing a glint of gold, grave
-  goods piled in the shadows, dust hanging in pale light.
+  Scene: a sealed records-vault deep in the archive — an ornate
+  sarcophagus-drawer pulled open revealing a glint of gold among
+  bundled contracts and wax seals, grave-goods filed in labelled
+  shadows, dust hanging in pale cold light.
 
 Act 2 achtergronden/Overwinningsachtergrond2gewoon.png
-  Scene: a catacomb gallery falling silent after battle, dust
-  settling in torchlight, broken bones scattered, a doorway
-  deeper down standing open.
+  Scene: an archive-gallery falling silent after battle, paper-dust
+  settling in cold light, scattered torn DUPLICATE pages and broken
+  bone-tags, a doorway of filing cabinets deeper down standing open.
 
 
 ==================== NOG ONTBREKEND — ACT 3 ====================
@@ -135,11 +145,11 @@ torchlight, palette of deep purples, charcoal and ember orange.
 NOT photorealistic, no photo, no 3D render. No characters, no
 text, no UI.
 
-Scene: a long catacomb gallery of bone niches where the votive
-candles are dying one by one, thin threads of smoke rising, an
-empty stone bier at the far end, cold blue-grey gloom with one
-last warm flame surviving at the frame's edge. Center of frame
-nearly black and empty.
+Scene: a long archive-gallery of bone-and-ledger niches where the
+votive candles over the nameplates are dying one by one, thin threads
+of smoke rising, an empty stone filing-bier at the far end, cold
+blue-grey clerical gloom with one last warm flame surviving at the
+frame's edge. Center of frame nearly black and empty.
 
 --- Act 3 achtergronden/Achtergrond nederlaag ACT3.png ---
 Painterly dark fantasy environment art for a deckbuilder game,
