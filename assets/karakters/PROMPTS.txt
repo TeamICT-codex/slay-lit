@@ -350,3 +350,7 @@ de_mal.png       (elite) a hulking iron casting-mould / printing-press
 mal_gietsel.png  (gespawnd door De Mal) a small half-formed blank cast: a
                  featureless hollow humanoid, faceless and smooth, fresh
                  and unfinished straight from the mould.
+
+EXTRA ACT 2-VIJANDEN (3): stempelaar, dossierwurm, spiegelwachter — de
+prompts + gedrag/bouw-data staan in ACT2-PROMPTBIB.md (repo-root), sectie
+"3. Vijanden". (spiegelwachter = glas → genereren op EFFEN ZWARTE achtergrond.)

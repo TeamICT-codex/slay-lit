@@ -181,3 +181,9 @@ laatste_lucifer.png  EPISCH — one single oversized match resting on
                      a velvet altar cushion, its red head faintly
                      pulsing as if holding its breath, a halo of
                      suspended sparks waiting around it
+
+
+########## ACT 2 — HET ARCHIEF ##########
+De 10 nieuwe Act 2-RELIKWIEËN (was-zegel, doorslagpapier, het grootboek…,
+thema bureaucratie/namaak) staan met hun prompts én bouw-data gebundeld in
+ACT2-PROMPTBIB.md (repo-root), sectie "2. Relikwieën".

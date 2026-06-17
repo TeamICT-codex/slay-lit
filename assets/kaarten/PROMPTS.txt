@@ -1099,3 +1099,9 @@ shattered flask, jaws open wide, smaller snakes of poison
 splitting off and striking outward in every direction.
 
 Painted illustration only, rich color, clean readable silhouette.
+
+
+############ ACT 2 — HET ARCHIEF ############
+De 15 nieuwe Act 2-KAARTEN (4 Slachter · 4 Gifmagiër · 3 Thoverk · 4
+neutraal, thema namaak/index/doorslag) staan met hun prompts én bouw-data
+gebundeld in ACT2-PROMPTBIB.md (repo-root), sectie "1. Kaarten".

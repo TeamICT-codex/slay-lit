@@ -55,3 +55,9 @@ avonturier.png
   Scene: a fallen adventurer slumped against a dungeon wall,
   backpack spilled open, a bulging coin pouch at his hip, his
   empty eyes catching a sliver of torchlight.
+
+
+============= ACT 2 — HET ARCHIEF =============
+De 4 nieuwe Act 2-EVENTS (Het Onafgewerkte Dossier, De Kopieermachine,
+De Naamloze Klerk, Het Verloren Origineel) staan met hun prompts én
+bouw-data gebundeld in ACT2-PROMPTBIB.md (repo-root), sectie "4. Events".
