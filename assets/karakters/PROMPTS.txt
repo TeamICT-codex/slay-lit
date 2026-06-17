@@ -278,8 +278,9 @@ background elements. The creature fills about 90% of a square
 1024x1024 canvas, base near the bottom edge.
 
 ======================= de_erfprins.png ======================
-(Act 2-baas — "De Erfprins": de onverdiende erfgenaam / nepo-baby
-als catacomben-vorst. Hint naar zijn schild "Pappies Invloed".)
+(Act 2-baas — THE COPYCAT, "De Erfprins": de onverdiende erfgenaam /
+nepo-baby die nooit iets zelf maakte en nu JOUW kaarten steelt en
+namaakt. Mask/plagiaat-motief i.p.v. het oude goud-schild.)
 Stylized painterly digital illustration for a dark fantasy card
 game, hand-painted fantasy concept art with expressive visible
 brushwork, rich colors and soft painted shading. NOT
@@ -289,14 +290,17 @@ epic boss presence with a pathetic edge. Warm torchlight rim
 lighting, palette of deep purples, charcoal and ember orange,
 matching a torchlit catacomb.
 
-Character: a petulant spoiled boy-prince who never earned his
-crown, drowning in oversized ornate golden armor that clearly
-isn't his, an over-large jeweled crown slipping down over his
-eyes, a bratty entitled sneer, clutching a too-big golden
-scepter, far too much gold everywhere; a faint shimmering golden
-aegis/barrier of floating coins and flattery wraps around him
-like a shield; small cowering sycophant shadows grovel at his
-feet. Entitled, smug and menacing yet faintly pathetic.
+Character: a petulant spoiled boy-prince who never made anything
+himself, drowning in oversized ornate armor that clearly isn't
+his, an over-large jeweled crown slipping down over his eyes, a
+bratty entitled sneer; he clutches a too-big scepter topped with
+a theatrical comedy-and-tragedy mask. Around him swirl STOLEN
+playing cards and floating mirror-shards that each reflect someone
+else's move — he is caught mid-mimic, one hand tracing a copy of a
+card in the air. A faint shimmer of plagiarised, second-hand copies
+wraps him like a counterfeit aura. Small cowering sycophant shadows
+grovel at his feet. Entitled, smug and menacing yet faintly
+pathetic — hollow without others to copy.
 
 Painted illustration style only. Isolated on a fully transparent
 background. No ground, no shadow, no text, no frame, no UI, no

@@ -1009,6 +1009,14 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   50% { box-shadow: 0 0 17px rgba(255, 200, 80, .65); }
 }
 .intent-aegis { color: #ffd873; }
+/* THE COPYCAT: het gebroken-arsenaal-label en de steel-intent */
+.bb-aegis.bb-gebroken {
+  background: rgba(120, 120, 140, .15);
+  border-color: rgba(150, 150, 170, .5);
+  color: #b8b2c4; text-decoration: line-through;
+  animation: none;
+}
+.intent-steel { color: #d9c2ff; border-color: rgba(170, 130, 255, .5); }
 .intent.intent-viseert-mg { outline: 2px solid rgba(255, 120, 60, .75); outline-offset: 2px; animation: viseerPuls 1s ease-in-out infinite; }
 @keyframes viseerPuls { 0%, 100% { outline-color: rgba(255, 120, 60, .4); } 50% { outline-color: rgba(255, 165, 85, .95); } }
 

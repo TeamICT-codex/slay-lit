@@ -12,13 +12,13 @@ const KAARTEN = {
   /* --- basis --- */
   slag: {
     naam: 'Slag', type: 'aanval', zeld: 'basis', kost: 1, doel: 'vijand', icoon: '⚔️',
-    dmg: 6, up: { dmg: 9 },
+    dmg: 6, up: { dmg: 9 }, kopie: { soort: 'aanval', veld: 'dmg' },
     tekst: c => `Doe ${pv(c, 'dmg')} schade.`,
     speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); }
   },
   verdediging: {
     naam: 'Verdediging', type: 'vaardigheid', zeld: 'basis', kost: 1, icoon: '🛡️',
-    blok: 5, up: { blok: 8 },
+    blok: 5, up: { blok: 8 }, kopie: { soort: 'blok', veld: 'blok' },
     tekst: c => `Krijg ${kval(c, 'blok')} Blok.`,
     speel: c => { geefBlok(sp(), kval(c, 'blok')); }
   },
@@ -38,7 +38,7 @@ const KAARTEN = {
   },
   zware_klap: {
     naam: 'Zware Klap', type: 'aanval', zeld: 'gewoon', kost: 2, doel: 'vijand', icoon: '🔨',
-    dmg: 14, up: { dmg: 18 },
+    dmg: 14, up: { dmg: 18 }, kopie: { soort: 'aanval', veld: 'dmg' },
     tekst: c => `Doe ${pv(c, 'dmg')} schade.`,
     speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); }
   },
@@ -226,7 +226,7 @@ const KAARTEN = {
   /* ============ DE GIFMAGIËR — eigen kaartenpool ============ */
   prik: {
     naam: 'Prik', type: 'aanval', zeld: 'basis', kost: 1, doel: 'vijand', icoon: '🗡️',
-    dmg: 5, up: { dmg: 8 },
+    dmg: 5, up: { dmg: 8 }, kopie: { soort: 'aanval', veld: 'dmg' },
     tekst: c => `Doe ${pv(c, 'dmg')} schade.`,
     speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); }
   },
@@ -274,7 +274,7 @@ const KAARTEN = {
   },
   gifflits: {
     naam: 'Gifflits', type: 'vaardigheid', zeld: 'gewoon', kost: 0, doel: 'vijand', icoon: '💉',
-    gif: 3, up: { gif: 5 },
+    gif: 3, up: { gif: 5 }, kopie: { soort: 'gif', veld: 'gif' },
     tekst: c => `Geef ${kval(c, 'gif')} Gif.`,
     speel: (c, t) => { geefGif(t, kval(c, 'gif')); }
   },
@@ -448,13 +448,13 @@ const KAARTEN = {
   /* --- Thoverk, de Kolendruïde: wortels, kolen en keukenmagie --- */
   takkenslag: {
     naam: 'Takkenslag', type: 'aanval', zeld: 'basis', kost: 1, doel: 'vijand', icoon: '🌳',
-    dmg: 6, up: { dmg: 9 },
+    dmg: 6, up: { dmg: 9 }, kopie: { soort: 'aanval', veld: 'dmg' },
     tekst: c => `Doe ${pv(c, 'dmg')} schade.`,
     speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); }
   },
   vonkenbeet: {
     naam: 'Vonkenbeet', type: 'aanval', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '💥',
-    licht: 1, dmg: 8, up: { dmg: 11 },
+    licht: 1, dmg: 8, up: { dmg: 11 }, kopie: { soort: 'aanval', veld: 'dmg' },
     tekst: c => `Verbrand ${kval(c, 'licht')} licht. Doe ${pv(c, 'dmg')} schade.`,
     speel: (c, t) => { verbrandLicht(kval(c, 'licht')); aanvalOp(t, kval(c, 'dmg')); }
   },
@@ -802,43 +802,18 @@ const VIJANDEN = {
       return { naam: 'Verdikken', type: 'blok', blok: 16, doe: () => geefStatus(v, 'kracht', 2) };
     }
   },
-  /* Act 2-baas (VOORLOPIG, emoji-art; de echte baas + interlock met Drops komt in
-     Fase B). Geen meerfasen-script — checkBaasFase guard't op de slijmkoning. */
+  /* Act 2-baas — THE COPYCAT (de Erfprins, het zoontje van de baas). Hij maakt
+     NOOIT iets zelf: hij STEELT je kaarten (uit de gevecht-kopie van je trek/afleg
+     — S.dek blijft heilig), kaatst ze opgewaardeerd terug, en GROEIT (v.gevoed)
+     naarmate jij optimaler speelt (de DICKtator-foreshadow). Geen eigen arsenaal:
+     zonder gestolen kaarten is z'n enige zet pathetisch zwak. De volledige mechaniek
+     (state, stelen, plagiaat, voeding, fases, mercy, het offer-breekpunt) leeft in
+     game.js — zie copycatKies() en de copycat*-helpers. Drops (METGEZELLEN.drops
+     rol:'breker') breekt de machine bij je first-clear: trouw is niet te indexeren. */
   de_erfprins: {
-    naam: 'De Erfprins', art: '🤴', hp: [210, 210], baas: true, aegis: 15,
+    naam: 'De Erfprins', art: '🤴', hp: [210, 210], baas: true, copycat: true,
     titel: 'Erfgenaam zonder verdienste',
-    /* PAPPIES INVLOED: een gouden aegis maakt de Erfprins ONAANTASTBAAR — gewone
-       aanvallen en gif ketsen af. Alleen Drops knaagt eraan (zie METGEZELLEN
-       .drops.beurt). Pappies koopt nieuw goud ("Pappies Geld") en probeert Drops
-       weg te wuiven ("Wegwuiven", gericht). Zónder Drops blijft hij onaantastbaar
-       (trage mercy-decay in beginSpelerBeurt). Verbrijzel het goud → je venster. */
-    kies: (v, beurt) => {
-      const fase = v.fase || 1;
-      const m = gMet();
-      /* aegis op? Pappies koopt nieuw goud (meer in latere fases) */
-      if ((v.aegis || 0) <= 0) {
-        return {
-          naam: 'Pappies Geld', type: 'buff',
-          doe: vv => { vv.aegis = (vv.aegis || 0) + (fase >= 3 ? 13 : 10); fxNummer(actorEl(vv), '🟡 Pappies Invloed', 'fx-buff'); }
-        };
-      }
-      /* Drops in beeld? hem af en toe wegwuiven (vaker naarmate hij wanhopiger wordt) */
-      if (m && !m.dood && beurt % (fase >= 2 ? 2 : 3) === 1) {
-        return {
-          naam: 'Wegwuiven', type: 'aanval', dmg: fase >= 3 ? 15 : 11, doelMetgezel: true,
-          doe: () => baasSpreekt(UITSPRAKEN._erfprins.banish)
-        };
-      }
-      const stap = beurt % 3;
-      if (fase >= 3) {
-        if (stap === 0) return { naam: 'Driftbui', type: 'aanval', dmg: 22 };
-        if (stap === 1) return { naam: 'Minachting', type: 'aanval', dmg: 8, hits: 2, doe: () => geefStatus(sp(), 'zwak', 1) };
-        return { naam: 'Bevel', type: 'aanval', dmg: 17 };
-      }
-      if (stap === 0) return { naam: 'Bevel', type: 'aanval', dmg: 15 };
-      if (stap === 1) return { naam: 'Minachting', type: 'aanval', dmg: 7, hits: 2, doe: () => geefStatus(sp(), 'zwak', 1) };
-      return { naam: 'Driftbui', type: 'aanval', dmg: 20 };
-    }
+    kies: (v, beurt) => copycatKies(v, beurt)
   }
 };
 
@@ -856,55 +831,53 @@ const VIJANDEN = {
    te sterven — terug te vinden via een latere queeste/event. */
 const METGEZELLEN = {
   drops: {
-    naam: 'Drops', art: 'drops', icoon: '🐕', zeld: 'episch', maxHp: 26,
-    tekst: 'Begin van je beurt: bijt een vijand voor 5. Knaagt door de Pappies Invloed van de Erfprins (6/beurt) — zónder hem is de baas onaantastbaar. Vangt soms een klap op; vlucht als het te zwaar wordt.',
+    naam: 'Drops', art: 'drops', icoon: '🐕', zeld: 'episch', maxHp: 26, rol: 'breker',
+    tekst: 'Begin van je beurt: bijt de baas voor 6 — elke klap helpt je gestolen kaarten terug te winnen. Vangt soms een klap op; vlucht als het te zwaar wordt. Zijn offer (De Laatste Sprong) breekt de kopieermachine.',
     lore: 'Geen fakkel kon het wekken — het donker wel. Uit het diepste zwart kroop iets kleins, warms en koppigs, met trouwe ogen. Het had jouw licht nooit nodig. Het bleef.',
     doelbaar: true, dreiging: 0.22,
     beurt(m) {
-      /* tegen de Erfprins met aegis: knaagt aan het goud i.p.v. te bijten */
-      const baas = (S.gevecht.vijanden || []).find(v => v.id === 'de_erfprins' && !v.dood);
-      if (baas && (baas.aegis || 0) > 0) {
-        const af = Math.min(baas.aegis, 6);
-        baas.aegis -= af;
-        pose2D(m, 'attack', 0.5);
-        fxNummer(actorEl(baas), `🐾 Pappies Invloed −${af}`, 'fx-schade');
-        Klank.sfx('klap');
-        return;
-      }
-      const d = kiesUit(alleVijanden());
-      if (d) metgezelAanval(m, d, 5);
+      /* bijt bij voorkeur de Copycat-baas — elke klap telt mee om je gestolen
+         kaarten terug te winnen (copycatTerugwin, via verliesHp). Voedt hem NIET. */
+      const d = (typeof copycatBaas === 'function' && copycatBaas(S.gevecht)) || kiesUit(alleVijanden());
+      if (d) metgezelAanval(m, d, 6);
     },
-    intent(m) {
-      const baas = (S.gevecht.vijanden || []).find(v => v.id === 'de_erfprins' && !v.dood);
-      if (baas && (baas.aegis || 0) > 0) return { type: 'aegis', n: Math.min(baas.aegis, 6) };
-      return alleVijanden().length ? { type: 'aanval', dmg: 5 } : null;
-    },
-    /* DE LAATSTE SPRONG — bewuste, PERMANENTE opoffering (climax tegen een baas).
-       Verbrijzelt alle Pappies Invloed, ramt de baas en schildt jou; Drops is
-       daarna voorgoed weg. Het opoffering-haakje is generiek: latere verhaal-
+    intent: () => (alleVijanden().length ? { type: 'aanval', dmg: 6 } : null),
+    /* DE LAATSTE SPRONG — bewuste, PERMANENTE opoffering (climax tegen de Copycat).
+       Breekt de kopieermachine, geeft je arsenaal terug, ramt de baas en schildt jou;
+       Drops is daarna voorgoed weg. Het opoffering-haakje is generiek: latere verhaal-
        metgezellen kunnen hun eigen offer krijgen door dit blok in te vullen. */
     opoffering: {
       naam: 'De Laatste Sprong',
-      tekst: 'Drops springt één laatste keer — recht door de Pappies Invloed heen: hij verbrijzelt al het goud, 40 schade aan de baas, en jij krijgt 15 Blok.',
-      /* pas beschikbaar op het wanhopige moment — niet vanaf beurt 1 (anders gooi
-         je per ongeluk je enige aegis-vreter weg). Verschijnt als de baas onder 60%
-         zakt, óf als Drops zelf kritiek laag staat (offer hem vóór hij verbannen wordt). */
+      tekst: 'Drops springt één laatste keer — recht in de kopieermachine. Trouw is niet te indexeren: hij breekt de machine, geeft je je hele gestolen arsenaal terug, doet 40 schade aan de baas, en jij krijgt 15 Blok.',
+      /* beschikbaar zodra de Copycat het gevaarlijkst is — niet vanaf beurt 1: baas
+         onder 50% HP, óf in fase 3, óf als Drops zelf kritiek laag staat. */
       beschikbaar: g => {
         if (g.soort !== 'baas') return false;
         const baas = g.vijanden.find(v => VIJANDEN[v.id].baas && !v.dood);
         const mg = g.metgezel;
-        return (baas && baas.hp / baas.maxHp <= 0.6) || (mg && !mg.dood && mg.hp / mg.maxHp <= 0.35);
+        return (baas && (baas.hp / baas.maxHp <= 0.5 || (baas.fase || 1) >= 3))
+            || (mg && !mg.dood && mg.hp / mg.maxHp <= 0.35);
       },
       doe(m, g) {
         const baas = g.vijanden.find(v => VIJANDEN[v.id].baas && !v.dood) || alleVijanden()[0];
+        const eersteKeer = !Codex.copycatGebroken;
+        g.copycatGebroken = true;          /* observeren/stelen/plagiaat worden no-op */
         if (baas) {
-          baas.aegis = 0;                 /* het goud smelt weg */
-          fxNummer(actorEl(baas), '🟡 verbrijzeld!', 'fx-schade');
-          doeSchade(baas, 40, m);         /* aegis is 0 → raakt nu HP */
+          /* geef het hele gestolen arsenaal terug (verse, kale kaarten in je trekstapel) */
+          (baas.gestolen || []).forEach(s => { const k = nieuweKaart(s.id); k.up = false; g.trek.push(k); });
+          baas.gestolen = [];
+          baas.copyKracht = 0;             /* de breuk verzwakt hem zichtbaar */
+          baasFaseMoment('ONINDEXEERBAAR', 'CLASSIFICEREN… TROUW: GEEN PRECEDENT');
+          fxNummer(actorEl(baas), '🎭 machine gebroken!', 'fx-schade');
+          doeSchade(baas, 40, m);
         }
         geefBlok(sp(), 15);
         schudScherm();
         Klank.sfx('schitter');
+        /* first-clear: de breuk is PERMANENT (de epische beat). Latere runs:
+           de Copycat herindexeert na 3 beurten — dan blijft het een slugfest. */
+        if (!eersteKeer) g.copycatHerstelBeurt = (g.beurt || 0) + 3;
+        Codex.copycatGebroken = true; bewaarCodex();
       }
     }
   },
@@ -975,21 +948,21 @@ const UITSPRAKEN = {
     fase3: '„MIJN TROON. MIJN DIEPTE."',
     dood:  '„De diepte... vergeet... niets..."'
   },
-  /* De Erfprins: nepotisme & onverdiende macht — Pappies Invloed beschermt hem,
-     en hij verafschuwt Drops, het kleine wezen dat z'n goud wegvreet. */
+  /* De Erfprins = THE COPYCAT: nepo-baby die nooit iets zelf maakte. Eerst pappies
+     geld, nu steelt hij jóuw kaarten. Hij verafschuwt Drops — trouw kan hij niet kopiëren. */
   _erfprins: {
-    intro:  'EINDELIJK. PERSONEEL OM TEGEN TE SCHREEUWEN.',
-    fase2:  '„Wéét je wel wie mijn váder is?!"',
-    fase3:  '„Dit is ONRECHTVAARDIG! Ik VERDIEN dit!"',
-    dood:   '„Maar... dit heb ik niet... verdíend..."',
-    banish: '„Wég, ongedierte! Jij hoort hier niet!"',
+    intro:  '„EINDELIJK — IEMAND OM VAN AF TE KIJKEN."',
+    fase2:  '„Wéét je wel wie mijn váder is?! Ik hóéf niks zelf te maken."',
+    fase3:  '„ALLES wat jij kan, kan ik óók — ik kopieer het gewoon!"',
+    dood:   '„Maar... ik kopieerde alles... waarom verlies ík...?"',
     /* ORAKEL: over opeenvolgende ontmoetingen verklapt hij cryptisch het geheim
-       (geïndexeerd op Codex.erfprinsOntmoetingen). Grootspraak die omslaat in paniek. */
+       (geïndexeerd op Codex.erfprinsOntmoetingen). Twee assen: het kopieer-thema
+       (1, 4) én de fakkel-doof-rite die Drops wekt (2, 3). */
     orakel: [
-      '„Pappies goud koopt álles. Zélfs jouw nederlaag."',
-      '„Eén ding koopt Pappie niet — en námaken lukt hem ook niet: wat trouw blíjft zonder loon."',
-      '„Wacht — waarom klem je dat lichtje zo vast? Bang voor wat in het donker meeloopt?"',
-      '„...het volgt je al, in het zwart dat jij niet dúrft te maken. Houd je fakkel maar brandend. Slím van Pappie."',
+      '„Ik hóéf niks zelf te maken — ik kijk gewoon af."',
+      '„Eén ding namaken lukt me niet: wat trouw blíjft zonder loon."',
+      '„Wacht — waarom klem je dat lichtje zo vast? Bang voor wat in het zwart meeloopt?"',
+      '„Hoe beter jij speelt, hoe sterker ík word... maar het zwart dat jij niet dúrft te maken, daar leeft wat ik nooit kan kopiëren."',
     ],
     /* sist hij op het moment dat jij in zijn zaal je fakkel laat DOVEN (de rite) */
     gedoofd: '„Wat... WÁT DOE JE? Het wordt wakker! BEWAKING! BE—"',
