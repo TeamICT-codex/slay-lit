@@ -1381,10 +1381,16 @@ function kiesNodeEcht(id) {
         /* latere acts schuiven de moeilijkheidstier omhoog (Act 2 begint al in 'midden') */
         const er = n.r + (huidigeAct() - 1) * 5;
         const moeilijkheid = er < 3 ? 'vroeg' : (er < 6 ? 'midden' : (er < 9 ? 'laat' : 'zwaar'));
-        startGevecht(kiesUit(ONTMOETINGEN[moeilijkheid]), 'gevecht', n.r);
+        /* Act 2+ trekt uit z'n eigen roster (de kopieerhel) i.p.v. opgeschaalde Act 1-vijanden */
+        const tabel = (huidigeAct() >= 2 && ONTMOETINGEN.act2) ? ONTMOETINGEN.act2 : ONTMOETINGEN;
+        startGevecht(kiesUit(tabel[moeilijkheid] || ONTMOETINGEN[moeilijkheid]), 'gevecht', n.r);
         break;
       }
-      case 'elite': startGevecht(kiesUit(ONTMOETINGEN.elite), 'elite', n.r); break;
+      case 'elite': {
+        const eliteTabel = (huidigeAct() >= 2 && ONTMOETINGEN.act2 && ONTMOETINGEN.act2.elite) ? ONTMOETINGEN.act2.elite : ONTMOETINGEN.elite;
+        startGevecht(kiesUit(eliteTabel), 'elite', n.r);
+        break;
+      }
       case 'baas': startGevecht([huidigeBaas().id], 'baas', n.r); break;
       case 'rust': toonRust(); break;
       case 'winkel': toonWinkel(); break;

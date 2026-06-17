@@ -306,3 +306,47 @@ Painted illustration style only. Isolated on a fully transparent
 background. No ground, no shadow, no text, no frame, no UI, no
 background elements. The character fills about 90% of a square
 1024x1024 canvas, feet near the bottom edge.
+
+=================================================================
+ACT 2 — DE KOPIEERHEL (vijandenroster; emoji-placeholder nu)
+=================================================================
+Zelfde stijl als hierboven: stylized painterly dark-fantasy concept
+art, expressive brushwork, NOT photorealistic / no photo / no 3D,
+warm torchlit catacomb palette (deep purples, charcoal, ember
+orange), single full-body creature, facing LEFT (richting de held),
+isolated on a fully TRANSPARENT background, no ground/shadow/text/
+frame/UI, fills ~90% van een 1024x1024 canvas. THEMA = NAMAAK/KOPIE:
+alles voelt gedupliceerd, gespiegeld, doorgedrukt, niet-origineel.
+
+echo.png         a ghostly humanoid made of overlapping translucent
+                 duplicates of itself, each layer slightly offset like
+                 a visual echo / after-image, faintly glowing edges —
+                 no single solid form, it IS its own repetition.
+
+doorslag.png     a creature like a stack of carbon-copy paper given
+                 life: a flat papery humanoid in smudged ink-blue and
+                 grey, edges like torn duplicate sheets, one half a
+                 faded carbon copy of the other. Bureaucratic, hollow.
+
+doorslag_kopie.png  (gespawnde zwakke kopie) hetzelfde figuur maar bleek,
+                 vervaagd en half-transparant — een versleten tweedehands
+                 kopie, zichtbaar zwakker en dunner.
+
+naaper.png       a mocking ape-imp mid-imitation: a wiry dark monkey-
+                 demon pulling a face / mirroring a pose, too-wide grin.
+                 Mischievous, derivative, never original.
+
+inktklerk.png    a gaunt clerk-creature dripping black ink, clutching an
+                 oversized rubber stamp, ink-stained robes, a face like a
+                 smeared duplicate; little stamped copy-marks float around
+                 it. Cold, bureaucratic menace.
+
+de_mal.png       (elite) a hulking iron casting-mould / printing-press
+                 creature: a heavy industrial matrix with a hollow mould-
+                 cavity in its chest dripping molten copies, half-formed
+                 duplicate bodies oozing out. Massive, relentless — a
+                 factory of fakes.
+
+mal_gietsel.png  (gespawnd door De Mal) a small half-formed blank cast: a
+                 featureless hollow humanoid, faceless and smooth, fresh
+                 and unfinished straight from the mould.

@@ -777,6 +777,68 @@ const VIJANDEN = {
       return { naam: 'Herstellen', type: 'blok', blok: 12 };
     }
   },
+  /* ===== Act 2 — DE KOPIEERHEL (Copycat-thema: echo, duplicaat, naäap, plagiaat).
+     Eigen roster i.p.v. opgeschaalde Act 1-vijanden; emoji-art voorlopig. ===== */
+  echo: {
+    naam: 'De Echo', art: '👥', hp: [22, 27],
+    /* herhaalt elke beurt zijn éérste zet — hij kopieert zichzelf, eindeloos */
+    kies: v => {
+      if (!v.echoZet) v.echoZet = willekeurig() < 0.5
+        ? { naam: 'Echo-slag', type: 'aanval', dmg: 8 }
+        : { naam: 'Echo-stoot', type: 'aanval', dmg: 5, hits: 2 };
+      return v.echoZet;
+    }
+  },
+  doorslag: {
+    naam: 'Doorslag', art: '📄', hp: [30, 36],
+    /* maakt onder 50% HP eenmalig een zwakke kopie van zichzelf (carbon copy) */
+    kies: v => {
+      if (!v.gesplitst && v.hp / v.maxHp <= 0.5) {
+        return { naam: 'Doorslaan', type: 'buff', doe: () => {
+          v.gesplitst = true; voegVijandToe('doorslag_kopie');
+          melding('📄 Doorslag perst een kopie van zichzelf!');
+        } };
+      }
+      return willekeurig() < 0.6 ? { naam: 'Papiersnee', type: 'aanval', dmg: 9 }
+        : { naam: 'Stapelen', type: 'blok', blok: 7 };
+    }
+  },
+  doorslag_kopie: {   /* alleen gespawnd door Doorslag — niet in ONTMOETINGEN */
+    naam: 'Kopie', art: '📃', hp: [8, 11],
+    kies: () => ({ naam: 'Flauwe slag', type: 'aanval', dmg: 4 })
+  },
+  naaper: {
+    naam: 'De Naäper', art: '🐒', hp: [24, 28],
+    /* kopieert je Kracht (naäpen), anders bootst hij je verdediging na of slaat */
+    kies: v => {
+      const sk = sp().status.kracht || 0;
+      if (sk > 0 && willekeurig() < 0.6) return { naam: 'Naäpen', type: 'buff', doe: () => geefStatus(v, 'kracht', Math.min(2, sk)) };
+      return willekeurig() < 0.55 ? { naam: 'Spotklap', type: 'aanval', dmg: 8 }
+        : { naam: 'Nabootsen', type: 'blok', blok: 8 };
+    }
+  },
+  inktklerk: {
+    naam: 'Inktklerk', art: '✒️', hp: [26, 31],
+    /* stempelt een kopie van je zwakte op je, of kliedert inkt */
+    kies: (v, beurt) => beurt % 2 === 1
+      ? { naam: 'Stempel', type: 'aanval', dmg: 5, doe: () => geefStatus(sp(), 'zwak', 1) }
+      : { naam: 'Inktklodder', type: 'aanval', dmg: 9 }
+  },
+  /* elite — De Mal: een matrijs die gietsels blijft baren tot je de mal zelf breekt */
+  de_mal: {
+    naam: 'De Mal', art: '🖨️', hp: [82, 90], elite: true,
+    kies: (v, beurt) => {
+      if (beurt % 2 === 0) return { naam: 'Gieten', type: 'buff', doe: () => {
+        voegVijandToe('mal_gietsel'); melding('🖨️ De Mal perst er een gietsel uit!');
+      } };
+      return willekeurig() < 0.6 ? { naam: 'Persen', type: 'aanval', dmg: 13 }
+        : { naam: 'Verharden', type: 'blok', blok: 10 };
+    }
+  },
+  mal_gietsel: {   /* alleen gespawnd door De Mal */
+    naam: 'Gietsel', art: '🫥', hp: [9, 12],
+    kies: () => ({ naam: 'Holle klap', type: 'aanval', dmg: 5 })
+  },
   /* baas — vecht in drie bedrijven (fases via checkBaasFase in game.js) */
   slijmkoning: {
     naam: 'De Slijmkoning', art: '🫠', hp: [150, 150], baas: true,
@@ -936,6 +998,12 @@ const UITSPRAKEN = {
   schaduw:       { start: ['...wij waren hier al...', '...doof het licht...'], dood: ['...eindelijk... rust...'] },
   grombaard:     { start: ['GRRRAAAH! Wie stoort mijn slaap?!', 'Ik kraak je als een twijgje!'], dood: ['Onmogelijk... zo klein...'] },
   steenwachter:  { start: ['HALT. Niemand passeert.', 'De wacht eindigt nooit.'], dood: ['De poort... staat open...'] },
+  /* Act 2 — de kopieerhel */
+  echo:          { start: ['...echo... echo...', 'Ik herhaal. Ik herhaal.'], dood: ['...stilte... eindelijk...'] },
+  doorslag:      { start: ['Eén van mij is nooit genoeg.', 'Maak een kopie. Maak er twee.'], dood: ['...welke was het origineel...?'] },
+  naaper:        { start: ['Wat jij kan, kan ik óók!', 'Kijk — precies zoals jij.'], dood: ['Na... ge... aapt...'] },
+  inktklerk:     { start: ['In drievoud, graag.', 'Ik stempel je af.'], dood: ['De inkt... vloeit uit...'] },
+  de_mal:        { start: ['UIT DE MAL KOMT ALLES.', 'Ik giet de diepte vol.'], dood: ['De vorm... breekt...'] },
   _duister: ['...wij zien jou wél...', '...kom dichter, lichtje...', '...jouw vlam is bijna op...', '...het donker heeft tanden...'],
   _held: {
     overkill: ['Daar. Opgeruimd.', 'Wie volgt?', 'De diepte mag hem houden.'],
@@ -1001,7 +1069,14 @@ const ONTMOETINGEN = {
     ['schaduw', 'schaduw']
   ],
   elite: [['grombaard'], ['steenwachter']],
-  baas: [['slijmkoning']]
+  baas: [['slijmkoning']],
+  /* Act 2 — de kopieerhel: eigen tiers (kiesNodeEcht kiest deze bij huidigeAct()>=2) */
+  act2: {
+    midden: [['echo'], ['naaper'], ['inktklerk'], ['echo', 'echo']],
+    laat:   [['doorslag'], ['naaper', 'inktklerk'], ['echo', 'inktklerk'], ['doorslag', 'echo']],
+    zwaar:  [['doorslag', 'naaper'], ['echo', 'echo', 'inktklerk'], ['doorslag', 'inktklerk'], ['naaper', 'naaper']],
+    elite:  [['de_mal'], ['de_mal', 'echo']]
+  }
 };
 
 /* ---------- RELIKWIEËN ---------- */
