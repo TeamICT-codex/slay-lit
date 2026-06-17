@@ -379,7 +379,8 @@ function nieuwSpel(heldId, seedTekst, ascensie) {
     stats: { gevechten: 0, kaarten: 0, schade: 0 },
     uid: 0,
     gevecht: null,
-    dropsOntwaakt: false   /* het Metgezel-Mysterie: dark-twist reveal-guard, eenmalig per run */
+    dropsOntwaakt: false,  /* het Metgezel-Mysterie: dark-twist reveal-guard, eenmalig per run */
+    contractGebruikt: false   /* Het Verlopen Contract: eenmalig-per-run dood-weigering */
   };
   held.dek.forEach(id => S.dek.push(nieuweKaart(id)));
 
@@ -866,6 +867,14 @@ function verliesHp(doel, n, bron) {
       melding('🪶 De Feniksveer verbrandt — je weigert te sterven!');
       Klank.sfx('schitter');
       heldFx('hfx-victory', 1600);
+    }
+    /* Het Verlopen Contract: eenmalig per run de dood weigeren + Zwak/Kwetsbaar wissen */
+    if (S.hp <= 0 && heeftRelikwie('verlopen_contract') && !S.contractGebruikt) {
+      S.contractGebruikt = true; S.hp = 1;
+      const sps = S.gevecht && S.gevecht.speler;
+      if (sps) { sps.status.zwak = 0; sps.status.kwetsbaar = 0; }
+      melding('📜 Het Verlopen Contract verscheurt zichzelf — je blijft op 1 HP!');
+      Klank.sfx('schitter');
     }
     if (n >= 8) schudScherm();
     renderTopbalk();
@@ -2359,6 +2368,12 @@ async function speelKaart(c, doel) {
     try { await resultaat; } finally { if (S.gevecht === g) g.bezig = false; }
   }
   baasZietKaart(c);   /* THE COPYCAT ziet wat je speelt (observeren) */
+  /* Act 2-kaarthaken (Het Archief): Doorslag-verdubbeling · Geïndexeerd-blok · eerste-aanval-teller */
+  if (def.type === 'aanval') {
+    if (c.id !== 'doorslag_kaart' && (sp().status.doorslag || 0) > 0) { sp().status.doorslag--; def.speel(c, doel); }
+    if ((sp().status.geindexeerd || 0) > 0) geefBlok(sp(), sp().status.geindexeerd);
+    g.aanvalDezeBeurt = (g.aanvalDezeBeurt || 0) + 1;
+  }
   if (def.type === 'kracht' || def.uitputten) {
     g.uitgeput.push(c);
   } else {
@@ -2759,6 +2774,7 @@ function beginSpelerBeurt() {
   g.beurt++;
   const s = g.speler;
   s.blok = 0;
+  g.aanvalDezeBeurt = 0;   /* Act 2: Originele Handtekening telt of dit je eerste aanval is */
 
   if ((s.status.gif || 0) > 0) {
     verliesHp(s, s.status.gif);

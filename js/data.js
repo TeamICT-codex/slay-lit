@@ -615,6 +615,101 @@ const KAARTEN = {
     naam: 'Pijn', type: 'vloek', zeld: 'vloek', kost: null, icoon: '💀',
     tekst: () => `Onbespeelbaar. Neemt ruimte in je hand in.`,
     speel: () => {}
+  },
+
+  /* ============ ACT 2 — HET ARCHIEF (namaak / index / doorslag) ============ */
+  /* neutraal (voor iedereen) */
+  doorslag_kaart: {
+    naam: 'Doorslag', type: 'aanval', zeld: 'ongewoon', kost: 1, doel: 'vijand', icoon: '📑',
+    dmg: 6, up: { dmg: 8 }, kopie: { soort: 'aanval', veld: 'dmg' },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. De eerstvolgende aanval die je deze beurt speelt, speel je een tweede keer af.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefStatus(sp(), 'doorslag', 1); }
+  },
+  stempel: {
+    naam: 'Stempel', type: 'vaardigheid', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '🔖',
+    kw: 2, zw: 1, up: { kw: 3, zw: 2 }, kopie: { soort: 'zwak', veld: 'zw' },
+    tekst: c => `Geef ${kval(c, 'kw')} Kwetsbaar en ${kval(c, 'zw')} Zwak.`,
+    speel: (c, t) => { geefStatus(t, 'kwetsbaar', kval(c, 'kw')); geefStatus(t, 'zwak', kval(c, 'zw')); }
+  },
+  rode_tape: {
+    naam: 'Rode Tape', type: 'vaardigheid', zeld: 'ongewoon', kost: 1, doel: 'vijand', icoon: '🎀',
+    zw: 1, kw: 1, n: 2, up: { zw: 2, kw: 2, n: 3 },
+    tekst: c => `Geef ${kval(c, 'zw')} Zwak en ${kval(c, 'kw')} Kwetsbaar. Verwijder ${kval(c, 'n')} Blok van het doelwit.`,
+    speel: (c, t) => { geefStatus(t, 'zwak', kval(c, 'zw')); geefStatus(t, 'kwetsbaar', kval(c, 'kw')); t.blok = Math.max(0, (t.blok || 0) - kval(c, 'n')); }
+  },
+  archiefstof: {
+    naam: 'Archiefstof', type: 'vaardigheid', zeld: 'gewoon', kost: 1, icoon: '🌫️',
+    blok: 6, up: { blok: 9 },
+    tekst: c => `Krijg ${kval(c, 'blok')} Blok. Trek 1 kaart.`,
+    speel: c => { geefBlok(sp(), kval(c, 'blok')); trekKaarten(1); }
+  },
+  /* De Slachter */
+  afgekeurd: {
+    naam: 'Afgekeurd', type: 'aanval', zeld: 'ongewoon', kost: 1, doel: 'vijand', icoon: '❌',
+    dmg: 8, bonus: 6, up: { dmg: 11, bonus: 8 }, kopie: { soort: 'aanval', veld: 'dmg' },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Kwetsbare vijanden krijgen ${kval(c, 'bonus')} extra.`,
+    speel: (c, t) => { const extra = (t.status.kwetsbaar > 0) ? kval(c, 'bonus') : 0; aanvalOp(t, kval(c, 'dmg') + extra); }
+  },
+  in_drievoud: {
+    naam: 'In Drievoud', type: 'aanval', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '🗂️',
+    dmg: 4, up: { dmg: 6 }, kopie: { soort: 'aanval', veld: 'dmg' },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade, drie keer.`,
+    speel: (c, t) => reeksAanval(t, kval(c, 'dmg'), 3)
+  },
+  originele_handtekening: {
+    naam: 'Originele Handtekening', type: 'aanval', zeld: 'zeldzaam', kost: 2, doel: 'vijand', icoon: '✍️',
+    dmg: 16, kr: 2, up: { dmg: 20, kr: 2 }, kopie: { soort: 'aanval', veld: 'dmg' },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Is dit je eerste aanval deze beurt: krijg ${kval(c, 'kr')} Kracht.`,
+    speel: (c, t) => { if (!(S.gevecht.aanvalDezeBeurt > 0)) geefStatus(sp(), 'kracht', kval(c, 'kr')); aanvalOp(t, kval(c, 'dmg')); }
+  },
+  geindexeerd: {
+    naam: 'Geïndexeerd', type: 'kracht', zeld: 'ongewoon', kost: 1, icoon: '🗄️',
+    n: 2, up: { n: 3 },
+    tekst: c => `Telkens je een aanval speelt, krijg je ${kval(c, 'n')} Blok.`,
+    speel: c => { geefStatus(sp(), 'geindexeerd', kval(c, 'n')); }
+  },
+  /* De Gifmagiër */
+  naaperij: {
+    naam: 'Naäperij', type: 'aanval', zeld: 'ongewoon', kost: 1, doel: 'vijand', icoon: '🐒',
+    dmg: 7, gif: 4, up: { dmg: 9, gif: 6 }, kopie: { soort: 'aanval', veld: 'dmg' },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade en geef ${kval(c, 'gif')} Gif; was het doelwit al vergiftigd, nogmaals.`,
+    speel: (c, t) => { const al = (t.status.gif || 0) > 0; aanvalOp(t, kval(c, 'dmg')); geefGif(t, kval(c, 'gif')); if (al) geefGif(t, kval(c, 'gif')); }
+  },
+  inktklerk_steek: {
+    naam: 'Inktsteek', type: 'aanval', zeld: 'gewoon', kost: 0, doel: 'vijand', icoon: '🖋️',
+    dmg: 4, gif: 2, up: { dmg: 5, gif: 4 }, kopie: { soort: 'aanval', veld: 'dmg' },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Geef ${kval(c, 'gif')} Gif.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefGif(t, kval(c, 'gif')); }
+  },
+  registerrot: {
+    naam: 'Registerrot', type: 'vaardigheid', zeld: 'zeldzaam', kost: 1, icoon: '🦠',
+    gif: 3, up: { gif: 4 },
+    tekst: c => `Geef alle vijanden ${kval(c, 'gif')} Gif, plus 1 extra per reeds vergiftigde vijand.`,
+    speel: c => { const verg = alleVijanden().filter(v => (v.status.gif || 0) > 0).length; alleVijanden().forEach(v => geefGif(v, kval(c, 'gif') + verg)); }
+  },
+  /* De Kolendruïde */
+  perkamentslag: {
+    naam: 'Perkamentslag', type: 'aanval', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '📜',
+    dmg: 8, dr: 1, up: { dmg: 11, dr: 2 }, kopie: { soort: 'aanval', veld: 'dmg' },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Krijg ${kval(c, 'dr')} Doornen.`,
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefStatus(sp(), 'doornen', kval(c, 'dr')); }
+  },
+  doorslag_doornen: {
+    naam: 'Naäpende Wortels', type: 'aanval', zeld: 'ongewoon', kost: 1, doel: 'vijand', icoon: '🪢',
+    dmg: 6, bonus: 5, up: { dmg: 8, bonus: 7 }, kopie: { soort: 'aanval', veld: 'dmg' },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Is het doelwit Zwak óf Kwetsbaar: ${kval(c, 'bonus')} extra.`,
+    speel: (c, t) => { const extra = ((t.status.zwak > 0) || (t.status.kwetsbaar > 0)) ? kval(c, 'bonus') : 0; aanvalOp(t, kval(c, 'dmg') + extra); }
+  },
+  kolenstempel: {
+    naam: 'Kolenstempel', type: 'vaardigheid', zeld: 'ongewoon', kost: 1, licht: 3, kr: 2, dr: 1, up: { licht: 2 }, icoon: '♨️',
+    tekst: c => `Verbrand ${kval(c, 'licht')} licht. Krijg ${kval(c, 'kr')} Kracht en ${kval(c, 'dr')} Doornen.`,
+    speel: c => { verbrandLicht(kval(c, 'licht')); geefStatus(sp(), 'kracht', kval(c, 'kr')); geefStatus(sp(), 'doornen', kval(c, 'dr')); }
+  },
+  het_origineel_kaart: {
+    naam: 'Het Origineel', type: 'aanval', zeld: 'zeldzaam', kost: 2, doel: 'vijand', icoon: '🌿',
+    dmg: 12, maal: 2, up: { dmg: 16, maal: 2 }, kopie: { soort: 'aanval', veld: 'dmg' },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade, plus ${kval(c, 'maal')} per Doornen die je hebt.`,
+    speel: (c, t) => { const dr = sp().status.doornen || 0; aanvalOp(t, kval(c, 'dmg') + kval(c, 'maal') * dr); }
   }
 };
 
@@ -622,17 +717,20 @@ const KAARTEN = {
 ['slag', 'knal', 'dubbelslag', 'zware_klap', 'klingenstorm', 'ijzeren_golf', 'bloedoffer',
  'uithaal', 'executie', 'molensteen', 'vampiersbeet', 'wervelwind', 'genadeslag',
  'metaalhuid', 'vlammende_hartstocht', 'demonenvorm', 'vlammenkling', 'brandmerk',
- 'beulswerk'
+ 'beulswerk',
+ 'afgekeurd', 'in_drievoud', 'originele_handtekening', 'geindexeerd'
 ].forEach(id => KAARTEN[id].held = 'slachter');
 ['giftige_steek', 'gifwolk', 'gifklieren', 'prik', 'dodelijke_kus', 'snelle_steek',
  'slangenbeet', 'venijnregen', 'giftand', 'nachtschade', 'gifflits', 'sluiproute',
  'verlammend_gif', 'katalyse', 'etterende_wonden', 'bloedzuiger', 'epidemie', 'gifvlam',
- 'lichtrot', 'moederslang'
+ 'lichtrot', 'moederslang',
+ 'naaperij', 'inktklerk_steek', 'registerrot'
 ].forEach(id => KAARTEN[id].held = 'gifmagier');
 ['takkenslag', 'vonkenbeet', 'stoofpotje', 'wortelgreep', 'doornzweep', 'bastvel',
  'sporenstoot', 'stoofgeur', 'wurgwortels', 'kolengloed', 'paddenstoelenstoofpot',
  'asadem', 'eikenhuid', 'doornmantel', 'duivelspact', 'knalsigaar', 'sporenkring',
- 'wilde_oogst', 'hart_van_de_duivelboom', 'flame'
+ 'wilde_oogst', 'hart_van_de_duivelboom', 'flame',
+ 'perkamentslag', 'doorslag_doornen', 'kolenstempel', 'het_origineel_kaart'
 ].forEach(id => KAARTEN[id].held = 'thoverk');
 
 /* ---------- SPEELBARE HELDEN ---------- */
@@ -683,7 +781,10 @@ const STATUSINFO = {
   innerlijkvuur: { naam: 'Innerlijk Vuur', icoon: '🫀', goed: true, uitleg: 'Geeft elke beurt zoveel extra Energie, maar verbrandt 2 licht per stapel.' },
   baken:       { naam: 'Lichtbaken',  icoon: '🏮', goed: true,  uitleg: 'Vult aan het begin van elke beurt 2 licht per stapel bij.' },
   bloedzuiger: { naam: 'Bloedzuiger', icoon: '🦟', goed: true,  uitleg: 'Geneest aan het begin van de beurt zoveel HP per vergiftigde vijand.' },
-  epidemie:    { naam: 'Epidemie',    icoon: '☣️', goed: true,  uitleg: 'Sterft een vijand, dan krijgen alle vijanden zoveel Gif.' }
+  epidemie:    { naam: 'Epidemie',    icoon: '☣️', goed: true,  uitleg: 'Sterft een vijand, dan krijgen alle vijanden zoveel Gif.' },
+  /* Act 2 — Het Archief */
+  doorslag:    { naam: 'Doorslag',    icoon: '📑', goed: true,  uitleg: 'De eerstvolgende aanval die je speelt, speel je een tweede keer af.' },
+  geindexeerd: { naam: 'Geïndexeerd', icoon: '🗄️', goed: true,  uitleg: 'Telkens je een aanval speelt, krijg je zoveel Blok.' }
 };
 
 /* ---------- VIJANDEN ----------
