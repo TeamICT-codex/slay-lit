@@ -735,7 +735,7 @@ function geefStatus(actor, naam, n) {
 }
 
 function geefGif(actor, n) {
-  if ((heeftRelikwie('smaragden_ring') || heeftRelikwie('inktpot')) && !actor.isSpeler) n += 1;
+  if (!actor.isSpeler) n += (heeftRelikwie('smaragden_ring') ? 1 : 0) + (heeftRelikwie('inktpot') ? 1 : 0);
   geefStatus(actor, 'gif', n);
   Klank.sfx('gif');
 }
@@ -1516,7 +1516,7 @@ function startGevecht(samenstelling, soort, rij) {
   if (heeftRelikwie('houten_been')) g.speler.status.doornen = (g.speler.status.doornen || 0) + 1;
   if (heeftRelikwie('duivelboomtak')) g.speler.status.kracht = (g.speler.status.kracht || 0) + 2;
   if (heeftRelikwie('slangenamulet')) {
-    const n = 2 + (heeftRelikwie('smaragden_ring') ? 1 : 0);
+    const n = 2 + (heeftRelikwie('smaragden_ring') ? 1 : 0) + (heeftRelikwie('inktpot') ? 1 : 0);
     g.vijanden.forEach(v => v.status.gif = (v.status.gif || 0) + n);
   }
   /* gedoofde fakkel: vijanden feller, maar de buit is groter */
@@ -1529,6 +1529,7 @@ function startGevecht(samenstelling, soort, rij) {
   let eersteTrek = 5;
   if (heeftRelikwie('klavertje')) eersteTrek += 2;
   if (heeftRelikwie('oorlogstrommel')) eersteTrek += 1;
+  if (heeftRelikwie('doorslagpapier')) eersteTrek += 1;   /* "eerste beurt 1 extra" = de openingshand */
   trekKaarten(eersteTrek);
 
   g.vijanden.forEach(v => v.intent = VIJANDEN[v.id].kies(v, 0));
@@ -2373,11 +2374,19 @@ async function speelKaart(c, doel) {
     try { await resultaat; } finally { if (S.gevecht === g) g.bezig = false; }
   }
   baasZietKaart(c);   /* THE COPYCAT ziet wat je speelt (observeren) */
-  /* Act 2-kaarthaken (Het Archief): Doorslag-verdubbeling · Geïndexeerd-blok · eerste-aanval-teller */
+  /* Act 2-kaarthaken (Het Archief): teller + Geïndexeerd-blok, dán de Doorslag-verdubbeling.
+     Increment vóór de recast (anders telt Originele Handtekening de recast dubbel als
+     'eerste aanval'); de recast wordt geawait (async multi-hit niet fire-and-forget). */
   if (def.type === 'aanval') {
-    if (c.id !== 'doorslag_kaart' && (sp().status.doorslag || 0) > 0) { sp().status.doorslag--; def.speel(c, doel); }
-    if ((sp().status.geindexeerd || 0) > 0) geefBlok(sp(), sp().status.geindexeerd);
     g.aanvalDezeBeurt = (g.aanvalDezeBeurt || 0) + 1;
+    if ((sp().status.geindexeerd || 0) > 0) geefBlok(sp(), sp().status.geindexeerd);
+    if (c.id !== 'doorslag_kaart' && (sp().status.doorslag || 0) > 0) {
+      sp().status.doorslag--;
+      const doel2 = (doel && doel.dood) ? alleVijanden()[0] : doel;   /* doel net gedood? mik op een levend */
+      const r2 = def.speel(c, doel2);
+      if (r2 && r2.then) { g.bezig = true; renderGevecht(); try { await r2; } finally { if (S.gevecht === g) g.bezig = false; } }
+      if ((sp().status.geindexeerd || 0) > 0) geefBlok(sp(), sp().status.geindexeerd);
+    }
   }
   if (def.type === 'kracht' || def.uitputten) {
     g.uitgeput.push(c);
@@ -2780,6 +2789,7 @@ function beginSpelerBeurt() {
   const s = g.speler;
   s.blok = 0;
   g.aanvalDezeBeurt = 0;   /* Act 2: Originele Handtekening telt of dit je eerste aanval is */
+  s.status.doorslag = 0;   /* Doorslag vervalt per beurt — geen carry-over (de kaart zegt "deze beurt") */
 
   if ((s.status.gif || 0) > 0) {
     verliesHp(s, s.status.gif);
@@ -2802,7 +2812,6 @@ function beginSpelerBeurt() {
   /* Act 2 — Het Archief */
   if (heeftRelikwie('dossierklem')) geefBlok(s, 4);
   if (heeftRelikwie('carbon_afdruk')) { geefBlok(s, 3); geefStatus(s, 'doornen', 1); }
-  if (g.beurt === 1 && heeftRelikwie('doorslagpapier')) trekKaarten(1);
   /* het Houten Been wortelt zich vast — ná de blok-reset van beurt 1 */
   if (g.beurt === 1 && heeftRelikwie('houten_been')) geefBlok(s, 4);
   if ((s.status.bloedzuiger || 0) > 0) {
