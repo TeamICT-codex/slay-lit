@@ -24,7 +24,7 @@ const KAARTEN = {
   },
   knal: {
     naam: 'Knal', type: 'aanval', zeld: 'basis', kost: 2, doel: 'vijand', icoon: '💥',
-    dmg: 8, kw: 2, up: { dmg: 10, kw: 3 },
+    dmg: 8, kw: 2, up: { dmg: 10, kw: 3 }, kopie: { soort: 'aanval', veld: 'dmg' },
     tekst: c => `Doe ${pv(c, 'dmg')} schade. Geef ${kval(c, 'kw')} Kwetsbaar.`,
     speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefStatus(t, 'kwetsbaar', kval(c, 'kw')); }
   },
@@ -50,7 +50,7 @@ const KAARTEN = {
   },
   giftige_steek: {
     naam: 'Giftige Steek', type: 'aanval', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '🗡️',
-    dmg: 5, gif: 3, up: { dmg: 6, gif: 5 },
+    dmg: 5, gif: 3, up: { dmg: 6, gif: 5 }, kopie: { soort: 'aanval', veld: 'dmg' },
     tekst: c => `Doe ${pv(c, 'dmg')} schade. Geef ${kval(c, 'gif')} Gif.`,
     speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefGif(t, kval(c, 'gif')); }
   },
@@ -238,13 +238,13 @@ const KAARTEN = {
   },
   snelle_steek: {
     naam: 'Snelle Steek', type: 'aanval', zeld: 'gewoon', kost: 0, doel: 'vijand', icoon: '⚡',
-    dmg: 4, up: { dmg: 6 },
+    dmg: 4, up: { dmg: 6 }, kopie: { soort: 'aanval', veld: 'dmg' },
     tekst: c => `Doe ${pv(c, 'dmg')} schade.`,
     speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); }
   },
   slangenbeet: {
     naam: 'Slangenbeet', type: 'aanval', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '🐍',
-    dmg: 6, bonus: 4, up: { dmg: 8, bonus: 6 },
+    dmg: 6, bonus: 4, up: { dmg: 8, bonus: 6 }, kopie: { soort: 'aanval', veld: 'dmg' },
     tekst: c => `Doe ${pv(c, 'dmg')} schade. Vergiftigde vijanden krijgen ${kval(c, 'bonus')} extra schade.`,
     speel: (c, t) => {
       const extra = (t.status.gif > 0) ? kval(c, 'bonus') : 0;
@@ -259,7 +259,7 @@ const KAARTEN = {
   },
   giftand: {
     naam: 'Giftand', type: 'aanval', zeld: 'ongewoon', kost: 2, doel: 'vijand', icoon: '🦷',
-    dmg: 9, up: { dmg: 12 },
+    dmg: 9, up: { dmg: 12 }, kopie: { soort: 'aanval', veld: 'dmg' },
     tekst: c => `Doe ${pv(c, 'dmg')} schade. Verdubbel het Gif op het doelwit.`,
     speel: (c, t) => {
       aanvalOp(t, kval(c, 'dmg'));
@@ -484,7 +484,7 @@ const KAARTEN = {
   },
   sporenstoot: {
     naam: 'Sporenstoot', type: 'aanval', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '🍄',
-    dmg: 6, bonus: 4, up: { dmg: 8, bonus: 5 },
+    dmg: 6, bonus: 4, up: { dmg: 8, bonus: 5 }, kopie: { soort: 'aanval', veld: 'dmg' },
     tekst: c => `Doe ${pv(c, 'dmg')} schade; +${kval(c, 'bonus')} als het doelwit Zwak of Kwetsbaar is.`,
     speel: (c, t) => {
       const raak = ((t.status.zwak || 0) > 0 || (t.status.kwetsbaar || 0) > 0);
@@ -499,7 +499,7 @@ const KAARTEN = {
   },
   wurgwortels: {
     naam: 'Wurgwortels', type: 'aanval', zeld: 'ongewoon', kost: 2, doel: 'vijand', icoon: '🪢',
-    dmg: 11, kw: 2, up: { dmg: 14, kw: 2 },
+    dmg: 11, kw: 2, up: { dmg: 14, kw: 2 }, kopie: { soort: 'aanval', veld: 'dmg' },
     tekst: c => `Doe ${pv(c, 'dmg')} schade en geef ${kval(c, 'kw')} Kwetsbaar.`,
     speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefStatus(t, 'kwetsbaar', kval(c, 'kw')); }
   },

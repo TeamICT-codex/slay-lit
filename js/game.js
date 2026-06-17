@@ -2393,10 +2393,10 @@ function checkBaasFase() {
    (de chokepoint — dus ook gif voedt). Drops (rol:'breker') breekt de machine.
    Volledig ontwerp: ONTWERP.md "The Copycat — Act 2-eindbaasmechaniek". */
 
-const COPYCAT_CAP_DMG = 30;      /* harde cap op teruggekaatste schade (na alle scaling) */
+const COPYCAT_CAP_DMG = { 1: 22, 2: 28, 3: 36 };   /* fase-afhankelijke cap op teruggekaatste schade — escalatie wordt voelbaar */
 const COPYCAT_STEEL_CAP = 12;    /* max ooit gestolen per gevecht (anti-leegtrekken) */
 const COPYCAT_ARSENAAL_CAP = 5;  /* max gelijktijdig in het arsenaal */
-const COPYCAT_TERUGWIN = 14;     /* schade aan de baas per teruggewonnen kaart */
+const COPYCAT_TERUGWIN = 20;     /* schade aan de baas per teruggewonnen kaart */
 const COPYCAT_F2 = 8, COPYCAT_F3 = 18;   /* voedings-drempels voor fase 2 / 3 */
 
 function copycatBaas(g) {
@@ -2457,7 +2457,7 @@ function copycatSteel(v, g) {
 function copycatPlagiaatDmg(v, n) {
   let d = Math.round(n * 1.5) + (v.copyKracht || 0);
   if (huidigeAct() > 1) d = Math.ceil(d * (1 + 0.15 * (huidigeAct() - 1)));
-  return Math.min(COPYCAT_CAP_DMG, Math.max(1, d));
+  return Math.min(COPYCAT_CAP_DMG[v.fase || 1] || 36, Math.max(1, d));
 }
 /* kies de N sterkste gestolen kaarten + bereken hun eind-getallen (voor telegraaf én uitvoer) */
 function copycatPlagiaatPlan(v, aantal) {
@@ -2526,7 +2526,7 @@ function copycatKies(v, beurt) {
     return { type: 'plagiaat', naam: 'Plagiaat', plan, doe: vv => copycatSpeelTerug(vv, g, plan) };
   };
   const steel = { type: 'steel', naam: 'Afkijken', doe: vv => { if (!copycatSteel(vv, g)) doeSchade(sp(), 4 + (fase >= 3 ? 2 : 0), vv); } };
-  const pathetisch = { type: 'aanval', naam: fase >= 2 ? 'Geschreeuw' : 'Pappie Bellen', dmg: 6 + (fase >= 3 ? 2 : 0) };
+  const pathetisch = { type: 'aanval', naam: fase >= 2 ? 'Geschreeuw' : 'Pappie Bellen', dmg: 6 + fase * 3 };
   if (g.copycatGebroken) return { type: 'aanval', naam: 'Wanhoopsklap', dmg: 6 + (fase >= 3 ? 2 : 0) };
   if (fase >= 3 && arsenaal > 0) {
     if (kanStelen && t % 3 === 2) return steel;
@@ -2576,13 +2576,18 @@ function copycatBeurtStart(g) {
     return;
   }
   const breker = levendeBrekerCompanion();
+  const raakte = g.raakteCopycat;
   /* stall-straf: deed je vorige beurt geen schade aan hem, dan leert hij traag bij;
      anders koelt zijn voeding licht af (nooit onder de huidige fase-bodem) */
-  if (!g.raakteCopycat) b.gevoed = (b.gevoed || 0) + 1;
+  if (!raakte) b.gevoed = (b.gevoed || 0) + 1;
   else b.gevoed = Math.max(copycatFaseBodem(b.fase || 1), (b.gevoed || 0) - 1);
   g.raakteCopycat = false;
-  if (!breker && Array.isArray(b.gestolen) && b.gestolen.length) {
-    /* geen breker: trage mercy — lek 1 gestolen kaart terug zodat je nooit vastzit */
+  /* tijds-vloer: hij blijft niet eeuwig in een lage fase hangen door stalling */
+  if (g.beurt >= 5 && (b.fase || 1) < 2) b.gevoed = Math.max(b.gevoed || 0, COPYCAT_F2);
+  if (g.beurt >= 10 && (b.fase || 1) < 3) b.gevoed = Math.max(b.gevoed || 0, COPYCAT_F3);
+  /* mercy-lek ALLEEN als je hem vorige beurt niet raakte (raakte je hem wél, dan win
+     je al kaarten terug via schade — geen dubbel-cadeau) */
+  if (!breker && !raakte && Array.isArray(b.gestolen) && b.gestolen.length) {
     const terug = b.gestolen.shift();
     const kaart = nieuweKaart(terug.id); kaart.up = false;
     g.trek.push(kaart);
