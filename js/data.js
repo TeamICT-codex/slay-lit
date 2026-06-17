@@ -1306,7 +1306,28 @@ const RELIKWIEEN = {
   gebroken_zandloper: { naam: 'Gebroken Zandloper', icoon: '⏳', zeld: 'episch', tekst: 'Ongebruikte Energie neem je mee naar je volgende beurt.',
     lore: 'Het zand valt omhoog. De tijd heeft het opgegeven.' },
   levend_vuur:    { naam: 'Levend Vuur', icoon: '🔆', zeld: 'episch', tekst: 'Je licht- en vuurkaarten kosten 1 Energie minder.',
-    lore: 'Het koos jou. Vraag nooit wat er met de vorige drager gebeurde.' }
+    lore: 'Het koos jou. Vraag nooit wat er met de vorige drager gebeurde.' },
+  /* ---- Act 2 — Het Archief ---- */
+  was_zegel:      { naam: 'Het Was-zegel', icoon: '🔴', zeld: 'gewoon', tekst: 'Begin elk gevecht met 8 Blok.',
+    lore: 'Niemand weet meer wiens zegel het was. Het sluit toch — alsof het bang is voor wat er anders uit zou kruipen.' },
+  stempelkussen:  { naam: 'Het Stempelkussen', icoon: '🟥', zeld: 'gewoon', tekst: 'Vijanden beginnen elk gevecht met 1 Kwetsbaar.',
+    lore: 'Eén klap met het kussen en je staat geregistreerd, gecatalogiseerd, gedoemd. De inkt droogt nooit helemaal.' },
+  doorslagpapier: { naam: 'Doorslagpapier', icoon: '📄', zeld: 'gewoon', tekst: 'Trek op je eerste beurt 1 extra kaart.',
+    lore: 'Schrijf één keer, en het verschijnt twee keer. Welke de echte is, staat nergens genoteerd.' },
+  dossierklem:    { naam: 'De Dossierklem', icoon: '📎', zeld: 'ongewoon', tekst: 'Aan het begin van je beurt: +4 Blok.',
+    lore: 'Bureaucratie verliest nooit een vel. De klem die jouw dossier bijeenhoudt, houdt ook jou bijeen.' },
+  rode_lint:      { naam: 'Het Rode Lint', icoon: '🎀', zeld: 'ongewoon', tekst: 'Vijanden beginnen elk gevecht met 1 Zwak.',
+    lore: 'Rode lint vertraagt alles — behalve jou. Bind het om je vijand en zelfs zijn vuist komt te laat.' },
+  inktpot:        { naam: 'De Bodemloze Inktpot', icoon: '🖋️', zeld: 'ongewoon', tekst: 'Wanneer je Gif toedient, dien je 1 extra toe.',
+    lore: 'De klerk vulde hem nooit bij. Hij raakt ook nooit leeg. Wat eruit komt, vlekt door tot op het bot.' },
+  indexkaart:     { naam: 'De Verloren Index-kaart', icoon: '🗂️', zeld: 'ongewoon', tekst: 'Je leest vijand-intenties zelfs in het donker.',
+    lore: 'Eén kaartje uit het oneindige register, en het beschrijft precies wat je vijand gaat doen. Het systeem weet alles. Nu jij ook.' },
+  carbon_afdruk:  { naam: 'De Carbon-afdruk', icoon: '🩹', zeld: 'zeldzaam', tekst: 'Aan het begin van je beurt: 3 Blok en 1 Doornen.',
+    lore: 'Druk hard genoeg en de afdruk komt door op het blad eronder. Zo verdedig je je: niet één keer, maar laag na laag na laag.' },
+  verlopen_contract: { naam: 'Het Verlopen Contract', icoon: '📜', zeld: 'zeldzaam', tekst: 'Zou je sterven: blijf op 1 HP en verwijder alle Zwak en Kwetsbaar. Eénmalig per run.',
+    lore: 'De clausules zijn verlopen, de handtekening vervaagd. Maar de onderwereld eert geen einddatum — totdat jij hem zelf verscheurt.' },
+  het_grootboek:  { naam: 'Het Grootboek', icoon: '📕', zeld: 'episch', tekst: 'Bij oppakken: +12 Max HP. Genees 8 HP na elk gevecht.',
+    lore: 'Elke naam die de diepte ooit opslokte staat erin, regel na regel, tot in het oneindige. Sla het open en het schrijft jóuw naam bij — niet bij de doden, nog niet.' }
 };
 
 /* ---------- DRANKJES ---------- */

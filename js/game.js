@@ -454,6 +454,7 @@ function geefRelikwie(id, vanSchrijn) {
   if (!S.relikwieen.includes(id)) S.relikwieen.push(id);
   if (id === 'spaarvarken') S.goud += 100;
   if (id === 'bloedrobijn') { S.maxHp += 8; S.hp += 8; }
+  if (id === 'het_grootboek') { S.maxHp += 12; S.hp += 12; }   /* Act 2: Het Grootboek */
   /* echt gevonden (niet uit het Schrijn meegenomen) = lading herladen */
   if (!vanSchrijn) laadSchrijnOp(id);
   renderTopbalk();
@@ -734,7 +735,7 @@ function geefStatus(actor, naam, n) {
 }
 
 function geefGif(actor, n) {
-  if (heeftRelikwie('smaragden_ring') && !actor.isSpeler) n += 1;
+  if ((heeftRelikwie('smaragden_ring') || heeftRelikwie('inktpot')) && !actor.isSpeler) n += 1;
   geefStatus(actor, 'gif', n);
   Klank.sfx('gif');
 }
@@ -1502,6 +1503,10 @@ function startGevecht(samenstelling, soort, rij) {
   }
   if (heeftRelikwie('bronzen_schub')) g.speler.status.doornen = 3;
   if (heeftRelikwie('scherpe_dolk')) g.vijanden.forEach(v => v.status.kwetsbaar = 1);
+  /* Act 2 — Het Archief */
+  if (heeftRelikwie('was_zegel')) g.speler.blok += 8;
+  if (heeftRelikwie('stempelkussen')) g.vijanden.forEach(v => v.status.kwetsbaar = (v.status.kwetsbaar || 0) + 1);
+  if (heeftRelikwie('rode_lint')) g.vijanden.forEach(v => v.status.zwak = (v.status.zwak || 0) + 1);
   if (heeftRelikwie('bottenfluit')) g.vijanden.forEach(v => v.status.zwak = 1);
   if (heeftRelikwie('energiekristal')) g.energie += 1;
   /* de kronen tellen ook al in de allereerste beurt mee */
@@ -1805,7 +1810,7 @@ function intentTekst(v) {
   const it = v.intent;
   if (!it) return '';
   /* de Fluisterende Schedel ziet wat jij niet ziet */
-  const niveau = heeftRelikwie('fluisterende_schedel') ? 'helder' : lichtNiveau();
+  const niveau = (heeftRelikwie('fluisterende_schedel') || heeftRelikwie('indexkaart')) ? 'helder' : lichtNiveau();
   if (niveau === 'gedoofd') {
     return `<span class="intent intent-duister" data-tip="Het is te donker om de bedoeling te zien">❓</span>`;
   }
@@ -2794,6 +2799,10 @@ function beginSpelerBeurt() {
     fxNummer($('#speler-zone'), '🔥-' + s.status.duivelhart, 'fx-debuff');
   }
   if (heeftRelikwie('mosamulet')) geefBlok(s, 3);
+  /* Act 2 — Het Archief */
+  if (heeftRelikwie('dossierklem')) geefBlok(s, 4);
+  if (heeftRelikwie('carbon_afdruk')) { geefBlok(s, 3); geefStatus(s, 'doornen', 1); }
+  if (g.beurt === 1 && heeftRelikwie('doorslagpapier')) trekKaarten(1);
   /* het Houten Been wortelt zich vast — ná de blok-reset van beurt 1 */
   if (g.beurt === 1 && heeftRelikwie('houten_been')) geefBlok(s, 4);
   if ((s.status.bloedzuiger || 0) > 0) {
@@ -2856,6 +2865,7 @@ async function gevechtGewonnen() {
   stopGevechtLus();
 
   if (heeftRelikwie('brandend_bloed')) geneesHpBuitenGevecht(6);
+  if (heeftRelikwie('het_grootboek')) geneesHpBuitenGevecht(8);
   if (heeftRelikwie('kookpot_van_maxenzele')) geneesHpBuitenGevecht(3);
 
   if (g.soort === 'baas') {
