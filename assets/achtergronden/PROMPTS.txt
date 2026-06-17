@@ -44,42 +44,85 @@ Act 1 achtergronden/Achtergrondrust1.png   (DE RUSTPLAATS — al
   en donker; warme gloed mag al zachtjes op de wanden hangen.
 
 
-============= NOG ONTBREKEND — ACT 2: HET ARCHIEF =============
+=================== ACT 2: HET ARCHIEF (volledig) ===================
 (de catacombe HERKADERD als een verrotte bureaucratische onderwereld —
 een oneindig dodenarchief. Thema: NAMAAK & INDEXERING. Palet kantelt naar
 KOUD blauw-grijs "systeem-licht"; jouw warme fakkel is het enige warme,
 onkopieerbare licht in beeld. Identieke, gedupliceerde, gespiegelde
-architectuur foreshadowt The Copycat. Voeg gerust een Act 1-plate als
-stijl-referentie toe, maar stuur het palet KOELER.)
+architectuur foreshadowt The Copycat. Voeg een bestaande plate als
+stijl-referentie toe, maar stuur het palet KOELER, klinischer, papieriger.)
 
-Act 2 achtergronden/Achtergrond ACT 2.png   (kaart-plate, staand!)
-  Scene: a vast vertical descent through an endless bureaucratic
-  ossuary-ARCHIVE seen as one towering scene — at the TOP, burial
-  niches packed with rotting ledgers and yellowed sealed contracts,
-  bones stacked and TAGGED like files; descending past identical
-  filing-galleries repeating in mirror-image rows (unsettlingly the
-  same, copied over and over) into a pitch-black gate of bricked-up
-  filing cabinets at the BOTTOM. Cold blue-grey clerical light, with
-  one faint WARM path-light threading down the middle.
+STATUS: de [✅]-platen bestaan al, maar in de OUDE catacombe-stijl — voor
+"Het Archief" her-genereer je ze met onderstaande prompts (zelfde bestandsnaam,
+overschrijven). De [⬜]-platen ontbreken nog; drop ze en zeg het me, dan wire
+ik de slot in het manifest (art.js). Bestandsnamen EXACT overnemen.
 
-Act 2 achtergronden/Achtergrondrust2.png
-  Scene: a quiet dead-records nook claimed as a campsite — a bedroll
-  between two stacked stone filing-sarcophagi, hanging cobweb and
-  curled paper, a small niche-shrine of melted-down candle stubs over
-  a defaced nameplate, one shaft of cold blue-grey light from a grate
-  above. Cold palette so the game-drawn warm fire stands out.
+[✅] Act 2 achtergronden/Startscherm ACT 2 achtergrond.webp   (kaart-plate, STAAND 9:16!)
+  Scene: a vast vertical descent through an endless bureaucratic ossuary-
+  ARCHIVE as one towering scene — TOP: burial niches packed with rotting
+  ledgers and yellowed sealed contracts, bones stacked and TAGGED like files;
+  descending past identical filing-galleries repeating in mirror-image rows
+  (the same, copied over and over) into a pitch-black gate of bricked-up filing
+  cabinets at the BOTTOM. Cold blue-grey clerical light, one faint WARM path-
+  light threading down the middle.
+
+[✅] Act 2 achtergronden/Gevechtstijl1act2.webp   (gevecht, LIGGEND 16:9, open midden)
+  Scene: a wide archive hall, towering shelves of tagged bone-files and bundled
+  contracts on both sides, open clerical floor in the middle, cold blue-grey light.
+[✅] Act 2 achtergronden/Gevechtstijl2act2.webp
+  Scene: a mirror-corridor of IDENTICAL filing niches receding into the distance
+  on both sides — unsettlingly duplicated, copied over and over (Doorslag-motief).
+[✅] Act 2 achtergronden/Gevechtstijl3act2.webp
+  Scene: a flooded records-basement, drowned ledgers and floating index-cards,
+  cold reflections, a low stone walkway across the middle.
+[✅] Act 2 achtergronden/Gevechtstijl4act2.webp
+  Scene: a sorting-hall, a dead conveyor of identical stone filing-drawers /
+  duplicate coffins, rubber-stamp gantries overhead, cold haze.
+[✅] Act 2 achtergronden/Gevechtstijl5act2.webp
+  Scene: a vast index-rotunda, concentric rings of numbered bone-niches around an
+  open central floor, a cold shaft of grey light from far above.
+
+[✅] Act 2 achtergronden/Gevechtstijl act2 EPISCH 1.webp   (epische vijand, LIGGEND, grootser)
+  Scene: a cathedral-scale central archive nave, colossal walls of tagged files
+  vanishing upward, an altar-desk of sealed contracts, cold reverent grey light.
+[✅] Act 2 achtergronden/Gevechtstijl act2 EPISCH 2.webp
+  Scene: the heart of the index — a towering mechanical card-catalogue engine, rows
+  of identical drawers spitting duplicate slips, one warm path-light at the foot.
+[✅] Act 2 achtergronden/Gevechtstijl act2 EPISCH 3.webp
+  Scene: a hall of mirrors made of filing-cabinet glass, the chamber reflected into
+  infinity (copies of copies), cold blue-grey, faint warm glow at the very center.
+
+[✅] Act 2 achtergronden/Achtergrondverkoper ACT2.webp   (winkel)
+  Scene: a clerk's wares-counter wedged into a records-vault, goods filed in
+  labelled drawers and tied with red tape, an abacus and stamps, cold lamp-light.
+[✅] Act 2 achtergronden/Achtergrondverkoper ACT2 easter egg.webp
+  Scene: same counter, but caught mid-fraud — duplicate price-tags, forged seals
+  and a hidden second set of ledgers spilling out; a sly conspiratorial cold glow.
+[✅] Act 2 achtergronden/Achtergrondvraagtekenencounter ACT2.webp   (event ❓)
+  Scene: a dim cross-roads of filing-corridors, a single sealed unmarked drawer
+  ajar with cold light leaking out, the rest in archive shadow.
+[✅] Act 2 achtergronden/Achtergrondvraagtekenrelikwieartefact ACT2.webp   (relikwie-event)
+  Scene: a forgotten reliquary-drawer in the archive, one ornate sealed artefact-
+  file glowing faintly warm among rows of cold grey dossiers.
+
+[⬜] Act 2 achtergronden/Achtergrondrust2.webp   (rustplaats — ik wire de slot)
+  Scene: a quiet dead-records nook claimed as a campsite — a bedroll between two
+  stacked stone filing-sarcophagi, curled paper and cobweb, a niche-shrine of
+  melted candle stubs over a defaced nameplate, one cold shaft from a grate above.
+  Cold palette zodat het (door het spel getekende) warme vuur eruit springt.
   LET OP: GEEN kampvuur in beeld (het spel tekent het zelf).
-
-Act 2 achtergronden/Achtergrondschatkist2.png
-  Scene: a sealed records-vault deep in the archive — an ornate
-  sarcophagus-drawer pulled open revealing a glint of gold among
-  bundled contracts and wax seals, grave-goods filed in labelled
-  shadows, dust hanging in pale cold light.
-
-Act 2 achtergronden/Overwinningsachtergrond2gewoon.png
-  Scene: an archive-gallery falling silent after battle, paper-dust
-  settling in cold light, scattered torn DUPLICATE pages and broken
-  bone-tags, a doorway of filing cabinets deeper down standing open.
+[⬜] Act 2 achtergronden/Achtergrondschatkist2.webp   (schat — ik wire de slot)
+  Scene: a sealed records-vault, an ornate sarcophagus-drawer pulled open revealing
+  a glint of gold among bundled contracts and wax seals, grave-goods filed in
+  labelled shadows, dust in pale cold light.
+[⬜] Act 2 achtergronden/Overwinningsachtergrond2gewoon.webp   (beloning — ik wire de slot)
+  Scene: an archive-gallery falling silent after battle, paper-dust settling in cold
+  light, scattered torn DUPLICATE pages and broken bone-tags, a filing-cabinet doorway
+  deeper down standing open.
+[⬜] Act 2 achtergronden/Overwinningsachtergrond2episch.webp   (epische overwinning — ik wire de slot)
+  Scene: the central index-nave after a great battle, a colossal toppled card-catalogue,
+  duplicate slips raining down slowly, one warm shaft breaking through the cold grey.
+  (de nederlaag-plate ACT2 staat al verderop in dit bestand.)
 
 
 ==================== NOG ONTBREKEND — ACT 3 ====================
