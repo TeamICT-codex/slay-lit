@@ -260,10 +260,14 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      wrappen ze, dus daar niet nodig) */
   body[data-modus="mobiel"] .hp-balk { width: 100px; }
   body[data-modus="mobiel"] .speler-hp { width: 120px; }
-  body[data-modus="mobiel"] .speler-figuur { width: 118px; height: 118px; }
-  body[data-modus="mobiel"] .vijand-art { width: 98px; height: 98px; }
-  body[data-modus="mobiel"] .is-elite .vijand-art { width: 112px; height: 112px; }
-  body[data-modus="mobiel"] .is-baas .vijand-art { width: 140px; height: 140px; }
+  /* figuren schalen mee met de SCHERMHOOGTE (clamp min/vh/max) i.p.v. vaste px per
+     breakpoint — zo passen ze vloeiend op élk telefoonformaat (≈320–600px hoog
+     liggend) zonder cliffs, en blijft de baas onder de #baas-balk (de min houdt 'm
+     leesbaar op piepkleine schermen, de max groot genoeg op grote telefoons/tablets). */
+  body[data-modus="mobiel"] .speler-figuur { width: clamp(88px, 24vh, 128px); height: clamp(88px, 24vh, 128px); }
+  body[data-modus="mobiel"] .vijand-art { width: clamp(74px, 20vh, 106px); height: clamp(74px, 20vh, 106px); }
+  body[data-modus="mobiel"] .is-elite .vijand-art { width: clamp(84px, 23vh, 120px); height: clamp(84px, 23vh, 120px); }
+  body[data-modus="mobiel"] .is-baas .vijand-art { width: clamp(82px, 22vh, 150px); height: clamp(82px, 22vh, 150px); }
   body[data-modus="mobiel"] #vijanden-rij { gap: 18px; flex-wrap: nowrap; max-width: none; }
   /* (baas: eigen HP-balk wegwerken staat nu onvoorwaardelijk in sectie A, zodat
      het óók in portret-baasgevechten geldt — niet enkel liggend.) */
@@ -292,17 +296,10 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
 }
 
 /* ---------- D. liggend gevecht op een KORTE telefoon (≤440px hoog) ----------
-   De grotere figuren (held 118 / vijand 98) maken de vijandkolom (intentie +
-   figuur + hp + naam) te hoog op een laag scherm → de intentie-icoon schoof
-   achter de topbalk. Op die hoogte de figuren wat kleiner zodat alles vrij blijft.
-   Op normale liggende telefoons (≈540px hoog) gelden de grotere maten gewoon. */
+   De figuurmaten zelf schalen al mee via clamp(min,vh,max) hierboven; hier enkel
+   de onderbalk wat korter zodat het strijdveld hoger wordt en de figuren (flex-end)
+   verder van de topbalk/​baasbalk zakken. De HUD/stapels hangen aan de schermbodem
+   (bottom-offset), dus die bewegen niet mee. */
 @media (orientation: landscape) and (max-height: 440px) {
-  body[data-modus="mobiel"] .speler-figuur { width: 98px; height: 98px; }
-  body[data-modus="mobiel"] .vijand-art { width: 82px; height: 82px; }
-  body[data-modus="mobiel"] .is-elite .vijand-art { width: 94px; height: 94px; }
-  body[data-modus="mobiel"] .is-baas .vijand-art { width: 96px; height: 96px; }
-  /* onderbalk wat korter → het strijdveld wordt hoger en de figuren zakken (flex-end)
-     verder van de topbalk weg; de HUD/stapels hangen aan de schermbodem (bottom-
-     offset), dus die bewegen niet mee. */
   body[data-modus="mobiel"] #onderbalk { height: 126px; }
 }
