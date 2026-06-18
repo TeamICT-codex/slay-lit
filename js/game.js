@@ -3993,7 +3993,7 @@ window.addEventListener('appinstalled', () => {
   _installPrompt = null;
   const n = document.getElementById('scherm-nudge'); if (n) n.remove();
   const knop = document.getElementById('inst-install'); if (knop) knop.style.display = 'none';
-  try { localStorage.setItem('slayit_nudge_scherm', 'weg'); } catch (e) {}
+  try { localStorage.setItem('slayit_nudge_v2', 'weg'); } catch (e) {}
   if (typeof melding === 'function') melding('📲 SLAY LIT is geïnstalleerd!');
 });
 
@@ -4003,33 +4003,38 @@ window.addEventListener('appinstalled', () => {
    ⚙️ Instellingen (installeerApp). Onthoudt 'weg'; niet als al geïnstalleerd. */
 function toonSchermNudge() {
   if (!window.mobiel || document.getElementById('scherm-nudge')) return;
-  try { if (localStorage.getItem('slayit_nudge_scherm') === 'weg') return; } catch (e) {}
+  try { if (localStorage.getItem('slayit_nudge_v2') === 'weg') return; } catch (e) {}
   if (appGeinstalleerd()) return;
   const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
   const docEl = document.documentElement;
-  const kanFS = !!(docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen);
-  let binnen, actie;
-  if (_installPrompt) {
-    binnen = `<span>📥 <b>Installeer SLAY LIT</b> als app — speelt op volledig scherm, ook offline.</span>
-       <button type="button" class="nudge-ja">Installeer</button>
-       <button type="button" class="nudge-x" aria-label="Sluiten">✕</button>`;
-    actie = () => { const p = _installPrompt; _installPrompt = null; try { p.prompt(); } catch (e) {} };
+  const kanFS = !!(docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen) && !document.fullscreenElement;
+
+  /* Volledig scherm (de directe winst — cruciaal voor Thomas) staat ALTIJD als
+     actie wanneer het kan, óók als installeren beschikbaar is; installeren staat
+     ernáást als de duurzame optie. Vroeger verving 'Installeer' de fullscreen-knop. */
+  const acties = [];
+  if (kanFS) acties.push({ label: '📲 Volledig scherm', primair: true, doe: () => wisselFullscreen(true) });
+  if (_installPrompt) acties.push({ label: '📥 Installeer app', doe: () => { const p = _installPrompt; _installPrompt = null; try { p.prompt(); } catch (e) {} } });
+
+  let tekst;
+  if (acties.length) {
+    tekst = 'Speel op <b>volledig scherm</b> voor de beste ervaring' + (_installPrompt ? ' — of installeer als app.' : '.');
   } else if (ios) {
-    binnen = `<span>📲 Voeg toe aan je beginscherm: tik <b>Deel</b> ▸ <b>Zet op beginscherm</b> — speelt dan als app op volledig scherm.</span>
-       <button type="button" class="nudge-x" aria-label="Sluiten">✕</button>`;
-  } else if (kanFS && !document.fullscreenElement) {
-    binnen = `<span>📲 Speel op <b>volledig scherm</b> voor de beste ervaring.</span>
-       <button type="button" class="nudge-ja">Aan</button>
-       <button type="button" class="nudge-x" aria-label="Sluiten">✕</button>`;
-    actie = () => wisselFullscreen(true);
-  } else { return; }   /* niets nuttigs te bieden */
+    tekst = '📲 Voeg toe aan je beginscherm: tik <b>Deel</b> ▸ <b>Zet op beginscherm</b> — speelt dan als app op volledig scherm.';
+  } else { return; }
+
   const wrap = document.createElement('div');
   wrap.id = 'scherm-nudge';
-  wrap.innerHTML = binnen;
+  wrap.innerHTML = `<div class="nudge-tekst">${tekst}</div>
+    <div class="nudge-acties">
+      ${acties.map((a, i) => `<button type="button" class="nudge-ja${a.primair ? '' : ' nudge-tweede'}" data-i="${i}">${a.label}</button>`).join('')}
+      <button type="button" class="nudge-x" aria-label="Sluiten">✕</button>
+    </div>`;
   document.body.appendChild(wrap);
-  const sluit = onthoud => { wrap.remove(); if (onthoud) { try { localStorage.setItem('slayit_nudge_scherm', 'weg'); } catch (e) {} } };
-  const ja = wrap.querySelector('.nudge-ja');
-  if (ja) ja.onclick = () => { if (actie) actie(); sluit(true); };
+  /* een actie sluit de nudge maar onthoudt 'weg' NIET (komt terug zolang je niet
+     fullscreen/geïnstalleerd bent); alleen de ✕ zet 'm voorgoed weg. */
+  const sluit = onthoud => { wrap.remove(); if (onthoud) { try { localStorage.setItem('slayit_nudge_v2', 'weg'); } catch (e) {} } };
+  wrap.querySelectorAll('.nudge-ja').forEach(b => b.onclick = () => { const a = acties[+b.dataset.i]; if (a) a.doe(); sluit(false); });
   wrap.querySelector('.nudge-x').onclick = () => sluit(true);
 }
 
