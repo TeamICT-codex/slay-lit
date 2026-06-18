@@ -130,6 +130,8 @@ body[data-modus="mobiel"] #scherm-held,
 body[data-modus="mobiel"] #scherm-event,
 body[data-modus="mobiel"] #scherm-rust,
 body[data-modus="mobiel"] #scherm-beloning,
+body[data-modus="mobiel"] #scherm-schat,
+body[data-modus="mobiel"] #scherm-winkel,
 body[data-modus="mobiel"] #scherm-einde {
   overflow-y: auto; justify-content: flex-start;
 }
@@ -173,17 +175,8 @@ body[data-modus="mobiel"] #hand .kaart.voorbeeld .kaart-tekst {
    Basis .inst-mobiel { display:none } staat in style.css. */
 body[data-modus="mobiel"] .inst-mobiel { display: flex; }
 
-/* draai-blok: gevechten dwingen liggend af. Vult het scherm in staande stand
-   tijdens een gevecht; in liggend matcht de query niet → weg.
-   (selector begint op body → het modus-attribuut wordt samengevoegd) */
-@media (orientation: portrait) {
-  body[data-modus="mobiel"][data-scherm="gevecht"] #draai-blok:not(.weg) {
-    display: flex; position: fixed; inset: 0; z-index: 2000;
-    flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 30px;
-    background: radial-gradient(ellipse at center, rgba(28, 18, 40, .98), rgba(10, 7, 14, .99));
-  }
-}
+/* draai-blok: de toon/positionering staat nu in style.css (#draai-blok.toon);
+   JS (evalueerDraaiBlok) bepaalt wanneer 'ie verschijnt, beide richtingen. */
 
 /* ---------- B. staand gevecht (telefoon, alle breedtes) ----------
    Vijanden wrappen zodat ze fors kunnen blijven; strijdveld verticaal

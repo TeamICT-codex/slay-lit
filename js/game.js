@@ -1143,6 +1143,7 @@ function toonScherm(naam) {
   $('#topbalk').style.display = (naam === 'titel') ? 'none' : 'flex';
   document.body.dataset.scherm = naam;   /* o.a. voor het fakkel-vignet */
   zetLichtVisueel();
+  evalueerDraaiBlok();                    /* combat=liggend, encounters=staand */
   if (S) S.scherm = naam;
   if (SCHERM_MUZIEK[naam]) Klank.muziek(SCHERM_MUZIEK[naam]);
 }
@@ -1510,14 +1511,42 @@ function maakVijand(id, rij) {
   return v;
 }
 
-/* eenmalige, vrijblijvende tip: liggend speelt comfortabeler. Geen blokkade —
-   alleen een toast, en enkel op een touch-toestel in staande stand. */
-/* gevechten dwingen liggend af (CSS toont de draai-prompt in staande stand).
-   Een vluchtweg voor wie zijn scherm vergrendeld heeft: deze sessie toch staand. */
+/* oriëntatie-routing: het gevecht speelt LIGGEND, de encounter-/transactie-
+   schermen (schat/winkel/beloning/event/rust) STAAND. We tonen de draai-prompt
+   met de juiste boodschap zodra het toestel verkeerd om gehouden wordt; per
+   richting eenmalig per sessie weg te klikken ("toch zo spelen"). */
+const _draaiGenegeerd = { liggend: false, staand: false };
+const _DRAAI_STAAND_SCHERMEN = ['schat', 'winkel', 'beloning', 'event', 'rust'];
+function evalueerDraaiBlok() {
+  const el = document.getElementById('draai-blok');
+  if (!el) return;
+  const scherm = document.body.dataset.scherm;
+  const liggend = !!(window.matchMedia && matchMedia('(orientation: landscape)').matches);
+  let richting = null;
+  if (window.mobiel) {
+    if (scherm === 'gevecht' && !liggend) richting = 'liggend';            /* gevecht wil liggend */
+    else if (_DRAAI_STAAND_SCHERMEN.includes(scherm) && liggend) richting = 'staand'; /* encounter wil staand */
+  }
+  if (!richting || _draaiGenegeerd[richting]) { el.classList.remove('toon'); el.dataset.richting = ''; return; }
+  const naarLiggend = richting === 'liggend';
+  const h2 = el.querySelector('h2'), p = el.querySelector('p'), knop = el.querySelector('button');
+  if (h2) h2.textContent = 'Draai je toestel';
+  if (p) p.textContent = naarLiggend
+    ? 'Gevechten speel je liggend — zo zie je het slagveld en je kaarten groot en duidelijk.'
+    : 'Dit scherm speelt prettiger rechtop — zo zie je alles in één blik.';
+  if (knop) knop.textContent = naarLiggend ? 'Toch staand spelen' : 'Toch liggend spelen';
+  el.dataset.richting = richting;
+  el.classList.add('toon');
+}
+/* "toch zo spelen": deze richting deze sessie niet meer vragen */
 function speelTochStaand() {
   const el = document.getElementById('draai-blok');
-  if (el) el.classList.add('weg');
+  const r = el && el.dataset.richting;
+  if (r) _draaiGenegeerd[r] = true;
+  if (el) el.classList.remove('toon');
 }
+window.addEventListener('orientationchange', evalueerDraaiBlok);
+window.addEventListener('resize', evalueerDraaiBlok);
 
 function startGevecht(samenstelling, soort, rij) {
   const g = {
