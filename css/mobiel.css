@@ -1,0 +1,234 @@
+/* ============================================================
+   SLAY LIT — MOBIEL SPOOR
+   ============================================================
+   Het aparte mobiele/touch-presentatiespoor. Alles hier is gekoppeld
+   aan  body[data-modus="mobiel"]  i.p.v. een  @media (pointer: coarse) /
+   (hover: none)  query. Dat attribuut wordt bij boot gezet door game.js
+   (zelfde detectie als voorheen: coarse pointer of mobiele user-agent),
+   dus op een echte telefoon werkt het identiek — maar het is nu óók
+   forceerbaar op de laptop (devMobiel()) om mobiel te previewen zonder
+   apparaat-emulatie.
+
+   Wat hier NIET hoort: gedeelde stijl, en de breedte/hoogte-responsieve
+   queries (max-width / max-height) + prefers-reduced-motion — die blijven
+   in style.css (de gedeelde basis), want ze gelden ook op een smal
+   laptopvenster.
+
+   Volgorde = de oorspronkelijke documentvolgorde uit style.css, zodat de
+   cascade tussen deze regels onderling exact bewaard blijft. Dit bestand
+   wordt NA style.css geladen, dus alle mobiele regels overschrijven de
+   laptop-basis (en de body[data-modus="mobiel"]-prefix tilt bovendien de
+   specificiteit op — overschrijven is hier net de bedoeling).
+   ============================================================ */
+
+/* op touch een grotere raakzone voor de ascensie-stepper (44/48px-richtlijn) */
+body[data-modus="mobiel"] .asc-knop { width: 48px; height: 48px; font-size: 1.6rem; }
+body[data-modus="mobiel"] .ascensie-stepper { gap: 20px; }
+
+/* titelscherm in liggende stand op een korte telefoon: scrollbaar + gecomprimeerd,
+   zodat titel/knoppen/loopbaan-regel altijd bereikbaar zijn (overliep eerder). */
+@media (orientation: landscape) and (max-height: 600px) {
+  body[data-modus="mobiel"] #scherm-titel {
+    overflow-y: auto; justify-content: flex-start;
+    padding: 12px 12px calc(16px + env(safe-area-inset-bottom));
+  }
+  body[data-modus="mobiel"] #scherm-titel .titel-groot { font-size: clamp(2.2rem, 13vh, 5rem); }
+  body[data-modus="mobiel"] #scherm-titel .titel-sub { margin: 4px 0 10px; }
+  body[data-modus="mobiel"] #scherm-titel .titel-knoppen { gap: 8px; }
+  body[data-modus="mobiel"] #scherm-titel .titel-knoppen .knop-groot { padding: 12px 22px; font-size: 1.25rem; }
+  body[data-modus="mobiel"] #scherm-titel .titel-stats { margin-top: 8px; }
+}
+
+/* op een vinger bestaat :hover niet → een ingedrukt-puls als tikbevestiging */
+body[data-modus="mobiel"] .knoop.kan:active,
+body[data-modus="mobiel"] .relikwie:active,
+body[data-modus="mobiel"] .drank:active,
+body[data-modus="mobiel"] .held-kaart:active,
+body[data-modus="mobiel"] .winkel-blok:active,
+body[data-modus="mobiel"] .beloning-kaart:active,
+body[data-modus="mobiel"] .schat-buit:active,
+body[data-modus="mobiel"] .codex-slot:active,
+body[data-modus="mobiel"] .boek-kaart:active,
+body[data-modus="mobiel"] .rust-knop:active,
+body[data-modus="mobiel"] .event-knop:active {
+  transform: scale(.94);
+  filter: brightness(1.15);
+  transition: transform .08s ease, filter .08s ease;
+}
+/* tap-to-inspect: de eerst aangetikte handkaart groot tonen om te lezen
+   (tweede tik speelt 'm). Werkt op telefoon én touch-tablet. */
+body[data-modus="mobiel"] #hand .kaart.voorbeeld {
+  transform: translateY(-34px) scale(1.18);
+  z-index: 100;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .85), 0 0 24px var(--kgloed, rgba(255, 156, 63, .32));
+}
+
+/* ================= MOBIEL / TOUCH =================
+   Voorheen gekoppeld aan (pointer: coarse); nu aan body[data-modus="mobiel"]
+   (zelfde detectie, maar forceerbaar). Telefoons rapporteren uiteenlopende
+   CSS-breedtes (390–540px), dus een vaste px-grens miste bredere toestellen.
+   Laptop (data-modus="laptop") ziet niets hiervan. */
+
+/* ---------- A. universeel-touch (beide oriëntaties) ---------- */
+body[data-modus="mobiel"] #tooltip { max-width: min(280px, 92vw); }
+
+/* beginscherm: titel vult ~85% van de breedte (was ~52% → voelde klein) */
+body[data-modus="mobiel"] .titel-groot { font-size: min(28vw, 8.5rem); }
+body[data-modus="mobiel"] .titel-sub { font-size: 1.5rem; margin: 16px 0 30px; }
+body[data-modus="mobiel"] .titel-knoppen { gap: 18px; }
+body[data-modus="mobiel"] .titel-knoppen .knop-groot { min-width: min(360px, 90vw); font-size: 1.6rem; padding: 20px 30px; }
+body[data-modus="mobiel"] .knop-stil { font-size: 1.35rem; padding: 12px 16px; }
+body[data-modus="mobiel"] .scherm-titel { font-size: 1.9rem; }
+
+/* --- topbalk: compact, transparant, overlappend. In battle telt het scherm;
+   de header is bijzaak. Logo weg, kleinere iconen, fade i.p.v. massieve balk.
+   Het gevecht krijgt de VOLLE hoogte (topbalk drijft erover). --- */
+body[data-modus="mobiel"] #topbalk {
+  height: calc(40px + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) calc(8px + env(safe-area-inset-right)) 0 calc(8px + env(safe-area-inset-left));
+  gap: 8px; font-size: .92rem; border-bottom: none;
+  background: linear-gradient(180deg, rgba(13, 10, 18, .8), rgba(13, 10, 18, .32) 72%, transparent);
+}
+body[data-modus="mobiel"] #topbalk .tb-logo { display: none; }
+body[data-modus="mobiel"] #tb-verdieping { display: none; }       /* diepte niet nodig tijdens battle */
+body[data-modus="mobiel"] #tb-relikwieen { font-size: 1.05rem; gap: 3px; }
+body[data-modus="mobiel"] .drank { font-size: 1.15rem; }
+body[data-modus="mobiel"] .tb-knop { font-size: 1.1rem; }
+
+/* schermen sluiten aan op de compacte balk; het gevecht gaat tot de rand */
+body[data-modus="mobiel"] .scherm { top: calc(40px + env(safe-area-inset-top)); }
+body[data-modus="mobiel"] #scherm-gevecht { top: env(safe-area-inset-top); }
+body[data-modus="mobiel"] #scherm-gevecht #beurt-label { margin-top: calc(42px + env(safe-area-inset-top)); }
+/* baasgevecht: het Beurt-label botste met de bazenbalk → weg op mobiel.
+   De bazenbalk compacter zodat hij in de krappe (liggende) hoogte past. */
+body[data-modus="mobiel"] #scherm-gevecht.baas-actief #beurt-label { display: none; }
+body[data-modus="mobiel"] #baas-balk { top: calc(38px + env(safe-area-inset-top)); width: min(560px, 94vw); }
+body[data-modus="mobiel"] #baas-balk .bb-naam { font-size: 1.15rem; }
+body[data-modus="mobiel"] #baas-balk .bb-titel { font-size: .68rem; letter-spacing: 1px; margin: -1px 0 3px; }
+body[data-modus="mobiel"] #baas-balk .bb-balk { height: 15px; }
+body[data-modus="mobiel"] #baas-balk .bb-fases { margin-top: 3px; gap: 5px; }
+body[data-modus="mobiel"] #baas-balk .bb-pip { width: 9px; height: 9px; }
+
+/* afdaalkaart swipebaar (700px-vlak blijft intact, px-knoopposities kloppen) */
+body[data-modus="mobiel"] #kaart-scroll { overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
+body[data-modus="mobiel"] #kaart-vlak { margin: 0 auto; }
+
+/* overlays + scrollbare schermen (.scherm is standaard overflow:hidden) */
+body[data-modus="mobiel"] .overlay { padding: 20px 10px; }
+body[data-modus="mobiel"] #scherm-held,
+body[data-modus="mobiel"] #scherm-event,
+body[data-modus="mobiel"] #scherm-rust,
+body[data-modus="mobiel"] #scherm-beloning,
+body[data-modus="mobiel"] #scherm-einde {
+  overflow-y: auto; justify-content: flex-start;
+}
+body[data-modus="mobiel"] #scherm-held { padding-bottom: 24px; }
+
+body[data-modus="mobiel"] .held-kaart { width: min(400px, 92vw); margin-top: 64px; padding: 20px 16px 16px; }
+body[data-modus="mobiel"] .held-kaart > b { font-size: 1.7rem; }
+body[data-modus="mobiel"] .held-art { width: 200px; height: 200px; margin-top: -80px; }
+body[data-modus="mobiel"] .held-aura { width: 210px; height: 210px; top: -50px; }
+
+body[data-modus="mobiel"] .event-opties { width: 100%; max-width: 92vw; }
+body[data-modus="mobiel"] .rust-knop,
+body[data-modus="mobiel"] .event-knop { padding: 16px 18px; font-size: 1.15rem; }
+
+body[data-modus="mobiel"] .einde-stats { gap: 12px 20px; flex-wrap: wrap; justify-content: center; margin: 12px 0; }
+body[data-modus="mobiel"] .einde-stats b { font-size: 1.7rem; }
+body[data-modus="mobiel"] .einde-held { width: 170px; height: 170px; }
+body[data-modus="mobiel"] .einde-knoppen { flex-direction: column; width: 92vw; }
+body[data-modus="mobiel"] .codex-slot { width: 60px; height: 60px; }
+
+/* --- handkaart-tekst: lange tekst niet laten uitbloeden ---
+   Op de kleine rustende kaart netjes afknippen met een zachte fade; de
+   aangetikte (voorbeeld) kaart groeit in hoogte + breedte zodat de
+   VOLLEDIGE tekst leesbaar wordt. */
+body[data-modus="mobiel"] #hand .kaart .kaart-tekst {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 74%, transparent);
+  mask-image: linear-gradient(to bottom, #000 74%, transparent);
+}
+body[data-modus="mobiel"] #hand .kaart.voorbeeld {
+  width: 172px; height: auto; min-height: 186px; z-index: 100;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .88), 0 0 26px var(--kgloed, rgba(255, 156, 63, .34));
+}
+body[data-modus="mobiel"] #hand .kaart.voorbeeld .kaart-icoon img { width: 132px; height: 72px; }
+body[data-modus="mobiel"] #hand .kaart.voorbeeld .kaart-tekst {
+  overflow: visible; -webkit-mask-image: none; mask-image: none;
+  font-size: .85rem; line-height: 1.3;
+}
+
+/* volledig-scherm-schakelaar enkel op touch tonen (desktop heeft F11).
+   Basis .inst-mobiel { display:none } staat in style.css. */
+body[data-modus="mobiel"] .inst-mobiel { display: flex; }
+
+/* draai-blok: gevechten dwingen liggend af. Vult het scherm in staande stand
+   tijdens een gevecht; in liggend matcht de query niet → weg.
+   (selector begint op body → het modus-attribuut wordt samengevoegd) */
+@media (orientation: portrait) {
+  body[data-modus="mobiel"][data-scherm="gevecht"] #draai-blok:not(.weg) {
+    display: flex; position: fixed; inset: 0; z-index: 2000;
+    flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 30px;
+    background: radial-gradient(ellipse at center, rgba(28, 18, 40, .98), rgba(10, 7, 14, .99));
+  }
+}
+
+/* ---------- B. staand gevecht (telefoon, alle breedtes) ----------
+   Vijanden wrappen zodat ze fors kunnen blijven; strijdveld verticaal
+   gecentreerd; HUD boven de hand i.p.v. ernaast. max-width sluit alleen
+   brede desktop-vensters met touchscreen uit. */
+@media (orientation: portrait) and (max-width: 900px) {
+  /* min-height:0 laat het strijdveld krimpen zodat de in-flow onderbalk + hand
+     onderaan blijven (geen afkapping); de figuren vullen de ruimte erboven */
+  body[data-modus="mobiel"] #strijdveld { padding: 0 8px 6px; align-items: center; justify-content: space-evenly; gap: 8px; min-height: 0; }
+  body[data-modus="mobiel"] #speler-zone { min-width: 0; }
+  body[data-modus="mobiel"] .speler-figuur { width: 140px; height: 140px; }
+  body[data-modus="mobiel"] #vijanden-rij { gap: 12px 16px; flex-wrap: wrap; justify-content: center; max-width: min(60vw, 340px); }
+  body[data-modus="mobiel"] .vijand { min-width: 0; padding: 4px; }
+  body[data-modus="mobiel"] .vijand-art { width: 122px; height: 122px; }
+  body[data-modus="mobiel"] .is-elite .vijand-art { width: 140px; height: 140px; }
+  body[data-modus="mobiel"] .is-baas .vijand-art { width: 178px; height: 178px; }
+
+  body[data-modus="mobiel"] #onderbalk { height: 292px; }
+  body[data-modus="mobiel"] #hand { bottom: calc(10px + env(safe-area-inset-bottom)); }
+  body[data-modus="mobiel"] .kaart { width: 120px; height: 168px; margin: 0 -32px; }
+  /* kaart-art schaalt mee met de smallere mobiele kaart (liep anders over) */
+  body[data-modus="mobiel"] .kaart-icoon img { width: 98px; height: 54px; }
+  body[data-modus="mobiel"] #hand .kaart:hover, body[data-modus="mobiel"] #hand .kaart.gekozen { transform: translateY(-30px) scale(1.08); }
+  body[data-modus="mobiel"] #hand .kaart.voorbeeld { transform: translateY(-34px); }
+
+  body[data-modus="mobiel"] #energie-orb { left: calc(10px + env(safe-area-inset-left)); bottom: 226px; transform: scale(.85); }
+  body[data-modus="mobiel"] #knop-eindbeurt { right: calc(10px + env(safe-area-inset-right)); bottom: 230px; min-height: 46px; padding: 11px 20px; font-size: 1.05rem; }
+  body[data-modus="mobiel"] #stapel-trek { left: calc(12px + env(safe-area-inset-left)); bottom: 266px; }
+  body[data-modus="mobiel"] #stapel-afleg { right: calc(12px + env(safe-area-inset-right)); bottom: 266px; }
+}
+
+/* ---------- C. liggend gevecht (telefoon, korte hoogte) ----------
+   Breedte is comfortabel; hoogte is krap → verticaal comprimeren zodat de
+   hand niet wordt afgekapt. max-height sluit tablets/laptops (veel hoger) uit. */
+@media (orientation: landscape) and (max-height: 600px) {
+  /* in-flow onderbalk onderaan; strijdveld krimpt (min-height:0). Figuren
+     VERTICAAL GECENTREERD zodat hun bovenkant (intentie-icoon) op elke
+     schermhoogte vrij van de topbalk blijft — anders schoot 'ie er bij meer
+     hoogte (fullscreen) anders doorheen dan zonder. */
+  body[data-modus="mobiel"] #strijdveld { padding: 4px 16px; align-items: center; justify-content: space-evenly; min-height: 0; }
+  body[data-modus="mobiel"] .speler-figuur { width: 96px; height: 96px; }
+  body[data-modus="mobiel"] .vijand-art { width: 90px; height: 90px; }
+  body[data-modus="mobiel"] .is-elite .vijand-art { width: 106px; height: 106px; }
+  body[data-modus="mobiel"] .is-baas .vijand-art { width: 134px; height: 134px; }
+  body[data-modus="mobiel"] #vijanden-rij { gap: 18px; flex-wrap: nowrap; max-width: none; }
+
+  body[data-modus="mobiel"] #onderbalk { height: 150px; }
+  body[data-modus="mobiel"] #hand { bottom: calc(6px + env(safe-area-inset-bottom)); }
+  body[data-modus="mobiel"] .kaart { width: 104px; height: 146px; margin: 0 -16px; }
+  body[data-modus="mobiel"] .kaart-icoon img { width: 84px; height: 46px; }
+  body[data-modus="mobiel"] #hand .kaart:hover, body[data-modus="mobiel"] #hand .kaart.gekozen { transform: translateY(-26px) scale(1.1); }
+  body[data-modus="mobiel"] #hand .kaart.voorbeeld { transform: translateY(-26px); }
+  /* breed zat: HUD weer NAAST de hand */
+  body[data-modus="mobiel"] #energie-orb { left: calc(14px + env(safe-area-inset-left)); bottom: 88px; transform: scale(.82); }
+  body[data-modus="mobiel"] #knop-eindbeurt { right: calc(14px + env(safe-area-inset-right)); bottom: 92px; min-height: 42px; padding: 9px 18px; }
+  body[data-modus="mobiel"] #stapel-trek { left: calc(14px + env(safe-area-inset-left)); bottom: 16px; }
+  body[data-modus="mobiel"] #stapel-afleg { right: calc(14px + env(safe-area-inset-right)); bottom: 16px; }
+  body[data-modus="mobiel"] #scherm-gevecht.baas-actief #beurt-label { margin-top: 58px; }
+}

@@ -7,6 +7,7 @@ const BESTANDEN = [
   '.',
   'index.html',
   'css/style.css',
+  'css/mobiel.css',
   'js/lib/three.min.js',
   'js/art.js',
   'js/audio.js',

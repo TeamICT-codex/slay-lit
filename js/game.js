@@ -90,6 +90,30 @@ const mobiel =
   /Android|iPhone|iPad|iPod|Mobile|Silk/i.test(navigator.userAgent || '');
 window.mobiel = mobiel;
 
+/* het presentatiespoor: laptop (gedeelde basis) of mobiel (css/mobiel.css).
+   Synchroon hier gezet — game.js draait als laatste body-script, vóór de
+   eerste paint — zodat de mobiele stijl er meteen staat, zonder flits.
+   css/mobiel.css koppelt alles aan body[data-modus="mobiel"], dus dit
+   attribuut bepaalt welk spoor zichtbaar is. */
+document.body.dataset.modus = mobiel ? 'mobiel' : 'laptop';
+
+/* DEV-SHORTCUT: het mobiele spoor forceren op de laptop om te previewen
+   zonder apparaat-emulatie. Toggle via Ctrl+Shift+M of devMobiel() in de
+   console. Wisselt het CSS-spoor (data-modus) én de JS-vlag (window.mobiel),
+   en hertekent het lopende gevecht zodat de JS-layouttakken meewisselen.
+   Vóór release samen met de andere DEV-shortcuts verwijderen. */
+window.devMobiel = function (forceer) {
+  const aan = (forceer !== undefined) ? !!forceer : (document.body.dataset.modus !== 'mobiel');
+  document.body.dataset.modus = aan ? 'mobiel' : 'laptop';
+  window.mobiel = aan;
+  try { if (typeof S !== 'undefined' && S && S.gevecht && typeof renderGevecht === 'function') renderGevecht(); } catch (e) {}
+  try { if (typeof melding === 'function') melding('DEV: mobiel-spoor ' + (aan ? 'AAN' : 'uit')); } catch (e) {}
+  console.info('[DEV] mobiel-spoor', aan ? 'AAN' : 'uit', '(data-modus=' + document.body.dataset.modus + ')');
+};
+window.addEventListener('keydown', function (e) {
+  if (e.ctrlKey && e.shiftKey && (e.key === 'M' || e.key === 'm')) { e.preventDefault(); window.devMobiel(); }
+});
+
 /* Three.js (~600 KB) alleen laden waar 3D überhaupt kán draaien: desktop op http.
    Op mobiel en file:// is 3D altijd uit (zie d3Gewenst), dus daar nooit de
    download+parse betalen. Async geïnjecteerd → blokkeert de eerste render niet en
