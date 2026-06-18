@@ -3931,6 +3931,13 @@ function toonInstellingen() {
   if ($('#inst-spraak')) $('#inst-spraak').checked = INST.spraak !== false;
   if ($('#inst-daglicht')) $('#inst-daglicht').checked = !!INST.daglicht;
   if ($('#inst-fullscreen')) $('#inst-fullscreen').checked = !!document.fullscreenElement;
+  /* install-knop: toon wanneer installeerbaar (Android: prompt klaar) of op iOS
+     (daar via de Deel-instructie), en nog niet geïnstalleerd */
+  const ib = $('#inst-install');
+  if (ib) {
+    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+    ib.style.display = (!appGeinstalleerd() && (_installPrompt || (window.mobiel && ios))) ? '' : 'none';
+  }
   $('#overlay-instellingen').classList.add('open');
 }
 function sluitInstellingen() { $('#overlay-instellingen').classList.remove('open'); }
@@ -3953,34 +3960,77 @@ document.addEventListener('fullscreenchange', () => {
   if (cb) cb.checked = !!document.fullscreenElement;
 });
 
-/* mobiel: éénmalige, sluitbare nudge om op volledig scherm te spelen (de zwarte
-   statusbalk/klok weg). Android kan het meteen — de knop ís het vereiste gebaar;
-   iOS heeft geen requestFullscreen → daar de install-instructie ("Zet op
-   beginscherm" geeft via manifest display:fullscreen een echt fullscreen-app).
-   Onthoudt 'weg' in localStorage. Verschijnt niet als al fullscreen/geïnstalleerd. */
+/* draait de game als geïnstalleerde app / op volledig scherm? */
+function appGeinstalleerd() {
+  return (window.matchMedia &&
+      (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches)) ||
+    !!navigator.standalone;
+}
+
+/* Chrome vuurt geen automatische install-banner meer: we vangen het event zelf op
+   en bieden onze eigen 'Installeer'-knop (nudge + ⚙️ Instellingen). */
+let _installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _installPrompt = e;
+  /* nudge die al toonde (fullscreen-variant) → upgraden naar 'Installeer' */
+  const n = document.getElementById('scherm-nudge');
+  if (n) { n.remove(); toonSchermNudge(); }
+  /* install-knop in een open instellingenpaneel meteen tonen */
+  const knop = document.getElementById('inst-install');
+  if (knop && $('#overlay-instellingen') && $('#overlay-instellingen').classList.contains('open') && !appGeinstalleerd()) {
+    knop.style.display = '';
+  }
+});
+window.addEventListener('appinstalled', () => {
+  _installPrompt = null;
+  const n = document.getElementById('scherm-nudge'); if (n) n.remove();
+  const knop = document.getElementById('inst-install'); if (knop) knop.style.display = 'none';
+  try { localStorage.setItem('slayit_nudge_scherm', 'weg'); } catch (e) {}
+  if (typeof melding === 'function') melding('📲 SLAY LIT is geïnstalleerd!');
+});
+
+/* mobiel: éénmalige, sluitbare nudge. Volgorde van wat ze aanbiedt: native
+   install (Android/Chrome, als beforeinstallprompt er is) → iOS-instructie ("Zet
+   op beginscherm") → volledig scherm als terugval. Permanente toegang zit ook in
+   ⚙️ Instellingen (installeerApp). Onthoudt 'weg'; niet als al geïnstalleerd. */
 function toonSchermNudge() {
   if (!window.mobiel || document.getElementById('scherm-nudge')) return;
   try { if (localStorage.getItem('slayit_nudge_scherm') === 'weg') return; } catch (e) {}
-  const standalone = (window.matchMedia &&
-      (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches)) ||
-    navigator.standalone;
-  if (standalone || document.fullscreenElement) return;
+  if (appGeinstalleerd()) return;
   const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
   const docEl = document.documentElement;
   const kanFS = !!(docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen);
-  const wrap = document.createElement('div');
-  wrap.id = 'scherm-nudge';
-  wrap.innerHTML = (ios || !kanFS)
-    ? `<span>📲 Speel op <b>volledig scherm</b>: tik <b>Deel</b> ▸ <b>Zet op beginscherm</b>.</span>
-       <button type="button" class="nudge-x" aria-label="Sluiten">✕</button>`
-    : `<span>📲 Speel op <b>volledig scherm</b> voor de beste ervaring.</span>
+  let binnen, actie;
+  if (_installPrompt) {
+    binnen = `<span>📥 <b>Installeer SLAY LIT</b> als app — speelt op volledig scherm, ook offline.</span>
+       <button type="button" class="nudge-ja">Installeer</button>
+       <button type="button" class="nudge-x" aria-label="Sluiten">✕</button>`;
+    actie = () => { const p = _installPrompt; _installPrompt = null; try { p.prompt(); } catch (e) {} };
+  } else if (ios) {
+    binnen = `<span>📲 Voeg toe aan je beginscherm: tik <b>Deel</b> ▸ <b>Zet op beginscherm</b> — speelt dan als app op volledig scherm.</span>
+       <button type="button" class="nudge-x" aria-label="Sluiten">✕</button>`;
+  } else if (kanFS && !document.fullscreenElement) {
+    binnen = `<span>📲 Speel op <b>volledig scherm</b> voor de beste ervaring.</span>
        <button type="button" class="nudge-ja">Aan</button>
        <button type="button" class="nudge-x" aria-label="Sluiten">✕</button>`;
+    actie = () => wisselFullscreen(true);
+  } else { return; }   /* niets nuttigs te bieden */
+  const wrap = document.createElement('div');
+  wrap.id = 'scherm-nudge';
+  wrap.innerHTML = binnen;
   document.body.appendChild(wrap);
   const sluit = onthoud => { wrap.remove(); if (onthoud) { try { localStorage.setItem('slayit_nudge_scherm', 'weg'); } catch (e) {} } };
   const ja = wrap.querySelector('.nudge-ja');
-  if (ja) ja.onclick = () => { wisselFullscreen(true); sluit(true); };
+  if (ja) ja.onclick = () => { if (actie) actie(); sluit(true); };
   wrap.querySelector('.nudge-x').onclick = () => sluit(true);
+}
+
+/* permanent bereikbaar vanuit ⚙️ Instellingen: installeer als app — of de
+   iOS-instructie tonen wanneer er geen install-prompt beschikbaar is. */
+function installeerApp() {
+  if (_installPrompt) { const p = _installPrompt; _installPrompt = null; try { p.prompt(); } catch (e) {} return; }
+  bevestig('📲 <b>Voeg toe aan beginscherm</b><br><br>Tik op <b>Deel</b> (het deel-icoon van je browser) en kies <b>Zet op beginscherm</b>. SLAY LIT opent dan als een echte app, op volledig scherm.', () => {}, 'Begrepen');
 }
 function instWijzig() {
   Klank.zet('aan', $('#inst-geluid').checked);

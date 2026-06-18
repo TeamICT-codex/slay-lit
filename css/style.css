@@ -2485,6 +2485,7 @@ img { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -we
   color: var(--perkament); font-size: 1.08rem; line-height: 1.35;
   animation: nudgeOp .35s ease both, nudgePuls 1.9s ease-in-out .45s 3;
 }
+.inst-install-knop { margin: 10px auto 2px; display: block; }
 #scherm-nudge b { color: var(--ember-fel); }
 #scherm-nudge span { flex: 1; }
 #scherm-nudge .nudge-ja {
