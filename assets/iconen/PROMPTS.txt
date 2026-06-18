@@ -90,3 +90,7 @@ LATERE UI-ICONEN (zelfde aanpak):
 Voeg gewoon een nieuw bestand toe (assets/iconen/<naam>.webp) en een
 <span data-icoon="<naam>"> in de UI. Vraag het even als de art-swap nog
 ergens gewired moet worden.
+
+NB — het APP-ICOON (beginscherm/PWA, de icoon-*.png in de assets-root) is iets
+anders: een VOLLE vierkante tegel, geen uitsnede, en blijft PNG (geen dambord/
+WebP). De prompts daarvoor staan in assets/PROMPTS.txt.

@@ -1,0 +1,80 @@
+APP-ICOON (PWA / beginscherm + browsertab)
+==========================================
+Dit is het icoon dat op je telefoon-beginscherm verschijnt zodra je SLAY LIT
+"als app" installeert, én de tegel in de installeer-dialoog. Het staat LOS van
+de in-game UI-iconen (die zijn transparante uitsneden — zie assets/iconen/).
+
+!! Een app-icoon is GEEN losgesneden object. Het is een VOLLE VIERKANTE TEGEL
+   met een eigen (donkere) achtergrond die tot de rand doorloopt. Het OS rondt
+   zelf de hoeken af — lever dus een vol vierkant aan, geen ronde vorm.
+
+DE BESTANDEN (vervang met dezelfde namen in assets/):
+  icoon-512.png          512x512  — hoofd-icoon (purpose "any")
+  icoon-192.png          192x192  — zelfde beeld, kleiner geschaald
+  icoon-180.png          180x180  — apple-touch-icon (iOS beginscherm)
+  icoon-512-maskable.png 512x512  — MASKABLE variant, zie veiligheidsmarge ↓
+  icoon.svg              (optioneel) de losse SVG-fallback (mag blijven of mee)
+
+Werkwijze: genereer één keer op hoge resolutie (bv. 1024x1024), exporteer dan
+naar 512 / 192 / 180 (gewoon verkleinen). De maskable maak je apart (zie onder).
+
+PIJPLIJN — ANDERS DAN DE REST:
+  • GEEN verwijder_dambord.py en GEEN converteer_webp.py op deze bestanden.
+    Ze zijn OPAAK (volle tegel, geen alpha) en blijven PNG — de manifest en de
+    service-worker verwachten PNG.
+  • Zodra je de nieuwe PNG's dropt: ik bump de service-worker-cacheversie zodat
+    telefoons ze opnieuw ophalen (anders blijft het oude icoon hangen).
+
+LEESBAAR OP ~48px — DE GOUDEN REGEL:
+  Een app-icoon wordt piepklein getoond. Dus: één bold, herkenbaar embleem,
+  hoog contrast, dik silhouet, weinig fijne details. Geen scène, geen tekst
+  (de OS-launcher zet de naam er zelf onder), geen dunne lijntjes.
+
+MASKABLE-VEILIGHEIDSMARGE (icoon-512-maskable.png):
+  Android maskt het icoon tot een cirkel/squircle en kan de buitenste ~10%
+  wegsnijden. Houd het embleem dus BINNEN de centrale cirkel (~80% van de
+  breedte, dus diameter ~410px op 512): teken het embleem kleiner/meer
+  gecentreerd en laat de donkere achtergrond VOL tot alle vier de randen
+  doorlopen. Niets belangrijks in de hoeken of vlak aan de rand.
+
+
+SJABLOON (vervang alleen de Embleem-regel):
+
+  App icon for a dark-fantasy deckbuilder game, a single bold emblem
+  CENTERED and filling a square tile, hand-painted painterly style,
+  deep purple-and-charcoal background with warm ember-orange glow,
+  high contrast, thick clean silhouette, instantly readable when very
+  small. Rich COLOURED orange/gold light (core may be bright but not
+  pure white), crisp defined edges, NO hazy white bloom, NO text, NO
+  border, NO rounded corners (full square, opaque background to the
+  edges). NOT photorealistic, no photo, no 3D render.
+
+  Embleem: [BESCHRIJVING]
+
+
+DE CONCEPTEN (kies er één; #1 vat het spel het sterkst samen):
+
+#1 — VLAMMEND ZWAARD  (aanrader: vangt "SLAY" + "LIT/licht" in één beeld)
+  Embleem: an upright knight's sword seen from the front, its blade
+  igniting into a richly coloured orange-gold flame that rises from
+  the steel, a small ember glow at the crossguard, set against the dark
+  tile — half weapon, half torch. Bold and symmetrical.
+
+#2 — ZWAARD × FAKKEL  (behoudt je huidige kruis-motief, met de licht-spine erbij)
+  Embleem: a sword and a burning torch crossed in an X, the torch flame
+  warm orange-gold, the steel catching the ember light, a faint glow
+  where they cross. Bold, symmetrical, heraldic.
+
+#3 — DE FAKKEL IN HET DONKER  (puurste thema: "voor het licht dooft")
+  Embleem: a single raised torch with a strong coloured orange-gold
+  flame cutting through deep darkness, the dark closing in around the
+  small circle of light at the edges — the descent's last light.
+
+#4 — DE GEHULDE AFDALER  (illustratiever; alleen als het bold genoeg blijft)
+  Embleem: a hooded figure shown from the chest up holding a torch
+  beside their face, only the flame and a sliver of the face lit, the
+  rest swallowed by darkness — moody but with a clear bright focal point.
+
+TIP: laat in concept #1/#2/#3 de vlam de heldere kern zijn (dat trekt het oog
+op klein formaat). Hou de achtergrond donker-paars/houtskool zodat het op een
+licht én donker beginscherm goed afsteekt.
