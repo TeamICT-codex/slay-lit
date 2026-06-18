@@ -245,6 +245,12 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] .is-elite .vijand-art { width: 106px; height: 106px; }
   body[data-modus="mobiel"] .is-baas .vijand-art { width: 134px; height: 134px; }
   body[data-modus="mobiel"] #vijanden-rij { gap: 18px; flex-wrap: nowrap; max-width: none; }
+  /* baasgevecht: de grote baasbalk staat bovenaan → figuren ONDERAAN uitlijnen
+     zodat ze er niet half onder verdwijnen (waren verticaal gecentreerd → te
+     hoog). En de baas z'n eigen HP-balk weg: de grote balk ís de baas-HP, dus
+     geen dubbele balk meer. */
+  body[data-modus="mobiel"] #scherm-gevecht.baas-actief #strijdveld { align-items: flex-end; }
+  body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk { display: none; }
 
   body[data-modus="mobiel"] #onderbalk { height: 150px; }
   body[data-modus="mobiel"] #hand { bottom: calc(6px + env(safe-area-inset-bottom)); }
