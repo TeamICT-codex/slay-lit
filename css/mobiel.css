@@ -75,9 +75,15 @@ body[data-modus="mobiel"] #tooltip { max-width: min(280px, 92vw); }
 /* beginscherm: titel vult ~85% van de breedte (was ~52% → voelde klein) */
 body[data-modus="mobiel"] .titel-groot { font-size: min(28vw, 8.5rem); }
 body[data-modus="mobiel"] .titel-sub { font-size: 1.5rem; margin: 16px 0 30px; }
-body[data-modus="mobiel"] .titel-knoppen { gap: 18px; }
-body[data-modus="mobiel"] .titel-knoppen .knop-groot { min-width: min(360px, 90vw); font-size: 1.6rem; padding: 20px 30px; }
+body[data-modus="mobiel"] .titel-knoppen { gap: 16px; width: min(380px, 90vw); }
+body[data-modus="mobiel"] .titel-knoppen .knop-groot { width: 100%; min-width: 0; font-size: 1.7rem; padding: 22px 26px; }
 body[data-modus="mobiel"] .knop-stil { font-size: 1.35rem; padding: 12px 16px; }
+/* titelscherm: de secundaire knoppen waren te kleine tekstlinkjes om handig te
+   tikken → volle breedte + ruime raakzone (≥54px), look blijft (dashed onderlijn) */
+body[data-modus="mobiel"] #scherm-titel .titel-knoppen .knop-stil {
+  width: 100%; min-height: 54px; font-size: 1.3rem; padding: 14px 18px;
+  display: flex; align-items: center; justify-content: center;
+}
 body[data-modus="mobiel"] .scherm-titel { font-size: 1.9rem; }
 
 /* --- topbalk: compact, transparant, overlappend. In battle telt het scherm;
