@@ -108,9 +108,9 @@ body[data-modus="mobiel"] #scherm-gevecht #beurt-label { margin-top: calc(42px +
 /* baasgevecht: het Beurt-label botste met de bazenbalk → weg op mobiel.
    De bazenbalk compacter zodat hij in de krappe (liggende) hoogte past. */
 body[data-modus="mobiel"] #scherm-gevecht.baas-actief #beurt-label { display: none; }
-body[data-modus="mobiel"] #baas-balk { top: calc(38px + env(safe-area-inset-top)); width: min(560px, 94vw); }
-body[data-modus="mobiel"] #baas-balk .bb-naam { font-size: 1.15rem; }
-body[data-modus="mobiel"] #baas-balk .bb-titel { font-size: .68rem; letter-spacing: 1px; margin: -1px 0 3px; }
+body[data-modus="mobiel"] #baas-balk { top: calc(38px + env(safe-area-inset-top)); width: min(440px, 86vw); }
+body[data-modus="mobiel"] #baas-balk .bb-naam { font-size: 1.1rem; }
+body[data-modus="mobiel"] #baas-balk .bb-titel { display: none; }   /* flavor-ondertitel weg op mobiel → compactere balk, minder dominant */
 body[data-modus="mobiel"] #baas-balk .bb-balk { height: 15px; }
 body[data-modus="mobiel"] #baas-balk .bb-fases { margin-top: 3px; gap: 5px; }
 body[data-modus="mobiel"] #baas-balk .bb-pip { width: 9px; height: 9px; }
@@ -122,6 +122,9 @@ body[data-modus="mobiel"] #baas-balk .bb-pip { width: 9px; height: 9px; }
 body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk { background: none; border-color: transparent; box-shadow: none; }
 body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk .hp-vulling,
 body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk .hp-tekst { display: none; }
+/* de baas z'n eigen naamlabel onder de figuur is dubbel met de #baas-balk → weg
+   (scheelt ook kolomhoogte zodat de figuur lager onder de balk uitkomt) */
+body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .vijand-naam { display: none; }
 
 /* afdaalkaart: de 700px-kaart wordt met zoom op schermbreedte geschaald
    (renderKaartScherm) → geen horizontale scroll meer, enkel verticaal. */
@@ -297,7 +300,7 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] .speler-figuur { width: 98px; height: 98px; }
   body[data-modus="mobiel"] .vijand-art { width: 82px; height: 82px; }
   body[data-modus="mobiel"] .is-elite .vijand-art { width: 94px; height: 94px; }
-  body[data-modus="mobiel"] .is-baas .vijand-art { width: 118px; height: 118px; }
+  body[data-modus="mobiel"] .is-baas .vijand-art { width: 96px; height: 96px; }
   /* onderbalk wat korter → het strijdveld wordt hoger en de figuren zakken (flex-end)
      verder van de topbalk weg; de HUD/stapels hangen aan de schermbodem (bottom-
      offset), dus die bewegen niet mee. */
