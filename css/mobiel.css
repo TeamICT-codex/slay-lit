@@ -287,3 +287,19 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] #stapel-afleg { right: calc(14px + env(safe-area-inset-right)); bottom: 16px; }
   body[data-modus="mobiel"] #scherm-gevecht.baas-actief #beurt-label { margin-top: 58px; }
 }
+
+/* ---------- D. liggend gevecht op een KORTE telefoon (≤440px hoog) ----------
+   De grotere figuren (held 118 / vijand 98) maken de vijandkolom (intentie +
+   figuur + hp + naam) te hoog op een laag scherm → de intentie-icoon schoof
+   achter de topbalk. Op die hoogte de figuren wat kleiner zodat alles vrij blijft.
+   Op normale liggende telefoons (≈540px hoog) gelden de grotere maten gewoon. */
+@media (orientation: landscape) and (max-height: 440px) {
+  body[data-modus="mobiel"] .speler-figuur { width: 98px; height: 98px; }
+  body[data-modus="mobiel"] .vijand-art { width: 82px; height: 82px; }
+  body[data-modus="mobiel"] .is-elite .vijand-art { width: 94px; height: 94px; }
+  body[data-modus="mobiel"] .is-baas .vijand-art { width: 118px; height: 118px; }
+  /* onderbalk wat korter → het strijdveld wordt hoger en de figuren zakken (flex-end)
+     verder van de topbalk weg; de HUD/stapels hangen aan de schermbodem (bottom-
+     offset), dus die bewegen niet mee. */
+  body[data-modus="mobiel"] #onderbalk { height: 126px; }
+}
