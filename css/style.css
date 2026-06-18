@@ -1793,6 +1793,9 @@ body.lite .onthul-kaart.bijzonder:not(.open) .kaart-rug { animation: none; }
 }
 .winkel-item { cursor: pointer; text-align: center; transition: transform .12s; }
 .winkel-item:hover { transform: translateY(-5px); }
+/* winkelkaarten zijn losse koopwaar — geen waaier-overlap (de basis-.kaart heeft
+   margin:0 -14px voor de hand); de gap van .winkel-kaarten regelt de spatiëring */
+.winkel-item .kaart { margin: 0; }
 .winkel-rij { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; max-width: 940px; }
 .winkel-blok {
   display: flex; flex-direction: column; align-items: center; gap: 3px;

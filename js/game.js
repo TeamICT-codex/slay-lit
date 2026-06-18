@@ -1523,9 +1523,12 @@ function evalueerDraaiBlok() {
   if (!el) return;
   const scherm = document.body.dataset.scherm;
   const liggend = !!(window.matchMedia && matchMedia('(orientation: landscape)').matches);
+  const kiesO = document.getElementById('overlay-kies');
+  const kiesOpen = !!(kiesO && kiesO.classList.contains('open'));   /* kaartoverzicht / smid */
   let richting = null;
   if (window.mobiel) {
-    if (scherm === 'gevecht' && !liggend) richting = 'liggend';            /* gevecht wil liggend */
+    if (kiesOpen) { if (!liggend) richting = 'liggend'; }                   /* een kaartoverzicht (smid/keuze/dek) wil LIGGEND — ook bovenop een portret-encounter */
+    else if (scherm === 'gevecht' && !liggend) richting = 'liggend';        /* gevecht wil liggend */
     else if (_DRAAI_STAAND_SCHERMEN.includes(scherm) && liggend) richting = 'staand'; /* encounter wil staand */
   }
   if (!richting || _draaiGenegeerd[richting]) { el.classList.remove('toon'); el.dataset.richting = ''; return; }
@@ -3205,13 +3208,14 @@ function toonKaartKeuze(kaarten, titel, bijKeuze, bijOverslaan, opts = {}) {
       else if (e.key === 'Escape') { e.preventDefault(); toonRij(); }
     };
     const kiesKnop = $('#focus-kies');
-    if (kiesKnop) kiesKnop.onclick = () => { document.onkeydown = null; ov.classList.remove('open'); bijKeuze(c); };
+    if (kiesKnop) kiesKnop.onclick = () => { document.onkeydown = null; ov.classList.remove('open'); evalueerDraaiBlok(); bijKeuze(c); };
     $('#focus-terug').onclick = toonRij;
   }
 
-  $('#kies-overslaan').onclick = () => { document.onkeydown = null; ov.classList.remove('open'); bijOverslaan && bijOverslaan(); };
+  $('#kies-overslaan').onclick = () => { document.onkeydown = null; ov.classList.remove('open'); evalueerDraaiBlok(); bijOverslaan && bijOverslaan(); };
   toonRij();
   ov.classList.add('open');
+  evalueerDraaiBlok();   /* een kaartoverzicht (smid/keuze/dek) speelt liggend */
 }
 
 function toonDek() {
