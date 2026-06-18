@@ -115,6 +115,14 @@ body[data-modus="mobiel"] #baas-balk .bb-balk { height: 15px; }
 body[data-modus="mobiel"] #baas-balk .bb-fases { margin-top: 3px; gap: 5px; }
 body[data-modus="mobiel"] #baas-balk .bb-pip { width: 9px; height: 9px; }
 
+/* baasgevecht (élke oriëntatie): de eigen HP-balk van de baas is dubbel met de
+   grote #baas-balk → weg. Maar CHIRURGISCH: enkel de HP-vulling + het getal weg
+   (en de balk-omkadering), zodat het blok-schild — dat IN .hp-balk zit — zichtbaar
+   blijft als de baas blokt (bv. de Slijmkoning 'Verdikken' +16). */
+body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk { background: none; border-color: transparent; box-shadow: none; }
+body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk .hp-vulling,
+body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk .hp-tekst { display: none; }
+
 /* afdaalkaart: de 700px-kaart wordt met zoom op schermbreedte geschaald
    (renderKaartScherm) → geen horizontale scroll meer, enkel verticaal. */
 body[data-modus="mobiel"] #kaart-scroll { overflow-x: hidden; justify-content: center; -webkit-overflow-scrolling: touch; }
@@ -175,14 +183,20 @@ body[data-modus="mobiel"] #hand .kaart.voorbeeld .kaart-tekst {
    de beloning (.weinig) was te groot, de smidse (hele dek, >5 kaarten) te klein
    en gekraamd met kostbadges over de titels. ~172px: titels passen, badges botsen
    niet, en het raster wrapt netjes + scrollt. */
-body[data-modus="mobiel"] #kies-kaarten { gap: 20px 18px; max-width: 100%; }
-body[data-modus="mobiel"] #kies-kaarten .kaart.groot { width: 150px; height: 210px; padding: 8px 9px; }
-body[data-modus="mobiel"] #kies-kaarten .kaart.groot .kaart-icoon img { width: 126px; height: 70px; }
-body[data-modus="mobiel"] #kies-kaarten .kaart-naam { font-size: 1rem; }
-body[data-modus="mobiel"] #kies-kaarten .kaart-icoon { font-size: 2.1rem; }
-body[data-modus="mobiel"] #kies-kaarten .kaart-tekst { font-size: .84rem; line-height: 1.28; }
-body[data-modus="mobiel"] #kies-kaarten .kaart-kost { width: 30px; height: 30px; font-size: 1.12rem; }
-body[data-modus="mobiel"] #kies-kaarten .kaart-rug::after { font-size: 3rem; }
+/* LET OP :not(.focus-modus) — anders zou deze #id-regel ook de inspect/zoom-kaart
+   én de smidse-ceremonie (die in dezelfde #kies-kaarten leven, mét .focus-modus)
+   naar 150px klemmen i.p.v. hun grote .kaart-focus-maat. */
+body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) { gap: 20px 18px; max-width: 100%; }
+body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart.groot { width: 150px; height: 210px; padding: 8px 9px; }
+body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart.groot .kaart-icoon img { width: 126px; height: 70px; }
+body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-naam { font-size: 1rem; }
+body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-icoon { font-size: 2.1rem; }
+body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-tekst { font-size: .84rem; line-height: 1.28; }
+body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-kost { width: 30px; height: 30px; font-size: 1.12rem; }
+body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-rug::after { font-size: 3rem; }
+/* de inspect/zoom-kaart op mobiel: passend op het scherm i.p.v. de vaste 300x425 */
+body[data-modus="mobiel"] #kies-kaarten .kaart.groot.kaart-focus { width: min(300px, 86vw); height: auto; min-height: 0; }
+body[data-modus="mobiel"] #kies-kaarten .kaart.groot.kaart-focus .kaart-icoon img { width: min(254px, 74vw); height: auto; aspect-ratio: 254 / 142; }
 
 /* volledig-scherm-schakelaar enkel op touch tonen (desktop heeft F11).
    Basis .inst-mobiel { display:none } staat in style.css. */
@@ -208,8 +222,9 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] .is-baas .vijand-art { width: 178px; height: 178px; }
 
   body[data-modus="mobiel"] #onderbalk { height: 292px; }
-  /* idem als liggend: de kaartrij rust ~1/5 onder de rand, tik-lift opgekrikt */
-  body[data-modus="mobiel"] #hand { bottom: calc(-34px + env(safe-area-inset-bottom)); }
+  /* idem als liggend: ~1/5 onder de rand, tik-lift opgekrikt; geen env() bijtellen
+     (.scherm heeft al padding-bottom:env() → anders dubbeltelling op iPhone) */
+  body[data-modus="mobiel"] #hand { bottom: -34px; }
   /* enkel de HANDkaarten (niet elke .kaart — winkel/keuze hebben hun eigen maat) */
   body[data-modus="mobiel"] #hand .kaart { width: 120px; height: 168px; margin: 0 -32px; }
   /* kaart-art schaalt mee met de smallere mobiele kaart (liep anders over) */
@@ -247,16 +262,18 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] .is-elite .vijand-art { width: 112px; height: 112px; }
   body[data-modus="mobiel"] .is-baas .vijand-art { width: 140px; height: 140px; }
   body[data-modus="mobiel"] #vijanden-rij { gap: 18px; flex-wrap: nowrap; max-width: none; }
-  /* baasgevecht: de baas z'n eigen HP-balk weg — de grote baasbalk ís de baas-HP,
-     dus geen dubbele balk. (De flex-end-uitlijning geldt nu al voor élk gevecht.) */
-  body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk { display: none; }
+  /* (baas: eigen HP-balk wegwerken staat nu onvoorwaardelijk in sectie A, zodat
+     het óók in portret-baasgevechten geldt — niet enkel liggend.) */
 
   body[data-modus="mobiel"] #onderbalk { height: 150px; }
   /* de hele kaartrij rust ~1/5 ONDER de schermrand: je tikt een kaart toch aan
      (preview licht 'm volledig op), dus dit wint verticale ruimte voor het
      slagveld zonder leesbaarheid te kosten. De tik-lift is opgekrikt zodat de
      aangetikte/gekozen kaart helemaal omhoogkomt. */
-  body[data-modus="mobiel"] #hand { bottom: calc(-29px + env(safe-area-inset-bottom)); }
+  /* GEEN env() bijtellen: #scherm-gevecht erft al .scherm{padding-bottom:env(...)},
+     dus de onderbalk-bodem ligt al boven de home-indicator. Met de negatieve
+     waarde zou dubbeltelling de rij op iPhone juist BOVEN de rand laten zweven. */
+  body[data-modus="mobiel"] #hand { bottom: -29px; }
   /* enkel de HANDkaarten krijgen de mini-maat — NIET elke .kaart (winkel/​keuze
      hebben hun eigen maat; de brede selector lekte de hand-maat + overlap erin) */
   body[data-modus="mobiel"] #hand .kaart { width: 104px; height: 146px; margin: 0 -16px; }

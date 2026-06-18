@@ -1531,7 +1531,11 @@ function evalueerDraaiBlok() {
     else if (scherm === 'gevecht' && !liggend) richting = 'liggend';        /* gevecht wil liggend */
     else if (_DRAAI_STAAND_SCHERMEN.includes(scherm) && liggend) richting = 'staand'; /* encounter wil staand */
   }
-  if (!richting || _draaiGenegeerd[richting]) { el.classList.remove('toon'); el.dataset.richting = ''; return; }
+  if (!richting || _draaiGenegeerd[richting]) {
+    el.classList.remove('toon'); el.dataset.richting = '';
+    misschienBaasIntro(typeof S !== 'undefined' && S && S.gevecht);   /* slagveld zichtbaar → wachtende baas-intro mag nu spelen */
+    return;
+  }
   const naarLiggend = richting === 'liggend';
   const h2 = el.querySelector('h2'), p = el.querySelector('p'), knop = el.querySelector('button');
   if (h2) h2.textContent = 'Draai je toestel';
@@ -1548,9 +1552,34 @@ function speelTochStaand() {
   const r = el && el.dataset.richting;
   if (r) _draaiGenegeerd[r] = true;
   if (el) el.classList.remove('toon');
+  misschienBaasIntro(typeof S !== 'undefined' && S && S.gevecht);   /* slagveld nu zichtbaar → wachtende baas-intro spelen */
 }
-window.addEventListener('orientationchange', evalueerDraaiBlok);
-window.addEventListener('resize', evalueerDraaiBlok);
+
+/* een baasgevecht onthult de baas met een korte intro — die mag NIET achter de
+   full-screen draai-prompt (z-index 2000) spelen. Daarom enkel starten als het
+   slagveld echt zichtbaar is; anders wacht 'ie tot de prompt weg is (draaien of
+   "toch zo spelen"). Eén keer per gevecht via g.baasIntroGespeeld. */
+function misschienBaasIntro(g) {
+  if (!g || g.voorbij || g.baasIntroGespeeld || g.soort !== 'baas') return;
+  const db = document.getElementById('draai-blok');
+  if (db && db.classList.contains('toon')) return;
+  g.baasIntroGespeeld = true;
+  toonBaasIntro(g);
+}
+
+let _draaiHertekenTimer = null;
+function opSchermDraai() {
+  evalueerDraaiBlok();
+  /* afdaalkaart herschalen bij draaien: de zoom hangt aan de schermbreedte, en
+     zonder hertekenen blijft 'ie stale → te klein (na portret→liggend) of
+     overlopend/afgeknipt (liggend→portret). Licht gedebounced tegen resize-burst. */
+  clearTimeout(_draaiHertekenTimer);
+  _draaiHertekenTimer = setTimeout(() => {
+    if (document.body.dataset.scherm === 'kaart' && typeof S !== 'undefined' && S && S.kaart) renderKaartScherm();
+  }, 140);
+}
+window.addEventListener('orientationchange', opSchermDraai);
+window.addEventListener('resize', opSchermDraai);
 
 function startGevecht(samenstelling, soort, rij) {
   const g = {
@@ -1663,7 +1692,7 @@ function startGevecht(samenstelling, soort, rij) {
     if (!S.daily) { Codex.erfprinsOntmoetingen = (Codex.erfprinsOntmoetingen || 0) + 1; bewaarCodex(); }
     noteerScherf('drops', 'drops_baas');
   }
-  if (soort === 'baas') toonBaasIntro(g);
+  if (soort === 'baas') misschienBaasIntro(g);   /* enkel als het slagveld zichtbaar is (niet achter de draai-prompt) */
 
   /* de metgezel handelt ook op de éérste beurt — even na de entree, zodat
      je 'm ziet binnenkomen voordat hij toeslaat/schildt/geneest */
@@ -4009,8 +4038,12 @@ document.addEventListener('fullscreenchange', () => {
 
 /* draait de game als geïnstalleerde app / op volledig scherm? */
 function appGeinstalleerd() {
+  /* display-mode:fullscreen telt alleen als ECHT geïnstalleerd, niet wanneer de
+     Fullscreen-API (wisselFullscreen) tijdelijk fullscreen forceert — anders
+     verdween de install-knop onterecht nadat je in browser-fullscreen ging. */
   return (window.matchMedia &&
-      (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches)) ||
+      (matchMedia('(display-mode: standalone)').matches ||
+       (matchMedia('(display-mode: fullscreen)').matches && !document.fullscreenElement))) ||
     !!navigator.standalone;
 }
 
