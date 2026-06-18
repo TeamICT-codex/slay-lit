@@ -2463,6 +2463,40 @@ body.lite .einde-doel, body.lite .daily-paneel, body.lite .einde-knoppen {
 #topbalk, #hand, #onderbalk, #strijdveld, #vijanden-rij, #kaart-scroll, .overlay {
   touch-action: manipulation;
 }
+/* spel-art is geen foto om op te slaan: geen native callout/sleep/selectie, en
+   de afbeelding vangt geen touch → lang-indrukken valt op de onderliggende knop
+   (relikwie/kaart/vijand) i.p.v. het 'Afbeelding opslaan'-menu te openen. */
+img { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.schrijn-slot img, .relikwie img, .drank img, .boek-kaart img, .codex-slot img,
+.vijand-art img, .kaart-icoon img, .held-art img, .beloning-kaart img, .schat-buit img {
+  pointer-events: none;
+}
+
+/* mobiel: volledig-scherm/install-nudge (onderaan, sluitbaar) */
+#scherm-nudge {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 3000;
+  display: flex; align-items: center; gap: 10px;
+  max-width: min(560px, 94vw); padding: 11px 13px;
+  background: linear-gradient(180deg, rgba(40, 30, 55, .97), rgba(24, 18, 33, .98));
+  border: 1px solid var(--rand); border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .6);
+  color: var(--perkament); font-size: .95rem; line-height: 1.3;
+  animation: nudgeOp .35s ease both;
+}
+#scherm-nudge b { color: var(--ember-fel); }
+#scherm-nudge span { flex: 1; }
+#scherm-nudge .nudge-ja {
+  flex: none; padding: 9px 16px; border-radius: 10px; border: none;
+  background: var(--ember); color: #1a1020; font-weight: 700;
+  font-family: 'Pirata One', serif; font-size: 1.1rem; cursor: pointer;
+}
+#scherm-nudge .nudge-x {
+  flex: none; width: 36px; height: 36px; border-radius: 9px;
+  background: rgba(255, 255, 255, .08); color: var(--perkament-dof);
+  border: 1px solid var(--rand); font-size: 1rem; cursor: pointer;
+}
+@keyframes nudgeOp { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
 /* touch-tikfeedback (:active-puls) + tap-to-inspect handkaart → mobiel.css */
 
 /* ================= MOBIEL / TOUCH =================

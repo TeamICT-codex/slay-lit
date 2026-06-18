@@ -130,7 +130,7 @@ const INST = Object.assign(
   /* op mobiel standaard 3D UIT (onspeelbaar daar), maar lite NIET geforceerd:
      lite dooft de animaties, en juist die geven het spel leven. Lite alleen
      bij echt zwakke hardware. Op laptop ongewijzigd want mobiel=false. */
-  { lite: standaardLite, d3: !standaardLite && !mobiel, spraak: true, daglicht: false },
+  { lite: standaardLite, d3: !standaardLite && !mobiel, spraak: true, daglicht: mobiel },
   JSON.parse(localStorage.getItem('slayit_inst') || '{}')
 );
 /* eenmalige mobiel-migratie: forceer 3D uit (onspeelbaar op telefoon) en zet de
@@ -3941,6 +3941,36 @@ document.addEventListener('fullscreenchange', () => {
   const cb = document.getElementById('inst-fullscreen');
   if (cb) cb.checked = !!document.fullscreenElement;
 });
+
+/* mobiel: éénmalige, sluitbare nudge om op volledig scherm te spelen (de zwarte
+   statusbalk/klok weg). Android kan het meteen — de knop ís het vereiste gebaar;
+   iOS heeft geen requestFullscreen → daar de install-instructie ("Zet op
+   beginscherm" geeft via manifest display:fullscreen een echt fullscreen-app).
+   Onthoudt 'weg' in localStorage. Verschijnt niet als al fullscreen/geïnstalleerd. */
+function toonSchermNudge() {
+  if (!window.mobiel || document.getElementById('scherm-nudge')) return;
+  try { if (localStorage.getItem('slayit_nudge_scherm') === 'weg') return; } catch (e) {}
+  const standalone = (window.matchMedia &&
+      (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches)) ||
+    navigator.standalone;
+  if (standalone || document.fullscreenElement) return;
+  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+  const docEl = document.documentElement;
+  const kanFS = !!(docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen);
+  const wrap = document.createElement('div');
+  wrap.id = 'scherm-nudge';
+  wrap.innerHTML = (ios || !kanFS)
+    ? `<span>📲 Speel op <b>volledig scherm</b>: tik <b>Deel</b> ▸ <b>Zet op beginscherm</b>.</span>
+       <button type="button" class="nudge-x" aria-label="Sluiten">✕</button>`
+    : `<span>📲 Speel op <b>volledig scherm</b> voor de beste ervaring.</span>
+       <button type="button" class="nudge-ja">Aan</button>
+       <button type="button" class="nudge-x" aria-label="Sluiten">✕</button>`;
+  document.body.appendChild(wrap);
+  const sluit = onthoud => { wrap.remove(); if (onthoud) { try { localStorage.setItem('slayit_nudge_scherm', 'weg'); } catch (e) {} } };
+  const ja = wrap.querySelector('.nudge-ja');
+  if (ja) ja.onclick = () => { wisselFullscreen(true); sluit(true); };
+  wrap.querySelector('.nudge-x').onclick = () => sluit(true);
+}
 function instWijzig() {
   Klank.zet('aan', $('#inst-geluid').checked);
   Klank.zet('muziek', parseFloat($('#inst-muziek').value));
@@ -4047,6 +4077,45 @@ document.addEventListener('pointerdown', e => {
   }, true);
 })();
 
+/* onderdruk het native context-/'afbeelding opslaan'-menu op het spel zelf:
+   lang-indrukken op art (relikwie, vijand, kaart…) opende anders dat menu en
+   blokkeerde de uitleg/peek. Inputs (zoals het seed-veld) houden hun menu zodat
+   plakken blijft werken. De desktop-drank-lore loopt via de eigen inline
+   oncontextmenu-handler (die vuurt vóór deze) en blijft dus gewoon werken. */
+document.addEventListener('contextmenu', e => {
+  if (!e.target.closest('input, textarea')) e.preventDefault();
+});
+
+/* touch: een relikwie/uitleg-item lang vasthouden toont de uitleg ZONDER te
+   kiezen — zo kun je afwegen vóór je beslist (de tip verschijnt al bij aanraken;
+   dit houdt 'm vast en onderdrukt de keuze-klik die normaal zou selecteren). */
+(() => {
+  let timer = null, lang = false;
+  const SEL = '.schrijn-slot, .relikwie, .boek-kaart';
+  document.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch') return;
+    const knop = e.target.closest(SEL);
+    if (!knop) return;
+    lang = false;
+    timer = setTimeout(() => {
+      const t = knop.matches('[data-tip]') ? knop : knop.closest('[data-tip]');
+      if (!t || !t.dataset.tip) return;     /* niets te tonen → laat de tik gewoon kiezen */
+      lang = true;
+      clearTimeout(_tipTouchTimer);
+      _plaatsTip(t);
+      if (window.Klank && Klank.sfx) Klank.sfx('klik');
+    }, 420);
+  });
+  const stop = () => { clearTimeout(timer); if (lang) { clearTimeout(_tipTouchTimer); _tipTouchTimer = setTimeout(_verbergTip, 1800); } };
+  document.addEventListener('pointerup', stop);
+  document.addEventListener('pointercancel', stop);
+  document.addEventListener('pointermove', () => clearTimeout(timer));
+  /* de klik ná een long-press onderdrukken zodat de relikwie NIET gekozen wordt */
+  document.addEventListener('click', e => {
+    if (lang && e.target.closest(SEL)) { e.preventDefault(); e.stopPropagation(); lang = false; }
+  }, true);
+})();
+
 /* touch: je held of een vijand VASTHOUDEN maakt de kaarthand even doorzichtig,
    zodat je de statussen, hp en intenties eronder duidelijk ziet (op een smal
    gsm-scherm dekken de kaarten die soms af). Loslaten herstelt meteen. Een korte
@@ -4150,4 +4219,5 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   naarTitel();
+  if (window.mobiel) setTimeout(toonSchermNudge, 1200);
 });
