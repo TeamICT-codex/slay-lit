@@ -115,9 +115,14 @@ body[data-modus="mobiel"] #baas-balk .bb-balk { height: 15px; }
 body[data-modus="mobiel"] #baas-balk .bb-fases { margin-top: 3px; gap: 5px; }
 body[data-modus="mobiel"] #baas-balk .bb-pip { width: 9px; height: 9px; }
 
-/* afdaalkaart swipebaar (700px-vlak blijft intact, px-knoopposities kloppen) */
-body[data-modus="mobiel"] #kaart-scroll { overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
+/* afdaalkaart: de 700px-kaart wordt met zoom op schermbreedte geschaald
+   (renderKaartScherm) → geen horizontale scroll meer, enkel verticaal. */
+body[data-modus="mobiel"] #kaart-scroll { overflow-x: hidden; justify-content: center; -webkit-overflow-scrolling: touch; }
 body[data-modus="mobiel"] #kaart-vlak { margin: 0 auto; }
+/* de knopen iets groter vóór de zoom, zodat ze ná het schalen tikbaar blijven
+   (centrum-positie ongewijzigd — margin is de helft van de maat) */
+body[data-modus="mobiel"] .knoop { width: 62px; height: 62px; margin: -31px 0 0 -31px; }
+body[data-modus="mobiel"] .knoop-baas { width: 84px; height: 84px; margin: -42px 0 0 -42px; }
 
 /* overlays + scrollbare schermen (.scherm is standaard overflow:hidden) */
 body[data-modus="mobiel"] .overlay { padding: 20px 10px; }

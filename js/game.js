@@ -1336,6 +1336,7 @@ function nodePositie(n) {
   return { x, y };
 }
 
+let _kaartZoom = 1;   /* schaalfactor van de afdaalkaart op smalle schermen (zoom) */
 function renderKaartScherm() {
   toonScherm('kaart');
   saveSpel();
@@ -1386,6 +1387,13 @@ function renderKaartScherm() {
   /* act-overzichtsplaat scrollt mee met de route: onderaan de vallei, bovenaan de baas */
   const scroller = $('#kaart-scroll');
   const schermEl = $('#scherm-kaart');
+  /* smal scherm: de hele 700px-kaart op breedte schalen met zoom (reflowt de
+     layout → géén horizontale scroll meer; je ziet je route in één oogopslag en
+     scrollt enkel verticaal, de natuurlijke afdaling). Op een breed scherm s=1
+     (no-op, laptop ongewijzigd). De scroll-rekenkunde verderop schaalt mee. */
+  const cw = scroller.clientWidth || window.innerWidth;
+  _kaartZoom = Math.min(1, (cw - 6) / 700);
+  vlak.style.zoom = _kaartZoom < 1 ? _kaartZoom : '';
   if (window.ACHTERGRONDEN && actBg('kaart')) {
     schermEl.style.backgroundImage =
       `linear-gradient(rgba(13,10,18,.40), rgba(13,10,18,.55)), url("${ACHTERGRONDEN.basis + actBg('kaart')}")`;
@@ -1399,12 +1407,11 @@ function renderKaartScherm() {
     requestAnimationFrame(zetPlaatPositie);
   }
 
-  const doelY = S.pos ? nodePositie(S.kaart[S.pos]).y : 0;
+  const doelY = (S.pos ? nodePositie(S.kaart[S.pos]).y : 0) * _kaartZoom;
   scroller.scrollTop = Math.max(0, doelY - scroller.clientHeight * 0.45);
-  /* horizontaal centreren op de huidige knoop (telefoon: vlak is breder dan
-     het scherm en swipebaar). Op desktop is er geen horizontale overloop,
-     dus dit is daar een no-op. */
-  if (S.pos) scroller.scrollLeft = Math.max(0, nodePositie(S.kaart[S.pos]).x - scroller.clientWidth * 0.5);
+  /* horizontaal centreren alleen nog op een breed scherm; geschaald past de
+     kaart exact op de breedte (geen horizontale overloop meer). */
+  if (S.pos && _kaartZoom >= 1) scroller.scrollLeft = Math.max(0, nodePositie(S.kaart[S.pos]).x - scroller.clientWidth * 0.5);
   $('#seed-label').textContent = 'Seed: ' + (S.seed || '—') + (S.ascensie ? ' · Ascensie ' + S.ascensie : '');
   zetLichtVisueel();
   renderTopbalk();
@@ -1424,8 +1431,8 @@ function kiesNode(id) {
   held.style.top = doel.y + 'px';
   const scroller = $('#kaart-scroll');
   if (scroller) scroller.scrollTo({
-    top: Math.max(0, doel.y - scroller.clientHeight * 0.45),
-    left: Math.max(0, doel.x - scroller.clientWidth * 0.5),  /* no-op op desktop */
+    top: Math.max(0, doel.y * _kaartZoom - scroller.clientHeight * 0.45),
+    left: _kaartZoom >= 1 ? Math.max(0, doel.x - scroller.clientWidth * 0.5) : 0,
     behavior: 'smooth'
   });
   Klank.sfx('stap');
