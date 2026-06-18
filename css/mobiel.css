@@ -171,6 +171,19 @@ body[data-modus="mobiel"] #hand .kaart.voorbeeld .kaart-tekst {
   font-size: .85rem; line-height: 1.3;
 }
 
+/* kaartkeuze (beloning + smidse): op mobiel convergeren naar één leesbare maat —
+   de beloning (.weinig) was te groot, de smidse (hele dek, >5 kaarten) te klein
+   en gekraamd met kostbadges over de titels. ~172px: titels passen, badges botsen
+   niet, en het raster wrapt netjes + scrollt. */
+body[data-modus="mobiel"] #kies-kaarten { gap: 26px 24px; max-width: 100%; }
+body[data-modus="mobiel"] #kies-kaarten .kaart.groot { width: 172px; height: 240px; padding: 9px 10px; }
+body[data-modus="mobiel"] #kies-kaarten .kaart.groot .kaart-icoon img { width: 146px; height: 82px; }
+body[data-modus="mobiel"] #kies-kaarten .kaart-naam { font-size: 1.08rem; }
+body[data-modus="mobiel"] #kies-kaarten .kaart-icoon { font-size: 2.4rem; }
+body[data-modus="mobiel"] #kies-kaarten .kaart-tekst { font-size: .9rem; line-height: 1.3; }
+body[data-modus="mobiel"] #kies-kaarten .kaart-kost { width: 32px; height: 32px; font-size: 1.2rem; }
+body[data-modus="mobiel"] #kies-kaarten .kaart-rug::after { font-size: 3.4rem; }
+
 /* volledig-scherm-schakelaar enkel op touch tonen (desktop heeft F11).
    Basis .inst-mobiel { display:none } staat in style.css. */
 body[data-modus="mobiel"] .inst-mobiel { display: flex; }

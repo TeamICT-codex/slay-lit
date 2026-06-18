@@ -3105,6 +3105,9 @@ function kaartHtml(c, klikbaar) {
 /* kaartkeuze met booster-onthulling en inspectie-zoom:
    opts.onthul  = kaarten beginnen gedekt en flippen open (beloningen)
    opts.bekijkAlleen = geen kies-knop in de zoomweergave (dek-overzicht) */
+/* "specialere kaarten" = de betere zeldzaamheden (niet basis/gewoon/vloek):
+   die blijven in een keuzemoment omgedraaid tot de speler ze zelf onthult. */
+function bijzondereKaart(c) { return ['ongewoon', 'zeldzaam', 'episch'].includes(kdef(c).zeld); }
 function toonKaartKeuze(kaarten, titel, bijKeuze, bijOverslaan, opts = {}) {
   const ov = $('#overlay-kies');
   const houder = $('#kies-kaarten');
@@ -3135,7 +3138,7 @@ function toonKaartKeuze(kaarten, titel, bijKeuze, bijOverslaan, opts = {}) {
     $('#kies-hint').textContent = 'Klik een kaart om hem van dichtbij te bekijken'
       + (opts.bekijkAlleen || !bijKeuze ? '.' : ' vóór je kiest.');
     houder.innerHTML = kaarten.map(c => `
-      <div class="onthul-kaart ${onthuld.has(c.uid) ? 'open' : ''}" data-uid="${c.uid}">
+      <div class="onthul-kaart ${onthuld.has(c.uid) ? 'open' : ''} ${bijzondereKaart(c) ? 'bijzonder' : ''}" data-uid="${c.uid}">
         <div class="onthul-binnen">
           <div class="onthul-voor zeldglans-${kdef(c).zeld}">${kaartHtml(c, true)}</div>
           <div class="kaart-rug"></div>
@@ -3151,9 +3154,12 @@ function toonKaartKeuze(kaarten, titel, bijKeuze, bijOverslaan, opts = {}) {
         else focus(c);
       };
     });
-    /* booster: kaarten flippen vanzelf één voor één open */
+    /* booster: de GEWONE kaarten flippen vanzelf één voor één open; de speciale
+       (ongewoon/zeldzaam) blijven omgedraaid liggen tot de speler ze zelf aantikt
+       — een bewust onthul-moment, met de bestaande flip + kleurflits + schitter. */
     if (opts.onthul) {
       kaarten.forEach((c, i) => {
+        if (bijzondereKaart(c)) return;
         setTimeout(() => {
           if (onthuld.has(c.uid) || !ov.classList.contains('open')) return;
           const el = houder.querySelector(`.onthul-kaart[data-uid="${c.uid}"]`);
