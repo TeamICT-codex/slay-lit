@@ -219,6 +219,16 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      schermhoogte vrij van de topbalk blijft — anders schoot 'ie er bij meer
      hoogte (fullscreen) anders doorheen dan zonder. */
   body[data-modus="mobiel"] #strijdveld { padding: 4px 16px; align-items: center; justify-content: space-evenly; min-height: 0; }
+  /* de brede basis-min-widths resetten (anders vreet de spelerzone ~170px en
+     worden 3 vijanden samen ~444px → de rechtse liep van het scherm) */
+  body[data-modus="mobiel"] #speler-zone { min-width: 0; }
+  body[data-modus="mobiel"] #held-cluster { gap: 10px; }
+  body[data-modus="mobiel"] .vijand { min-width: 0; padding: 4px; }
+  /* de hp-balk bepaalt de kolombreedte → smaller in liggend gevecht zodat 3
+     vijanden + speler op een smal scherm naast elkaar passen (in portret
+     wrappen ze, dus daar niet nodig) */
+  body[data-modus="mobiel"] .hp-balk { width: 100px; }
+  body[data-modus="mobiel"] .speler-hp { width: 120px; }
   body[data-modus="mobiel"] .speler-figuur { width: 96px; height: 96px; }
   body[data-modus="mobiel"] .vijand-art { width: 90px; height: 90px; }
   body[data-modus="mobiel"] .is-elite .vijand-art { width: 106px; height: 106px; }
