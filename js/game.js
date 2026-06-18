@@ -1511,12 +1511,13 @@ function maakVijand(id, rij) {
   return v;
 }
 
-/* oriëntatie-routing: het gevecht speelt LIGGEND, de encounter-/transactie-
-   schermen (schat/winkel/beloning/event/rust) STAAND. We tonen de draai-prompt
-   met de juiste boodschap zodra het toestel verkeerd om gehouden wordt; per
-   richting eenmalig per sessie weg te klikken ("toch zo spelen"). */
+/* oriëntatie-routing: bijna alles (gevecht, beloning/kaartkeuze ná de battle,
+   winkel, rust) speelt prima LIGGEND en blijft dat. ALLEEN de echte map-
+   encounters waar landscape brak — de schatkist en de event-scènes — vragen
+   STAAND (knop viel weg / visual niet zichtbaar). Per richting eenmalig per
+   sessie weg te klikken ("toch zo spelen"). */
 const _draaiGenegeerd = { liggend: false, staand: false };
-const _DRAAI_STAAND_SCHERMEN = ['schat', 'winkel', 'beloning', 'event', 'rust'];
+const _DRAAI_STAAND_SCHERMEN = ['schat', 'event'];
 function evalueerDraaiBlok() {
   const el = document.getElementById('draai-blok');
   if (!el) return;
