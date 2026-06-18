@@ -430,6 +430,11 @@ Risico-checklist na elke fase: open op laptop een gevecht met 1 baas +
   kaart swipebaar (#kaart-scroll overflow-x:auto — géén transform:scale,
   dat breekt de scroll-rekenkunde); kaarthand agressievere overlap
   (104px, margin -30px); orb + eindbeurt-knop bóven de hand.
+  > UPDATE (18 juni 2026): de afdaalkaart is NIET meer swipebaar — het
+  > 700px-vlak wordt nu met CSS `zoom` op schermbreedte geschaald in
+  > renderKaartScherm (de scroll-rekenkunde schaalt mee via _kaartZoom),
+  > zodat de hele route in één oogopslag past en je enkel verticaal scrollt.
+  > `zoom` reflowt de layout (anders dan transform:scale) → klikken klopt.
 - **Fase 4 — touch-uitleg** (middel, laag). Tooltips op pointerdown
   (touch) naast mouseover; drank-lore via long-press naast rechtsklik;
   :active-feedback naast :hover; touch-action:manipulation.
