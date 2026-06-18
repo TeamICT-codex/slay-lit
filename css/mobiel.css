@@ -208,12 +208,13 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] .is-baas .vijand-art { width: 178px; height: 178px; }
 
   body[data-modus="mobiel"] #onderbalk { height: 292px; }
-  body[data-modus="mobiel"] #hand { bottom: calc(10px + env(safe-area-inset-bottom)); }
+  /* idem als liggend: de kaartrij rust ~1/5 onder de rand, tik-lift opgekrikt */
+  body[data-modus="mobiel"] #hand { bottom: calc(-34px + env(safe-area-inset-bottom)); }
   body[data-modus="mobiel"] .kaart { width: 120px; height: 168px; margin: 0 -32px; }
   /* kaart-art schaalt mee met de smallere mobiele kaart (liep anders over) */
   body[data-modus="mobiel"] .kaart-icoon img { width: 98px; height: 54px; }
-  body[data-modus="mobiel"] #hand .kaart:hover, body[data-modus="mobiel"] #hand .kaart.gekozen { transform: translateY(-30px) scale(1.08); }
-  body[data-modus="mobiel"] #hand .kaart.voorbeeld { transform: translateY(-34px); }
+  body[data-modus="mobiel"] #hand .kaart:hover, body[data-modus="mobiel"] #hand .kaart.gekozen { transform: translateY(-64px) scale(1.08); }
+  body[data-modus="mobiel"] #hand .kaart.voorbeeld { transform: translateY(-68px); }
 
   body[data-modus="mobiel"] #energie-orb { left: calc(10px + env(safe-area-inset-left)); bottom: 226px; transform: scale(.85); }
   body[data-modus="mobiel"] #knop-eindbeurt { right: calc(10px + env(safe-area-inset-right)); bottom: 230px; min-height: 46px; padding: 11px 20px; font-size: 1.05rem; }
@@ -253,11 +254,15 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk { display: none; }
 
   body[data-modus="mobiel"] #onderbalk { height: 150px; }
-  body[data-modus="mobiel"] #hand { bottom: calc(6px + env(safe-area-inset-bottom)); }
+  /* de hele kaartrij rust ~1/5 ONDER de schermrand: je tikt een kaart toch aan
+     (preview licht 'm volledig op), dus dit wint verticale ruimte voor het
+     slagveld zonder leesbaarheid te kosten. De tik-lift is opgekrikt zodat de
+     aangetikte/gekozen kaart helemaal omhoogkomt. */
+  body[data-modus="mobiel"] #hand { bottom: calc(-29px + env(safe-area-inset-bottom)); }
   body[data-modus="mobiel"] .kaart { width: 104px; height: 146px; margin: 0 -16px; }
   body[data-modus="mobiel"] .kaart-icoon img { width: 84px; height: 46px; }
-  body[data-modus="mobiel"] #hand .kaart:hover, body[data-modus="mobiel"] #hand .kaart.gekozen { transform: translateY(-26px) scale(1.1); }
-  body[data-modus="mobiel"] #hand .kaart.voorbeeld { transform: translateY(-26px); }
+  body[data-modus="mobiel"] #hand .kaart:hover, body[data-modus="mobiel"] #hand .kaart.gekozen { transform: translateY(-56px) scale(1.1); }
+  body[data-modus="mobiel"] #hand .kaart.voorbeeld { transform: translateY(-56px); }
   /* breed zat: HUD weer NAAST de hand */
   body[data-modus="mobiel"] #energie-orb { left: calc(14px + env(safe-area-inset-left)); bottom: 88px; transform: scale(.82); }
   body[data-modus="mobiel"] #knop-eindbeurt { right: calc(14px + env(safe-area-inset-right)); bottom: 92px; min-height: 42px; padding: 9px 18px; }
