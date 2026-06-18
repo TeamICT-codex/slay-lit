@@ -2472,31 +2472,37 @@ img { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -we
   pointer-events: none;
 }
 
-/* mobiel: volledig-scherm/install-nudge (onderaan, sluitbaar) */
+/* mobiel: volledig-scherm/install-nudge (onderaan, sluitbaar) — opvallend genoeg
+   om gezien te worden: ruimer, ember-rand + een korte aandacht-glow bij verschijnen */
 #scherm-nudge {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 3000;
-  display: flex; align-items: center; gap: 10px;
-  max-width: min(560px, 94vw); padding: 11px 13px;
-  background: linear-gradient(180deg, rgba(40, 30, 55, .97), rgba(24, 18, 33, .98));
-  border: 1px solid var(--rand); border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .6);
-  color: var(--perkament); font-size: .95rem; line-height: 1.3;
-  animation: nudgeOp .35s ease both;
+  bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 3000;
+  display: flex; align-items: center; gap: 12px;
+  width: min(560px, 94vw); padding: 15px 17px;
+  background: linear-gradient(180deg, rgba(48, 35, 64, .98), rgba(26, 19, 36, .99));
+  border: 1.5px solid rgba(255, 156, 63, .55); border-radius: 16px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .65), 0 0 0 1px rgba(255, 156, 63, .12);
+  color: var(--perkament); font-size: 1.08rem; line-height: 1.35;
+  animation: nudgeOp .35s ease both, nudgePuls 1.9s ease-in-out .45s 3;
 }
 #scherm-nudge b { color: var(--ember-fel); }
 #scherm-nudge span { flex: 1; }
 #scherm-nudge .nudge-ja {
-  flex: none; padding: 9px 16px; border-radius: 10px; border: none;
+  flex: none; padding: 12px 22px; border-radius: 11px; border: none;
   background: var(--ember); color: #1a1020; font-weight: 700;
-  font-family: 'Pirata One', serif; font-size: 1.1rem; cursor: pointer;
+  font-family: 'Pirata One', serif; font-size: 1.3rem; cursor: pointer;
+  box-shadow: 0 3px 12px rgba(255, 156, 63, .4);
 }
 #scherm-nudge .nudge-x {
-  flex: none; width: 36px; height: 36px; border-radius: 9px;
+  flex: none; width: 40px; height: 40px; border-radius: 10px;
   background: rgba(255, 255, 255, .08); color: var(--perkament-dof);
-  border: 1px solid var(--rand); font-size: 1rem; cursor: pointer;
+  border: 1px solid var(--rand); font-size: 1.1rem; cursor: pointer;
 }
-@keyframes nudgeOp { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes nudgeOp { from { opacity: 0; transform: translate(-50%, 14px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes nudgePuls {
+  0%, 100% { box-shadow: 0 12px 34px rgba(0, 0, 0, .65), 0 0 0 1px rgba(255, 156, 63, .12); }
+  50%      { box-shadow: 0 12px 34px rgba(0, 0, 0, .65), 0 0 0 2px rgba(255, 156, 63, .6), 0 0 26px rgba(255, 156, 63, .5); }
+}
 /* touch-tikfeedback (:active-puls) + tap-to-inspect handkaart → mobiel.css */
 
 /* ================= MOBIEL / TOUCH =================

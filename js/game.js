@@ -663,7 +663,7 @@ function zetLichtVisueel() {
   const bg = $('#gevecht-achtergrond');
   if (bg) {
     let bgB = 0.45 + 0.55 * f;
-    if (INST.daglicht) bgB = Math.min(1, bgB + 0.22);   /* daglicht: de plaat lichter */
+    if (INST.daglicht) bgB = Math.min(1.35, bgB + 0.45);   /* daglicht: de gevechtsplaat flink lichter */
     bg.style.filter = `brightness(${bgB.toFixed(2)})`;
   }
   const vignet = $('#licht-vignet');
@@ -676,7 +676,7 @@ function zetLichtVisueel() {
     else if (fk >= 30) sterkte = 0.26 + 0.24 * (60 - fk) / 30;
     else if (fk >= 1) sterkte = 0.56 + 0.24 * (30 - fk) / 29;
     else sterkte = 0.92;
-    if (INST.daglicht) sterkte *= 0.4;                  /* daglicht: het duister-vignet veel zachter */
+    if (INST.daglicht) sterkte *= 0.22;                 /* daglicht: het duister-vignet véél zachter */
     vignet.style.opacity = sterkte.toFixed(2);
     vignet.classList.toggle('flikker', fk < 30);
   }
@@ -1094,21 +1094,32 @@ function revealDrops(g) {
 }
 
 /* ---------- schermachtergronden (eigen platen, gedimd voor leesbaarheid) ---------- */
+const _schermBg = {};   /* basis-args per scherm onthouden zodat Daglichtmodus live kan herhelderen */
 function schermAchtergrond(naam, pad, donker = 0.55, positie = 'center') {
   const el = $('#scherm-' + naam);
   if (!el) return;
-  /* Daglichtmodus: de verdonkering-overlay lichter zetten zodat de plaat
-     overdag/buiten leesbaar blijft. Veilig — enkel de gradient-alpha, geen
-     filter (die zou de containing-block voor fixed-elementen breken). */
-  if (INST.daglicht) donker *= 0.5;
   if (pad && window.ACHTERGRONDEN) {
+    _schermBg[naam] = { pad, donker, positie };       /* de BASIS-donker (vóór daglicht) */
+    /* Daglichtmodus: de verdonkering-overlay flink lichter zetten zodat de plaat
+       overdag/buiten leesbaar blijft. Veilig — enkel de gradient-alpha, geen
+       filter (die zou de containing-block voor fixed-elementen breken). */
+    const d = INST.daglicht ? donker * 0.32 : donker;
     el.style.backgroundImage =
-      `linear-gradient(rgba(13,10,18,${donker}), rgba(13,10,18,${Math.min(1, donker + 0.18)})), url("${ACHTERGRONDEN.basis + pad}")`;
+      `linear-gradient(rgba(13,10,18,${d}), rgba(13,10,18,${Math.min(1, d + 0.16)})), url("${ACHTERGRONDEN.basis + pad}")`;
     el.style.backgroundSize = 'cover';
     el.style.backgroundPosition = positie;
   } else {
+    delete _schermBg[naam];
     el.style.backgroundImage = '';
   }
+}
+/* her-teken alle scherm-platen met de huidige Daglichtmodus (na een toggle), zodat
+   het beeld waar je nú op staat meteen mee verheldert i.p.v. pas bij navigatie. */
+function herpasSchermAchtergronden() {
+  Object.keys(_schermBg).forEach(naam => {
+    const b = _schermBg[naam];
+    schermAchtergrond(naam, b.pad, b.donker, b.positie);
+  });
 }
 
 /* gevechtsplaat kiezen (willekeurige variant; episch voor elite/baas) */
@@ -3981,7 +3992,8 @@ function instWijzig() {
   if ($('#inst-daglicht')) INST.daglicht = $('#inst-daglicht').checked;
   bewaarInst();
   pasInstToe();
-  zetLichtVisueel();   /* Daglichtmodus meteen toepassen (vignet + plaat-helderheid) */
+  zetLichtVisueel();              /* Daglichtmodus live: vignet + gevechtsplaat */
+  herpasSchermAchtergronden();    /* én de menu-/scherm-platen meteen herhelderen */
   /* 3D aan/uit midden in een gevecht: toneel wisselen */
   if (inGevecht()) {
     const scherm = $('#scherm-gevecht');
