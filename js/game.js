@@ -783,7 +783,7 @@ function geefBlok(actor, n) {
 
 /* speler valt vijand aan */
 function aanvalOp(doel, basis) {
-  if (doel.dood) return;
+  if (!doel || doel.dood) return;
   if (window.Vista) Vista.aanval(sp(), doel);
   pose2D(sp(), 'attack', 0.5);
   const fig = $('#speler-figuur');
@@ -1176,7 +1176,12 @@ function laadSpel() {
     if (!kaartOk || !Array.isArray(S.dek) || !Array.isArray(S.relikwieen) || !Array.isArray(S.dranken)) {
       wisSave(); return false;
     }
+    /* saniteer bezit tegen verdwenen/hernoemde ids — renderTopbalk derefereert
+       RELIKWIEEN[r]/DRANKEN[d] zonder fallback, een stale id zou de run bricken. */
+    S.relikwieen = S.relikwieen.filter(r => RELIKWIEEN[r]);
+    S.dranken = S.dranken.filter(d => DRANKEN[d]);
     if (S.pos === undefined) S.pos = null;
+    if (S.pos !== null && !S.kaart[S.pos]) S.pos = null;   /* pos wijst naar onbestaande node → terug naar de ingang */
     if (typeof S.hp !== 'number') S.hp = huidigeHeld().hp;
     if (typeof S.maxHp !== 'number') S.maxHp = S.hp;
     if (typeof S.goud !== 'number') S.goud = 0;
@@ -2500,11 +2505,15 @@ async function speelKaart(c, doel) {
     g.aanvalDezeBeurt = (g.aanvalDezeBeurt || 0) + 1;
     if ((sp().status.geindexeerd || 0) > 0) geefBlok(sp(), sp().status.geindexeerd);
     if (c.id !== 'doorslag_kaart' && (sp().status.doorslag || 0) > 0) {
-      sp().status.doorslag--;
       const doel2 = (doel && doel.dood) ? alleVijanden()[0] : doel;   /* doel net gedood? mik op een levend */
-      const r2 = def.speel(c, doel2);
-      if (r2 && r2.then) { g.bezig = true; renderGevecht(); try { await r2; } finally { if (S.gevecht === g) g.bezig = false; } }
-      if ((sp().status.geindexeerd || 0) > 0) geefBlok(sp(), sp().status.geindexeerd);
+      /* laatste vijand net geveld? dan is er niets meer om de recast op te mikken →
+         sla 'm over, anders crasht aanvalOp op een undefined doel (won-but-frozen). */
+      if (def.doel !== 'vijand' || (doel2 && !doel2.dood)) {
+        sp().status.doorslag--;
+        const r2 = def.speel(c, doel2);
+        if (r2 && r2.then) { g.bezig = true; renderGevecht(); try { await r2; } finally { if (S.gevecht === g) g.bezig = false; } }
+        if ((sp().status.geindexeerd || 0) > 0) geefBlok(sp(), sp().status.geindexeerd);
+      }
     }
   }
   if (def.type === 'kracht' || def.uitputten) {
@@ -2838,6 +2847,7 @@ async function eindBeurt() {
   await slaap(350);
   if (gestopt()) return;
 
+  try {
   for (const v of g.vijanden) {
     if (v.dood || gestopt()) continue;
     v.blok = 0;
@@ -2893,6 +2903,12 @@ async function eindBeurt() {
     v.intent = VIJANDEN[v.id].kies(v, v.beurtTeller);
     renderGevecht();
     await slaap(380);
+    if (gestopt()) return;
+  }
+  } catch (e) {
+    /* een throw uit een data-hook (it.doe/kies, lookup-bugklasse) mag de beurt niet
+       bevriezen: log, en val door naar het normale herstel (beurt netjes teruggeven). */
+    console.error('Fout tijdens de vijandbeurt — beurt veilig teruggeven i.p.v. bevriezen:', e);
     if (gestopt()) return;
   }
 
@@ -3681,11 +3697,16 @@ function devSprongAct2() {
 function volgendeAct(verslagenBaas) {
   S.act = huidigeAct() + 1;
   S.fakkel = 100;                 /* episch: het laatste licht van de baas → je fakkel laait op */
-  /* Drops komt alleen mee als je 'm al hebt VRIJGESPEELD (zie het Metgezel-Mysterie).
-     De eerste keren ontrafel je zijn raadsel in Act 2 i.p.v. hem cadeau te krijgen. */
-  if (isOntgrendeld('drops') && !heeftMetgezel() && (!S.metgezel || !S.metgezel.vluchtig)) {
+  /* Drops komt mee zodra je 'm hebt VRIJGESPEELD (zie het Metgezel-Mysterie) én er
+     geen actieve metgezel is. Een in de vorige act gevluchte Drops (heeftMetgezel()
+     is dan false want vluchtig) sluit hier weer aan — zo lost de 'later terugvinden'-
+     belofte zich in i.p.v. in permanente limbo te blijven hangen. */
+  if (isOntgrendeld('drops') && !heeftMetgezel()) {
+    const kwamTerug = !!(S.metgezel && S.metgezel.vluchtig && S.metgezel.id === 'drops');
     geefMetgezel('drops');
-    melding('🐾 Drops daalt met je mee het Archief in.');
+    melding(kwamTerug
+      ? '🐾 Drops kruipt uit het donker terug aan je zij en daalt mee het Archief in.'
+      : '🐾 Drops daalt met je mee het Archief in.');
   }
   S.pos = null;
   S.kaart = genereerKaart();      /* nieuwe ladder, act-bewust; de verdieping-teller loopt door */

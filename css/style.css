@@ -1588,6 +1588,7 @@ body.lite .onthul-kaart.bijzonder:not(.open) .kaart-rug { animation: none; }
 .zeldglans-gewoon { --flits: rgba(232, 213, 174, .45); }
 .zeldglans-ongewoon { --flits: rgba(111, 179, 236, .7); }
 .zeldglans-zeldzaam { --flits: rgba(245, 197, 66, .95); }
+.zeldglans-episch { --flits: rgba(190, 120, 245, .95); }
 @keyframes onthulFlits {
   0% { opacity: 0; transform: scale(.55); }
   30% { opacity: 1; }
