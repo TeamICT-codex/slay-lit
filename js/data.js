@@ -292,8 +292,8 @@ const KAARTEN = {
   },
   katalyse: {
     naam: 'Katalyse', type: 'vaardigheid', zeld: 'zeldzaam', kost: 1, doel: 'vijand', icoon: '⚗️', uitputten: true,
-    maal: 3, up: { maal: 4 },
-    tekst: c => `Ver${kval(c, 'maal') === 3 ? 'drie' : 'vier'}voudig het Gif op een vijand. Uitputten.`,
+    maal: 2, up: { maal: 3 },
+    tekst: c => `${kval(c, 'maal') === 2 ? 'Verdubbel' : 'Verdriedubbel'} het Gif op een vijand. Uitputten.`,
     speel: (c, t) => {
       if (t.status.gif > 0) geefStatus(t, 'gif', t.status.gif * (kval(c, 'maal') - 1));
     }
@@ -620,25 +620,25 @@ const KAARTEN = {
   /* ============ ACT 2 — HET ARCHIEF (namaak / index / doorslag) ============ */
   /* neutraal (voor iedereen) */
   doorslag_kaart: {
-    naam: 'Doorslag', type: 'aanval', zeld: 'ongewoon', kost: 1, doel: 'vijand', icoon: '📑',
+    naam: 'Doorslag', type: 'aanval', zeld: 'ongewoon', act: 2, kost: 1, doel: 'vijand', icoon: '📑',
     dmg: 6, up: { dmg: 8 }, kopie: { soort: 'aanval', veld: 'dmg' },
     tekst: c => `Doe ${pv(c, 'dmg')} schade. De eerstvolgende aanval die je deze beurt speelt, speel je een tweede keer af.`,
     speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefStatus(sp(), 'doorslag', 1); }
   },
   stempel: {
-    naam: 'Stempel', type: 'vaardigheid', zeld: 'gewoon', kost: 1, doel: 'vijand', icoon: '🔖',
+    naam: 'Stempel', type: 'vaardigheid', zeld: 'gewoon', act: 2, kost: 1, doel: 'vijand', icoon: '🔖',
     kw: 2, zw: 1, up: { kw: 3, zw: 2 }, kopie: { soort: 'zwak', veld: 'zw' },
     tekst: c => `Geef ${kval(c, 'kw')} Kwetsbaar en ${kval(c, 'zw')} Zwak.`,
     speel: (c, t) => { geefStatus(t, 'kwetsbaar', kval(c, 'kw')); geefStatus(t, 'zwak', kval(c, 'zw')); }
   },
   rode_tape: {
-    naam: 'Rode Tape', type: 'vaardigheid', zeld: 'ongewoon', kost: 1, doel: 'vijand', icoon: '🎀',
+    naam: 'Rode Tape', type: 'vaardigheid', zeld: 'ongewoon', act: 2, kost: 1, doel: 'vijand', icoon: '🎀',
     zw: 1, kw: 1, n: 2, up: { zw: 2, kw: 2, n: 3 },
     tekst: c => `Geef ${kval(c, 'zw')} Zwak en ${kval(c, 'kw')} Kwetsbaar. Verwijder ${kval(c, 'n')} Blok van het doelwit.`,
     speel: (c, t) => { geefStatus(t, 'zwak', kval(c, 'zw')); geefStatus(t, 'kwetsbaar', kval(c, 'kw')); t.blok = Math.max(0, (t.blok || 0) - kval(c, 'n')); }
   },
   archiefstof: {
-    naam: 'Archiefstof', type: 'vaardigheid', zeld: 'gewoon', kost: 1, icoon: '🌫️',
+    naam: 'Archiefstof', type: 'vaardigheid', zeld: 'gewoon', act: 2, kost: 1, icoon: '🌫️',
     blok: 6, up: { blok: 9 },
     tekst: c => `Krijg ${kval(c, 'blok')} Blok. Trek 1 kaart.`,
     speel: c => { geefBlok(sp(), kval(c, 'blok')); trekKaarten(1); }
@@ -1271,7 +1271,7 @@ const RELIKWIEEN = {
   /* --- start (held-eigen) --- */
   brandend_bloed: { naam: 'Brandend Bloed', icoon: '🩸', start: true, zeld: 'start', tekst: 'Genees 6 HP na elk gevecht.',
     lore: 'Het bloed van De Slachter kookt — en wat kookt, sluit zichzelf.' },
-  slangenamulet:  { naam: 'Slangenamulet', icoon: '🐍', start: true, zeld: 'start', tekst: 'Begin elk gevecht: geef alle vijanden 2 Gif.',
+  slangenamulet:  { naam: 'Slangenamulet', icoon: '🐍', start: true, zeld: 'start', tekst: 'Begin elk gevecht: geef alle vijanden 1 Gif.',
     lore: 'De slang slaapt nooit. Ze proeft al voordat jij toeslaat.' },
 
   /* --- gewoon --- */

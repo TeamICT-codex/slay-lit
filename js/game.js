@@ -1640,7 +1640,7 @@ function startGevecht(samenstelling, soort, rij) {
   if (heeftRelikwie('houten_been')) g.speler.status.doornen = (g.speler.status.doornen || 0) + 1;
   if (heeftRelikwie('duivelboomtak')) g.speler.status.kracht = (g.speler.status.kracht || 0) + 2;
   if (heeftRelikwie('slangenamulet')) {
-    const n = 2 + (heeftRelikwie('smaragden_ring') ? 1 : 0) + (heeftRelikwie('inktpot') ? 1 : 0);
+    const n = 1 + (heeftRelikwie('smaragden_ring') ? 1 : 0) + (heeftRelikwie('inktpot') ? 1 : 0);
     g.vijanden.forEach(v => v.status.gif = (v.status.gif || 0) + n);
   }
   /* gedoofde fakkel: vijanden feller, maar de buit is groter */
@@ -2697,8 +2697,12 @@ function copycatKies(v, beurt) {
     const plan = copycatPlagiaatPlan(v, aantal);
     return { type: 'plagiaat', naam: 'Plagiaat', plan, doe: vv => copycatSpeelTerug(vv, g, plan) };
   };
-  const steel = { type: 'steel', naam: 'Afkijken', doe: vv => { if (!copycatSteel(vv, g)) doeSchade(sp(), 4 + (fase >= 3 ? 2 : 0), vv); } };
-  const pathetisch = { type: 'aanval', naam: fase >= 2 ? 'Geschreeuw' : 'Pappie Bellen', dmg: 6 + fase * 3 };
+  const steel = { type: 'steel', naam: 'Afkijken', doe: vv => { if (!copycatSteel(vv, g)) doeSchade(sp(), 4 + fase * 3, vv); } };
+  /* sterker tegen niet-voedende (bv. gif/chip) dekken: gif jaagt hem wél naar fase 3
+     (copycatNaSchade !bron-tak voedt half), maar zonder kopieerbaar arsenaal viel hij
+     terug op deze magere zet. Nu fase-geschaald 12/18/24 i.p.v. 9/12/15 — voelbaar in
+     fase 3, waar een gestarveerde Erfprins anders tandeloos bleef. */
+  const pathetisch = { type: 'aanval', naam: fase >= 2 ? 'Geschreeuw' : 'Pappie Bellen', dmg: 6 + fase * 6 };
   if (g.copycatGebroken) return { type: 'aanval', naam: 'Wanhoopsklap', dmg: 6 + (fase >= 3 ? 2 : 0) };
   if (fase >= 3 && arsenaal > 0) {
     if (kanStelen && t % 3 === 2) return steel;
@@ -3069,7 +3073,7 @@ function nederlaag() {
 function heldPool() {
   return Object.keys(KAARTEN).filter(id => {
     const k = KAARTEN[id];
-    return !['basis', 'vloek'].includes(k.zeld) && (!k.held || k.held === S.held);
+    return !['basis', 'vloek'].includes(k.zeld) && (!k.held || k.held === S.held) && (!k.act || k.act <= huidigeAct());
   });
 }
 
