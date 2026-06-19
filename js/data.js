@@ -1478,7 +1478,9 @@ const EVENTS = [
     ]
   },
   {
-    id: 'smid', titel: 'De Oude Smid', icoon: '⚒️',
+    id: 'smid', titel: 'De Oude Smid', icoon: '⚒️', liggend: true,
+    /* liggend:true → dit event speelt LIGGEND (het smeden zelf ook), anders dekte
+       de portret-draaiprompt het smid-scherm + artwork af in landscape. */
     tekst: 'Een verweerde smid heeft zijn aambeeld in een grot opgezet. "Ik smeed of ik sloop," gromt hij. "Kies maar."',
     opties: [
       {

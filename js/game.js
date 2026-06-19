@@ -1525,11 +1525,16 @@ function evalueerDraaiBlok() {
   const liggend = !!(window.matchMedia && matchMedia('(orientation: landscape)').matches);
   const kiesO = document.getElementById('overlay-kies');
   const kiesOpen = !!(kiesO && kiesO.classList.contains('open'));   /* kaartoverzicht / smid */
+  /* sommige events (de smid) leiden naar het smeden en spelen dus LIGGEND, niet staand */
+  const eventLiggend = scherm === 'event' && typeof EVENTS !== 'undefined' && typeof S !== 'undefined' && S && S.huidigEvent
+    ? (() => { const ev = EVENTS.find(e => e.id === S.huidigEvent); return !!(ev && ev.liggend); })()
+    : false;
   let richting = null;
   if (window.mobiel) {
     if (kiesOpen) { if (!liggend) richting = 'liggend'; }                   /* een kaartoverzicht (smid/keuze/dek) wil LIGGEND — ook bovenop een portret-encounter */
     else if (scherm === 'gevecht' && !liggend) richting = 'liggend';        /* gevecht wil liggend */
-    else if (_DRAAI_STAAND_SCHERMEN.includes(scherm) && liggend) richting = 'staand'; /* encounter wil staand */
+    else if (eventLiggend && !liggend) richting = 'liggend';                /* het smid-event wil liggend (anders dekt de prompt het artwork af) */
+    else if (_DRAAI_STAAND_SCHERMEN.includes(scherm) && !eventLiggend && liggend) richting = 'staand'; /* andere encounter wil staand */
   }
   if (!richting || _draaiGenegeerd[richting]) {
     el.classList.remove('toon'); el.dataset.richting = '';
