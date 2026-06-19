@@ -1989,7 +1989,7 @@ function renderGevecht() {
       bb.innerHTML = `
         <div class="bb-naam">👑 ${b.naam}</div>
         ${VIJANDEN[b.id].titel ? `<div class="bb-titel">~ ${VIJANDEN[b.id].titel} ~</div>` : ''}
-        <div class="bb-balk ${(b.fase || 1) >= 3 ? 'bb-woede' : ''}">
+        <div class="bb-balk ${(b.fase || 1) >= 3 ? 'bb-woede' : ''}" style="--hp:${Math.max(0, Math.round(b.hp / b.maxHp * 100))}">
           <div class="bb-vul" style="width:${Math.max(0, b.hp / b.maxHp * 100)}%"></div>
           <span class="bb-tekst">${b.hp}/${b.maxHp}</span>
         </div>

@@ -108,12 +108,40 @@ body[data-modus="mobiel"] #scherm-gevecht #beurt-label { margin-top: calc(42px +
 /* baasgevecht: het Beurt-label botste met de bazenbalk → weg op mobiel.
    De bazenbalk compacter zodat hij in de krappe (liggende) hoogte past. */
 body[data-modus="mobiel"] #scherm-gevecht.baas-actief #beurt-label { display: none; }
-body[data-modus="mobiel"] #baas-balk { top: calc(38px + env(safe-area-inset-top)); width: min(440px, 86vw); }
-body[data-modus="mobiel"] #baas-balk .bb-naam { font-size: 1.1rem; }
-body[data-modus="mobiel"] #baas-balk .bb-titel { display: none; }   /* flavor-ondertitel weg op mobiel → compactere balk, minder dominant */
-body[data-modus="mobiel"] #baas-balk .bb-balk { height: 15px; }
-body[data-modus="mobiel"] #baas-balk .bb-fases { margin-top: 3px; gap: 5px; }
-body[data-modus="mobiel"] #baas-balk .bb-pip { width: 9px; height: 9px; }
+/* MOBIEL: de baas-HP is GÉÉN brede balk (die domineerde + botste met de figuren)
+   maar een compact GROEN HART rechtsboven, dat met de HP 'leegt'. Naam + fase-pips
+   compact eronder. Zo komt de hele bovenrand vrij voor het slagveld. */
+body[data-modus="mobiel"] #baas-balk {
+  top: calc(46px + env(safe-area-inset-top));
+  right: calc(8px + env(safe-area-inset-right));
+  left: auto; transform: none; width: auto; max-width: 46vw; text-align: right;
+}
+body[data-modus="mobiel"] #baas-balk .bb-naam { font-size: .9rem; line-height: 1.1; }
+body[data-modus="mobiel"] #baas-balk .bb-titel { display: none; }
+body[data-modus="mobiel"] #baas-balk .bb-fases { justify-content: flex-end; margin-top: 4px; gap: 5px; }
+body[data-modus="mobiel"] #baas-balk .bb-pip { width: 8px; height: 8px; }
+/* de balk → hart-gauge (fractie links, hart rechts) */
+body[data-modus="mobiel"] #baas-balk .bb-balk {
+  width: auto; height: auto; background: none; border: none; box-shadow: none; border-radius: 0;
+  display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin: 3px 0 0;
+}
+body[data-modus="mobiel"] #baas-balk .bb-balk .bb-vul { display: none; }   /* de hart-vulling vervangt de balk-vulling */
+body[data-modus="mobiel"] #baas-balk .bb-balk .bb-tekst {
+  order: 1; position: static; font-family: 'Pirata One', serif; font-size: .95rem;
+  color: var(--perkament); text-shadow: 0 1px 3px #000; padding: 0;
+}
+body[data-modus="mobiel"] #baas-balk .bb-balk::before {
+  content: ''; order: 2; flex: none; width: 46px; height: 42px;
+  background: linear-gradient(to top, #6bdb4d 0 calc(var(--hp, 100) * 1%), #2b1420 calc(var(--hp, 100) * 1%) 100%);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E") center/contain no-repeat;
+  filter: drop-shadow(0 0 5px rgba(107, 219, 77, .55));
+}
+/* fase 3 (woede): het hart kleurt rood-oranje */
+body[data-modus="mobiel"] #baas-balk .bb-balk.bb-woede::before {
+  background: linear-gradient(to top, #ff6a4a 0 calc(var(--hp, 100) * 1%), #2b1420 calc(var(--hp, 100) * 1%) 100%);
+  filter: drop-shadow(0 0 7px rgba(255, 90, 60, .7));
+}
 
 /* baasgevecht (élke oriëntatie): de eigen HP-balk van de baas is dubbel met de
    grote #baas-balk → weg. Maar CHIRURGISCH: enkel de HP-vulling + het getal weg
@@ -122,9 +150,12 @@ body[data-modus="mobiel"] #baas-balk .bb-pip { width: 9px; height: 9px; }
 body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk { background: none; border-color: transparent; box-shadow: none; }
 body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk .hp-vulling,
 body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk .hp-tekst { display: none; }
-/* de baas z'n eigen naamlabel onder de figuur is dubbel met de #baas-balk → weg
-   (scheelt ook kolomhoogte zodat de figuur lager onder de balk uitkomt) */
-body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .vijand-naam { display: none; }
+/* baasgevecht: de combatant-namen onder de figuren weg (de baas-naam staat nu in
+   het hart-badge). Zo krijgen held + baas + adds dezelfde 'onder de figuur'-opbouw
+   (enkel hp + status), waardoor hun voeten op één lijn staan i.p.v. de held hoger
+   door zijn extra naamlabel dat de baas niet heeft. */
+body[data-modus="mobiel"] #scherm-gevecht.baas-actief .vijand-naam,
+body[data-modus="mobiel"] #scherm-gevecht.baas-actief .speler-naam { display: none; }
 
 /* afdaalkaart: de 700px-kaart wordt met zoom op schermbreedte geschaald
    (renderKaartScherm) → geen horizontale scroll meer, enkel verticaal. */
