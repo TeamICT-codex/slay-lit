@@ -307,6 +307,30 @@ background. No ground, no shadow, no text, no frame, no UI, no
 background elements. The character fills about 90% of a square
 1024x1024 canvas, feet near the bottom edge.
 
+--- POSE-STATES voor de Erfprins (optioneel, net als de helden) ---
+De game wisselt de figuur naar <id>_<state> op het juiste moment, met terugval op de
+basis. Maak ze in DEZELFDE sessie als de basis: zelfde personage + stijl + kijkrichting
+(LINKS) + transparante achtergrond — verander ALLEEN de "Pose:"-regel. De Copycat gebruikt:
+  de_erfprins_attack — hij haalt uit / kaatst een klap terug.  Pose: a contemptuous lunging
+    strike to the LEFT, scepter swung forward, stolen cards slashing ahead of him.
+  de_erfprins_cast   — AFKIJKEN/stelen + zijn fase-escalatie.  Pose: leaning in with a
+    greedy outstretched hand, eyes (under the slipping crown) locked on your hand, a stolen
+    card peeling toward him on a shimmer of counterfeit light.
+  de_erfprins_hit    — een klap opvangen.  Pose: flinching back, the over-large crown
+    sliding further over his eyes, the masks on his cloak rattling, an indignant spoiled grimace.
+  de_erfprins_death  — verlies ("ik kopieerde alles... waarom verlies ÍK?").  Pose: collapsing
+    to his knees, scepter dropping, his stolen cards and mirror-shards scattering and going
+    DULL, the cowering sycophant shadows fleeing — hollow without anyone left to copy.
+
+--- de_erfprins_plagiaat.png  (UNIEKE / SIGNATURE — "JOUW BESTE ZET") ---
+Het iconische Copycat-moment: hij speelt JOUW gestolen kaart triomfantelijk terug.
+  Pose: a supremely smug, theatrical TRIUMPH — he holds up a glowing COPY of YOUR card in
+  one hand like a trophy and sweeps the mask-scepter wide, while a fan of duplicated cards
+  EXPLODES outward around him in counterfeit purple-gold light; head tilted back with an
+  entitled grin („Kijk — JOUW beste zet. Nu is het MÍJN beste zet."). Grander and more
+  theatrical than de_erfprins_attack — dit is zijn pronkstuk.
+  (De game speelt deze af op het plagiaat-moment — ingehaakt in copycatSpeelTerug.)
+
 =================================================================
 ACT 2 — DE KOPIEERHEL (vijandenroster; emoji-placeholder nu)
 =================================================================
