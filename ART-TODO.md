@@ -17,9 +17,9 @@
 ## 🥇 PRIORITEIT 1 — De centrale stukken (grootste impact)
 
 ### Copycat-eindbaas
-- [ ] `assets/karakters/de_erfprins.png` — **combat-figuur: UITGESNEDEN op transparante achtergrond** (geen scène!)  ·  **prompt:** `assets/karakters/PROMPTS.txt` (blok `de_erfprins.png`)
-- [ ] `assets/karakters/de_erfprins_intro.png` — **intro-splash: VOLLE SCÈNE** (de mooie scène-versie, mét achtergrond/spiegel-kopieën). Verschijnt **als speelkaart** in de boss-intro (al ingebouwd). Pijplijn: **alleen WebP, géén dambord-verwijdering.**
-  - poses (optioneel, zelfde uitgesneden figuur): `de_erfprins_attack` · `de_erfprins_cast` · `de_erfprins_hit` · `de_erfprins_death` · **`de_erfprins_plagiaat`** (signature — speelt JOUW kaart terug) → prompts staan in `karakters/PROMPTS.txt`
+- [x] `assets/karakters/de_erfprins.webp` — ✅ **combat-figuur** (uitgesneden + geverifieerd op het strijdveld)
+- [x] `assets/karakters/de_erfprins_intro.webp` — ✅ **intro-splash** (toont als speelkaart in de boss-intro)
+  - [x] poses: `de_erfprins_attack` · `de_erfprins_cast` · `de_erfprins_hit` · `de_erfprins_death` + **2 plagiaat-varianten** (`de_erfprins_plagiaat` + `_plagiaat_variant` — de game wisselt ertussen). ✅ alle 8 verwerkt + geverifieerd.
 
 ### Drops — de hele set (companion)  ·  **prompt:** `assets/metgezellen/PROMPTS.txt`
 *Genereer de basis eerst, dan de poses in DEZELFDE sessie (zelfde hond, alleen de "Pose:"-regel anders).*

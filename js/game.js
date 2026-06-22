@@ -2753,7 +2753,7 @@ function copycatPlagiaatPlan(v, aantal) {
 /* KANAAL 3 — terugspelen: voert het plan uit, gedwongen op de speler (geen vijandAanval,
    dus geen dubbele act-scaling en de hond wordt nooit geraakt) */
 function copycatSpeelTerug(v, g, plan) {
-  pose2D(v, 'plagiaat', 0.9);   /* SIGNATURE-pose: hij speelt JOUW kaart terug (terugval op attack/basis als de art ontbreekt) */
+  pose2D(v, Math.random() < 0.5 ? 'plagiaat' : 'plagiaat_variant', 0.9);   /* SIGNATURE: wisselt tussen 2 plagiaat-varianten (de Copycat toont steeds een andere 'kopie'); zuiver cosmetisch → Math.random raakt de seeded RNG niet */
   (plan || []).forEach(k => {
     if (k.soort === 'aanval') doeSchade(sp(), k.eindDmg, v);
     else if (k.soort === 'blok') geefBlok(v, k.n);
