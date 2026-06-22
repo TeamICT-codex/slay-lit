@@ -96,6 +96,12 @@ offeren).
   sereen, trouwe ogen, de ember-kool nu een kern van **koud wit vuur** dat van binnenuit
   gloeit; groter/imposanter dan de levende Drops; licht dat geen schaduw werpt maar er een
   verdrijft.
+- **Poses (naar analogie met de levende Drops + de hoofdpersonages; de engine stuurt ze al aan):**
+  `drops_wit_attack` (de witklap — speelt af bij zijn blok-negerende beet, data.js-beurt-hook),
+  `drops_wit_hit` (klap opvangen — via `verliesHp`), en een **signatuur-pose**
+  `drops_wit_terugkeer` (de sprong terug in het beeld — `revealDropsWit` speelt 'm 2D+3D af op
+  de reünie; het geascendeerde spiegelbeeld van `drops_death`). Volledige prompts in
+  `assets/metgezellen/PROMPTS.txt`.
 - Codex-portret: hergebruik `drops_wit` (vervangt het ✝/grijze `drops_geest`).
 - **Geen** `drops_wit_death` (kan niet meer sterven). **Geen** 8-traps geest-varianten.
 - Pootafdruk + as-silhouet = CSS/emoji-fx (🐾 + `drops_geest` op 12% opacity) — geen nieuwe asset.

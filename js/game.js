@@ -1201,6 +1201,10 @@ function revealDropsWit(g, poort) {
   g.metgezel.intent = def.intent ? def.intent(g.metgezel) : null;
   bouwGevechtDom(g);
   renderGevecht();
+  /* signatuur-pose: hij SPRINGT het beeld in (spiegelt drops_death) — 2D + 3D, valt
+     stil terug op het basis-beeld zolang drops_wit_terugkeer-art nog niet bestaat */
+  if (window.Vista) Vista.pose(g.metgezel, 'terugkeer', 2.6);
+  pose2D(g.metgezel, 'terugkeer', 2.6);
   pootSpoorPayoff();                  /* de pootafdruk dooft nu NIET meer: een wit-zilver spoor */
   melding('🤍 Drops de Witte keert terug — hij overleefde het donker, zoals jij hem nooit liet doven.');
 }

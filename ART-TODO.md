@@ -28,8 +28,11 @@
 - [ ] `assets/metgezellen/drops_hit.png` — klap opvangen
 - [ ] `assets/metgezellen/drops_death.png` — De Laatste Sprong (sterft-tijdens-offer; sprong + uiteenspatten)
 - [ ] `assets/metgezellen/drops_geest.png` — spectrale geest (Codex-gedenkplek na het offer)
-- [ ] `assets/metgezellen/drops_wit.png` — **Drops de Witte** (geascendeerd, wit-zilver, koud wit vuur)
-  - optioneel: `drops_wit_attack.png` · `drops_wit_hit.png`  (GEEN `_death` — hij sterft niet meer)
+- [ ] `assets/metgezellen/drops_wit.png` — **Drops de Witte** basis/idle (geascendeerd, wit-zilver, koud wit vuur) — óók het Codex-portret
+  - [ ] `drops_wit_attack.png` — de witklap (beet, wit vuur flakkert op; speelt af bij zijn beet)
+  - [ ] `drops_wit_hit.png` — klap opvangen (wit licht hapert; speelt af bij schade)
+  - [ ] `drops_wit_terugkeer.png` — **signatuur/uniek**: de sprong terug in het beeld (speelt af bij de reünie; spiegelt `drops_death`)
+  - *(GEEN `drops_wit_death` — hij sterft niet meer)*
 
 ---
 

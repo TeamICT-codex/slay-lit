@@ -148,10 +148,33 @@ Isolated on a FULLY TRANSPARENT background, no ground, no shadow, no text, no fr
 the glow COLOURED (cool white-silver-blue) — crisp edges, NO white-bloom/haze/dambord-halo
 (the light comes from within, it is not a hazy halo). Fills ~82% of a square 1024x1024 canvas.
 
-OPTIONEEL (zelfde witte personage, alleen de Pose-regel anders):
-  drops_wit_attack.png — LUNGING bite to the RIGHT, white fire flaring (zijn beet negeert blok).
-  drops_wit_hit.png    — flinching recoil, the white glow guttering a moment.
-  (GEEN drops_wit_death — hij is al door de dood; deze keer blijft hij.)
+--- drops_wit_attack.png  (AANVAL — de witklap; de game speelt 'm af bij zijn beet) ---
+[zelfde stijl + zelfde wit-zilveren Character als drops_wit.png]
+  Pose: LUNGING into a bite — low and driving forward to the RIGHT, jaws open, the core of
+  COLD WHITE FIRE in its chest FLARING into a burst of white-silver flame around its jaws as
+  it strikes (zijn beet negeert vijand-blok — onkopieerbaar). Fierce, radiant, noble — not
+  rabid. Still facing RIGHT.
+
+--- drops_wit_hit.png  (KLAP OPVANGEN; de game speelt 'm af bij schade) -----------
+[zelfde stijl + zelfde wit-zilveren Character als drops_wit.png]
+  Pose: flinching and recoiling from a blow — ears flattened back, head dipped, weight
+  braced onto its hind legs, the inner white fire guttering low for a moment — hurt but
+  UNBREAKABLE (he is past dying). Still facing RIGHT.
+
+--- drops_wit_terugkeer.png  (SIGNATUUR / UNIEK — de sprong terug in het beeld) ----
+[zelfde stijl + zelfde wit-zilveren Character als drops_wit.png]
+  De geascendeerde tegenhanger van drops_death, en het spiegelbeeld van de boss z'n
+  de_erfprins_plagiaat. De game speelt deze pose ZICHTBAAR af op het reünie-moment (Poort A
+  én B, in revealDropsWit): waar de zwarte Drops zich in ember-licht UITEEN-sprong, springt
+  de Witte zich nu juist BIJEEN — uit het niets het beeld in.
+  Pose: DROPS DE WITTE leaping into frame from the RIGHT, caught mid-air at the peak of a
+  powerful bound — four paws gathered, body blazing with COLD WHITE FIRE, light erupting
+  OUTWARD from within him as if the darkness itself is tearing open into white around him.
+  Radiant white-silver streaks and sparks trailing the leap. Triumphant, unstoppable,
+  reborn — the exact opposite of death: a creature ARRIVING, not leaving. NOT scary, NO
+  gore — pure white-silver light.
+
+(GEEN drops_wit_death — hij is al door de dood; deze keer blijft hij.)
 
 
 ##################################################################################
