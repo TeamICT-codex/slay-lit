@@ -4422,7 +4422,6 @@ window.addEventListener('DOMContentLoaded', () => {
   /* audio mag pas starten na een gebruikersgebaar */
   const eersteGebaar = () => {
     Klank.init();
-    gaFullscreen();
     const naam = (S && S.scherm) || 'titel';
     Klank.muziek(SCHERM_MUZIEK[naam] || 'titel');
     document.removeEventListener('pointerdown', eersteGebaar);
@@ -4430,6 +4429,22 @@ window.addEventListener('DOMContentLoaded', () => {
   };
   document.addEventListener('pointerdown', eersteGebaar);
   document.addEventListener('keydown', eersteGebaar);
+
+  /* volledig scherm zó vroeg mogelijk én BETROUWBAAR: een browser mag fullscreen niet
+     bij het laden forceren (vereist een gebaar), maar wél bij de eerste tik. Sommige
+     Android-browsers wijzen die eerste aanvraag echter af → daarom proberen we 't bij
+     ELK gebaar opnieuw tot het één keer lukt, en stoppen dan (zodat een bewuste veeg-
+     om-te-verlaten niet telkens wordt teruggevochten). iOS-browsers hebben geen
+     Fullscreen-API → daar dekt de PWA-install (manifest display:fullscreen) het, die
+     start sowieso meteen schermvullend. */
+  const _docEl = document.documentElement;
+  if (window.mobiel && (_docEl.requestFullscreen || _docEl.webkitRequestFullscreen || _docEl.msRequestFullscreen)) {
+    const fsProberen = () => { if (!document.fullscreenElement) gaFullscreen(); };
+    document.addEventListener('pointerdown', fsProberen);
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) document.removeEventListener('pointerdown', fsProberen);
+    });
+  }
   /* iOS kan de audio na backgrounding opnieuw 'suspenden' → bij elk later gebaar
      opnieuw hervatten (lichtgewicht: checkt enkel de context-state). */
   document.addEventListener('pointerdown', () => { if (window.Klank && Klank.hervat) Klank.hervat(); });
