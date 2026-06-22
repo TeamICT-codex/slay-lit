@@ -983,7 +983,7 @@ function metgezelBeurt() {
 function metgezelVlucht(m) {
   if (S.metgezel) S.metgezel.vluchtig = true;
   Klank.sfx('dood');
-  pose2D(m, 'death', 2);
+  pose2D(m, 'hit', 2);   /* een vlucht = gewond terugtrekken, niet de heroïsche offer-sprong */
   const el = actorEl(m);
   if (el) el.classList.add('gevlucht');
   melding(`💨 ${METGEZELLEN[m.id].naam} vlucht het donker in — je kunt hem later terugvinden.`);
@@ -1041,15 +1041,26 @@ function metgezelOpoffering() {
     () => {
       if (S.gevecht !== g || g.voorbij || !gMet() || gMet().dood) return;
       def.opoffering.doe(m, g);
-      m.dood = true;
-      S.metgezel = null;                       /* permanent — niet 'vluchtig' */
-      Codex.gevallen = Array.isArray(Codex.gevallen) ? Codex.gevallen : [];
-      if (!Codex.gevallen.includes(m.id)) { Codex.gevallen.push(m.id); bewaarCodex(); }
       baasFaseMoment('DE LAATSTE SPRONG', `${def.naam} offert zich op — de diepte onthoudt zijn moed.`);
-      melding(`✝ ${def.naam} is voorgoed heengegaan.`);
-      const el = actorEl(m); if (el) el.classList.add('gevlucht');
-      renderGevecht();
-      if (alleVijanden().length === 0) gevechtGewonnen();
+      /* TOON de dood: speel eerst de offer-pose (<art>_death) zichtbaar af — de sprong
+         recht in de machine — en verwijder Drops pas DAARNA permanent. Voorheen verdween
+         hij meteen (S.metgezel=null + renderGevecht), zodat je zijn offer nooit zag. */
+      g.bezig = true;
+      if (window.Vista) Vista.pose(m, 'death', 2.4);
+      pose2D(m, 'death', 2.4);
+      schudScherm(); Klank.sfx('dood');
+      setTimeout(() => {
+        m.dood = true;
+        if (S.gevecht !== g) return;
+        g.bezig = false;
+        S.metgezel = null;                       /* permanent — niet 'vluchtig' */
+        Codex.gevallen = Array.isArray(Codex.gevallen) ? Codex.gevallen : [];
+        if (!Codex.gevallen.includes(m.id)) { Codex.gevallen.push(m.id); bewaarCodex(); }
+        melding(`✝ ${def.naam} is voorgoed heengegaan.`);
+        const el = actorEl(m); if (el) el.classList.add('gevlucht');
+        renderGevecht();
+        if (alleVijanden().length === 0) gevechtGewonnen();
+      }, 1150);
     },
     'Offer op 🐾'
   );

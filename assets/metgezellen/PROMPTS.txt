@@ -97,12 +97,22 @@ background. Crisp clean COLOURED edges, NO white glow/bloom/haze. Fills ~80% of 
   thrown onto braced hind legs, a pained grimace — hurt but refusing to break; the ember
   in its fur guttering low for a moment. Still facing RIGHT.
 
---- drops_death.png  (DE LAATSTE SPRONG — het offer) ------------------------------
+--- drops_death.png  (DE LAATSTE SPRONG — het dodelijke offer) --------------------
 [zelfde stijl + zelfde Character als drops.png]
-  Pose: a final heroic mid-air LEAP to the RIGHT — the whole body stretched out forward
-  like a loosed arrow, ears and legs streaming back, the ember-spark BLAZING at its
-  brightest in one last burst of warmth. A noble sacrifice frozen mid-flight (he springs
-  straight into the kopieermachine). Triumphant, not gruesome.
+  De game speelt deze pose nu ZICHTBAAR af op het moment van het offer (daarvóór verdween
+  Drops meteen). Hij moet onmiskenbaar lezen als STERVEN-terwijl-hij-zich-opoffert — niet
+  als een speelse sprong.
+  Pose: hurling himself forward to the RIGHT, straight INTO the copy-machine — a fierce,
+  desperate, FATAL leap. At the point of impact his body is already COMING APART: bursting
+  and dissolving into a blaze of ember-light, embers and sparks streaming off him, the
+  glowing spark in his chest erupting outward as his life leaves him. Eyes fierce and
+  unafraid. Heroic and bittersweet — clearly a creature destroying itself to break the
+  machine. NOT gruesome, NO blood — light and embers, not gore.
+
+  OPTIONEEL — een 2-beats-dood (als één pose niet duidelijk genoeg blijkt):
+  splits in drops_death.png (de SPRONG: vol vaart de machine in, nog heel, fel en
+  vastberaden) + drops_offer.png (de BURST: volledig uiteenspattend in ember-licht en
+  vonken, vergaand). Zeg het me, dan speel ik ze als sequentie af (sprong → burst → weg).
 
 --- drops_geest.png  (GEEST — ná de opoffering) -----------------------------------
 [zelfde stijl + zelfde Character, maar nu SPECTRAAL — een trouwe geest, NIET eng]
