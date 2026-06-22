@@ -1075,7 +1075,9 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   50% { box-shadow: 0 0 16px rgba(255, 140, 50, .85); }
 }
 
-.bevestig-overlay { z-index: 60; }
+/* boven de gewone overlays (.overlay z-index:800) — anders verdween de iOS-install-
+   instructie achter het openstaande instellingen-paneel (onbereikbaar op iPhone). */
+.bevestig-overlay { z-index: 1200; }
 .bevestig-kaart {
   max-width: 460px; margin: auto;
   background: linear-gradient(180deg, #241a26, #181018);

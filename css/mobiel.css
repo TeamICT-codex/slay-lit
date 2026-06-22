@@ -97,7 +97,13 @@ body[data-modus="mobiel"] #topbalk {
 }
 body[data-modus="mobiel"] #topbalk .tb-logo { display: none; }
 body[data-modus="mobiel"] #tb-verdieping { display: none; }       /* diepte niet nodig tijdens battle */
-body[data-modus="mobiel"] #tb-relikwieen { font-size: 1.05rem; gap: 3px; }
+/* de relikwie-rij mag bij veel relikwieën NIET de dek/instellingen-knoppen van het
+   scherm duwen: ze krimpt + scrollt horizontaal, de knoppen blijven flex-shrink:0. */
+body[data-modus="mobiel"] #tb-relikwieen { font-size: 1.05rem; gap: 3px; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+body[data-modus="mobiel"] #tb-relikwieen::-webkit-scrollbar { display: none; }
+body[data-modus="mobiel"] #tb-relikwieen .relikwie { flex-shrink: 0; }
+body[data-modus="mobiel"] #tb-dranken,
+body[data-modus="mobiel"] #topbalk .tb-knop { flex-shrink: 0; }
 body[data-modus="mobiel"] .drank { font-size: 1.15rem; }
 body[data-modus="mobiel"] .tb-knop { font-size: 1.1rem; }
 
@@ -142,6 +148,14 @@ body[data-modus="mobiel"] #baas-balk .bb-balk.bb-woede::before {
   background: linear-gradient(to top, #ff6a4a 0 calc(var(--hp, 100) * 1%), #2b1420 calc(var(--hp, 100) * 1%) 100%);
   filter: drop-shadow(0 0 7px rgba(255, 90, 60, .7));
 }
+/* Copycat-arsenaalpil (#baas-balk rechtsboven): compact + 1 regel met ellipsis,
+   anders wrapt de kaartnamenlijst en botst ze met de rechts-staande baasfiguur. */
+body[data-modus="mobiel"] #baas-balk .bb-aegis {
+  max-width: 44vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: .72rem; padding: 2px 8px;
+}
+/* instellingen-paneel niet breder dan een smalle telefoon (min-width:340px lekte rechts eruit) */
+body[data-modus="mobiel"] .inst-paneel { min-width: 0; width: min(340px, 92vw); padding: 18px 16px; }
 
 /* baasgevecht (élke oriëntatie): de eigen HP-balk van de baas is dubbel met de
    grote #baas-balk → weg. Maar CHIRURGISCH: enkel de HP-vulling + het getal weg
@@ -280,28 +294,35 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      uitlijnen (flex-end): zo staan held + vijanden op dezelfde grondlijn (met
      center stond de korte heldkolom te HOOG) én blijven hun intentie-iconen vrij
      van de topbalk (center duwde de figuren juist naar boven, achter de balk). */
-  body[data-modus="mobiel"] #strijdveld { padding: 4px 16px; align-items: flex-end; justify-content: space-evenly; min-height: 0; }
+  /* center + gecontroleerde gap i.p.v. space-evenly: die laatste blies bij 3 vijanden
+     (+ metgezel) honderden px gaten tussen held en vijanden → beide randen klipten,
+     terwijl de figuren samen ruim passen. Nu netjes gecentreerd, held links/vijand rechts. */
+  body[data-modus="mobiel"] #strijdveld { padding: 4px 12px; align-items: flex-end; justify-content: center; gap: clamp(14px, 5vw, 48px); min-height: 0; }
   /* de brede basis-min-widths resetten (anders vreet de spelerzone ~170px en
      worden 3 vijanden samen ~444px → de rechtse liep van het scherm) */
   body[data-modus="mobiel"] #speler-zone { min-width: 0; }
-  body[data-modus="mobiel"] #held-cluster { gap: 10px; }
+  body[data-modus="mobiel"] #held-cluster { gap: 8px; }
+  /* metgezel reist elk gevecht mee → reset z'n brede min-width (104px) + schaal de
+     figuur, anders klipt de spelerzone links én duwt ze de vijanden van het scherm */
+  body[data-modus="mobiel"] #metgezel-zone { min-width: 0; }
+  body[data-modus="mobiel"] .metgezel-art { width: clamp(56px, 16vh, 88px); height: clamp(56px, 16vh, 88px); }
   body[data-modus="mobiel"] .vijand { min-width: 0; padding: 4px; }
   /* de hp-balk bepaalt de kolombreedte → smaller in liggend gevecht zodat 3
      vijanden + speler op een smal scherm naast elkaar passen (in portret
      wrappen ze, dus daar niet nodig) */
-  body[data-modus="mobiel"] .hp-balk { width: 100px; }
-  body[data-modus="mobiel"] .speler-hp { width: 120px; }
+  body[data-modus="mobiel"] .hp-balk { width: 84px; }
+  body[data-modus="mobiel"] .speler-hp { width: 104px; }
   /* figuren schalen mee met de SCHERMHOOGTE (clamp min/vh/max) i.p.v. vaste px per
      breakpoint — zo passen ze vloeiend op élk telefoonformaat (≈320–600px hoog
      liggend) zonder cliffs, en blijft de baas onder de #baas-balk (de min houdt 'm
      leesbaar op piepkleine schermen, de max groot genoeg op grote telefoons/tablets). */
   body[data-modus="mobiel"] .speler-figuur { width: clamp(92px, 26vh, 138px); height: clamp(92px, 26vh, 138px); }
-  body[data-modus="mobiel"] .vijand-art { width: clamp(76px, 21vh, 112px); height: clamp(76px, 21vh, 112px); }
+  body[data-modus="mobiel"] .vijand-art { width: clamp(64px, 21vh, 112px); height: clamp(64px, 21vh, 112px); }
   body[data-modus="mobiel"] .is-elite .vijand-art { width: clamp(88px, 24vh, 128px); height: clamp(88px, 24vh, 128px); }
   /* baas groter: hij is HET monster — vh-factor omhoog zodat hij op echte telefoons
      (≈360–500px hoog) imposant oogt; min/max houden 'm leesbaar én onder de topbalk */
   body[data-modus="mobiel"] .is-baas .vijand-art { width: clamp(98px, 30vh, 176px); height: clamp(98px, 30vh, 176px); }
-  body[data-modus="mobiel"] #vijanden-rij { gap: 18px; flex-wrap: nowrap; max-width: none; }
+  body[data-modus="mobiel"] #vijanden-rij { gap: 10px; flex-wrap: nowrap; max-width: none; }
   /* (baas: eigen HP-balk wegwerken staat nu onvoorwaardelijk in sectie A, zodat
      het óók in portret-baasgevechten geldt — niet enkel liggend.) */
 
