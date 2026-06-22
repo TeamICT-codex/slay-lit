@@ -54,7 +54,7 @@ Prompt: **`assets/karakters/PROMPTS.txt`** (blok `de_erfprins.png`, herschreven 
 ## 4. Companion — `assets/metgezellen/drops.webp`
 Prompt: **`assets/metgezellen/PROMPTS.txt`** (blok `drops.png`, de hond).
 Optioneel: `drops_attack` (beet) / `drops_hit` / `drops_death` (de Laatste Sprong).
-- [ ] `drops` — Drops, een **magische zwarte labrador** (kijkt naar RECHTS, ember-vonk in de vacht). Poses: `drops_attack`/`drops_hit`/`drops_death` — volledige prompts in `assets/metgezellen/PROMPTS.txt`
+- [ ] `drops` — Drops, een **magische zwarte labrador** (kijkt naar RECHTS, ember-vonk in de vacht). Poses: `drops_attack`/`drops_hit`/`drops_death` + `drops_geest` (spectrale gedenkplek-versie, getoond in de Codex ná De Laatste Sprong) — volledige prompts in `assets/metgezellen/PROMPTS.txt`
 
 ---
 

@@ -104,6 +104,17 @@ background. Crisp clean COLOURED edges, NO white glow/bloom/haze. Fills ~80% of 
   brightest in one last burst of warmth. A noble sacrifice frozen mid-flight (he springs
   straight into the kopieermachine). Triumphant, not gruesome.
 
+--- drops_geest.png  (GEEST — ná de opoffering) -----------------------------------
+[zelfde stijl + zelfde Character, maar nu SPECTRAAL — een trouwe geest, NIET eng]
+  Pose: the translucent, ethereal SPIRIT of the black Labrador — sitting calm and
+  watchful, head turned back toward its master, its body softly glowing and SEE-THROUGH
+  (ghostly, semi-transparent), the lower edges of its form dissolving into faint drifting
+  wisps. The ember-spark deep in its chest still glows warm — loyalty that not even death
+  could index. Serene, peaceful, bittersweet. NOT a horror ghost, NOT scary.
+  NB: dit is GEEN combat-pose maar een VERHAAL-staat. Wordt getoond op de Codex-gedenkplek
+  van een gevallen metgezel (ná De Laatste Sprong). De engine valt terug op de emoji + ✝
+  tot deze art bestaat. (Werkt voor elke metgezel met een opoffering: <art>_geest.)
+
 
 ##################################################################################
 #  DE VLAMWACHT  (art-id: vlamwachter)  — zelfde 4 blokken, eigen personage        #

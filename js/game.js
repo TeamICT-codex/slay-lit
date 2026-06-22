@@ -2233,7 +2233,7 @@ function toonCodex() {
         return `<div class="codex-slot leeg" data-tip="??? — nog niet ontmoet">❓</div>`;
       }
       const gevallen = Codex.gevallen.includes(id);
-      return `<div class="codex-slot rel-${d.zeld} ${gevallen ? 'gevallen' : ''}" data-mgart="${id}" data-tip="${d.naam}${gevallen ? ' · ✝ offerde zich op' : ''} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${d.icoon}${gevallen ? '<span class="codex-kruis">✝</span>' : ''}</div>`;
+      return `<div class="codex-slot rel-${d.zeld} ${gevallen ? 'gevallen' : ''}" data-mgart="${gevallen ? id + '_geest' : id}" data-tip="${d.naam}${gevallen ? ' · ✝ offerde zich op' : ''} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${d.icoon}${gevallen ? '<span class="codex-kruis">✝</span>' : ''}</div>`;
     }).join('') + `</div>` + mysterieCodexBlok() + `
     <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt + mgOntdekt === rels.length + dranks.length + mgs.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
     <small>🗝️ = opgeladen: dit relikwie kun je bij een nieuwe run éénmalig meenemen uit het Schrijn.</small></p>`;
@@ -2271,7 +2271,7 @@ function toonMetgezelBoek(id) {
   const rgb = '255, 156, 63';   /* ember */
   $('#relikwie-boek').innerHTML = `
     <div class="boek-kaart" style="--relk:${rgb}">
-      <div class="boek-icoon" data-mgart="${id}">${d.icoon}</div>
+      <div class="boek-icoon" data-mgart="${(Codex.gevallen || []).includes(id) ? id + '_geest' : id}">${d.icoon}</div>
       <span class="schaarste-chip" style="--relk:${rgb}">${SCHAARSTE_LABEL[d.zeld] || 'Metgezel'}</span>
       <h3>${d.naam}</h3>
       <p class="boek-effect">${d.tekst}</p>
