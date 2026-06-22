@@ -1,60 +1,152 @@
-METGEZELLEN — bondgenoten die naast de held meevechten
-======================================================
-Eén figuur per metgezel (PNG, transparante achtergrond), getoond ~88px naast
-de held in het gevecht. Stijl = exact die van de andere personages
-(zie ../karakters/PROMPTS.txt): dark-fantasy, painterly, warm ember-licht.
+METGEZELLEN — bondgenoten die naast de held meevechten (v2 — pose-set zoals de helden)
+========================================================================================
+Eén figuur per metgezel, getoond ~88px NAAST de held in het gevecht. De stijl is EXACT
+die van de hoofdpersonages (zie ../karakters/PROMPTS.txt) zodat held + metgezel in
+hetzelfde plaatje thuishoren: dark-fantasy, painterly, warm ember-licht, GEEN fotorealisme,
+volledig transparante achtergrond.
 
-RICHTING: de metgezel staat AAN DE ZIJDE van de held en kijkt naar RECHTS
-(richting de vijanden), net als de held. (Vijanden kijken links; de held en
-zijn metgezellen kijken rechts.)
+RICHTING: de metgezel staat AAN DE ZIJDE van de held en kijkt naar RECHTS (richting de
+vijanden), net als de held. (Vijanden kijken LINKS; held + metgezellen kijken RECHTS.)
 
-Bestandsnaam = exact de 'art'-id uit METGEZELLEN in js/data.js.
-Pose-states (optioneel, net als personages): <art>_attack / <art>_hit / <art>_death.
+BESTANDSNAAM = exact de 'art'-id uit METGEZELLEN in js/data.js, met een pose-achtervoegsel.
+Drop als PNG in assets/metgezellen/ (bv. voor Drops):
+  drops.png          basis / idle  (verplicht — wat standaard te zien is)
+  drops_attack.png   aanval        (optioneel)
+  drops_hit.png      klap opvangen (optioneel)
+  drops_death.png    de Laatste Sprong / vlucht (optioneel)
 
-PIJPLIJN NA ELKE DROP (volgorde telt, zoals personages):
-  1) python .claude/verwijder_dambord.py   (haalt dambord/witte achtergrond weg)
-  2) python .claude/converteer_webp.py     (PNG -> WebP, alpha blijft behouden)
-CONTROLEER op een DONKERE achtergrond (zie ../iconen/PROMPTS.txt "VERMIJD WIT
-BLOOM"): fire-/glow-metgezellen die de generator op een dambord levert, bakken
-hun glow als opaak wit vast. Stuur in de prompt dus op "crisp coloured edges,
-NO white glow / bloom / haze".
 
-SJABLOON (vervang alleen de Item-regel):
+WELKE POSES GEBRUIKT DE GAME — en dus welke je maakt
+----------------------------------------------------
+Net als bij de helden verwisselt de engine de afbeelding naar <art>_<state> zodra die
+staat gebeurt, en valt ze terug op de basis als de pose-art ontbreekt. Op een metgezel
+roept de game deze 3 staten aan:
+  • attack — de metgezel slaat zélf toe   (Drops bijt de baas).          → enkel wie aanvalt
+  • hit    — de metgezel VANGT een klap op (hij is doelbaar).            → elke metgezel
+  • death  — de metgezel valt / offert zich (vlucht het donker in).      → elke metgezel
+De basis-idle is verplicht; attack/hit/death zijn optioneel maar maken hem net zo levend
+als de helden. (block/cast zijn voorlopig HELD-only — voor metgezellen niet nodig.)
 
-  Dark-fantasy game character, a single small companion creature, full body,
-  facing RIGHT, painterly hand-painted style, warm ember light, parchment-and-
-  coal palette, fully TRANSPARENT background (isolated cut-out, no scene, no
-  tile). Crisp clean edges, NO white glow, NO hazy bloom, NO misty halo.
-  NOT photorealistic, no photo, no 3D render. Readable at small size,
-  no text, no frame, no UI, no background.
 
-  Item: [BESCHRIJVING]
+DE WERKWIJZE — cruciaal voor een COHERENTE set (zoals de hoofdpersonages)
+------------------------------------------------------------------------
+  1. Genereer eerst de BASIS en kies de beste variant.
+  2. Genereer elke pose in DEZELFDE sessie/chat, met DEZELFDE personagebeschrijving +
+     hetzelfde stijlblok — verander ALLEEN de "Pose:"-regel. Zo blijven vacht, kleur,
+     belichting, formaat én kijkrichting identiek; anders 'springt' het figuur zichtbaar
+     tussen poses.
+  3. Sla op onder exact de bestandsnaam hierboven.
+  4. Drop in assets/metgezellen/ → vraag Claude "ruim de nieuwe metgezellen op"
+     (= python .claude/verwijder_dambord.py  → python .claude/converteer_webp.py).
 
-DE METGEZELLEN (bestandsnaam = art-id):
+GLOW-WAARSCHUWING: metgezellen met een ember-/magische gloed (zoals Drops) bakken op een
+dambord-achtergrond hun gloed soms als opaak WIT vast. Stuur daarom altijd op
+"crisp coloured edges, NO white glow, NO hazy bloom, NO misty halo".
 
-drops.png        a small, scruffy, loyal hound — a stray dog-creature with shaggy
-                 dark fur, soulful warm-glowing eyes and a single faint ember-spark
-                 caught deep in its coat (a coal that never went out), alert and
-                 devoted, ears up, looking back at its master. Dark-fantasy,
-                 painterly, warm ember rim-light, NOT cute-cartoon. CRISP coloured
-                 edges, NO white wash/halo/bloom.
-                 (geen vlam meer — het trouwe wezen dat je in het TOTALE DONKER vindt
-                  als je fakkel dooft; verschijnt in Act 2. De ember in z'n vacht is
-                  de stille knipoog naar de fakkel-rode-draad.)
-                 POSES: drops_attack = lunging bite, low and forward; drops_hit =
-                 flinching recoil, ears back; drops_death = a final mid-air leap,
-                 body stretched forward (de Laatste Sprong — het offer).
 
-vlamwachter.png  a small stoic guardian: a squat armoured figure holding a
-                 round ember-lit shield almost as big as itself, a glowing rune
-                 on the shield, a silent protector. Heavy, grounded, warm
-                 battered metal, crisp silhouette.
+=========================== GEDEELD STIJLBLOK ===========================
+Plak dit als opening + slot rond ELKE pose (het is hieronder al per blok verwerkt):
 
-mosgeest.png     a gentle little moss-spirit: a small humanoid woven of moss,
-                 leaves and soft green-amber light, a few glowing motes drifting
-                 close around it, frail and kind. Crisp silhouette, soft glow
-                 kept COLOURED (no white bloom).
+  Stylized painterly digital illustration for a dark fantasy card game, hand-painted
+  fantasy concept art with expressive visible brushwork, rich colors and soft painted
+  shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+  Single full-body companion creature, facing RIGHT, three-quarter side view. Warm
+  torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching
+  a torchlit dungeon. Isolated on a FULLY TRANSPARENT background. No ground, no shadow,
+  no text, no frame, no UI, no background elements. Crisp clean COLOURED edges, NO white
+  glow, NO hazy bloom, NO misty halo. Fills about 80% of a square 1024x1024 canvas, feet
+  near the bottom edge.
 
-LATERE METGEZELLEN (zelfde aanpak): voeg een nieuw blok hier toe, zet de
-definitie in METGEZELLEN (js/data.js) met dezelfde 'art'-naam, en drop
-assets/metgezellen/<art>.png.
+
+##################################################################################
+#  DROPS — de magische zwarte labrador  (art-id: drops)                           #
+##################################################################################
+Rol: breker. Je vindt hem in het TOTALE DONKER als je fakkel dooft; verschijnt in Act 2.
+De ember-vonk in zijn vacht is de stille knipoog naar de fakkel-rode-draad. NIET schattig-
+cartoon — een trouw, koppig, licht-magisch wezen.
+
+PERSONAGE (in ELKE pose identiek houden):
+  a magical black Labrador retriever — a sleek, powerful, black-coated dog with a faint
+  ember-spark glowing deep within its fur (a coal that never went out), soulful warm
+  amber eyes, a subtle arcane ember rim-light tracing its silhouette. Loyal, devoted,
+  alert. Dark-fantasy painterly, NOT cute-cartoon.
+
+--- drops.png  (BASIS / idle) -----------------------------------------------------
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted with
+expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic,
+no photo, no 3D render. Single full-body creature, facing RIGHT. Warm torchlight rim
+lighting, palette of deep purples, charcoal and ember orange.
+  Character: a magical black Labrador retriever, sleek black coat with a faint ember-spark
+  glowing deep in its fur, soulful warm amber eyes, a subtle ember rim-light along its
+  outline.
+  Pose: standing alert and calm at its master's side, paws planted, ears up, head turned
+  watchfully to the RIGHT toward unseen enemies — a steady, devoted guard stance.
+Isolated on a FULLY TRANSPARENT background, no ground, no shadow, no text, no frame, no
+background. Crisp clean COLOURED edges, NO white glow/bloom/haze. Fills ~80% of a square
+1024x1024 canvas, paws near the bottom edge.
+
+--- drops_attack.png  (AANVAL — de beet) ------------------------------------------
+[zelfde stijl + zelfde Character als drops.png]
+  Pose: LUNGING into a bite — low and driving forward to the RIGHT, jaws open and fangs
+  bared, body stretched into a powerful pounce, front paws reaching, the ember-spark in
+  its fur FLARING brighter with the effort. Ferocious but noble, not rabid.
+
+--- drops_hit.png  (KLAP OPVANGEN) ------------------------------------------------
+[zelfde stijl + zelfde Character als drops.png]
+  Pose: flinching and recoiling from a blow — ears flattened back, head dipped, weight
+  thrown onto braced hind legs, a pained grimace — hurt but refusing to break; the ember
+  in its fur guttering low for a moment. Still facing RIGHT.
+
+--- drops_death.png  (DE LAATSTE SPRONG — het offer) ------------------------------
+[zelfde stijl + zelfde Character als drops.png]
+  Pose: a final heroic mid-air LEAP to the RIGHT — the whole body stretched out forward
+  like a loosed arrow, ears and legs streaming back, the ember-spark BLAZING at its
+  brightest in one last burst of warmth. A noble sacrifice frozen mid-flight (he springs
+  straight into the kopieermachine). Triumphant, not gruesome.
+
+
+##################################################################################
+#  DE VLAMWACHT  (art-id: vlamwachter)  — zelfde 4 blokken, eigen personage        #
+##################################################################################
+PERSONAGE (identiek houden over de poses):
+  a small stoic guardian companion — a squat, heavily armoured figure in warm battered
+  metal, holding a round ember-lit shield almost as big as itself, a glowing rune on the
+  shield, a silent grounded protector.
+
+--- vlamwachter.png  (BASIS / idle) ---
+  [gedeeld stijlblok] Character: <PERSONAGE>. Pose: standing firm and grounded, shield
+  half-raised at its side, facing RIGHT, calm and watchful.
+--- vlamwachter_hit.png  (KLAP OPVANGEN — zijn specialiteit) ---
+  Pose: bracing hard behind the big shield as a blow lands, boots sliding back, sparks
+  flying off the shield rim — taking the hit so you don't have to. Still facing RIGHT.
+--- vlamwachter_death.png  (valt) ---
+  Pose: sinking to one knee, shield dropping, the rune-glow on the shield fading out —
+  spent, having stood between you and the dark one time too many.
+(attack: n.v.t. — de Vlamwacht slaat niet zelf toe, hij blokt.)
+
+
+##################################################################################
+#  DE MOSGEEST  (art-id: mosgeest)  — zelfde aanpak                                #
+##################################################################################
+PERSONAGE (identiek houden over de poses):
+  a gentle little moss-spirit companion — a small humanoid woven of moss, leaves and soft
+  green-amber light, a few glowing motes drifting close around it, frail and kind. Keep
+  the glow COLOURED (no white bloom).
+
+--- mosgeest.png  (BASIS / idle) ---
+  [gedeeld stijlblok, but the warm palette mixes with soft green-amber light] Character:
+  <PERSONAGE>. Pose: standing softly, hands cupped with a faint healing glow, facing
+  RIGHT, serene.
+--- mosgeest_hit.png  (KLAP OPVANGEN) ---
+  Pose: recoiling as a blow scatters some of its glowing motes, body half-dissolving into
+  drifting leaves for a moment before reforming — fragile but enduring. Facing RIGHT.
+--- mosgeest_death.png  (valt) ---
+  Pose: gently coming apart into a swirl of moss, leaves and fading green-amber motes,
+  sinking toward the ground — dissolving back into the earth it came from.
+(attack: n.v.t. — de Mosgeest geneest, hij valt niet aan.)
+
+
+----------------------------------------------------------------------------------
+LATERE METGEZELLEN (zelfde aanpak): voeg een nieuw blok toe, zet de definitie in
+METGEZELLEN (js/data.js) met dezelfde 'art'-naam, en drop assets/metgezellen/<art>.png
+(+ optioneel <art>_attack/_hit/_death.png in dezelfde stijl en kijkrichting).
