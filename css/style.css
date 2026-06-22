@@ -2200,6 +2200,22 @@ body.lite .onthul-kaart.bijzonder:not(.open) .kaart-rug { animation: none; }
 @keyframes introVervaag { 0% { opacity: 0; } 12% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes introGroei { 0% { transform: scale(.82); } 100% { transform: scale(1.06); } }
 
+/* boss-onthul: de baas doemt GROOT op en zakt naar zijn gevechtsmaat — zo blijft het
+   'grootte'-gevoel van het monster, zonder de (werkende) rustlayout te vergroten.
+   Voeten op de grond (transform-origin onder) → zakt nooit in de handzone; de piek mag
+   even de bovenrand vullen (dramatische loom, speelt achter de semi-transparante
+   titelkaart). Werkt overal waar de 2D-figuur zichtbaar is (alle mobiel + desktop-lite). */
+@keyframes baasOnthul {
+  0%   { transform: scale(1.6); opacity: .35; }
+  12%  { transform: scale(1.6); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.is-baas .vijand-art.baas-onthuld {
+  animation: baasOnthul 2.6s cubic-bezier(.2, .7, .25, 1) both;
+  transform-origin: bottom center;
+  z-index: 6;
+}
+
 /* fase-flits: korte aankondiging midden in het gevecht */
 .baas-flits {
   position: fixed; inset: 0;

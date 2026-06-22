@@ -1743,6 +1743,13 @@ function toonBaasIntro(g) {
     <span>${VIJANDEN[b.id].titel || ''}</span>
   </div>`;
   $('#scherm-gevecht').appendChild(el);
+  /* de baas doemt groot op en zakt naar zijn gevechtsmaat (CSS .baas-onthuld) */
+  const baasArt = document.querySelector('#scherm-gevecht .is-baas .vijand-art');
+  if (baasArt) {
+    baasArt.classList.remove('baas-onthuld'); void baasArt.offsetWidth;
+    baasArt.classList.add('baas-onthuld');
+    setTimeout(() => baasArt.classList.remove('baas-onthuld'), 2800);
+  }
   Klank.sfx('zwareklap');
   setTimeout(() => { Klank.sfx('dood'); schudScherm(); }, 700);
   setTimeout(() => el.remove(), 3600);
