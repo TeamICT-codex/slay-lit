@@ -127,6 +127,34 @@ background. Crisp clean COLOURED edges, NO white glow/bloom/haze. Fills ~80% of 
 
 
 ##################################################################################
+#  DROPS DE WITTE  (art-id: drops_wit)  — de geascendeerde terugkeer               #
+##################################################################################
+Gandalf de Grijze → de Witte. Dezelfde trouwe hond, maar door de dood gegaan en
+teruggekeerd als stralend wit-zilveren geest-wezen. Verschijnt na de reünie (zie
+DROPS-DE-WITTE.md). Hij sterft niet meer (GEEN _death-pose).
+
+--- drops_wit.png  (BASIS — verplicht; ook het Codex-gedenkplek-portret) ---
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted with
+expressive visible brushwork, soft painted shading. NOT photorealistic, no photo, no 3D.
+Single full-body creature, facing RIGHT. Cool radiant rim lighting.
+  Character: the same loyal Labrador, now ASCENDED — a radiant WHITE-SILVER spirit-hound,
+  sleek coat of pure white and silver light, faintly ethereal/translucent, the ember-spark
+  deep in its chest now a core of COLD WHITE FIRE glowing from WITHIN (no torch needed — he
+  IS the light). Larger and more imposing than the living black Drops; light that casts no
+  shadow but drives one away. Serene, devoted, unbreakable — NOT a horror ghost, NOT cute.
+  Pose: standing tall and calm at its master's side, head turned watchfully to the RIGHT,
+  a radiant guardian.
+Isolated on a FULLY TRANSPARENT background, no ground, no shadow, no text, no frame. Keep
+the glow COLOURED (cool white-silver-blue) — crisp edges, NO white-bloom/haze/dambord-halo
+(the light comes from within, it is not a hazy halo). Fills ~82% of a square 1024x1024 canvas.
+
+OPTIONEEL (zelfde witte personage, alleen de Pose-regel anders):
+  drops_wit_attack.png — LUNGING bite to the RIGHT, white fire flaring (zijn beet negeert blok).
+  drops_wit_hit.png    — flinching recoil, the white glow guttering a moment.
+  (GEEN drops_wit_death — hij is al door de dood; deze keer blijft hij.)
+
+
+##################################################################################
 #  DE VLAMWACHT  (art-id: vlamwachter)  — zelfde 4 blokken, eigen personage        #
 ##################################################################################
 PERSONAGE (identiek houden over de poses):

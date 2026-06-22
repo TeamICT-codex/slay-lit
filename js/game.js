@@ -1834,6 +1834,12 @@ function toonBaasIntro(g) {
       setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt('„En blijf van dat lichtje AF. Het hóórt te branden. NIET DOVEN. Begrepen?"'); }, 9200);
     }
   }
+  /* GRIEF: heb je Drops geofferd maar is de Witte nog niet terug? De Erfprins claimt de
+     overwinning — de wond die de reünie later heelt (zie DROPS-DE-WITTE.md). */
+  if (b.id === 'de_erfprins' && Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops')
+      && !isOntgrendeld('drops_wit') && UITSPRAKEN._erfprins.dossier) {
+    setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(UITSPRAKEN._erfprins.dossier); }, 6400);
+  }
 }
 
 /* per frame: 3D renderen + DOM-overlays op spriteposities zetten */
