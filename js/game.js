@@ -3934,6 +3934,7 @@ function toonHeldKeuze() {
   const maxOnt = maxOntgrendeld();
   gekozenAscensie = Math.max(0, Math.min(gekozenAscensie, maxOnt));
   schermAchtergrond('held', ACHTERGRONDEN.titel, 0.55);
+  const poseWoord = document.body.dataset.modus === 'mobiel' ? '👆 tik' : '🖱️ klik';
   $('#scherm-held').innerHTML = `
     <h2 class="scherm-titel">Kies je held</h2>
     <div class="held-rij">` +
@@ -3944,7 +3945,7 @@ function toonHeldKeuze() {
         <div class="held-kaart" data-held="${id}" style="--held-gloed:${h.kleur || '255,156,63'}">
         <div class="held-aura"></div>
         <button type="button" class="held-art" data-art="${h.art}" onclick="heldPose('${id}', event)" aria-label="Toon ${h.naam} in actie (tik voor z'n aanval/cast)">${art}</button>
-        <div class="held-pose-hint" data-hint="${h.art}">👆 tik voor z'n move</div>
+        <div class="held-pose-hint" data-hint="${h.art}">${poseWoord} voor z'n move</div>
         <b>${h.naam}</b>
         <small class="held-stijl">${h.stijl}</small>
         ${ontgrendeldNiveau(id) >= 1 ? `<span class="held-asc">🔥 ontgrendeld tot A${ontgrendeldNiveau(id)}</span>` : ''}
