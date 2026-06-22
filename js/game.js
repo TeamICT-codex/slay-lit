@@ -2099,6 +2099,7 @@ function renderGevecht() {
     $('#scherm-gevecht').classList.toggle('baas-actief', !!b);
     if (b) {
       bb.style.display = 'block';
+      bb.dataset.baas = b.id;   /* per-baas kleuring van het HP-hart/de balk (zie css) */
       bb.innerHTML = `
         <div class="bb-naam">👑 ${b.naam}</div>
         ${VIJANDEN[b.id].titel ? `<div class="bb-titel">~ ${VIJANDEN[b.id].titel} ~</div>` : ''}

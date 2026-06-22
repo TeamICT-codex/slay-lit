@@ -148,6 +148,16 @@ body[data-modus="mobiel"] #baas-balk .bb-balk.bb-woede::before {
   background: linear-gradient(to top, #ff6a4a 0 calc(var(--hp, 100) * 1%), #2b1420 calc(var(--hp, 100) * 1%) 100%);
   filter: drop-shadow(0 0 7px rgba(255, 90, 60, .7));
 }
+/* De Erfprins (Copycat): geen slijmgroen maar koningspaars/amethist — regaal +
+   de magenta steel-aura uit z'n art. Woede → heet magenta i.p.v. rood-oranje. */
+body[data-modus="mobiel"] #baas-balk[data-baas="de_erfprins"] .bb-balk::before {
+  background: linear-gradient(to top, #b56bff 0 calc(var(--hp, 100) * 1%), #241229 calc(var(--hp, 100) * 1%) 100%);
+  filter: drop-shadow(0 0 6px rgba(181, 107, 255, .6));
+}
+body[data-modus="mobiel"] #baas-balk[data-baas="de_erfprins"] .bb-balk.bb-woede::before {
+  background: linear-gradient(to top, #ff5cc0 0 calc(var(--hp, 100) * 1%), #241229 calc(var(--hp, 100) * 1%) 100%);
+  filter: drop-shadow(0 0 8px rgba(255, 92, 192, .75));
+}
 /* Copycat-arsenaalpil (#baas-balk rechtsboven): compact + 1 regel met ellipsis,
    anders wrapt de kaartnamenlijst en botst ze met de rechts-staande baasfiguur. */
 body[data-modus="mobiel"] #baas-balk .bb-aegis {
