@@ -176,6 +176,7 @@ Codex.ascensie = Object.fromEntries(Object.entries(Codex.ascensie || {}).filter(
 Codex.bestDiepte = Object.fromEntries(Object.entries(Codex.bestDiepte || {}).filter(([k]) => _geldigeHeld(k)).map(([k, v]) => [k, Math.max(0, +v || 0)]));
 if (!Array.isArray(Codex.metgezellen)) Codex.metgezellen = [];   /* migratie: oude codex mist deze sleutel */
 if (!Array.isArray(Codex.gevallen)) Codex.gevallen = [];         /* metgezellen die zich opofferden (gedenkplek) */
+Codex.dropsZaadjeNul = !!Codex.dropsZaadjeNul;                    /* grief: is het 'zaadje-nul'-vonkje (eerste doof ná Drops' dood) al ooit getoond? */
 /* het Metgezel-Mysterie: per-metgezel voortgang (scherven/rijp/voltooid) + baas-teller */
 if (typeof Codex.mysteries !== 'object' || !Codex.mysteries || Array.isArray(Codex.mysteries)) Codex.mysteries = {};
 Codex.erfprinsOntmoetingen = Math.max(0, +Codex.erfprinsOntmoetingen || 0);
@@ -603,6 +604,7 @@ function zetFakkel(delta) {
   }
   if (typeof checkDropsOntwaak === 'function') checkDropsOntwaak();   /* dark-twist: doof je je fakkel bij de Erfprins? */
   if (typeof checkDropsWitWeigering === 'function') checkDropsWitWeigering(voor, delta);   /* Poort A: weiger je juist te doven? */
+  if (delta < 0 && inGevecht() && typeof toonRouwPoot === 'function') toonRouwPoot();        /* grief: pootafdruk in de as bij elke doof-keuze */
   zetLichtVisueel();
   renderTopbalk();
 }
@@ -1121,6 +1123,54 @@ function revealDrops(g) {
   melding(`🐾 ${rev.kreet} Drops kruipt uit de duisternis — en hij wijkt niet meer van je zij.`);
 }
 
+/* ---------- DROPS-GRIEF: de stille rouw-atmosfeer (zie DROPS-DE-WITTE.md §1) ----------
+   Géén teller — puur de bestaande gevallen-gate + de voltooid-vlag van drops_wit. Het spel
+   gedraagt zich alsof hij écht voorgoed weg is; de afwezigheid ÍS de tekst. */
+function dropsInRouw() {
+  return Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops') && !isOntgrendeld('drops_wit');
+}
+/* een gloeiende pootafdruk in de as bij elke doof-keuze; de allereerste doof ná zijn dood
+   is een wit vonkje dat meteen sterft (zaadje-nul, max 1× per save). Presentatie: bewust
+   Math.random/performance.now — dit raakt de seeded spelstroom niet. */
+let _laatsteRouwPoot = 0;
+function toonRouwPoot() {
+  if (!dropsInRouw()) return;
+  const mz = $('#metgezel-zone');
+  if (!mz || mz.hidden || !mz.classList.contains('rouw-zone')) return;
+  const nu = performance.now();
+  if (nu - _laatsteRouwPoot < 700) return;   /* niet strobe-en bij snel licht-verbranden */
+  _laatsteRouwPoot = nu;
+  if (!Codex.dropsZaadjeNul) {                /* zaadje-nul: één wit vonkje dat meteen dooft */
+    Codex.dropsZaadjeNul = true; bewaarCodex();
+    const v = document.createElement('div');
+    v.className = 'rouw-vonk'; mz.appendChild(v);
+    setTimeout(() => v.remove(), 1300);
+    return;
+  }
+  const p = document.createElement('div');
+  p.className = 'rouw-poot'; p.textContent = '🐾';
+  p.style.left = (28 + Math.random() * 44) + '%';
+  p.style.bottom = (8 + Math.random() * 30) + '%';
+  mz.appendChild(p);
+  setTimeout(() => p.remove(), 1700);
+}
+/* reünie-payoff: de pootafdruk dooft nu NIET meer — een spoor wit-zilveren poten in de zone
+   waar Drops de Witte zojuist verscheen. */
+function pootSpoorPayoff() {
+  const mz = $('#metgezel-zone');
+  if (!mz) return;
+  for (let i = 0; i < 4; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'rouw-poot wit'; p.textContent = '🐾';
+      p.style.left = (24 + i * 16 + Math.random() * 8) + '%';
+      p.style.bottom = (6 + i * 7) + '%';
+      mz.appendChild(p);
+      setTimeout(() => p.remove(), 2000);
+    }, i * 260);
+  }
+}
+
 /* ---------- DROPS DE WITTE: de geascendeerde terugkeer (zie DROPS-DE-WITTE.md) ----------
    Twee geheime poorten, één wonder; eenmalig permanent via isOntgrendeld('drops_wit').
    Bewust GEEN scherven-mysterie (alleen de voltooid-vlag), zodat het anders aanvoelt. */
@@ -1151,6 +1201,7 @@ function revealDropsWit(g, poort) {
   g.metgezel.intent = def.intent ? def.intent(g.metgezel) : null;
   bouwGevechtDom(g);
   renderGevecht();
+  pootSpoorPayoff();                  /* de pootafdruk dooft nu NIET meer: een wit-zilver spoor */
   melding('🤍 Drops de Witte keert terug — hij overleefde het donker, zoals jij hem nooit liet doven.');
 }
 /* POORT A — DE WEIGERING: vanuit het diepste donker je licht juist VERHOGEN (spiegelt de
@@ -1989,6 +2040,7 @@ function bouwGevechtDom(g) {
     if (g.metgezel) {
       const md = METGEZELLEN[g.metgezel.id];
       mz.hidden = false;
+      mz.classList.remove('rouw-zone');
       mz.innerHTML = `
         <div class="metgezel-intent"></div>
         <div class="metgezel-art" data-tip="${md.naam} — ${md.tekst}">${md.icoon}</div>
@@ -2011,8 +2063,22 @@ function bouwGevechtDom(g) {
           if (img && a) a.innerHTML = `<img src="${img.src}" alt="${md.naam}">`;
         });
       }
+    } else if (dropsInRouw()) {
+      /* De afwezigheid ÍS de tekst: een gedimd as-silhouet waar Drops stond — niet
+         doelbaar, geen HP, geen tooltip. Hergebruikt drops_geest; valt terug op 🐕. */
+      mz.hidden = false;
+      mz.classList.add('rouw-zone');
+      mz.innerHTML = `<div class="rouw-silhouet" aria-hidden="true">🐕</div>`;
+      GDOM.metgezel = null;
+      if (window.laadMetgezelAfbeelding) {
+        laadMetgezelAfbeelding('drops_geest', img => {
+          const s = mz.querySelector('.rouw-silhouet');
+          if (img && s) { s.textContent = ''; s.style.backgroundImage = `url("${img.src}")`; }
+        });
+      }
     } else {
       mz.hidden = true;
+      mz.classList.remove('rouw-zone');
       mz.innerHTML = '';
       GDOM.metgezel = null;
     }

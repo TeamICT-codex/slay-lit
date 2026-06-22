@@ -1035,6 +1035,40 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 #metgezel-zone.gevlucht { opacity: .22; filter: grayscale(.85); transition: opacity .7s, filter .7s; }
 .d3-actief #metgezel-zone { z-index: 2; }
 
+/* ---------- DROPS-GRIEF: het lege as-silhouet + wegdovende pootafdrukken (zie DROPS-DE-WITTE.md §1) ---------- */
+#metgezel-zone.rouw-zone { animation: none; pointer-events: none; justify-content: flex-end; }
+.rouw-silhouet {
+  width: clamp(64px, 18vw, 88px); height: clamp(64px, 18vw, 88px);
+  margin: 0 auto;
+  background-position: center bottom; background-repeat: no-repeat; background-size: contain;
+  font-size: 3.4rem; line-height: 1; text-align: center; color: #1c1622;
+  opacity: .12; filter: grayscale(1) brightness(.55);
+  animation: rouwAdem 6s ease-in-out infinite;   /* een nauwelijks merkbare ademhaling: een herinnering, geen wezen */
+}
+@keyframes rouwAdem { 0%, 100% { opacity: .10; } 50% { opacity: .17; } }
+.rouw-poot {
+  position: absolute; font-size: 1.45rem; pointer-events: none; z-index: 3;
+  color: #d8b86a; filter: drop-shadow(0 0 6px rgba(216, 184, 106, .7));
+  animation: rouwPoot 1.7s ease-out forwards;
+}
+@keyframes rouwPoot {
+  0%   { opacity: 0; transform: translateY(7px) scale(.7); }
+  16%  { opacity: .85; }
+  100% { opacity: 0; transform: translateY(-3px) scale(1.02); }
+}
+.rouw-poot.wit { color: #eef3ff; filter: drop-shadow(0 0 9px rgba(222, 232, 255, .95)); }
+.rouw-vonk {
+  position: absolute; left: 50%; bottom: 30%; width: 8px; height: 8px; margin-left: -4px;
+  border-radius: 50%; background: #fff; pointer-events: none; z-index: 3;
+  box-shadow: 0 0 12px 4px rgba(255, 255, 255, .9);
+  animation: rouwVonk 1.3s ease-out forwards;   /* het zaadje-nul: oplichten en meteen doven */
+}
+@keyframes rouwVonk {
+  0%   { opacity: 0; transform: scale(.2); }
+  14%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(.1) translateY(9px); }
+}
+
 /* ---------- B2: Pappies Invloed (aegis), opoffering, bevestig-dialoog ---------- */
 .bb-aegis {
   margin-top: 6px; display: inline-block;
