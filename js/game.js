@@ -3941,16 +3941,17 @@ function toonHeldKeuze() {
       const rel = RELIKWIEEN[h.relikwie];
       const art = (window.karakterSvg && karakterSvg(h.art)) || h.icoon;
       return `<div class="held-kaart-wrap">
-        <button class="held-kaart" data-held="${id}" style="--held-gloed:${h.kleur || '255,156,63'}" onclick="kiesHeld('${id}')">
+        <div class="held-kaart" data-held="${id}" style="--held-gloed:${h.kleur || '255,156,63'}">
         <div class="held-aura"></div>
-        <div class="held-art" data-art="${h.art}">${art}</div>
+        <button type="button" class="held-art" data-art="${h.art}" onclick="heldPose('${id}', event)" aria-label="Toon ${h.naam} in actie (tik voor z'n aanval/cast)">${art}</button>
+        <div class="held-pose-hint" data-hint="${h.art}">👆 tik voor z'n move</div>
         <b>${h.naam}</b>
         <small class="held-stijl">${h.stijl}</small>
         ${ontgrendeldNiveau(id) >= 1 ? `<span class="held-asc">🔥 ontgrendeld tot A${ontgrendeldNiveau(id)}</span>` : ''}
         <div class="held-info">❤️ ${h.hp} HP &nbsp;·&nbsp; 🃏 ${h.dek.length} startkaarten</div>
         <div class="held-info">${rel.icoon} <b>${rel.naam}</b><br><i>${rel.tekst}</i></div>
-        <span class="held-kies">Speel als ${h.naam} ➤</span>
-      </button>
+        <button type="button" class="held-kies" onclick="kiesHeld('${id}')">Speel als ${h.naam} ➤</button>
+      </div>
         <button type="button" class="knop-stil held-dek-knop" onclick="bekijkStartdek('${id}', event)">Bekijk startdek</button>
       </div>`;
     }).join('') + `</div>
@@ -3975,6 +3976,41 @@ function bekijkStartdek(id, e) {
   const h = SPELERS[id];
   toonKaartKeuze(h.dek.map(k => nieuweKaart(k)), `Startdek — ${h.naam}`, null, () => {}, { bekijkAlleen: true });
 }
+
+/* levende heldenkeuze: tik op het portret → speel z'n aanval/cast/signature-pose,
+   cyclisch (elke tik de volgende). De 'Speel als'-knop eronder start pas écht. */
+const HELD_SIGNATUUR_POSE = { speler: 'beulswerk', gifmagier: 'moederslang', thoverk: 'flame' };
+let _heldPoseStand = {};
+function heldPose(id, e) {
+  if (e) e.stopPropagation();
+  const h = SPELERS[id]; if (!h || !window.laadKarakterAfbeelding) return;
+  const el = document.querySelector(`.held-art[data-art="${h.art}"]`);
+  const im = el && el.querySelector('img');
+  if (!im) return;   /* nog emoji/geen art geladen → niets te poseren */
+  const hint = document.querySelector(`.held-pose-hint[data-hint="${h.art}"]`);
+  if (hint) hint.style.visibility = 'hidden';
+  const reeks = ['attack', 'cast'];
+  if (HELD_SIGNATUUR_POSE[h.art]) reeks.push(HELD_SIGNATUUR_POSE[h.art]);
+  const i = (_heldPoseStand[id] || 0) % reeks.length;
+  _heldPoseStand[id] = i + 1;
+  const state = reeks[i];
+  laadKarakterAfbeelding(h.art + '_' + state, img => {
+    const im2 = el.querySelector('img');
+    if (!img || !im2) return;        /* deze pose-art bestaat niet → laat 'm staan */
+    im2.src = img.src;
+    el.classList.remove('held-art-poseert'); void el.offsetWidth; el.classList.add('held-art-poseert');
+    Klank.sfx(state === 'attack' ? 'kaart' : (state === 'cast' ? 'buff' : 'schitter'));
+    clearTimeout(el._poseTimer);
+    el._poseTimer = setTimeout(() => {
+      laadKarakterAfbeelding(h.art, terug => {
+        const im3 = el.querySelector('img');
+        if (terug && im3) im3.src = terug.src;
+      });
+      el.classList.remove('held-art-poseert');
+    }, 1000);
+  });
+}
+window.heldPose = heldPose;
 
 function kiesHeld(id, bevestigd) {
   /* Schrijn-nudge: opgeladen relikwieën liggen klaar maar er is er geen gekozen.

@@ -790,11 +790,37 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   margin-top: 8px;
   padding: 8px 20px;
   font-size: 1.05rem;
+  font-family: inherit; font-weight: 700;
   color: var(--nacht);
   background: linear-gradient(180deg, var(--ember-fel), var(--ember));
   border-radius: 8px;
   border: 1px solid #5a3413;
+  cursor: pointer;
 }
+.held-kies:hover { filter: brightness(1.08); }
+.held-kies:active { transform: scale(.97); }
+.held-kies:focus-visible { outline: 2px solid var(--goud); outline-offset: 3px; }
+
+/* het portret is nu een tik-knop: speelt de aanval/cast/signature-pose van de held */
+.held-art {
+  display: block;
+  background: none; border: 0; padding: 0; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.held-art:focus-visible { outline: 2px solid rgba(var(--held-gloed), .85); outline-offset: 6px; border-radius: 14px; }
+.held-art.held-art-poseert { animation: heldPoseStoot .55s ease; }
+@keyframes heldPoseStoot {
+  0% { transform: scale(1); }
+  28% { transform: scale(1.13) translateY(-8px); }
+  100% { transform: scale(1.07); }
+}
+.held-pose-hint {
+  font-family: 'Alegreya', serif; font-size: .82rem;
+  color: rgba(var(--held-gloed), .95);
+  margin: -2px 0 2px; letter-spacing: .02em; user-select: none;
+  animation: poseHintPuls 2.2s ease-in-out infinite;
+}
+@keyframes poseHintPuls { 0%, 100% { opacity: .4; } 50% { opacity: .9; } }
 
 /* ---------- ascension-ladder (heldenkeuze) ---------- */
 .ascensie-vak {
