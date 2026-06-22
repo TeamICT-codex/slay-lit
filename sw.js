@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v7'; /* v7: herwerkte karakter-art (witresten weg) */
+const CACHE = 'slayit-v8'; /* v8: code-updates kwamen niet door op gsm → cache:'reload' + verse shell */
 const BESTANDEN = [
   '.',
   'index.html',
@@ -26,12 +26,17 @@ const BESTANDEN = [
   'assets/icoon-512-maskable.png',
   'manifest.webmanifest'
 ];
-/* NB: CACHE bewust op v7 gehouden — een gewijzigde sw.js her-installeert en
-   voegt de nieuwe iconen aan de bestaande cache toe; een versiebump zou de
-   hele art-cache wissen (onnodige her-download voor elke speler). */
+/* NB: een versiebump laat 'activate' de oude cache wissen (één keer art-her-download).
+   Bewust hier: de gsm bleef op een oude build hangen omdat de oude shell in de cache
+   bleef zitten. De code-fetch hieronder gebruikt nu cache:'reload' zodat online ALTIJD
+   de nieuwste html/js/css binnenkomt, dwars door de HTTP/CDN-cache (Pages: max-age=600). */
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(BESTANDEN)).then(() => self.skipWaiting()));
+  /* shell vers ophalen (cache:'reload') zodat de install niet zelf een oude
+     HTTP-gecachte versie inmetselt */
+  e.waitUntil(caches.open(CACHE)
+    .then(c => c.addAll(BESTANDEN.map(u => new Request(u, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -60,9 +65,12 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  /* code: network-first met cache-terugval */
+  /* code: network-first met cache-terugval. cache:'reload' forceert de fetch
+     dóór de HTTP-cache van browser/CDN heen → online ALTIJD de nieuwste versie
+     (GitHub Pages stuurt max-age=600 mee; zonder dit bleef de gsm tot 10 min op
+     een oude build hangen, ondanks 'network-first'). Offline → catch → cache. */
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, { cache: 'reload' })
       .then(antwoord => {
         if (antwoord.ok) {
           const kopie = antwoord.clone();
