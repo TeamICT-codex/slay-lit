@@ -1116,6 +1116,29 @@ const METGEZELLEN = {
       }
     }
   },
+  /* DROPS DE WITTE — de geascendeerde terugkeer (zie DROPS-DE-WITTE.md). Geen opoffering
+     meer (hij ging al door de dood); zijn beet NEGEERT vijand-blok (onkopieerbaar), en hoe
+     donkerder je fakkel, hoe feller hij brandt. Niet via scherven ontgrendeld maar via een
+     van twee geheime poorten → isOntgrendeld('drops_wit'). Codex toont hem als variant van
+     'drops' (transformeert de ✝-gedenkplek naar 🤍), niet als apart roster-slot. */
+  drops_wit: {
+    naam: 'Drops de Witte', art: 'drops_wit', icoon: '🤍', zeld: 'episch', maxHp: 34, rol: 'breker',
+    tekst: 'Geascendeerd. Begin van je beurt: bijt de baas — negeert vijand-blok — en geeft je 3 Blok. Hoe donkerder je fakkel, hoe feller hij brandt (gedoofd = dubbele klap). Zolang hij leeft zie je elke intent, ook blind, en steelt de Copycat trager. Hij sterft niet meer.',
+    lore: 'Je liet hem niet doven. Daarom kwam hij terug — niet zwart, maar wit. Trouw kun je niet indexeren, en de dood houdt haar niet.',
+    doelbaar: true, dreiging: 0.18,
+    beurt(m) {
+      const d = (typeof copycatBaas === 'function' && copycatBaas(S.gevecht)) || kiesUit(alleVijanden());
+      if (d) {
+        const fel = (typeof lichtNiveau === 'function' && lichtNiveau() === 'gedoofd') ? 12 : 6;   /* duisternis voedt hem */
+        pose2D(m, 'attack', 0.5);
+        verliesHp(d, fel, m);                                      /* negeert vijand-blok (onkopieerbaar) */
+        if (d.copyKracht) d.copyKracht = Math.max(0, d.copyKracht - 1);   /* vertraagt het kopiëren */
+      }
+      geefBlok(sp(), 3);
+    },
+    intent: () => (alleVijanden().length ? { type: 'aanval', dmg: (typeof lichtNiveau === 'function' && lichtNiveau() === 'gedoofd') ? 12 : 6 } : null)
+    /* GEEN opoffering — hij is al door de dood. */
+  },
   vlamwachter: {
     naam: 'De Vlamwacht', art: 'vlamwachter', icoon: '🛡️', zeld: 'zeldzaam', maxHp: 34,
     tekst: 'Begin van je beurt: geeft je 5 Blok. Een stille schilddrager die de klappen graag zelf opvangt.',
@@ -1216,6 +1239,8 @@ const UITSPRAKEN = {
     ],
     /* sist hij op het moment dat jij in zijn zaal je fakkel laat DOVEN (de rite) */
     gedoofd: '„Wat... WÁT DOE JE? Het wordt wakker! BEWAKING! BE—"',
+    /* grief-haak: ná Drops' offer claimt de Erfprins de overwinning — tot Drops de Witte terugkeert */
+    dossier: '„Ik heb je hond geïndexeerd. Dossier gesloten."',
   }
 };
 

@@ -602,6 +602,7 @@ function zetFakkel(delta) {
     if (inGevecht()) renderGevecht(); /* intent-weergave kan veranderen */
   }
   if (typeof checkDropsOntwaak === 'function') checkDropsOntwaak();   /* dark-twist: doof je je fakkel bij de Erfprins? */
+  if (typeof checkDropsWitWeigering === 'function') checkDropsWitWeigering(voor, delta);   /* Poort A: weiger je juist te doven? */
   zetLichtVisueel();
   renderTopbalk();
 }
@@ -891,6 +892,18 @@ function verliesHp(doel, n, bron) {
   }
   if (doel.isSpeler) {
     S.hp = Math.max(0, S.hp - n);
+    /* POORT B — DE LAATSTE SPRONG, ANDERSOM: op een écht dieptepunt (gedoofd, geen
+       feniks/contract meer, Drops geofferd, latere run) springt Drops de Witte uit het
+       zwart tussen jou en de doodslag. De redding ÍS de reünie. Vóór feniks/contract,
+       maar streng gegate zodat het nooit hun moment steelt. */
+    if (S.hp <= 0 && lichtNiveau() === 'gedoofd'
+        && !heeftRelikwie('feniksveer') && !(heeftRelikwie('verlopen_contract') && !S.contractGebruikt)
+        && magWitTerugkeren()) {
+      S.hp = Math.max(1, Math.round(S.maxHp * 0.4));
+      revealDropsWit(S.gevecht, 'sprong');
+      renderTopbalk();
+      return;
+    }
     /* Feniksveer: één keer is de dood een misverstand */
     if (S.hp <= 0 && heeftRelikwie('feniksveer')) {
       S.relikwieen = S.relikwieen.filter(r => r !== 'feniksveer');
@@ -1055,7 +1068,11 @@ function metgezelOpoffering() {
         g.bezig = false;
         S.metgezel = null;                       /* permanent — niet 'vluchtig' */
         Codex.gevallen = Array.isArray(Codex.gevallen) ? Codex.gevallen : [];
-        if (!Codex.gevallen.includes(m.id)) { Codex.gevallen.push(m.id); bewaarCodex(); }
+        if (!Codex.gevallen.includes(m.id)) {
+          Codex.gevallen.push(m.id);
+          if (m.id === 'drops') Codex.dropsOfferRun = (Codex.runs || 0);   /* ijkpunt voor de Drops-de-Witte-grief-gate */
+          bewaarCodex();
+        }
         melding(`✝ ${def.naam} is voorgoed heengegaan.`);
         const el = actorEl(m); if (el) el.classList.add('gevlucht');
         renderGevecht();
@@ -1102,6 +1119,47 @@ function revealDrops(g) {
   bouwGevechtDom(g);                /* herbouw de gevecht-DOM incl. de metgezel-zone */
   renderGevecht();
   melding(`🐾 ${rev.kreet} Drops kruipt uit de duisternis — en hij wijkt niet meer van je zij.`);
+}
+
+/* ---------- DROPS DE WITTE: de geascendeerde terugkeer (zie DROPS-DE-WITTE.md) ----------
+   Twee geheime poorten, één wonder; eenmalig permanent via isOntgrendeld('drops_wit').
+   Bewust GEEN scherven-mysterie (alleen de voltooid-vlag), zodat het anders aanvoelt. */
+function magWitTerugkeren() {
+  return inGevecht() && S.gevecht
+    && Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops')
+    && !isOntgrendeld('drops_wit')
+    && (Codex.runs || 0) > (Codex.dropsOfferRun || 0)        /* grief moet ≥1 volle run landen */
+    && S.gevecht.vijanden.some(v => v.id === 'de_erfprins' && !v.dood);
+}
+function revealDropsWit(g, poort) {
+  if (!g || g.voorbij || isOntgrendeld('drops_wit')) return;
+  ontgrendelMetgezel('drops_wit');     /* eenmalig + permanent (Codex), geen scherven */
+  Klank.sfx('schitter');
+  const sc = document.getElementById('scherm-gevecht');
+  if (sc) { sc.classList.remove('wit-flits'); void sc.offsetWidth; sc.classList.add('wit-flits'); setTimeout(() => sc.classList.remove('wit-flits'), 2400); }
+  if (poort === 'sprong') baasFaseMoment('UIT HET ZWART', 'De slag landt — en het zwart scheurt open in wit.');
+  else baasFaseMoment('DE VONK DIE JE NIET LIET DOVEN', 'Wat trouw is, gaat niet uit.');
+  /* de drie beats, met stiltes ertussen */
+  setTimeout(() => melding('🤍 „De vonk die nooit doofde, was nooit van de fakkel."'), 900);
+  setTimeout(() => melding('🤍 „Het was van hem."'), 2100);
+  setTimeout(() => melding('🤍 „En hij was van jou."'), 3300);
+  setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasFaseMoment('HERINDEXEREN…', 'TROUW: NOG STEEDS GEEN PRECEDENT.'); }, 4500);
+  /* injecteer Drops de Witte midden in het gevecht (zelfde patroon als revealDrops) */
+  geefMetgezel('drops_wit');
+  const def = METGEZELLEN.drops_wit;
+  g.metgezel = { id: 'drops_wit', naam: def.naam, isMetgezel: true, hp: def.maxHp, maxHp: def.maxHp, blok: 0, status: {}, dood: false };
+  g.metgezel.intent = def.intent ? def.intent(g.metgezel) : null;
+  bouwGevechtDom(g);
+  renderGevecht();
+  melding('🤍 Drops de Witte keert terug — hij overleefde het donker, zoals jij hem nooit liet doven.');
+}
+/* POORT A — DE WEIGERING: vanuit het diepste donker je licht juist VERHOGEN (spiegelt de
+   doof-rite die hem ooit wekte). Aangeroepen vanuit zetFakkel. */
+function checkDropsWitWeigering(voorNiveau, delta) {
+  if (delta <= 0 || !magWitTerugkeren()) return;
+  const vlak = voorNiveau === 'gedoofd' || (voorNiveau === 'duister' && heeftRelikwie('eeuwige_lont'));
+  if (!vlak) return;
+  revealDropsWit(S.gevecht, 'weigering');
 }
 
 /* ---------- schermachtergronden (eigen platen, gedimd voor leesbaarheid) ---------- */
@@ -1952,8 +2010,10 @@ function trekKaarten(n) {
 function intentTekst(v) {
   const it = v.intent;
   if (!it) return '';
-  /* de Fluisterende Schedel ziet wat jij niet ziet */
-  const niveau = (heeftRelikwie('fluisterende_schedel') || heeftRelikwie('indexkaart')) ? 'helder' : lichtNiveau();
+  /* de Fluisterende Schedel ziet wat jij niet ziet; Drops de Witte is je levende licht
+     (ook blind zie je elke intent zolang hij leeft) */
+  const witLeeft = !!(gMet() && !gMet().dood && gMet().id === 'drops_wit');
+  const niveau = (witLeeft || heeftRelikwie('fluisterende_schedel') || heeftRelikwie('indexkaart')) ? 'helder' : lichtNiveau();
   if (niveau === 'gedoofd') {
     return `<span class="intent intent-duister" data-tip="Het is te donker om de bedoeling te zien">❓</span>`;
   }
@@ -2202,7 +2262,7 @@ function toonCodex() {
   const relOntdekt = rels.filter(r => Codex.relikwieen.includes(r)).length;
   const dranks = Object.keys(DRANKEN);
   const drOntdekt = dranks.filter(d => Codex.dranken.includes(d)).length;
-  const mgs = Object.keys(METGEZELLEN).sort((a, b) =>
+  const mgs = Object.keys(METGEZELLEN).filter(id => id !== 'drops_wit').sort((a, b) =>   /* drops_wit = variant van 'drops', geen apart slot */
     volgorde.indexOf(METGEZELLEN[a].zeld) - volgorde.indexOf(METGEZELLEN[b].zeld));
   const mgOntdekt = mgs.filter(m => Codex.metgezellen.includes(m)).length;
   /* loopbaan-blok: totalen + de laatste afdalingen (het opstapelende spoor) */
@@ -2244,7 +2304,10 @@ function toonCodex() {
         return `<div class="codex-slot leeg" data-tip="??? — nog niet ontmoet">❓</div>`;
       }
       const gevallen = Codex.gevallen.includes(id);
-      return `<div class="codex-slot rel-${d.zeld} ${gevallen ? 'gevallen' : ''}" data-mgart="${gevallen ? id + '_geest' : id}" data-tip="${d.naam}${gevallen ? ' · ✝ offerde zich op' : ''} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${d.icoon}${gevallen ? '<span class="codex-kruis">✝</span>' : ''}</div>`;
+      const wit = (id === 'drops') && isOntgrendeld('drops_wit');   /* de gedenkplek transformeert van ✝ naar 🤍 */
+      const mgart = wit ? 'drops_wit' : (gevallen ? id + '_geest' : id);
+      const tip = wit ? ' · 🤍 keerde terug uit het zwart' : (gevallen ? ' · ✝ offerde zich op' : '');
+      return `<div class="codex-slot rel-${d.zeld} ${gevallen && !wit ? 'gevallen' : ''}" data-mgart="${mgart}" data-tip="${d.naam}${tip} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${wit ? '🤍' : d.icoon}${gevallen && !wit ? '<span class="codex-kruis">✝</span>' : ''}</div>`;
     }).join('') + `</div>` + mysterieCodexBlok() + `
     <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt + mgOntdekt === rels.length + dranks.length + mgs.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
     <small>🗝️ = opgeladen: dit relikwie kun je bij een nieuwe run éénmalig meenemen uit het Schrijn.</small></p>`;
@@ -2282,12 +2345,14 @@ function toonMetgezelBoek(id) {
   const rgb = '255, 156, 63';   /* ember */
   $('#relikwie-boek').innerHTML = `
     <div class="boek-kaart" style="--relk:${rgb}">
-      <div class="boek-icoon" data-mgart="${(Codex.gevallen || []).includes(id) ? id + '_geest' : id}">${d.icoon}</div>
+      <div class="boek-icoon" data-mgart="${(id === 'drops' && isOntgrendeld('drops_wit')) ? 'drops_wit' : ((Codex.gevallen || []).includes(id) ? id + '_geest' : id)}">${(id === 'drops' && isOntgrendeld('drops_wit')) ? '🤍' : d.icoon}</div>
       <span class="schaarste-chip" style="--relk:${rgb}">${SCHAARSTE_LABEL[d.zeld] || 'Metgezel'}</span>
       <h3>${d.naam}</h3>
       <p class="boek-effect">${d.tekst}</p>
       ${d.lore ? `<p class="boek-lore">„${d.lore}"</p>` : ''}
-      ${(Codex.gevallen || []).includes(id) ? '<p class="boek-gevallen">✝ Offerde zich op. Voorgoed heen — de diepte onthield zijn moed.</p>' : ''}
+      ${(id === 'drops' && isOntgrendeld('drops_wit'))
+        ? '<p class="boek-gevallen">🤍 Offerde zich op — en kwam terug. Voorgoed heen, en toch teruggekeerd: de diepte gaf terug wat ze nam. Trouw is niet te indexeren, en de dood houdt haar niet.</p>'
+        : ((Codex.gevallen || []).includes(id) ? '<p class="boek-gevallen">✝ Offerde zich op. Voorgoed heen — de diepte onthield zijn moed.</p>' : '')}
       <button class="knop-groot" onclick="$('#overlay-relikwie').classList.remove('open')">Sluit</button>
     </div>`;
   verfraaiItemArt($('#relikwie-boek'));
@@ -3723,12 +3788,17 @@ function volgendeAct(verslagenBaas) {
      geen actieve metgezel is. Een in de vorige act gevluchte Drops (heeftMetgezel()
      is dan false want vluchtig) sluit hier weer aan — zo lost de 'later terugvinden'-
      belofte zich in i.p.v. in permanente limbo te blijven hangen. */
-  if (isOntgrendeld('drops') && !heeftMetgezel()) {
-    const kwamTerug = !!(S.metgezel && S.metgezel.vluchtig && S.metgezel.id === 'drops');
-    geefMetgezel('drops');
-    melding(kwamTerug
-      ? '🐾 Drops kruipt uit het donker terug aan je zij en daalt mee het Archief in.'
-      : '🐾 Drops daalt met je mee het Archief in.');
+  if (!heeftMetgezel()) {
+    if (isOntgrendeld('drops_wit')) {
+      geefMetgezel('drops_wit');
+      melding('🤍 Drops de Witte daalt met je mee — hij wijkt niet meer van je zij.');
+    } else if (isOntgrendeld('drops')) {
+      const kwamTerug = !!(S.metgezel && S.metgezel.vluchtig && S.metgezel.id === 'drops');
+      geefMetgezel('drops');
+      melding(kwamTerug
+        ? '🐾 Drops kruipt uit het donker terug aan je zij en daalt mee het Archief in.'
+        : '🐾 Drops daalt met je mee het Archief in.');
+    }
   }
   S.pos = null;
   S.kaart = genereerKaart();      /* nieuwe ladder, act-bewust; de verdieping-teller loopt door */
