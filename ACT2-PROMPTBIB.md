@@ -288,6 +288,13 @@ de_archivaris.png  (elite) a towering head-archivist, a tall robed figure buried
                  over its eyes and a stamp in each hand, cold authoritative
                  blue-grey light, index-tabs and wax seals orbiting. Inevitable,
                  all-remembering — the bureaucracy made flesh.
+
+POSE-STATES (volledige conventie + richtlijnen: assets/karakters/PROMPTS.txt → "POSE-STATES"):
+  - stempelaar / dossierwurm / spiegelwachter / de_deadline / de_inktvlek / de_redacteur =
+    GEWOON → maak minstens <id>_death (een uiteenvallende kopie). _attack/_hit vallen terug op de basis.
+  - de_archivaris = ELITE → meerdere poses: <id>_attack + <id>_hit + <id>_death + <id>_cast
+    (z'n dossier BIJWERKEN) + optioneel <id>_block (zich indekken achter opgestapelde dossiers).
+  Zelfde wezen + stijl + kijkrichting (LINKS) + transparant; verander alleen de "Pose:"-regel.
 ```
 
 ### Bouw-data vijanden (voor `data.js VIJANDEN`, in het kopieerhel-blok)

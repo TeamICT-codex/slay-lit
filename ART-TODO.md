@@ -35,6 +35,11 @@
 
 ## 🥈 PRIORITEIT 2 — Kopieerhel-vijanden (Act 2-roster) → `assets/karakters/<id>.png`
 
+> **Poses (zelfde conventie als Act 1):** gewone vijanden = minstens een `_death`-pose;
+> de **elites** (`de_mal`, `de_archivaris`) + het **episch** (`het_origineel`) = meerdere
+> (`_attack`/`_hit`/`_death`/`_cast`, archivaris ook `_block`). Volledige richtlijnen staan in
+> de prompt-docs. Spawns (`doorslag_kopie`, `mal_gietsel`) hebben geen poses nodig.
+
 **Prompt in `assets/karakters/PROMPTS.txt` (sectie "ACT 2 — DE KOPIEERHEL"):**
 - [ ] `echo` — De Echo (doorschijnende duplicaten van zichzelf)
 - [ ] `doorslag` — Doorslag (carbon-copy-papierwezen)

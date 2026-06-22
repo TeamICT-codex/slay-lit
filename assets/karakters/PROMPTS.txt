@@ -342,6 +342,19 @@ isolated on a fully TRANSPARENT background, no ground/shadow/text/
 frame/UI, fills ~90% van een 1024x1024 canvas. THEMA = NAMAAK/KOPIE:
 alles voelt gedupliceerd, gespiegeld, doorgedrukt, niet-origineel.
 
+POSE-STATES (zelfde conventie als Act 1 — optioneel, maar maakt ze levend):
+- GEWONE vijanden → maak minstens <id>_death (de sterf-pose). Attack/hit vallen terug op de
+  basis, dus _death alléén volstaat (precies zoals de Act 1-vijanden: enkel een death-pose).
+  _death-richtlijn: het wezen valt/desintegreert, themabewust — een kopie die uiteenvalt,
+  bladzijden/inkt/spiegelscherven die verstrooien en DOF worden.
+- ELITES (de_mal, de_archivaris) + het EPISCHE (het_origineel) → MEERDERE poses, net als de
+  Act 1-elites: <id>_attack + <id>_hit + <id>_death + <id>_cast (de_archivaris ook _block).
+  Zelfde wezen + stijl + kijkrichting (LINKS) + transparant; verander alleen de "Pose:"-regel:
+    _attack — uithalen naar links;  _hit — terugdeinzen van een klap;  _death — vallen/uiteenvallen;
+    _cast  — zijn 'maak'-moment (de_mal PERST een gietsel uit; de_archivaris WERKT z'n dossier bij);
+    _block (de_archivaris) — zich indekken achter opgestapelde dossiers.
+- Spawns (doorslag_kopie, mal_gietsel) mogen emoji/alleen-basis blijven — geen poses nodig.
+
 echo.png         a ghostly humanoid made of overlapping translucent
                  duplicates of itself, each layer slightly offset like
                  a visual echo / after-image, faintly glowing edges —
