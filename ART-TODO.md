@@ -17,7 +17,8 @@
 ## 🥇 PRIORITEIT 1 — De centrale stukken (grootste impact)
 
 ### Copycat-eindbaas
-- [ ] `assets/karakters/de_erfprins.png` — The Copycat / De Erfprins  ·  **prompt:** `assets/karakters/PROMPTS.txt` (blok `de_erfprins.png`)
+- [ ] `assets/karakters/de_erfprins.png` — **combat-figuur: UITGESNEDEN op transparante achtergrond** (geen scène!)  ·  **prompt:** `assets/karakters/PROMPTS.txt` (blok `de_erfprins.png`)
+- [ ] `assets/karakters/de_erfprins_intro.png` — **intro-splash: VOLLE SCÈNE** (de mooie scène-versie, mét achtergrond/spiegel-kopieën). Verschijnt **als speelkaart** in de boss-intro (al ingebouwd). Pijplijn: **alleen WebP, géén dambord-verwijdering.**
 
 ### Drops — de hele set (companion)  ·  **prompt:** `assets/metgezellen/PROMPTS.txt`
 *Genereer de basis eerst, dan de poses in DEZELFDE sessie (zelfde hond, alleen de "Pose:"-regel anders).*

@@ -1806,14 +1806,38 @@ function toonBaasIntro(g) {
   if (!b) return;
   const el = document.createElement('div');
   el.id = 'baas-intro';
-  el.innerHTML = `<div class="baas-intro-binnen">
-    <small>Act ${huidigeAct()} — ${ACT_NAMEN[huidigeAct()] || 'De Diepte'}</small>
-    <h1>${b.naam}</h1>
-    <span>${VIJANDEN[b.id].titel || ''}</span>
-  </div>`;
+  const isErf = (b.id === 'de_erfprins');
+  if (isErf) {
+    /* THE COPYCAT presenteert zichzelf als een SPEELKAART — de enige die hij nooit
+       hoefde te stelen. De volle introplaat (assets/karakters/de_erfprins_intro) zit
+       in het kaart-frame; emoji-terugval tot de art bestaat. */
+    el.classList.add('baas-intro-erfprins');
+    el.innerHTML = `<div class="baas-intro-binnen bik-wrap">
+      <small>Act ${huidigeAct()} — ${ACT_NAMEN[huidigeAct()] || 'Het Archief'}</small>
+      <div class="bik-kaart">
+        <div class="bik-tag">ORIGINEEL · GESTOLEN · GEPERFECTIONEERD</div>
+        <div class="bik-art">🃏</div>
+        <div class="bik-naam">${b.naam}</div>
+        <div class="bik-titel">${VIJANDEN[b.id].titel || ''}</div>
+        <div class="bik-flavor">„De enige kaart die hij nooit hoefde te stelen — zichzelf."</div>
+      </div>
+    </div>`;
+  } else {
+    el.innerHTML = `<div class="baas-intro-binnen">
+      <small>Act ${huidigeAct()} — ${ACT_NAMEN[huidigeAct()] || 'De Diepte'}</small>
+      <h1>${b.naam}</h1>
+      <span>${VIJANDEN[b.id].titel || ''}</span>
+    </div>`;
+  }
   $('#scherm-gevecht').appendChild(el);
-  /* de baas doemt groot op en zakt naar zijn gevechtsmaat (CSS .baas-onthuld) */
-  const baasArt = document.querySelector('#scherm-gevecht .is-baas .vijand-art');
+  if (isErf && window.laadKarakterAfbeelding) {
+    laadKarakterAfbeelding('de_erfprins_intro', img => {
+      const bik = el.querySelector('.bik-art');
+      if (img && bik) { bik.style.backgroundImage = `url("${img.src}")`; bik.textContent = ''; bik.classList.add('heeft-art'); }
+    });
+  }
+  /* de baas doemt groot op en zakt naar zijn gevechtsmaat — niet bij de Erfprins (de KAART is de onthulling) */
+  const baasArt = isErf ? null : document.querySelector('#scherm-gevecht .is-baas .vijand-art');
   if (baasArt) {
     baasArt.classList.remove('baas-onthuld'); void baasArt.offsetWidth;
     baasArt.classList.add('baas-onthuld');
