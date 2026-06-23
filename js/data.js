@@ -1531,6 +1531,26 @@ const EVENTS = [
     ]
   },
   {
+    id: 'vonkaltaar', titel: 'Het Vonkaltaar', icoon: '🪔', liggend: true,
+    /* liggend:true → het kaartkiezen speelt liggend (anders dekt de portret-draaiprompt het af) */
+    tekst: 'Op een laag altaar brandt een vlam die geen hout verteert — koud-blauw aan de randen, hongerig in haar hart. „Leg iets van jezelf erin," sist de hitte, „en ik brand er mijn aard in. Wélke aard? Dat beslist de vlam — niet jij."',
+    opties: [
+      {
+        label: 'Leg een kaart in de vlam', hint: 'De vlam is grillig — niemand weet of ze schenkt of vreet.',
+        kan: () => S.dek.some(c => !c.vonk && KAARTEN[c.id] && KAARTEN[c.id].kost !== null),
+        reden: () => 'Geen kaart vat nog vlam (alles gebrandmerkt of onspeelbaar).',
+        doe: () => { vonkAltaarKies(false); return null; }
+      },
+      {
+        label: 'Voed eerst de vlam (−25 licht)', detail: 'Offer 25 fakkellicht; de vlam wordt milder gestemd — vaker Heldering, zelden een dud.',
+        kan: () => S.fakkel >= 25 && S.dek.some(c => !c.vonk && KAARTEN[c.id] && KAARTEN[c.id].kost !== null),
+        reden: () => S.fakkel < 25 ? 'Je fakkel heeft te weinig licht (min. 25).' : 'Geen kaart vat nog vlam.',
+        doe: () => { vonkAltaarKies(true); return null; }
+      },
+      { label: 'Loop door', detail: 'Je laat de vlam met rust.', doe: () => 'Je laat de vlam likken aan de leegte. Sommige gokken sla je beter over.' }
+    ]
+  },
+  {
     id: 'kist', titel: 'De Verdachte Kist', icoon: '🧰',
     tekst: 'Midden in de gang staat een kist. Zomaar. Niemand laat zomaar een kist achter in een kerker vol monsters... toch?',
     opties: [

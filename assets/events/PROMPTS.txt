@@ -32,6 +32,15 @@ smid.png
   cave, hammer resting on an anvil, sparks drifting, weapon racks
   in the shadows behind him.
 
+vonkaltaar.png
+  Scene: a low ancient stone shrine-altar in a dark cavern, a single
+  flame burning above it that consumes no fuel — cold blue at its
+  edges, hungry white-gold at its heart, casting flickering light on
+  worn carved runes; faint embers and sparks drifting upward, no
+  blacksmith, no figure — just the eerie living flame waiting. Mysterious,
+  sacred, slightly ominous (a gamble of fire). Keep the flame vertically
+  centered.
+
 kist.png
   Scene: a single ornate wooden chest standing suspiciously alone
   in the middle of a torchlit dungeon corridor, faint scratch

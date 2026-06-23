@@ -177,6 +177,7 @@ Codex.bestDiepte = Object.fromEntries(Object.entries(Codex.bestDiepte || {}).fil
 if (!Array.isArray(Codex.metgezellen)) Codex.metgezellen = [];   /* migratie: oude codex mist deze sleutel */
 if (!Array.isArray(Codex.gevallen)) Codex.gevallen = [];         /* metgezellen die zich opofferden (gedenkplek) */
 Codex.dropsZaadjeNul = !!Codex.dropsZaadjeNul;                    /* grief: is het 'zaadje-nul'-vonkje (eerste doof ná Drops' dood) al ooit getoond? */
+Codex.dropsOfferRun = Math.max(0, +Codex.dropsOfferRun || 0);    /* ijkpunt Drops-de-Witte-grief-gate: numeriek klemmen (corrupte save mag de reünie niet blokkeren) */
 /* het Metgezel-Mysterie: per-metgezel voortgang (scherven/rijp/voltooid) + baas-teller */
 if (typeof Codex.mysteries !== 'object' || !Codex.mysteries || Array.isArray(Codex.mysteries)) Codex.mysteries = {};
 Codex.erfprinsOntmoetingen = Math.max(0, +Codex.erfprinsOntmoetingen || 0);
@@ -447,6 +448,11 @@ function kkost(c) {
   if ((def.licht || def.vuur) && heeftRelikwie('levend_vuur')) return Math.max(0, k - 1);
   return k;
 }
+/* VONK-ENTING (het Vonkaltaar): per-kaart fakkelkracht. c.vonk > 0 = Heldering
+   (+licht bij spelen), c.vonk < 0 = Verduistering (verbrandt licht + geeft Blok).
+   Magnitude per |niveau|. Defensief geklemd tegen een getamperde save. */
+const VONK_BEDRAG = { 1: 5, 2: 9 };
+const vonkBedrag = c => (c && c.vonk) ? (VONK_BEDRAG[Math.min(2, Math.abs(c.vonk))] || 0) : 0;
 
 function inGevecht() { return S && S.gevecht && !S.gevecht.voorbij; }
 function sp() { return S.gevecht.speler; }
@@ -626,6 +632,22 @@ function verbrandLicht(n) {
   if (inGevecht() && heeftRelikwie('zwarte_kaars')) geefBlok(sp(), n);
   /* Vuurvreter: de vlam spuwt de pijn door naar alle vijanden */
   if (inGevecht() && heeftRelikwie('vuurvreter')) alleVijanden().forEach(v => verliesHp(v, 2));
+}
+
+/* VONK-ENTING: een via het Vonkaltaar gebrandmerkte kaart raakt de fakkel bij elke
+   beurt dat ze gespeeld wordt. Heldering schenkt licht (heldere builds); Verduistering
+   verbrandt licht (triggert dark-relikwieen + jaagt naar gedoofd) maar hardt je met Blok. */
+function pasVonkToe(c) {
+  if (!c || !c.vonk || !inGevecht()) return;
+  const n = vonkBedrag(c);
+  if (!n) return;
+  if (c.vonk > 0) {
+    zetFakkel(n);                                          /* Heldering: +fakkellicht */
+    fxNummer($('#speler-zone') || $('#topbalk'), '🔥+' + n, 'fx-buff');
+  } else {
+    verbrandLicht(n);                                     /* Verduistering: verbrand licht (incl. dark-relic-haken) */
+    geefBlok(sp(), n);                                    /* ...maar het donker hardt je */
+  }
 }
 
 /* ---------- fluistertekst: stemmen uit de diepte ----------
@@ -887,7 +909,10 @@ function verliesHp(doel, n, bron) {
   const el = actorEl(doel);
   if (el) { el.classList.remove('raak'); void el.offsetWidth; el.classList.add('raak'); }
   if (doel.isMetgezel) {
-    doel.hp = Math.max(0, doel.hp - n);
+    /* Drops de Witte is al door de dood gegaan: hij sterft/vlucht niet meer (kaarttekst-
+       belofte + blind-immuniteit). Klem hem op minimaal 1 HP zodat de vlucht-tak nooit vuurt. */
+    const bodem = doel.id === 'drops_wit' ? 1 : 0;
+    doel.hp = Math.max(bodem, doel.hp - n);
     if (S.metgezel) S.metgezel.hp = doel.hp;
     if (doel.hp <= 0 && !doel.dood) { doel.dood = true; metgezelVlucht(doel); }
     return;
@@ -1832,7 +1857,10 @@ function startGevecht(samenstelling, soort, rij) {
   /* Het Metgezel-Mysterie: de Erfprins-ontmoeting telt mee (cross-run escalatie)
      en levert gegarandeerd de baas-scherf — zo is zelfs een verloren run progressie. */
   if (soort === 'baas' && g.vijanden.some(v => v.id === 'de_erfprins')) {
-    if (!S.daily) { Codex.erfprinsOntmoetingen = (Codex.erfprinsOntmoetingen || 0) + 1; bewaarCodex(); }
+    /* teller NIET meer daily-gated: de scherven + de finale unlock vuren óók in daily
+       (noteerScherf/checkDropsOntwaak hebben geen daily-gate), dus moet de orakel-
+       escalatie consistent meelopen — anders blijft de doof-rite-hint in daily op idx 0. */
+    Codex.erfprinsOntmoetingen = (Codex.erfprinsOntmoetingen || 0) + 1; bewaarCodex();
     noteerScherf('drops', 'drops_baas');
   }
   if (soort === 'baas') misschienBaasIntro(g);   /* enkel als het slagveld zichtbaar is (niet achter de draai-prompt) */
@@ -2372,7 +2400,12 @@ function toonCodex() {
   const relOntdekt = rels.filter(r => Codex.relikwieen.includes(r)).length;
   const dranks = Object.keys(DRANKEN);
   const drOntdekt = dranks.filter(d => Codex.dranken.includes(d)).length;
-  const mgs = Object.keys(METGEZELLEN).filter(id => id !== 'drops_wit').sort((a, b) =>   /* drops_wit = variant van 'drops', geen apart slot */
+  /* alleen DAADWERKELIJK vrijspeelbare metgezellen tellen mee: drops_wit is een variant van
+     'drops' (geen apart slot), en vlamwachter/mosgeest bestaan wel in METGEZELLEN maar hebben
+     (nog) geen mysterie/bron → ze nooit meetellen, anders is de Codex onafmaakbaar (100%
+     onbereikbaar). Voeg een id toe aan VRIJSPEELBARE_MG zodra zijn unlock-bron bestaat. */
+  const VRIJSPEELBARE_MG = new Set(['drops']);
+  const mgs = Object.keys(METGEZELLEN).filter(id => VRIJSPEELBARE_MG.has(id)).sort((a, b) =>
     volgorde.indexOf(METGEZELLEN[a].zeld) - volgorde.indexOf(METGEZELLEN[b].zeld));
   const mgOntdekt = mgs.filter(m => Codex.metgezellen.includes(m)).length;
   /* loopbaan-blok: totalen + de laatste afdalingen (het opstapelende spoor) */
@@ -2709,6 +2742,7 @@ async function speelKaart(c, doel) {
       }
     }
   }
+  pasVonkToe(c);   /* het Vonkaltaar: gebrandmerkte kaart raakt de fakkel (+licht of verbrand+Blok) */
   if (def.type === 'kracht' || def.uitputten) {
     g.uitgeput.push(c);
   } else {
@@ -3345,6 +3379,7 @@ function kaartHtml(c, klikbaar) {
   return `<div class="kaart groot ktype-${def.type} zeld-${def.zeld} ${def.licht || def.vuur ? 'kaart-licht' : ''} ${klikbaar ? 'klikbaar' : ''}" data-uid="${c.uid}">
     <div class="kaart-kost">${kkost(c) === null ? '✕' : kkost(c)}</div>
     ${def.licht ? `<div class="kaart-lichtkost" data-tip="Verbrandt fakkellicht bij het spelen">🔥${kval(c, 'licht')}</div>` : ''}
+    ${c.vonk ? `<div class="kaart-vonk ${c.vonk > 0 ? 'vonk-helder' : 'vonk-duister'}" data-tip="${c.vonk > 0 ? 'Heldering: +' + vonkBedrag(c) + ' fakkellicht telkens je deze kaart speelt' : 'Verduistering: verbrandt ' + vonkBedrag(c) + ' fakkellicht bij het spelen, maar geeft je evenveel Blok'}">${c.vonk > 0 ? '🔥' : '🜂'}${vonkBedrag(c)}</div>` : ''}
     <div class="kaart-naam">${knaam(c)}</div>
     <div class="kaart-icoon" data-kicoon="${c.id}">${def.icoon}</div>
     <div class="kaart-tekst">${def.tekst(c)}</div>
@@ -3531,6 +3566,45 @@ function smeedCeremonie(c, daarna) {
       daarna && daarna();
     };
   }, 1100);
+}
+
+/* ---------- HET VONKALTAAR: brand fakkelkracht (±) in een kaart — een GOK ----------
+   Mysterieus & random: je kiest de kaart, de vlam kiest de aard. gevoed=true (25 licht
+   geofferd) kantelt de kansen naar Heldering. Seeded (willekeurig) → dailies eerlijk. */
+function vonkAltaarKies(gevoed) {
+  const kandidaten = S.dek.filter(c => !c.vonk && KAARTEN[c.id] && KAARTEN[c.id].kost !== null);
+  if (!kandidaten.length) { eventKlaar('Geen enkele kaart vat nog vlam — alles is al gebrandmerkt of te koud.'); return; }
+  toonKaartKeuze(
+    kandidaten,
+    gevoed ? 'Leg een kaart in de gevoede vlam' : 'Leg een kaart in de vlam',
+    c => vonkAltaarBrand(c, gevoed),
+    () => eventKlaar('Je trekt je hand terug van de hitte. De vlam knettert teleurgesteld na.')
+  );
+}
+function vonkAltaarBrand(c, gevoed) {
+  const ov = $('#overlay-kies'); if (ov) ov.classList.remove('open');
+  evalueerDraaiBlok();
+  if (gevoed) zetFakkel(-25);                  /* de offergave wordt pas hier betaald (geen kost bij annuleren) */
+  const r = willekeurig();
+  /* gevoed schuift de tabel naar Heldering/jackpot; blind is een echte gok */
+  const niveau = gevoed
+    ? (r < 0.24 ? 2 : r < 0.64 ? 1 : r < 0.84 ? -1 : r < 0.94 ? -2 : 0)
+    : (r < 0.10 ? 2 : r < 0.42 ? 1 : r < 0.74 ? -1 : r < 0.90 ? -2 : 0);
+  if (niveau === 0) {                          /* de dud — met een schrale troost */
+    zetFakkel(8);
+    Klank.sfx('debuff');
+    eventKlaar(`De vlam likt aan <b>${knaam(c)}</b>… en dooft sissend. Niets gebrand — de kaart blijft koud. (Je fakkel pikt nog 8 licht op uit de nagloed.)`);
+    return;
+  }
+  c.vonk = niveau;
+  saveSpel();
+  schudScherm();
+  Klank.sfx(niveau > 0 ? 'schitter' : 'smeed');
+  const n = vonkBedrag(c);
+  const tekst = niveau > 0
+    ? `🔥 De vlam <b>OMHELST</b> ${knaam(c)}! <b>Heldering${niveau === 2 ? ' (groot)' : ''}</b> — telkens je deze kaart speelt laait je fakkel <b>+${n} licht</b> op. Een geschenk voor wie in het licht vecht.`
+    : `🜂 De vlam <b>HONGERT</b> in ${knaam(c)}. <b>Verduistering${niveau === -2 ? ' (diep)' : ''}</b> — bij het spelen verbrandt ze <b>${n} licht</b>, maar geeft je <b>${n} Blok</b>. Wie het donker omarmt, wordt erdoor gehard.`;
+  eventKlaar(tekst);
 }
 
 /* ============================================================

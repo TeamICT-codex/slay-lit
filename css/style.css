@@ -1396,6 +1396,29 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   cursor: help;
 }
 
+/* Vonkaltaar-brandmerk: fakkelkracht in een kaart (Heldering = warm goud, Verduistering = koud violet) */
+.kaart-vonk {
+  position: absolute; bottom: -10px; right: -10px;
+  padding: 2px 8px;
+  border-radius: 14px;
+  font-family: 'Pirata One', serif;
+  font-size: .9rem;
+  color: #fff;
+  cursor: help;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
+}
+.kaart-vonk.vonk-helder {
+  background: radial-gradient(circle at 35% 30%, #ffe79a, #e09a2c);
+  border: 2px solid #7a4d12;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .6), 0 0 12px rgba(255, 210, 110, .6);
+}
+.kaart-vonk.vonk-duister {
+  background: radial-gradient(circle at 35% 30%, #9a7be0, #2c1a44);
+  border: 2px solid #1a0f2a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .6), 0 0 12px rgba(150, 110, 230, .55);
+}
+.kaart-focus .kaart-vonk { font-size: 1.15rem; bottom: -14px; right: -14px; }
+
 .kaart-kost {
   position: absolute; top: -10px; left: -10px;
   width: 32px; height: 32px;
