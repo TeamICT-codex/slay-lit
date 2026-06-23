@@ -3965,6 +3965,65 @@ function devSprongAct2() {
   renderKaartScherm();
 }
 
+/* ============================================================
+   DEV-SHORTCUT — DROPS-TESTCYCLUS (VOORLOPIG, weg vóór release).
+   Elke klik op het logo schakelt naar het volgende Drops-testscenario, zodat
+   de hele boog (levend → offer/dood → grief → reünie → de Witte) snel te testen
+   is zonder een echte run. Zoek 'DEV-SHORTCUT' om alles in één keer te wissen.
+   ============================================================ */
+function _devDropsFight(samenstelling, soort) {
+  if (!S) nieuwSpel('slachter');
+  if (inGevecht()) stopGevechtLus();
+  S.act = 2; S.gevecht = null;
+  startGevecht(samenstelling, soort || 'gevecht', 1);   /* startGevecht betreedt zelf het gevechtscherm */
+}
+function _devDropsReset() {
+  if (Codex.mysteries) { delete Codex.mysteries.drops; delete Codex.mysteries.drops_wit; }
+  Codex.gevallen = (Codex.gevallen || []).filter(x => x !== 'drops');
+  Codex.metgezellen = (Codex.metgezellen || []).filter(x => x !== 'drops' && x !== 'drops_wit');
+  Codex.dropsZaadjeNul = false; Codex.dropsOfferRun = 0; Codex.drops_wit_keerde = false;
+  if (S) S.metgezel = null;
+  bewaarCodex();
+}
+let _devDropsStap = 0;
+const _DEV_DROPS = [
+  () => devSprongAct2(),                                            /* 0: oud gedrag — Act 2 + mysterie rijp (dark-twist oefenen) */
+  () => {                                                           /* 1: levende Drops vs Erfprins */
+    _devDropsReset(); ontgrendelMetgezel('drops'); geefMetgezel('drops');
+    _devDropsFight(['de_erfprins'], 'baas');
+    melding('⚡ DEV 1/5 — Levende Drops vs Erfprins: test de bijt + de offer-knop (De Laatste Sprong) + de 2-beats-dood (sprong→burst)');
+  },
+  () => {                                                           /* 2: grief — silhouet + pootafdruk */
+    _devDropsReset(); Codex.gevallen = ['drops']; Codex.dropsOfferRun = 0; Codex.runs = 2; bewaarCodex();
+    _devDropsFight(['groene_slijm'], 'gevecht');
+    S.fakkel = 60; zetLichtVisueel(); renderTopbalk();
+    melding('⚡ DEV 2/5 — GRIEF: verbrand licht (een kaart) en kijk in de lege metgezel-zone → as-silhouet + wegdovende pootafdruk');
+  },
+  () => {                                                           /* 3: reünie NU (cinematic + de Witte verschijnt) */
+    _devDropsReset(); Codex.gevallen = ['drops']; Codex.dropsOfferRun = 0; Codex.runs = 2; bewaarCodex();
+    _devDropsFight(['de_erfprins'], 'baas');
+    setTimeout(() => { if (inGevecht() && S.gevecht.vijanden.some(v => v.id === 'de_erfprins' && !v.dood)) revealDropsWit(S.gevecht, 'weigering'); }, 900);
+    melding('⚡ DEV 3/5 — REÜNIE: de Witte keert direct terug (wit-flits + 3 beats + signatuur-sprong)');
+  },
+  () => {                                                           /* 4: Drops de Witte vecht mee */
+    _devDropsReset(); Codex.gevallen = ['drops']; ontgrendelMetgezel('drops'); ontgrendelMetgezel('drops_wit'); bewaarCodex();
+    geefMetgezel('drops_wit');
+    _devDropsFight(['de_erfprins'], 'baas');
+    S.fakkel = 0; zetLichtVisueel(); renderTopbalk();
+    melding('⚡ DEV 4/5 — Drops de Witte vecht mee: test de blok-negerende witklap (gedoofd = ×2) + blind-immuniteit (intent zichtbaar bij fakkel 0)');
+  },
+  () => {                                                           /* 5: reset → schone lei */
+    _devDropsReset();
+    melding('⚡ DEV 5/5 — Drops-Codex GERESET (gevallen/mysterie/Witte/zaadje weg). Volgende klik = Act 2-sprong.');
+  },
+];
+function devDropsTest() {
+  if (!S) nieuwSpel('slachter');
+  try { _DEV_DROPS[_devDropsStap % _DEV_DROPS.length](); }
+  catch (e) { melding('DEV-fout: ' + e.message); }
+  _devDropsStap++;
+}
+
 function volgendeAct(verslagenBaas) {
   S.act = huidigeAct() + 1;
   S.fakkel = 100;                 /* episch: het laatste licht van de baas → je fakkel laait op */
