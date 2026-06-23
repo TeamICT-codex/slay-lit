@@ -1061,9 +1061,18 @@ function metgezelOpoffering() {
          recht in de machine — en verwijder Drops pas DAARNA permanent. Voorheen verdween
          hij meteen (S.metgezel=null + renderGevecht), zodat je zijn offer nooit zag. */
       g.bezig = true;
-      if (window.Vista) Vista.pose(m, 'death', 2.4);
-      pose2D(m, 'death', 2.4);
+      /* 2-beats-dood (als de art bestaat): beat 1 = de SPRONG (<art>_death, nog heel),
+         beat 2 = de BURST (<art>_offer, uiteenspattend). Ontbreekt _offer, dan blijft de
+         death-pose staan — pose2D no-opt netjes op ontbrekende art. */
+      if (window.Vista) Vista.pose(m, 'death', 1.6);
+      pose2D(m, 'death', 1.6);
       schudScherm(); Klank.sfx('dood');
+      setTimeout(() => {
+        if (S.gevecht !== g || !gMet()) return;
+        if (window.Vista) Vista.pose(m, 'offer', 1.6);
+        pose2D(m, 'offer', 1.6);
+        schudScherm();
+      }, 620);
       setTimeout(() => {
         m.dood = true;
         if (S.gevecht !== g) return;
@@ -1079,7 +1088,7 @@ function metgezelOpoffering() {
         const el = actorEl(m); if (el) el.classList.add('gevlucht');
         renderGevecht();
         if (alleVijanden().length === 0) gevechtGewonnen();
-      }, 1150);
+      }, 1500);
     },
     'Offer op 🐾'
   );

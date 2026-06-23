@@ -21,17 +21,17 @@
 - [x] `assets/karakters/de_erfprins_intro.webp` — ✅ **intro-splash** (toont als speelkaart in de boss-intro)
   - [x] poses: `de_erfprins_attack` · `de_erfprins_cast` · `de_erfprins_hit` · `de_erfprins_death` + **2 plagiaat-varianten** (`de_erfprins_plagiaat` + `_plagiaat_variant` — de game wisselt ertussen). ✅ alle 8 verwerkt + geverifieerd.
 
-### Drops — de hele set (companion)  ·  **prompt:** `assets/metgezellen/PROMPTS.txt`
-*Genereer de basis eerst, dan de poses in DEZELFDE sessie (zelfde hond, alleen de "Pose:"-regel anders).*
-- [ ] `assets/metgezellen/drops.png` — basis/idle (magische **zwarte labrador**, ember-vonk in de vacht)
-- [ ] `assets/metgezellen/drops_attack.png` — de beet
-- [ ] `assets/metgezellen/drops_hit.png` — klap opvangen
-- [ ] `assets/metgezellen/drops_death.png` — De Laatste Sprong (sterft-tijdens-offer; sprong + uiteenspatten)
-- [ ] `assets/metgezellen/drops_geest.png` — spectrale geest (Codex-gedenkplek na het offer)
-- [ ] `assets/metgezellen/drops_wit.png` — **Drops de Witte** basis/idle (geascendeerd, wit-zilver, koud wit vuur) — óók het Codex-portret
-  - [ ] `drops_wit_attack.png` — de witklap (beet, wit vuur flakkert op; speelt af bij zijn beet)
-  - [ ] `drops_wit_hit.png` — klap opvangen (wit licht hapert; speelt af bij schade)
-  - [ ] `drops_wit_terugkeer.png` — **signatuur/uniek**: de sprong terug in het beeld (speelt af bij de reünie; spiegelt `drops_death`)
+### Drops — de hele set (companion)  ✅ **VERWERKT** (10 webps, dambord-gestript + geverifieerd op donker strijdveld)
+- [x] `assets/metgezellen/drops.webp` — basis/idle (magische **zwarte labrador**, ember-vonk in de vacht)
+- [x] `assets/metgezellen/drops_attack.webp` — de beet
+- [x] `assets/metgezellen/drops_hit.webp` — klap opvangen
+- [x] `assets/metgezellen/drops_death.webp` — **De Laatste Sprong, beat 1** (de sprong de machine in, nog heel)
+- [x] `assets/metgezellen/drops_offer.webp` — **beat 2** (de burst — uiteenspattend in ember-licht); de game speelt nu de **2-beats-dood** af (sprong → burst → weg)
+- [x] `assets/metgezellen/drops_geest.webp` — spectrale geest (Codex-gedenkplek na het offer) · variant in reserve (`originelen/drops_geest_variant.png`)
+- [x] `assets/metgezellen/drops_wit.webp` — **Drops de Witte** basis/idle (geascendeerd, wit-zilver, koud wit vuur) — óók het Codex-portret
+  - [x] `drops_wit_attack.webp` — de witklap (beet)
+  - [x] `drops_wit_hit.webp` — klap opvangen
+  - [x] `drops_wit_terugkeer.webp` — **signatuur** (was `drops_wit_blij`): de sprong terug in het beeld; speelt af bij de reünie
   - *(GEEN `drops_wit_death` — hij sterft niet meer)*
 
 ---
