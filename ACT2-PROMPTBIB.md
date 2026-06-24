@@ -234,8 +234,12 @@ bestaande `feniksveer`-verbruiktak.*
 ---
 
 ## 3. Vijanden (extra) — prompts
-> Append onder de bestaande kopieerhel-roster in `assets/karakters/PROMPTS.txt`. Facing
-> LEFT, ~90% van 1024x1024. `stempelaar`/`dossierwurm` = transparant. **`spiegelwachter`
+> ⚠️ **De geoptimaliseerde, canonieke prompts voor ALLE 14 kopieerhel-vijanden (incl. deze 7)
+> staan nu gebundeld in `assets/karakters/PROMPTS.txt`** (met silhouet + accentkleur +
+> mechaniek-signaal + differentiatie-tabel). Genereer dáár vanuit. Onderstaande blokken zijn
+> de oudere/kortere versies — bewaard voor de bouw-data hieronder; bij verschil wint
+> `karakters/PROMPTS.txt`.
+> Facing LEFT, ~90% van 1024x1024. `stempelaar`/`dossierwurm` = transparant. **`spiegelwachter`
 > = doorschijnend glas → EFFEN ZWARTE achtergrond** (zelfde uitzondering als echo/schaduw).
 
 ```

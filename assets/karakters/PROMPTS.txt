@@ -365,54 +365,138 @@ POSE-STATES (zelfde conventie als Act 1 — optioneel, maar maakt ze levend):
     _block (de_archivaris) — zich indekken achter opgestapelde dossiers.
 - Spawns (doorslag_kopie, mal_gietsel) mogen emoji/alleen-basis blijven — geen poses nodig.
 
-echo.png         a ghostly humanoid made of overlapping translucent
-                 duplicates of itself, each layer slightly offset like
-                 a visual echo / after-image, faintly glowing edges —
-                 no single solid form, it IS its own repetition.
+============ DE VIJANDEN — volledige, geoptimaliseerde prompts (alle 14 + 2 spawns) ============
+Begin elke prompt met het UNIEKE silhouet (niet met "a creature in the archive"). Koud
+Archief-palet + warme ember-rand + transparant + facing LEFT (zie de kop hierboven). De
+mechaniek-signalen tussen haakjes mag je in beeld brengen zodat de vijand z'n zet "leest".
+NB: de ember-rand is een DUNNE warme rand; het lichaam blijft KOUD — behalve de_mal (gloeiend
+oranje) en het_origineel (goud-karmozijn), die zijn warm doorheen. echo + spiegelwachter = op
+EFFEN ZWARTE bg → die twee krijgen een aparte alpha-verwerking (donkere/glazige randen niet
+wegknippen). Houd elk wezen mét marge in het frame (geen wezen dat tot alle randen volloopt).
 
-doorslag.png     a creature like a stack of carbon-copy paper given
-                 life: a flat papery humanoid in smudged ink-blue and
-                 grey, edges like torn duplicate sheets, one half a
-                 faded carbon copy of the other. Bureaucratic, hollow.
+--- echo.png   (De Echo — herhaalt telkens zijn vorige zet) ---
+  A ghostly humanoid with NO single solid body — it IS its own repetition: three or four
+  translucent duplicate silhouettes of the SAME figure stacked and slightly OFFSET like a
+  frozen after-image / motion-blur, each layer fainter than the last, edges glowing faint
+  VIOLET-WHITE. You can't tell which layer is the "real" one. Reaching forward, the echo-
+  layers trailing behind the gesture. Made of cold light, not flesh.
+  Accent: violet-white after-image glow on near-transparent layers.
+  (Doorschijnend → mag op EFFEN ZWARTE achtergrond als transparantie lastig is.)
 
-doorslag_kopie.png  (gespawnde zwakke kopie) hetzelfde figuur maar bleek,
-                 vervaagd en half-transparant — een versleten tweedehands
-                 kopie, zichtbaar zwakker en dunner.
+--- doorslag.png   (Doorslag — splitst onder 50% HP in een zwakkere kopie) ---
+  A flat, PAPERY humanoid like a living sheet of carbon-copy paper given form: thin, almost
+  two-dimensional, edges torn and frayed like duplicate sheets peeling apart. One half of
+  him is a crisp inked figure, the OTHER half a faded, smudged CARBON COPY of that same half
+  (asymmetric: original vs duplicate). Hollow, flimsy, bureaucratic.
+  Accent: smudged ink-BLUE + carbon-grey, torn duplicate-sheet edges.
 
-naaper.png       a mocking ape-imp mid-imitation: a wiry dark monkey-
-                 demon pulling a face / mirroring a pose, too-wide grin.
-                 Mischievous, derivative, never original.
+--- doorslag_kopie.png   (spawn — de afgesplitste zwakke kopie; geen poses nodig) ---
+  The same papery figure but BLEACHED and thinner — a worn, second-hand carbon copy, visibly
+  weaker, paler and more transparent than doorslag, the ink almost rubbed away.
 
-inktklerk.png    a gaunt clerk-creature dripping black ink, clutching an
-                 oversized rubber stamp, ink-stained robes, a face like a
-                 smeared duplicate; little stamped copy-marks float around
-                 it. Cold, bureaucratic menace.
+--- naaper.png   (De Naäper — kopieert jouw Kracht) ---
+  The only beastly/organic enemy: a wiry dark monkey-DEMON imp caught MID-MIMICRY — scrawny,
+  long-limbed, matted dark fur, an exaggerated MOCKING face, a too-wide grin full of teeth. With
+  one cupped hand it SCOOPS a glowing golden muscular ARM / a stolen bicep of light off an unseen
+  hero and is flexing that stolen muscle onto its own scrawny limb (your KRACHT, visibly stolen),
+  aping a strongman pose. Mischievous, derivative, never original.
+  Accent: dark fur + sickly-YELLOW grin and eyes + the ONE stolen golden muscle-glow.
 
-de_mal.png       (elite) a hulking iron casting-mould / printing-press
-                 creature: a heavy industrial matrix with a hollow mould-
-                 cavity in its chest dripping molten copies, half-formed
-                 duplicate bodies oozing out. Massive, relentless — a
-                 factory of fakes.
+--- inktklerk.png   (Inktklerk — drukt Zwak op je met natte inkt) ---
+  A gaunt CLERK-creature utterly DRENCHED and DRIPPING — glossy black ink pours off his sleeves,
+  chin, hem and fingertips and pools at his feet (the WET one; NO rubber stamp — that tool is
+  the Stempelaar's). He marks you with a bare ink-soaked HAND, leaving smeared black hand-prints
+  and running "weak"-blots in the air; his robes are sodden, his face a smeared over-printed form
+  with features RUNNING like wet ink. Hunched, fluid, half-melting. Cold, inky menace.
+  Accent: glossy BLACK ink, everything dripping and running WET (bone-dry nowhere).
 
-mal_gietsel.png  (gespawnd door De Mal) a small half-formed blank cast: a
-                 featureless hollow humanoid, faceless and smooth, fresh
-                 and unfinished straight from the mould, pale CLAY/WAX-white.
+--- de_mal.png   (ELITE — De Mal: baart blanco gietsels (mal_gietsel)) ---
+  A hulking IRON casting-mould / printing-press creature — a massive industrial matrix with a
+  hollow mould-CAVITY in its chest glowing MOLTEN ORANGE, half-formed duplicate bodies oozing
+  and dripping out of the cavity, heavy riveted black-iron limbs like a press. The only HOT,
+  industrial enemy. Massive, relentless — a factory of fakes.
+  Accent: molten ORANGE glow in the mould-cavity + heavy black iron.
+  (Elite → meer poses; _cast = PERST zichtbaar een gietsel uit de borst-holte.)
 
-het_origineel.png  (EPISCH — de baas-tier vijand "Het Origineel": het ENE ware
-                 origineel waar heel het Archief z'n kopieën van aftrok, en het
-                 houdt vol dat JIJ de kopie bent) a tall, regal, hyper-VIVID
-                 archetypal humanoid — the ONE fully SATURATED, warmly lit being
-                 in a world of cold grey fakes: rich GOLD-AND-CRIMSON, sharp and
-                 perfect, more real and solid than anything around it, holding a
-                 glowing master seal-of-origin / a radiant source-quill. From its
-                 silhouette PALE washed-out grey duplicate copies of ITSELF peel
-                 away and bleed off into the cold dark behind, each fainter and
-                 more lifeless than the last. Radiant, arrogant, archetypal — it
-                 BLAZES warm against the cold. (episch → meer poses, zie POSE-STATES.)
+--- mal_gietsel.png   (spawn — vers blanco gietsel; geen poses nodig) ---
+  A small half-formed BLANK cast: a featureless, faceless, smooth hollow humanoid, pale
+  CLAY/WAX-white, soft and unfinished, fresh straight from the mould.
 
-EXTRA ACT 2-VIJANDEN (7) in ACT2-PROMPTBIB.md (repo-root), sectie "3. Vijanden":
-stempelaar, dossierwurm, spiegelwachter, de_deadline, de_inktvlek, de_redacteur,
-de_archivaris (elite). (spiegelwachter = glas → genereren op EFFEN ZWARTE achtergrond.)
+--- het_origineel.png   (EPISCH — Het Origineel: "jij bent een kopie van MIJ"; kaatst jouw klap terug) ---
+  The ONE true Original from which the whole Archive's copies derive — and it insists YOU are
+  the copy. A tall, regal, hyper-VIVID archetypal humanoid: the ONLY fully SATURATED, warmly-
+  lit being in a world of cold grey fakes — rich GOLD-and-CRIMSON, sharp, perfect, more real
+  and solid than anything around it, holding a glowing master seal-of-origin / a radiant
+  source-quill. From its silhouette PALE washed-out grey duplicates of ITSELF peel away and
+  bleed into the cold dark, each fainter and more lifeless than the last. One open palm is RAISED,
+  throwing an incoming blow back as a washed-out grey echo (it reflects your strike). Radiant,
+  arrogant, archetypal — it BLAZES warm against the cold.
+  Accent: GOLD-and-crimson, warm and saturated (the unique warm one). (Episch → meer poses.)
+
+--- stempelaar.png   (De Stempelaar — drukt Kwetsbaar in je) ---
+  A clerk-CONSTRUCT whose entire right ARM is REPLACED by a tall mechanical BRASS-and-iron
+  APPROVAL-STAMP column (no hand at all) — RIGID, machine-like, STIFF and BONE-DRY (where the
+  Inktklerk drips, this one is dry and hard). Hunched grey, ink-stained parchment robes hung
+  with RED wax seals and dangling carbon-copy slips, a flat smudged face like an over-printed
+  form, the heavy brass stamp-head RAISED high to slam down, identical duplicated stamp-marks
+  floating around it. Accent: BRASS stamp-arm + RED wax seals; rigid, dry, mechanical.
+
+--- dossierwurm.png   (De Dossierwurm — rolt in: +Kracht +Doornen) ---
+  The only non-humanoid, snake-like silhouette: a long SEGMENTED archive-WORM built from
+  hundreds of stacked bone-YELLOW dossier-sheets and curled parchment scrolls bound with RED
+  string and wax seals, sharp torn paper-EDGES along its flanks like blades (its Doornen), a
+  blunt eyeless head of crumpled rolled documents with a circular ink-stained maw, rusted
+  index-tabs jutting from each segment, REARING up to bite. Cold light glows between the pages.
+  Accent: bone-YELLOW parchment + red string + bladed paper edges.
+
+--- spiegelwachter.png   (De Spiegelwachter — kaatst jouw schade terug · GLAS → EFFEN ZWARTE achtergrond) ---
+  A tall sentinel of polished black MIRROR-GLASS shaped like a faceless armoured guardian, its
+  surface a dark reflective pane throwing back warped COLD reflections of an unseen attacker
+  (you), a cold blow visibly RICOCHETING off its mirror surface back toward the viewer, hairline
+  CRACKS webbing across its chest, shards of broken mirror orbiting it — each shard showing a
+  different STOLEN pose — a single cold blue-grey glow behind the glass where a face should be,
+  sharp glass edges. Reflective, hollow, derivative.
+  Accent: black mirror-glass + cold reflections. NB: glas → genereer op EFFEN ZWARTE achtergrond.
+
+--- de_deadline.png   (De Deadline — escaleert elke beurt: tijdsdruk) ---
+  A gaunt CLOCK-TOWER creature looming with time-pressure: a tall, hunched figure whose TORSO
+  is a cracked iron HOURGLASS whose black SAND is piling HIGHER and overflowing, CLOCK-HANDS for
+  fingers, a face of a stopped clock with overdue-red numerals CLIMBING and multiplying, frayed
+  CALENDAR pages and overdue RED stamps fluttering off it, rusted gears and chains — it seems to
+  swell taller each turn (escalation). Relentless, oppressive — time running out.
+  Accent: black sand + overdue-RED stamps + clock-faces. (Uniek silhouet: de hoge zandloper/klok-toren.)
+
+--- de_inktvlek.png   (De Inktvlek — gif) ---
+  The only LOW, formless, puddle-shaped enemy: a crawling ink-blot OOZE given malice — a
+  CONTAINED blot of glistening black-and-sickly-GREEN ink gathered into one reaching, half-shaped
+  limb (clear empty margin around it — NOT bleeding to the frame edges, for a clean cut-out
+  contour), dripping corrosive droplets, smeared dissolving SIGNATURES and half-drowned letters
+  floating in its body, cold light on the wet sheen. Corrosive, derivative.
+  Accent: black + sickly-GREEN (poison).
+
+--- de_redacteur.png   (De Redacteur — strijkt je Blok weg) ---
+  A stern CENSOR-construct, upright and rigid, in a tight BANDED censor-uniform (NOT dripping
+  clerical robes): one hand a giant pair of black REDACTION-SHEARS caught MID-CUT slicing
+  through a translucent BLUE SHIELD-shape (cutting your Blok away), the other holding a fan of
+  blacked-out documents; its OWN face is half blacked-out behind heavy REDACTION BARS, strips of
+  censored/cut paper hanging off it. Cold, controlling, surgical.
+  Accent: BLACK redaction-bars + white censored strips + shears cutting a blue shield.
+  (≠ andere klerken: scherp, gecensureerd, schaar-handig — droog, geen inktdruip.)
+
+--- de_archivaris.png   (2e ELITE — De Archivaris: compoundt Kracht, "vergeet niets") ---
+  The BIGGEST enemy — a colossal, towering head-archivist whose FULL figure still fits within the
+  frame with clear margin: a tall robed figure buried under and fused with an entire MOUNTAIN of
+  tagged bone-files and ledgers growing from its back and shoulders like a landslide, stacked
+  SPECTACLES piled over its eyes. In one arm an enormous open LEDGER (chained to it) in which new
+  entries write themselves; the other hand clutches a fistful of glowing index-TAGS (NO stamp —
+  that's the Stempelaar's). The files on its back GLOW brighter one by one as it "remembers" — a
+  visible build-up of lit seals climbing higher (it compounds each turn). Inevitable, all-
+  remembering — the bureaucracy made flesh.
+  Accent: bone-grey file-mountain, TOWERING but framed with margin; the climbing glow = it compounds.
+  (Elite → meer poses + _block = zich indekken achter opgestapelde dossiers.)
+
+(De bouw-data/HP/zetten van de 7 'extra' vijanden — stempelaar t/m de_archivaris — staan in
+ACT2-PROMPTBIB.md §3; de prompts hierboven zijn de canonieke bron.)
 
 ================ DIFFERENTIATIE-TABEL (eigen silhouet + accentkleur per wezen) ================
 Houd deze uit elkaar — zelfde koud Archief-palet + warme ember-rand, maar elk een
