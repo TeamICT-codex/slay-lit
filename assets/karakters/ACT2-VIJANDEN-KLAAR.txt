@@ -1,0 +1,206 @@
+ACT 2 — DE KOPIEERHEL · GENEREER-KLARE VIJAND-PROMPTS
+======================================================
+Eén zelfstandig blok per wezen: de stijl-prefix zit er al IN, plus de pose-set
++ death-flavor. Kopieer gewoon één heel blok in je generator. Volgorde per wezen:
+maak de BASIS, en in DEZELFDE sessie (zelfde wezen, alleen de "Pose:"-regel anders)
+de poses. Bestandsnaam = exact de id (bv. echo.png, echo_death.png).
+
+PIJPLIJN: cut-outs → dambord-pijplijn. UITZONDERINGEN: echo + spiegelwachter staan
+op EFFEN ZWARTE achtergrond (doorschijnend/glas) → aparte verwerking.
+Volledige bron + differentiatie-tabel: zie PROMPTS.txt (deze blokken zijn identiek).
+
+
+████████ 1. ECHO — De Echo (herhaalt zijn vorige zet) · GEWOON ████████
+Painterly dark-fantasy concept art, no photo / no 3D render, expressive brushwork. Single full-body
+creature facing LEFT on a plain solid BLACK background (translucent figure — no transparency), fills
+~90% of a 1024x1024 canvas with margin. Cold blue-grey Archief "system light" + a thin warm ember rim.
+Theme: forgery/copy.
+Character: a ghostly humanoid with NO single solid body — three or four translucent duplicate
+silhouettes of the SAME figure stacked and slightly OFFSET like a frozen after-image, each layer
+fainter, edges glowing faint VIOLET-WHITE; made of cold light, not flesh. You can't tell which layer
+is the real one.
+  echo (basis)  — Pose: reaching forward, the echo-layers trailing behind the gesture.
+  echo_death    — Pose: the offset after-image layers peel apart and wink out one by one into nothing.
+
+
+████████ 2. DOORSLAG — Doorslag (splitst <50% HP in doorslag_kopie) · GEWOON ████████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+facing LEFT, isolated on a fully TRANSPARENT background (no ground/shadow/text/frame), ~90% of a
+1024x1024 canvas with margin. Cold blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
+Character: a flat, almost two-dimensional PAPERY humanoid like a living sheet of carbon-copy paper,
+edges torn and frayed like duplicate sheets peeling apart; one half a crisp inked figure, the OTHER
+half a faded, smudged CARBON COPY of that same half (asymmetric). Smudged ink-BLUE + carbon-grey,
+hollow and flimsy.
+  doorslag (basis) — Pose: standing stiff, half-peeling apart.
+  doorslag_death   — Pose: the flat paper body tears down the middle and crumples; the carbon-half smears away into a grey blot.
+
+
+████████ 3. NAAPER — De Naäper (kopieert jouw Kracht) · GEWOON ████████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
+blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
+Character: the only beastly/organic enemy — a wiry dark monkey-DEMON imp, scrawny, long-limbed, matted
+dark fur, an exaggerated MOCKING face with a too-wide grin full of teeth and sickly-YELLOW grin/eyes.
+With one cupped hand it SCOOPS a glowing golden muscular ARM / a stolen bicep of light off an unseen
+hero and flexes that stolen muscle onto its own scrawny limb (your strength, visibly stolen).
+  naaper (basis) — Pose: mid-mimicry, aping a flexed strongman pose with the stolen golden muscle.
+  naaper_death   — Pose: the stolen golden muscle evaporates; the scrawny imp collapses, deflated.
+
+
+████████ 4. INKTKLERK — Inktklerk (stempelt Zwak, nat) · GEWOON ████████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
+blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
+Character: a gaunt CLERK-creature utterly DRENCHED and DRIPPING — glossy black ink pours off his
+sleeves, chin, hem and fingertips and pools at his feet (NO stamp tool). He marks you with a bare
+ink-soaked HAND, leaving smeared black hand-prints; his face is a smeared over-printed form with
+features RUNNING like wet ink. Hunched, fluid, half-melting. Glossy BLACK ink everywhere, all WET.
+  inktklerk (basis) — Pose: hunched, reaching out a dripping ink-soaked hand to mark you.
+  inktklerk_death   — Pose: melts away into a spreading black ink-puddle, his face running off.
+
+
+████████ 5. STEMPELAAR — De Stempelaar (drukt Kwetsbaar in je) · GEWOON ████████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
+blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
+Character: a clerk-CONSTRUCT whose entire right ARM is REPLACED by a tall mechanical BRASS-and-iron
+APPROVAL-STAMP column (no hand at all) — RIGID, machine-like, STIFF and BONE-DRY. Hunched grey,
+ink-stained parchment robes hung with RED wax seals and dangling carbon-copy slips, a flat smudged
+over-printed face. Identical duplicated stamp-marks float around it.
+  stempelaar (basis) — Pose: rigid, the heavy brass stamp-head raised high to slam down.
+  stempelaar_death   — Pose: the brass stamp-arm snaps off; the body folds flat shut like an over-stamped form.
+
+
+████████ 6. DOSSIERWURM — De Dossierwurm (rolt in: +Kracht +Doornen) · GEWOON ████████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
+blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
+Character: the only non-humanoid, snake-like silhouette — a long SEGMENTED archive-WORM built from
+hundreds of stacked bone-YELLOW dossier-sheets and curled parchment scrolls bound with RED string and
+wax seals, sharp torn paper-EDGES along its flanks like blades, a blunt eyeless head of crumpled rolled
+documents with a circular ink-stained maw, rusted index-tabs jutting from each segment.
+  dossierwurm (basis) — Pose: rearing up coiled, ready to bite to the left.
+  dossierwurm_death   — Pose: the segments unspool, dossier-sheets scattering, the worm collapsing into a heap of loose paper.
+
+
+████████ 7. SPIEGELWACHTER — De Spiegelwachter (kaatst schade terug) · GEWOON ████████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+facing LEFT on a plain solid BLACK background (glass/reflective figure — no transparency), fills ~90%
+of a 1024x1024 canvas with margin. Cold blue-grey Archief light. Theme: forgery/copy.
+Character: a tall sentinel of polished black MIRROR-GLASS shaped like a faceless armoured guardian, its
+surface a dark reflective pane throwing back warped COLD reflections of an unseen attacker, a cold blow
+visibly RICOCHETING off its mirror surface back toward the viewer, hairline CRACKS webbing its chest,
+shards of broken mirror orbiting it — each shard showing a different stolen pose — a single cold
+blue-grey glow where a face should be.
+  spiegelwachter (basis) — Pose: sentinel stance, reflecting a blow back at the viewer.
+  spiegelwachter_death   — Pose: the mirror-glass SHATTERS into a burst of falling shards (each a stolen pose), then dark.
+
+
+████████ 8. DE_DEADLINE — De Deadline (escaleert elke beurt) · GEWOON ████████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
+blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
+Character: a gaunt, tall, hunched CLOCK-TOWER creature looming with time-pressure — its TORSO a cracked
+iron HOURGLASS whose black SAND is piling HIGHER and overflowing, CLOCK-HANDS for fingers, a face of a
+stopped clock with overdue-red numerals CLIMBING and multiplying, frayed CALENDAR pages and overdue RED
+stamps fluttering off it, rusted gears and chains. It seems to swell taller (escalation).
+  de_deadline (basis) — Pose: looming and swelling, sand overflowing.
+  de_deadline_death   — Pose: the hourglass cracks, all the black sand pours out at once, the clock-hands fall still.
+
+
+████████ 9. DE_INKTVLEK — De Inktvlek (gif) · GEWOON ████████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with CLEAR MARGIN
+(do not bleed to the frame edges). Cold blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
+Character: the only LOW, formless, puddle-shaped enemy — a CONTAINED ink-blot OOZE of glistening
+black-and-sickly-GREEN ink gathered into one reaching, half-shaped limb, dripping corrosive droplets,
+smeared dissolving SIGNATURES and half-drowned letters floating in its body, cold light on the wet sheen.
+  de_inktvlek (basis) — Pose: rising up into one reaching, dripping limb.
+  de_inktvlek_death   — Pose: the green-black ooze dries up and flakes away into a stain.
+
+
+████████ 10. DE_REDACTEUR — De Redacteur (strijkt je Blok weg) · GEWOON ████████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
+blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
+Character: a stern CENSOR-construct, upright and rigid, in a tight BANDED censor-uniform (NOT dripping
+robes): one hand a giant pair of black REDACTION-SHEARS caught MID-CUT slicing through a translucent
+BLUE SHIELD-shape (cutting your block away), the other holding a fan of blacked-out documents; its OWN
+face half blacked-out behind heavy REDACTION BARS, strips of censored/cut paper hanging off it.
+  de_redacteur (basis) — Pose: shears mid-cut through a blue shield-shape.
+  de_redacteur_death   — Pose: fully REDACTED — black bars swallow the whole figure, snipped to strips by its own shears.
+
+
+████████ 11. DE_MAL — De Mal (ELITE · baart blanco gietsels) · VOLLEDIGE POSE-SET ████████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
+blue-grey Archief surroundings BUT this creature is WARM throughout (molten). Theme: forgery/copy.
+Character: a hulking IRON casting-mould / printing-press creature — a massive industrial matrix with a
+hollow mould-CAVITY in its chest glowing MOLTEN ORANGE, half-formed duplicate bodies oozing and dripping
+out of the cavity, heavy riveted black-iron limbs like a press. Massive, relentless — a factory of fakes.
+  de_mal (basis)  — Pose: looming press, the mould-cavity glowing.
+  de_mal_attack   — Pose: slamming the heavy press down to the LEFT.
+  de_mal_hit      — Pose: recoiling, the iron cracking.
+  de_mal_cast     — Pose: PRESSING a fresh half-formed cast out of its chest-cavity.
+  de_mal_death    — Pose: the iron press tears open, the cavity goes cold and dark, half-formed casts spilling out and shattering.
+
+
+████████ 12. DE_ARCHIVARIS — De Archivaris (2e ELITE · compoundt Kracht) · VOLLEDIGE POSE-SET ████████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+facing LEFT, isolated on a fully TRANSPARENT background, fully within the frame with CLEAR MARGIN, on a
+~1024x1024 canvas. Cold blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
+Character: the BIGGEST enemy — a colossal, towering head-archivist buried under and fused with an entire
+MOUNTAIN of tagged bone-files and ledgers growing from its back and shoulders like a landslide, stacked
+SPECTACLES piled over its eyes. In one arm an enormous open LEDGER (chained to it) in which new entries
+write themselves; the other hand clutches a fistful of glowing index-TAGS. The files on its back GLOW
+brighter one by one (it compounds).
+  de_archivaris (basis) — Pose: towering, the open ledger held, tags glowing.
+  de_archivaris_attack  — Pose: bringing the heavy ledger / fistful of tags slamming down to the LEFT.
+  de_archivaris_hit     — Pose: staggering back, files sliding off the mountain.
+  de_archivaris_cast    — Pose: UPDATING its dossier — writing a new line as another tag lights up (it grows stronger).
+  de_archivaris_block   — Pose: hunkering down, shielding behind a wall of stacked dossiers.
+  de_archivaris_death   — Pose: the file-mountain landslides down and buries it, the glowing tags going dark one by one.
+
+
+████████ 13. HET_ORIGINEEL — Het Origineel (EPISCH · "jij bent de kopie") · VOLLEDIGE POSE-SET ████████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
+grey Archief surroundings BUT this being is WARM and fully SATURATED (the only one). Theme: forgery/copy.
+Character: the ONE true Original from which all the Archive's copies derive — a tall, regal, hyper-VIVID
+archetypal humanoid in rich GOLD-and-CRIMSON, sharp and perfect, more real and solid than anything
+around it, holding a glowing master seal-of-origin / a radiant source-quill; from its silhouette PALE
+washed-out grey duplicates of ITSELF peel away and bleed into the cold dark. Arrogant, archetypal, it
+BLAZES warm against the cold.
+  het_origineel (basis)  — Pose: standing regal, one open palm raised throwing a blow back as a grey echo.
+  het_origineel_attack   — Pose: striking forward to the LEFT, pale grey copies trailing the blow.
+  het_origineel_hit      — Pose: recoiling, its gold-crimson colour flickering toward grey.
+  het_origineel_cast     — Pose: peeling a fresh pale grey COPY of itself off its own body.
+  het_origineel_death    — Pose: it cracks like a mould, the gold-crimson draining to grey, its copies scattering — "even the original was just a copy."
+
+
+████████ 14. DOORSLAG_KOPIE — (spawn · geen poses nodig) ████████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
+blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
+Character: the same papery carbon-copy humanoid as Doorslag but BLEACHED and thinner — a worn,
+second-hand carbon copy, visibly weaker, paler and half-transparent, the ink almost rubbed away.
+  Pose: standing limp and faded. (spawn — geen extra poses nodig.)
+
+
+████████ 15. MAL_GIETSEL — (spawn · geen poses nodig) ████████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
+blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
+Character: a small half-formed BLANK cast — a featureless, faceless, smooth hollow humanoid, pale
+CLAY/WAX-white, soft and unfinished, fresh straight from the mould.
+  Pose: standing slack and incomplete. (spawn — geen extra poses nodig.)
+
+
+====================================================================================
+SAMENVATTING — wat te genereren (15 ids):
+  10 GEWONE → basis + _death:  echo* · doorslag · naaper · inktklerk · stempelaar ·
+              dossierwurm · spiegelwachter* · de_deadline · de_inktvlek · de_redacteur
+  2 ELITES  → volledige set:   de_mal (5) · de_archivaris (6, incl. _block)
+  1 EPISCH  → volledige set:   het_origineel (5)
+  2 SPAWNS  → enkel basis:     doorslag_kopie · mal_gietsel
+  (* echo + spiegelwachter = op EFFEN ZWARTE achtergrond)
