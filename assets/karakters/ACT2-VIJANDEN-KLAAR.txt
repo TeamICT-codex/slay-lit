@@ -5,9 +5,12 @@ Eén zelfstandig blok per wezen: de stijl-prefix zit er al IN, plus de pose-set
 maak de BASIS, en in DEZELFDE sessie (zelfde wezen, alleen de "Pose:"-regel anders)
 de poses. Bestandsnaam = exact de id (bv. echo.png, echo_death.png).
 
+De POSES zijn bewust UITVOERIG beschreven (actie-in-beweging + lichaamshouding +
+wat de props/effecten doen + uitdrukking + camerahoek) — magere pose-regels gaven
+zwakke art. Houd ze zo gedetailleerd; dat is precies wat de generator nodig heeft.
+
 PIJPLIJN: cut-outs → dambord-pijplijn. UITZONDERINGEN: echo + spiegelwachter staan
 op EFFEN ZWARTE achtergrond (doorschijnend/glas) → aparte verwerking.
-Volledige bron + differentiatie-tabel: zie PROMPTS.txt (deze blokken zijn identiek).
 
 
 ████████ 1. ECHO — De Echo (herhaalt zijn vorige zet) · GEWOON ████████
@@ -17,10 +20,16 @@ creature facing LEFT on a plain solid BLACK background (translucent figure — n
 Theme: forgery/copy.
 Character: a ghostly humanoid with NO single solid body — three or four translucent duplicate
 silhouettes of the SAME figure stacked and slightly OFFSET like a frozen after-image, each layer
-fainter, edges glowing faint VIOLET-WHITE; made of cold light, not flesh. You can't tell which layer
-is the real one.
-  echo (basis)  — Pose: reaching forward, the echo-layers trailing behind the gesture.
-  echo_death    — Pose: the offset after-image layers peel apart and wink out one by one into nothing.
+fainter, edges glowing faint VIOLET-WHITE; made of cold light, not flesh.
+  echo (basis) — Pose: caught mid-LUNGE, stepping forward and to the LEFT with one arm thrust out, and
+    the three or four offset duplicate layers fan out BEHIND the motion like a strobe-light trail — each
+    ghost-body a half-beat behind the last so the whole figure smears across the frame; the violet-white
+    edge-glow streaks with the movement, weight pitched onto the front foot, silent and eerie. Strong
+    diagonal sense of motion.
+  echo_death — Pose: the stacked after-image layers come UNSTUCK from each other and drift apart in
+    different directions like a dropped fan of cards, each translucent copy thinning and blinking out one
+    by one from the outside in, the violet glow guttering; the last faint core-layer dissolves into a few
+    drifting motes of cold light — frozen at the instant it stops being many and becomes nothing.
 
 
 ████████ 2. DOORSLAG — Doorslag (splitst <50% HP in doorslag_kopie) · GEWOON ████████
@@ -29,10 +38,15 @@ facing LEFT, isolated on a fully TRANSPARENT background (no ground/shadow/text/f
 1024x1024 canvas with margin. Cold blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: a flat, almost two-dimensional PAPERY humanoid like a living sheet of carbon-copy paper,
 edges torn and frayed like duplicate sheets peeling apart; one half a crisp inked figure, the OTHER
-half a faded, smudged CARBON COPY of that same half (asymmetric). Smudged ink-BLUE + carbon-grey,
-hollow and flimsy.
-  doorslag (basis) — Pose: standing stiff, half-peeling apart.
-  doorslag_death   — Pose: the flat paper body tears down the middle and crumples; the carbon-half smears away into a grey blot.
+half a faded, smudged CARBON COPY of that same half (asymmetric). Smudged ink-BLUE + carbon-grey.
+  doorslag (basis) — Pose: standing tall but bent and crackling like a sheet caught in a draught — the
+    crisp inked half straining forward while the smudged carbon half lags and buckles behind it, torn
+    paper-edges lifting and fluttering all along its body; one flat hand raised in a stiff bureaucratic
+    gesture, the whole body twisted just off-axis so you read its papery thinness in silhouette.
+  doorslag_death — Pose: the flat paper body TEARS straight down the middle with a violent rip, the two
+    halves crumpling and curling inward; the carbon-copy half smears and dissolves into a grey ink-blot
+    while loose torn shreds scatter and drift through the air, the inked half folding limp — a document
+    being destroyed mid-motion.
 
 
 ████████ 3. NAAPER — De Naäper (kopieert jouw Kracht) · GEWOON ████████
@@ -41,10 +55,13 @@ facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 can
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: the only beastly/organic enemy — a wiry dark monkey-DEMON imp, scrawny, long-limbed, matted
 dark fur, an exaggerated MOCKING face with a too-wide grin full of teeth and sickly-YELLOW grin/eyes.
-With one cupped hand it SCOOPS a glowing golden muscular ARM / a stolen bicep of light off an unseen
-hero and flexes that stolen muscle onto its own scrawny limb (your strength, visibly stolen).
-  naaper (basis) — Pose: mid-mimicry, aping a flexed strongman pose with the stolen golden muscle.
-  naaper_death   — Pose: the stolen golden muscle evaporates; the scrawny imp collapses, deflated.
+  naaper (basis) — Pose: crouched low and springy on its haunches mid-MIMICRY, spine arched, one cupped
+    hand SCOOPING a glowing golden muscle-arm of stolen light and slapping it onto its own scrawny bicep
+    as it puffs up into an exaggerated strongman flex; the too-wide yellow grin splitting its face, the
+    other hand mockingly mirroring an unseen hero's pose. Kinetic, off-balance, gleeful.
+  naaper_death — Pose: the stolen golden muscle suddenly EVAPORATES into a puff of sparks and — caught
+    mid-flex — the imp deflates and crumples, limbs folding like wet string, the wide grin collapsing
+    into a startled open-mouthed gape as it topples backward into a scrawny heap.
 
 
 ████████ 4. INKTKLERK — Inktklerk (stempelt Zwak, nat) · GEWOON ████████
@@ -52,11 +69,15 @@ Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Sing
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: a gaunt CLERK-creature utterly DRENCHED and DRIPPING — glossy black ink pours off his
-sleeves, chin, hem and fingertips and pools at his feet (NO stamp tool). He marks you with a bare
-ink-soaked HAND, leaving smeared black hand-prints; his face is a smeared over-printed form with
-features RUNNING like wet ink. Hunched, fluid, half-melting. Glossy BLACK ink everywhere, all WET.
-  inktklerk (basis) — Pose: hunched, reaching out a dripping ink-soaked hand to mark you.
-  inktklerk_death   — Pose: melts away into a spreading black ink-puddle, his face running off.
+sleeves, chin, hem and fingertips and pools at his feet (NO stamp tool). His face is a smeared
+over-printed form with features RUNNING like wet ink. Hunched, fluid, half-melting. All WET.
+  inktklerk (basis) — Pose: hunched and lurching one step toward you, reaching a bare ink-soaked HAND out
+    wide to press a smeared black hand-print onto you, ropes of glossy ink sheeting off his sleeve and
+    spattering the ground beneath the gesture; his over-printed face sags and runs, mouth a dripping
+    smudge, the whole posture heavy and threatening.
+  inktklerk_death — Pose: he loses all form and SLUMPS, melting straight downward into a spreading black
+    ink-puddle, his face running off his skull in sheets and his robes collapsing into the pool, one hand
+    still half-raised and dissolving away — a clerk pouring out of his own shape into a stain.
 
 
 ████████ 5. STEMPELAAR — De Stempelaar (drukt Kwetsbaar in je) · GEWOON ████████
@@ -65,10 +86,14 @@ facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 can
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: a clerk-CONSTRUCT whose entire right ARM is REPLACED by a tall mechanical BRASS-and-iron
 APPROVAL-STAMP column (no hand at all) — RIGID, machine-like, STIFF and BONE-DRY. Hunched grey,
-ink-stained parchment robes hung with RED wax seals and dangling carbon-copy slips, a flat smudged
-over-printed face. Identical duplicated stamp-marks float around it.
-  stempelaar (basis) — Pose: rigid, the heavy brass stamp-head raised high to slam down.
-  stempelaar_death   — Pose: the brass stamp-arm snaps off; the body folds flat shut like an over-stamped form.
+ink-stained parchment robes hung with RED wax seals and dangling carbon-copy slips.
+  stempelaar (basis) — Pose: rigid and machine-stiff, torso cranked back as it HOISTS the heavy brass
+    stamp-arm high overhead like a piston about to fire, the cold-glowing stamp-head poised to slam down
+    to the LEFT; red wax seals swinging from its robe, duplicated stamp-marks already puffing into the air
+    around the raised stamp. Brutal, top-heavy, about to strike.
+  stempelaar_death — Pose: the brass stamp-arm SNAPS off at the shoulder and clangs away, and the body —
+    robbed of its counterweight — folds flat shut from the bottom up like an over-stamped form crumpling
+    closed, wax seals cracking off and scattering, the smudged face creasing into the collapsing fold.
 
 
 ████████ 6. DOSSIERWURM — De Dossierwurm (rolt in: +Kracht +Doornen) · GEWOON ████████
@@ -76,11 +101,16 @@ Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Sing
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: the only non-humanoid, snake-like silhouette — a long SEGMENTED archive-WORM built from
-hundreds of stacked bone-YELLOW dossier-sheets and curled parchment scrolls bound with RED string and
-wax seals, sharp torn paper-EDGES along its flanks like blades, a blunt eyeless head of crumpled rolled
-documents with a circular ink-stained maw, rusted index-tabs jutting from each segment.
-  dossierwurm (basis) — Pose: rearing up coiled, ready to bite to the left.
-  dossierwurm_death   — Pose: the segments unspool, dossier-sheets scattering, the worm collapsing into a heap of loose paper.
+hundreds of stacked bone-YELLOW dossier-sheets and curled scrolls bound with RED string, sharp torn
+paper-EDGES along its flanks like blades, a blunt eyeless head of crumpled rolled documents with a
+circular ink-stained maw.
+  dossierwurm (basis) — Pose: reared up high and coiled into a tense S-curve, the bone-yellow segments
+    flexing and the bladed paper-edges flared out along its flanks, the document-head drawn back and the
+    circular ink-stained maw gaping WIDE to strike down to the LEFT, red binding-string snapping taut
+    along its body. Serpentine, coiled, an instant from lunging.
+  dossierwurm_death — Pose: the segments come UNSPOOLED and burst apart, hundreds of dossier-sheets and
+    torn scrolls exploding outward in a cloud of loose paper, the red string snapping and whipping loose,
+    the document-head crumpling inward — the whole worm unravelling and collapsing into a settling heap.
 
 
 ████████ 7. SPIEGELWACHTER — De Spiegelwachter (kaatst schade terug) · GEWOON ████████
@@ -88,24 +118,35 @@ Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Sing
 facing LEFT on a plain solid BLACK background (glass/reflective figure — no transparency), fills ~90%
 of a 1024x1024 canvas with margin. Cold blue-grey Archief light. Theme: forgery/copy.
 Character: a tall sentinel of polished black MIRROR-GLASS shaped like a faceless armoured guardian, its
-surface a dark reflective pane throwing back warped COLD reflections of an unseen attacker, a cold blow
-visibly RICOCHETING off its mirror surface back toward the viewer, hairline CRACKS webbing its chest,
-shards of broken mirror orbiting it — each shard showing a different stolen pose — a single cold
-blue-grey glow where a face should be.
-  spiegelwachter (basis) — Pose: sentinel stance, reflecting a blow back at the viewer.
-  spiegelwachter_death   — Pose: the mirror-glass SHATTERS into a burst of falling shards (each a stolen pose), then dark.
+surface a dark reflective pane; hairline CRACKS web its chest, shards of broken mirror orbit it — each
+shard showing a different stolen pose — a single cold blue-grey glow where a face should be.
+  spiegelwachter (basis) — Pose: planted in a wide, immovable sentinel stance, chest squared to the
+    viewer, its black mirror-surface catching and throwing back a warped cold reflection of the attacker
+    as a bright cold blow visibly RICOCHETS off its chest and streaks back toward you; the orbiting
+    mirror-shards spin a little faster, each flashing a different stolen pose, the chest-cracks glinting.
+    Impassive, defensive, lethal.
+  spiegelwachter_death — Pose: a web of cracks races across the whole figure and it SHATTERS — exploding
+    into a frozen burst of mirror-shards flung outward in every direction, each spinning splinter still
+    reflecting a different stolen pose, the cold face-glow snuffing out as the body comes apart into a
+    cloud of glittering black glass.
 
 
 ████████ 8. DE_DEADLINE — De Deadline (escaleert elke beurt) · GEWOON ████████
 Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
-Character: a gaunt, tall, hunched CLOCK-TOWER creature looming with time-pressure — its TORSO a cracked
-iron HOURGLASS whose black SAND is piling HIGHER and overflowing, CLOCK-HANDS for fingers, a face of a
-stopped clock with overdue-red numerals CLIMBING and multiplying, frayed CALENDAR pages and overdue RED
-stamps fluttering off it, rusted gears and chains. It seems to swell taller (escalation).
-  de_deadline (basis) — Pose: looming and swelling, sand overflowing.
-  de_deadline_death   — Pose: the hourglass cracks, all the black sand pours out at once, the clock-hands fall still.
+Character: a gaunt, tall, hunched CLOCK-TOWER creature — its TORSO a cracked iron HOURGLASS leaking
+black SAND, CLOCK-HANDS for fingers, a face of a stopped clock with overdue-red numerals, frayed
+CALENDAR pages and overdue RED stamps fluttering off it, rusted gears and chains.
+  de_deadline (basis) — Pose: looming tall and hunching forward as if SWELLING mid-escalation, the
+    cracked hourglass-torso overflowing with black sand that spills down its frame, clock-hand fingers
+    spread wide and reaching toward you, the stopped-clock face tilted down at you with red overdue-
+    numerals climbing; calendar pages and red overdue-stamps whirl off it in a small storm. Oppressive,
+    growing, relentless.
+  de_deadline_death — Pose: the hourglass-torso BURSTS and all the black sand pours out at once in a
+    heavy cascade, the figure caving in around the emptied glass, clock-hand fingers dropping limp and
+    the clock-face going dark as the last calendar pages and red stamps flutter down — time finally run
+    all the way out.
 
 
 ████████ 9. DE_INKTVLEK — De Inktvlek (gif) · GEWOON ████████
@@ -113,10 +154,15 @@ Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Sing
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with CLEAR MARGIN
 (do not bleed to the frame edges). Cold blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: the only LOW, formless, puddle-shaped enemy — a CONTAINED ink-blot OOZE of glistening
-black-and-sickly-GREEN ink gathered into one reaching, half-shaped limb, dripping corrosive droplets,
-smeared dissolving SIGNATURES and half-drowned letters floating in its body, cold light on the wet sheen.
-  de_inktvlek (basis) — Pose: rising up into one reaching, dripping limb.
-  de_inktvlek_death   — Pose: the green-black ooze dries up and flakes away into a stain.
+black-and-sickly-GREEN ink, smeared dissolving SIGNATURES and half-drowned letters floating in its body,
+cold light on the wet sheen.
+  de_inktvlek (basis) — Pose: low to the ground, the gathered green-black blot surging UPWARD into one
+    tall reaching limb that arcs and curls over toward you, corrosive droplets flinging off and hissing
+    where they land, dissolving signatures swirling up through the rising column of ink; the base still a
+    contained puddle with clear margin around it. Coiled, venomous, mid-lunge.
+  de_inktvlek_death — Pose: the reaching limb collapses back into the puddle and the whole ooze DRIES
+    from the edges inward, cracking and flaking apart into curling brittle scabs, the sickly-green sheen
+    fading to a dull dead matte stain, a last bubble popping at the centre — a spill drying to nothing.
 
 
 ████████ 10. DE_REDACTEUR — De Redacteur (strijkt je Blok weg) · GEWOON ████████
@@ -124,11 +170,15 @@ Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Sing
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: a stern CENSOR-construct, upright and rigid, in a tight BANDED censor-uniform (NOT dripping
-robes): one hand a giant pair of black REDACTION-SHEARS caught MID-CUT slicing through a translucent
-BLUE SHIELD-shape (cutting your block away), the other holding a fan of blacked-out documents; its OWN
-face half blacked-out behind heavy REDACTION BARS, strips of censored/cut paper hanging off it.
-  de_redacteur (basis) — Pose: shears mid-cut through a blue shield-shape.
-  de_redacteur_death   — Pose: fully REDACTED — black bars swallow the whole figure, snipped to strips by its own shears.
+robes); its OWN face half blacked-out behind heavy REDACTION BARS, strips of censored/cut paper hanging
+off it. Holds giant black REDACTION-SHEARS and a fan of blacked-out documents.
+  de_redacteur (basis) — Pose: upright and surgical, leaning in with the giant black redaction-shears
+    caught MID-CUT — the open blades scissoring clean through a translucent BLUE SHIELD-shape that splits
+    and falls away in two halves; the other hand fans out blacked-out documents, its bar-redacted face
+    cocked with cold precision, body squared and clinical. Sharp, controlled, mid-snip.
+  de_redacteur_death — Pose: it is REDACTED out of existence — thick black censor-bars slam across the
+    figure from every side, boxing it in, and its own shears snip the boxed shape into falling paper
+    strips that scatter and drift down; the last visible sliver of it blacked out to nothing.
 
 
 ████████ 11. DE_MAL — De Mal (ELITE · baart blanco gietsels) · VOLLEDIGE POSE-SET ████████
@@ -136,13 +186,23 @@ Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Sing
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief surroundings BUT this creature is WARM throughout (molten). Theme: forgery/copy.
 Character: a hulking IRON casting-mould / printing-press creature — a massive industrial matrix with a
-hollow mould-CAVITY in its chest glowing MOLTEN ORANGE, half-formed duplicate bodies oozing and dripping
-out of the cavity, heavy riveted black-iron limbs like a press. Massive, relentless — a factory of fakes.
-  de_mal (basis)  — Pose: looming press, the mould-cavity glowing.
-  de_mal_attack   — Pose: slamming the heavy press down to the LEFT.
-  de_mal_hit      — Pose: recoiling, the iron cracking.
-  de_mal_cast     — Pose: PRESSING a fresh half-formed cast out of its chest-cavity.
-  de_mal_death    — Pose: the iron press tears open, the cavity goes cold and dark, half-formed casts spilling out and shattering.
+hollow mould-CAVITY in its chest glowing MOLTEN ORANGE, half-formed duplicate bodies oozing out of the
+cavity, heavy riveted black-iron limbs like a press. A factory of fakes.
+  de_mal (basis) — Pose: squatting heavy and immovable like a forge-idol, the molten-orange mould-cavity
+    in its chest glowing and pulsing, half-formed casts sagging out over the rim; arms hanging like iron
+    columns, heat-shimmer and orange light spilling from every seam. Massive, latent, smouldering.
+  de_mal_attack — Pose: rearing up and SLAMMING one colossal iron press-arm straight down to the LEFT
+    like a stamping mill, sparks and molten droplets flung from the impact, the whole frame torquing into
+    the blow and the chest-cavity flaring white-hot with the effort.
+  de_mal_hit — Pose: jolted backward, iron plates buckling and cracking in a spray of sparks, the molten
+    cavity guttering and spitting, one heavy arm flung wide to catch its balance — a great machine
+    knocked off its rhythm.
+  de_mal_cast — Pose: hunched forward with the chest-cavity yawning open, PRESSING a fresh half-formed
+    blank cast out through the molten rim — the new dripping, steaming body squeezing free as a gout of
+    orange light blasts outward at the moment of its 'birth'.
+  de_mal_death — Pose: the iron press TEARS open along its seams and folds in on itself, the molten
+    cavity going black and cold, a slurry of half-formed casts spilling out and shattering on the ground
+    as the whole machine collapses into a dead heap of iron and ash.
 
 
 ████████ 12. DE_ARCHIVARIS — De Archivaris (2e ELITE · compoundt Kracht) · VOLLEDIGE POSE-SET ████████
@@ -150,16 +210,27 @@ Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Sing
 facing LEFT, isolated on a fully TRANSPARENT background, fully within the frame with CLEAR MARGIN, on a
 ~1024x1024 canvas. Cold blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: the BIGGEST enemy — a colossal, towering head-archivist buried under and fused with an entire
-MOUNTAIN of tagged bone-files and ledgers growing from its back and shoulders like a landslide, stacked
-SPECTACLES piled over its eyes. In one arm an enormous open LEDGER (chained to it) in which new entries
-write themselves; the other hand clutches a fistful of glowing index-TAGS. The files on its back GLOW
-brighter one by one (it compounds).
-  de_archivaris (basis) — Pose: towering, the open ledger held, tags glowing.
-  de_archivaris_attack  — Pose: bringing the heavy ledger / fistful of tags slamming down to the LEFT.
-  de_archivaris_hit     — Pose: staggering back, files sliding off the mountain.
-  de_archivaris_cast    — Pose: UPDATING its dossier — writing a new line as another tag lights up (it grows stronger).
-  de_archivaris_block   — Pose: hunkering down, shielding behind a wall of stacked dossiers.
-  de_archivaris_death   — Pose: the file-mountain landslides down and buries it, the glowing tags going dark one by one.
+MOUNTAIN of tagged bone-files and ledgers growing from its back like a landslide, stacked SPECTACLES
+piled over its eyes; an open chained LEDGER in one arm, a fistful of glowing index-TAGS in the other.
+  de_archivaris (basis) — Pose: towering and serene, the colossal file-mountain rising off its back, the
+    chained open ledger held forward in one arm with new lines writing themselves across the page, a
+    fistful of glowing index-tags raised in the other, lit seals climbing its shoulders. Monumental,
+    inevitable, looming over you.
+  de_archivaris_attack — Pose: bringing the immense chained ledger and a fistful of tags CRASHING down to
+    the LEFT like a toppling shelf, the whole file-mountain lurching with the swing, loose tags and wax
+    seals flung forward ahead of the blow.
+  de_archivaris_hit — Pose: rocked backward, whole stacks sliding and cascading off the file-mountain,
+    spectacles knocked askew, the heavy ledger swinging wild on its chain — the archive thrown into brief
+    disarray.
+  de_archivaris_cast — Pose: bending over the open ledger and deliberately WRITING a new line with a stab
+    of its quill, as another index-tag flares alight and the seals across its back brighten a notch —
+    visibly recording, growing stronger before your eyes.
+  de_archivaris_block — Pose: hunkering down and dragging a wall of stacked dossiers and shelf-slabs
+    around itself like a barricade, head tucked low behind the paper rampart, only the stacked spectacles
+    glinting through a gap.
+  de_archivaris_death — Pose: the file-mountain on its back finally gives way and AVALANCHES down over
+    the figure, burying it under a thundering landslide of bone-files and ledgers, the glowing index-tags
+    winking out one by one beneath the collapse until only a slowly settling cloud of paper is left.
 
 
 ████████ 13. HET_ORIGINEEL — Het Origineel (EPISCH · "jij bent de kopie") · VOLLEDIGE POSE-SET ████████
@@ -167,15 +238,24 @@ Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Sing
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 grey Archief surroundings BUT this being is WARM and fully SATURATED (the only one). Theme: forgery/copy.
 Character: the ONE true Original from which all the Archive's copies derive — a tall, regal, hyper-VIVID
-archetypal humanoid in rich GOLD-and-CRIMSON, sharp and perfect, more real and solid than anything
-around it, holding a glowing master seal-of-origin / a radiant source-quill; from its silhouette PALE
-washed-out grey duplicates of ITSELF peel away and bleed into the cold dark. Arrogant, archetypal, it
-BLAZES warm against the cold.
-  het_origineel (basis)  — Pose: standing regal, one open palm raised throwing a blow back as a grey echo.
-  het_origineel_attack   — Pose: striking forward to the LEFT, pale grey copies trailing the blow.
-  het_origineel_hit      — Pose: recoiling, its gold-crimson colour flickering toward grey.
-  het_origineel_cast     — Pose: peeling a fresh pale grey COPY of itself off its own body.
-  het_origineel_death    — Pose: it cracks like a mould, the gold-crimson draining to grey, its copies scattering — "even the original was just a copy."
+archetypal humanoid in rich GOLD-and-CRIMSON, sharp and perfect; pale washed-out grey duplicates of
+ITSELF peel away off its shoulders, a glowing master seal-of-origin / radiant source-quill in hand.
+  het_origineel (basis) — Pose: standing regal and supremely composed, weight elegant and centred, one
+    open palm raised toward you — and an incoming blow is thrown straight back off that palm as a
+    washed-out grey echo; the master seal glows in the other hand, pale grey copies peeling slowly off
+    its shoulders. Radiant, arrogant, untouchable.
+  het_origineel_attack — Pose: striking forward to the LEFT with the source-quill like a rapier, the
+    motion leaving a sweeping fan of pale grey duplicate after-images trailing behind the strike while
+    gold-crimson blazes at the leading edge. Sharp, masterful, theatrical.
+  het_origineel_hit — Pose: snapped half a step back, its perfect gold-crimson colour FLICKERING and
+    bleeding toward dead grey for an instant at the point it was struck, expression affronted that a mere
+    'copy' could touch it, the peeling duplicates stuttering.
+  het_origineel_cast — Pose: sweeping one hand down its own side and PEELING a fresh full-size pale-grey
+    COPY of itself off its body like shrugging off a cloak, the new half-formed duplicate sliding free
+    beside it while the original blazes brighter as it spawns.
+  het_origineel_death — Pose: it CRACKS down the centre like a splitting mould, the saturated gold-crimson
+    draining out to dead grey from the cracks outward, all its peeling copies scattering on the wind as it
+    crumbles — the final revelation that even the Original was only ever a copy.
 
 
 ████████ 14. DOORSLAG_KOPIE — (spawn · geen poses nodig) ████████
@@ -183,8 +263,9 @@ Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Sing
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: the same papery carbon-copy humanoid as Doorslag but BLEACHED and thinner — a worn,
-second-hand carbon copy, visibly weaker, paler and half-transparent, the ink almost rubbed away.
-  Pose: standing limp and faded. (spawn — geen extra poses nodig.)
+second-hand carbon copy, the ink almost rubbed away.
+  Pose: standing limp and faded, shoulders sagging, the washed-out half-transparent paper-body drooping
+  as if it might dissolve at a touch. (spawn — geen extra poses nodig.)
 
 
 ████████ 15. MAL_GIETSEL — (spawn · geen poses nodig) ████████
@@ -193,7 +274,8 @@ facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 can
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: a small half-formed BLANK cast — a featureless, faceless, smooth hollow humanoid, pale
 CLAY/WAX-white, soft and unfinished, fresh straight from the mould.
-  Pose: standing slack and incomplete. (spawn — geen extra poses nodig.)
+  Pose: standing slack and incomplete, arms hanging unfinished, the smooth blank body soft and faceless,
+  newly turned out of the mould and not yet set. (spawn — geen extra poses nodig.)
 
 
 ====================================================================================
