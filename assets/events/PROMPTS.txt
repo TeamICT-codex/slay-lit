@@ -84,3 +84,27 @@ avonturier.png
 De 4 nieuwe Act 2-EVENTS (Het Onafgewerkte Dossier, De Kopieermachine,
 De Naamloze Klerk, Het Verloren Origineel) staan met hun prompts én
 bouw-data gebundeld in ACT2-PROMPTBIB.md (repo-root), sectie "4. Events".
+
+De 2 FIGUUR-events hieronder (Act 2+) horen bij het Drops-mysterie en geven de
+drops_figuur-scherf. Elk een eigen onderscheidend beeld:
+
+lantaarndrager.png   (FIGUUR-event, Act 2+ — De Gedoofde Lantaarndrager)
+  Scene: a tall gaunt CLOAKED wanderer deep in a pitch-dark archive aisle, holding
+  ALOFT a wrought-iron LANTERN whose flame is DEAD and OUT — cold black glass, a
+  single thread of grey dead-smoke and one faint, almost-spent BLUE ember barely
+  glowing inside it. His face is lost in the hood; he feels his way through the
+  unlit niches, untroubled by the dark as if he belongs to it. Almost everything is
+  swallowed in blackness — the dark lantern is the focal point: a lantern-bearer who
+  carries NO light. Mournful, spectral, ominous, a herald of the doused flame. Cold
+  near-black palette with that one dying blue ember as the only glow. Vertically centred.
+
+spiegelaar.png   (FIGUUR-event, Act 2+ — De Naamloze Spiegelaar)
+  Scene: a gaunt, hollow WRAITH-figure standing beside a tall cracked STANDING-MIRROR
+  in a cold archive alcove — but he himself has NO FACE: where his face should be is
+  smooth BLANK glass / blank parchment, nameless and identity-less. The mirror does
+  not reflect HIM; instead its cracked surface throws back a faint warped reflection
+  of the VIEWER (the hero) with pale duplicate selves fading behind. He reaches one
+  thin hand toward the glass, mournful, longing for a name he no longer has. Cold
+  silver-grey mirror light, hairline cracks, one small warm torch-glint on a shard.
+  Tragic, eerie, identity-less — a THIN lost figure, NOT an armoured guardian (≠ de
+  spiegelwachter-vijand). Vertically centred.
