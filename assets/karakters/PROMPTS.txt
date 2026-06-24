@@ -365,6 +365,21 @@ POSE-STATES (zelfde conventie als Act 1 — optioneel, maar maakt ze levend):
     _block (de_archivaris) — zich indekken achter opgestapelde dossiers.
 - Spawns (doorslag_kopie, mal_gietsel) mogen emoji/alleen-basis blijven — geen poses nodig.
 
+DEATH-POSE per wezen (<id>_death — zelfde wezen/stijl/links/transparant, alleen de Pose-regel; themabewust UITEENVALLEN):
+  echo          — de offset na-beeld-lagen pellen los en doven één voor één weg tot niets.
+  doorslag      — het platte papierlichaam scheurt doormidden en kreukt; de carbon-helft smeert weg tot een grijze vlek.
+  naaper        — de gestolen gouden spier verdampt; de schriele imp zakt leeggelopen in elkaar.
+  inktklerk     — smelt weg in een uitvloeiende zwarte inktplas, het gelaat wegrennend.
+  stempelaar    — de messing-stempelarm knapt af; het lijf vouwt plat dicht als een overstempeld formulier.
+  dossierwurm   — de segmenten rollen uiteen, dossiervellen verstuiven, de worm zakt tot een hoop los papier.
+  spiegelwachter— het spiegelglas VERBRIJZELT in een regen van scherven (elk een gestolen pose), dan zwart.
+  de_deadline   — de zandloper barst, al het zwarte zand stort er ineens uit, de klokwijzers vallen stil.
+  de_inktvlek   — de groen-zwarte ooze droogt uit en bladdert weg tot een vlek.
+  de_redacteur  — wordt volledig GEREDIGEERD: zwarte balken slokken de hele figuur op, tot snippers geknipt door z'n eigen schaar.
+  de_mal        — (elite) de ijzeren pers scheurt, de matrijs-holte dooft koud, half-gevormde gietsels stromen eruit en verbrijzelen.
+  het_origineel — (episch) barst als een mal; het goud-karmozijn verkleurt grijs, z'n kopieën verwaaien — "ook het origineel was maar een kopie."
+  de_archivaris — (elite) de plankenberg stort als een aardverschuiving over hem heen; de oplichtende tags doven één voor één.
+
 ============ DE VIJANDEN — volledige, geoptimaliseerde prompts (alle 14 + 2 spawns) ============
 Begin elke prompt met het UNIEKE silhouet (niet met "a creature in the archive"). Koud
 Archief-palet + warme ember-rand + transparant + facing LEFT (zie de kop hierboven). De
