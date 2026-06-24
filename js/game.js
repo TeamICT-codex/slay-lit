@@ -4036,6 +4036,18 @@ function devDropsTest() {
   catch (e) { melding('DEV-fout: ' + e.message); }
   _devDropsStap++;
 }
+/* logo-klik: GEWONE klik = veilige Act 2-sprong (géén Drops spawnen/ontgrendelen, dus je
+   playtest-save blijft schoon). SHIFT+klik = de Drops-testcyclus (die bewust spawnt/schrijft).
+   devDropsWis() in de console reset de (cross-run) Drops-Codex weer naar nul. */
+function devLogo(e) {
+  if (e && e.shiftKey) { devDropsTest(); return; }
+  devSprongAct2();
+}
+function devDropsWis() {
+  _devDropsReset();
+  _devDropsStap = 0;
+  melding('⚡ DEV: Drops-Codex gewist (gevallen/mysterie/Witte/zaadje/offer weg).');
+}
 
 function volgendeAct(verslagenBaas) {
   S.act = huidigeAct() + 1;
