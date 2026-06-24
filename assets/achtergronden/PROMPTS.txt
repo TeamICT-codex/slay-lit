@@ -103,30 +103,36 @@ ik de slot in het manifest (art.js). Bestandsnamen EXACT overnemen.
   >> relikwie = warm goud. Lukt iets nog steeds te generiek, voeg toe:
   >> "--no symmetric corridor of identical shelves, no perspective hallway".
 
-[✅] Act 2 achtergronden/Achtergrondverkoper ACT2.webp   (WINKEL — de klerk-koopman)
-  Scene: a cramped MERCHANT'S STALL built into a dead-records vault — a heavy
-  wooden trade-counter in the FOREGROUND filling the lower third, its top crowded
-  with goods FOR SALE: sealed contract-scrolls in a rack, a few glass potion-vials,
-  small trinket-relics on a velvet tray, a brass weighing-scale and an abacus, a
-  locked cash-box, hand-written price-tags dangling on red string. A single warm
-  brass LANTERN hangs over the counter, pooling amber light across the wares — the
-  one warm spot in the cold blue-grey vault behind, where ledger-shelves fade into
-  clinical shadow. Customer's three-quarter viewpoint, the inviting cluttered
-  counter as the clear hero; an empty clerk's stool and an open tally-book hint at
-  the absent vendor. Cozy yet bureaucratic. An intimate shop NOOK, NOT a symmetric
-  corridor of shelves.
+[✅] Act 2 achtergronden/Achtergrondverkoper ACT2.webp   (WINKEL — de klerk-koopman ZELF in beeld)
+  Scene: a hunched old CLERK-MERCHANT standing behind his cramped trade-counter in a
+  dead-records vault — the VENDOR is the focal character. He is a gaunt, shady
+  archive-peddler (the bureaucratic cousin of a back-alley merchant): ink-stained
+  clerical robes over a threadbare merchant's coat, half-moon spectacles with a
+  jeweller's loupe flipped over ONE eye that catches the warm lantern-light, a quill
+  tucked behind his ear, fingerless gloves on ink-stained fingers, a heavy coin-pouch
+  and a ring of brass stamps and wax-seal sticks dangling at his belt. He leans over
+  the counter with an obsequious, sly, knowing SMILE, one hand presenting his wares —
+  a back-room fence who'll sell you anything off-the-record. The counter before him is
+  crowded with goods FOR SALE: sealed contract-scrolls in a rack, glass potion-vials,
+  small trinket-relics on a velvet tray, a brass weighing-scale and abacus, a locked
+  cash-box, price-tags on red string. A warm brass LANTERN hangs over him, pooling
+  amber light on his face and the wares — the one warm spot in the cold blue-grey
+  vault, ledger-shelves fading into clinical shadow behind. Place the merchant and his
+  counter slightly to ONE SIDE / the upper area (the shop's buy-grid UI covers the
+  lower centre). Cozy yet bureaucratic; an intimate shop nook, NOT a symmetric corridor.
 
-[✅] Act 2 achtergronden/Achtergrondverkoper ACT2 easter egg.webp   (zelfde winkel, BETRAPT)
-  Scene: the SAME merchant's trade-counter and warm hanging lantern as the normal
-  shop (keep it recognizably the same stall) — but caught MID-FRAUD, and the scam
-  IS the subject: on the counter, DUPLICATE price-tags hang from one and the same
-  item (two prices — the copy motif), a half-pressed FORGED wax seal and stamp lie
-  mid-forgery, a coin-stack with a false bottom tipped open. From a hidden
-  compartment UNDER the counter a SECOND set of secret ledgers spills out, lit by a
-  sickly GREEN conspiratorial under-glow that clashes with the honest amber lantern
-  above (two-tone, something's-off). A sly long shadow of an unseen hand. Same
-  customer's three-quarter view but pushed closer and lower onto the under-counter
-  reveal. Sneaky, two-faced, doubles everywhere — foreshadowing the Copycat.
+[✅] Act 2 achtergronden/Achtergrondverkoper ACT2 easter egg.webp   (zelfde koopman, BETRAPT)
+  Scene: the SAME hunched clerk-merchant, his counter and warm lantern (keep the
+  EXACT same character — the gaunt, loupe-eyed archive-peddler with the stamps on his
+  belt), but caught MID-FRAUD: his sly smile has frozen into a caught-in-the-act
+  SMIRK with a guilty sweat-bead, one hand quietly PALMING a duplicate slip behind his
+  back while the other still gestures innocently over the wares. The scam is on show
+  around him: DUPLICATE price-tags on one and the same item (two prices — the copy
+  motif), a half-pressed FORGED wax seal mid-forgery, a coin-stack with a false bottom
+  tipped open, and from a hidden compartment UNDER the counter a SECOND set of secret
+  ledgers spills out — lit by a sickly GREEN conspiratorial under-glow that clashes
+  with the honest amber lantern above (two-tone, two-faced). Same off-centre placement
+  as the normal shop. Sneaky, doubles everywhere — foreshadowing the Copycat.
 
 [✅] Act 2 achtergronden/Achtergrondvraagtekenencounter ACT2.webp   (EVENT ❓ — de onbekende lade)
   Scene: a near-BLACK archive dead-end, almost entirely swallowed in shadow — and
