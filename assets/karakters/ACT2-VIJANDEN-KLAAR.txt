@@ -190,23 +190,29 @@ sharp focus, high detail, striking.
 Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief surroundings BUT this creature is WARM throughout (molten). Theme: forgery/copy.
-Character: a hulking IRON casting-mould / printing-press creature — a massive industrial matrix with a
-hollow mould-CAVITY in its chest glowing MOLTEN ORANGE, half-formed duplicate bodies oozing out of the
-cavity, heavy riveted black-iron limbs like a press. A factory of fakes.
-  ► de_mal.png         — Pose (basis · facing LEFT · render as ONE separate single image, NO sheet/grid):squatting heavy and immovable like a forge-idol, the molten-orange
-    mould-cavity in its chest glowing and pulsing, half-formed casts sagging out over the rim; arms
-    hanging like iron columns, heat-shimmer and orange light spilling from every seam. Massive, latent.
-  ► de_mal_attack.png  — Pose (facing LEFT · render as ONE separate single image, NO sheet/grid):rearing up and SLAMMING one colossal iron press-arm straight down to the
-    LEFT like a stamping mill, sparks and molten droplets flung from the impact, the whole frame torquing
-    into the blow and the chest-cavity flaring white-hot with the effort.
-  ► de_mal_hit.png     — Pose (facing LEFT · render as ONE separate single image, NO sheet/grid):jolted backward, iron plates buckling and cracking in a spray of sparks,
-    the molten cavity guttering and spitting, one heavy arm flung wide to catch its balance.
-  ► de_mal_cast.png    — Pose (facing LEFT · render as ONE separate single image, NO sheet/grid):hunched forward with the chest-cavity yawning open, PRESSING a fresh half-
-    formed blank cast out through the molten rim — the new dripping, steaming body squeezing free as a
-    gout of orange light blasts outward at the moment of its 'birth'.
-  ► de_mal_death.png   — Pose (facing LEFT · render as ONE separate single image, NO sheet/grid):the iron press TEARS open along its seams and folds in on itself, the molten
-    cavity going black and cold, a slurry of half-formed casts spilling out and shattering on the ground
-    as the whole machine collapses into a dead heap of iron and ash.
+Character: a hulking industrial IRON casting-PRESS creature — a massive black-iron printing-and-stamping
+machine, its chest a hollow rectangular MOULD-FRAME glowing MOLTEN ORANGE. From that mould it stamps out
+BLANK, FACELESS, smooth clay-white DUMMY duplicates (featureless mannequin-like blanks). Heavy riveted
+iron limbs like a stamping press; heat-shimmer and orange glow leaking from every seam. A relentless
+factory of fakes (warm throughout).
+→ Genereer ELKE pose hieronder als een APARTE, losse afbeelding (één pose per beeld — NOOIT samen op één plaat).
+  ► de_mal.png         — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): looming heavy and immovable
+    like a forge-idol, the molten-orange mould-frame in its chest glowing and pulsing with a half-stamped
+    blank dummy still clamped in it; arms hanging like iron pillars, embers drifting up, heat-shimmer rising
+    off the metal. Massive, latent, smouldering.
+  ► de_mal_attack.png  — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): rearing up and SLAMMING one
+    colossal iron press-arm straight down to the LEFT like a stamping mill, a burst of bright sparks and
+    molten flecks flung from the impact, the whole frame torquing into the blow, the chest-mould flaring
+    white-hot with the effort.
+  ► de_mal_hit.png     — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): knocked backward, iron
+    plates buckling and cracking in a shower of sparks, the molten mould guttering and spitting embers, one
+    heavy arm flung wide to catch its balance — a great machine thrown off its rhythm.
+  ► de_mal_cast.png    — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): the chest-mould clamping
+    shut and STAMPING OUT a fresh BLANK faceless dummy-duplicate that slides free and stands beside it, still
+    glowing hot at the edges, a gout of orange light and sparks flaring from the mould as it presses.
+  ► de_mal_death.png   — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): the iron press cracks open
+    along its seams and folds in on itself, the molten mould going dark and cold, a pile of blank unfinished
+    casts tumbling out and shattering as the whole machine collapses into a heap of dead iron and ash.
 
 
 ████████ 12. DE_ARCHIVARIS — De Archivaris (2e ELITE · compoundt Kracht) · VOLLEDIGE POSE-SET ████████

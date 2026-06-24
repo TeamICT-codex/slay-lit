@@ -428,12 +428,13 @@ wegknippen). Houd elk wezen mét marge in het frame (geen wezen dat tot alle ran
   Accent: glossy BLACK ink, everything dripping and running WET (bone-dry nowhere).
 
 --- de_mal.png   (ELITE — De Mal: baart blanco gietsels (mal_gietsel)) ---
-  A hulking IRON casting-mould / printing-press creature — a massive industrial matrix with a
-  hollow mould-CAVITY in its chest glowing MOLTEN ORANGE, half-formed duplicate bodies oozing
-  and dripping out of the cavity, heavy riveted black-iron limbs like a press. The only HOT,
-  industrial enemy. Massive, relentless — a factory of fakes.
-  Accent: molten ORANGE glow in the mould-cavity + heavy black iron.
-  (Elite → meer poses; _cast = PERST zichtbaar een gietsel uit de borst-holte.)
+  A hulking industrial IRON casting-PRESS creature — a massive black-iron printing-and-stamping
+  machine, its chest a hollow rectangular MOULD-FRAME glowing MOLTEN ORANGE that stamps out
+  BLANK, FACELESS, smooth clay-white DUMMY duplicates (featureless mannequin-like blanks). Heavy
+  riveted iron limbs like a stamping press. The only HOT, industrial enemy. Massive, relentless —
+  a factory of fakes. (Geen lichaams-horror: het zijn glad-blanke pop-duplicaten, geen 'lichamen'.)
+  Accent: molten ORANGE glow in the mould-frame + heavy black iron.
+  (Elite → meer poses; _cast = STAMPT zichtbaar een blanco pop-duplicaat uit de borst-mal.)
 
 --- mal_gietsel.png   (spawn — vers blanco gietsel; geen poses nodig) ---
   A small half-formed BLANK cast: a featureless, faceless, smooth hollow humanoid, pale
