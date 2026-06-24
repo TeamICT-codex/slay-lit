@@ -384,6 +384,8 @@ DEATH-POSE per wezen (<id>_death — zelfde wezen/stijl/links/transparant, allee
 Begin elke prompt met het UNIEKE silhouet (niet met "a creature in the archive"). Koud
 Archief-palet + warme ember-rand + transparant + facing LEFT (zie de kop hierboven). De
 mechaniek-signalen tussen haakjes mag je in beeld brengen zodat de vijand z'n zet "leest".
+LET OP: ELKE pose = een APARTE losse afbeelding (één wezen, één pose per beeld) — nooit een
+grid/collage/sheet met meerdere poses in één frame.
 NB: de ember-rand is een DUNNE warme rand; het lichaam blijft KOUD — behalve de_mal (gloeiend
 oranje) en het_origineel (goud-karmozijn), die zijn warm doorheen. echo + spiegelwachter = op
 EFFEN ZWARTE bg → die twee krijgen een aparte alpha-verwerking (donkere/glazige randen niet

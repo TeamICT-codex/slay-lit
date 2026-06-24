@@ -6,6 +6,10 @@ maak de BASIS, en in DEZELFDE sessie (zelfde wezen, alleen de "Pose:"-regel ande
 de poses. **Elke pose-regel begint met de EXACTE BESTANDSNAAM** (vet, met .png) —
 sla het beeld precies zo op, dan slot het automatisch in.
 
+⚠️ ELKE pose/variant = een APARTE losse afbeelding. Genereer ze één voor één
+(één wezen, één pose, per beeld) — NOOIT een grid/collage/sheet/turn-around met
+meerdere poses in één frame. (Dit staat ook in de prefix van elk blok meegebakken.)
+
 De POSES zijn bewust UITVOERIG beschreven (actie-in-beweging + lichaamshouding +
 wat de props/effecten doen + uitdrukking + camerahoek) — magere pose-regels gaven
 zwakke art. Houd ze zo gedetailleerd; dat is precies wat de generator nodig heeft.
@@ -15,7 +19,7 @@ op EFFEN ZWARTE achtergrond (doorschijnend/glas) → aparte verwerking.
 
 
 ████████ 1. ECHO — De Echo (herhaalt zijn vorige zet) · GEWOON ████████
-Painterly dark-fantasy concept art, no photo / no 3D render, expressive brushwork. Single full-body
+Painterly dark-fantasy concept art, no photo / no 3D render, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body
 creature facing LEFT on a plain solid BLACK background (translucent figure — no transparency), fills
 ~90% of a 1024x1024 canvas with margin. Cold blue-grey Archief "system light" + a thin warm ember rim.
 Theme: forgery/copy.
@@ -34,7 +38,7 @@ fainter, edges glowing faint VIOLET-WHITE; made of cold light, not flesh.
 
 
 ████████ 2. DOORSLAG — Doorslag (splitst <50% HP in doorslag_kopie) · GEWOON ████████
-Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background (no ground/shadow/text/frame), ~90% of a
 1024x1024 canvas with margin. Cold blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: a flat, almost two-dimensional PAPERY humanoid like a living sheet of carbon-copy paper,
@@ -50,7 +54,7 @@ half a faded, smudged CARBON COPY of that same half (asymmetric). Smudged ink-BL
 
 
 ████████ 3. NAAPER — De Naäper (kopieert jouw Kracht) · GEWOON ████████
-Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: the only beastly/organic enemy — a wiry dark monkey-DEMON imp, scrawny, long-limbed, matted
@@ -65,7 +69,7 @@ dark fur, an exaggerated MOCKING face with a too-wide grin full of teeth and sic
 
 
 ████████ 4. INKTKLERK — Inktklerk (stempelt Zwak, nat) · GEWOON ████████
-Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: a gaunt CLERK-creature utterly DRENCHED and DRIPPING — glossy black ink pours off his
@@ -81,7 +85,7 @@ over-printed form with features RUNNING like wet ink. Hunched, fluid, half-melti
 
 
 ████████ 5. STEMPELAAR — De Stempelaar (drukt Kwetsbaar in je) · GEWOON ████████
-Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: a clerk-CONSTRUCT whose entire right ARM is REPLACED by a tall mechanical BRASS-and-iron
@@ -97,7 +101,7 @@ ink-stained parchment robes hung with RED wax seals and dangling carbon-copy sli
 
 
 ████████ 6. DOSSIERWURM — De Dossierwurm (rolt in: +Kracht +Doornen) · GEWOON ████████
-Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: the only non-humanoid, snake-like silhouette — a long SEGMENTED archive-WORM built from
@@ -114,7 +118,7 @@ circular ink-stained maw.
 
 
 ████████ 7. SPIEGELWACHTER — De Spiegelwachter (kaatst schade terug) · GEWOON ████████
-Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT on a plain solid BLACK background (glass/reflective figure — no transparency), fills ~90%
 of a 1024x1024 canvas with margin. Cold blue-grey Archief light. Theme: forgery/copy.
 Character: a tall sentinel of polished black MIRROR-GLASS shaped like a faceless armoured guardian, its
@@ -131,7 +135,7 @@ shard showing a different stolen pose — a single cold blue-grey glow where a f
 
 
 ████████ 8. DE_DEADLINE — De Deadline (escaleert elke beurt) · GEWOON ████████
-Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: a gaunt, tall, hunched CLOCK-TOWER creature — its TORSO a cracked iron HOURGLASS leaking
@@ -147,7 +151,7 @@ CALENDAR pages and overdue RED stamps fluttering off it, rusted gears and chains
 
 
 ████████ 9. DE_INKTVLEK — De Inktvlek (gif) · GEWOON ████████
-Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with CLEAR MARGIN
 (do not bleed to the frame edges). Cold blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: the only LOW, formless, puddle-shaped enemy — a CONTAINED ink-blot OOZE of glistening
@@ -163,7 +167,7 @@ cold light on the wet sheen.
 
 
 ████████ 10. DE_REDACTEUR — De Redacteur (strijkt je Blok weg) · GEWOON ████████
-Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: a stern CENSOR-construct, upright and rigid, in a tight BANDED censor-uniform (NOT dripping
@@ -179,7 +183,7 @@ off it. Holds giant black REDACTION-SHEARS and a fan of blacked-out documents.
 
 
 ████████ 11. DE_MAL — De Mal (ELITE · baart blanco gietsels) · VOLLEDIGE POSE-SET ████████
-Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief surroundings BUT this creature is WARM throughout (molten). Theme: forgery/copy.
 Character: a hulking IRON casting-mould / printing-press creature — a massive industrial matrix with a
@@ -202,7 +206,7 @@ cavity, heavy riveted black-iron limbs like a press. A factory of fakes.
 
 
 ████████ 12. DE_ARCHIVARIS — De Archivaris (2e ELITE · compoundt Kracht) · VOLLEDIGE POSE-SET ████████
-Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, fully within the frame with CLEAR MARGIN, on a
 ~1024x1024 canvas. Cold blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: the BIGGEST enemy — a colossal, towering head-archivist buried under and fused with an entire
@@ -228,7 +232,7 @@ piled over its eyes; an open chained LEDGER in one arm, a fistful of glowing ind
 
 
 ████████ 13. HET_ORIGINEEL — Het Origineel (EPISCH · "jij bent de kopie") · VOLLEDIGE POSE-SET ████████
-Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 grey Archief surroundings BUT this being is WARM and fully SATURATED (the only one). Theme: forgery/copy.
 Character: the ONE true Original from which all the Archive's copies derive — a tall, regal, hyper-VIVID
@@ -253,7 +257,7 @@ ITSELF peel away off its shoulders, a glowing master seal-of-origin / radiant so
 
 
 ████████ 14. DOORSLAG_KOPIE — (spawn · enkel basis) ████████
-Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: the same papery carbon-copy humanoid as Doorslag but BLEACHED and thinner — a worn,
@@ -263,7 +267,7 @@ second-hand carbon copy, the ink almost rubbed away.
 
 
 ████████ 15. MAL_GIETSEL — (spawn · enkel basis) ████████
-Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Single full-body creature
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
 Character: a small half-formed BLANK cast — a featureless, faceless, smooth hollow humanoid, pale
