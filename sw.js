@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v14'; /* v14: Act 2 winkel + easter egg + event/relikwie-vraagteken-achtergronden (Archief-stijl) */
+const CACHE = 'slayit-v15'; /* v15: Act 2 rust/schat/overwinning(gewoon+episch)-achtergronden gewired (nederlaag ACT2 nog te maken) */
 const BESTANDEN = [
   '.',
   'index.html',

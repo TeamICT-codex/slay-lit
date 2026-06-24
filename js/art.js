@@ -581,7 +581,12 @@ const ACHTERGRONDEN = {
     winkel: 'Act 2 achtergronden/Achtergrondverkoper ACT2.webp',
     winkelEasterEgg: 'Act 2 achtergronden/Achtergrondverkoper ACT2 easter egg.webp',
     event: 'Act 2 achtergronden/Achtergrondvraagtekenencounter ACT2.webp',
-    eventRelikwie: 'Act 2 achtergronden/Achtergrondvraagtekenrelikwieartefact ACT2.webp'
+    eventRelikwie: 'Act 2 achtergronden/Achtergrondvraagtekenrelikwieartefact ACT2.webp',
+    rust: 'Act 2 achtergronden/Achtergrondrust2.webp',
+    schat: 'Act 2 achtergronden/Achtergrondschatkist2.webp',
+    beloning: 'Act 2 achtergronden/Overwinningsachtergrond2gewoon.webp',
+    overwinning: 'Act 2 achtergronden/Overwinningsachtergrond2episch.webp'
+    /* nederlaag: nog niet gemaakt → valt via actBg() terug op de Act 1-nederlaagplaat */
   }
 };
 window.ACHTERGRONDEN = ACHTERGRONDEN;

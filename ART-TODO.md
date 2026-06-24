@@ -77,11 +77,11 @@
 - [x] `Achtergrondvraagtekenrelikwieartefact ACT2.webp` (relikwie-event) ✅ verwerkt
 
 **Ontbreken nog → maken (ik wire de slot in `js/art.js` zodra je 'm dropt):**
-- [ ] `Achtergrondrust2.webp` (rustplaats)
-- [ ] `Achtergrondschatkist2.webp` (schat)
-- [ ] `Overwinningsachtergrond2gewoon.webp` (beloning)
-- [ ] `Overwinningsachtergrond2episch.webp` (epische overwinning)
-- [ ] `Achtergrond nederlaag ACT2.webp` (nederlaagscherm)
+- [x] `Achtergrondrust2.webp` (rustplaats) ✅ verwerkt + gewired
+- [x] `Achtergrondschatkist2.webp` (schat) ✅ verwerkt + gewired
+- [x] `Overwinningsachtergrond2gewoon.webp` (beloning) ✅ verwerkt + gewired
+- [x] `Overwinningsachtergrond2episch.webp` (epische overwinning) ✅ verwerkt + gewired
+- [ ] `Achtergrond nederlaag ACT2.webp` (nederlaagscherm) — **nog te maken** (valt nu terug op de Act 1-plaat)
 
 ---
 
