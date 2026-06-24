@@ -1045,6 +1045,37 @@ const VIJANDEN = {
      (state, stelen, plagiaat, voeding, fases, mercy, het offer-breekpunt) leeft in
      game.js — zie copycatKies() en de copycat*-helpers. Drops (METGEZELLEN.drops
      rol:'breker') breekt de machine bij je first-clear: trouw is niet te indexeren. */
+  /* ====== ZWARTE ZIEL — corruptie die gif verzwelgt (counter op de Gifmagiër) ======
+     zwarteZiel:'verminder' (gewone) = halve gif-tik · 'absorbeer' (elite) = gif HEELT het
+     wezen · 'counter' (boss-tier) = kaatst gif terug. De Zielslantaarn-relikwie breekt dit.
+     De getallen zijn vertrekwaarden → playtest-tunebaar. */
+  pekziel: {
+    naam: 'De Pekziel', art: '🕳️', hp: [27, 31], zwarteZiel: 'verminder',
+    kies: v => {
+      const r = willekeurig();
+      if (r < 0.55) return { naam: 'Pekklauw', type: 'aanval', dmg: 9 };
+      if (r < 0.8) return { naam: 'Teergreep', type: 'aanval', dmg: 5, doe: () => geefStatus(sp(), 'zwak', 1) };
+      return { naam: 'Verharden', type: 'blok', blok: 7 };
+    }
+  },
+  de_uitgewiste: {
+    naam: 'De Uitgewiste', art: '⬛', hp: [29, 33], zwarteZiel: 'verminder',
+    kies: v => {
+      const r = willekeurig();
+      if (r < 0.55) return { naam: 'Doorhaling', type: 'aanval', dmg: 9 };
+      if (r < 0.8) return { naam: 'Wegwissen', type: 'aanval', dmg: 5, doe: () => geefStatus(sp(), 'zwak', 1) };
+      return { naam: 'Verstommen', type: 'blok', blok: 8 };
+    }
+  },
+  de_verzwolgene: {
+    naam: 'De Verzwolgene', art: '🌑', hp: [82, 92], elite: true, zwarteZiel: 'absorbeer',
+    kies: (v, beurt) => {
+      if (beurt % 3 === 2) return { naam: 'Verzwelgen', type: 'blok', blok: 12 };
+      return willekeurig() < 0.6
+        ? { naam: 'Zielendreun', type: 'aanval', dmg: 14 }
+        : { naam: 'Leegteklauw', type: 'aanval', dmg: 9, doe: () => geefStatus(sp(), 'kwetsbaar', 1) };
+    }
+  },
   de_erfprins: {
     naam: 'De Erfprins', art: '🤴', hp: [210, 210], baas: true, copycat: true, gifkaats: 0.5,   /* Plagiaat: Gif — kopieert de helft van je gif op jou (+ baas = halve gif-tik) */
     titel: 'Erfgenaam zonder verdienste',
@@ -1208,6 +1239,9 @@ const UITSPRAKEN = {
   de_inktvlek:    { start: ['Alles wordt vlek.', 'Ik kruip in je dossier.'], dood: ['...opdrogen...'] },
   de_redacteur:   { start: ['Dat keuren we niet goed.', 'Doorgehaald. Volgende.'], dood: ['...geschrapt... ikzelf...'] },
   de_archivaris:  { start: ['Ik vergeet NIETS.', 'Elke regel telt mee.'], dood: ['Mijn... archief... brandt...'] },
+  pekziel:        { start: ['Mijn ziel is al zwart.', 'Je gif vindt hier geen plek meer.'], dood: ['...weer... leeg...'] },
+  de_uitgewiste:  { start: ['Naam: doorgehaald.', 'Er valt niets meer te vergiftigen.'], dood: ['...al... gewist...'] },
+  de_verzwolgene: { start: ['Geef mij je gif. Ik HONGER.', 'De leegte neemt álles.'], dood: ['...nooit... genoeg...'] },
   _duister: ['...wij zien jou wél...', '...kom dichter, lichtje...', '...jouw vlam is bijna op...', '...het donker heeft tanden...'],
   _held: {
     overkill: ['Daar. Opgeruimd.', 'Wie volgt?', 'De diepte mag hem houden.'],
@@ -1266,7 +1300,9 @@ const ONTMOETINGEN = {
     ['schaduw'],
     ['bandiet', 'grotrat'],
     ['paddenstoelman', 'paddenstoelman'],
-    ['kultist', 'groene_slijm']
+    ['kultist', 'groene_slijm'],
+    ['pekziel'],
+    ['pekziel', 'grotrat']
   ],
   zwaar: [
     ['steengolem', 'schaduw'],
@@ -1275,14 +1311,14 @@ const ONTMOETINGEN = {
     ['blauwe_slijm', 'blauwe_slijm'],
     ['schaduw', 'schaduw']
   ],
-  elite: [['grombaard'], ['steenwachter']],
+  elite: [['grombaard'], ['steenwachter'], ['de_verzwolgene']],
   baas: [['slijmkoning']],
   /* Act 2 — de kopieerhel: eigen tiers (kiesNodeEcht kiest deze bij huidigeAct()>=2) */
   act2: {
-    midden: [['echo'], ['naaper'], ['inktklerk'], ['echo', 'echo'], ['stempelaar'], ['spiegelwachter'], ['de_inktvlek'], ['de_redacteur']],
-    laat:   [['doorslag'], ['naaper', 'inktklerk'], ['echo', 'inktklerk'], ['doorslag', 'echo'], ['stempelaar', 'echo'], ['dossierwurm'], ['de_deadline'], ['de_inktvlek', 'echo']],
-    zwaar:  [['doorslag', 'naaper'], ['echo', 'echo', 'inktklerk'], ['doorslag', 'inktklerk'], ['naaper', 'naaper'], ['dossierwurm', 'spiegelwachter'], ['stempelaar', 'naaper'], ['de_deadline', 'de_redacteur'], ['de_inktvlek', 'de_inktvlek']],
-    elite:  [['de_mal'], ['de_mal', 'echo'], ['de_archivaris'], ['de_archivaris', 'echo']]
+    midden: [['echo'], ['naaper'], ['inktklerk'], ['echo', 'echo'], ['stempelaar'], ['spiegelwachter'], ['de_inktvlek'], ['de_redacteur'], ['de_uitgewiste']],
+    laat:   [['doorslag'], ['naaper', 'inktklerk'], ['echo', 'inktklerk'], ['doorslag', 'echo'], ['stempelaar', 'echo'], ['dossierwurm'], ['de_deadline'], ['de_inktvlek', 'echo'], ['de_uitgewiste', 'echo']],
+    zwaar:  [['doorslag', 'naaper'], ['echo', 'echo', 'inktklerk'], ['doorslag', 'inktklerk'], ['naaper', 'naaper'], ['dossierwurm', 'spiegelwachter'], ['stempelaar', 'naaper'], ['de_deadline', 'de_redacteur'], ['de_inktvlek', 'de_inktvlek'], ['de_uitgewiste', 'doorslag']],
+    elite:  [['de_mal'], ['de_mal', 'echo'], ['de_archivaris'], ['de_archivaris', 'echo'], ['de_verzwolgene'], ['de_verzwolgene', 'echo']]
   },
   /* episch-node (Act 2): de mysterie-vijand die de drops_episch-scherf laat vallen */
   episch: [['het_origineel']]
@@ -1414,7 +1450,9 @@ const RELIKWIEEN = {
   verlopen_contract: { naam: 'Het Verlopen Contract', icoon: '📜', zeld: 'zeldzaam', tekst: 'Zou je sterven: blijf op 1 HP en verwijder alle Zwak en Kwetsbaar. Eénmalig per run.',
     lore: 'De clausules zijn verlopen, de handtekening vervaagd. Maar de onderwereld eert geen einddatum — totdat jij hem zelf verscheurt.' },
   het_grootboek:  { naam: 'Het Grootboek', icoon: '📕', zeld: 'episch', tekst: 'Bij oppakken: +12 Max HP. Genees 8 HP na elk gevecht.',
-    lore: 'Elke naam die de diepte ooit opslokte staat erin, regel na regel, tot in het oneindige. Sla het open en het schrijft jóuw naam bij — niet bij de doden, nog niet.' }
+    lore: 'Elke naam die de diepte ooit opslokte staat erin, regel na regel, tot in het oneindige. Sla het open en het schrijft jóuw naam bij — niet bij de doden, nog niet.' },
+  zielslantaarn:  { naam: 'De Zielslantaarn', icoon: '🏮', zeld: 'episch', tekst: 'Je Gif negeert ALLE gif-afweer (immuniteit, weerstand, absorptie, Zwarte-Ziel-weerkaatsing). Sterft een wezen met zo\'n afweer aan je gif: +2 Kracht.',
+    lore: 'Een lantaarn die geen vlam draagt maar zielen. Het zwart dat anderen verzwelgt, schenkt zij aan jou — regel na regel, ziel na ziel.' }
 };
 
 /* ---------- DRANKJES ---------- */

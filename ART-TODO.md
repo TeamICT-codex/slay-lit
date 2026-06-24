@@ -62,6 +62,11 @@
 - [ ] `de_redacteur` — De Redacteur (strijkt je Blok weg)
 - [ ] `de_archivaris` — De Archivaris (2e elite, compoundt Kracht)
 
+**ZWARTE ZIEL — gif-counters (corruptie/leegte; prompts in `assets/karakters/ACT2-VIJANDEN-KLAAR.txt` blok 16-18):**
+- [ ] `pekziel` — De Pekziel (Act 1, gewone, vermindert gif) — basis + `_death`
+- [ ] `de_uitgewiste` — De Uitgewiste (Act 2, gewone, vermindert gif) — basis + `_death`
+- [ ] `de_verzwolgene` — De Verzwolgene (elite, absorbeert gif) — volledige pose-set
+
 ---
 
 ## 🥉 PRIORITEIT 3 — Achtergronden "Het Archief" → `assets/achtergronden/Act 2 achtergronden/`

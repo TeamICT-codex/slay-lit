@@ -286,17 +286,81 @@ CLAY/WAX-white, soft and unfinished, fresh straight from the mould.
     soft and faceless, newly turned out of the mould and not yet set. (spawn — geen extra poses nodig.)
 
 
+█████████████ ZWARTE ZIEL — corruptie-vijanden (gif-counters) █████████████
+Eigen THEMA, los van de papier/inkt/glas/ijzer-roster: deze wezens zijn een ZWART GAT waar de ziel
+zat — pure corruptie/leegte, pikzwart, hol, lekkend zwart. (Mechaniek: ze verzwakken/absorberen/
+kaatsen je Gif; een 🕳️-/🌑-marker hoort er in-game bij.) Pikzwart silhouet op TRANSPARANTE bg met een
+dunne KOUDE void-glow + warme ember-rand zodat het zwart op de donkere achtergrond leest.
+
+████ 16. PEKZIEL — De Pekziel (ACT 1 · gewone · vermindert gif) ████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single
+image of ONE creature in ONE pose. Single full-body creature facing LEFT, isolated on a fully TRANSPARENT
+background, ~90% of a 1024x1024 canvas with margin. Warm torchlit catacomb surroundings, but the creature
+itself is PITCH-BLACK with a thin cold void-glow + warm ember rim. Theme: corruption / a blackened soul.
+Character: a gaunt humanoid HUSK of cracked black TAR/PITCH, hollow black-hole eyes, and a gaping VOID
+where its heart/soul should be — churning black pitch slowly dripping off it; no warm light lives inside
+it (the soul is already black). A faint cold violet sheen on the wet tar.
+  ► pekziel.png        — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): hunched and shambling
+    forward to the LEFT, one tar-dripping claw raised to strike, pitch sloughing off its limbs in ropes,
+    the void in its chest pulsing. Hollow, relentless, soulless.
+  ► pekziel_death.png  — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): the tar-husk slumps and
+    melts apart, the chest-void collapsing inward and swallowing the body down into a spreading black
+    puddle — going still and empty, a soul that was already long gone.
+
+████ 17. DE_UITGEWISTE — De Uitgewiste (ACT 2 · gewone · vermindert gif) ████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single
+image of ONE creature in ONE pose. Single full-body creature facing LEFT, isolated on a fully TRANSPARENT
+background, ~90% of a 1024x1024 canvas with margin. Cold blue-grey Archief light + thin warm ember rim.
+Theme: corruption / an erased soul.
+Character: a hollow, slumped clerk-HUSK that has been REDACTED out of existence — its whole body and face
+a solid BLACKED-OUT void of censor-ink, identity erased; tattered black-inked archive-robes, a few
+floating black REDACTION BARS where its name and face used to be. A VICTIM of the redaction — it carries
+NO weapon (≠ de_redacteur), just emptiness and loss.
+  ► de_uitgewiste.png        — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): shambling forward
+    to the LEFT, hollow and faceless, one blacked-out hand reaching out, redaction bars drifting across
+    the void where its face was. Lost, empty, mournful-menacing.
+  ► de_uitgewiste_death.png  — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): the blacked-out
+    body crumbles into a scatter of loose black redaction-bars and ink-flakes drifting apart, the void
+    where it stood simply closing — erased a second time, for good.
+
+████ 18. DE_VERZWOLGENE — De Verzwolgene (ELITE · ABSORBEERT gif) · VOLLEDIGE POSE-SET ████
+Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single
+image of ONE creature in ONE pose. Single full-body creature facing LEFT, isolated on a fully TRANSPARENT
+background, fully within the frame with CLEAR MARGIN (~1024x1024). Deep void-black with a cold abyssal
+blue-violet glow + thin ember rim. Theme: corruption / a devouring void.
+Character: a colossal, towering MASS of pure swirling black VOID given a hunched humanoid shape, with a
+gaping VORTEX-maw in its core that drags everything inward; half-formed faces and souls surface in the
+black and are pulled under, a cold abyssal blue-violet glow leaking from the vortex. It HUNGERS — it
+feeds on poison and souls. Imposing, elite.
+  ► de_verzwolgene.png        — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): looming and
+    hunched, the core-vortex slowly churning and pulsing, void-tendrils curling off its mass, faint
+    swallowed faces surfacing and sinking in the black. Vast, patient, hungry.
+  ► de_verzwolgene_attack.png — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): a huge void-tendril
+    / black maw lunging out to the LEFT to engulf, the vortex flaring abyssal-blue with the surge,
+    swallowed faces straining outward along the strike.
+  ► de_verzwolgene_hit.png    — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): the void-mass
+    rippling and recoiling like struck black water, tendrils flailing, the core-glow guttering for a moment.
+  ► de_verzwolgene_cast.png   — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): VERZWELGEN — it
+    draws everything inward, the vortex yawning wide and blazing abyssal-blue as it DEVOURS, streams of
+    black and swallowed souls spiralling into its core, swelling darker as it feeds.
+  ► de_verzwolgene_death.png  — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): the void collapses
+    in on itself, the vortex imploding and sucking the whole mass into a single shrinking point that winks
+    out — the hunger finally consuming itself into nothing.
+
+
 ====================================================================================
-SAMENVATTING — alle bestandsnamen (15 ids):
+SAMENVATTING — alle bestandsnamen (18 ids):
   GEWOON (basis + _death):
     echo.png + echo_death.png*            doorslag.png + doorslag_death.png
     naaper.png + naaper_death.png         inktklerk.png + inktklerk_death.png
     stempelaar.png + stempelaar_death.png dossierwurm.png + dossierwurm_death.png
     spiegelwachter.png + ..._death.png*   de_deadline.png + de_deadline_death.png
     de_inktvlek.png + de_inktvlek_death.png   de_redacteur.png + de_redacteur_death.png
+    pekziel.png + pekziel_death.png       de_uitgewiste.png + de_uitgewiste_death.png   (Zwarte Ziel)
   ELITE (volledige set):
     de_mal: .png/_attack/_hit/_cast/_death
     de_archivaris: .png/_attack/_hit/_cast/_block/_death
+    de_verzwolgene: .png/_attack/_hit/_cast/_death   (Zwarte Ziel — absorbeert gif)
   EPISCH (volledige set):
     het_origineel: .png/_attack/_hit/_cast/_death
   SPAWN (enkel basis):  doorslag_kopie.png   mal_gietsel.png

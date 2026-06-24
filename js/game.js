@@ -55,7 +55,7 @@ function schud(arr) {
   return arr;
 }
 
-const RIJEN = 13, KOLS = 7;
+const RIJEN = 15, KOLS = 7;   /* afdaling iets langer (13→15): meer gevechten/encounters per act */
 const SAVE_SLEUTEL = 'slayit_save_v1';
 
 /* ---------- acts (meerdere verdiepingen-ladders na elkaar) ---------- */
@@ -792,12 +792,14 @@ function geefStatus(actor, naam, n) {
 function geefGif(actor, n) {
   if (!actor.isSpeler) {
     const gd = VIJANDEN[actor.id] || {};
-    /* GIF-IMMUUN: dit wezen vat geen Gif (gif-deck moet hier directe schade doen) */
-    if (gd.gifImmuun) { fxNummer(actorEl(actor), '🚫 gif-immuun', 'fx-blok'); return; }
+    const lantaarn = heeftRelikwie('zielslantaarn');   /* De Zielslantaarn breekt alle gif-afweer */
+    /* GIF-IMMUUN (sporen/inkt) — tenzij de Zielslantaarn de afweer breekt */
+    if (!lantaarn && gd.gifImmuun) { fxNummer(actorEl(actor), '🚫 gif-immuun', 'fx-blok'); return; }
     n += (heeftRelikwie('smaragden_ring') ? 1 : 0) + (heeftRelikwie('inktpot') ? 1 : 0);
-    /* GIF-KAATS (Copycat-thema): kopieert een deel van je net-opgelegde Gif terug op JOU */
-    if (gd.gifkaats && inGevecht() && n > 0) {
-      const terug = Math.max(1, Math.ceil(n * gd.gifkaats));
+    /* GIF-KAATS (Copycat 'Plagiaat: Gif') / Zwarte-Ziel-COUNTER: kopieert een deel terug op JOU */
+    const frac = lantaarn ? 0 : (gd.gifkaats || (gd.zwarteZiel === 'counter' ? 0.5 : 0));
+    if (frac && inGevecht() && n > 0) {
+      const terug = Math.max(1, Math.ceil(n * frac));
       geefStatus(sp(), 'gif', terug);
       fxNummer($('#speler-zone') || $('#topbalk'), '🪞 Plagiaat: Gif +' + terug, 'fx-debuff');
     }
@@ -3094,17 +3096,36 @@ async function eindBeurt() {
     v.blok = 0;
 
     if ((v.status.gif || 0) > 0) {
-      /* BAZEN-WEERSTAND: een baas (of gifWeerstand-wezen) neemt Gif aan HALVE snelheid →
-         geen one-shot-gif meer op bazen, zonder de hero-getallen aan te raken. */
       const gd = VIJANDEN[v.id] || {};
-      const tik = (gd.baas || gd.gifWeerstand) ? Math.ceil(v.status.gif / 2) : v.status.gif;
-      if (tik < v.status.gif && !g._gifWeerstandGemeld) { melding('🛡️ De baas weerstaat de helft van het gif.'); g._gifWeerstandGemeld = true; }
-      verliesHp(v, tik);
+      const lantaarn = heeftRelikwie('zielslantaarn');        /* breekt alle gif-afweer */
+      const zz = lantaarn ? null : gd.zwarteZiel;
+      const gif = v.status.gif;
+      if (zz === 'absorbeer') {
+        /* ZWARTE ZIEL (episch): de corruptie VERZWELGT het gif → het wezen HEELT i.p.v. schade. */
+        v.hp = Math.min(v.maxHp || v.hp, v.hp + gif);
+        fxNummer(actorEl(v), '🕳️ +' + gif, 'fx-blok');
+        if (!g._zwarteZielGemeld) { melding('🕳️ Een Zwarte Ziel verzwelgt je gif en heelt ervan...'); g._zwarteZielGemeld = true; }
+      } else {
+        /* verminder (Zwarte Ziel, gewone) OF baas/gifWeerstand → halve gif-tik. */
+        const halveer = !lantaarn && (zz === 'verminder' || gd.baas || gd.gifWeerstand);
+        if (halveer && !g._gifWeerstandGemeld) {
+          melding(zz === 'verminder' ? '🕳️ Een Zwarte Ziel slokt de helft van je gif op.' : '🛡️ De baas weerstaat de helft van het gif.');
+          g._gifWeerstandGemeld = true;
+        }
+        verliesHp(v, halveer ? Math.ceil(gif / 2) : gif);
+      }
       v.status.gif--;
       renderGevecht();
       await slaap(380);
       if (gestopt()) return;
-      if (v.dood) { if (alleVijanden().length === 0) { gevechtGewonnen(); return; } continue; }
+      if (v.dood) {
+        /* De Zielslantaarn vangt de vrijgekomen ziel van een vergiftigde-corrupte vijand → +2 Kracht */
+        if (lantaarn && (gd.zwarteZiel || gd.gifImmuun || gd.gifkaats || gd.gifWeerstand)) {
+          geefStatus(sp(), 'kracht', 2); fxNummer($('#speler-zone'), '🏮 +2 Kracht', 'fx-buff');
+        }
+        if (alleVijanden().length === 0) { gevechtGewonnen(); return; }
+        continue;
+      }
     }
     if ((v.status.ritueel || 0) > 0) v.status.kracht = (v.status.kracht || 0) + v.status.ritueel;
 
