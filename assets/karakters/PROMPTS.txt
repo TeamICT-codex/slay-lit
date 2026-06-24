@@ -492,13 +492,15 @@ wegknippen). Houd elk wezen mét marge in het frame (geen wezen dat tot alle ran
   Accent: black + sickly-GREEN (poison).
 
 --- de_redacteur.png   (De Redacteur — strijkt je Blok weg) ---
-  A stern CENSOR-construct, upright and rigid, in a tight BANDED censor-uniform (NOT dripping
-  clerical robes): one hand a giant pair of black REDACTION-SHEARS caught MID-CUT slicing
-  through a translucent BLUE SHIELD-shape (cutting your Blok away), the other holding a fan of
-  blacked-out documents; its OWN face is half blacked-out behind heavy REDACTION BARS, strips of
-  censored/cut paper hanging off it. Cold, controlling, surgical.
-  Accent: BLACK redaction-bars + white censored strips + shears cutting a blue shield.
-  (≠ andere klerken: scherp, gecensureerd, schaar-handig — droog, geen inktdruip.)
+  A tall, lean, ELEGANT censor-knight shown in THREE-QUARTER view clearly FACING LEFT (head,
+  torso and gaze turned to the left toward an unseen foe, right shoulder toward the viewer): dark
+  iron banded plate over pale censor-robes, a smooth helm-face crossed by horizontal BLACK
+  REDACTION BARS with one cold slit of light. It thrusts a single giant pair of black REDACTION-
+  SHEARS out to the LEFT, blades MID-SNIP slicing through a translucent pale-BLUE SHIELD at the
+  left that cracks into two falling halves. Only a FEW censored black-barred strips trail from it
+  — keep it CRISP, NOT cluttered with masses of paper-text. Strong readable silhouette, sharp.
+  Accent: BLACK redaction-bars + the shears cutting a pale-blue shield (left).
+  (≠ andere klerken: scherp, gecensureerd, schaar-handig, droog; elegant & clean, niet rommelig.)
 
 --- de_archivaris.png   (2e ELITE — De Archivaris: compoundt Kracht, "vergeet niets") ---
   The BIGGEST enemy — a colossal, towering head-archivist whose FULL figure still fits within the

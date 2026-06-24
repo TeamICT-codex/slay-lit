@@ -170,16 +170,20 @@ cold light on the wet sheen.
 Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single image of ONE creature in ONE pose — NOT a grid, sheet, collage, turn-around or multiple poses/variants in one frame. Single full-body creature
 facing LEFT, isolated on a fully TRANSPARENT background, ~90% of a 1024x1024 canvas with margin. Cold
 blue-grey Archief light + thin warm ember rim. Theme: forgery/copy.
-Character: a stern CENSOR-construct, upright and rigid, in a tight BANDED censor-uniform (NOT dripping
-robes); its OWN face half blacked-out behind heavy REDACTION BARS, strips of censored/cut paper hanging
-off it. Holds giant black REDACTION-SHEARS and a fan of blacked-out documents.
-  ► de_redacteur.png        — Pose (basis · facing LEFT · render as ONE separate single image, NO sheet/grid):upright and surgical, leaning in with the giant black
-    redaction-shears caught MID-CUT — the open blades scissoring clean through a translucent BLUE SHIELD-
-    shape that splits and falls away in two halves; the other hand fans out blacked-out documents, its
-    bar-redacted face cocked with cold precision, body squared and clinical. Sharp, mid-snip.
-  ► de_redacteur_death.png  — Pose (facing LEFT · render as ONE separate single image, NO sheet/grid):it is REDACTED out of existence — thick black censor-bars slam across
-    the figure from every side, boxing it in, and its own shears snip the boxed shape into falling paper
-    strips that scatter and drift down; the last visible sliver of it blacked out to nothing.
+Character: a tall, lean, ELEGANT censor-knight in dark iron banded plate over pale censor-robes; its
+helm-face is smooth, crossed by a row of horizontal BLACK REDACTION BARS with a single cold slit of
+light between them. Surgical and clean — only a FEW censored black-barred paper strips trail from it
+(keep it CRISP; do NOT clutter the body with masses of loose paper-text). Strong readable silhouette,
+sharp focus, high detail, striking.
+  ► de_redacteur.png        — Pose (THREE-QUARTER VIEW, clearly FACING LEFT — head, torso and gaze turned
+    to the LEFT toward an unseen foe at the left edge, right shoulder toward the viewer; ONE separate single
+    image, NO sheet/grid): lunging into a precise cut to the LEFT, thrusting a single giant pair of black
+    REDACTION-SHEARS out to the LEFT, the open blades caught MID-SNIP slicing clean through a translucent
+    pale-BLUE SHIELD that hovers at the LEFT and cracks into two falling halves. Elegant, surgical, sharp.
+  ► de_redacteur_death.png  — Pose (THREE-QUARTER VIEW, still FACING LEFT; ONE separate single image, NO
+    sheet/grid): it is REDACTED out of existence — thick black censor-bars slam across the figure from
+    every side, boxing it in, and its own giant shears snip the boxed shape into a cascade of falling
+    black-and-white paper strips scattering to the LEFT; the last sliver of it blacked out to nothing.
 
 
 ████████ 11. DE_MAL — De Mal (ELITE · baart blanco gietsels) · VOLLEDIGE POSE-SET ████████
