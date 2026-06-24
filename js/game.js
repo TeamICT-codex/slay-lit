@@ -3874,12 +3874,25 @@ function koopVerwijdering() {
   });
 }
 
+/* sommige events hebben meerdere art-VARIANTEN (assets/events/<id>.webp, <id>2, <id>3, ...);
+   de game toont er willekeurig één per ontmoeting voor variatie. Puur cosmetisch → Math.random
+   (raakt de seeded/daily-stroom NIET). Variant 1 = <id> zelf, 2..n = <id>2..<id>n. */
+const EVENT_VARIANTEN = { koopman: 4 };
+let _eventArtId = null;
+function kiesEventArt(id) {
+  const n = EVENT_VARIANTEN[id] || 1;
+  if (n < 2) return id;
+  const k = 1 + Math.floor(Math.random() * n);
+  return k === 1 ? id : id + k;
+}
+
 function toonEvent() {
   let pool = EVENTS.filter(e => !S.gebruikteEvents.includes(e.id) && (!e.toon || e.toon()));
   if (pool.length === 0) { S.gebruikteEvents = []; pool = EVENTS.filter(e => !e.toon || e.toon()); }
   const ev = kiesUit(pool);
   S.gebruikteEvents.push(ev.id);
   S.huidigEvent = ev.id;
+  _eventArtId = kiesEventArt(ev.id);   /* welk art-beeld deze ontmoeting toont (1 vaste keuze voor renderEvent + eventKlaar) */
   toonScherm('event');
   schermAchtergrond('event',
     ev.id === 'altaar' ? actBg('eventRelikwie') : actBg('event'), 0.5);
@@ -3892,7 +3905,7 @@ function eventArtHtml(ev) {
 }
 function laadEventArt(ev) {
   if (!window.laadEventAfbeelding) return;
-  laadEventAfbeelding(ev.id, img => {
+  laadEventAfbeelding(_eventArtId || ev.id, img => {     /* de deze-ontmoeting-gekozen variant */
     const el = document.querySelector(`.event-art[data-eart="${ev.id}"]`);
     if (img && el) el.innerHTML = `<img src="${img.src}" alt="">`;
   });
