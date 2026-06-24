@@ -1594,7 +1594,7 @@ const EVENTS = [
   },
   {
     id: 'koopman', titel: 'De Zwervende Koopman', icoon: '🧳',
-    tekst: 'Een gestalte in lompen opent zijn jas. Tientallen flesjes glinsteren. "Vers gebrouwen," knipoogt hij.',
+    tekst: 'Een uitgemergelde gestalte schuifelt nader, half vergroeid met dossiers en rood lint — op zijn borst een verbleekt B.A.A.S.-naamplaatje, de naam weggekrast. Hij opent zijn jas; tientallen flesjes glinsteren tussen het papier. „...nog altijd in dienst," fluistert hij.',
     opties: [
       {
         label: 'Koop een drankje (20 goud)', detail: 'Een willekeurig drankje.',

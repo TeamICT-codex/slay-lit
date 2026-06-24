@@ -51,10 +51,24 @@ fontein.png
   liquid, faint red mist drifting over its rim, candles and bones
   scattered at its base.
 
-koopman.png
-  Scene: a mysterious merchant in ragged robes opening his coat
-  in a dark archway, dozens of glowing potion vials glinting
-  inside the lining, one eye catching the torchlight.
+koopman.png   (De Zwervende Koopman — een mens OPGEGETEN door het systeem/archief)
+  Scene: a hollow wandering HUSK of a former 198X corporate office worker, now half-
+  CONSUMED by the bureaucratic archive — gaunt, paper-grey, hollow-eyed, with bundles
+  of contracts, curled ledgers, punch-cards, red-tape and rusted index-tabs GROWING
+  THROUGH and out of his body like a parasitic fungus (erupting from his collar, cuffs
+  and ribs), his lower half trailing off into a drift of loose papers and filing-
+  drawers — he is slowly BECOMING part of the archive. He wears the rotted remnants of
+  an OFFICE SUIT (frayed blazer, limp tie) under the paper-growth, and on his chest a
+  faded 198X plastic EMPLOYEE ID BADGE on a lanyard reading "B.A.A.S. — MEDEWERKER",
+  but his actual NAME is scratched out / smeared / over-stamped with a serial number
+  and a barcode, the corporate logo defaced and ink-bled — the last trace of who he
+  was, now indexed and filed away. He OPENS his tattered coat toward the viewer to
+  reveal rows of glinting POTION VIALS tucked among the files he is fused with — still
+  doing business, hollow and rote, a vacant pleading half-smile, one still-human eye
+  catching the warm torchlight. Tragic corporate-horror, uncanny and pitiable — a
+  cautionary mirror of the rat race. Vertically centred.
+  (Compleet ander personage dan de winkelier/klerk-koopman: die is een sluwe levende
+  fence; DIT is een tragisch, half-opgegeten slachtoffer van het systeem.)
 
 vuurvliegjes.png
   Scene: a swarm of golden-green fireflies dancing through a dark
