@@ -69,12 +69,12 @@
 **Volle scènes — GEEN dambord-verwijdering, alleen WebP. Houd de exacte bestandsnaam.**
 
 **Bestaan al → hergenereren in Archief-stijl (zelfde naam):**
-- [ ] `Startscherm ACT 2 achtergrond.webp` (kaart-plate, STAAND 9:16)
-- [ ] `Gevechtstijl1act2.webp` … `Gevechtstijl5act2.webp` (5× gevecht, LIGGEND 16:9, open midden)
-- [ ] `Gevechtstijl act2 EPISCH 1.webp` … `EPISCH 3.webp` (3× episch)
-- [ ] `Achtergrondverkoper ACT2.webp` + `Achtergrondverkoper ACT2 easter egg.webp` (winkel)
-- [ ] `Achtergrondvraagtekenencounter ACT2.webp` (event ❓)
-- [ ] `Achtergrondvraagtekenrelikwieartefact ACT2.webp` (relikwie-event)
+- [x] `Startscherm ACT 2 achtergrond.webp` (kaart-plate, STAAND 9:16) ✅ verwerkt
+- [x] `Gevechtstijl1act2.webp` … `Gevechtstijl5act2.webp` (5× gevecht, LIGGEND 16:9, open midden) ✅ verwerkt
+- [x] `Gevechtstijl act2 EPISCH 1.webp` … `EPISCH 3.webp` (3× episch) ✅ verwerkt
+- [ ] `Achtergrondverkoper ACT2.webp` + `Achtergrondverkoper ACT2 easter egg.webp` (winkel) — nog oude stijl
+- [ ] `Achtergrondvraagtekenencounter ACT2.webp` (event ❓) — nog oude stijl
+- [ ] `Achtergrondvraagtekenrelikwieartefact ACT2.webp` (relikwie-event) — nog oude stijl
 
 **Ontbreken nog → maken (ik wire de slot in `js/art.js` zodra je 'm dropt):**
 - [ ] `Achtergrondrust2.webp` (rustplaats)
@@ -90,6 +90,7 @@
 - [ ] **15 Act 2-kaarten** → `assets/kaarten/<id>.png` (Doorslag/Stempel/Afgekeurd/Naäperij/…)
 - [ ] **10 Act 2-relikwieën** → `assets/relikwieen/<id>.png`
 - [ ] **4 Act 2-events** → `assets/events/<id>.png`
+- [ ] **`vonkaltaar.png`** → `assets/events/` — het Vonkaltaar (fakkel-smederij; prompt in `assets/events/PROMPTS.txt`, emoji 🪔 werkt nu)
 
 ---
 
