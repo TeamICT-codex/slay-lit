@@ -92,18 +92,62 @@ ik de slot in het manifest (art.js). Bestandsnamen EXACT overnemen.
   Scene: a hall of mirrors made of filing-cabinet glass, the chamber reflected into
   infinity (copies of copies), cold blue-grey, faint warm glow at the very center.
 
-[✅] Act 2 achtergronden/Achtergrondverkoper ACT2.webp   (winkel)
-  Scene: a clerk's wares-counter wedged into a records-vault, goods filed in
-  labelled drawers and tied with red tape, an abacus and stamps, cold lamp-light.
-[✅] Act 2 achtergronden/Achtergrondverkoper ACT2 easter egg.webp
-  Scene: same counter, but caught mid-fraud — duplicate price-tags, forged seals
-  and a hidden second set of ledgers spilling out; a sly conspiratorial cold glow.
-[✅] Act 2 achtergronden/Achtergrondvraagtekenencounter ACT2.webp   (event ❓)
-  Scene: a dim cross-roads of filing-corridors, a single sealed unmarked drawer
-  ajar with cold light leaking out, the rest in archive shadow.
-[✅] Act 2 achtergronden/Achtergrondvraagtekenrelikwieartefact ACT2.webp   (relikwie-event)
-  Scene: a forgotten reliquary-drawer in the archive, one ornate sealed artefact-
-  file glowing faintly warm among rows of cold grey dossiers.
+  >> WAAROM LEKEN ZE OP ELKAAR? De oude prompts zeiden alle vier "filing-
+  >> corridor / dossiers / cold light" → de generator viel terug op dezelfde
+  >> symmetrische archiefgang (= net je gevechtsplaten). De aangescherpte versies
+  >> hieronder geven elk EEN uniek focaal ONDERWERP + eigen CAMERA/compositie +
+  >> eigen KLEURACCENT, en duwen de generieke gang expliciet weg. Tip bij het
+  >> genereren: begin de prompt met het unieke onderwerp (niet met "archive"),
+  >> en varieer de seed. De vier moeten qua kleur al verschillen: winkel = warm
+  >> amber, fraude = amber + ziek groen, ❓-event = bijna zwart + koud cyaan,
+  >> relikwie = warm goud. Lukt iets nog steeds te generiek, voeg toe:
+  >> "--no symmetric corridor of identical shelves, no perspective hallway".
+
+[✅] Act 2 achtergronden/Achtergrondverkoper ACT2.webp   (WINKEL — de klerk-koopman)
+  Scene: a cramped MERCHANT'S STALL built into a dead-records vault — a heavy
+  wooden trade-counter in the FOREGROUND filling the lower third, its top crowded
+  with goods FOR SALE: sealed contract-scrolls in a rack, a few glass potion-vials,
+  small trinket-relics on a velvet tray, a brass weighing-scale and an abacus, a
+  locked cash-box, hand-written price-tags dangling on red string. A single warm
+  brass LANTERN hangs over the counter, pooling amber light across the wares — the
+  one warm spot in the cold blue-grey vault behind, where ledger-shelves fade into
+  clinical shadow. Customer's three-quarter viewpoint, the inviting cluttered
+  counter as the clear hero; an empty clerk's stool and an open tally-book hint at
+  the absent vendor. Cozy yet bureaucratic. An intimate shop NOOK, NOT a symmetric
+  corridor of shelves.
+
+[✅] Act 2 achtergronden/Achtergrondverkoper ACT2 easter egg.webp   (zelfde winkel, BETRAPT)
+  Scene: the SAME merchant's trade-counter and warm hanging lantern as the normal
+  shop (keep it recognizably the same stall) — but caught MID-FRAUD, and the scam
+  IS the subject: on the counter, DUPLICATE price-tags hang from one and the same
+  item (two prices — the copy motif), a half-pressed FORGED wax seal and stamp lie
+  mid-forgery, a coin-stack with a false bottom tipped open. From a hidden
+  compartment UNDER the counter a SECOND set of secret ledgers spills out, lit by a
+  sickly GREEN conspiratorial under-glow that clashes with the honest amber lantern
+  above (two-tone, something's-off). A sly long shadow of an unseen hand. Same
+  customer's three-quarter view but pushed closer and lower onto the under-counter
+  reveal. Sneaky, two-faced, doubles everywhere — foreshadowing the Copycat.
+
+[✅] Act 2 achtergronden/Achtergrondvraagtekenencounter ACT2.webp   (EVENT ❓ — de onbekende lade)
+  Scene: a near-BLACK archive dead-end, almost entirely swallowed in shadow — and
+  ONE unmarked, unlabelled filing-drawer hanging slightly AJAR, off-centre, with a
+  thin blade of eerie pale-CYAN light leaking from the crack and spilling a single
+  cold streak across the dusty floor. You cannot see what's inside. The surrounding
+  shelves are barely-readable silhouettes in the dark; lots of heavy NEGATIVE SPACE
+  and mystery. No warm light anywhere — cold, hushed, ominous, curious; a held
+  breath. Minimal high-contrast composition, one mysterious focal leak in deep
+  darkness. NOT a bright or busy corridor, NOT symmetric.
+
+[✅] Act 2 achtergronden/Achtergrondvraagtekenrelikwieartefact ACT2.webp   (RELIKWIE-event — het heilige lade)
+  Scene: a single ornate, ancient ARTEFACT-reliquary as the unmistakable hero of
+  the frame — a richly decorated sealed relic-file resting in an opened, gilded
+  niche-drawer raised on a small stone ledge, HALOED in a warm GOLD glow with
+  dust-motes drifting in its beam, almost an altar. Around it, rows of dull,
+  identical COLD-GREY dossiers fall away into clinical blue shadow, so the one warm
+  precious object blazes out by contrast. Reverent, sacred, treasure-found. The
+  glowing reliquary set slightly ABOVE centre (so it stays readable behind UI), a
+  soft golden halo, the cold archive receding around it — the warm, singular,
+  holy inverse of the cold ❓-mystery. NOT a corridor, NOT cluttered.
 
 [⬜] Act 2 achtergronden/Achtergrondrust2.webp   (rustplaats — ik wire de slot)
   Scene: a quiet dead-records nook claimed as a campsite — a bedroll between two
