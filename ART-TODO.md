@@ -81,7 +81,7 @@
 - [x] `Achtergrondschatkist2.webp` (schat) ✅ verwerkt + gewired
 - [x] `Overwinningsachtergrond2gewoon.webp` (beloning) ✅ verwerkt + gewired
 - [x] `Overwinningsachtergrond2episch.webp` (epische overwinning) ✅ verwerkt + gewired
-- [ ] `Achtergrond nederlaag ACT2.webp` (nederlaagscherm) — **nog te maken** (valt nu terug op de Act 1-plaat)
+- [x] `Achtergrond nederlaag ACT2.webp` (nederlaagscherm) ✅ verwerkt + gewired → **Act 2-achtergronden 18/18 COMPLEET**
 
 ---
 

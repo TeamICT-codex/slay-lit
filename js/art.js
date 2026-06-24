@@ -585,8 +585,8 @@ const ACHTERGRONDEN = {
     rust: 'Act 2 achtergronden/Achtergrondrust2.webp',
     schat: 'Act 2 achtergronden/Achtergrondschatkist2.webp',
     beloning: 'Act 2 achtergronden/Overwinningsachtergrond2gewoon.webp',
-    overwinning: 'Act 2 achtergronden/Overwinningsachtergrond2episch.webp'
-    /* nederlaag: nog niet gemaakt → valt via actBg() terug op de Act 1-nederlaagplaat */
+    overwinning: 'Act 2 achtergronden/Overwinningsachtergrond2episch.webp',
+    nederlaag: 'Act 2 achtergronden/Achtergrond nederlaag ACT2.webp'
   }
 };
 window.ACHTERGRONDEN = ACHTERGRONDEN;
