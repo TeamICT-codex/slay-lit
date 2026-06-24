@@ -43,24 +43,29 @@
 > (`_attack`/`_hit`/`_death`/`_cast`, archivaris ook `_block`). Volledige richtlijnen staan in
 > de prompt-docs. Spawns (`doorslag_kopie`, `mal_gietsel`) hebben geen poses nodig.
 
+> ✅ **VERWERKT (24 juni 2026, v17):** 35 webps dambord/luma-gestript + geverifieerd op donker
+> strijdveld. **2 moeten opnieuw** (zie ⚠️ onderaan): `de_deadline` (basis) + `spiegelwachter` (×2).
+
 **Prompt in `assets/karakters/PROMPTS.txt` (sectie "ACT 2 — DE KOPIEERHEL"):**
-- [ ] `echo` — De Echo (doorschijnende duplicaten van zichzelf)
-- [ ] `doorslag` — Doorslag (carbon-copy-papierwezen)
-  - [ ] `doorslag_kopie` — bleke zwakke kopie (spawn; optioneel/mag emoji blijven)
-- [ ] `naaper` — De Naäper (spottende na-aap-imp)
-- [ ] `inktklerk` — Inktklerk (inkt + stempel)
-- [ ] `de_mal` — De Mal (elite: ijzeren matrijs/drukpers)
-  - [ ] `mal_gietsel` — leeg blanco gietsel (spawn; optioneel)
-- [ ] `het_origineel` — Het Origineel (episch: "jij bent maar een kopie van mij")
+- [x] `echo` — De Echo (luma-key, doorschijnend) + `echo_death` ✅
+- [x] `doorslag` + `doorslag_death` ✅
+  - [x] `doorslag_kopie` — bleke zwakke kopie (spawn) ✅
+- [x] `naaper` + `naaper_death` ✅
+- [x] `inktklerk` + `inktklerk_death` ✅
+- [x] `de_mal` — De Mal (elite) volledige set: `_attack`/`_hit`/`_cast`/`_death` ✅
+  - [x] `mal_gietsel` — leeg blanco gietsel (spawn) ✅
+- [x] `het_origineel` — episch, volledige set `_attack`/`_hit`/`_cast`/`_death` ✅
 
 **Prompt in `ACT2-PROMPTBIB.md` (sectie 3 — extra vijanden):**
-- [ ] `stempelaar` — De Stempelaar
-- [ ] `dossierwurm` — De Dossierwurm
-- [ ] `spiegelwachter` — De Spiegelwachter
-- [ ] `de_deadline` — De Deadline (escalerende klap)
-- [ ] `de_inktvlek` — De Inktvlek (gif)
-- [ ] `de_redacteur` — De Redacteur (strijkt je Blok weg)
-- [ ] `de_archivaris` — De Archivaris (2e elite, compoundt Kracht)
+- [x] `stempelaar` + `stempelaar_death` ✅
+- [x] `dossierwurm` + `dossierwurm_death` ✅
+- [ ] ⚠️ `spiegelwachter` (+ `_death`) — **opnieuw genereren** (origineel te donker glas-op-zwart, geen
+      contrast om uit te snijden) → **op checkerboard** mét felle koude glow-randen, niet op zwart
+- [ ] ⚠️ `de_deadline` (basis) — **opnieuw genereren op checkerboard** (kwam als donkere scène, niet
+      uitsneedbaar); `de_deadline_death` ✅ is wél goed
+- [x] `de_inktvlek` + `de_inktvlek_death` ✅
+- [x] `de_redacteur` (herschreven) + `de_redacteur_death` ✅
+- [x] `de_archivaris` — 2e elite, volledige set `_attack`/`_hit`/`_cast`/`_block`/`_death` ✅
 
 **ZWARTE ZIEL — gif-counters (corruptie/leegte; prompts in `assets/karakters/ACT2-VIJANDEN-KLAAR.txt` blok 16-18):**
 - [ ] `pekziel` — De Pekziel (Act 1, gewone, vermindert gif) — basis + `_death`
