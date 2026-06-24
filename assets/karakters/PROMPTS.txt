@@ -334,13 +334,23 @@ Het iconische Copycat-moment: hij speelt JOUW gestolen kaart triomfantelijk teru
 =================================================================
 ACT 2 — DE KOPIEERHEL (vijandenroster; emoji-placeholder nu)
 =================================================================
-Zelfde stijl als hierboven: stylized painterly dark-fantasy concept
-art, expressive brushwork, NOT photorealistic / no photo / no 3D,
-warm torchlit catacomb palette (deep purples, charcoal, ember
-orange), single full-body creature, facing LEFT (richting de held),
-isolated on a fully TRANSPARENT background, no ground/shadow/text/
-frame/UI, fills ~90% van een 1024x1024 canvas. THEMA = NAMAAK/KOPIE:
-alles voelt gedupliceerd, gespiegeld, doorgedrukt, niet-origineel.
+Zelfde TEKEN-stijl als de Act 1-vijanden: stylized painterly dark-fantasy
+concept art, expressive brushwork, NOT photorealistic / no photo / no 3D,
+single full-body creature, facing LEFT (richting de held), isolated on a fully
+TRANSPARENT background, no ground/shadow/text/frame/UI, fills ~90% van een
+1024x1024 canvas. MAAR het Archief-palet is KOUD (niet de warme Act 1-catacombe):
+lit by cold blue-grey clerical "system light", with a thin WARM EMBER RIM-LIGHT
+along one edge (de gloed van de fakkel van de held) zodat elk wezen toch warm-
+omrand oogt en loskomt van de koude achtergronden. THEMA = NAMAAK/KOPIE: alles
+voelt gedupliceerd, gespiegeld, doorgedrukt, niet-origineel — papier, inkt,
+stempels, spiegels, matrijzen.
+
+>> GEEF ELK WEZEN EEN EIGEN SILHOUET + EIGEN ACCENTKLEUR (zie de differentiatie-
+>> tabel onderaan dit blok), anders komen ze allemaal als 'grijs papieren figuur'
+>> uit de generator. Begin de prompt met het UNIEKE onderwerp/silhouet, niet met
+>> "a creature in the archive". De vier 'klerk in gewaad' (inktklerk, stempelaar,
+>> de_redacteur, de_archivaris) lijken het snelst op elkaar — forceer daar een
+>> duidelijk verschillende HOUDING, MATERIAAL en KLEUR.
 
 POSE-STATES (zelfde conventie als Act 1 — optioneel, maar maakt ze levend):
 - GEWONE vijanden → maak minstens <id>_death (de sterf-pose). Attack/hit vallen terug op de
@@ -386,8 +396,39 @@ de_mal.png       (elite) a hulking iron casting-mould / printing-press
 
 mal_gietsel.png  (gespawnd door De Mal) a small half-formed blank cast: a
                  featureless hollow humanoid, faceless and smooth, fresh
-                 and unfinished straight from the mould.
+                 and unfinished straight from the mould, pale CLAY/WAX-white.
 
-EXTRA ACT 2-VIJANDEN (3): stempelaar, dossierwurm, spiegelwachter — de
-prompts + gedrag/bouw-data staan in ACT2-PROMPTBIB.md (repo-root), sectie
-"3. Vijanden". (spiegelwachter = glas → genereren op EFFEN ZWARTE achtergrond.)
+het_origineel.png  (EPISCH — de baas-tier vijand "Het Origineel": het ENE ware
+                 origineel waar heel het Archief z'n kopieën van aftrok, en het
+                 houdt vol dat JIJ de kopie bent) a tall, regal, hyper-VIVID
+                 archetypal humanoid — the ONE fully SATURATED, warmly lit being
+                 in a world of cold grey fakes: rich GOLD-AND-CRIMSON, sharp and
+                 perfect, more real and solid than anything around it, holding a
+                 glowing master seal-of-origin / a radiant source-quill. From its
+                 silhouette PALE washed-out grey duplicate copies of ITSELF peel
+                 away and bleed off into the cold dark behind, each fainter and
+                 more lifeless than the last. Radiant, arrogant, archetypal — it
+                 BLAZES warm against the cold. (episch → meer poses, zie POSE-STATES.)
+
+EXTRA ACT 2-VIJANDEN (7) in ACT2-PROMPTBIB.md (repo-root), sectie "3. Vijanden":
+stempelaar, dossierwurm, spiegelwachter, de_deadline, de_inktvlek, de_redacteur,
+de_archivaris (elite). (spiegelwachter = glas → genereren op EFFEN ZWARTE achtergrond.)
+
+================ DIFFERENTIATIE-TABEL (eigen silhouet + accentkleur per wezen) ================
+Houd deze uit elkaar — zelfde koud Archief-palet + warme ember-rand, maar elk een
+ANDER silhouet en ANDERE accentkleur, anders worden het allemaal grijze papierfiguren.
+  echo          — wazig MEERLAAGS humanoid (after-images)      · accent: violet-wit nagloed
+  doorslag      — plat PAPIEREN humanoid (carbonblad)          · accent: inkt-BLAUW + carbongrijs
+  doorslag_kopie— bleke dunne doorslag (spawn)                 · accent: vervaagd bijna-wit
+  naaper        — pezige AAP-imp (na-aapt; enige 'dier')       · accent: donkere vacht + ziek-GELE grijns/ogen
+  inktklerk     — gebogen DRUIPENDE klerk + stempel            · accent: glanzend ZWARTE inkt + rood lak
+  de_mal        — log IJZEREN drukpers/matrijs (massief)       · accent: gloeiend ORANJE matrijs-holte + zwart ijzer
+  mal_gietsel   — glad BLANCO gietsel (spawn)                  · accent: bleek klei/was-wit
+  het_origineel — fel ARCHETYPISCH humanoid (episch, uniek)    · accent: GOUD-en-KARMOZIJN, warm, verzadigd
+  stempelaar    — klerk met één REUZE-STEMPEL-arm (asymmetrisch)· accent: BRONS-stempel + RODE waxzegels
+  dossierwurm   — lange GESEGMENTEERDE worm (geen humanoid)    · accent: bot-GEEL perkament + rood touw
+  spiegelwachter— GLAZEN wachter (zwarte bg!)                  · accent: zwart SPIEGELglas + koude reflecties
+  de_deadline   — hoge gebukte KLOK-toren (zandloper-torso)    · accent: zwart ZAND + te-late rode stempels
+  de_inktvlek   — lage VORMLOZE plas/ooze (kruipt)             · accent: zwart + ziek GROEN
+  de_redacteur  — rechte CENSOR met schaar-hand                · accent: ZWARTE censuurbalken + witte stroken
+  de_archivaris — kolossale ARCHIVARIS + plankenberg op rug (grootste, elite) · accent: bot-grijs, TORENHOOG

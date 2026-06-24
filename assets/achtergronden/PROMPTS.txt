@@ -149,23 +149,45 @@ ik de slot in het manifest (art.js). Bestandsnamen EXACT overnemen.
   soft golden halo, the cold archive receding around it — the warm, singular,
   holy inverse of the cold ❓-mystery. NOT a corridor, NOT cluttered.
 
-[⬜] Act 2 achtergronden/Achtergrondrust2.webp   (rustplaats — ik wire de slot)
-  Scene: a quiet dead-records nook claimed as a campsite — a bedroll between two
-  stacked stone filing-sarcophagi, curled paper and cobweb, a niche-shrine of
-  melted candle stubs over a defaced nameplate, one cold shaft from a grate above.
-  Cold palette zodat het (door het spel getekende) warme vuur eruit springt.
-  LET OP: GEEN kampvuur in beeld (het spel tekent het zelf).
-[⬜] Act 2 achtergronden/Achtergrondschatkist2.webp   (schat — ik wire de slot)
-  Scene: a sealed records-vault, an ornate sarcophagus-drawer pulled open revealing
-  a glint of gold among bundled contracts and wax seals, grave-goods filed in
-  labelled shadows, dust in pale cold light.
-[⬜] Act 2 achtergronden/Overwinningsachtergrond2gewoon.webp   (beloning — ik wire de slot)
-  Scene: an archive-gallery falling silent after battle, paper-dust settling in cold
-  light, scattered torn DUPLICATE pages and broken bone-tags, a filing-cabinet doorway
-  deeper down standing open.
-[⬜] Act 2 achtergronden/Overwinningsachtergrond2episch.webp   (epische overwinning — ik wire de slot)
-  Scene: the central index-nave after a great battle, a colossal toppled card-catalogue,
-  duplicate slips raining down slowly, one warm shaft breaking through the cold grey.
+[⬜] Act 2 achtergronden/Achtergrondrust2.webp   (RUSTPLAATS — intieme kampplek; ik wire de slot)
+  Scene: a small sheltered hollow scooped out between two massive stone filing-
+  SARCOPHAGI shoved together to make a private nook — an unrolled BEDROLL and a
+  leaning pack on the cleared stone floor, a folded blanket, a tin cup, curled
+  paper and cobweb in the corners, a tiny niche-shrine of melted candle-stubs over
+  a scratched-out nameplate on the wall. One thin COLD shaft of grey light falls
+  from a grate high above onto the empty floor in the middle. Intimate, hushed,
+  safe-for-one-night; a close low viewpoint on the little camp. The CENTRE of the
+  floor is kept EMPTY and dark (the game draws an animated campfire there) — only a
+  faint warm pre-glow may touch the surrounding walls. Cold blue-grey palette so the
+  game's warm fire pops. An enclosed nook, NOT a corridor, NOT symmetric.
+
+[⬜] Act 2 achtergronden/Achtergrondschatkist2.webp   (SCHAT — één opengetrokken graflade; ik wire de slot)
+  Scene: ONE ornate stone SARCOPHAGUS-DRAWER pulled half-open as the clear hero of
+  the frame, a warm GOLDEN glint of treasure spilling from inside — gold coins, a
+  jewelled seal, a gilded artefact-file — among bundled contracts and dripping wax
+  seals, grave-goods packed in the drawer like burial loot. A soft warm gold glow
+  rises from the open drawer (the only warm light) against the cold blue-grey vault
+  around it; dust drifting in the beam. Close three-quarter composition on the open
+  drawer, the rest of the vault receding into clinical shadow. Tomb-treasure, secret,
+  rewarding. NOT a corridor of shelves.
+
+[⬜] Act 2 achtergronden/Overwinningsachtergrond2gewoon.webp   (BELONING — de stilte ná; ik wire de slot)
+  Scene: the quiet AFTERMATH of a fight in an archive hall — the air full of slowly
+  SETTLING paper-dust and drifting torn DUPLICATE pages floating down, scattered
+  broken bone-tags and snapped index-rods on the floor, a knocked-over filing-stool.
+  Deeper in, ONE filing-cabinet DOORWAY stands open, a soft pale light beyond it
+  inviting you onward. Calm, still, cold blue-grey light, a sense of release. Wide
+  but tranquil composition, the open doorway as a gentle focal point off-centre;
+  drama in the drifting debris and depth, centre kept calm. NOT a busy symmetric corridor.
+
+[⬜] Act 2 achtergronden/Overwinningsachtergrond2episch.webp   (EPISCHE OVERWINNING — de machine valt; ik wire de slot)
+  Scene: a COLOSSAL mechanical CARD-CATALOGUE engine TOPPLED and broken across the
+  central index-nave after a great battle — a fallen tower of thousands of drawers
+  spilling open, duplicate slips and index-cards RAINING down slowly through the air
+  like confetti, sparks and dust. Through the broken ceiling above, ONE triumphant
+  warm GOLDEN shaft of light breaks through and cuts across the cold grey ruin — the
+  copy-machine is dead. Grand, epic, cathartic, low heroic angle looking up at the
+  fallen engine. The warm shaft is the hero light against the cold; NOT a corridor.
   (de nederlaag-plate ACT2 staat al verderop in dit bestand.)
 
 
@@ -232,11 +254,15 @@ torchlight, palette of deep purples, charcoal and ember orange.
 NOT photorealistic, no photo, no 3D render. No characters, no
 text, no UI.
 
-Scene: a long archive-gallery of bone-and-ledger niches where the
-votive candles over the nameplates are dying one by one, thin threads
-of smoke rising, an empty stone filing-bier at the far end, cold
-blue-grey clerical gloom with one last warm flame surviving at the
-frame's edge. Center of frame nearly black and empty.
+Scene: a row of votive CANDLES set over scratched-out nameplates in
+bone-and-ledger niches, GUTTERING OUT one after another — each thread
+of smoke rising as another flame dies, the light receding into the
+dark; an empty cold stone filing-BIER waits at the lower edge. Cold
+blue-grey clerical gloom, with just ONE last warm flame still clinging
+to life at the very edge of the frame. Mournful, snuffed-out, final.
+The candle-row and the lone surviving flame live in the EDGES and the
+depth; the CENTRE of the frame is kept nearly black and empty (the
+fallen hero + the defeat-text go there). NOT a corridor.
 
 --- Act 3 achtergronden/Achtergrond nederlaag ACT3.png ---
 Painterly dark fantasy environment art for a deckbuilder game,
