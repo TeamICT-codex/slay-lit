@@ -72,9 +72,9 @@
 - [x] `Startscherm ACT 2 achtergrond.webp` (kaart-plate, STAAND 9:16) ✅ verwerkt
 - [x] `Gevechtstijl1act2.webp` … `Gevechtstijl5act2.webp` (5× gevecht, LIGGEND 16:9, open midden) ✅ verwerkt
 - [x] `Gevechtstijl act2 EPISCH 1.webp` … `EPISCH 3.webp` (3× episch) ✅ verwerkt
-- [ ] `Achtergrondverkoper ACT2.webp` + `Achtergrondverkoper ACT2 easter egg.webp` (winkel) — nog oude stijl
-- [ ] `Achtergrondvraagtekenencounter ACT2.webp` (event ❓) — nog oude stijl
-- [ ] `Achtergrondvraagtekenrelikwieartefact ACT2.webp` (relikwie-event) — nog oude stijl
+- [x] `Achtergrondverkoper ACT2.webp` + `Achtergrondverkoper ACT2 easter egg.webp` (winkel — mét koopman) ✅ verwerkt
+- [x] `Achtergrondvraagtekenencounter ACT2.webp` (event ❓) ✅ verwerkt
+- [x] `Achtergrondvraagtekenrelikwieartefact ACT2.webp` (relikwie-event) ✅ verwerkt
 
 **Ontbreken nog → maken (ik wire de slot in `js/art.js` zodra je 'm dropt):**
 - [ ] `Achtergrondrust2.webp` (rustplaats)
