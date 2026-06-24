@@ -820,7 +820,7 @@ const VIJANDEN = {
       : { naam: 'Duistere Slag', type: 'aanval', dmg: 6 }
   },
   paddenstoelman: {
-    naam: 'Paddenstoelman', art: '🍄', hp: [24, 28],
+    naam: 'Paddenstoelman', art: '🍄', hp: [24, 28], gifImmuun: true,   /* sporen/toxines: immuun voor Gif → gif-deck moet hier directe schade doen */
     kies: v => {
       const r = willekeurig();
       if (r < 0.5) return { naam: 'Sporenbeet', type: 'aanval', dmg: 5, doe: () => geefGif(sp(), 2) };
@@ -975,7 +975,7 @@ const VIJANDEN = {
           : { naam: 'Bladsnede', type: 'aanval', dmg: 10 })
   },
   spiegelwachter: {
-    naam: 'De Spiegelwachter', art: '🔮', hp: [24, 29],
+    naam: 'De Spiegelwachter', art: '🔮', hp: [24, 29], gifkaats: 0.5,   /* kaatst ook je Gif terug (helft) — niet alleen klappen */
     /* kaatst je eigen klap terug — leest dezelfde laatsteSpelerDmg als Het Origineel */
     kies: (v, beurt) => {
       if (beurt === 0) return { naam: 'Oppoetsen', type: 'blok', blok: 9 };
@@ -992,7 +992,7 @@ const VIJANDEN = {
       : { naam: 'Termijn', type: 'aanval', dmg: 6 + Math.min(beurt, 6) * 2 }
   },
   de_inktvlek: {
-    naam: 'De Inktvlek', art: '🩸', hp: [20, 25],
+    naam: 'De Inktvlek', art: '🩸', hp: [20, 25], gifImmuun: true,   /* zelf van gif gemaakt → immuun; je kunt de vergiftiger niet vergiftigen */
     /* gif-bron: inkt die je dossier (en jou) wegvreet */
     kies: v => willekeurig() < 0.55
       ? { naam: 'Inktspat', type: 'aanval', dmg: 5, doe: () => geefGif(sp(), 3) }
@@ -1046,7 +1046,7 @@ const VIJANDEN = {
      game.js — zie copycatKies() en de copycat*-helpers. Drops (METGEZELLEN.drops
      rol:'breker') breekt de machine bij je first-clear: trouw is niet te indexeren. */
   de_erfprins: {
-    naam: 'De Erfprins', art: '🤴', hp: [210, 210], baas: true, copycat: true,
+    naam: 'De Erfprins', art: '🤴', hp: [210, 210], baas: true, copycat: true, gifkaats: 0.5,   /* Plagiaat: Gif — kopieert de helft van je gif op jou (+ baas = halve gif-tik) */
     titel: 'Erfgenaam zonder verdienste',
     kies: (v, beurt) => copycatKies(v, beurt)
   }

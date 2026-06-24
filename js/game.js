@@ -790,7 +790,18 @@ function geefStatus(actor, naam, n) {
 }
 
 function geefGif(actor, n) {
-  if (!actor.isSpeler) n += (heeftRelikwie('smaragden_ring') ? 1 : 0) + (heeftRelikwie('inktpot') ? 1 : 0);
+  if (!actor.isSpeler) {
+    const gd = VIJANDEN[actor.id] || {};
+    /* GIF-IMMUUN: dit wezen vat geen Gif (gif-deck moet hier directe schade doen) */
+    if (gd.gifImmuun) { fxNummer(actorEl(actor), '🚫 gif-immuun', 'fx-blok'); return; }
+    n += (heeftRelikwie('smaragden_ring') ? 1 : 0) + (heeftRelikwie('inktpot') ? 1 : 0);
+    /* GIF-KAATS (Copycat-thema): kopieert een deel van je net-opgelegde Gif terug op JOU */
+    if (gd.gifkaats && inGevecht() && n > 0) {
+      const terug = Math.max(1, Math.ceil(n * gd.gifkaats));
+      geefStatus(sp(), 'gif', terug);
+      fxNummer($('#speler-zone') || $('#topbalk'), '🪞 Plagiaat: Gif +' + terug, 'fx-debuff');
+    }
+  }
   geefStatus(actor, 'gif', n);
   Klank.sfx('gif');
 }
@@ -1797,10 +1808,9 @@ function startGevecht(samenstelling, soort, rij) {
   if (heeftRelikwie('kroon_van_sintels') && lichtStart === 'helder') g.energie += 1;
   if (heeftRelikwie('houten_been')) g.speler.status.doornen = (g.speler.status.doornen || 0) + 1;
   if (heeftRelikwie('duivelboomtak')) g.speler.status.kracht = (g.speler.status.kracht || 0) + 2;
-  if (heeftRelikwie('slangenamulet')) {
-    const n = 1 + (heeftRelikwie('smaragden_ring') ? 1 : 0) + (heeftRelikwie('inktpot') ? 1 : 0);
-    g.vijanden.forEach(v => v.status.gif = (v.status.gif || 0) + n);
-  }
+  /* via geefGif zodat de smaragden_ring/inktpot-bonus ÉN gif-immuun/gif-kaats meegerekend
+     worden (basis 1; geefGif telt de relic-bonus er zelf bij) */
+  if (heeftRelikwie('slangenamulet')) g.vijanden.forEach(v => geefGif(v, 1));
   /* gedoofde fakkel: vijanden feller, maar de buit is groter */
   g.gedoofd = lichtNiveau() === 'gedoofd';
   if (g.gedoofd) g.vijanden.forEach(v => v.status.kracht = (v.status.kracht || 0) + 1);
@@ -3084,7 +3094,12 @@ async function eindBeurt() {
     v.blok = 0;
 
     if ((v.status.gif || 0) > 0) {
-      verliesHp(v, v.status.gif);
+      /* BAZEN-WEERSTAND: een baas (of gifWeerstand-wezen) neemt Gif aan HALVE snelheid →
+         geen one-shot-gif meer op bazen, zonder de hero-getallen aan te raken. */
+      const gd = VIJANDEN[v.id] || {};
+      const tik = (gd.baas || gd.gifWeerstand) ? Math.ceil(v.status.gif / 2) : v.status.gif;
+      if (tik < v.status.gif && !g._gifWeerstandGemeld) { melding('🛡️ De baas weerstaat de helft van het gif.'); g._gifWeerstandGemeld = true; }
+      verliesHp(v, tik);
       v.status.gif--;
       renderGevecht();
       await slaap(380);
