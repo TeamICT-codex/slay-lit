@@ -269,8 +269,8 @@ const KAARTEN = {
   nachtschade: {
     naam: 'Nachtschade', type: 'aanval', zeld: 'zeldzaam', kost: 2, doel: 'vijand', icoon: '🌑',
     maal: 3, up: { maal: 4 },
-    tekst: c => `Doe ${kval(c, 'maal')}× het Gif op het doelwit aan schade.`,
-    speel: (c, t) => { aanvalOp(t, (t.status.gif || 0) * kval(c, 'maal')); }
+    tekst: c => `Doe ${kval(c, 'maal')}× het Gif op het doelwit aan schade. Verbruik daarna ál het Gif.`,
+    speel: (c, t) => { aanvalOp(t, (t.status.gif || 0) * kval(c, 'maal')); if (!t.dood) t.status.gif = 0; }   /* finisher: het gif erupteert in één klap, geen blijvende DoT meer */
   },
   gifflits: {
     naam: 'Gifflits', type: 'vaardigheid', zeld: 'gewoon', kost: 0, doel: 'vijand', icoon: '💉',

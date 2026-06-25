@@ -1002,8 +1002,10 @@ function verliesHp(doel, n, bron) {
       if (window.Vista) Vista.sterf(doel);
       pose2D(doel, 'death', 3);
       if (el) el.classList.add('sterft');
-      /* Epidemie: een sterfgeval verspreidt gif onder de rest */
-      if (inGevecht() && (sp().status.epidemie || 0) > 0) {
+      /* Epidemie: een sterfgeval verspreidt gif onder de rest — max 1× per beurt
+         (anders kettingt een AoE-kill exponentieel door). */
+      if (inGevecht() && (sp().status.epidemie || 0) > 0 && !S.gevecht._epidemieGespreid) {
+        S.gevecht._epidemieGespreid = true;
         alleVijanden().forEach(v => geefGif(v, sp().status.epidemie));
       }
     }
@@ -3227,6 +3229,7 @@ function beginSpelerBeurt() {
   const s = g.speler;
   s.blok = 0;
   g.aanvalDezeBeurt = 0;   /* Act 2: Originele Handtekening telt of dit je eerste aanval is */
+  g._epidemieGespreid = false;   /* Epidemie mag deze beurt weer 1× verspreiden */
   s.status.doorslag = 0;   /* Doorslag vervalt per beurt — geen carry-over (de kaart zegt "deze beurt") */
 
   if ((s.status.gif || 0) > 0) {
