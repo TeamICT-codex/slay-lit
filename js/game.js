@@ -3710,6 +3710,42 @@ function vonkAltaarBrand(c, gevoed) {
   eventKlaar(tekst);
 }
 
+/* HET VONKALTAAR — een VLOEK als brandstof: de vlam verslindt haar (uit je dek) en het
+   vrijgekomen duister slaat om in GEGARANDEERD Heldering op een willekeurige kaart (de vlam
+   kiest, niet jij). Zo wordt je grootste tegenslag licht — de licht-economie rond. Tweede
+   uitweg voor vloeken náást de Oude Smid (die kost goud, geen beloning). */
+function vonkAltaarVloek() {
+  const vloeken = S.dek.filter(c => KAARTEN[c.id] && KAARTEN[c.id].type === 'vloek');
+  if (!vloeken.length) { eventKlaar('Je draagt geen vloek om te offeren.'); return; }
+  toonKaartKeuze(
+    vloeken,
+    'Welke vloek werp je in de vlam?',
+    c => vonkAltaarVerteer(c),
+    () => eventKlaar('Je houdt de vloek tegen je borst. Nog niet.')
+  );
+}
+function vonkAltaarVerteer(vloek) {
+  const ov = $('#overlay-kies'); if (ov) ov.classList.remove('open');
+  evalueerDraaiBlok();
+  S.dek = S.dek.filter(k => k.uid !== vloek.uid);          /* de vloek wordt verslonden */
+  schudScherm();
+  Klank.sfx('schitter');
+  /* de vlam grijpt een willekeurige nog-niet-gebrandmerkte speelbare kaart en brandt er licht in */
+  const doelen = S.dek.filter(c => !c.vonk && KAARTEN[c.id] && KAARTEN[c.id].kost !== null);
+  if (!doelen.length) {
+    zetFakkel(25);                                          /* geen kaart om te zegenen → de gloed gaat naar je fakkel */
+    saveSpel();
+    eventKlaar(`De vlam <b>VERSLINDT</b> ${knaam(vloek)} en laait hoog op — geen kaart vat de gloed, dus je fakkel drinkt het licht. <b>(+25 licht)</b>`);
+    return;
+  }
+  const doel = kiesUit(doelen);
+  const niveau = willekeurig() < 0.4 ? 2 : 1;               /* gegarandeerd Heldering; soms groot */
+  doel.vonk = niveau;
+  saveSpel();
+  const n = vonkBedrag(doel);
+  eventKlaar(`De vlam <b>VERSLINDT</b> ${knaam(vloek)} — en het vrijgekomen duister slaat om in licht. Ze brandt <b>Heldering${niveau === 2 ? ' (groot)' : ''}</b> in <b>${knaam(doel)}</b>: telkens je die kaart speelt laait je fakkel <b>+${n} licht</b> op.`);
+}
+
 /* ============================================================
    RUSTPLAATS / SCHAT / WINKEL / EVENTS / EINDE
    ============================================================ */

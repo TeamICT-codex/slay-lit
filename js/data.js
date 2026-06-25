@@ -1617,6 +1617,12 @@ const EVENTS = [
         reden: () => S.fakkel < 25 ? 'Je fakkel heeft te weinig licht (min. 25).' : 'Geen kaart vat nog vlam.',
         doe: () => { vonkAltaarKies(true); return null; }
       },
+      {
+        label: 'Voer een vloek aan de vlam', hint: 'Het duister van een vloek is gretige brandstof — de vlam verslindt haar en slaat het om in licht.',
+        kan: () => S.dek.some(c => KAARTEN[c.id] && KAARTEN[c.id].type === 'vloek'),
+        reden: () => 'Je draagt geen vloek om te offeren.',
+        doe: () => { vonkAltaarVloek(); return null; }
+      },
       { label: 'Loop door', detail: 'Je laat de vlam met rust.', doe: () => 'Je laat de vlam likken aan de leegte. Sommige gokken sla je beter over.' }
     ]
   },
