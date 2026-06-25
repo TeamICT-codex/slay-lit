@@ -650,6 +650,48 @@ shadow, weeping a faint sickly light.
 
 Painted illustration only, rich color, clean readable silhouette.
 
+############ LICHT-VLOEKEN (de licht-economie — onspeelbaar) ############
+
+====================== schaduwsmet.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of charcoal and ash with cold violet and
+void-black accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a creeping stain of living black shadow spreading and
+festering across pale cracked stone, darker and hungrier where it
+grows, a single guttering ember struggling to hold it back at the
+edge of the frame.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================= mottenvlam.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of charcoal and ash with warm amber and sickly
+grey-green accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a lone bright torch-flame swarmed by a thick cloud of black
+death's-head moths drawn to its glare, their beating wings
+smothering and clawing at the light, lured fatally close.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================== doofpot.png =======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of charcoal and ash with dying ember-orange
+accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a heavy black iron snuffer-lid clamping down over a
+torch-flame, smothering it to a last thin curl of grey smoke, the
+light dying out beneath the cover.
+
+Painted illustration only, rich color, clean readable silhouette.
+
 
 ==================== NIEUWE FAKKELKAARTEN (12-06) ====================
 
