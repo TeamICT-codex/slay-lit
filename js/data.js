@@ -1211,6 +1211,19 @@ const MYSTERIES = {
 };
 window.MYSTERIES = MYSTERIES;   /* expliciet op window: de helpers in game.js guarden op window.MYSTERIES */
 
+/* ---------- GIF-REACTIE-HINTS (Zwarte Ziel) ----------
+   Korte log-hint die 1× per wezen per gevecht verschijnt zodra het op je
+   gif reageert, zodat de speler de mechaniek léést: verminderen (gewone),
+   absorberen (elite, HEELT) of counteren (kaatst terug). Verschijnt naast
+   de _gif-reactie-pose + de drijvende fx op het wezen.                  */
+const GIFHINTS = {
+  pekziel:        '🕳️ De Pekziel slokt de helft van je gif op — de pek verzwelgt het.',
+  de_uitgewiste:  '⬛ De Uitgewiste haalt je gif half door — alsof het er nooit was.',
+  de_verzwolgene: '🌑 De Verzwolgene vérzwelgt je gif en HEELT ervan — niet vergiftigen!',
+  spiegelwachter: '🪞 De Spiegelwachter weerkaatst een deel van je gif terug op JOU.',
+  de_erfprins:    '🪞 De Erfprins kopieert de helft van je gif terug op JOU.'
+};
+
 /* ---------- UITSPRAKEN: fluistertekst in gevechten ----------
    Per vijand korte poelen (max ~6 woorden per regel). _duister is
    de gedeelde pool voor gevechten in het donker; _held spreekt

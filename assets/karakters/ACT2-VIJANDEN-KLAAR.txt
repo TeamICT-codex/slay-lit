@@ -291,6 +291,9 @@ Eigen THEMA, los van de papier/inkt/glas/ijzer-roster: deze wezens zijn een ZWAR
 zat — pure corruptie/leegte, pikzwart, hol, lekkend zwart. (Mechaniek: ze verzwakken/absorberen/
 kaatsen je Gif; een 🕳️-/🌑-marker hoort er in-game bij.) Pikzwart silhouet op TRANSPARANTE bg met een
 dunne KOUDE void-glow + warme ember-rand zodat het zwart op de donkere achtergrond leest.
+LET OP — elk Zwarte-Ziel-wezen heeft een EXTRA pose "_gif": de reactie op binnenkomend (groen) gif,
+zodat de speler ZIET dat het wezen het gif verzwakt/absorbeert. Dit moet duidelijk afwijken van de
+basispose (zichtbaar groen gif dat gedempt/verzwolgen wordt). Zelfde stijl/kijkrichting als de rest.
 
 ████ 16. PEKZIEL — De Pekziel (ACT 1 · gewone · vermindert gif) ████
 Painterly dark-fantasy concept art, no photo / no 3D, expressive brushwork. Generate this as ONE single
@@ -303,6 +306,9 @@ it (the soul is already black). A faint cold violet sheen on the wet tar.
   ► pekziel.png        — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): hunched and shambling
     forward to the LEFT, one tar-dripping claw raised to strike, pitch sloughing off its limbs in ropes,
     the void in its chest pulsing. Hollow, relentless, soulless.
+  ► pekziel_gif.png    — Pose (GIF-REACTIE · FACING LEFT · ONE SEPARATE image, NO sheet/grid): a streak of
+    sickly GREEN poison washes over it and the VOID in its chest GULPS half of it down — the tar tilts its
+    head back as the green dims and beads harmlessly off the pitch. Utterly unbothered. (toont: gif HALVEREN)
   ► pekziel_death.png  — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): the tar-husk slumps and
     melts apart, the chest-void collapsing inward and swallowing the body down into a spreading black
     puddle — going still and empty, a soul that was already long gone.
@@ -319,6 +325,9 @@ NO weapon (≠ de_redacteur), just emptiness and loss.
   ► de_uitgewiste.png        — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): shambling forward
     to the LEFT, hollow and faceless, one blacked-out hand reaching out, redaction bars drifting across
     the void where its face was. Lost, empty, mournful-menacing.
+  ► de_uitgewiste_gif.png    — Pose (GIF-REACTIE · FACING LEFT · ONE SEPARATE image, NO sheet/grid): green
+    poison hits and black REDACTION BARS snap across the gif-cloud, CENSORING half of it out of existence;
+    the hollow figure stands utterly unmoved as the struck-through green fades. (toont: gif HALVEREN)
   ► de_uitgewiste_death.png  — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): the blacked-out
     body crumbles into a scatter of loose black redaction-bars and ink-flakes drifting apart, the void
     where it stood simply closing — erased a second time, for good.
@@ -335,6 +344,10 @@ feeds on poison and souls. Imposing, elite.
   ► de_verzwolgene.png        — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): looming and
     hunched, the core-vortex slowly churning and pulsing, void-tendrils curling off its mass, faint
     swallowed faces surfacing and sinking in the black. Vast, patient, hungry.
+  ► de_verzwolgene_gif.png    — Pose (GIF-REACTIE · FACING LEFT · ONE SEPARATE image, NO sheet/grid): the
+    core-vortex GREEDILY inhales an entire green poison-cloud, the gif spiralling down into the abyss — and
+    the whole mass SWELLS, the abyssal glow flaring brighter and sickly-green as it FEEDS and heals on it.
+    Gluttonous, nourished. (toont: gif ABSORBEREN → het wezen wordt er sterker van)
   ► de_verzwolgene_attack.png — Pose (FACING LEFT · ONE SEPARATE image, NO sheet/grid): a huge void-tendril
     / black maw lunging out to the LEFT to engulf, the vortex flaring abyssal-blue with the surge,
     swallowed faces straining outward along the strike.
@@ -356,11 +369,11 @@ SAMENVATTING — alle bestandsnamen (18 ids):
     stempelaar.png + stempelaar_death.png dossierwurm.png + dossierwurm_death.png
     spiegelwachter.png + ..._death.png*   de_deadline.png + de_deadline_death.png
     de_inktvlek.png + de_inktvlek_death.png   de_redacteur.png + de_redacteur_death.png
-    pekziel.png + pekziel_death.png       de_uitgewiste.png + de_uitgewiste_death.png   (Zwarte Ziel)
+    pekziel: .png/_gif/_death              de_uitgewiste: .png/_gif/_death   (Zwarte Ziel — +gif-reactie-pose)
   ELITE (volledige set):
     de_mal: .png/_attack/_hit/_cast/_death
     de_archivaris: .png/_attack/_hit/_cast/_block/_death
-    de_verzwolgene: .png/_attack/_hit/_cast/_death   (Zwarte Ziel — absorbeert gif)
+    de_verzwolgene: .png/_gif/_attack/_hit/_cast/_death   (Zwarte Ziel — absorbeert gif; _gif = vreet je gif op)
   EPISCH (volledige set):
     het_origineel: .png/_attack/_hit/_cast/_death
   SPAWN (enkel basis):  doorslag_kopie.png   mal_gietsel.png

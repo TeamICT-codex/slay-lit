@@ -802,10 +802,20 @@ function geefGif(actor, n) {
       const terug = Math.max(1, Math.ceil(n * frac));
       geefStatus(sp(), 'gif', terug);
       fxNummer($('#speler-zone') || $('#topbalk'), '🪞 Plagiaat: Gif +' + terug, 'fx-debuff');
+      pose2D(actor, 'plagiaat', 0.7);   /* reflecterende vijand toont z'n kaats-pose (Erfprins: plagiaat-art) */
+      zwarteZielHint(actor);            /* per-wezen counter-hint, 1× per gevecht */
     }
   }
   geefStatus(actor, 'gif', n);
   Klank.sfx('gif');
+}
+
+/* per-wezen gif-reactie-hint: verschijnt 1× per gevecht in de log (GIFHINTS in data.js),
+   zodat de speler ziet dát/hóé een Zwarte Ziel je gif vermindert/absorbeert/countert. */
+function zwarteZielHint(actor) {
+  if (!actor || actor._gifHintGemeld) return;
+  const h = (typeof GIFHINTS !== 'undefined' ? GIFHINTS : {})[actor.id];
+  if (h) { melding(h); actor._gifHintGemeld = true; }
 }
 
 function geefBlok(actor, n) {
@@ -3103,14 +3113,18 @@ async function eindBeurt() {
       if (zz === 'absorbeer') {
         /* ZWARTE ZIEL (episch): de corruptie VERZWELGT het gif → het wezen HEELT i.p.v. schade. */
         v.hp = Math.min(v.maxHp || v.hp, v.hp + gif);
-        fxNummer(actorEl(v), '🕳️ +' + gif, 'fx-blok');
-        if (!g._zwarteZielGemeld) { melding('🕳️ Een Zwarte Ziel verzwelgt je gif en heelt ervan...'); g._zwarteZielGemeld = true; }
+        fxNummer(actorEl(v), '🕳️ verzwelgt +' + gif, 'fx-blok');
+        pose2D(v, 'gif', 0.9);          /* reactie-pose: de leegte slurpt je gif op en zwelt */
+        zwarteZielHint(v);              /* per-wezen hint, 1× per gevecht */
       } else {
         /* verminder (Zwarte Ziel, gewone) OF baas/gifWeerstand → halve gif-tik. */
         const halveer = !lantaarn && (zz === 'verminder' || gd.baas || gd.gifWeerstand);
-        if (halveer && !g._gifWeerstandGemeld) {
-          melding(zz === 'verminder' ? '🕳️ Een Zwarte Ziel slokt de helft van je gif op.' : '🛡️ De baas weerstaat de helft van het gif.');
-          g._gifWeerstandGemeld = true;
+        if (halveer && zz === 'verminder') {
+          fxNummer(actorEl(v), '🕳️ ½ gif', 'fx-blok');
+          pose2D(v, 'gif', 0.9);        /* reactie-pose: het wezen dempt de helft van je gif */
+          zwarteZielHint(v);
+        } else if (halveer && !g._gifWeerstandGemeld) {
+          melding('🛡️ De baas weerstaat de helft van het gif.'); g._gifWeerstandGemeld = true;
         }
         verliesHp(v, halveer ? Math.ceil(gif / 2) : gif);
       }

@@ -68,9 +68,10 @@
 - [x] `de_archivaris` — 2e elite, volledige set `_attack`/`_hit`/`_cast`/`_block`/`_death` ✅
 
 **ZWARTE ZIEL — gif-counters (corruptie/leegte; prompts in `assets/karakters/ACT2-VIJANDEN-KLAAR.txt` blok 16-18):**
-- [ ] `pekziel` — De Pekziel (Act 1, gewone, vermindert gif) — basis + `_death`
-- [ ] `de_uitgewiste` — De Uitgewiste (Act 2, gewone, vermindert gif) — basis + `_death`
-- [ ] `de_verzwolgene` — De Verzwolgene (elite, absorbeert gif) — volledige pose-set
+- [ ] `pekziel` — De Pekziel (Act 1, vermindert gif) — basis + **`_gif`** (gif-reactie) + `_death`
+- [ ] `de_uitgewiste` — De Uitgewiste (Act 2, vermindert gif) — basis + **`_gif`** (gif-reactie) + `_death`
+- [ ] `de_verzwolgene` — De Verzwolgene (elite, absorbeert gif) — volledige pose-set + **`_gif`** (gif-absorptie)
+  - > **`_gif`-pose** = de reactie op binnenkomend gif (zie `ACT2-VIJANDEN-KLAAR.txt` blok 16-18). De code toont 'm automatisch tijdens de gif-tik zodra de webp bestaat.
 
 ---
 
