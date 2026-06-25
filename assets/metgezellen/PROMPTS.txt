@@ -199,7 +199,11 @@ PERSONAGE (identiek houden over de poses):
   Pose: its aloft-keeping ember-flame guttering and dying out, the figure sinking as the
   glow fades, shield slipping, the rune going dark — drifting down, spent, having floated
   between you and the dark one time too many.
-(attack: n.v.t. — de Vlamwacht slaat niet zelf toe, hij blokt.)
+--- vlamwachter_attack.png  (SCHILDSTOOT — optioneel; de game blokt standaard) ---
+  Pose: surging forward through the air in a sudden charge, ramming the huge ember-lit
+  shield edge-first into the enemy, the rune FLARING white-hot at the moment of impact, a
+  shockwave of embers and sparks exploding outward from the bash, its flame-tail streaming
+  behind from the lunge — fierce for once. Facing RIGHT.
 
 
 ##################################################################################
@@ -220,7 +224,11 @@ PERSONAGE (identiek houden over de poses):
 --- mosgeest_death.png  (valt) ---
   Pose: gently coming apart into a swirl of moss, leaves and fading green-amber motes,
   sinking toward the ground — dissolving back into the earth it came from.
-(attack: n.v.t. — de Mosgeest geneest, hij valt niet aan.)
+--- mosgeest_attack.png  (SPORENZWEEP — optioneel; de game geneest standaard) ---
+  Pose: thrusting both cupped hands forward and releasing a sharp lashing burst — a whip of
+  thorned green brambles and a cloud of stinging glowing spores snapping toward the enemy,
+  leaves and amber motes torn loose from its own body with the effort, its gentle form
+  briefly fierce. Facing RIGHT. (keep the glow COLOURED, no white bloom)
 
 
 ----------------------------------------------------------------------------------
