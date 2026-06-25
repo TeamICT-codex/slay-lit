@@ -1191,19 +1191,19 @@ const METGEZELLEN = {
   },
   vlamwachter: {
     naam: 'De Vlamwacht', art: 'vlamwachter', icoon: '🛡️', zeld: 'zeldzaam', maxHp: 34,
-    tekst: 'Begin van je beurt: geeft je 5 Blok. Een stille schilddrager die de klappen graag zelf opvangt.',
+    tekst: 'Begin van je beurt: geeft je 5 Blok én ramt een vijand met zijn schild voor 5. Een stille schilddrager die de klappen graag zelf opvangt — maar terugslaat als het moet.',
     lore: 'Hij sprak nooit. Hij stond gewoon tussen jou en wat kwam — telkens opnieuw.',
     doelbaar: true, dreiging: 0.32,
-    beurt() { geefBlok(sp(), 5); },
-    intent: () => ({ type: 'blok', blok: 5 })
+    beurt(m) { geefBlok(sp(), 5); const d = kiesUit(alleVijanden()); if (d) metgezelAanval(m, d, 5); },
+    intent: () => (alleVijanden().length ? { type: 'aanval', dmg: 5 } : { type: 'blok', blok: 5 })
   },
   mosgeest: {
     naam: 'De Mosgeest', art: 'mosgeest', icoon: '🍃', zeld: 'zeldzaam', maxHp: 22,
-    tekst: 'Begin van je beurt: geneest je 4 HP. Breekbaar maar trouw.',
+    tekst: 'Begin van je beurt: geneest je 4 HP én prikt een vijand met stekende sporen voor 4. Breekbaar maar trouw.',
     lore: 'Waar zij loopt, sluit de aarde je wonden. Vraag niet wat ze er ooit voor terugneemt.',
     doelbaar: true, dreiging: 0.16,
-    beurt() { geneesHp(4); },
-    intent: () => ({ type: 'heal', n: 4 })
+    beurt(m) { geneesHp(4); const d = kiesUit(alleVijanden()); if (d) metgezelAanval(m, d, 4); },
+    intent: () => (alleVijanden().length ? { type: 'aanval', dmg: 4 } : { type: 'heal', n: 4 })
   }
 };
 
