@@ -616,6 +616,23 @@ const KAARTEN = {
     tekst: () => `Onbespeelbaar. Neemt ruimte in je hand in.`,
     speel: () => {}
   },
+  /* --- LICHT-VLOEKEN — een licht-economie die je naar het midden-band knijpt.
+     Onspeelbaar; de effecten vuren via de begin/eind-beurt-haken (game.js), niet via speel(). --- */
+  schaduwsmet: {
+    naam: 'Schaduwsmet', type: 'vloek', zeld: 'vloek', kost: null, icoon: '🌑',
+    tekst: () => `Onbespeelbaar. Groeit in het donker en bijt elke beurt buiten helder licht (negeert Blok). Enkel helder licht zuivert haar.`,
+    speel: () => {}
+  },
+  mottenvlam: {
+    naam: 'Mottenvlam', type: 'vloek', zeld: 'vloek', kost: null, icoon: '🦟',
+    tekst: () => `Onbespeelbaar. Zolang ze in je hand zit én je fakkel helder brandt, lokt je vlam ze: +1 Kwetsbaar per beurt.`,
+    speel: () => {}
+  },
+  doofpot: {
+    naam: 'Doofpot', type: 'vloek', zeld: 'vloek', kost: null, icoon: '🫥',
+    tekst: () => `Onbespeelbaar. Aan het einde van elke beurt dat ze in je hand zit, smoort ze je vlam: −2 licht.`,
+    speel: () => {}
+  },
 
   /* ============ ACT 2 — HET ARCHIEF (namaak / index / doorslag) ============ */
   /* neutraal (voor iedereen) */
@@ -784,7 +801,9 @@ const STATUSINFO = {
   epidemie:    { naam: 'Epidemie',    icoon: '☣️', goed: true,  uitleg: 'Sterft een vijand, dan krijgen alle vijanden zoveel Gif.' },
   /* Act 2 — Het Archief */
   doorslag:    { naam: 'Doorslag',    icoon: '📑', goed: true,  uitleg: 'De eerstvolgende aanval die je speelt, speel je een tweede keer af.' },
-  geindexeerd: { naam: 'Geïndexeerd', icoon: '🗄️', goed: true,  uitleg: 'Telkens je een aanval speelt, krijg je zoveel Blok.' }
+  geindexeerd: { naam: 'Geïndexeerd', icoon: '🗄️', goed: true,  uitleg: 'Telkens je een aanval speelt, krijg je zoveel Blok.' },
+  /* licht-vloek (Schaduwsmet) */
+  schaduwsmet: { naam: 'Schaduwsmet', icoon: '🌑', goed: false, uitleg: 'Bijt elke beurt buiten helder licht (negeert Blok). Groeit in het donker; helder licht zuivert er 1 per beurt.' }
 };
 
 /* ---------- VIJANDEN ----------
@@ -1702,7 +1721,7 @@ const EVENTS = [
     opties: [
       {
         label: 'Teken het af', detail: 'Krijg 25 goud. Maar wie tekent, bindt zich.',
-        doe: () => { S.goud += 25; if (willekeurig() < 0.5) { S.dek.push(nieuweKaart('pijn')); return 'Je zet je krabbel. 25 goud glijdt over de tafel... en een kille clausule kruipt je dek in: "Pijn".'; } return 'Je zet je krabbel. 25 goud glijdt over de tafel. De inkt droogt verdacht snel.'; }
+        doe: () => { S.goud += 25; if (willekeurig() < 0.5) { const v = geefLichtVloek(); return `Je zet je krabbel. 25 goud glijdt over de tafel... en een kille clausule kruipt je dek in: "${v}".`; } return 'Je zet je krabbel. 25 goud glijdt over de tafel. De inkt droogt verdacht snel.'; }
       },
       {
         label: 'Wis je naam uit', detail: 'Verlies 7 HP, maar je fakkel laait op (+20 licht).',
@@ -1744,7 +1763,7 @@ const EVENTS = [
       },
       {
         label: 'Vraag om je dossier', detail: 'Misschien een relikwie — of een berisping.',
-        doe: () => { if (willekeurig() < 0.55) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `De klerk schuift je dossier door het loket. Erin: ${RELIKWIEEN[r].naam}!`; } S.goud += 50; return 'Je dossier is leeg op 50 goud aan onkostenvergoeding na.'; } verliesHpBuitenGevecht(5); S.dek.push(nieuweKaart('pijn')); return 'De klerk stempelt AFGEKEURD op je verzoek. −5 HP en een clausule "Pijn" erbij.'; }
+        doe: () => { if (willekeurig() < 0.55) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `De klerk schuift je dossier door het loket. Erin: ${RELIKWIEEN[r].naam}!`; } S.goud += 50; return 'Je dossier is leeg op 50 goud aan onkostenvergoeding na.'; } verliesHpBuitenGevecht(5); const v = geefLichtVloek(); return `De klerk stempelt AFGEKEURD op je verzoek. −5 HP en een clausule "${v}" erbij.`; }
       },
       { label: 'Loop weg', detail: 'Niets gebeurt.', doe: () => 'Je laat de gezichtloze klerk wachten. Hij zal je naam onthouden.' }
     ]

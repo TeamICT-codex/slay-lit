@@ -818,6 +818,14 @@ function zwarteZielHint(actor) {
   if (h) { melding(h); actor._gifHintGemeld = true; }
 }
 
+/* LICHT-VLOEK toekennen (verwerving via de Archief-events): willekeurig uit de drie,
+   pusht 'm naar het dek en geeft de naam terug voor de event-tekst. */
+function geefLichtVloek() {
+  const id = kiesUit(['schaduwsmet', 'mottenvlam', 'doofpot']);
+  S.dek.push(nieuweKaart(id));
+  return KAARTEN[id].naam;
+}
+
 function geefBlok(actor, n) {
   actor.blok = (actor.blok || 0) + n;
   fxNummer(actorEl(actor), `+${n} Blok`, 'fx-blok');
@@ -3094,6 +3102,12 @@ async function eindBeurt() {
   if (heeftRelikwie('gebroken_zandloper') && g.energie > 0) g.bewaardeEnergie = g.energie;
 
   if ((g.speler.status.metaalhuid || 0) > 0) geefBlok(g.speler, g.speler.status.metaalhuid);
+  /* DOOFPOT (licht-vloek): smoort je vlam aan het einde van elke beurt dat ze in je hand zit */
+  const doofpotN = g.hand.filter(c => c.id === 'doofpot').length;
+  if (doofpotN > 0) {
+    fxNummer($('#speler-zone'), '🫥 Doofpot −' + (2 * doofpotN) + ' licht', 'fx-debuff');
+    zetFakkel(-2 * doofpotN);
+  }
   g.afleg.push(...g.hand);
   g.hand = [];
   renderGevecht();
@@ -3212,6 +3226,18 @@ function beginSpelerBeurt() {
     s.status.gif--;
     if (g.voorbij) return;
   }
+  /* SCHADUWSMET (licht-vloek): bijt elke beurt buiten helder licht (negeert Blok),
+     enkel helder licht zuivert er 1 per beurt. Groei gebeurt na de trek (zie onder). */
+  if ((s.status.schaduwsmet || 0) > 0) {
+    if (lichtNiveau() === 'helder') {
+      s.status.schaduwsmet--;
+      fxNummer($('#speler-zone'), '✨ Schaduwsmet −1', 'fx-buff');
+    } else {
+      fxNummer($('#speler-zone'), '🌑 Schaduwsmet', 'fx-debuff');
+      verliesHp(s, s.status.schaduwsmet);
+      if (g.voorbij) return;
+    }
+  }
   if ((s.status.kwetsbaar || 0) > 0) s.status.kwetsbaar--;
   if ((s.status.zwak || 0) > 0) s.status.zwak--;
   if ((s.status.demonenvorm || 0) > 0) geefStatus(s, 'kracht', s.status.demonenvorm);
@@ -3260,6 +3286,17 @@ function beginSpelerBeurt() {
   trekKaarten(5 + (heeftRelikwie('oorlogstrommel') ? 1 : 0));
   /* Mottenkroon: de motten brengen nieuws zolang het licht brandt */
   if (heeftRelikwie('mottenkroon') && lichtNu === 'helder') trekKaarten(1);
+  /* LICHT-VLOEKEN in de hand (onspeelbaar) — sturen je fakkel-gedrag */
+  const smetN = g.hand.filter(c => c.id === 'schaduwsmet').length;
+  if (smetN > 0 && ['duister', 'gedoofd'].includes(lichtNu)) {
+    geefStatus(s, 'schaduwsmet', smetN);   /* in het donker vreet de smet zich dieper in */
+    melding('🌑 De Schaduwsmet vreet zich dieper in het donker.');
+  }
+  const motN = g.hand.filter(c => c.id === 'mottenvlam').length;
+  if (motN > 0 && lichtNu === 'helder') {
+    geefStatus(s, 'kwetsbaar', motN);      /* je felle vlam maakt je een doelwit voor de motten */
+    melding('🦟 Je felle vlam lokt de Mottenvlam — je staat in het volle licht.');
+  }
   g.jongleurOp = false; /* Fakkeljongleur is weer klaar voor zijn act */
   copycatAntiSoftlock(g);   /* THE COPYCAT: je houdt altijd minstens 1 speelbare kaart */
 
