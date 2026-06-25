@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v24'; /* v24: 10 Act 2-relikwie-iconen + 6 event-sfeerbeelden verwerkt (enkel metgezellen resten) */
+const CACHE = 'slayit-v25'; /* v25: Vlamwacht + Mosgeest art (basis+attack+hit+death) — ALLE artwork compleet */
 const BESTANDEN = [
   '.',
   'index.html',
