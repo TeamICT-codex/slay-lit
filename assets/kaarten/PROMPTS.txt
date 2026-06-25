@@ -1143,7 +1143,233 @@ splitting off and striking outward in every direction.
 Painted illustration only, rich color, clean readable silhouette.
 
 
-############ ACT 2 — HET ARCHIEF ############
-De 15 nieuwe Act 2-KAARTEN (4 Slachter · 4 Gifmagiër · 3 Thoverk · 4
-neutraal, thema namaak/index/doorslag) staan met hun prompts én bouw-data
-gebundeld in ACT2-PROMPTBIB.md (repo-root), sectie "1. Kaarten".
+############ ACT 2 — HET ARCHIEF (15 kaarten) ############
+Thema: namaak / index / doorslag / bureaucratie. Koud blauw-grijs systeem-
+licht waar passend; de warme fakkel/ember is de enige warme bron. Accent per
+type: aanval = crimson/ember, vaardigheid = staalblauw/teal, kracht = violet.
+(Geoptimaliseerd + convergentie-gecheckt: elk een uniek silhouet.)
+
+#### NEUTRAAL ####
+
+====================== doorslag_kaart.png ==================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a sheet of blue carbon paper crushed under a heavy iron
+stylus, an identical ghost-imprint of a slashing blade-stroke
+bleeding through onto the page beneath, the duplicated cut glowing
+ember-red as if it struck twice, ink lines doubling.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+========================= stempel.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue and
+teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a massive bronze bureaucratic stamp slamming down onto a
+bone-pale dossier, a wax-red splatter of ink bursting from the
+impact, the grimacing seal-face branded deep into the parchment,
+cold clerical light raking the brass.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================== rode_tape.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue and
+teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: long strips of blood-red bureaucratic ribbon and seal-wax
+lashing a struggling armoured arm tight against a stone filing
+cabinet, knots cinched cruelly, cold clerical light glinting on
+the wax, the limb pinned and useless.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================= archiefstof.png ====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue and
+teal accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a thick drifting pall of pale grey archive dust settling
+like armour over a stack of bone-bound ledgers, motes swirling in
+cold blue-grey light, the topmost ledger half-buried and
+untouchable beneath the shroud.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+#### DE SLACHTER ####
+
+======================== afgekeurd.png =====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a heavy red REJECTED stamp crashing straight down onto a
+bone-white contract, the wax seal bursting apart in a crimson
+spray, shredded parchment fragments spinning away on a shock of
+embers.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================= in_drievoud.png ====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: three narrow rapier-points punching through a single
+brittle parchment sheet from three different angles at once, each
+exit-hole searing red-hot as the blade passes through, the
+foremost blade sharp and vivid, the page pierced thrice in a wide
+fan.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+================= originele_handtekening.png ===============
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents. NOT photorealistic, no photo, no 3D render.
+Landscape composition, subject centered, no text, no frame, no UI.
+
+Scene: a longsword driven point-first through the heart of an
+ornate wax-sealed contract, the blood-red signature flourish at
+its base flaring with ember light, one authentic stroke no forgery
+could ever match.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================= geindexeerd.png ====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with arcane violet
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: a single brass index-card sliding home into its slot with a
+soft pulse of arcane violet light, a sharp catalogue sigil glowing
+on its face, ranks of cards fading into shadow behind it, cold
+light catching the metal frame.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+#### DE GIFMAGIËR ####
+
+======================== naaperij.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents and a sickly toxic-green ink undertone. NOT
+photorealistic, no photo, no 3D render. Landscape composition,
+subject centered, no text, no frame, no UI.
+
+Scene: a curved serpent's fang dripping luminous green venom,
+candlelight throwing its shadow onto pale parchment as a second
+mirrored fang, both the real fang and its shadow feeding poison
+into one spreading dark-green stain.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== inktklerk_steek.png ==================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents and a sickly toxic-green ink undertone. NOT
+photorealistic, no photo, no 3D render. Landscape composition,
+subject centered, no text, no frame, no UI.
+
+Scene: a long iron quill-nib stabbing forward like a dagger, a fat
+bead of luminous green poison-ink swelling at its point, a smeared
+wet signature trailing behind the thrust through the dark.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================= registerrot.png ====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue and
+teal accents and a sickly green rot undertone. NOT photorealistic,
+no photo, no 3D render. Landscape composition, subject centered,
+no text, no frame, no UI.
+
+Scene: a single stack of bone-bound ledgers collapsing into
+luminous green rot, thick spores swirling up through the
+foreground, the rot devouring the shelf-section from top to
+bottom, other shelves blurred in cold archive light behind.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+#### THOVERK — DE KOLENDRUÏDE ####
+
+====================== perkamentslag.png ===================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents, warm torchlight. NOT photorealistic, no photo,
+no 3D render. Landscape composition, subject centered, no text, no
+frame, no UI.
+
+Scene: a curled sheet of ancient parchment cracking forward
+horizontally like a bullwhip, thorned brambles bristling along
+both edges, its tip snapping against the dark in a curl of
+archival dust, the silhouette unmistakably flat and ribbon-like,
+warm torchlight along the barbs.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== doorslag_doornen.png =================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents, warm torchlight. NOT photorealistic, no photo,
+no 3D render. Landscape composition, subject centered, no text, no
+frame, no UI.
+
+Scene: gnarled thorned roots erupting from a cracked filing-
+cabinet drawer in the shape of grasping hands, lashing at a
+faltering shadowy foe, warm ember rim-light burning along the
+barbs.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== kolenstempel.png ====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with steel blue and
+teal accents and one warm ember glow. NOT photorealistic, no
+photo, no 3D render. Landscape composition, subject centered, no
+text, no frame, no UI.
+
+Scene: a coal-hot iron stamp pressed searing into a sheet of cold
+blue-grey parchment, the smouldering seal-mark burning straight
+through, curling thorny embers up from the scorched paper.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+==================== het_origineel_kaart.png ===============
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of deep purples and charcoal with crimson and
+ember red accents, warm torchlight. NOT photorealistic, no photo,
+no 3D render. Landscape composition, subject centered, no text, no
+frame, no UI.
+
+Scene: a single vivid thorn-wreathed branch wielded like a club,
+fully saturated and warmly lit, while pale washed-out duplicate
+copies of it fade into the dark behind, the original unmistakably
+the brightest.
+
+Painted illustration only, rich color, clean readable silhouette.
