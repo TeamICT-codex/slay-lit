@@ -41,6 +41,15 @@ vonkaltaar.png
   sacred, slightly ominous (a gamble of fire). Keep the flame vertically
   centered.
 
+offeraltaar.png   (Het Offeraltaar — een hongerige stenen muil, transmutatie door offer)
+  Scene: a great open MAW carved into a slab of cold black stone in a dark cavern,
+  its throat a deep void faintly lit from within by a slow violet-and-ember glow where
+  offered things dissolve and reform; worn sacrificial grooves run down into the mouth,
+  a single card-shaped object hovering at its lips, half-unmade. No flame, no figure —
+  just the patient, hungry stone that gives back only what it chooses. Mysterious,
+  ancient, slightly ominous (a sacrifice, a transmutation). Cold black stone with one
+  inner violet-ember glow. Vertically centred.
+
 kist.png
   Scene: a single ornate wooden chest standing suspiciously alone
   in the middle of a torchlit dungeon corridor, faint scratch

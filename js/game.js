@@ -3746,6 +3746,57 @@ function vonkAltaarVerteer(vloek) {
   eventKlaar(`De vlam <b>VERSLINDT</b> ${knaam(vloek)} — en het vrijgekomen duister slaat om in licht. Ze brandt <b>Heldering${niveau === 2 ? ' (groot)' : ''}</b> in <b>${knaam(doel)}</b>: telkens je die kaart speelt laait je fakkel <b>+${n} licht</b> op.`);
 }
 
+/* ---------- HET OFFERALTAAR: offer kaarten (of vloeken) → smeed er een BETERE van ----------
+   De steen verslindt je offers en baart één willekeurige kaart hoger op de ladder (zij kiest
+   het resultaat — mysterieus). Een vloek is potente brandstof: +1 extra tier. Náást de smid
+   (verwijderen) en het Vonkaltaar (vonk branden) — een derde, eigen smaak: transmutatie. */
+const ZELD_LADDER = ['gewoon', 'ongewoon', 'zeldzaam', 'episch'];
+function zeldOmhoog(zeld, stappen) {
+  const i = ZELD_LADDER.indexOf(zeld);
+  if (i < 0) return ZELD_LADDER[Math.min(ZELD_LADDER.length - 1, stappen - 1)];   /* basis/vloek → start onderaan */
+  return ZELD_LADDER[Math.min(ZELD_LADDER.length - 1, i + stappen)];
+}
+function willekeurigeKaartVanZeld(doelZeld) {
+  for (let z = ZELD_LADDER.indexOf(doelZeld); z >= 0; z--) {   /* val terug naar lagere tier als de pool leeg is */
+    const kand = heldPool().filter(id => KAARTEN[id].zeld === ZELD_LADDER[z]);
+    if (kand.length) return kiesUit(kand);
+  }
+  return null;
+}
+function offeraltaarVersmelt() {
+  if (S.dek.length < 2) { eventKlaar('Je dek is te dun om te versmelten.'); return; }
+  toonKaartKeuze(S.dek.slice(), 'Offer de EERSTE kaart aan de steen', a => {
+    const rest = S.dek.filter(c => c.uid !== a.uid);
+    toonKaartKeuze(rest, 'Offer de TWEEDE kaart', b => offeraltaarSmeed([a, b], 1),
+      () => eventKlaar('Je trekt je tweede offer terug. De steen wacht, geduldig.'));
+  }, () => eventKlaar('Je houdt je kaarten tegen je borst. De steen verkilt.'));
+}
+function offeraltaarBloed() {
+  if (!(S.hp > 8 && S.dek.length > 1)) { eventKlaar('De steen wijst je bloedoffer af.'); return; }
+  toonKaartKeuze(S.dek.slice(), 'Offer 1 kaart in bloed (−8 HP) — twee tiers hoger', c => {
+    verliesHpBuitenGevecht(8);
+    offeraltaarSmeed([c], 2);
+  }, () => eventKlaar('Je deinst terug van de hongerige muil.'));
+}
+function offeraltaarSmeed(offers, tiers) {
+  const ov = $('#overlay-kies'); if (ov) ov.classList.remove('open');
+  evalueerDraaiBlok();
+  const uids = new Set(offers.map(c => c.uid));
+  const vloekBonus = offers.some(c => kdef(c).type === 'vloek') ? 1 : 0;    /* een vloek voedt de honger: +1 tier */
+  const echteZeld = offers.map(c => kdef(c).zeld).filter(z => ZELD_LADDER.includes(z))
+    .sort((x, y) => ZELD_LADDER.indexOf(y) - ZELD_LADDER.indexOf(x));
+  const basisZeld = echteZeld[0] || 'gewoon';
+  const doelZeld = zeldOmhoog(basisZeld, tiers + vloekBonus);
+  S.dek = S.dek.filter(c => !uids.has(c.uid));                              /* verteer de offers */
+  const nieuwId = willekeurigeKaartVanZeld(doelZeld);
+  schudScherm();
+  Klank.sfx('schitter');
+  const offerNamen = offers.map(c => knaam(c)).join(' + ');
+  if (!nieuwId) { zetFakkel(20); saveSpel(); eventKlaar(`De steen verslindt <b>${offerNamen}</b> maar baart niets — de gloed slaat terug in je fakkel. <b>(+20 licht)</b>`); return; }
+  const nk = nieuweKaart(nieuwId); S.dek.push(nk); saveSpel();
+  eventKlaar(`De steen verslindt <b>${offerNamen}</b>${vloekBonus ? ' (de vloek voedt haar honger)' : ''} en smeedt er één <b>${kdef(nk).zeld}</b> kaart van: <b>${knaam(nk)}</b>. „Dít," fluistert ze, „heb ik voor je gekozen."`);
+}
+
 /* ============================================================
    RUSTPLAATS / SCHAT / WINKEL / EVENTS / EINDE
    ============================================================ */

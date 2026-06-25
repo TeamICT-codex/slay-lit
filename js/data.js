@@ -1627,6 +1627,26 @@ const EVENTS = [
     ]
   },
   {
+    id: 'offeraltaar', titel: 'Het Offeraltaar', icoon: '🗿', liggend: true,
+    /* liggend:true → het kaartkiezen speelt liggend (anders dekt de portret-draaiprompt het af) */
+    tekst: 'Een muil van koud zwart steen gaapt in de rotswand, geduldig en oeroud. „Geef," fluistert ze van diep onderin, „en ik geef terug — maar wát ik teruggeef, dat kies ík."',
+    opties: [
+      {
+        label: 'Versmelt twee kaarten', detail: 'Offer 2 kaarten → 1 willekeurige, één zeldzaamheid hoger. Een vloek erbij voedt extra (+1 tier).',
+        kan: () => S.dek.length >= 2,
+        reden: () => 'Je dek is te dun om te versmelten.',
+        doe: () => { offeraltaarVersmelt(); return null; }
+      },
+      {
+        label: 'Bloedoffer (−8 HP)', detail: 'Offer 1 kaart + 8 HP → twee zeldzaamheden hoger.',
+        kan: () => S.hp > 8 && S.dek.length > 1,
+        reden: () => S.hp <= 8 ? 'Je bent te zwak voor een bloedoffer.' : 'Je dek is te dun.',
+        doe: () => { offeraltaarBloed(); return null; }
+      },
+      { label: 'Loop weg', detail: 'Je laat de steen hongerig achter.', doe: () => 'Je keert de hongerige muil de rug toe. Ze onthoudt gezichten.' }
+    ]
+  },
+  {
     id: 'kist', titel: 'De Verdachte Kist', icoon: '🧰',
     tekst: 'Midden in de gang staat een kist. Zomaar. Niemand laat zomaar een kist achter in een kerker vol monsters... toch?',
     opties: [
