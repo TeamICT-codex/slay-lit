@@ -794,7 +794,12 @@ function geefGif(actor, n) {
     const gd = VIJANDEN[actor.id] || {};
     const lantaarn = heeftRelikwie('zielslantaarn');   /* De Zielslantaarn breekt alle gif-afweer */
     /* GIF-IMMUUN (sporen/inkt) — tenzij de Zielslantaarn de afweer breekt */
-    if (!lantaarn && gd.gifImmuun) { fxNummer(actorEl(actor), '🚫 gif-immuun', 'fx-blok'); return; }
+    if (!lantaarn && gd.gifImmuun) {
+      fxNummer(actorEl(actor), '🚫 gif-immuun', 'fx-blok');
+      pose2D(actor, 'gif', 0.8);   /* immuun-reactie-pose: de sporen/inkt verteren het gif */
+      zwarteZielHint(actor);       /* per-wezen hint (GIFHINTS), 1× per gevecht */
+      return;
+    }
     n += (heeftRelikwie('smaragden_ring') ? 1 : 0) + (heeftRelikwie('inktpot') ? 1 : 0);
     /* GIF-KAATS (Copycat 'Plagiaat: Gif') / Zwarte-Ziel-COUNTER: kopieert een deel terug op JOU */
     const frac = lantaarn ? 0 : (gd.gifkaats || (gd.zwarteZiel === 'counter' ? 0.5 : 0));
@@ -2591,6 +2596,7 @@ function maakKaartEl(c) {
   el.innerHTML = `
     <div class="kaart-kost"></div>
     ${def.licht ? '<div class="kaart-lichtkost" data-tip="Verbrandt fakkellicht bij het spelen"></div>' : ''}
+    <div class="kaart-vonk" style="display:none"></div>
     <div class="kaart-naam"></div>
     <div class="kaart-icoon" data-kicoon="${c.id}">${def.icoon}</div>
     <div class="kaart-tekst"></div>
@@ -2613,6 +2619,20 @@ function bijwerkKaartEl(el, c, klikbaar) {
   el.querySelector('.kaart-kost').textContent = kost === null ? '✕' : kost;
   const lichtEl = el.querySelector('.kaart-lichtkost');
   if (lichtEl) lichtEl.textContent = '🔥' + kval(c, 'licht');
+  /* Vonkaltaar-brandmerk: toon de vonk-badge óók op de gevechtskaart (stond enkel in het dek) */
+  const vonkEl = el.querySelector('.kaart-vonk');
+  if (vonkEl) {
+    if (c.vonk) {
+      vonkEl.style.display = '';
+      vonkEl.className = 'kaart-vonk ' + (c.vonk > 0 ? 'vonk-helder' : 'vonk-duister');
+      vonkEl.textContent = (c.vonk > 0 ? '🔥' : '🜂') + vonkBedrag(c);
+      vonkEl.dataset.tip = c.vonk > 0
+        ? 'Heldering: +' + vonkBedrag(c) + ' fakkellicht telkens je deze kaart speelt'
+        : 'Verduistering: verbrandt ' + vonkBedrag(c) + ' fakkellicht bij het spelen, maar geeft je evenveel Blok';
+    } else {
+      vonkEl.style.display = 'none';
+    }
+  }
   el.querySelector('.kaart-naam').textContent = knaam(c);
   el.querySelector('.kaart-tekst').innerHTML = def.tekst(c);
 }

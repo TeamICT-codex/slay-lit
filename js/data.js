@@ -1240,7 +1240,9 @@ const GIFHINTS = {
   de_uitgewiste:  '⬛ De Uitgewiste haalt je gif half door — alsof het er nooit was.',
   de_verzwolgene: '🌑 De Verzwolgene vérzwelgt je gif en HEELT ervan — niet vergiftigen!',
   spiegelwachter: '🪞 De Spiegelwachter weerkaatst een deel van je gif terug op JOU.',
-  de_erfprins:    '🪞 De Erfprins kopieert de helft van je gif terug op JOU.'
+  de_erfprins:    '🪞 De Erfprins kopieert de helft van je gif terug op JOU.',
+  paddenstoelman: '🍄 De Paddenstoelman is gif-immuun — de sporen gedijen júist op je gif.',
+  de_inktvlek:    '🩸 De Inktvlek vat geen gif — hier helpt enkel directe schade.'
 };
 
 /* ---------- UITSPRAKEN: fluistertekst in gevechten ----------

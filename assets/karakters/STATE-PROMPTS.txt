@@ -597,6 +597,19 @@ Fills ~85% of a square 1024x1024 canvas.
 Pose: wilting like a dying plant, the great red cap drooping down
 over its face, releasing one last soft puff of glowing spores.
 
+================ paddenstoelman_gif.png ================
+Use the attached reference image: the EXACT same creature, same
+design, colors and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single
+creature, centered, same facing as the reference, isolated on a
+fully transparent background, no ground, no shadow, no text.
+Fills ~85% of a square 1024x1024 canvas.
+
+Pose: GIF-REACTIE (gif-IMMUUN) — a wash of sickly GREEN poison mist
+rolls over it and the mushroom DRINKS it in, the spores feasting;
+its great cap flushes brighter and greener, gills pulsing, thriving
+on the toxin — head tilted back, utterly unbothered, immune.
+
 =================== bandiet_death.png ====================
 Use the attached reference image: the EXACT same character, same
 design, colors and painterly style. Stylized hand-painted fantasy
