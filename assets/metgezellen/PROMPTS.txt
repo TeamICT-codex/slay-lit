@@ -181,19 +181,24 @@ the glow COLOURED (cool white-silver-blue) — crisp edges, NO white-bloom/haze/
 #  DE VLAMWACHT  (art-id: vlamwachter)  — zelfde 4 blokken, eigen personage        #
 ##################################################################################
 PERSONAGE (identiek houden over de poses):
-  a small stoic guardian companion — a squat, heavily armoured figure in warm battered
-  metal, holding a round ember-lit shield almost as big as itself, a glowing rune on the
-  shield, a silent grounded protector.
+  a small stoic guardian companion that HOVERS in the air — a compact, heavily armoured
+  sentinel of warm battered metal with NO legs; its lower body trails off into a curling
+  wisp of living ember-flame that keeps it aloft above a faint swirling ring of embers. It
+  holds a round ember-lit shield almost as big as itself, a glowing rune blazing on the
+  shield, and small tattered ember-wisp wings drifting at its back. A silent AIRBORNE protector.
 
 --- vlamwachter.png  (BASIS / idle) ---
-  [gedeeld stijlblok] Character: <PERSONAGE>. Pose: standing firm and grounded, shield
-  half-raised at its side, facing RIGHT, calm and watchful.
+  [gedeeld stijlblok] Character: <PERSONAGE>. Pose: hovering steadily in mid-air, shield
+  half-raised at its side, embers drifting up around it and trailing from its flame-tail,
+  facing RIGHT, calm and watchful.
 --- vlamwachter_hit.png  (KLAP OPVANGEN — zijn specialiteit) ---
-  Pose: bracing hard behind the big shield as a blow lands, boots sliding back, sparks
-  flying off the shield rim — taking the hit so you don't have to. Still facing RIGHT.
+  Pose: knocked backward in the air, bracing hard behind the big shield as a blow lands,
+  sparks and embers scattering off the shield rim and its flame-tail — taking the hit so
+  you don't have to. Still hovering, facing RIGHT.
 --- vlamwachter_death.png  (valt) ---
-  Pose: sinking to one knee, shield dropping, the rune-glow on the shield fading out —
-  spent, having stood between you and the dark one time too many.
+  Pose: its aloft-keeping ember-flame guttering and dying out, the figure sinking as the
+  glow fades, shield slipping, the rune going dark — drifting down, spent, having floated
+  between you and the dark one time too many.
 (attack: n.v.t. — de Vlamwacht slaat niet zelf toe, hij blokt.)
 
 
