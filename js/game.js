@@ -826,6 +826,14 @@ function geefLichtVloek() {
   return KAARTEN[id].naam;
 }
 
+/* GENERIEKE VLOEK (incl. Pijn + de licht-vloeken) — voor vloek-bronnen door het hele
+   spel verweven (Act 1+). Alle vloeken zijn weg te slopen bij de Oude Smid. */
+function geefVloek() {
+  const id = kiesUit(['pijn', 'schaduwsmet', 'mottenvlam', 'doofpot']);
+  S.dek.push(nieuweKaart(id));
+  return KAARTEN[id].naam;
+}
+
 function geefBlok(actor, n) {
   actor.blok = (actor.blok || 0) + n;
   fxNummer(actorEl(actor), `+${n} Blok`, 'fx-blok');
@@ -3329,6 +3337,14 @@ async function gevechtGewonnen() {
   if (heeftRelikwie('brandend_bloed')) geneesHpBuitenGevecht(6);
   if (heeftRelikwie('het_grootboek')) geneesHpBuitenGevecht(8);
   if (heeftRelikwie('kookpot_van_maxenzele')) geneesHpBuitenGevecht(3);
+
+  /* HET DONKER TEKENT JE — win je in volslagen duister (fakkel gedoofd), dan kan de
+     schaduw zich in je dek nestelen. Verweven licht-vloek-bron (elke act); stuurt je
+     weg van blind-vechten. Weg te slopen bij de Oude Smid. */
+  if (lichtNiveau() === 'gedoofd' && willekeurig() < 0.3) {
+    S.dek.push(nieuweKaart('schaduwsmet'));
+    melding('🌑 Je versloeg ze in volslagen duister — de schaduw nestelt zich in je dek: Schaduwsmet.');
+  }
 
   if (g.soort === 'baas') {
     /* de doodsklap van een baas verdient een flits en een stilte */

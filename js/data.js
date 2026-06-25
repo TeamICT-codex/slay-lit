@@ -1706,8 +1706,8 @@ const EVENTS = [
     tekst: 'Tegen de muur ligt een avonturier die het niet heeft gered. Zijn buidel puilt uit. Zijn ogen lijken je te volgen.',
     opties: [
       {
-        label: 'Doorzoek het lijk', detail: 'Krijg 60 goud, maar ook de vloek "Pijn".',
-        doe: () => { S.goud += 60; S.dek.push(nieuweKaart('pijn')); return 'Je vindt 60 goud... maar een kille rilling trekt door je botten. Je dek bevat nu "Pijn".'; }
+        label: 'Doorzoek het lijk', detail: 'Krijg 60 goud, maar ook een vloek.',
+        doe: () => { S.goud += 60; const v = geefVloek(); return `Je vindt 60 goud... maar een kille rilling trekt door je botten. Je dek bevat nu "${v}".`; }
       },
       { label: 'Laat hem rusten', detail: 'Niets gebeurt.', doe: () => 'Je vouwt zijn handen over zijn borst en loopt verder.' }
     ]
