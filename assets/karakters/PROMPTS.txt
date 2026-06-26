@@ -477,12 +477,35 @@ wegknippen). Houd elk wezen mét marge in het frame (geen wezen dat tot alle ran
   Accent: black mirror-glass + cold reflections. NB: glas → genereer op EFFEN ZWARTE achtergrond.
 
 --- de_deadline.png   (De Deadline — escaleert elke beurt: tijdsdruk) ---
-  A gaunt CLOCK-TOWER creature looming with time-pressure: a tall, hunched figure whose TORSO
-  is a cracked iron HOURGLASS whose black SAND is piling HIGHER and overflowing, CLOCK-HANDS for
-  fingers, a face of a stopped clock with overdue-red numerals CLIMBING and multiplying, frayed
-  CALENDAR pages and overdue RED stamps fluttering off it, rusted gears and chains — it seems to
-  swell taller each turn (escalation). Relentless, oppressive — time running out.
-  Accent: black sand + overdue-RED stamps + clock-faces. (Uniek silhouet: de hoge zandloper/klok-toren.)
+  [HERMAAKT — playtest: de oude art sneed niet schoon uit (grijze halo-box). Nu een COMPACTE,
+   GESLOTEN, OPAKE silhouet; alle losse zand/paginas/stempels verzegeld of platgelijmd op het lijf.]
+  A single COMPACT, SOLID, OPAQUE clock-tower monster cast in one piece of cracked dark iron,
+  shaped like a hunched grandfather clock, facing LEFT — a broad heavy iron BASE tapering up to a
+  rounded, CLOSED hooded STOPPED-CLOCK head that juts forward to the left, reading instantly as one
+  solid bounded shape with a sealed dome-like top. Its TORSO is a sealed iron-and-glass HOURGLASS
+  built flush INTO the tower body, the glass fully enclosed behind a thick riveted iron frame so
+  nothing spills; the lower bulb packed solid and overfull with black sand pressing up hard against
+  the glass so it bulges (pure time-pressure read), the upper bulb nearly empty. One forward arm is
+  a single rigid CLOCK-HAND blade held tight to the body, the other a stubby ratchet-claw hugging
+  the torso — no thin isolated hands floating away. The clock FACE shows overdue-RED roman numerals,
+  but ALL red is pressed FLAT and fused directly ONTO the opaque cold-iron face, enclosed by cold
+  metal and contained inside the contour — NO numerals/stamps/paper multiplying around the rim or
+  floating in the air. Surface sheathed in FLATTENED calendar pages and overdue-RED wax stamps
+  pressed and glued tight onto the metal like overlapping armour scales — every page crisp-edged and
+  lying flat, NONE peeling, fluttering or drifting off. Time-pressure shown STRUCTURALLY (overfull
+  bulging lower bulb, head jutting left) NOT by stacking/climbing/swelling upward; the silhouette top
+  stays closed and rounded, never narrowing into spikes. Rusted gears and a short taut chain clamped
+  INSIDE the silhouette as solid relief, hugging the contour, never trailing outward. Cold blue-grey
+  "system light" over the whole opaque body + a THIN warm ember rim-light tracing ONLY the left
+  contour as a crisp hard edge line (NOT a soft glow/aura). Brightest focal points: the cold clock
+  face with red numerals + the black-packed lower bulb.
+  CUT-OUT: ONE clearly bounded, fully CLOSED silhouette with SHARP OPAQUE high-contrast contour
+  edges all around, on TRANSPARENT (or flat solid BLACK) background, clear empty margin on all four
+  sides. ABSOLUTELY NO smoke/haze/mist/dust/motion-blur/drifting sand/loose flying pages/glowing
+  aura/halo and NO soft semi-transparent wispy fringes bleeding toward the frame; nothing fading to
+  any edge. No ground/shadow/text/UI/frame/background.
+  Accent: zwart ZAND (verzegeld achter glas) + te-late RODE stempels/cijfers (platgelijmd op koud
+  ijzer) + koude klok-faces. (Uniek silhouet: de compacte, top-zware klok-toren met zandloper-torso.)
 
 --- de_inktvlek.png   (De Inktvlek — gif) ---
   The only LOW, formless, puddle-shaped enemy: a crawling ink-blot OOZE given malice — a
@@ -492,27 +515,81 @@ wegknippen). Houd elk wezen mét marge in het frame (geen wezen dat tot alle ran
   floating in its body, cold light on the wet sheen. Corrosive, derivative.
   Accent: black + sickly-GREEN (poison).
 
---- de_redacteur.png   (De Redacteur — strijkt je Blok weg) ---
-  A tall, lean, ELEGANT censor-knight shown in THREE-QUARTER view clearly FACING LEFT (head,
-  torso and gaze turned to the left toward an unseen foe, right shoulder toward the viewer): dark
-  iron banded plate over pale censor-robes, a smooth helm-face crossed by horizontal BLACK
-  REDACTION BARS with one cold slit of light. It thrusts a single giant pair of black REDACTION-
-  SHEARS out to the LEFT, blades MID-SNIP slicing through a translucent pale-BLUE SHIELD at the
-  left that cracks into two falling halves. Only a FEW censored black-barred strips trail from it
-  — keep it CRISP, NOT cluttered with masses of paper-text. Strong readable silhouette, sharp.
-  Accent: BLACK redaction-bars + the shears cutting a pale-blue shield (left).
-  (≠ andere klerken: scherp, gecensureerd, schaar-handig, droog; elegant & clean, niet rommelig.)
+--- de_redacteur.png   (De Redacteur — strijkt je Blok weg · BASIS = schaar-only) ---
+  [HERMAAKT — playtest: het pale-blue schild stond permanent in de basis-pose (dat is JOUW Blok,
+   hoort daar niet). BASIS = enkel de schaar; het schild-knipmoment verhuist naar de ATTACK-pose.]
+  A tall, lean, ELEGANT censor-knight in THREE-QUARTER view clearly FACING LEFT (head, torso and
+  gaze turned left toward an unseen foe, right shoulder toward the viewer): dark iron banded plate
+  over pale blue-grey censor-robes, a smooth featureless helm-face crossed by horizontal BLACK
+  REDACTION BARS with one cold slit of pale light between them like a closed eye. POSE (BASE / idle —
+  menacing at rest, NO shield, NO cutting action, nothing being severed): both gauntleted hands grip
+  a single giant pair of black REDACTION-SHEARS held CLOSED and RAISED upright just clear of the
+  torso, the long lacquered blades pointing up and catching one cold highlight so they read as the
+  tall sharp PEAK of his silhouette — poised, not yet striking; blade tips stay well INSIDE the top
+  margin (NOT touching the frame edge). Robe in clean heavy folds tight to the body; at most ONE or
+  TWO short censored black-barred strips rest FLAT against the chest, NONE trailing toward the edges
+  — keep the idle calm and nearly strip-free, CRISP and clean. Cold blue-grey "system light" on the
+  body + a THIN warm ember rim-light tracing only the left edge (body stays COLD); the slit-eye a
+  quiet cold glow, no bloom. Painterly dark-fantasy, NOT photorealistic.
+  CUT-OUT: ONE compact, closed, immediately readable silhouette with SHARP OPAQUE contour edges on
+  a flat neutral dark / fully TRANSPARENT background, clear margin all sides. NO mist/smoke/haze/
+  floating paper/loose particles, nothing fading into the background. No ground/shadow/text/UI/frame.
+  Accent: ZWARTE censuurbalken + witte censuur-stroken + de rechtopstaande gesloten lakzwarte
+  redactie-schaar. (≠ andere klerken: scherp, gecensureerd, schaar-handig, droog, elegant & clean.)
+
+--- de_redacteur_attack.png   (ATTACK — de Blok-snede; gebruik de basis als referentie) ---
+  Use the attached reference image (de_redacteur.png): the EXACT same censor-knight — same banded
+  iron plate, same redaction-barred helm, same robe, same giant black redaction-shears, same
+  painterly style, same THREE-QUARTER view FACING LEFT, same flat neutral dark / TRANSPARENT
+  background and same THIN warm ember rim-light along the left edge — change ONLY the Pose.
+  POSE (ATTACK — the Block-cut): he THRUSTS the single giant pair of black REDACTION-SHEARS out to
+  the LEFT, blades caught MID-SNIP slicing clean THROUGH a pale-BLUE SHIELD just in front of the
+  blade tips (this shield is the hero's Block being struck away — it appears ONLY in this attack
+  pose). Render the shield as ONE contained, mostly OPAQUE second shape with a crisp solid opaque
+  rim and SHARP clean broken edges (NOT a soft translucent glow fading into the background); it
+  cracks into exactly TWO falling halves that stay CLAMPED close to the blade tips, fully INSIDE the
+  frame margin, NOT drifting/scattering toward the edges. NO scatter of tiny shards, NO dust cloud,
+  NO glow-bloom, NO bright flash cut-line. Body stays cold blue-grey; only the shield carries the
+  pale-blue tone; slit-eye a quiet cold glow. At most ONE or TWO short black-barred strips trail
+  close to the shears, kept SHORT and tight to the body. The knight plus the cut shield form ONE
+  compact group with SHARP OPAQUE contour edges and clear margin all sides; strong tonal contrast
+  for a clean cut-out. No ground/shadow/text/UI/frame/background.
+  Accent: ZWARTE censuurbalken + de schaar die een bleekblauw schild doorknipt (links).
 
 --- de_archivaris.png   (2e ELITE — De Archivaris: compoundt Kracht, "vergeet niets") ---
-  The BIGGEST enemy — a colossal, towering head-archivist whose FULL figure still fits within the
-  frame with clear margin: a tall robed figure buried under and fused with an entire MOUNTAIN of
-  tagged bone-files and ledgers growing from its back and shoulders like a landslide, stacked
-  SPECTACLES piled over its eyes. In one arm an enormous open LEDGER (chained to it) in which new
-  entries write themselves; the other hand clutches a fistful of glowing index-TAGS (NO stamp —
-  that's the Stempelaar's). The files on its back GLOW brighter one by one as it "remembers" — a
-  visible build-up of lit seals climbing higher (it compounds each turn). Inevitable, all-
-  remembering — the bureaucracy made flesh.
-  Accent: bone-grey file-mountain, TOWERING but framed with margin; the climbing glow = it compounds.
+  [HERMAAKT — playtest: de oude art was een onleesbare brij. Nu een LEESBARE figuur met strikte
+   focal-hiërarchie en een geordende, aan de figuur gefuseerde dossier-toren i.p.v. amorfe massa.]
+  The BIGGEST elite enemy, three-quarter side view, clearly FACING LEFT, imposing and top-heavy but
+  with a CLEAN, READABLE silhouette. A colossal, statuesque ARCHIVIST, read first from his SILHOUETTE
+  as ONE towering robed clerk, NEVER as a pile of paper. STRICT FOCAL HIERARCHY enforced TONALLY,
+  three readable beats: (1) THE ONLY BRIGHTEST ZONE is his HEAD and gaunt over-spectacled FACE high
+  up — a long hollow parchment-pale face, stacked round SPECTACLES sliding down his nose catching a
+  single cold glint, deep remembering eye-sockets — the lightest, sharpest, highest-contrast spot,
+  where the eye lands first. (2) CLEARLY DIMMER: held close across his chest in both gaunt grey
+  hands, ONE enormous open LEDGER, a short thick chain anchoring it tight to the robe (chain stays
+  short, no dangling loop), the pages a muted cool-lit shape distinctly darker than the face. (3)
+  DEEP IN COLD SHADOW, the burden: rising directly from his back and shoulders and FUSED to him as
+  one continuous body, a single ORDERLY ZIGGURAT-TOWER of neatly stacked bone-grey file-drawers and
+  tagged dossiers — a compact, stepped, architectural tower read as ONE deliberate built-up mass (a
+  clear "figure carrying a mountain" shape), NOT a scattered cloud of loose paper, NOT a separate
+  building beside him; it falls into deep cold shadow behind the lit face, NO gap between tower and
+  head. COMPOUND SIGNAL (single, readable, inside the contour): a vertical LADDER of glowing
+  index-TAGS up the INNER front face of the tower, well inside the silhouette; the lowest tags glow
+  bright and light UP one by one climbing higher (he compounds each turn) — the ONLY glowing element.
+  LIGHT: cold blue-grey "system light" over the whole COLD bone-grey body + a THIN warm ember
+  rim-light as a SHARP crisp LINE riding exactly ON his front-left contour (NOT a glow/bloom/halo).
+  Large simple shapes, strong tonal contrast, MINIMAL micro-detail; keep the gaps between the three
+  beats tonally calm. NO loose flying papers, NO scattered drifting pages, NO swirling dust/smoke/
+  mist, NO sparks or tags streaming toward the edges. Mood: inevitable, all-remembering, the
+  bureaucracy made flesh — statuesque and CRISP, not a messy heap.
+  CUT-OUT: the whole figure has ONE continuous CLOSED OPAQUE sharp outer contour — face, spectacles,
+  ledger, chain, tags and the entire fused file-tower all sit tightly inside that single silhouette,
+  held close, nothing dangling far out, no thin trailing wisps. On a flat neutral dark / fully
+  TRANSPARENT background with strong tonal contrast between the cool bone-grey figure and the dark
+  background; clear empty margin on ALL FOUR sides incl. below the feet and above the tower-top.
+  No ground/shadow/text/UI/frame/background scenery. Fills ~90% of a square 1024x1024 canvas.
+  Accent: bot-grijs, torenhoog; de van-onder-naar-boven oplichtende index-tag-ladder op het binnen-
+  front van de gefuseerde dossiertoren = de compound.
   (Elite → meer poses + _block = zich indekken achter opgestapelde dossiers.)
 
 (De bouw-data/HP/zetten van de 7 'extra' vijanden — stempelaar t/m de_archivaris — staan in
