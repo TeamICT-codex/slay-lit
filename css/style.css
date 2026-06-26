@@ -2003,6 +2003,30 @@ body.lite .onthul-kaart.bijzonder:not(.open) .kaart-rug { animation: none; }
   to { opacity: 1; transform: none; }
 }
 
+/* ---------- entree-VARIANTEN op maat van het wezen ----------
+   De wrap zelf blijft stil (animation:none) zodat z'n grootte-scale (vijand-klein/groot)
+   intact blijft; de FIGUUR (.vijand-art) speelt de binnenkomst. .entree wordt na afloop
+   door triggerEntree() weer verwijderd → de idle-'adem' op .vijand-art keert dan terug. */
+.vijand.entree.entree-geest, .vijand.entree.entree-opborrel { animation: none; }
+
+/* GEEST (Echo, Spiegelwachter, de zielen): materialiseert traag en ijl, vanuit de zijkant. */
+.vijand.entree.entree-geest .vijand-art { animation: figuurGeest 1.7s cubic-bezier(.25, .7, .3, 1) backwards; }
+@keyframes figuurGeest {
+  0%   { opacity: 0; transform: translateX(90px) scale(1.05); filter: blur(10px) brightness(1.7); }
+  30%  { opacity: .30; }
+  65%  { opacity: .62; filter: blur(3px) brightness(1.25); }
+  100% { opacity: 1; transform: translateX(0) scale(1); filter: blur(0) brightness(1); }
+}
+
+/* OPBORREL (Inktvlek, Inktklerk, slijmen): rijst op uit de grond met een lichte borrel-overshoot. */
+.vijand.entree.entree-opborrel .vijand-art { transform-origin: bottom center; animation: figuurOpborrel 1.15s cubic-bezier(.2, .8, .3, 1) backwards; }
+@keyframes figuurOpborrel {
+  0%   { opacity: 0; transform: translateY(58px) scaleY(.5) scaleX(1.06); }
+  55%  { opacity: 1; }
+  78%  { transform: translateY(-5px) scaleY(1.04) scaleX(.98); }
+  100% { opacity: 1; transform: translateY(0) scaleY(1) scaleX(1); }
+}
+
 /* ---------- de held reist over de kaart ---------- */
 .kaart-held {
   position: absolute;

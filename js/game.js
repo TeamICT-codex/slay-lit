@@ -1957,8 +1957,7 @@ function startGevecht(samenstelling, soort, rij) {
      (in 3D regelt Vista de opkomst van de sprites zelf) */
   if (!d3Actief()) {
     document.querySelectorAll('#vijanden-rij .vijand').forEach((el, i) => {
-      el.classList.add('entree');
-      el.style.animationDelay = (0.1 + i * 0.18) + 's';
+      triggerEntree(el, 0.1 + i * 0.18);
     });
     $('#speler-zone').classList.add('entree-links');
   }
@@ -2131,6 +2130,22 @@ function stopGevechtLus() {
    visueel via transform-scale, origin bottom → geen reflow/grondlijn-breuk). Tunebaar. */
 const VIJAND_KLEIN = new Set(['groene_slijm', 'blauwe_slijm', 'grotrat', 'naaper', 'mal_gietsel', 'doorslag_kopie', 'echo', 'kultist', 'pekziel']);
 const VIJAND_GROOT = new Set(['steengolem', 'dossierwurm', 'de_deadline', 'de_inktvlek', 'grombaard']);
+/* ENTREE-VARIANT per vijand (2D): een eigen binnenkomst op maat van het wezen. Niet vermeld
+   = de standaard glij-in-van-rechts. 'geest' = materialiseert traag, ijl, vanuit de zijkant;
+   'opborrel' = rijst op uit de grond (vloeistof/slijm). Vrij uit te breiden — zie css .entree-*. */
+const VIJAND_ENTREE = {
+  echo: 'geest', spiegelwachter: 'geest', pekziel: 'geest', de_uitgewiste: 'geest', de_verzwolgene: 'geest',
+  de_inktvlek: 'opborrel', inktklerk: 'opborrel', groene_slijm: 'opborrel', blauwe_slijm: 'opborrel', mal_gietsel: 'opborrel',
+};
+/* speel de binnenkomst-animatie en ruim de .entree-trigger daarna weer op. Het opruimen is
+   nodig omdat de variant-entree op .vijand-art draait (waar ook de idle-'adem' zit): zolang
+   .entree blijft staan bezet de entree-animatie die slot → de adem zou nooit terugkeren. */
+function triggerEntree(el, delaySec) {
+  if (!el) return;
+  el.classList.add('entree');
+  if (delaySec) el.style.animationDelay = delaySec + 's';
+  setTimeout(() => { el.classList.remove('entree'); el.style.animationDelay = ''; }, 2000 + (delaySec || 0) * 1000);
+}
 
 /* eenmalige opbouw van de gevechts-DOM */
 function bouwGevechtDom(g) {
@@ -2142,7 +2157,8 @@ function bouwGevechtDom(g) {
     const def = VIJANDEN[v.id];
     const wrap = document.createElement('div');
     wrap.className = 'vijand' + (def.baas ? ' is-baas' : '') + (def.elite ? ' is-elite' : '')
-      + (VIJAND_KLEIN.has(v.id) ? ' vijand-klein' : '') + (VIJAND_GROOT.has(v.id) ? ' vijand-groot' : '');   /* grootte-variatie (transform-scale, origin bottom → breekt de grondlijn niet) */
+      + (VIJAND_KLEIN.has(v.id) ? ' vijand-klein' : '') + (VIJAND_GROOT.has(v.id) ? ' vijand-groot' : '')   /* grootte-variatie (transform-scale, origin bottom → breekt de grondlijn niet) */
+      + (VIJAND_ENTREE[v.id] ? ' entree-' + VIJAND_ENTREE[v.id] : '');   /* binnenkomst-variant (de .entree-trigger zet startGevecht/voegVijandToe erbij) */
     wrap.dataset.i = i;
     const art = (window.karakterSvg && karakterSvg(v.id))
       || `${v.art}${def.baas ? '<span class="kroon">👑</span>' : ''}`;
@@ -3223,10 +3239,9 @@ function voegVijandToe(id) {
   if (d3Actief() && window.Vista) {
     Vista.gevechtStart(g, g.soort, !!g.achtergrond);
   } else {
-    /* in 2D komt alleen de nieuwkomer het toneel op */
+    /* in 2D komt alleen de nieuwkomer het toneel op (eigen entree-variant indien gezet) */
     const wraps = document.querySelectorAll('#vijanden-rij .vijand');
-    const laatste = wraps[wraps.length - 1];
-    if (laatste) laatste.classList.add('entree');
+    triggerEntree(wraps[wraps.length - 1], 0);
   }
   renderGevecht();
 }
@@ -4296,6 +4311,12 @@ function devSprongAct2() {
   S.act = 2;
   S.fakkel = 100;
   S.pos = null;
+  /* DEV-testbuffer: ruime HP + volle heeldrank-slots zodat je Act 2-vijanden grondig kunt
+     bekijken/uittesten zonder meteen te sneuvelen (DEV-SHORTCUT — weg vóór release). */
+  S.maxHp = Math.max(S.maxHp || 0, 150);
+  S.hp = S.maxHp;
+  S.dranken = [];
+  while (S.dranken.length < drankSlots()) S.dranken.push('heeldrank');
   delete S.beloning; delete S.winkel; delete S.huidigEvent;
   S.kaart = genereerKaart();   /* act-bewust → de Act 2-ladder */
   /* DEV: zet het Drops-mysterie 'rijp' (alle scherven) maar NIET voltooid + geen
@@ -4306,7 +4327,7 @@ function devSprongAct2() {
   _m.rijp = true; _m.voltooid = false;
   bewaarCodex();
   saveSpel();
-  melding('⚡ DEV: Act 2 + Drops-mysterie RIJP — doof je fakkel bij de Erfprins');
+  melding('⚡ DEV: Act 2 + Drops-mysterie RIJP — 150 HP + 2 heeldranken om rustig te testen. Doof je fakkel bij de Erfprins.');
   renderKaartScherm();
 }
 
