@@ -1153,6 +1153,7 @@ function synergieTier(mgid, held) {
   return 'basis';
 }
 function synergieFactor(mgid, held) { return (window.SYNERGIE_FACTOR || {})[synergieTier(mgid, held)] || 1; }
+function synergieOptimaal(mgid) { return synergieTier(mgid) === 'optimaal'; }   /* het signatuur-perkje vuurt enkel bij de optimale held */
 /* schaal een metgezel-getal (blok/heal/schade) met de synergie; min. 1. Gebruikt in de beurt-hooks. */
 function synergieN(mgid, basis) { return Math.max(1, Math.round((basis || 0) * synergieFactor(mgid))); }
 function metgezelMaxHp(id) { const def = METGEZELLEN[id]; return def ? Math.max(1, Math.round((def.maxHp || 1) * synergieFactor(id))) : 1; }
@@ -1162,6 +1163,18 @@ function synergieLabel(mgid, held) {
   if (t === 'optimaal') return '✨ optimale band (+30%)';
   if (t === 'goed') return '◆ goede band (+15%)';
   return '';
+}
+/* synergie-blok voor het metgezelboek (Codex): de paren + het optimaal-perk */
+function synergieBoekHtml(mgid) {
+  const s = window.SYNERGIE && SYNERGIE[mgid];
+  if (!s) return '';
+  const opt = s.optimaal ? HELDNAAM(s.optimaal) : null;
+  const goed = (s.goed || []).map(HELDNAAM);
+  let h = '<div class="boek-synergie"><b>🔗 Synergie</b>';
+  if (opt) h += `<p>✨ <b>Optimale band</b> met <b>${opt}</b> — +30% effect & HP${s.perk ? `, en ${s.perk}` : ''}.</p>`;
+  if (goed.length) h += `<p>◆ Goede band met ${goed.join(' · ')} — +15%.</p>`;
+  h += '<p class="boek-synergie-rest">Bij elke andere held nog steeds een volwaardige bondgenoot.</p></div>';
+  return h;
 }
 
 /* werf een metgezel voor de rest van de run (HP gaat mee tussen gevechten) */
@@ -2768,6 +2781,7 @@ function toonMetgezelBoek(id) {
       <span class="schaarste-chip" style="--relk:${rgb}">${SCHAARSTE_LABEL[d.zeld] || 'Metgezel'}</span>
       <h3>${d.naam}</h3>
       <p class="boek-effect">${d.tekst}</p>
+      ${synergieBoekHtml(id)}
       ${d.lore ? `<p class="boek-lore">„${d.lore}"</p>` : ''}
       ${(id === 'drops' && isOntgrendeld('drops_wit'))
         ? '<p class="boek-gevallen">🤍 Offerde zich op — en kwam terug. Voorgoed heen, en toch teruggekeerd: de diepte gaf terug wat ze nam. Trouw is niet te indexeren, en de dood houdt haar niet.</p>'

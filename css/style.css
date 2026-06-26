@@ -605,6 +605,14 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   margin: 0;
   max-width: 320px;
 }
+.boek-synergie {
+  max-width: 340px; margin: 2px auto; padding: 8px 12px; border-radius: 9px;
+  background: rgba(150, 110, 220, .1); border: 1px solid rgba(160, 130, 255, .3);
+  font-size: .9rem; line-height: 1.4; text-align: left;
+}
+.boek-synergie > b { color: #c9b3ff; }
+.boek-synergie p { margin: 4px 0 0; }
+.boek-synergie-rest { color: var(--perkament-dof); font-style: italic; font-size: .82rem; }
 .relikwie img {
   width: 28px; height: 28px;
   object-fit: cover;
