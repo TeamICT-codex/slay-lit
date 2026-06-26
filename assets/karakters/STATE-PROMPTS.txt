@@ -715,3 +715,119 @@ wrapping across the front of the body like a coiled shell/cocoon,
 the central void contracting to a narrow vertical slit, the violet
 soul-glow drawn deep inside and dimming — a dense, impenetrable
 defensive ball of gathered souls. Braced, immovable, hunkered.
+
+
+#################### ACT 2 / EVENT-VIJANDEN — POSES (herwerkt + nieuw) ####################
+Reference-anchored: voeg telkens de BASIS-art van dat wezen toe als referentie.
+Stijl = identiek aan de basis: painterly dark-fantasy, NOT photorealistic, no photo,
+no 3D render; facing LEFT; transparante (of effen zwarte) achtergrond; één wezen,
+één gesloten opake silhouet, scherpe contour, ruime marge, GEEN mist/rook/zwevende
+deeltjes; geen grond/schaduw/tekst/kader. Verander ALLEEN de "Pose:"-regel.
+
+=================== de_deadline_death.png ===================
+Use the attached reference image (de_deadline.png): the EXACT same clock-tower creature,
+same cracked dark iron, same hourglass torso, same painterly style, facing LEFT,
+transparent background. Change ONLY the pose.
+Pose: the sealed iron-and-glass hourglass torso CRACKS and bursts, all the packed black
+sand pouring out at once; the clock-hands droop and fall still, the overdue-red numerals
+dim to dead grey, and the whole hunched iron tower buckles and slumps sideways as it dies.
+
+=================== de_deadline_attack.png  (optioneel) ===================
+Use the attached reference image (de_deadline.png): same creature/style/left/transparent.
+Change ONLY the pose.
+Pose: it swings its rigid CLOCK-HAND blade-arm down in a heavy overhead strike to the left,
+the stopped-clock face flaring brighter overdue-red, the black sand in the hourglass torso
+jolting from the force. Kept compact and tight to the body.
+
+=================== de_archivaris_attack.png ===================
+Use the attached reference image (de_archivaris.png): the EXACT same colossal archivist,
+same fused file-tower, same spectacled face, same painterly style, facing LEFT, transparent.
+Change ONLY the pose.
+Pose: he swings the enormous CHAINED LEDGER out and around to the left like a great stone
+bludgeon, pages fanning, the index-tags on his tower flaring bright as he "cites" a damning
+entry; leaning forward-left with cold weight. Tower stays fused and readable behind him.
+
+=================== de_archivaris_hit.png ===================
+Use the attached reference image (de_archivaris.png): same creature/style/left/transparent.
+Change ONLY the pose.
+Pose: he recoils from a blow, the ziggurat file-tower on his back lurching with a few top
+drawers sliding loose, his stacked spectacles knocked askew, the lit index-tags guttering
+for a moment. Off-balance but still towering.
+
+=================== de_archivaris_death.png ===================
+Use the attached reference image (de_archivaris.png): same creature/style/left/transparent.
+Change ONLY the pose.
+Pose: the ziggurat file-tower collapses in a slow avalanche down over him, the glowing
+index-tags going out one by one, the gaunt robed figure folding forward and vanishing
+beneath his own archive; bone-grey drawers and ledgers sliding into a settling heap.
+
+=================== de_archivaris_cast.png   (zijn 'werkt-dossier-bij'-moment) ===================
+Use the attached reference image (de_archivaris.png): same creature/style/left/transparent.
+Change ONLY the pose.
+Pose: he holds the open LEDGER high, a new entry writing ITSELF across the page in glowing
+script, and a fresh row of index-TAGS igniting one by one up the file-tower (the compound —
+"hij vergeet niets"). Solemn, inevitable, the brightest glow climbing higher.
+
+=================== de_archivaris_block.png ===================
+Use the attached reference image (de_archivaris.png): same creature/style/left/transparent.
+Change ONLY the pose.
+Pose: he hunkers and pulls the great file-tower around in front of him like a wall of
+stacked bone-grey drawers and ledgers, spectacled face peering over the top, bracing
+immovably behind his own bureaucracy.
+
+=================== de_redacteur_hit.png ===================
+Use the attached reference image (de_redacteur.png): the EXACT same censor-knight, same
+banded iron plate, same redaction-barred helm, same shears, same painterly style, facing
+LEFT, transparent. Change ONLY the pose.
+Pose: he twists back from a blow, the horizontal redaction-bars across his helm flickering,
+one short censored black-barred strip torn loose, the giant shears swung defensively across
+his chest. Crisp and clean, no clutter.
+
+=================== de_redacteur_death.png ===================
+Use the attached reference image (de_redacteur.png): same creature/style/left/transparent.
+Change ONLY the pose.
+Pose: he is fully REDACTED — thick black censorship bars sweep across and swallow the whole
+figure, his OWN giant shears snipping him into falling black-barred strips that scatter and
+go dark. Elegant self-erasure.
+
+=================== de_verzwolgene_attack.png  (optioneel — elite) ===================
+Use the attached reference image (de_verzwolgene.png): the EXACT same towering mass of black
+soul-matter, same violet soul-glow, same hollow central void, same trapped soul-faces and
+tendrils, same painterly style, facing LEFT, transparent/black. Change ONLY the pose.
+Pose: it LUNGES, the central void yawning wide and a great clawed TENDRIL of black soul-
+matter lashing forward to the left, streams of violet screaming soul-faces racing along it.
+Hungry, engulfing.
+
+=================== de_verzwolgene_hit.png  (optioneel) ===================
+Use the attached reference image (de_verzwolgene.png): same creature/style/left.
+Change ONLY the pose.
+Pose: it recoils, the violet soul-glow flaring harshly, several trapped soul-faces wailing
+and the tendrils splaying outward; the central void shrinking for a beat.
+
+=================== de_verzwolgene_death.png  (optioneel) ===================
+Use the attached reference image (de_verzwolgene.png): same creature/style/left.
+Change ONLY the pose.
+Pose: the gathered mass comes apart — the trapped souls tear free and stream upward as
+fading violet wisps, the writhing tendrils going limp, the central void collapsing inward
+to nothing. The hunger finally emptied.
+
+=================== de_drempelwachter_attack.png ===================
+Use the attached reference image (de_drempelwachter.png): the EXACT same Balrog-like threshold
+guardian of black fire and shadow, same horns, same molten-red/violet inner fire, same
+painterly style, facing LEFT, transparent/black. Change ONLY the pose.
+Pose: it cracks its long WHIP of black flame forward in a great arc to the left, the fissures
+across its obsidian body flaring molten RED, wings of black smoke flung wide, roaring —
+"JE KOMT ER NIET LANGS!". Immense, primal.
+
+=================== de_drempelwachter_hit.png ===================
+Use the attached reference image (de_drempelwachter.png): same creature/style/left.
+Change ONLY the pose.
+Pose: it rears back, the black-fire wings flaring and the ember-cracks across its body
+brightening from the impact, one clawed hand thrown up — staggered but unbroken.
+
+=================== de_drempelwachter_death.png ===================
+Use the attached reference image (de_drempelwachter.png): same creature/style/left.
+Change ONLY the pose.
+Pose: the black fire gutters and dies, the molten-red veins cooling to dead grey-black, the
+colossal horned body crumbling apart into cooling cinders and sinking shadow as the gate
+behind it finally falls quiet.
