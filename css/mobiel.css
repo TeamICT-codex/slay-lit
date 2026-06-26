@@ -270,7 +270,7 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
 @media (orientation: portrait) and (max-width: 900px) {
   /* min-height:0 laat het strijdveld krimpen zodat de in-flow onderbalk + hand
      onderaan blijven (geen afkapping); de figuren vullen de ruimte erboven */
-  body[data-modus="mobiel"] #strijdveld { padding: 0 8px 6px; align-items: center; justify-content: space-evenly; gap: 8px; min-height: 0; }
+  body[data-modus="mobiel"] #strijdveld { padding: 0 8px 6px; align-items: flex-end; justify-content: space-evenly; gap: 8px; min-height: 0; }
   body[data-modus="mobiel"] #speler-zone { min-width: 0; }
   body[data-modus="mobiel"] .speler-figuur { width: 140px; height: 140px; }
   body[data-modus="mobiel"] #vijanden-rij { gap: 12px 16px; flex-wrap: wrap; justify-content: center; max-width: min(60vw, 340px); }

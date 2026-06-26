@@ -988,7 +988,8 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   font-size: 5.5rem;
   width: 124px; height: 124px;
   display: flex; align-items: flex-end; justify-content: center;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, .7));
+  /* tightere, donkere voet-schaduw → de figuur 'staat' op de grond i.p.v. te zweven */
+  filter: drop-shadow(0 9px 5px rgba(0, 0, 0, .6)) drop-shadow(0 2px 3px rgba(0, 0, 0, .55));
   animation: adem 3s ease-in-out infinite;
 }
 .speler-figuur.valt-aan { animation: uitval-speler .4s ease; }
@@ -1006,7 +1007,7 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 }
 @keyframes adem {
   0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-5px) scale(1.015); }
+  50% { transform: translateY(-2px) scale(1.012); }   /* subtieler → minder 'zwevend' */
 }
 .speler-naam { font-size: 1.15rem; color: var(--ember-fel); }
 
@@ -1145,7 +1146,8 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   width: 108px; height: 108px;
   display: flex; align-items: flex-end; justify-content: center;
   position: relative;
-  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .7));
+  /* tightere voet-schaduw → 'op de grond' i.p.v. zwevend */
+  filter: drop-shadow(0 8px 5px rgba(0, 0, 0, .6)) drop-shadow(0 2px 3px rgba(0, 0, 0, .55));
   animation: adem 2.6s ease-in-out infinite;
 }
 .vijand-art svg, .speler-figuur svg { width: 100%; height: 100%; }

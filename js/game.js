@@ -2984,12 +2984,17 @@ function copycatKies(v, beurt) {
     const plan = copycatPlagiaatPlan(v, aantal);
     return { type: 'plagiaat', naam: 'Plagiaat', plan, doe: vv => copycatSpeelTerug(vv, g, plan) };
   };
-  const steel = { type: 'steel', naam: 'Afkijken', doe: vv => { if (!copycatSteel(vv, g)) doeSchade(sp(), 4 + fase * 3, vv); } };
+  const steel = { type: 'steel', naam: 'Afkijken', doe: vv => { if (!copycatSteel(vv, g)) { melding('🎭 De Copycat grist naar je zet… maar grijpt mis, en haalt zelf uit.'); doeSchade(sp(), 4 + fase * 3, vv); } } };
   /* sterker tegen niet-voedende (bv. gif/chip) dekken: gif jaagt hem wél naar fase 3
      (copycatNaSchade !bron-tak voedt half), maar zonder kopieerbaar arsenaal viel hij
      terug op deze magere zet. Nu fase-geschaald 12/18/24 i.p.v. 9/12/15 — voelbaar in
      fase 3, waar een gestarveerde Erfprins anders tandeloos bleef. */
-  const pathetisch = { type: 'aanval', naam: fase >= 2 ? 'Geschreeuw' : 'Pappie Bellen', dmg: 6 + fase * 6 };
+  const pathetisch = { type: 'aanval', naam: fase >= 2 ? 'Geschreeuw' : 'Pappie Bellen', dmg: 6 + fase * 6,
+    /* maak ZICHTBAAR dat de kopieer-machine leegloopt — anders lijkt de baas passief/tandeloos */
+    doe: vv => {
+      fxNummer(actorEl(vv), '🎭 niks om na te bootsen!', 'fx-debuff');
+      if (!g._copycatLeeggemeld) { melding('🎭 De Copycat heeft niks van jou om na te bootsen — dus haalt hij zélf wild uit. Speel kopieerbare kaarten en hij wordt gevaarlijker.'); g._copycatLeeggemeld = true; }
+    } };
   if (g.copycatGebroken) return { type: 'aanval', naam: 'Wanhoopsklap', dmg: 6 + (fase >= 3 ? 2 : 0) };
   if (fase >= 3 && arsenaal > 0) {
     if (kanStelen && t % 3 === 2) return steel;
@@ -3161,8 +3166,10 @@ async function eindBeurt() {
         pose2D(v, 'gif', 0.9);          /* reactie-pose: de leegte slurpt je gif op en zwelt */
         zwarteZielHint(v);              /* per-wezen hint, 1× per gevecht */
       } else {
-        /* verminder (Zwarte Ziel, gewone) OF baas/gifWeerstand → halve gif-tik. */
-        const halveer = !lantaarn && (zz === 'verminder' || gd.baas || gd.gifWeerstand);
+        /* verminder (Zwarte Ziel, gewone) OF baas/gifWeerstand → halve gif-tik. De Zielslantaarn
+           breekt de SITUATIONELE counters (immuun/kaats/absorbeer/verminder, via zz=null hierboven)
+           maar NIET de statische baas-halvering: een baas blijft innerlijk sterk tegen gif. */
+        const halveer = (zz === 'verminder') || gd.baas || gd.gifWeerstand;
         if (halveer && zz === 'verminder') {
           fxNummer(actorEl(v), '🕳️ ½ gif', 'fx-blok');
           pose2D(v, 'gif', 0.9);        /* reactie-pose: het wezen dempt de helft van je gif */
