@@ -552,40 +552,34 @@ wegknippen). Houd elk wezen mét marge in het frame (geen wezen dat tot alle ran
   Accent: ZWARTE censuurbalken + de schaar die een bleekblauw schild doorknipt (links).
 
 --- de_archivaris.png   (2e ELITE — De Archivaris: compoundt Kracht, "vergeet niets") ---
-  [HERMAAKT — playtest: de oude art was een onleesbare brij. Nu een LEESBARE figuur met strikte
-   focal-hiërarchie en een geordende, aan de figuur gefuseerde dossier-toren i.p.v. amorfe massa.]
-  The BIGGEST elite enemy, three-quarter side view, clearly FACING LEFT, imposing and top-heavy but
-  with a CLEAN, READABLE silhouette. A colossal, statuesque ARCHIVIST, read first from his SILHOUETTE
-  as ONE towering robed clerk, NEVER as a pile of paper. STRICT FOCAL HIERARCHY enforced TONALLY,
-  three readable beats: (1) THE ONLY BRIGHTEST ZONE is his HEAD and gaunt over-spectacled FACE high
-  up — a long hollow parchment-pale face, stacked round SPECTACLES sliding down his nose catching a
-  single cold glint, deep remembering eye-sockets — the lightest, sharpest, highest-contrast spot,
-  where the eye lands first. (2) CLEARLY DIMMER: held close across his chest in both gaunt grey
-  hands, ONE enormous open LEDGER, a short thick chain anchoring it tight to the robe (chain stays
-  short, no dangling loop), the pages a muted cool-lit shape distinctly darker than the face. (3)
-  DEEP IN COLD SHADOW, the burden: rising directly from his back and shoulders and FUSED to him as
-  one continuous body, a single ORDERLY ZIGGURAT-TOWER of neatly stacked bone-grey file-drawers and
-  tagged dossiers — a compact, stepped, architectural tower read as ONE deliberate built-up mass (a
-  clear "figure carrying a mountain" shape), NOT a scattered cloud of loose paper, NOT a separate
-  building beside him; it falls into deep cold shadow behind the lit face, NO gap between tower and
-  head. COMPOUND SIGNAL (single, readable, inside the contour): a vertical LADDER of glowing
-  index-TAGS up the INNER front face of the tower, well inside the silhouette; the lowest tags glow
-  bright and light UP one by one climbing higher (he compounds each turn) — the ONLY glowing element.
-  LIGHT: cold blue-grey "system light" over the whole COLD bone-grey body + a THIN warm ember
-  rim-light as a SHARP crisp LINE riding exactly ON his front-left contour (NOT a glow/bloom/halo).
-  Large simple shapes, strong tonal contrast, MINIMAL micro-detail; keep the gaps between the three
-  beats tonally calm. NO loose flying papers, NO scattered drifting pages, NO swirling dust/smoke/
-  mist, NO sparks or tags streaming toward the edges. Mood: inevitable, all-remembering, the
-  bureaucracy made flesh — statuesque and CRISP, not a messy heap.
-  CUT-OUT: the whole figure has ONE continuous CLOSED OPAQUE sharp outer contour — face, spectacles,
-  ledger, chain, tags and the entire fused file-tower all sit tightly inside that single silhouette,
-  held close, nothing dangling far out, no thin trailing wisps. On a flat neutral dark / fully
-  TRANSPARENT background with strong tonal contrast between the cool bone-grey figure and the dark
-  background; clear empty margin on ALL FOUR sides incl. below the feet and above the tower-top.
-  No ground/shadow/text/UI/frame/background scenery. Fills ~90% of a square 1024x1024 canvas.
-  Accent: bot-grijs, torenhoog; de van-onder-naar-boven oplichtende index-tag-ladder op het binnen-
-  front van de gefuseerde dossiertoren = de compound.
-  (Elite → meer poses + _block = zich indekken achter opgestapelde dossiers.)
+  [HERMAAK v2 — minder 'figuur met papierberg', meer een DREIGENDE archivaris-INQUISITEUR: een
+   personage met gezag, niet een stapel. Donkerder, sinister, statig.]
+  A towering, GAUNT, HOODED ARCHIVIST-INQUISITOR — a figure of cold authority and DREAD, three-quarter
+  view clearly FACING LEFT, imposing and statuesque with a CLEAN, READABLE single-figure silhouette
+  (read instantly as a robed JUDGE, never as a pile of paper). He is drowned in deep shadow; only a
+  thin cold edge-light and a faint warm ember rim trace his left contour. Deep within a heavy raised
+  COWL/hood his face is a long, hollow, parchment-pale mask, two cracked round SPECTACLES catching a
+  single cold glint over deep eye-sockets that hold a quiet, judging COLD-BLUE glow — the brightest,
+  sharpest point, where the eye lands first. His robes are HEAVY and dark, and woven INTO them — as
+  regalia, not clutter — are bound LEDGERS, rolled scrolls and small chained file-drawers forming a
+  high collar and a draped MANTLE over his shoulders (orderly, fused to the body, NOT a scattered heap).
+  In both gaunt grey hands he holds one great chained LEDGER upright before him like a book of
+  judgement, a long iron STYLUS/quill resting on the open page. THE COMPOUND ("hij vergeet niets"):
+  a vertical row of red wax INDEX-SEALS down the front of the mantle lights up one by one with a cold
+  ember glow, climbing higher (the only glowing accents besides the eyes). PALETTE: deep shadow and
+  cold bone-grey, much DARKER than a lit clerk; the warm ember rim + the glowing seals + the cold eyes
+  are the only light. Mood: inevitable, all-remembering, sepulchral — the bureaucracy that JUDGES and
+  never forgets. Painterly dark-fantasy, NOT photorealistic, no photo, no 3D render. Large simple
+  shapes, strong tonal contrast, MINIMAL micro-detail.
+  CUT-OUT: ONE continuous CLOSED OPAQUE sharp outer contour — cowl, face, ledger, mantle, scrolls and
+  drawers all held tight inside that single silhouette, nothing dangling far out, no thin trailing
+  wisps. NO loose flying papers, NO scattered drifting pages, NO swirling dust/smoke/mist, NO sparks
+  streaming to the edges. On a fully TRANSPARENT (or flat PURE-MAGENTA #FF00FF chroma-key) background,
+  clear empty margin on all four sides. No ground/shadow/text/UI/frame. Fills ~90% of a square
+  1024x1024 canvas.
+  Accent: koud bot-grijs in diepe schaduw + smeulende RODE wax-zegels (de compound) + koud-blauwe,
+  oordelende ogen diep in de kap. (Uniek silhouet: de gehulde archivaris-inquisiteur met dossier-mantel.)
+  (Elite → meer poses + _block = zich indekken achter zijn dossier-mantel/de geheven ledger.)
 
 --- de_drempelwachter.png   (De Drempelwachter — Balrog-stijl poortwachter; ontwaakt bij een FOUT scherf-trio op de Drempel) ---
   A towering BALROG-like threshold guardian wreathed in BLACK FIRE, facing LEFT — a colossal horned
