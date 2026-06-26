@@ -1421,6 +1421,25 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 }
 .kaart-focus .kaart-vonk { font-size: 1.15rem; bottom: -14px; right: -14px; }
 
+/* VERDUISTERD: de Redacteur heeft je hand doorgehaald — verberg de face, toon een
+   inkt-rug. De kaart blijft klikbaar (je speelt blind). */
+.kaart.kaart-verduisterd { position: relative; }
+.kaart.kaart-verduisterd > * { visibility: hidden; }
+.kaart.kaart-verduisterd::after {
+  content: '🌫️';
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.4rem;
+  background:
+    radial-gradient(ellipse at 50% 32%, rgba(70,60,92,.55), transparent 72%),
+    repeating-linear-gradient(135deg, #15101d 0 7px, #0d0913 7px 14px);
+  border-radius: inherit;
+  border: 1px solid rgba(120, 110, 150, .35);
+  color: rgba(195, 185, 215, .5);
+  pointer-events: none;
+  box-shadow: inset 0 0 26px rgba(0, 0, 0, .72);
+}
+
 .kaart-kost {
   position: absolute; top: -10px; left: -10px;
   width: 32px; height: 32px;

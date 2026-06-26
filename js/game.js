@@ -2615,6 +2615,7 @@ function bijwerkKaartEl(el, c, klikbaar) {
     + (g && ((kost !== null && kost > g.energie) || lichtTekort) ? ' te-duur' : '')
     + (g && g.gekozenKaart === c.uid ? ' gekozen' : '')
     + (g && g.voorbeeldKaart === c.uid ? ' voorbeeld' : '')
+    + (g && (sp().status.verduisterd || 0) > 0 ? ' kaart-verduisterd' : '')   /* Verduisterd: toon de rug, speel blind */
     + (el.classList.contains('nieuw') ? ' nieuw' : '');
   el.querySelector('.kaart-kost').textContent = kost === null ? '✕' : kost;
   const lichtEl = el.querySelector('.kaart-lichtkost');
@@ -3143,6 +3144,8 @@ async function eindBeurt() {
     fxNummer($('#speler-zone'), '🫥 Doofpot −' + (2 * doofpotN) + ' licht', 'fx-debuff');
     zetFakkel(-2 * doofpotN);
   }
+  /* Verduisterd neemt aan het EINDE van de blind-beurt af (zo blijft de hand de hele beurt donker) */
+  if ((g.speler.status.verduisterd || 0) > 0) g.speler.status.verduisterd--;
   g.afleg.push(...g.hand);
   g.hand = [];
   renderGevecht();

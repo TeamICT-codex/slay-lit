@@ -803,7 +803,9 @@ const STATUSINFO = {
   doorslag:    { naam: 'Doorslag',    icoon: '📑', goed: true,  uitleg: 'De eerstvolgende aanval die je speelt, speel je een tweede keer af.' },
   geindexeerd: { naam: 'Geïndexeerd', icoon: '🗄️', goed: true,  uitleg: 'Telkens je een aanval speelt, krijg je zoveel Blok.' },
   /* licht-vloek (Schaduwsmet) */
-  schaduwsmet: { naam: 'Schaduwsmet', icoon: '🌑', goed: false, uitleg: 'Bijt elke beurt buiten helder licht (negeert Blok). Groeit in het donker; helder licht zuivert er 1 per beurt.' }
+  schaduwsmet: { naam: 'Schaduwsmet', icoon: '🌑', goed: false, uitleg: 'Bijt elke beurt buiten helder licht (negeert Blok). Groeit in het donker; helder licht zuivert er 1 per beurt.' },
+  /* censor-status: je hand is verduisterd → je ziet enkel de ruggen, blind spelen */
+  verduisterd: { naam: 'Verduisterd', icoon: '🌫️', goed: false, uitleg: 'Je hand is doorgehaald — je ziet enkel de kaartruggen en speelt BLIND. Neemt elke beurt met 1 af.' }
 };
 
 /* ---------- VIJANDEN ----------
@@ -929,12 +931,13 @@ const VIJANDEN = {
   },
   naaper: {
     naam: 'De Naäper', art: '🐒', hp: [24, 28],
-    /* kopieert je Kracht (naäpen), anders bootst hij je verdediging na of slaat */
+    /* kopieert je Kracht én slaat er meteen mee (naäpen = weaponized), anders spot-slaat
+       of bootst je verdediging na. Geen pure-buff-beurten meer → hij blijft dreigend. */
     kies: v => {
       const sk = sp().status.kracht || 0;
-      if (sk > 0 && willekeurig() < 0.6) return { naam: 'Naäpen', type: 'buff', doe: () => geefStatus(v, 'kracht', Math.min(2, sk)) };
-      return willekeurig() < 0.55 ? { naam: 'Spotklap', type: 'aanval', dmg: 8 }
-        : { naam: 'Nabootsen', type: 'blok', blok: 8 };
+      if (sk > 0 && willekeurig() < 0.6) return { naam: 'Naäpende Klap', type: 'aanval', dmg: 6, doe: () => { geefStatus(v, 'kracht', Math.min(2, sk)); fxNummer(actorEl(v), '🐒 zoals jij!', 'fx-debuff'); } };
+      return willekeurig() < 0.6 ? { naam: 'Spotklap', type: 'aanval', dmg: 8 }
+        : { naam: 'Nabootsen', type: 'blok', blok: 7 };
     }
   },
   inktklerk: {
@@ -1019,10 +1022,13 @@ const VIJANDEN = {
   },
   de_redacteur: {
     naam: 'De Redacteur', art: '✂️', hp: [24, 29],
-    /* censureert je verdediging: streept je Blok weg */
-    kies: v => willekeurig() < 0.5
-      ? { naam: 'Wegstrepen', type: 'aanval', dmg: 6, doe: () => { sp().blok = Math.max(0, (sp().blok || 0) - 6); } }
-      : { naam: 'Censuur', type: 'aanval', dmg: 9 }
+    /* censureert: streept je Blok weg OF HAALT JE HAND DOOR (verduisterd → blind spelen) */
+    kies: v => {
+      const r = willekeurig();
+      if (r < 0.34) return { naam: 'Doorhaling', type: 'aanval', dmg: 5, doe: () => { geefStatus(sp(), 'verduisterd', 1); melding('✂️ De Redacteur haalt je hand door — een beurt speel je BLIND.'); } };
+      if (r < 0.67) return { naam: 'Wegstrepen', type: 'aanval', dmg: 6, doe: () => { sp().blok = Math.max(0, (sp().blok || 0) - 6); } };
+      return { naam: 'Censuur', type: 'aanval', dmg: 9 };
+    }
   },
   /* elite — De Archivaris: compoundt elke beurt (de bureaucratie die onafwendbaar groeit) */
   de_archivaris: {
