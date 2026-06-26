@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v27'; /* v27: Naaper weaponiseert Kracht + nieuwe Verduisterd-status (blind spelen, de Redacteur) */
+const CACHE = 'slayit-v28'; /* v28: 9 scherf-fragmenten (3 sigils) verwerkt → tonen in de Drempel */
 const BESTANDEN = [
   '.',
   'index.html',

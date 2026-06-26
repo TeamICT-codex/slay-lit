@@ -1853,6 +1853,9 @@ body.lite .onthul-kaart.bijzonder:not(.open) .kaart-rug { animation: none; }
 }
 .drempel-scherf:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0, 0, 0, .5), 0 0 14px rgba(150, 110, 220, .4); }
 .drempel-leeg { color: var(--perkament-dof); font-style: italic; max-width: 32em; }
+/* de scherf-fragment-art (per scherf-id) vervangt het bron-emoji zodra ze geladen is */
+.dn-icoon img, .ds-icoon img { width: 60px; height: 60px; object-fit: contain; display: block; filter: drop-shadow(0 2px 7px rgba(0, 0, 0, .55)); }
+.dn-icoon, .ds-icoon { display: inline-flex; align-items: center; justify-content: center; min-height: 30px; }
 
 /* ---------- de smidse ---------- */
 .overlay.smeed-dreun { animation: smeedDreun .4s ease; }

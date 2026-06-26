@@ -4558,11 +4558,11 @@ function renderDrempel() {
 
   const nissen = [0, 1, 2].map(i => {
     const sid = drempelGeplaatst[i];
-    if (sid) { const d = scherfDef(sid); return `<button class="drempel-nis vol" onclick="drempelHaalWeg(${i})"><span class="dn-icoon">${bronIcoon(d && d.bron)}</span><i>${(d && d.codexTekst) || '…'}</i></button>`; }
+    if (sid) { const d = scherfDef(sid); return `<button class="drempel-nis vol" onclick="drempelHaalWeg(${i})"><span class="dn-icoon" data-shart="${sid}">${bronIcoon(d && d.bron)}</span><i>${(d && d.codexTekst) || '…'}</i></button>`; }
     return `<div class="drempel-nis leeg">◇</div>`;
   }).join('');
   const poolHtml = pool.length
-    ? pool.map(sid => { const d = scherfDef(sid); return `<button class="drempel-scherf" onclick="drempelPlaats('${sid}')"><span class="ds-icoon">${bronIcoon(d && d.bron)}</span><i>${(d && d.codexTekst) || '…'}</i></button>`; }).join('')
+    ? pool.map(sid => { const d = scherfDef(sid); return `<button class="drempel-scherf" onclick="drempelPlaats('${sid}')"><span class="ds-icoon" data-shart="${sid}">${bronIcoon(d && d.bron)}</span><i>${(d && d.codexTekst) || '…'}</i></button>`; }).join('')
     : `<p class="drempel-leeg">Je draagt nog geen scherven. Vind ze in je afdalingen — drie die samen passen roepen een bondgenoot op.</p>`;
   const vol = drempelGeplaatst.filter(Boolean).length === 3;
   $('#scherm-einde').innerHTML = `
