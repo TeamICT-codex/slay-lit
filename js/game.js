@@ -235,6 +235,25 @@ function noteerScherf(mid, sid) {
 function noteerRite(mid, vlag) { mys(mid).rite[vlag] = true; bewaarCodex(); }
 function ontgrendelMetgezel(mid) { mys(mid).voltooid = true; bewaarCodex(); }
 
+/* SEQUENTIEEL ontdekken: je verzamelt telkens naar ÉÉN metgezel toe. Het actieve mysterie
+   is het eerstvolgende nog-niet-vrijgespeelde in deze vaste volgorde. Zo blijft de voortgang
+   duidelijk (één balk tegelijk) en verklap je niet meteen de hele roster. */
+const MYSTERIE_VOLGORDE = ['drops', 'vlamwachter', 'mosgeest'];
+function actiefMysterie() {
+  return MYSTERIE_VOLGORDE.find(mid => window.MYSTERIES && MYSTERIES[mid] && !isOntgrendeld(mid)) || null;
+}
+/* de scherf-id binnen het actieve mysterie die bij een gegeven bron hoort ('baas'|'figuur'|'episch'),
+   of null als die bron al binnen is of er geen actief mysterie meer is. Bouwblok voor de generieke bronnen. */
+function actiefMysScherf(bron) {
+  const mid = actiefMysterie();
+  if (!mid) return null;
+  const def = MYSTERIES[mid];
+  const sid = (def.vereist || []).find(s => def.scherven[s] && def.scherven[s].bron === bron);
+  if (!sid) return null;
+  if (mys(mid).scherven.includes(sid)) return null;   /* al verzameld → bron is hier 'op' */
+  return { mid, sid };
+}
+
 /* ---------- loopbaan: het spoor dat élke run achterlaat (retentiemotor) ---------- */
 const HELDNAAM = id => (window.SPELERS && SPELERS[id] && SPELERS[id].naam) || id;
 function registreerRun(gewonnen) {
@@ -1041,6 +1060,33 @@ function geefMetgezel(id) {
   ontdek('metgezellen', id);
   renderTopbalk();
 }
+/* de vrijgespeelde, "meeneembare" metgezellen — drops_wit verdringt drops (z'n rouw-evolutie),
+   vlamwachter en mosgeest staan daar los naast. Volgorde = stabiel voor de rotatie hieronder. */
+function ontgrendeldeMetgezellen() {
+  const lijst = [];
+  if (isOntgrendeld('drops_wit')) lijst.push('drops_wit');
+  else if (isOntgrendeld('drops')) lijst.push('drops');
+  if (isOntgrendeld('vlamwachter')) lijst.push('vlamwachter');
+  if (isOntgrendeld('mosgeest')) lijst.push('mosgeest');
+  return lijst;
+}
+/* welke vrijgespeelde metgezel daalt déze run mee? Rotatie per run (Codex.runs) zodat élke
+   ontgrendelde metgezel aan bod komt over je afdalingen heen. Null als er nog niets vrij is. */
+function kiesRunMetgezel() {
+  const lijst = ontgrendeldeMetgezellen();
+  if (!lijst.length) return null;
+  return lijst[(Codex.runs || 0) % lijst.length];
+}
+function metgezelInstapMelding(id, teruggekeerd) {
+  switch (id) {
+    case 'drops_wit':   return '🤍 Drops de Witte daalt met je mee — hij wijkt niet meer van je zij.';
+    case 'vlamwachter': return '🔥 De Vlamwachter zweeft geruisloos mee de diepte in — je stille schild.';
+    case 'mosgeest':    return '🌿 De Mosgeest rankt met je mee naar beneden — waar jij heel blijft, bloeit hij.';
+    default:            return teruggekeerd
+      ? '🐾 Drops kruipt uit het donker terug aan je zij en daalt mee het Archief in.'
+      : '🐾 Drops daalt met je mee het Archief in.';
+  }
+}
 /* de metgezel haalt uit naar een vijand (zelfde modifiers als een spelersaanval) */
 function metgezelAanval(m, doel, basis) {
   if (!doel || doel.dood) return;
@@ -1201,6 +1247,31 @@ function revealDrops(g) {
   bouwGevechtDom(g);                /* herbouw de gevecht-DOM incl. de metgezel-zone */
   renderGevecht();
   melding(`🐾 ${rev.kreet} Drops kruipt uit de duisternis — en hij wijkt niet meer van je zij.`);
+}
+
+/* WIN-RITES voor de látere mysteries (Vlamwachter, Mosgeest): hun metgezel ontwaakt niet
+   midden in het gevecht zoals Drops, maar bij het VERSLAAN van de Erfprins onder de juiste
+   voorwaarde. Mysterie moet rijp zijn (alle 3 scherven). Eenmalig — daarna komt de metgezel
+   in volgende runs gewoon mee. Geeft true terug als er net iets ontgrendelde (voor de pauze). */
+function checkBaasRite(g) {
+  const mid = actiefMysterie();
+  if (!mid || mid === 'drops') return false;          /* Drops heeft z'n eigen doof-rite */
+  if (!mysterieRijp(mid) || isOntgrendeld(mid)) return false;
+  if (!g.vijanden.some(v => v.id === 'de_erfprins')) return false;   /* enkel de Erfprins telt */
+  const def = MYSTERIES[mid];
+  let voldaan = false;
+  if (def.rite === 'fakkel_helder') voldaan = (lichtNiveau() === 'helder');   /* tunebaar: fakkel hoog houden */
+  if (def.rite === 'baas_hoge_hp')  voldaan = (S.hp / S.maxHp >= 0.70);        /* tunebaar: gedijen, niet bloeden */
+  if (!voldaan) return false;
+  noteerRite(mid, def.rite);
+  ontgrendelMetgezel(mid);
+  if (typeof ontdek === 'function') ontdek('metgezellen', def.metgezel);   /* Codex-ontdekking (komt vanaf nu in runs mee) */
+  const rev = def.eindreveal || { titel: 'EEN NIEUWE BONDGENOOT', kreet: 'Iets koos jou.' };
+  const naam = (window.METGEZELLEN && METGEZELLEN[def.metgezel] && METGEZELLEN[def.metgezel].naam) || '';
+  baasFaseMoment(rev.titel, rev.kreet);
+  Klank.sfx('schitter');
+  melding(`🜂 ${naam} sluit zich voortaan bij je aan — in elke volgende afdaling.`);
+  return true;
 }
 
 /* ---------- DROPS-GRIEF: de stille rouw-atmosfeer (zie DROPS-DE-WITTE.md §1) ----------
@@ -1519,10 +1590,9 @@ function genereerKaart() {
     if (n.r >= 4 && huidigeAct() >= 2) opties.push(['episch', 8]);
     n.type = gewogenKeuze(opties);
   }
-  /* garandeer ≥1 episch-node zolang het Drops-mysterie open is — anders is de derde
-     scherf (drops_episch) een mapseed-loterij die de unlock kan blokkeren */
-  if (huidigeAct() >= 2 && typeof mys === 'function'
-      && !isOntgrendeld('drops') && !(mys('drops').scherven || []).includes('drops_episch')
+  /* garandeer ≥1 episch-node zolang het ACTIEVE mysterie nog een episch-scherf mist —
+     anders is die derde scherf een mapseed-loterij die de unlock kan blokkeren */
+  if (huidigeAct() >= 2 && typeof actiefMysScherf === 'function' && actiefMysScherf('episch')
       && !Object.values(nodes).some(n => n.type === 'episch')) {
     const kand = Object.values(nodes).filter(n => n.r >= 4 && n.r < RIJEN - 1 && (n.type === 'gevecht' || n.type === 'event'));
     if (kand.length) kiesUit(kand).type = 'episch';
@@ -1682,7 +1752,7 @@ function kiesNodeEcht(id) {
       case 'episch': {
         /* de mysterie-vijand; bij winst valt z'n scherf (zie gevechtGewonnen) */
         startGevecht(kiesUit(ONTMOETINGEN.episch || [['het_origineel']]), 'elite', n.r);
-        if (S.gevecht && !isOntgrendeld('drops')) S.gevecht.scherfDrop = { mid: 'drops', sid: 'drops_episch' };
+        { const es = actiefMysScherf('episch'); if (S.gevecht && es) S.gevecht.scherfDrop = es; }
         break;
       }
       case 'baas': startGevecht([huidigeBaas().id], 'baas', n.r); break;
@@ -1906,7 +1976,7 @@ function startGevecht(samenstelling, soort, rij) {
        (noteerScherf/checkDropsOntwaak hebben geen daily-gate), dus moet de orakel-
        escalatie consistent meelopen — anders blijft de doof-rite-hint in daily op idx 0. */
     Codex.erfprinsOntmoetingen = (Codex.erfprinsOntmoetingen || 0) + 1; bewaarCodex();
-    noteerScherf('drops', 'drops_baas');
+    const bs = actiefMysScherf('baas'); if (bs) noteerScherf(bs.mid, bs.sid);
   }
   if (soort === 'baas') misschienBaasIntro(g);   /* enkel als het slagveld zichtbaar is (niet achter de draai-prompt) */
 
@@ -1993,6 +2063,17 @@ function toonBaasIntro(g) {
        doof-rite leesbaar zonder een knop te tonen (reverse psychology) */
     if (mysterieRijp('drops')) {
       setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt('„En blijf van dat lichtje AF. Het hóórt te branden. NIET DOVEN. Begrepen?"'); }, 9200);
+    }
+  }
+  /* látere mysteries (Vlamwachter/Mosgeest): fluister cryptisch de rite zodra rijp — de Codex
+     toont hem ook, dit is de in-zaal-nudge. Verklapt de wélke-metgezel niet. */
+  if (b.id === 'de_erfprins' && typeof actiefMysterie === 'function') {
+    const am = actiefMysterie();
+    if (am && am !== 'drops' && mysterieRijp(am)) {
+      const fluister = MYSTERIES[am].rite === 'fakkel_helder'
+        ? '„Je vlam… hou hem maar hóóg. Iets wáákt erin — en het wacht net op déze slag."'
+        : '„Blijf maar héél, jij. Wie híér niet bloedt… díé komt straks iets groens tegemoet."';
+      setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(fluister); }, 9200);
     }
   }
   /* GRIEF: heb je Drops geofferd maar is de Witte nog niet terug? De Erfprins claimt de
@@ -2406,6 +2487,15 @@ function meestGevorderdeMysterie() {
   });
   return best;
 }
+/* hoe voltooi je een rijp mysterie? Wél richtinggevend (de speler verdiende het door alle
+   scherven te vinden), maar nog steeds thematisch — verklapt de WÉLKE-metgezel niet. */
+function mysterieRiteHint(mid) {
+  const def = window.MYSTERIES && MYSTERIES[mid];
+  const rite = def && def.rite;
+  if (rite === 'fakkel_helder') return 'Versla de Erfprins met je fakkel nog <b>helder</b> brandend.';
+  if (rite === 'baas_hoge_hp')  return 'Versla de Erfprins <b>zonder zwaar te bloeden</b> — blijf heel.';
+  return 'Het antwoord wacht in het <b>donker dat je niet dúrft te maken</b> — bij de Erfprins.';
+}
 /* de Codex-sectie "Onopgeloste Mysteries" (lege string als er niets te tonen is) */
 function mysterieCodexBlok() {
   const M = window.MYSTERIES; if (!M) return '';
@@ -2419,13 +2509,15 @@ function mysterieCodexBlok() {
     const slots = vereist.map(sid => {
       const sdef = (def.scherven && def.scherven[sid]) || {};
       return gevonden.includes(sid)
-        ? `<div class="mys-scherf gevonden">🜂 <i>${sdef.codexTekst || '…'}</i></div>`
+        ? `<div class="mys-scherf gevonden"><span class="mys-scherf-art" data-shart="scherf_${sdef.bron}">🜂</span> <i>${sdef.codexTekst || '…'}</i></div>`
         : `<div class="mys-scherf"><span class="mys-vraag">❓</span> <small>${mysterieBronLabel(sdef.bron)}</small></div>`;
     }).join('');
+    const balk = '▰'.repeat(gevonden.length) + '▱'.repeat(Math.max(0, vereist.length - gevonden.length));
+    const voortgang = `<p class="mys-voortgang"><span class="mys-balk">${balk}</span> <b>${gevonden.length}/${vereist.length}</b> scherven</p>`;
     const staart = (m && m.rijp)
-      ? `<p class="mys-rijp">De scherven passen samen. Maar het antwoord voelt verkeerd — alsof het iets van je vráágt…</p>`
-      : `<p class="mys-rest">${gevonden.length} / ${vereist.length} scherven. <i>Verlies wás progressie.</i></p>`;
-    blokken.push(`<div class="mys-blok ${(m && m.rijp) ? 'rijp' : ''}"><h4 class="mys-titel">🜂 Een onopgelost mysterie</h4>${slots}${staart}</div>`);
+      ? `<p class="mys-rijp">De scherven passen samen. ${mysterieRiteHint(mid)}</p>`
+      : `<p class="mys-rest"><i>Verlies wás progressie — er ontbreekt nog een scherf.</i></p>`;
+    blokken.push(`<div class="mys-blok ${(m && m.rijp) ? 'rijp' : ''}"><h4 class="mys-titel">🜂 Een onopgelost mysterie</h4>${slots}${voortgang}${staart}</div>`);
   });
   if (!blokken.length) return '';
   return `<h3 class="codex-kop">🜂 Onopgeloste Mysteries</h3><div class="mys-lijst">${blokken.join('')}</div>`;
@@ -2452,10 +2544,10 @@ function toonCodex() {
   const dranks = Object.keys(DRANKEN);
   const drOntdekt = dranks.filter(d => Codex.dranken.includes(d)).length;
   /* alleen DAADWERKELIJK vrijspeelbare metgezellen tellen mee: drops_wit is een variant van
-     'drops' (geen apart slot), en vlamwachter/mosgeest bestaan wel in METGEZELLEN maar hebben
-     (nog) geen mysterie/bron → ze nooit meetellen, anders is de Codex onafmaakbaar (100%
-     onbereikbaar). Voeg een id toe aan VRIJSPEELBARE_MG zodra zijn unlock-bron bestaat. */
-  const VRIJSPEELBARE_MG = new Set(['drops']);
+     'drops' (geen apart slot, dus niet apart geteld). drops/vlamwachter/mosgeest hebben elk een
+     eigen mysterie (scherven + rite) → ze tellen mee. Voeg een id toe aan VRIJSPEELBARE_MG zodra
+     zijn unlock-bron bestaat, anders is de Codex onafmaakbaar (100% onbereikbaar). */
+  const VRIJSPEELBARE_MG = new Set(['drops', 'vlamwachter', 'mosgeest']);
   const mgs = Object.keys(METGEZELLEN).filter(id => VRIJSPEELBARE_MG.has(id)).sort((a, b) =>
     volgorde.indexOf(METGEZELLEN[a].zeld) - volgorde.indexOf(METGEZELLEN[b].zeld));
   const mgOntdekt = mgs.filter(m => Codex.metgezellen.includes(m)).length;
@@ -2589,6 +2681,14 @@ function verfraaiItemArt(wortel) {
     w.querySelectorAll('[data-mgart]').forEach(el => {
       const art = (METGEZELLEN[el.dataset.mgart] && METGEZELLEN[el.dataset.mgart].art) || el.dataset.mgart;
       laadMetgezelAfbeelding(art, img => {
+        if (img && !el.querySelector('img')) el.innerHTML = `<img src="${img.src}" alt="">`;
+      });
+    });
+  }
+  /* mysterie-scherf-art uit assets/scherven/ (cryptisch fragment per bron; 🜂-emoji blijft terugval) */
+  if (window.laadScherfAfbeelding) {
+    w.querySelectorAll('[data-shart]').forEach(el => {
+      laadScherfAfbeelding(el.dataset.shart, img => {
         if (img && !el.querySelector('img')) el.innerHTML = `<img src="${img.src}" alt="">`;
       });
     });
@@ -3396,6 +3496,9 @@ async function gevechtGewonnen() {
     schudScherm();
     await slaap(1400);
     flits.remove();
+    if (S.gevecht !== g) return;
+    /* win-rite: ontwaakt een látere metgezel (Vlamwachter/Mosgeest) bij déze baas-winst? */
+    if (checkBaasRite(g)) await slaap(2200);
     if (S.gevecht !== g) return;
     S.gevecht = null;
     if (huidigeAct() < ACTS_MAX) {
@@ -4286,15 +4389,13 @@ function volgendeAct(verslagenBaas) {
      is dan false want vluchtig) sluit hier weer aan — zo lost de 'later terugvinden'-
      belofte zich in i.p.v. in permanente limbo te blijven hangen. */
   if (!heeftMetgezel()) {
-    if (isOntgrendeld('drops_wit')) {
-      geefMetgezel('drops_wit');
-      melding('🤍 Drops de Witte daalt met je mee — hij wijkt niet meer van je zij.');
-    } else if (isOntgrendeld('drops')) {
-      const kwamTerug = !!(S.metgezel && S.metgezel.vluchtig && S.metgezel.id === 'drops');
-      geefMetgezel('drops');
-      melding(kwamTerug
-        ? '🐾 Drops kruipt uit het donker terug aan je zij en daalt mee het Archief in.'
-        : '🐾 Drops daalt met je mee het Archief in.');
+    /* een gevluchte metgezel sluit weer aan; anders de voor déze run gekozen vrijgespeelde
+       metgezel (één keer per run vastgezet via S.runMetgezel zodat hij niet per act wisselt) */
+    const teruggekeerd = !!(S.metgezel && S.metgezel.vluchtig);
+    const mgid = teruggekeerd ? S.metgezel.id : (S.runMetgezel || (S.runMetgezel = kiesRunMetgezel()));
+    if (mgid && METGEZELLEN[mgid]) {
+      geefMetgezel(mgid);
+      melding(metgezelInstapMelding(mgid, teruggekeerd));
     }
   }
   S.pos = null;

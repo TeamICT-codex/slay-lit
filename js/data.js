@@ -1233,6 +1233,29 @@ const MYSTERIES = {
     },
     eindreveal: { titel: 'UIT HET GEDOOFDE LICHT', kreet: 'Waar je fakkel stierf, kroop iets warms uit het zwart — en het week niet meer van je zij.' },
   },
+  /* HET TWEEDE mysterie — pas actief zodra Drops vrij is (sequentieel, zie actiefMysterie).
+     Rite: de Erfprins verslaan met je fakkel nog HELDER (de tegenpool van Drops' doven). */
+  vlamwachter: {
+    metgezel: 'vlamwachter', baasId: 'de_erfprins', rite: 'fakkel_helder',
+    vereist: ['vlamwachter_baas', 'vlamwachter_figuur', 'vlamwachter_episch'],
+    scherven: {
+      vlamwachter_baas:   { bron: 'baas',   codexTekst: '„Iemand stond altijd tussen jou en de klap. Je keek nooit om."' },
+      vlamwachter_figuur: { bron: 'figuur', codexTekst: '„Hij sprak niet, hij doofde niet — hij blééf gewoon staan."' },
+      vlamwachter_episch: { bron: 'episch', codexTekst: '„Hou je vlam hoog tot het einde, en wat wáákt zal ontwaken."' },
+    },
+    eindreveal: { titel: 'DE STILLE SCHILD', kreet: 'Je liet je licht nooit zakken — en uit dat onwankelbare vuur stapte een zwijgende schildwacht, voorgoed aan je zij.' },
+  },
+  /* HET DERDE mysterie. Rite: de Erfprins verslaan met hoge HP (gedijen i.p.v. bloeden). */
+  mosgeest: {
+    metgezel: 'mosgeest', baasId: 'de_erfprins', rite: 'baas_hoge_hp',
+    vereist: ['mosgeest_baas', 'mosgeest_figuur', 'mosgeest_episch'],
+    scherven: {
+      mosgeest_baas:   { bron: 'baas',   codexTekst: '„Waar je heel bleef, sloot de aarde zich zacht om je heen."' },
+      mosgeest_figuur: { bron: 'figuur', codexTekst: '„Het kleine groene licht volgt wie bloeit, niet wie bloedt."' },
+      mosgeest_episch: { bron: 'episch', codexTekst: '„Versla de diepte zónder te breken, en het leven komt naar je toe."' },
+    },
+    eindreveal: { titel: 'WAT BLOEIT IN HET DONKER', kreet: 'Je bleef heel waar anderen braken — en uit de spleten kroop een zacht groen wezen dat je wonden sloot.' },
+  },
 };
 window.MYSTERIES = MYSTERIES;   /* expliciet op window: de helpers in game.js guarden op window.MYSTERIES */
 
@@ -1554,28 +1577,29 @@ const EVENTS = [
       { label: 'Loop weg', detail: 'Niets gebeurt.', doe: () => 'Je laat het altaar achter je. De fluisterstem sterft weg.' }
     ]
   },
-  /* Fase 5 — mysterieuze-figuur-events: alleen in Act 2, alleen zolang het Drops-
-     mysterie open is én de figuur-scherf nog niet gevonden. Bron van drops_figuur. */
+  /* Fase 5 — mysterieuze-figuur-events: alleen in Act 2, alleen zolang het ACTIEVE
+     mysterie nog een figuur-scherf mist. De afscheidsregel = de codexTekst van dat
+     actieve mysterie → de hint verschilt per metgezel zonder te verklappen wélke. */
   {
     id: 'lantaarndrager', titel: 'De Gedoofde Lantaarndrager', icoon: '🏮',
-    toon: () => huidigeAct() >= 2 && !isOntgrendeld('drops') && !mys('drops').scherven.includes('drops_figuur'),
-    tekst: 'Een gebogen figuur zit in het donker, een dóófde lantaarn in de hand. „Ik liet mijn licht uitgaan," fluistert hij. „Pas toen vond het mij — wat altijd al meeliep. Vraag je je af wat?"',
+    toon: () => huidigeAct() >= 2 && !!actiefMysScherf('figuur'),
+    tekst: 'Een gebogen figuur zit in het donker, een gedóófde lantaarn in de hand. „Iedereen hierbeneden jaagt op iets," fluistert hij. „Maar weet jij wel wát jou volgt? Luister..."',
     opties: [
       {
         label: 'Luister naar zijn raadsel', detail: 'Een scherf van een groter geheim.',
-        doe: () => { noteerScherf('drops', 'drops_figuur'); return '„Het kwam pas toen ik mijn licht dúrfde te doven," herhaalt hij. Zijn woorden branden zich in je geheugen. 🜂'; }
+        doe: () => { const f = actiefMysScherf('figuur'); if (!f) return 'De figuur is al verstomd.'; const t = MYSTERIES[f.mid].scherven[f.sid].codexTekst; noteerScherf(f.mid, f.sid); return t + ' Zijn woorden branden zich in je geheugen. 🜂'; }
       },
       { label: 'Loop door', detail: 'Het donker heeft genoeg geheimen.', doe: () => 'Je laat de figuur in zijn duister achter.' }
     ]
   },
   {
     id: 'spiegelaar', titel: 'De Naamloze Spiegelaar', icoon: '🪞',
-    toon: () => huidigeAct() >= 2 && !isOntgrendeld('drops') && !mys('drops').scherven.includes('drops_figuur'),
-    tekst: 'Een gestalte houdt je een blinde spiegel voor. „Alles hierbeneden is na te maken," zegt ze. „Op één ding na. Weet jij wat een dief nóóit kan stelen?"',
+    toon: () => huidigeAct() >= 2 && !!actiefMysScherf('figuur'),
+    tekst: 'Een gestalte houdt je een blinde spiegel voor. „Alles hierbeneden is na te maken," zegt ze. „Op één ding na — en dát is precies wat jou zoekt. Kijk goed."',
     opties: [
       {
-        label: 'Antwoord: trouw', detail: 'Een scherf van een groter geheim.',
-        doe: () => { noteerScherf('drops', 'drops_figuur'); return 'Ze glimlacht dun. „Wat trouw blíjft zonder loon — dát kun je niet namaken." Heel even toont de spiegel iets warms in het zwart. 🜂'; }
+        label: 'Tuur in de blinde spiegel', detail: 'Een scherf van een groter geheim.',
+        doe: () => { const f = actiefMysScherf('figuur'); if (!f) return 'De spiegel is weer blind.'; const t = MYSTERIES[f.mid].scherven[f.sid].codexTekst; noteerScherf(f.mid, f.sid); return 'Heel even toont de spiegel iets in het zwart. ' + t + ' 🜂'; }
       },
       { label: 'Zeg niets', detail: 'Je vertrouwt het niet.', doe: () => 'Je zwijgt. De spiegelaar vervaagt in het donker.' }
     ]

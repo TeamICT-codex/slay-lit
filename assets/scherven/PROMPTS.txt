@@ -1,0 +1,46 @@
+MYSTERIE-SCHERVEN — cryptische verzamel-fragmenten van het Metgezel-Mysterie
+============================================================================
+Kleine "scherven" die in de Codex (sectie "Onopgeloste Mysteries") als verzamelbare
+gem-fragmenten tonen, ~34px in een glanzend lila/amber kadertje. Elke scherf die je
+vindt brengt je dichter bij het vrijspelen van een verborgen metgezel — maar mag NOOIT
+verklappen WELKE metgezel (geen diersilhouet, geen gezicht, puur een mysterieus relikwie-
+fragment). Het 🜂-symbool blijft de terugval als de afbeelding ontbreekt.
+
+STIJL: dark-fantasy, painterly, GEEN fotorealisme. Een enkel gebroken fragment, zwevend,
+met gloeiende breukranden. Volledig TRANSPARANTE achtergrond. Vierkant canvas (bv. 256×256),
+het fragment goed gecentreerd en duidelijk leesbaar als het klein wordt weergegeven.
+Deze art is een VOLLEDIG OBJECT op transparant — dus enkel converteren naar WebP, GEEN
+dambord-uitsnijden nodig (zie hieronder).
+
+ER ZIJN DRIE SCHERVEN — één per BRON. Dezelfde drie worden hergebruikt over alle mysteries
+heen (zo blijft het non-spoiler en behapbaar). Bestandsnamen exact:
+
+  scherf_baas.png     — "uit de mond van de baas"
+      Een gekarteld fragment afgebroken van een gebarsten GOUDEN ZEGEL / kroonrand van de
+      Erfprins: bureaucratisch-koninklijk, een afdruk van een wassen stempel half zichtbaar,
+      warme amberen gloed langs de breuk. Geen gezicht, geen figuur — enkel het scherf-relikwie.
+
+  scherf_figuur.png   — "bij een mysterieuze figuur"
+      Een splinter van een BLINDE SPIEGEL of het glas van een gedoofde lantaarn: koud,
+      violet-blauwe gloed, een vage weerspiegeling van iets warms diep in het zwart (niet
+      thuis te brengen). Mysterieus, melancholisch. Geen herkenbaar wezen in de spiegeling.
+
+  scherf_episch.png   — "van een epische vijand"
+      Een brok obsidiaan/verkoold steen waarin het alchemistische teken 🜂 (vuur-driehoek)
+      gegraveerd staat, gloeiende ember-barsten erdoorheen, alsof het net uit een gevecht
+      is bevochten. Krachtig, heet, ondoorgrondelijk.
+
+KLEUR-LOGICA: baas = amber/goud, figuur = violet/koud, episch = ember/obsidiaan. Samen
+voelen ze als drie stukken van één groter, onleesbaar geheel.
+
+
+WERKWIJZE (zoals de andere full-scene art, bv. relikwieën)
+---------------------------------------------------------
+  1. Genereer de drie scherven het liefst in DEZELFDE sessie met hetzelfde stijlblok, zodat
+     ze als één set aanvoelen — verander enkel de objectbeschrijving.
+  2. Sla op onder exact de bestandsnamen hierboven (PNG) in assets/scherven/.
+  3. Drop in assets/scherven/ → vraag Claude "ruim de nieuwe scherven op"
+     = ENKEL  python .claude/converteer_webp.py   (GEEN verwijder_dambord.py — het is al
+       een vrijstaand object op transparant, net als kaart-/relikwie-art).
+  4. Claude bumpt daarna de service-worker-cache (CACHE = 'slayit-vNN' in sw.js) zodat de
+     nieuwe art op gsm/desktop doorkomt.
