@@ -477,35 +477,30 @@ wegknippen). Houd elk wezen mét marge in het frame (geen wezen dat tot alle ran
   Accent: black mirror-glass + cold reflections. NB: glas → genereer op EFFEN ZWARTE achtergrond.
 
 --- de_deadline.png   (De Deadline — escaleert elke beurt: tijdsdruk) ---
-  [HERMAAKT — playtest: de oude art sneed niet schoon uit (grijze halo-box). Nu een COMPACTE,
-   GESLOTEN, OPAKE silhouet; alle losse zand/paginas/stempels verzegeld of platgelijmd op het lijf.]
-  A single COMPACT, SOLID, OPAQUE clock-tower monster cast in one piece of cracked dark iron,
-  shaped like a hunched grandfather clock, facing LEFT — a broad heavy iron BASE tapering up to a
-  rounded, CLOSED hooded STOPPED-CLOCK head that juts forward to the left, reading instantly as one
-  solid bounded shape with a sealed dome-like top. Its TORSO is a sealed iron-and-glass HOURGLASS
-  built flush INTO the tower body, the glass fully enclosed behind a thick riveted iron frame so
-  nothing spills; the lower bulb packed solid and overfull with black sand pressing up hard against
-  the glass so it bulges (pure time-pressure read), the upper bulb nearly empty. One forward arm is
-  a single rigid CLOCK-HAND blade held tight to the body, the other a stubby ratchet-claw hugging
-  the torso — no thin isolated hands floating away. The clock FACE shows overdue-RED roman numerals,
-  but ALL red is pressed FLAT and fused directly ONTO the opaque cold-iron face, enclosed by cold
-  metal and contained inside the contour — NO numerals/stamps/paper multiplying around the rim or
-  floating in the air. Surface sheathed in FLATTENED calendar pages and overdue-RED wax stamps
-  pressed and glued tight onto the metal like overlapping armour scales — every page crisp-edged and
-  lying flat, NONE peeling, fluttering or drifting off. Time-pressure shown STRUCTURALLY (overfull
-  bulging lower bulb, head jutting left) NOT by stacking/climbing/swelling upward; the silhouette top
-  stays closed and rounded, never narrowing into spikes. Rusted gears and a short taut chain clamped
-  INSIDE the silhouette as solid relief, hugging the contour, never trailing outward. Cold blue-grey
-  "system light" over the whole opaque body + a THIN warm ember rim-light tracing ONLY the left
-  contour as a crisp hard edge line (NOT a soft glow/aura). Brightest focal points: the cold clock
-  face with red numerals + the black-packed lower bulb.
-  CUT-OUT: ONE clearly bounded, fully CLOSED silhouette with SHARP OPAQUE high-contrast contour
-  edges all around, on TRANSPARENT (or flat solid BLACK) background, clear empty margin on all four
-  sides. ABSOLUTELY NO smoke/haze/mist/dust/motion-blur/drifting sand/loose flying pages/glowing
-  aura/halo and NO soft semi-transparent wispy fringes bleeding toward the frame; nothing fading to
-  any edge. No ground/shadow/text/UI/frame/background.
-  Accent: zwart ZAND (verzegeld achter glas) + te-late RODE stempels/cijfers (platgelijmd op koud
-  ijzer) + koude klok-faces. (Uniek silhouet: de compacte, top-zware klok-toren met zandloper-torso.)
+  [HERMAAKT v2 — playtest: de vorige las als een nette staartklok-meubel, te 'meh'. Nu veel
+   DONKERDER en SINISTERDER: een ineengedoken klokwerk-REAPER, dreigend en levend.]
+  A towering, HUNCHED, GAUNT REAPER-like CLOCKWORK WRAITH of near-BLACK tarnished iron, facing LEFT,
+  LOOMING and leaning forward predatorily — a creature of DREAD, NOT a furniture clock. The body is
+  deep matte black, half-swallowed in shadow, sinister and oppressive; only a thin cold edge-light and
+  a faint warm ember rim trace its left contour. Its HEAD is a cracked, weathered CLOCK-DIAL sunk
+  deep inside a ragged iron COWL / hood like a skull in a shroud — the roman numerals worn and grimy,
+  the two clock-HANDS angled like a cruel narrowed GLARE, and behind the cracked glass a malevolent
+  ember-RED glow SMOULDERS where a face should be (the overdue numerals burning like coals in a skull).
+  Its chest is a tarnished iron-and-glass HOURGLASS built into the ribcage, the black sand half run-out
+  and draining low (time running out). Long, GAUNT, skeletal iron arms reach slightly toward the LEFT
+  as if to seize the viewer: one ends in a single elongated CLOCK-HAND blade held low and ready, the
+  other in a heavy hooked ratchet-CLAW. A few overdue-RED wax seals and worn calendar-fragments are
+  pressed FLAT into the black iron like old scars (subtle, not busy — no clutter). The whole figure
+  leans forward, hunched and looming, drowned in shadow. Mood: ominous, sepulchral, INEVITABLE —
+  Death with a deadline. PALETTE: deep BLACK and gunmetal drowned in shadow, with SMOULDERING ember-RED
+  as the only warm light (the burning dial-face, the seals). MUCH darker and more menacing than a
+  polished grey clock.
+  Painterly dark-fantasy, NOT photorealistic, no photo, no 3D render. ONE compact, CLOSED, OPAQUE
+  silhouette with SHARP high-contrast contour edges, on a fully TRANSPARENT (or flat PURE-MAGENTA
+  #FF00FF chroma-key) background, clear empty margin all four sides. NO smoke/haze/mist/dust/drifting
+  sand/loose flying pages/glowing aura/halo; nothing fading to any edge. No ground/shadow/text/UI/frame.
+  Accent: DIEPZWART ijzer in schaduw + smeulend ember-ROOD (de brandende wijzerplaat-'ogen' + zegels)
+  + zwart zand dat leegloopt. (Uniek silhouet: de ineengedoken klokwerk-reaper met kap + zandloper-borst.)
 
 --- de_inktvlek.png   (De Inktvlek — gif) ---
   The only LOW, formless, puddle-shaped enemy: a crawling ink-blot OOZE given malice — a
