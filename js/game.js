@@ -268,10 +268,19 @@ function alleScherfIds() {
   Object.keys(M).forEach(mid => (M[mid].vereist || []).forEach(s => ids.push(s)));
   return ids;
 }
+/* TWEE bakken: de STASH = Codex.scherven (veilig, cross-run); GEDRAGEN = S.scherven (wat je
+   DÉZE run draagt — inzet, kwijt bij dood). Unieke sets (geen dupes — een trio = 3 verschillende). */
 function scherfStash() { if (!Array.isArray(Codex.scherven)) Codex.scherven = []; return Codex.scherven; }
-function bezitScherf(sid) { return scherfStash().includes(sid); }
-function geefScherf(sid) { if (!scherfDef(sid)) return false; scherfStash().push(sid); bewaarCodex(); return true; }
-function neemScherf(sid) { const a = scherfStash(); const i = a.indexOf(sid); if (i >= 0) { a.splice(i, 1); bewaarCodex(); return true; } return false; }
+function gedragen() { if (!S) return []; if (!Array.isArray(S.scherven)) S.scherven = []; return S.scherven; }
+function bezitScherf(sid) { return scherfStash().includes(sid) || gedragen().includes(sid); }   /* heb je 'm ergens? */
+function bankScherf(sid) { if (!scherfDef(sid)) return false; const a = scherfStash(); if (!a.includes(sid)) { a.push(sid); bewaarCodex(); } return true; }
+function draagScherf(sid) { if (!scherfDef(sid)) return false; const a = gedragen(); if (!a.includes(sid)) a.push(sid); return true; }   /* in je gedragen tas (at risk) */
+function neemUitStash(sid) { const a = scherfStash(); const i = a.indexOf(sid); if (i >= 0) { a.splice(i, 1); bewaarCodex(); return true; } return false; }
+function neemGedragen(sid) { const a = gedragen(); const i = a.indexOf(sid); if (i >= 0) { a.splice(i, 1); return true; } return false; }
+/* bank alle gedragen scherven veilig op de stash (bij het verlaten van de Drempel + bij winst) */
+function bankGedragen() { gedragen().slice().forEach(bankScherf); if (S) S.scherven = []; }
+/* run-start loadout: verplaats gekozen scherven van de stash naar je gedragen tas (nu staan ze op het spel) */
+function laadScherfLoadout(ids) { (ids || []).forEach(sid => { if (neemUitStash(sid)) draagScherf(sid); }); }
 /* welke metgezel hoort bij 3 geplaatste scherf-ids? (exact, nog-niet-vrij trio) → mid of null */
 function scherfTrio(ids) {
   const set = (ids || []).filter(Boolean);
@@ -283,14 +292,15 @@ function scherfTrio(ids) {
   }
   return null;
 }
-/* Act-1 drop: een willekeurige scherf van bron 'bron' die je nog NIET bezit (anders willekeurig van
-   die bron). Voedt de cross-run, cross-held verzameling. Geeft de gevonden scherf-id terug (of null). */
+/* drop tijdens een run: een willekeurige scherf van 'bron' die je nog NIET bezit → in je GEDRAGEN
+   tas (at risk). Geeft de gevonden scherf-id terug (of null). */
 function vindScherf(bron) {
   const alle = alleScherfIds().filter(sid => { const d = scherfDef(sid); return d && (!bron || d.bron === bron); });
   if (!alle.length) return null;
   const nieuw = alle.filter(sid => !bezitScherf(sid));
-  const sid = kiesUit(nieuw.length ? nieuw : alle);
-  geefScherf(sid);
+  if (!nieuw.length) return null;   /* je hebt al alles van deze bron → niets te vinden */
+  const sid = kiesUit(nieuw);
+  draagScherf(sid);
   return sid;
 }
 /* is er nog een scherf van deze bron die je NIET bezit? (gate voor de figuur-events) */
@@ -470,7 +480,8 @@ function nieuwSpel(heldId, seedTekst, ascensie) {
     uid: 0,
     gevecht: null,
     dropsOntwaakt: false,  /* het Metgezel-Mysterie: dark-twist reveal-guard, eenmalig per run */
-    contractGebruikt: false   /* Het Verlopen Contract: eenmalig-per-run dood-weigering */
+    contractGebruikt: false,   /* Het Verlopen Contract: eenmalig-per-run dood-weigering */
+    scherven: []           /* GEDRAGEN scherven deze run (inzet — kwijt bij dood; geplaatst bij de Drempel) */
   };
   held.dek.forEach(id => S.dek.push(nieuweKaart(id)));
 
@@ -482,6 +493,13 @@ function nieuwSpel(heldId, seedTekst, ascensie) {
     meegenomen.forEach(r => geefRelikwie(r, true));
     melding(`🗝️ Uit het Schrijn: ${meegenomen.map(r => RELIKWIEEN[r].naam).join(' · ')}`);
   }
+  /* scherf-loadout: gekozen scherven uit de stash MEENEMEN (komen nu op het spel — kwijt bij dood,
+     te plaatsen bij de Drempel). Niet op een daily (eerlijk veld, zoals het Schrijn). */
+  if (!S.daily && scherfKeuzes.length) {
+    laadScherfLoadout(scherfKeuzes.filter(sid => scherfStash().includes(sid)));
+    if (gedragen().length) melding(`🜂 Je neemt ${gedragen().length} scherf${gedragen().length === 1 ? '' : 'ven'} mee de diepte in.`);
+  }
+  scherfKeuzes = [];
   /* ascension: klem op wat déze held ontgrendeld heeft, dan de modifiers toepassen */
   S.ascensie = Math.max(0, Math.min(ascensie || 0, ontgrendeldNiveau(heldId)));
   pasAscensieToe();
@@ -4549,9 +4567,9 @@ function toonDrempel() {
   renderDrempel();
 }
 function renderDrempel() {
-  /* de pool = bezit minus wat al in de nissen ligt (per instance) */
+  /* de pool = wat je DRAAGT (gedragen tas) minus wat al in de nissen ligt */
   const tel = {};
-  scherfStash().forEach(sid => { tel[sid] = (tel[sid] || 0) + 1; });
+  gedragen().forEach(sid => { tel[sid] = (tel[sid] || 0) + 1; });
   drempelGeplaatst.forEach(sid => { if (sid && tel[sid]) tel[sid]--; });
   const pool = [];
   Object.keys(tel).forEach(sid => { for (let i = 0; i < tel[sid]; i++) pool.push(sid); });
@@ -4587,12 +4605,12 @@ function drempelPlaats(sid) {
   renderDrempel();
 }
 function drempelHaalWeg(slot) { drempelGeplaatst[slot] = null; Klank.sfx('klik'); renderDrempel(); }
-function drempelSlaOver() { toonActOvergang(S._verslagenBaas); }
+function drempelSlaOver() { bankGedragen(); toonActOvergang(S._verslagenBaas); }   /* niet-geplaatste scherven zijn nu veilig (gebankt) */
 function drempelRoepOp() {
   const ids = drempelGeplaatst.filter(Boolean);
   if (ids.length !== 3) return;
   const mid = scherfTrio(ids);
-  ids.forEach(sid => neemScherf(sid));          /* inzet verbruikt — scherven weg */
+  ids.forEach(sid => neemGedragen(sid));        /* de geplaatste 3 zijn verbruikt — weg uit je tas */
   drempelGeplaatst = [null, null, null];
   if (mid && !isOntgrendeld(mid)) {
     const def = MYSTERIES[mid];
@@ -4600,11 +4618,13 @@ function drempelRoepOp() {
     if (typeof ontdek === 'function') ontdek('metgezellen', def.metgezel);
     geefMetgezel(def.metgezel);                 /* hij daalt nu mee Act 2 in (overschrijft de rotatie) */
     Klank.sfx('schitter');
+    bankGedragen();                             /* de rest van je tas is nu veilig */
     const rev = def.eindreveal || { titel: 'EEN BONDGENOOT ONTWAAKT', kreet: 'Iets koos jou.' };
     toonActOvergang(S._verslagenBaas, rev);
   } else {
     melding('🔥 De verkeerde scherven! De Drempelwachter ontwaakt — je inzet is verbrand.');
     Klank.sfx('debuff');
+    bankGedragen();                             /* de niet-geplaatste rest blijft veilig */
     S.gevecht = null;
     startGevecht(['de_drempelwachter'], 'elite', 1);   /* win → beloning → Act 2-kaart; rotatie-metgezel kreeg je al */
   }
@@ -4668,6 +4688,7 @@ function toonEinde(gewonnen, verslagenBaas) {
   if (!S.runGeregistreerd) {
     uitslag = registreerRun(gewonnen);
     if (S.daily) { const du = registreerDaily(gewonnen); S.dailyNieuweTop = du.nieuweTop; wisSave(); }
+    if (gewonnen) bankGedragen();   /* overleefd → gedragen scherven (bv. in Act 2 gevonden) bankt veilig op de stash */
     S.runGeregistreerd = true;
   }
   const besteHeld = (Codex.bestDiepte && Codex.bestDiepte[S.held]) || 0;
@@ -4799,6 +4820,8 @@ function kopieerUitdaagcode() {
 /* ---------- het Schrijn: neem tot 3 gevonden relikwieën mee ---------- */
 const SCHRIJN_MAX = 3;
 let schrijnKeuzes = [];
+const SCHERF_LOADOUT_MAX = 6;   /* max scherven mee per run (je plaatst er 3; ruimte voor een trio + reserve) */
+let scherfKeuzes = [];
 
 function schrijnHtml() {
   const beschikbaar = Codex.opgeladen.filter(r => RELIKWIEEN[r]);
@@ -4828,6 +4851,34 @@ function kiesSchrijn(id) {
   Klank.sfx('klik');
 }
 
+/* SCHERF-LOADOUT: kies welke scherven uit je stash je meeneemt (inzet — kwijt bij dood). */
+function scherfLoadoutHtml() {
+  const bezit = scherfStash();
+  if (!bezit.length) {
+    return `<small class="schrijn-leeg">🜂 Je hebt nog geen scherven. Vind ze in je afdalingen (elite-winst, de Erfprins, epische vijanden, mysterieuze figuren) en breng er drie die samenpassen naar De Drempel tussen Act 1 en 2 — dat roept een metgezel op.</small>`;
+  }
+  return `<div class="schrijn-titel">🜂 Scherven <span class="schrijn-teller">${scherfKeuzes.length}/${SCHERF_LOADOUT_MAX}</span>
+      <small>neem scherven mee voor De Drempel (Act 1→2) — wat je meeneemt staat op het spel: <b>kwijt bij dood</b></small></div>
+    <div class="schrijn-rij">` + bezit.map(sid => {
+      const d = scherfDef(sid); if (!d) return '';
+      return `<button class="schrijn-slot scherf-slot ${scherfKeuzes.includes(sid) ? 'gekozen' : ''}" data-shart="${sid}"
+        data-tip="${d.codexTekst}" onclick="kiesScherfLoadout('${sid}')">${bronIcoon(d.bron)}</button>`;
+    }).join('') + `</div>`;
+}
+function kiesScherfLoadout(sid) {
+  if (scherfKeuzes.includes(sid)) {
+    scherfKeuzes = scherfKeuzes.filter(s => s !== sid);
+  } else if (scherfKeuzes.length >= SCHERF_LOADOUT_MAX) {
+    melding(`Je kunt maximaal ${SCHERF_LOADOUT_MAX} scherven meenemen.`);
+    return;
+  } else {
+    scherfKeuzes.push(sid);
+  }
+  const vak = $('#scherf-vak');
+  if (vak) { vak.innerHTML = scherfLoadoutHtml(); verfraaiItemArt(vak); }
+  Klank.sfx('klik');
+}
+
 let gekozenAscensie = 0;
 function ascensieHtml(maxOnt) {
   const a = gekozenAscensie;
@@ -4854,6 +4905,7 @@ function wijzigAscensie(delta) {
 function toonHeldKeuze() {
   toonScherm('held');
   schrijnKeuzes = [];
+  scherfKeuzes = [];
   const maxOnt = maxOntgrendeld();
   gekozenAscensie = Math.max(0, Math.min(gekozenAscensie, maxOnt));
   schermAchtergrond('held', ACHTERGRONDEN.titel, 0.55);
@@ -4880,6 +4932,7 @@ function toonHeldKeuze() {
       </div>`;
     }).join('') + `</div>
     <div class="schrijn-vak" id="schrijn-vak">${schrijnHtml()}</div>
+    ${scherfStash().length ? `<div class="schrijn-vak scherf-vak" id="scherf-vak">${scherfLoadoutHtml()}</div>` : ''}
     ${maxOnt >= 1 ? `<div class="ascensie-vak" id="ascensie-vak">${ascensieHtml(maxOnt)}</div>` : ''}
     <div class="seed-vak">
       <label>Seed (optioneel, voor een gedeelde run):
