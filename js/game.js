@@ -858,6 +858,35 @@ function geefVloek() {
   return KAARTEN[id].naam;
 }
 
+/* VLOEK-REVEAL: toon een nieuw verworven vloek dramatisch als grote kaart (card-flip, à la
+   de Erfprins-intro) zodat het écht binnenkomt i.p.v. enkel een vluchtige melding. Modaal,
+   wegklikbaar + auto-dismiss; toont de kaart-art via de gewone focus-kaart-render. */
+function toonVloekReveal(kaartId, flavor) {
+  const c = (typeof nieuweKaart === 'function') ? nieuweKaart(kaartId) : { id: kaartId, uid: 'vloekreveal' };
+  document.querySelectorAll('.vloek-reveal-overlay').forEach(n => n.remove());
+  const ov = document.createElement('div');
+  ov.className = 'vloek-reveal-overlay';
+  ov.innerHTML = `
+    <div class="vloek-reveal-binnen">
+      <div class="vloek-reveal-kop">🌑 EEN VLOEK NESTELT ZICH IN JE DEK</div>
+      <div class="vloek-reveal-kaartwrap">
+        <div class="kaart-focus-houder"><div class="focus-rij">
+          ${kaartHtml(c, false).replace('kaart groot', 'kaart groot kaart-focus zeldglans-vloek')}
+        </div></div>
+      </div>
+      ${flavor ? `<div class="vloek-reveal-flavor">${flavor}</div>` : ''}
+      <button class="knop-stil vloek-reveal-sluit">Verder ↓</button>
+    </div>`;
+  document.body.appendChild(ov);
+  if (typeof verfraaiKaartIconen === 'function') verfraaiKaartIconen(ov);
+  Klank.sfx('debuff'); setTimeout(() => Klank.sfx('dood'), 280); schudScherm();
+  const sluit = () => { if (!ov.isConnected) return; clearTimeout(ov._timer); ov.classList.add('weg'); setTimeout(() => ov.remove(), 360); };
+  ov.querySelector('.vloek-reveal-sluit').onclick = sluit;
+  ov.addEventListener('click', e => { if (e.target === ov) sluit(); });
+  ov._timer = setTimeout(sluit, 6500);
+  return ov;
+}
+
 function geefBlok(actor, n) {
   actor.blok = (actor.blok || 0) + n;
   fxNummer(actorEl(actor), `+${n} Blok`, 'fx-blok');
@@ -3497,7 +3526,7 @@ async function gevechtGewonnen() {
      weg van blind-vechten. Weg te slopen bij de Oude Smid. */
   if (lichtNiveau() === 'gedoofd' && willekeurig() < 0.3) {
     S.dek.push(nieuweKaart('schaduwsmet'));
-    melding('🌑 Je versloeg ze in volslagen duister — de schaduw nestelt zich in je dek: Schaduwsmet.');
+    toonVloekReveal('schaduwsmet', 'Je versloeg ze in volslagen duister — en het donker tekende je. De Schaduwsmet groeit met elke donkere beurt; enkel helder licht zuivert haar. Sloop haar bij de Oude Smid.');
   }
 
   if (g.soort === 'baas') {
@@ -4411,9 +4440,13 @@ function volgendeAct(verslagenBaas) {
      belofte zich in i.p.v. in permanente limbo te blijven hangen. */
   if (!heeftMetgezel()) {
     /* een gevluchte metgezel sluit weer aan; anders de voor déze run gekozen vrijgespeelde
-       metgezel (één keer per run vastgezet via S.runMetgezel zodat hij niet per act wisselt) */
+       metgezel (één keer per run vastgezet via S.runMetgezel zodat hij niet per act wisselt).
+       OP EEN DAILY RUN komt er GÉÉN cross-run-vrijgespeelde metgezel mee — net als de Schrijn
+       die in de daily uit staat (eerlijk veld voor het leaderboard). Een binnen-de-run gevluchte
+       metgezel mag wél weer aansluiten. */
     const teruggekeerd = !!(S.metgezel && S.metgezel.vluchtig);
-    const mgid = teruggekeerd ? S.metgezel.id : (S.runMetgezel || (S.runMetgezel = kiesRunMetgezel()));
+    const mgid = teruggekeerd ? S.metgezel.id
+      : (S.daily ? null : (S.runMetgezel || (S.runMetgezel = kiesRunMetgezel())));
     if (mgid && METGEZELLEN[mgid]) {
       geefMetgezel(mgid);
       melding(metgezelInstapMelding(mgid, teruggekeerd));

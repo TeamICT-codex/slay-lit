@@ -1754,19 +1754,50 @@ body.lite .onthul-kaart.bijzonder:not(.open) .kaart-rug { animation: none; }
     rgba(255, 235, 200, .25), rgba(255, 255, 255, .04) 38%, transparent 65%);
   pointer-events: none;
 }
-.kaart-focus .kaart-naam { font-size: 1.7rem; margin-top: 6px; }
-.kaart-focus .kaart-icoon { font-size: 4.5rem; margin: 14px 0 10px; }
-.kaart.groot.kaart-focus .kaart-icoon img { width: 262px; height: 185px; border-radius: 8px; }
+.kaart-focus .kaart-naam { font-size: 1.6rem; margin-top: 5px; }
+.kaart-focus .kaart-icoon { font-size: 4.1rem; margin: 10px 0 8px; }
+.kaart.groot.kaart-focus .kaart-icoon img { width: 218px; height: 154px; border-radius: 8px; }
+/* compactere tekst + meer verticale ruimte (art verkleind hierboven) zodat lange teksten —
+   m.n. de vloeken (Schaduwsmet/Mottenvlam) — niet meer uit de kaart puilen */
 .kaart-focus .kaart-tekst {
-  font-size: 1.15rem; line-height: 1.5;
+  font-size: 1.02rem; line-height: 1.34;
   display: flex; align-items: center; justify-content: center;
-  padding: 0 6px;
+  padding: 0 7px; overflow: hidden;
 }
 .kaart-focus .kaart-type { font-size: .85rem; }
 .kaart-focus .kaart-kost { width: 46px; height: 46px; font-size: 1.7rem; top: -14px; left: -14px; }
 .kaart-focus .kaart-lichtkost { font-size: 1.2rem; top: -14px; right: -14px; }
 .focus-knoppen { display: flex; gap: 16px; align-items: center; }
 .focus-knoppen .knop-groot { margin-top: 0; }
+
+/* ---------- vloek-reveal: een nieuw verworven vloek komt binnen als grote kaart ---------- */
+.vloek-reveal-overlay {
+  position: fixed; inset: 0; z-index: 720;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 42%, rgba(40, 18, 60, .55), rgba(5, 3, 9, .95));
+  animation: vloekRevealIn .3s ease;
+}
+.vloek-reveal-overlay.weg { animation: vloekRevealUit .36s ease forwards; }
+@keyframes vloekRevealIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vloekRevealUit { to { opacity: 0; } }
+.vloek-reveal-binnen { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding: 20px; max-width: 96vw; }
+.vloek-reveal-kop {
+  font-family: 'PirataOne', serif; font-size: clamp(1.2rem, 4.4vw, 1.7rem); letter-spacing: .05em;
+  color: #cdaaff; text-shadow: 0 0 16px rgba(150, 90, 220, .6); margin: 0;
+}
+/* de wrapper flipt binnen; de kaart binnenin houdt z'n eigen focus-scale (geen transform-conflict) */
+.vloek-reveal-kaartwrap {
+  display: flex; align-items: center; justify-content: center;
+  transform-style: preserve-3d;
+  animation: vloekKaartFlip .75s cubic-bezier(.3, .85, .4, 1.08) backwards;
+}
+@keyframes vloekKaartFlip {
+  0%   { opacity: 0; transform: perspective(1300px) rotateY(82deg) scale(.82); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: perspective(1300px) rotateY(0deg) scale(1); }
+}
+.vloek-reveal-flavor { max-width: 30em; color: var(--perkament-dof); font-style: italic; font-size: .98rem; line-height: 1.45; margin: 0; }
+.vloek-reveal-sluit { margin-top: 2px; }
 
 /* ---------- de smidse ---------- */
 .overlay.smeed-dreun { animation: smeedDreun .4s ease; }
