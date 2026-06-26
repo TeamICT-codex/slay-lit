@@ -20,10 +20,14 @@ Hand-painted PAINTERLY dark-fantasy GAME-ITEM icon, rich visible brushwork and s
 shading, dramatic moody lighting with a magical glowing engraved inlay. NOT photorealistic, NOT
 a photo, NO photo textures, NOT a 3D or CGI render, NOT anime, NOT cartoon, NOT flat vector, NOT
 a pencil sketch. ONE single broken SHARD object, centered, filling ~70% of a square 1024x1024
-canvas with clear empty margin on all sides, on a FULLY TRANSPARENT (or flat solid BLACK)
-background — no scene, no ground, no hand, no text, no frame, no border, no second object. The
-shard is the SAME dark slate / charcoal-obsidian stone in all nine, with the same chiseled,
-hand-painted finish; only the GLOW-COLOUR and the engraved EMBLEM change.
+canvas with clear empty margin on all sides. The shard is the SAME dark slate / charcoal-obsidian
+stone in all nine, with the same chiseled hand-painted finish; only the GLOW-COLOUR and the
+engraved EMBLEM change.
+>> ACHTERGROND (cruciaal voor een schone uitsnede — eerdere drops kwamen op wit/zwart MÉT vignet,
+   wat een lelijke box gaf): the background MUST be a FLAT, UNIFORM, EDGE-TO-EDGE solid colour with
+   NO vignette, NO gradient, NO texture/noise. Use TRUE TRANSPARENCY if the tool supports it; if not,
+   a FLAT PURE-MAGENTA (#FF00FF) chroma-key fill (a colour that does NOT appear in the shard). The
+   shard must have a clear DARK CONTOUR so it separates cleanly. No scene/ground/hand/text/frame/border.
 ═══════════════════════════════════════════════════════════════════════════════════════
 
 HOE DE 9 IN ELKAAR PASSEN
