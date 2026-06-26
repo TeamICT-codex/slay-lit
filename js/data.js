@@ -1142,9 +1142,9 @@ const METGEZELLEN = {
       /* bijt bij voorkeur de Copycat-baas — elke klap telt mee om je gestolen
          kaarten terug te winnen (copycatTerugwin, via verliesHp). Voedt hem NIET. */
       const d = (typeof copycatBaas === 'function' && copycatBaas(S.gevecht)) || kiesUit(alleVijanden());
-      if (d) metgezelAanval(m, d, 6);
+      if (d) metgezelAanval(m, d, synergieN('drops', 6));
     },
-    intent: () => (alleVijanden().length ? { type: 'aanval', dmg: 6 } : null),
+    intent: () => (alleVijanden().length ? { type: 'aanval', dmg: synergieN('drops', 6) } : null),
     /* DE LAATSTE SPRONG — bewuste, PERMANENTE opoffering (climax tegen de Copycat).
        Breekt de kopieermachine, geeft je arsenaal terug, ramt de baas en schildt jou;
        Drops is daarna voorgoed weg. Het opoffering-haakje is generiek: latere verhaal-
@@ -1197,14 +1197,14 @@ const METGEZELLEN = {
     beurt(m) {
       const d = (typeof copycatBaas === 'function' && copycatBaas(S.gevecht)) || kiesUit(alleVijanden());
       if (d) {
-        const fel = (typeof lichtNiveau === 'function' && lichtNiveau() === 'gedoofd') ? 12 : 6;   /* duisternis voedt hem */
+        const fel = synergieN('drops_wit', (typeof lichtNiveau === 'function' && lichtNiveau() === 'gedoofd') ? 12 : 6);   /* duisternis voedt hem */
         pose2D(m, 'attack', 0.5);
         verliesHp(d, fel, m);                                      /* negeert vijand-blok (onkopieerbaar) */
         if (d.copyKracht) d.copyKracht = Math.max(0, d.copyKracht - 1);   /* vertraagt het kopiëren */
       }
-      geefBlok(sp(), 3);
+      geefBlok(sp(), synergieN('drops_wit', 3));
     },
-    intent: () => (alleVijanden().length ? { type: 'aanval', dmg: (typeof lichtNiveau === 'function' && lichtNiveau() === 'gedoofd') ? 12 : 6 } : null)
+    intent: () => (alleVijanden().length ? { type: 'aanval', dmg: synergieN('drops_wit', (typeof lichtNiveau === 'function' && lichtNiveau() === 'gedoofd') ? 12 : 6) } : null)
     /* GEEN opoffering — hij is al door de dood. */
   },
   vlamwachter: {
@@ -1212,18 +1212,33 @@ const METGEZELLEN = {
     tekst: 'Begin van je beurt: geeft je 5 Blok én ramt een vijand met zijn schild voor 5. Een stille schilddrager die de klappen graag zelf opvangt — maar terugslaat als het moet.',
     lore: 'Hij sprak nooit. Hij stond gewoon tussen jou en wat kwam — telkens opnieuw.',
     doelbaar: true, dreiging: 0.32,
-    beurt(m) { geefBlok(sp(), 5); const d = kiesUit(alleVijanden()); if (d) metgezelAanval(m, d, 5); },
-    intent: () => (alleVijanden().length ? { type: 'aanval', dmg: 5 } : { type: 'blok', blok: 5 })
+    beurt(m) { geefBlok(sp(), synergieN('vlamwachter', 5)); const d = kiesUit(alleVijanden()); if (d) metgezelAanval(m, d, synergieN('vlamwachter', 5)); },
+    intent: () => (alleVijanden().length ? { type: 'aanval', dmg: synergieN('vlamwachter', 5) } : { type: 'blok', blok: synergieN('vlamwachter', 5) })
   },
   mosgeest: {
     naam: 'De Mosgeest', art: 'mosgeest', icoon: '🍃', zeld: 'zeldzaam', maxHp: 22,
     tekst: 'Begin van je beurt: geneest je 4 HP én prikt een vijand met stekende sporen voor 4. Breekbaar maar trouw.',
     lore: 'Waar zij loopt, sluit de aarde je wonden. Vraag niet wat ze er ooit voor terugneemt.',
     doelbaar: true, dreiging: 0.16,
-    beurt(m) { geneesHp(4); const d = kiesUit(alleVijanden()); if (d) metgezelAanval(m, d, 4); },
-    intent: () => (alleVijanden().length ? { type: 'aanval', dmg: 4 } : { type: 'heal', n: 4 })
+    beurt(m) { geneesHp(synergieN('mosgeest', 4)); const d = kiesUit(alleVijanden()); if (d) metgezelAanval(m, d, synergieN('mosgeest', 4)); },
+    intent: () => (alleVijanden().length ? { type: 'aanval', dmg: synergieN('mosgeest', 4) } : { type: 'heal', n: synergieN('mosgeest', 4) })
   }
 };
+
+/* ---------- SYNERGIE: metgezel × held ----------
+   Een metgezel is ÁLTIJD nuttig (basis ×1.0), maar past extra goed bij sommige helden →
+   sterker per-beurt-effect én meer HP. Tunebaar. Thematisch: Drops (onkopieerbare trouw) ↔
+   Thoverk (standvastige natuur); Vlamwacht (schild-muur) ↔ de Slachter (frontlinie); Mosgeest
+   (leven/groei) ↔ de Gifmagiër (natuur/gif-cyclus). 'goed' = themaverwant, kleinere bonus. */
+const SYNERGIE = {
+  drops:       { optimaal: 'thoverk',   goed: ['slachter'] },
+  drops_wit:   { optimaal: 'thoverk',   goed: ['slachter'] },
+  vlamwachter: { optimaal: 'slachter',  goed: ['thoverk'] },
+  mosgeest:    { optimaal: 'gifmagier', goed: ['thoverk'] },
+};
+const SYNERGIE_FACTOR = { optimaal: 1.3, goed: 1.15, basis: 1.0 };   /* vertrekwaarden — tunebaar */
+window.SYNERGIE = SYNERGIE;
+window.SYNERGIE_FACTOR = SYNERGIE_FACTOR;
 
 /* ---------- MYSTERIES: hoe je een metgezel VRIJSPEELT (cross-run) ----------
    "You were meant to fail": een metgezel wordt niet gegeven maar ontrafeld over

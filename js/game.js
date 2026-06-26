@@ -1143,12 +1143,36 @@ function verliesHpBuitenGevecht(n) {
 }
 
 /* ---------- metgezellen (bondgenoten met eigen HP) ---------- */
+/* SYNERGIE metgezel × held: basis/goed/optimaal → factor op HP + per-beurt-getallen (data: SYNERGIE) */
+function synergieTier(mgid, held) {
+  held = held || (S && S.held);
+  const s = window.SYNERGIE && SYNERGIE[mgid];
+  if (!s || !held) return 'basis';
+  if (s.optimaal === held) return 'optimaal';
+  if ((s.goed || []).includes(held)) return 'goed';
+  return 'basis';
+}
+function synergieFactor(mgid, held) { return (window.SYNERGIE_FACTOR || {})[synergieTier(mgid, held)] || 1; }
+/* schaal een metgezel-getal (blok/heal/schade) met de synergie; min. 1. Gebruikt in de beurt-hooks. */
+function synergieN(mgid, basis) { return Math.max(1, Math.round((basis || 0) * synergieFactor(mgid))); }
+function metgezelMaxHp(id) { const def = METGEZELLEN[id]; return def ? Math.max(1, Math.round((def.maxHp || 1) * synergieFactor(id))) : 1; }
+/* korte UI-regel over de band met de huidige held */
+function synergieLabel(mgid, held) {
+  const t = synergieTier(mgid, held);
+  if (t === 'optimaal') return '✨ optimale band (+30%)';
+  if (t === 'goed') return '◆ goede band (+15%)';
+  return '';
+}
+
 /* werf een metgezel voor de rest van de run (HP gaat mee tussen gevechten) */
 function geefMetgezel(id) {
   const def = METGEZELLEN[id];
   if (!def) return;
-  S.metgezel = { id, hp: def.maxHp, maxHp: def.maxHp, vluchtig: false };
+  const mx = metgezelMaxHp(id);
+  S.metgezel = { id, hp: mx, maxHp: mx, vluchtig: false };
   ontdek('metgezellen', id);
+  const lab = synergieLabel(id);
+  if (lab) melding(`${def.icoon || '🜂'} ${def.naam} — ${lab} met ${HELDNAAM(S.held)}.`);
   renderTopbalk();
 }
 /* de vrijgespeelde, "meeneembare" metgezellen — drops_wit verdringt drops (z'n rouw-evolutie),
@@ -1330,9 +1354,10 @@ function revealDrops(g) {
   ontgrendelMetgezel('drops');      /* voortaan komt hij gewoon mee — de grind is eenmalig */
   /* injecteer hem MIDDEN in het lopende gevecht (zelfde vorm als startGevecht) */
   const def = METGEZELLEN.drops;
+  const dmx = metgezelMaxHp('drops');
   g.metgezel = {
     id: 'drops', naam: def.naam, isMetgezel: true,
-    hp: def.maxHp, maxHp: def.maxHp, blok: 0, status: {}, dood: false,
+    hp: dmx, maxHp: dmx, blok: 0, status: {}, dood: false,
   };
   g.metgezel.intent = def.intent ? def.intent(g.metgezel) : null;
   bouwGevechtDom(g);                /* herbouw de gevecht-DOM incl. de metgezel-zone */
@@ -1439,7 +1464,7 @@ function revealDropsWit(g, poort) {
   /* injecteer Drops de Witte midden in het gevecht (zelfde patroon als revealDrops) */
   geefMetgezel('drops_wit');
   const def = METGEZELLEN.drops_wit;
-  g.metgezel = { id: 'drops_wit', naam: def.naam, isMetgezel: true, hp: def.maxHp, maxHp: def.maxHp, blok: 0, status: {}, dood: false };
+  { const wmx = metgezelMaxHp('drops_wit'); g.metgezel = { id: 'drops_wit', naam: def.naam, isMetgezel: true, hp: wmx, maxHp: wmx, blok: 0, status: {}, dood: false }; }
   g.metgezel.intent = def.intent ? def.intent(g.metgezel) : null;
   bouwGevechtDom(g);
   renderGevecht();
@@ -1976,7 +2001,7 @@ function startGevecht(samenstelling, soort, rij) {
     const md = METGEZELLEN[S.metgezel.id];
     g.metgezel = {
       id: S.metgezel.id, naam: md.naam, isMetgezel: true,
-      hp: Math.max(1, Math.min(S.metgezel.hp, md.maxHp)), maxHp: md.maxHp,
+      hp: Math.max(1, Math.min(S.metgezel.hp, metgezelMaxHp(S.metgezel.id))), maxHp: metgezelMaxHp(S.metgezel.id),
       blok: 0, status: {}, dood: false
     };
     g.metgezel.intent = md.intent ? md.intent(g.metgezel) : null;
