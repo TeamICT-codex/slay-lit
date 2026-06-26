@@ -1824,6 +1824,36 @@ body.lite .onthul-kaart.bijzonder:not(.open) .kaart-rug { animation: none; }
 .vloek-reveal-flavor { max-width: 30em; color: var(--perkament-dof); font-style: italic; font-size: .98rem; line-height: 1.45; margin: 0; }
 .vloek-reveal-sluit { margin-top: 2px; }
 
+/* ---------- de Drempel (scherven-ritueel tussen Act 1 en Act 2) ---------- */
+.drempel-scene { display: flex; flex-direction: column; align-items: center; gap: 13px; max-width: 780px; margin: 0 auto; padding: 10px; }
+.drempel-lore { max-width: 40em; font-style: italic; }
+.drempel-nissen { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin: 4px 0; }
+.drempel-nis {
+  width: 150px; min-height: 94px; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+  text-align: center; padding: 10px; font-family: inherit;
+}
+.drempel-nis.leeg { border: 2px dashed rgba(190, 160, 255, .4); color: rgba(190, 160, 255, .5); font-size: 1.9rem; background: rgba(20, 14, 34, .4); }
+.drempel-nis.vol {
+  border: 2px solid rgba(190, 160, 255, .7); cursor: pointer; color: var(--perkament);
+  background: radial-gradient(circle at 50% 30%, rgba(150, 110, 220, .3), rgba(24, 16, 40, .85));
+  box-shadow: 0 0 16px rgba(150, 110, 220, .3);
+}
+.drempel-nis.vol:hover { border-color: #cbb0ff; }
+.dn-icoon, .ds-icoon { font-size: 1.5rem; line-height: 1; }
+.drempel-nis i, .drempel-scherf i { font-size: .82rem; line-height: 1.3; font-style: italic; }
+.drempel-poollabel { color: var(--perkament-dof); margin: 2px 0 0; font-size: .9rem; }
+.drempel-pool { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; max-width: 740px; }
+.drempel-scherf {
+  width: 132px; border-radius: 10px; cursor: pointer; padding: 9px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center;
+  border: 1px solid rgba(170, 140, 255, .5); color: var(--perkament);
+  background: linear-gradient(160deg, #241a3a, #140f1f);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.drempel-scherf:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0, 0, 0, .5), 0 0 14px rgba(150, 110, 220, .4); }
+.drempel-leeg { color: var(--perkament-dof); font-style: italic; max-width: 32em; }
+
 /* ---------- de smidse ---------- */
 .overlay.smeed-dreun { animation: smeedDreun .4s ease; }
 @keyframes smeedDreun {

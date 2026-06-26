@@ -1105,6 +1105,18 @@ const VIJANDEN = {
     naam: 'De Erfprins', art: '🤴', hp: [210, 210], baas: true, copycat: true, gifkaats: 0.5,   /* Plagiaat: Gif — kopieert de helft van je gif op jou (+ baas = halve gif-tik) */
     titel: 'Erfgenaam zonder verdienste',
     kies: (v, beurt) => copycatKies(v, beurt)
+  },
+  /* DE DREMPELWACHTER — Balrog-stijl poortwachter; ontwaakt bij een FOUT scherf-trio op de Drempel
+     (zie toonDrempel). Alleen via dat event gespawnd, niet in ONTMOETINGEN. Zwaar maar verslaanbaar. */
+  de_drempelwachter: {
+    naam: 'De Drempelwachter', art: '🔥', hp: [150, 150], elite: true,
+    titel: 'Wachter tussen de werelden',
+    kies: (v, beurt) => {
+      if (beurt % 3 === 0) return { naam: 'Drempelvuur', type: 'aanval', dmg: 22, doe: () => melding('🔥 „JE KOMT ER NIET LANGS!"') };
+      return willekeurig() < 0.55
+        ? { naam: 'Vlammenzweep', type: 'aanval', dmg: 15 }
+        : { naam: 'Schaduwgreep', type: 'aanval', dmg: 9, doe: () => geefStatus(sp(), 'kwetsbaar', 1) };
+    }
   }
 };
 
@@ -1582,24 +1594,24 @@ const EVENTS = [
      actieve mysterie → de hint verschilt per metgezel zonder te verklappen wélke. */
   {
     id: 'lantaarndrager', titel: 'De Gedoofde Lantaarndrager', icoon: '🏮',
-    toon: () => huidigeAct() >= 2 && !!actiefMysScherf('figuur'),
+    toon: () => huidigeAct() >= 1 && typeof scherfTeVinden === 'function' && scherfTeVinden('figuur'),
     tekst: 'Een gebogen figuur zit in het donker, een gedóófde lantaarn in de hand. „Iedereen hierbeneden jaagt op iets," fluistert hij. „Maar weet jij wel wát jou volgt? Luister..."',
     opties: [
       {
         label: 'Luister naar zijn raadsel', detail: 'Een scherf van een groter geheim.',
-        doe: () => { const f = actiefMysScherf('figuur'); if (!f) return 'De figuur is al verstomd.'; const t = MYSTERIES[f.mid].scherven[f.sid].codexTekst; noteerScherf(f.mid, f.sid); return t + ' Zijn woorden branden zich in je geheugen. 🜂'; }
+        doe: () => { const sid = vindScherf('figuur'); if (!sid) return 'De figuur is al verstomd.'; const d = scherfDef(sid); return (d ? d.codexTekst : '') + ' Zijn woorden branden zich in je geheugen — je draagt nu een scherf. 🜂'; }
       },
       { label: 'Loop door', detail: 'Het donker heeft genoeg geheimen.', doe: () => 'Je laat de figuur in zijn duister achter.' }
     ]
   },
   {
     id: 'spiegelaar', titel: 'De Naamloze Spiegelaar', icoon: '🪞',
-    toon: () => huidigeAct() >= 2 && !!actiefMysScherf('figuur'),
+    toon: () => huidigeAct() >= 1 && typeof scherfTeVinden === 'function' && scherfTeVinden('figuur'),
     tekst: 'Een gestalte houdt je een blinde spiegel voor. „Alles hierbeneden is na te maken," zegt ze. „Op één ding na — en dát is precies wat jou zoekt. Kijk goed."',
     opties: [
       {
         label: 'Tuur in de blinde spiegel', detail: 'Een scherf van een groter geheim.',
-        doe: () => { const f = actiefMysScherf('figuur'); if (!f) return 'De spiegel is weer blind.'; const t = MYSTERIES[f.mid].scherven[f.sid].codexTekst; noteerScherf(f.mid, f.sid); return 'Heel even toont de spiegel iets in het zwart. ' + t + ' 🜂'; }
+        doe: () => { const sid = vindScherf('figuur'); if (!sid) return 'De spiegel is weer blind.'; const d = scherfDef(sid); return 'Heel even toont de spiegel iets in het zwart. ' + (d ? d.codexTekst : '') + ' 🜂'; }
       },
       { label: 'Zeg niets', detail: 'Je vertrouwt het niet.', doe: () => 'Je zwijgt. De spiegelaar vervaagt in het donker.' }
     ]

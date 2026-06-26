@@ -150,7 +150,7 @@ const Codex = Object.assign(
   /* loopbaan over alle runs heen: runs/wins/diepterecord per held, laatste runs,
      en het hoogst-ontgrendelde ascensieniveau per held. Bestaande saves missen
      deze sleutels → Object.assign houdt dan deze defaults aan (migratie). */
-  { relikwieen: [], dranken: [], metgezellen: [], gevallen: [], opgeladen: null, runs: 0, wins: 0, bestDiepte: {}, gesch: [], ascensie: {}, mysteries: {}, erfprinsOntmoetingen: 0, copycatGebroken: false },
+  { relikwieen: [], dranken: [], metgezellen: [], gevallen: [], opgeladen: null, runs: 0, wins: 0, bestDiepte: {}, gesch: [], ascensie: {}, mysteries: {}, scherven: [], erfprinsOntmoetingen: 0, copycatGebroken: false },
   JSON.parse(localStorage.getItem(CODEX_SLEUTEL) || '{}')
 );
 /* migratie: wie al ontdekkingen had, krijgt ze meteen opgeladen in het Schrijn */
@@ -252,6 +252,50 @@ function actiefMysScherf(bron) {
   if (!sid) return null;
   if (mys(mid).scherven.includes(sid)) return null;   /* al verzameld → bron is hier 'op' */
   return { mid, sid };
+}
+
+/* ====== SCHERVEN 2.0 — een platte, inzetbare stash (verbruikbaar; geplaatst bij de Drempel) ======
+   De 9 scherven (3 per metgezel) staan al als 'recept' in MYSTERIES[mid].scherven. Hierover een
+   platte bag-laag: Codex.scherven = multiset van scherf-ids die je bezit. Bij de Drempel (Act 1→2)
+   plaats je er 3; een kloppend trio roept de metgezel op, een fout trio wekt de Drempelwachter. */
+function scherfDef(sid) {
+  const M = window.MYSTERIES; if (!M) return null;
+  for (const mid in M) { const s = M[mid].scherven && M[mid].scherven[sid]; if (s) return { sid, mid, bron: s.bron, codexTekst: s.codexTekst, metgezel: M[mid].metgezel }; }
+  return null;
+}
+function alleScherfIds() {
+  const M = window.MYSTERIES || {}; const ids = [];
+  Object.keys(M).forEach(mid => (M[mid].vereist || []).forEach(s => ids.push(s)));
+  return ids;
+}
+function scherfStash() { if (!Array.isArray(Codex.scherven)) Codex.scherven = []; return Codex.scherven; }
+function bezitScherf(sid) { return scherfStash().includes(sid); }
+function geefScherf(sid) { if (!scherfDef(sid)) return false; scherfStash().push(sid); bewaarCodex(); return true; }
+function neemScherf(sid) { const a = scherfStash(); const i = a.indexOf(sid); if (i >= 0) { a.splice(i, 1); bewaarCodex(); return true; } return false; }
+/* welke metgezel hoort bij 3 geplaatste scherf-ids? (exact, nog-niet-vrij trio) → mid of null */
+function scherfTrio(ids) {
+  const set = (ids || []).filter(Boolean);
+  if (set.length !== 3 || new Set(set).size !== 3) return null;
+  const M = window.MYSTERIES || {};
+  for (const mid in M) {
+    const ver = M[mid].vereist || [];
+    if (ver.length === 3 && ver.every(s => set.includes(s))) return mid;
+  }
+  return null;
+}
+/* Act-1 drop: een willekeurige scherf van bron 'bron' die je nog NIET bezit (anders willekeurig van
+   die bron). Voedt de cross-run, cross-held verzameling. Geeft de gevonden scherf-id terug (of null). */
+function vindScherf(bron) {
+  const alle = alleScherfIds().filter(sid => { const d = scherfDef(sid); return d && (!bron || d.bron === bron); });
+  if (!alle.length) return null;
+  const nieuw = alle.filter(sid => !bezitScherf(sid));
+  const sid = kiesUit(nieuw.length ? nieuw : alle);
+  geefScherf(sid);
+  return sid;
+}
+/* is er nog een scherf van deze bron die je NIET bezit? (gate voor de figuur-events) */
+function scherfTeVinden(bron) {
+  return alleScherfIds().some(sid => { const d = scherfDef(sid); return d && (!bron || d.bron === bron) && !bezitScherf(sid); });
 }
 
 /* ---------- loopbaan: het spoor dat élke run achterlaat (retentiemotor) ---------- */
@@ -627,8 +671,8 @@ function zetFakkel(delta) {
     }
     if (inGevecht()) renderGevecht(); /* intent-weergave kan veranderen */
   }
-  if (typeof checkDropsOntwaak === 'function') checkDropsOntwaak();   /* dark-twist: doof je je fakkel bij de Erfprins? */
-  if (typeof checkDropsWitWeigering === 'function') checkDropsWitWeigering(voor, delta);   /* Poort A: weiger je juist te doven? */
+  /* (checkDropsOntwaak — de oude doof-unlock voor Drops — vervangen door het Drempel-ritueel) */
+  if (typeof checkDropsWitWeigering === 'function') checkDropsWitWeigering(voor, delta);   /* Poort A (grief-arc): weiger je juist te doven? */
   if (delta < 0 && inGevecht() && typeof toonRouwPoot === 'function') toonRouwPoot();        /* grief: pootafdruk in de as bij elke doof-keuze */
   zetLichtVisueel();
   renderTopbalk();
@@ -1619,9 +1663,9 @@ function genereerKaart() {
     if (n.r >= 4 && huidigeAct() >= 2) opties.push(['episch', 8]);
     n.type = gewogenKeuze(opties);
   }
-  /* garandeer ≥1 episch-node zolang het ACTIEVE mysterie nog een episch-scherf mist —
-     anders is die derde scherf een mapseed-loterij die de unlock kan blokkeren */
-  if (huidigeAct() >= 2 && typeof actiefMysScherf === 'function' && actiefMysScherf('episch')
+  /* garandeer ≥1 episch-node zolang je nog episch-scherven mist — anders hangt die bron
+     aan een mapseed-loterij */
+  if (huidigeAct() >= 2 && typeof scherfTeVinden === 'function' && scherfTeVinden('episch')
       && !Object.values(nodes).some(n => n.type === 'episch')) {
     const kand = Object.values(nodes).filter(n => n.r >= 4 && n.r < RIJEN - 1 && (n.type === 'gevecht' || n.type === 'event'));
     if (kand.length) kiesUit(kand).type = 'episch';
@@ -1781,7 +1825,7 @@ function kiesNodeEcht(id) {
       case 'episch': {
         /* de mysterie-vijand; bij winst valt z'n scherf (zie gevechtGewonnen) */
         startGevecht(kiesUit(ONTMOETINGEN.episch || [['het_origineel']]), 'elite', n.r);
-        { const es = actiefMysScherf('episch'); if (S.gevecht && es) S.gevecht.scherfDrop = es; }
+        if (S.gevecht) S.gevecht.epischScherf = true;   /* bij winst valt een episch-scherf (zie gevechtGewonnen) */
         break;
       }
       case 'baas': startGevecht([huidigeBaas().id], 'baas', n.r); break;
@@ -2004,7 +2048,7 @@ function startGevecht(samenstelling, soort, rij) {
        (noteerScherf/checkDropsOntwaak hebben geen daily-gate), dus moet de orakel-
        escalatie consistent meelopen — anders blijft de doof-rite-hint in daily op idx 0. */
     Codex.erfprinsOntmoetingen = (Codex.erfprinsOntmoetingen || 0) + 1; bewaarCodex();
-    const bs = actiefMysScherf('baas'); if (bs) noteerScherf(bs.mid, bs.sid);
+    const sid = vindScherf('baas'); if (sid) melding('🜂 In de zaal van de Erfprins vind je een scherf (baas).');   /* bankt op je stash → mee te nemen naar de Drempel */
   }
   if (soort === 'baas') misschienBaasIntro(g);   /* enkel als het slagveld zichtbaar is (niet achter de draai-prompt) */
 
@@ -3517,7 +3561,7 @@ function beginSpelerBeurt() {
   }
   if (heeftRelikwie('hartsteen')) geneesHp(1);
 
-  checkDropsOntwaak();   /* dark-twist: kwam je gedoofd de beurt in bij de Erfprins? */
+  /* (checkDropsOntwaak verwijderd — Drops unlock je nu via het Drempel-ritueel) */
   metgezelBeurt();   /* de bondgenoot handelt aan het begin van je beurt (kan de laatste vijand vellen → onderstaande check vangt dat) */
 
   /* THE COPYCAT: mercy-lek (geen breker) óf breker-terugwin, stall-straf, fase-check */
@@ -3560,10 +3604,10 @@ async function gevechtGewonnen() {
   const g = S.gevecht;
   if (!g || g.voorbij) return;
   g.voorbij = true;
-  /* Fase 5: een episch-vijand-gevecht laat bij winst zijn mysterie-scherf vallen */
-  if (g.scherfDrop && typeof noteerScherf === 'function' && !isOntgrendeld(g.scherfDrop.mid)) {
-    noteerScherf(g.scherfDrop.mid, g.scherfDrop.sid);
-  }
+  /* een episch-vijand-gevecht laat bij winst een episch-scherf vallen (bankt op je stash) */
+  if (g.epischScherf) { const sid = vindScherf('episch'); if (sid) melding('🜂 De epische vijand laat een scherf na (episch).'); }
+  /* Act 1+: elite-winst kan een willekeurige scherf opleveren → je verzamelt ze gaandeweg, ook in Act 1 */
+  else if (g.soort === 'elite' && willekeurig() < 0.5) { const sid = vindScherf(); if (sid) melding('🜂 Tussen de resten vind je een mysterieuze scherf.'); }
   /* metgezel-HP uit dit gevecht meenemen naar de run-state (gaat mee naar het volgende) */
   if (g.metgezel && !g.metgezel.dood && S.metgezel && !S.metgezel.vluchtig) S.metgezel.hp = g.metgezel.hp;
   if (window.Vista) Vista.pose(g.speler, 'victory', 2.5);
@@ -3600,8 +3644,7 @@ async function gevechtGewonnen() {
     await slaap(1400);
     flits.remove();
     if (S.gevecht !== g) return;
-    /* win-rite: ontwaakt een látere metgezel (Vlamwachter/Mosgeest) bij déze baas-winst? */
-    if (checkBaasRite(g)) await slaap(2200);
+    /* (win-rites verwijderd — Vlamwachter/Mosgeest unlock je nu via het Drempel-ritueel) */
     if (S.gevecht !== g) return;
     S.gevecht = null;
     if (huidigeAct() < ACTS_MAX) {
@@ -4490,6 +4533,83 @@ function devDropsWis() {
   melding('⚡ DEV: Drops-Codex gewist (gevallen/mysterie/Witte/zaadje/offer weg).');
 }
 
+/* ============================================================
+   DE DREMPEL — het scherven-ritueel tussen Act 1 en Act 2.
+   Plaats 3 scherven: een kloppend trio roept een metgezel op, een fout trio wekt de
+   Drempelwachter (de scherven zijn dan verbrand). Altijd over te slaan → direct Act 2.
+   ============================================================ */
+let drempelGeplaatst = [];   /* scherf-ids in de 3 nissen (null = leeg) */
+function bronIcoon(bron) { return bron === 'baas' ? '👑' : bron === 'figuur' ? '🪞' : bron === 'episch' ? '🜂' : '❓'; }
+
+function toonDrempel() {
+  drempelGeplaatst = [null, null, null];
+  toonScherm('einde');
+  schermAchtergrond('einde', actBg('kaart'), 0.5, 'center');
+  Klank.muziek('stil');
+  renderDrempel();
+}
+function renderDrempel() {
+  /* de pool = bezit minus wat al in de nissen ligt (per instance) */
+  const tel = {};
+  scherfStash().forEach(sid => { tel[sid] = (tel[sid] || 0) + 1; });
+  drempelGeplaatst.forEach(sid => { if (sid && tel[sid]) tel[sid]--; });
+  const pool = [];
+  Object.keys(tel).forEach(sid => { for (let i = 0; i < tel[sid]; i++) pool.push(sid); });
+
+  const nissen = [0, 1, 2].map(i => {
+    const sid = drempelGeplaatst[i];
+    if (sid) { const d = scherfDef(sid); return `<button class="drempel-nis vol" onclick="drempelHaalWeg(${i})"><span class="dn-icoon">${bronIcoon(d && d.bron)}</span><i>${(d && d.codexTekst) || '…'}</i></button>`; }
+    return `<div class="drempel-nis leeg">◇</div>`;
+  }).join('');
+  const poolHtml = pool.length
+    ? pool.map(sid => { const d = scherfDef(sid); return `<button class="drempel-scherf" onclick="drempelPlaats('${sid}')"><span class="ds-icoon">${bronIcoon(d && d.bron)}</span><i>${(d && d.codexTekst) || '…'}</i></button>`; }).join('')
+    : `<p class="drempel-leeg">Je draagt nog geen scherven. Vind ze in je afdalingen — drie die samen passen roepen een bondgenoot op.</p>`;
+  const vol = drempelGeplaatst.filter(Boolean).length === 3;
+  $('#scherm-einde').innerHTML = `
+    <div class="drempel-scene">
+      <h2 class="scherm-titel goud-tekst">🜂 De Drempel</h2>
+      <p class="scherm-sub drempel-lore">Voor je gaapt de poort naar de diepte. „Wie de juiste drie scherven samenbrengt, roept een bondgenoot uit het donker. Wie de verkeerde plaatst, wekt zijn Wachter."</p>
+      <div class="drempel-nissen">${nissen}</div>
+      <p class="drempel-poollabel">${pool.length ? 'Je scherven — plaats er drie:' : ''}</p>
+      <div class="drempel-pool">${poolHtml}</div>
+      <div class="einde-knoppen">
+        <button class="knop-groot" ${vol ? '' : 'disabled'} onclick="drempelRoepOp()">🜂 Roep op</button>
+        <button class="knop-stil" onclick="drempelSlaOver()">Sla over → daal af naar Act 2</button>
+      </div>
+    </div>`;
+  verfraaiItemArt($('#scherm-einde'));
+}
+function drempelPlaats(sid) {
+  let slot = drempelGeplaatst.indexOf(null);
+  if (slot < 0) return;                 /* nissen vol */
+  drempelGeplaatst[slot] = sid;
+  Klank.sfx('klik');
+  renderDrempel();
+}
+function drempelHaalWeg(slot) { drempelGeplaatst[slot] = null; Klank.sfx('klik'); renderDrempel(); }
+function drempelSlaOver() { toonActOvergang(S._verslagenBaas); }
+function drempelRoepOp() {
+  const ids = drempelGeplaatst.filter(Boolean);
+  if (ids.length !== 3) return;
+  const mid = scherfTrio(ids);
+  ids.forEach(sid => neemScherf(sid));          /* inzet verbruikt — scherven weg */
+  drempelGeplaatst = [null, null, null];
+  if (mid && !isOntgrendeld(mid)) {
+    const def = MYSTERIES[mid];
+    ontgrendelMetgezel(mid);
+    if (typeof ontdek === 'function') ontdek('metgezellen', def.metgezel);
+    geefMetgezel(def.metgezel);                 /* hij daalt nu mee Act 2 in (overschrijft de rotatie) */
+    Klank.sfx('schitter');
+    const rev = def.eindreveal || { titel: 'EEN BONDGENOOT ONTWAAKT', kreet: 'Iets koos jou.' };
+    toonActOvergang(S._verslagenBaas, rev);
+  } else {
+    melding('🔥 De verkeerde scherven! De Drempelwachter ontwaakt — je inzet is verbrand.');
+    Klank.sfx('debuff');
+    S.gevecht = null;
+    startGevecht(['de_drempelwachter'], 'elite', 1);   /* win → beloning → Act 2-kaart; rotatie-metgezel kreeg je al */
+  }
+}
+
 function volgendeAct(verslagenBaas) {
   S.act = huidigeAct() + 1;
   S.fakkel = 100;                 /* episch: het laatste licht van de baas → je fakkel laait op */
@@ -4514,17 +4634,21 @@ function volgendeAct(verslagenBaas) {
   S.pos = null;
   S.kaart = genereerKaart();      /* nieuwe ladder, act-bewust; de verdieping-teller loopt door */
   delete S.beloning; delete S.winkel; delete S.huidigEvent;
+  S._verslagenBaas = verslagenBaas;
+  if (S.act === 2) { toonDrempel(); return; }   /* Act 1→2: eerst het scherven-ritueel (altijd skipbaar) */
   toonActOvergang(verslagenBaas);
 }
-function toonActOvergang(verslagenBaas) {
+function toonActOvergang(verslagenBaas, reveal) {
   toonScherm('einde');            /* hergebruik het lege einde-scherm als overgangsdoek */
   schermAchtergrond('einde', actBg('kaart'), 0.42);
   Klank.sfx('schitter'); setTimeout(() => Klank.sfx('win'), 250);
   const naam = ACT_NAMEN[S.act] || ('Act ' + S.act);
   $('#scherm-einde').innerHTML = `
     <div class="einde-held einde-winst"><div class="schat-stralen einde-stralen"></div></div>
-    <h2 class="scherm-titel einde-titel goud-tekst">ACT ${S.act} — ${naam}</h2>
-    <p class="scherm-sub einde-regel">Je trekt het laatste licht uit ${verslagenBaas}. Het stroomt je fakkel in — die laait wonderbaarlijk op. 🔥</p>
+    ${reveal ? `<h2 class="scherm-titel einde-titel goud-tekst">${reveal.titel}</h2>
+       <p class="scherm-sub einde-regel">${reveal.kreet}</p>` : `
+       <h2 class="scherm-titel einde-titel goud-tekst">ACT ${S.act} — ${naam}</h2>
+       <p class="scherm-sub einde-regel">Je trekt het laatste licht uit ${verslagenBaas}. Het stroomt je fakkel in — die laait wonderbaarlijk op. 🔥</p>`}
     <p class="einde-loopbaan">Je dek, je relikwieën en je littekens dalen met je mee. De diepte wordt killer.</p>
     <div class="einde-knoppen">
       <button class="knop-groot" onclick="renderKaartScherm()">⬇️ Daal dieper af</button>

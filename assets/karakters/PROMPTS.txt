@@ -592,6 +592,22 @@ wegknippen). Houd elk wezen mét marge in het frame (geen wezen dat tot alle ran
   front van de gefuseerde dossiertoren = de compound.
   (Elite → meer poses + _block = zich indekken achter opgestapelde dossiers.)
 
+--- de_drempelwachter.png   (De Drempelwachter — Balrog-stijl poortwachter; ontwaakt bij een FOUT scherf-trio op de Drempel) ---
+  A towering BALROG-like threshold guardian wreathed in BLACK FIRE, facing LEFT — a colossal horned
+  demon-sentinel of living shadow and dark flame that guards the gate between Act 1 and the deep. A
+  hulking molten-black silhouette: cracked obsidian-and-charcoal body with veins of deep ember-RED and
+  cold violet fire glowing through the fissures, great curved horns, burning hollow eyes, ragged wings
+  of black smoke half-furled behind it. In one fist a long whip/lash of dripping black flame, the other
+  hand planted forward as if barring the way ("you shall not pass"). Smouldering, immense, primal —
+  older and darker than the cold bureaucratic Archive. A THIN warm ember rim-light on its left contour;
+  the body itself is deep black with red/violet inner fire (it is the one HOT, primal enemy here).
+  CUT-OUT: ONE massive, mostly CLOSED, OPAQUE silhouette with sharp high-contrast contour edges, on a
+  flat solid BLACK (or fully TRANSPARENT) background, clear margin all sides. The black-fire whip + wing-
+  smoke kept TIGHT to the body, not wisping off to the frame edges; NO loose drifting embers/smoke/haze
+  bleeding into the background (a clean cut-out). No ground/shadow/text/UI/frame. Painterly dark-fantasy,
+  NOT photorealistic. Fills ~90% of a 1024x1024 canvas.
+  Accent: zwart vuur + ember-ROOD en koud-VIOLET binnenvuur; horens, schaduwvleugels, vlammenzweep.
+
 (De bouw-data/HP/zetten van de 7 'extra' vijanden — stempelaar t/m de_archivaris — staan in
 ACT2-PROMPTBIB.md §3; de prompts hierboven zijn de canonieke bron.)
 
