@@ -1172,6 +1172,29 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 .is-baas .vijand-art { font-size: 6.4rem; width: 176px; height: 176px; }
 /* episch (bv. Het Origineel) = imposant, duidelijk GROTER dan de held (108→158px), tussen elite en baas */
 .is-episch .vijand-art { font-size: 5.9rem; width: 158px; height: 158px; }
+
+/* ---------- zichtbare kaart-steel (de Erfprins grist/kaatst een kaart) ---------- */
+.steel-vlieger {
+  position: fixed; z-index: 660; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 7px 11px; border-radius: 9px;
+  background: linear-gradient(160deg, #2a2140, #14101f);
+  border: 1.5px solid rgba(190, 160, 255, .6);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, .6), 0 0 16px rgba(150, 90, 220, .5);
+  transition: transform .56s cubic-bezier(.4, .05, .25, 1), opacity .22s ease;
+  will-change: transform;
+}
+.steel-vlieger .sv-icoon { font-size: 1.5rem; line-height: 1; }
+.steel-vlieger .sv-naam { font-size: .62rem; color: var(--perkament); letter-spacing: .02em; white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+.steel-vlieger.vloek { border-color: rgba(150, 110, 210, .85); box-shadow: 0 6px 22px rgba(0, 0, 0, .7), 0 0 20px rgba(110, 50, 160, .75); }
+.steel-vlieger.terug { border-color: rgba(255, 130, 95, .75); box-shadow: 0 6px 22px rgba(0, 0, 0, .6), 0 0 16px rgba(255, 100, 55, .55); }
+.steel-vlieger.weg { opacity: 0; }
+.steel-flits { animation: steelFlits .46s ease; }
+@keyframes steelFlits {
+  0% { filter: brightness(1); }
+  30% { filter: brightness(2.1) drop-shadow(0 0 14px rgba(190, 140, 255, .9)); }
+  100% { filter: brightness(1); }
+}
 /* grootte-variatie per wezen — transform op de WRAP reflowt niet (geen overlap), en
    transform-origin:bottom houdt de voeten op de grondlijn. Werkt op laptop én mobiel
    (schaalt wat de clamp ook geeft). */

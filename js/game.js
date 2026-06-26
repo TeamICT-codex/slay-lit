@@ -3006,11 +3006,11 @@ function checkBaasFase() {
    (de chokepoint — dus ook gif voedt). Drops (rol:'breker') breekt de machine.
    Volledig ontwerp: ONTWERP.md "The Copycat — Act 2-eindbaasmechaniek". */
 
-const COPYCAT_CAP_DMG = { 1: 22, 2: 28, 3: 36 };   /* fase-afhankelijke cap op teruggekaatste schade — escalatie wordt voelbaar */
+const COPYCAT_CAP_DMG = { 1: 26, 2: 34, 3: 46 };   /* fase-afhankelijke cap op teruggekaatste schade — escalatie wordt voelbaar (opgehoogd: hij voelde te zwak) */
 const COPYCAT_STEEL_CAP = 12;    /* max ooit gestolen per gevecht (anti-leegtrekken) */
 const COPYCAT_ARSENAAL_CAP = 5;  /* max gelijktijdig in het arsenaal */
 const COPYCAT_TERUGWIN = 20;     /* schade aan de baas per teruggewonnen kaart */
-const COPYCAT_F2 = 8, COPYCAT_F3 = 18;   /* voedings-drempels voor fase 2 / 3 */
+const COPYCAT_F2 = 6, COPYCAT_F3 = 13;   /* voedings-drempels voor fase 2 / 3 (verlaagd: hij ramt nu sneller op) */
 
 function copycatBaas(g) {
   return (g && g.vijanden) ? g.vijanden.find(v => !v.dood && VIJANDEN[v.id] && VIJANDEN[v.id].copycat) : null;
@@ -3040,11 +3040,65 @@ function baasZietKaart(c) {
   g.vorigeId = c.id;
 }
 
+/* ---- ZICHTBARE STEEL: een kaart vliegt over het scherm (van je hand-zone naar de
+   Erfprins bij het grissen; van hem naar jou bij het terugspelen). Puur cosmetisch. ---- */
+function kaartVliegFx(kaartId, bronEl, doelEl, opts) {
+  opts = opts || {};
+  if (!bronEl || !doelEl || typeof bronEl.getBoundingClientRect !== 'function') return;
+  const br = bronEl.getBoundingClientRect(), dr = doelEl.getBoundingClientRect();
+  if (!br.width || !dr.width) return;
+  const bx = br.left + br.width / 2, by = br.top + br.height / 2;
+  const dx = dr.left + dr.width / 2, dy = dr.top + dr.height / 2;
+  const def = kaartId && KAARTEN[kaartId];
+  const fly = document.createElement('div');
+  fly.className = 'steel-vlieger' + (opts.vloek ? ' vloek' : '') + (opts.terug ? ' terug' : '');
+  fly.innerHTML = `<span class="sv-icoon">${(def && def.icoon) || '🎴'}</span><span class="sv-naam">${(def && def.naam) || ''}</span>`;
+  fly.style.left = bx + 'px'; fly.style.top = by + 'px';
+  fly.style.transform = `translate(-50%,-50%) scale(.5) rotate(${opts.terug ? 8 : -8}deg)`;
+  document.body.appendChild(fly);
+  void fly.offsetWidth;                       /* reflow → de transitie pakt */
+  fly.classList.add('vliegt');
+  fly.style.transform = `translate(calc(-50% + ${Math.round(dx - bx)}px), calc(-50% + ${Math.round(dy - by)}px)) scale(1.06) rotate(${opts.terug ? -10 : 10}deg)`;
+  setTimeout(() => {
+    if (doelEl.classList) { doelEl.classList.remove('steel-flits'); void doelEl.offsetWidth; doelEl.classList.add('steel-flits'); setTimeout(() => doelEl.classList.remove('steel-flits'), 480); }
+    fly.classList.add('weg');
+    setTimeout(() => fly.remove(), 220);
+  }, 560);
+}
+function copycatBronEl() { return $('#hand') || $('#onderbalk') || $('#speler-zone'); }
+
+/* VLOEK-GREEP: de Erfprins grijpt blind — een vloek in je stapels keert zich tégen hem.
+   Hij loopt er zélf schade van op (zonder zich eraan te voeden) en de vloek is geconsumeerd.
+   → "neem bewust vloeken mee" wordt een echte counter. Tunebaar via VLOEK_BACKFIRE. */
+const VLOEK_BACKFIRE = (v) => 12 + (v.fase || 1) * 5 + Math.max(0, huidigeAct() - 1) * 4;   /* ~17–31 */
+function copycatGristVloek(v, g) {
+  for (const p of ['afleg', 'trek']) {
+    const i = (g[p] || []).findIndex(k => kdef(k).type === 'vloek');
+    if (i < 0) continue;
+    const c = g[p][i]; g[p].splice(i, 1);
+    const def = kdef(c);
+    const schade = VLOEK_BACKFIRE(v);
+    v.totaalGestolen = (v.totaalGestolen || 0) + 1;   /* telt mee tegen de steel-cap (niet oneindig curse-farmen tégen hem) */
+    kaartVliegFx(c.id, copycatBronEl(), actorEl(v), { vloek: true });   /* cosmetisch — loopt los van de schade */
+    melding(`🎭 De Erfprins grist blind je ${def.naam} weg — en de vloek keert zich tégen hém!`);
+    Klank.sfx('debuff');
+    g._vloekGreep = true;                  /* deze schade voedt hem NIET + geen terugwin */
+    verliesHp(v, schade);
+    g._vloekGreep = false;
+    if (!v.dood) { fxNummer(actorEl(v), `🌑 ${def.naam}! −${schade}`, 'fx-schade'); pose2D(v, 'hit', 0.5); }
+    renderGevecht();
+    return true;
+  }
+  return false;
+}
+
 /* KANAAL 2 — stelen: grist één instance van het sterkste recent gespeelde type
    uit je trek/afleg (NOOIT S.dek). Faalt stil als er geen instance beschikbaar is. */
 function copycatSteel(v, g) {
   if (g.copycatGebroken) return false;
   if ((v.totaalGestolen || 0) >= COPYCAT_STEEL_CAP || (v.gestolen || []).length >= COPYCAT_ARSENAAL_CAP) return false;
+  /* GREEDY: ligt er een vloek in je stapels? Hij grijpt 'm blind en bezeert zichzelf. */
+  if (copycatGristVloek(v, g)) return true;
   const pool = (g.laatstGespeeld || []).slice().sort((a, b) => snapSterkte(b) - snapSterkte(a));
   for (const snap of pool) {
     let bron = g.trek, idx = g.trek.findIndex(k => k.id === snap.id);
@@ -3057,31 +3111,34 @@ function copycatSteel(v, g) {
     v.gevoed = (v.gevoed || 0) + (snap.kost || 1);
     const li = g.laatstGespeeld.indexOf(snap); if (li >= 0) g.laatstGespeeld.splice(li, 1);
     pose2D(v, 'cast', 0.8);
+    kaartVliegFx(snap.id, copycatBronEl(), actorEl(v));        /* zichtbaar: de kaart vliegt naar hem toe */
     fxNummer(actorEl(v), `🎭 steelt je ${snap.naam}!`, 'fx-debuff');
     Klank.sfx('debuff');
-    melding(`🎭 De Copycat grist je ${snap.naam} weg!`);
+    melding(`🎭 De Erfprins grist je ${snap.naam} weg — hij speelt 'm straffer terug!`);
     renderGevecht();
     return true;
   }
   return false;
 }
 
-/* de eind-schade van een teruggespeelde aanval: +50%, +copyKracht, act-scaling, cap ≤30 */
+/* de eind-schade van een teruggespeelde aanval: +65%, +copyKracht, act-scaling, fase-cap */
 function copycatPlagiaatDmg(v, n) {
-  let d = Math.round(n * 1.5) + (v.copyKracht || 0);
+  let d = Math.round(n * 1.65) + (v.copyKracht || 0);
   if (huidigeAct() > 1) d = Math.ceil(d * (1 + 0.15 * (huidigeAct() - 1)));
-  return Math.min(COPYCAT_CAP_DMG[v.fase || 1] || 36, Math.max(1, d));
+  return Math.min(COPYCAT_CAP_DMG[v.fase || 1] || 46, Math.max(1, d));
 }
 /* kies de N sterkste gestolen kaarten + bereken hun eind-getallen (voor telegraaf én uitvoer) */
 function copycatPlagiaatPlan(v, aantal) {
   return (v.gestolen || []).slice().sort((a, b) => snapSterkte(b) - snapSterkte(a)).slice(0, aantal)
-    .map(s => ({ naam: s.naam, soort: s.soort, n: s.n, eindDmg: s.soort === 'aanval' ? copycatPlagiaatDmg(v, s.n) : 0 }));
+    .map(s => ({ id: s.id, naam: s.naam, soort: s.soort, n: s.n, eindDmg: s.soort === 'aanval' ? copycatPlagiaatDmg(v, s.n) : 0 }));
 }
 /* KANAAL 3 — terugspelen: voert het plan uit, gedwongen op de speler (geen vijandAanval,
    dus geen dubbele act-scaling en de hond wordt nooit geraakt) */
 function copycatSpeelTerug(v, g, plan) {
   pose2D(v, Math.random() < 0.5 ? 'plagiaat' : 'plagiaat_variant', 0.9);   /* SIGNATURE: wisselt tussen 2 plagiaat-varianten (de Copycat toont steeds een andere 'kopie'); zuiver cosmetisch → Math.random raakt de seeded RNG niet */
-  (plan || []).forEach(k => {
+  (plan || []).forEach((k, i) => {
+    /* zichtbaar (cosmetisch, los van de schade): jouw gestolen kaart vliegt van hém terug naar jou */
+    setTimeout(() => kaartVliegFx(k.id, actorEl(v), copycatBronEl(), { terug: true }), i * 220);
     if (k.soort === 'aanval') doeSchade(sp(), k.eindDmg, v);
     else if (k.soort === 'blok') geefBlok(v, k.n);
     else if (k.soort === 'gif') geefGif(sp(), k.n);
@@ -3114,6 +3171,7 @@ function copycatTerugwin(v, g, n) {
    schade) + voeding (bron-gegate: speler piekt, gif voedt half, breker voedt NIET) */
 function copycatNaSchade(v, n, bron) {
   const g = S.gevecht; if (!g) return;
+  if (g._vloekGreep) return;   /* vloek-backfire: bezeert hem, maar voedt hem NIET en geeft geen terugwin */
   copycatTerugwin(v, g, n);
   if (bron === sp()) {
     g.raakteCopycat = true;
@@ -3550,7 +3608,7 @@ async function gevechtGewonnen() {
       volgendeAct(verslagenBaas);   /* nog een act → episch verder afdalen */
     } else {
       wisSave();
-      toonEinde(true);             /* laatste act verslagen → echte overwinning */
+      toonEinde(true, verslagenBaas);   /* laatste act verslagen → echte overwinning (toon de juiste baasnaam) */
     }
     return;
   }
@@ -4473,7 +4531,7 @@ function toonActOvergang(verslagenBaas) {
     </div>`;
 }
 
-function toonEinde(gewonnen) {
+function toonEinde(gewonnen, verslagenBaas) {
   toonScherm('einde');
   /* winst = de epische plaat, verlies = de nederlaag-plaat (per act) */
   schermAchtergrond('einde', gewonnen ? actBg('overwinning') : actBg('nederlaag'),
@@ -4521,7 +4579,7 @@ function toonEinde(gewonnen) {
     <div class="einde-held ${gewonnen ? 'einde-winst' : 'einde-dood'}" id="einde-held">
       ${gewonnen ? '<div class="schat-stralen einde-stralen"></div>' : ''}
     </div>
-    <h2 class="scherm-titel einde-titel ${gewonnen ? 'goud-tekst' : 'rood-tekst'}">${gewonnen ? 'DE SLIJMKONING IS VERSLAGEN!' : 'JE BENT GEVALLEN...'}</h2>
+    <h2 class="scherm-titel einde-titel ${gewonnen ? 'goud-tekst' : 'rood-tekst'}">${gewonnen ? ((verslagenBaas || (typeof huidigeBaas === 'function' && huidigeBaas() && huidigeBaas().naam) || 'De baas') + ' IS VERSLAGEN!').toUpperCase() : 'JE BENT GEVALLEN...'}</h2>
     <p class="scherm-sub einde-regel">„${regel}"</p>
     ${!gewonnen ? mysterieDuiding() : ''}
     <div class="einde-stats einde-onthul">
