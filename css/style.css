@@ -1170,6 +1170,8 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 }
 .is-elite .vijand-art { font-size: 5.2rem; width: 136px; height: 136px; }
 .is-baas .vijand-art { font-size: 6.4rem; width: 176px; height: 176px; }
+/* episch (bv. Het Origineel) = imposant, duidelijk GROTER dan de held (108→158px), tussen elite en baas */
+.is-episch .vijand-art { font-size: 5.9rem; width: 158px; height: 158px; }
 /* grootte-variatie per wezen — transform op de WRAP reflowt niet (geen overlap), en
    transform-origin:bottom houdt de voeten op de grondlijn. Werkt op laptop én mobiel
    (schaalt wat de clamp ook geeft). */

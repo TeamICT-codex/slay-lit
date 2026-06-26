@@ -2185,9 +2185,10 @@ function bouwGevechtDom(g) {
   g.vijanden.forEach((v, i) => {
     const def = VIJANDEN[v.id];
     const wrap = document.createElement('div');
-    wrap.className = 'vijand' + (def.baas ? ' is-baas' : '') + (def.elite ? ' is-elite' : '')
+    wrap.className = 'vijand' + (def.baas ? ' is-baas' : '') + (def.elite ? ' is-elite' : '') + (def.episch ? ' is-episch' : '')
       + (VIJAND_KLEIN.has(v.id) ? ' vijand-klein' : '') + (VIJAND_GROOT.has(v.id) ? ' vijand-groot' : '')   /* grootte-variatie (transform-scale, origin bottom → breekt de grondlijn niet) */
-      + (VIJAND_ENTREE[v.id] ? ' entree-' + VIJAND_ENTREE[v.id] : '');   /* binnenkomst-variant (de .entree-trigger zet startGevecht/voegVijandToe erbij) */
+      + (VIJAND_ENTREE[v.id] ? ' entree-' + VIJAND_ENTREE[v.id] : '')   /* binnenkomst-variant (de .entree-trigger zet startGevecht/voegVijandToe erbij) */
+      + (v.dood ? ' sterft' : '');   /* al gesneuvelde vijand blijft verborgen na een herbouw (voegVijandToe/reveal) — anders 'herrijst' hij zichtbaar */
     wrap.dataset.i = i;
     const art = (window.karakterSvg && karakterSvg(v.id))
       || `${v.art}${def.baas ? '<span class="kroon">👑</span>' : ''}`;
@@ -4023,7 +4024,7 @@ function toonRust() {
         <span class="rust-icoon" data-icoon="smeden">⚒️</span><b>Smeden</b><small>Verbeter een kaart</small>
         ${kanSmeden ? '' : '<small class="reden-uit">✕ Al je kaarten zijn al gesmeed.</small>'}</button>
       <button class="rust-knop" ${kanPoken ? 'onclick="rustPook()"' : 'disabled'}>
-        <span class="rust-icoon" data-icoon="oppoken">🔥</span><b>Oppoken</b><small>+20 licht voor je fakkel</small>
+        <span class="rust-icoon" data-icoon="oppoken">🔥</span><b>Oppoken</b><small>+50 licht voor je fakkel</small>
         ${kanPoken ? '' : '<small class="reden-uit">✕ Je fakkel is al vol.</small>'}</button>
     </div>`;
   verfraaiItemArt($('#scherm-rust'));   /* eigen iconen-art uit assets/iconen/ inladen (emoji blijft als terugval) */
@@ -4044,8 +4045,8 @@ function toonRust() {
 function rustPook() {
   if (rustKlaar) return;
   rustKlaar = true;
-  zetFakkel(20);
-  melding('Je fakkel laait weer op (+20 licht).');
+  zetFakkel(50);   /* vertrekwaarde — een halve balk, zodat oppoken een echte keuze is naast heal/smeden */
+  melding('Je fakkel laait fel op (+50 licht).');
   Klank.sfx('buff');
   /* het vuur laait zichtbaar op voor we vertrekken */
   const scene = $('#kv-scene');

@@ -690,3 +690,28 @@ Pose: the summoning — the flask raised high and overflowing, an
 enormous serpent of luminous green venom coiling up out of it and
 rearing above his head, his beak mask tilted back, the glowing
 lens flaring bright green.
+
+
+#################### ACT 2 — ZWARTE-ZIEL-ELITE: DE VERZWOLGENE ####################
+(playtest: hij blokt elke 3e beurt 12 — "Verzwelgen" — maar miste een blok-pose.
+De engine wisselt naar <id>_block zodra die er is; basis blijft de terugval.)
+
+================ de_verzwolgene_block.png ================
+Use the attached reference image (de_verzwolgene.png): the EXACT
+same creature — same towering mass of black soul-matter, same
+violet soul-glow, same hollow central void/maw, same trapped
+screaming soul-faces and writhing tendrils, same painterly style.
+Stylized hand-painted dark-fantasy game art, NOT photorealistic,
+no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent (or flat solid BLACK)
+background, no ground, no shadow, no text. ONE compact closed
+opaque silhouette with sharp contour edges and clear margin all
+sides, NO mist/smoke/haze/loose particles fading into the bg.
+Fills ~88% of a square 1024x1024 canvas.
+
+Pose: the VERZWELGEN / engulf-guard — the creature pulls ALL of
+itself inward and hunkers down, its tendrils sweeping forward and
+wrapping across the front of the body like a coiled shell/cocoon,
+the central void contracting to a narrow vertical slit, the violet
+soul-glow drawn deep inside and dimming — a dense, impenetrable
+defensive ball of gathered souls. Braced, immovable, hunkered.

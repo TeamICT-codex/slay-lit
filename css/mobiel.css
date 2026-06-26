@@ -277,6 +277,7 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] .vijand { min-width: 0; padding: 4px; }
   body[data-modus="mobiel"] .vijand-art { width: 122px; height: 122px; }
   body[data-modus="mobiel"] .is-elite .vijand-art { width: 140px; height: 140px; }
+  body[data-modus="mobiel"] .is-episch .vijand-art { width: 158px; height: 158px; }
   body[data-modus="mobiel"] .is-baas .vijand-art { width: 178px; height: 178px; }
 
   body[data-modus="mobiel"] #onderbalk { height: 292px; }
@@ -329,6 +330,7 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] .speler-figuur { width: clamp(92px, 26vh, 138px); height: clamp(92px, 26vh, 138px); }
   body[data-modus="mobiel"] .vijand-art { width: clamp(64px, 21vh, 112px); height: clamp(64px, 21vh, 112px); }
   body[data-modus="mobiel"] .is-elite .vijand-art { width: clamp(88px, 24vh, 128px); height: clamp(88px, 24vh, 128px); }
+  body[data-modus="mobiel"] .is-episch .vijand-art { width: clamp(92px, 27vh, 150px); height: clamp(92px, 27vh, 150px); }
   /* baas groter: hij is HET monster — vh-factor omhoog zodat hij op echte telefoons
      (≈360–500px hoog) imposant oogt; min/max houden 'm leesbaar én onder de topbalk */
   body[data-modus="mobiel"] .is-baas .vijand-art { width: clamp(98px, 30vh, 176px); height: clamp(98px, 30vh, 176px); }
