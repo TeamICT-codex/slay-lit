@@ -2046,6 +2046,11 @@ function stopGevechtLus() {
   $('#scherm-gevecht').classList.remove('d3-actief');
 }
 
+/* grootte-variatie: kleine basics krimpen, een paar imposante wezens groeien (puur
+   visueel via transform-scale, origin bottom → geen reflow/grondlijn-breuk). Tunebaar. */
+const VIJAND_KLEIN = new Set(['groene_slijm', 'blauwe_slijm', 'grotrat', 'naaper', 'mal_gietsel', 'doorslag_kopie', 'echo', 'kultist', 'pekziel']);
+const VIJAND_GROOT = new Set(['steengolem', 'dossierwurm', 'de_deadline', 'de_inktvlek', 'grombaard']);
+
 /* eenmalige opbouw van de gevechts-DOM */
 function bouwGevechtDom(g) {
   GDOM = { vijanden: [], speler: null, metgezel: null, hand: new Map(), bg: $('#gevecht-achtergrond') };
@@ -2055,7 +2060,8 @@ function bouwGevechtDom(g) {
   g.vijanden.forEach((v, i) => {
     const def = VIJANDEN[v.id];
     const wrap = document.createElement('div');
-    wrap.className = 'vijand' + (def.baas ? ' is-baas' : '') + (def.elite ? ' is-elite' : '');
+    wrap.className = 'vijand' + (def.baas ? ' is-baas' : '') + (def.elite ? ' is-elite' : '')
+      + (VIJAND_KLEIN.has(v.id) ? ' vijand-klein' : '') + (VIJAND_GROOT.has(v.id) ? ' vijand-groot' : '');   /* grootte-variatie (transform-scale, origin bottom → breekt de grondlijn niet) */
     wrap.dataset.i = i;
     const art = (window.karakterSvg && karakterSvg(v.id))
       || `${v.art}${def.baas ? '<span class="kroon">👑</span>' : ''}`;

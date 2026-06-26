@@ -1157,6 +1157,11 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 }
 .is-elite .vijand-art { font-size: 5.2rem; width: 136px; height: 136px; }
 .is-baas .vijand-art { font-size: 6.4rem; width: 176px; height: 176px; }
+/* grootte-variatie per wezen — transform op de WRAP reflowt niet (geen overlap), en
+   transform-origin:bottom houdt de voeten op de grondlijn. Werkt op laptop én mobiel
+   (schaalt wat de clamp ook geeft). */
+.vijand.vijand-klein { transform: scale(.82); transform-origin: bottom center; }
+.vijand.vijand-groot { transform: scale(1.18); transform-origin: bottom center; }
 .kroon {
   position: absolute; top: -26px; left: 50%; transform: translateX(-50%) rotate(-8deg);
   font-size: 2.2rem;
