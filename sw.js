@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v29'; /* v29: scherf-fragmenten schoon uitgesneden (hybride wit/zwart-bg cut → transparant) */
+const CACHE = 'slayit-v30'; /* v30: debugronde scherven-systeem — scherf-duplicatie (stale save) + Drempel-no-op + vloekGreep-vlag + plagiaat-planfilter + S.scherven-sanitatie */
 const BESTANDEN = [
   '.',
   'index.html',

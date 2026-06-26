@@ -1584,6 +1584,11 @@ function laadSpel() {
        RELIKWIEEN[r]/DRANKEN[d] zonder fallback, een stale id zou de run bricken. */
     S.relikwieen = S.relikwieen.filter(r => RELIKWIEEN[r]);
     S.dranken = S.dranken.filter(d => DRANKEN[d]);
+    /* gedragen scherven: gooi onbekende/hernoemde ids weg (anders een loze ❓ in de
+       Drempel), én verwijder wat al veilig in de stash zit — een stale save (tab dicht
+       tussen baas-win en Drempel) zou anders al-gebankte scherven dubbel herstellen
+       (gedragen + stash) → herplaatsbaar/herbankbaar → oneindige scherf-duplicatie. */
+    S.scherven = (Array.isArray(S.scherven) ? S.scherven : []).filter(sid => scherfDef(sid) && !scherfStash().includes(sid));
     if (S.pos === undefined) S.pos = null;
     if (S.pos !== null && !S.kaart[S.pos]) S.pos = null;   /* pos wijst naar onbestaande node → terug naar de ingang */
     if (typeof S.hp !== 'number') S.hp = huidigeHeld().hp;
@@ -3191,8 +3196,7 @@ function copycatGristVloek(v, g) {
     melding(`🎭 De Erfprins grist blind je ${def.naam} weg — en de vloek keert zich tégen hém!`);
     Klank.sfx('debuff');
     g._vloekGreep = true;                  /* deze schade voedt hem NIET + geen terugwin */
-    verliesHp(v, schade);
-    g._vloekGreep = false;
+    try { verliesHp(v, schade); } finally { g._vloekGreep = false; }   /* throw in verliesHp (fx/audio/death-tak) mag de vlag niet laten hangen → anders voedt/terugwint hij nooit meer */
     if (!v.dood) { fxNummer(actorEl(v), `🌑 ${def.naam}! −${schade}`, 'fx-schade'); pose2D(v, 'hit', 0.5); }
     renderGevecht();
     return true;
@@ -3244,7 +3248,14 @@ function copycatPlagiaatPlan(v, aantal) {
    dus geen dubbele act-scaling en de hond wordt nooit geraakt) */
 function copycatSpeelTerug(v, g, plan) {
   pose2D(v, Math.random() < 0.5 ? 'plagiaat' : 'plagiaat_variant', 0.9);   /* SIGNATURE: wisselt tussen 2 plagiaat-varianten (de Copycat toont steeds een andere 'kopie'); zuiver cosmetisch → Math.random raakt de seeded RNG niet */
+  /* het plan is een BEVROREN snapshot van vorige beurt; sla kaarten over die de speler
+     intussen heeft TERUGGEWONNEN (niet meer in v.gestolen) — anders kaatst hij een net
+     teruggegeven kaart alsnog tegen je terug en doet het terugwin-cadeau teniet. */
+  const beschikbaar = {};
+  (v.gestolen || []).forEach(s => { beschikbaar[s.id] = (beschikbaar[s.id] || 0) + 1; });
   (plan || []).forEach((k, i) => {
+    if (!(beschikbaar[k.id] > 0)) return;       /* deze instance is teruggewonnen → niet terugkaatsen */
+    beschikbaar[k.id]--;
     /* zichtbaar (cosmetisch, los van de schade): jouw gestolen kaart vliegt van hém terug naar jou */
     setTimeout(() => kaartVliegFx(k.id, actorEl(v), copycatBronEl(), { terug: true }), i * 220);
     if (k.soort === 'aanval') doeSchade(sp(), k.eindDmg, v);
@@ -4651,26 +4662,37 @@ function drempelPlaats(sid) {
   renderDrempel();
 }
 function drempelHaalWeg(slot) { drempelGeplaatst[slot] = null; Klank.sfx('klik'); renderDrempel(); }
-function drempelSlaOver() { bankGedragen(); toonActOvergang(S._verslagenBaas); }   /* niet-geplaatste scherven zijn nu veilig (gebankt) */
+function drempelSlaOver() { bankGedragen(); saveSpel(); toonActOvergang(S._verslagenBaas); }   /* niet-geplaatste scherven zijn nu veilig (gebankt) + meteen gepersisteerd */
 function drempelRoepOp() {
   const ids = drempelGeplaatst.filter(Boolean);
   if (ids.length !== 3) return;
   const mid = scherfTrio(ids);
+  if (mid && isOntgrendeld(mid)) {
+    /* kloppend trio van een AL ontwaakte bondgenoot → niet bestraffen, niets verbruiken:
+       leg de scherven terug zodat de speler een ander trio kiest of overslaat. */
+    melding('Deze bondgenoot is al ontwaakt — je scherven blijven veilig.');
+    Klank.sfx('klik');
+    drempelGeplaatst = [null, null, null];
+    renderDrempel();
+    return;
+  }
   ids.forEach(sid => neemGedragen(sid));        /* de geplaatste 3 zijn verbruikt — weg uit je tas */
   drempelGeplaatst = [null, null, null];
-  if (mid && !isOntgrendeld(mid)) {
+  if (mid) {
     const def = MYSTERIES[mid];
     ontgrendelMetgezel(mid);
     if (typeof ontdek === 'function') ontdek('metgezellen', def.metgezel);
     geefMetgezel(def.metgezel);                 /* hij daalt nu mee Act 2 in (overschrijft de rotatie) */
     Klank.sfx('schitter');
     bankGedragen();                             /* de rest van je tas is nu veilig */
+    saveSpel();                                 /* persisteer act-2-state + lege tas meteen — geen stale Act-1-save → geen scherf-duplicatie */
     const rev = def.eindreveal || { titel: 'EEN BONDGENOOT ONTWAAKT', kreet: 'Iets koos jou.' };
     toonActOvergang(S._verslagenBaas, rev);
   } else {
     melding('🔥 De verkeerde scherven! De Drempelwachter ontwaakt — je inzet is verbrand.');
     Klank.sfx('debuff');
     bankGedragen();                             /* de niet-geplaatste rest blijft veilig */
+    saveSpel();                                 /* idem: leg de gebankte stash + act-2-state vast vóór het gevecht */
     S.gevecht = null;
     startGevecht(['de_drempelwachter'], 'elite', 1);   /* win → beloning → Act 2-kaart; rotatie-metgezel kreeg je al */
   }
