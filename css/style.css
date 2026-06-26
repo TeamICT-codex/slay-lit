@@ -1049,6 +1049,15 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   animation: adem 2.8s ease-in-out infinite;
 }
 .metgezel-art svg, .metgezel-art img { width: 100%; height: 100%; object-fit: contain; }
+/* synergie-badge op de metgezel in het gevecht (✨ optimaal / ◆ goed) — ankert op de zone
+   (niet op .metgezel-art, want de art-loader overschrijft die innerHTML) */
+#metgezel-zone { position: relative; }
+.metgezel-syn { position: absolute; top: 0; right: 2px; z-index: 3; font-size: 1rem; line-height: 1; text-shadow: 0 0 5px rgba(0, 0, 0, .85); cursor: help; pointer-events: auto; }
+.metgezel-syn.syn-optimaal { animation: synPuls 1.9s ease-in-out infinite; }
+@keyframes synPuls {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 3px rgba(255, 210, 110, .5)); }
+  50% { transform: scale(1.18); filter: drop-shadow(0 0 9px rgba(255, 210, 110, .95)); }
+}
 .metgezel-art.uithaal { animation: uitval-speler .4s ease; }
 #metgezel-zone.raak .metgezel-art { animation: uitval-vijand .3s ease; }
 .metgezel-naam { font-size: .92rem; color: var(--ember-fel); opacity: .9; }

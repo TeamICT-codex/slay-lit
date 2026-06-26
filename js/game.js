@@ -2358,11 +2358,18 @@ function bouwGevechtDom(g) {
   if (mz) {
     if (g.metgezel) {
       const md = METGEZELLEN[g.metgezel.id];
+      const synT = synergieTier(g.metgezel.id);
+      const synPerk = (window.SYNERGIE && SYNERGIE[g.metgezel.id] && SYNERGIE[g.metgezel.id].perk) || '';
+      const synBadge = synT === 'optimaal'
+        ? `<span class="metgezel-syn syn-optimaal" data-tip="✨ Optimale band met ${HELDNAAM(S.held)} — +30% effect & HP${synPerk ? ', en ' + synPerk : ''}.">✨</span>`
+        : synT === 'goed' ? `<span class="metgezel-syn syn-goed" data-tip="◆ Goede band met ${HELDNAAM(S.held)} — +15% effect & HP.">◆</span>` : '';
+      const synTip = synergieLabel(g.metgezel.id);
       mz.hidden = false;
       mz.classList.remove('rouw-zone');
       mz.innerHTML = `
+        ${synBadge}
         <div class="metgezel-intent"></div>
-        <div class="metgezel-art" data-tip="${md.naam} — ${md.tekst}">${md.icoon}</div>
+        <div class="metgezel-art" data-tip="${md.naam} — ${md.tekst}${synTip ? ' · ' + synTip : ''}">${md.icoon}</div>
         <div class="metgezel-naam">${md.naam}</div>
         <div class="hp-balk metgezel-hp"><div class="hp-vulling"></div><span class="hp-tekst"></span><span class="blok-schild" data-tip="Blok: vangt aanvalsschade op"><svg viewBox="0 0 24 28" aria-hidden="true"><path fill="url(#blokgrad)" stroke="#0c1c2e" stroke-width="1.6" d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg><b></b></span></div>
         <div class="blok-status"></div>
