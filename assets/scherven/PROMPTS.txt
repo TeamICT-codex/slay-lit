@@ -1,46 +1,99 @@
-MYSTERIE-SCHERVEN — cryptische verzamel-fragmenten van het Metgezel-Mysterie
+MYSTERIE-SCHERVEN — 9 fragmenten die samen 3 sigils vormen (Drempel-ritueel)
 ============================================================================
-Kleine "scherven" die in de Codex (sectie "Onopgeloste Mysteries") als verzamelbare
-gem-fragmenten tonen, ~34px in een glanzend lila/amber kadertje. Elke scherf die je
-vindt brengt je dichter bij het vrijspelen van een verborgen metgezel — maar mag NOOIT
-verklappen WELKE metgezel (geen diersilhouet, geen gezicht, puur een mysterieus relikwie-
-fragment). Het 🜂-symbool blijft de terugval als de afbeelding ontbreekt.
+Negen scherven = DRIE sigils van elk DRIE fragmenten. Bij De Drempel (tussen Act 1 en Act 2)
+plaatst de speler 3 scherven; de juiste drie zijn de drie delen van ÉÉN sigil (zelfde gloed-
+kleur) en klikken visueel samen. Een sigil verklapt NIET welke metgezel — het is een abstract,
+heraldisch/alchemistisch embleem; je leert pas wie je oproept op het moment van de oproep.
 
-STIJL: dark-fantasy, painterly, GEEN fotorealisme. Een enkel gebroken fragment, zwevend,
-met gloeiende breukranden. Volledig TRANSPARANTE achtergrond. Vierkant canvas (bv. 256×256),
-het fragment goed gecentreerd en duidelijk leesbaar als het klein wordt weergegeven.
-Deze art is een VOLLEDIG OBJECT op transparant — dus enkel converteren naar WebP, GEEN
-dambord-uitsnijden nodig (zie hieronder).
+>> WAAROM JE "ANDERE" BEELDEN KREEG: zonder een vaste, expliciete stijlomschrijving kiest de
+>> generator elke keer een andere look. Daarom staat HIERONDER een STYLE LOCK die je bij ÉLKE
+>> van de 9 prompts ONGEWIJZIGD meegeeft. De 9 prompts hieronder hebben die lock al ingebakken
+>> — kopieer telkens het HELE blok (style + scherf), niet enkel de scherf-zin.
 
-ER ZIJN DRIE SCHERVEN — één per BRON. Dezelfde drie worden hergebruikt over alle mysteries
-heen (zo blijft het non-spoiler en behapbaar). Bestandsnamen exact:
+BESTANDSNAMEN (exact — de game laadt ze op scherf-id):
+  drops_baas.png   drops_figuur.png   drops_episch.png
+  vlamwachter_baas.png   vlamwachter_figuur.png   vlamwachter_episch.png
+  mosgeest_baas.png   mosgeest_figuur.png   mosgeest_episch.png
 
-  scherf_baas.png     — "uit de mond van de baas"
-      Een gekarteld fragment afgebroken van een gebarsten GOUDEN ZEGEL / kroonrand van de
-      Erfprins: bureaucratisch-koninklijk, een afdruk van een wassen stempel half zichtbaar,
-      warme amberen gloed langs de breuk. Geen gezicht, geen figuur — enkel het scherf-relikwie.
+═══════════════════ STYLE LOCK (identiek in alle 9 — NIET wijzigen) ═══════════════════
+Hand-painted PAINTERLY dark-fantasy GAME-ITEM icon, rich visible brushwork and soft painted
+shading, dramatic moody lighting with a magical glowing engraved inlay. NOT photorealistic, NOT
+a photo, NO photo textures, NOT a 3D or CGI render, NOT anime, NOT cartoon, NOT flat vector, NOT
+a pencil sketch. ONE single broken SHARD object, centered, filling ~70% of a square 1024x1024
+canvas with clear empty margin on all sides, on a FULLY TRANSPARENT (or flat solid BLACK)
+background — no scene, no ground, no hand, no text, no frame, no border, no second object. The
+shard is the SAME dark slate / charcoal-obsidian stone in all nine, with the same chiseled,
+hand-painted finish; only the GLOW-COLOUR and the engraved EMBLEM change.
+═══════════════════════════════════════════════════════════════════════════════════════
 
-  scherf_figuur.png   — "bij een mysterieuze figuur"
-      Een splinter van een BLINDE SPIEGEL of het glas van een gedoofde lantaarn: koud,
-      violet-blauwe gloed, een vage weerspiegeling van iets warms diep in het zwart (niet
-      thuis te brengen). Mysterieus, melancholisch. Geen herkenbaar wezen in de spiegeling.
+HOE DE 9 IN ELKAAR PASSEN
+-------------------------
+KLEUR = de familie (welke metgezel):  drops = KOEL VIOLET-zilver · vlamwachter = WARM AMBER-goud
+        · mosgeest = SMARAGD-groen.   (Een kloppend trio = drie scherven van DEZELFDE gloedkleur.)
+BRON = welk DERDE van het embleem + de breukrand + een klein hoekglyph:
+        baas   = BOVENSTE derde — schone/rechte BOVENrand, gekartelde onderrand · hoekglyph 👑
+        figuur = MIDDELSTE derde — gekartelde boven- én onderrand · hoekglyph 🪞 (spiegel)
+        episch = ONDERSTE derde — gekartelde bovenrand, in een punt naar onderen · hoekglyph 🜂
+Stapel je boven+midden+onder van dezelfde kleur, dan vormen ze samen één rond/wapenschild-
+vormig embleem. Hou het embleem ABSTRACT (geen dier, gezicht of letter) zodat het non-spoiler is.
 
-  scherf_episch.png   — "van een epische vijand"
-      Een brok obsidiaan/verkoold steen waarin het alchemistische teken 🜂 (vuur-driehoek)
-      gegraveerd staat, gloeiende ember-barsten erdoorheen, alsof het net uit een gevecht
-      is bevochten. Krachtig, heet, ondoorgrondelijk.
+────────────────────────────── DE 9 PROMPTS (kopieer per stuk hét hele blok) ──────────────────────────────
 
-KLEUR-LOGICA: baas = amber/goud, figuur = violet/koud, episch = ember/obsidiaan. Samen
-voelen ze als drie stukken van één groter, onleesbaar geheel.
+### drops_baas.png
+[STYLE LOCK] A broken obsidian shard, the TOP third of a round emblem: a straight clean TOP edge and
+a jagged torn BOTTOM edge. Engraved into it, glowing COOL VIOLET-SILVER, the upper arc of an abstract
+unbroken interlocking knot (a loyalty-sigil — abstract, no animal). A tiny faint CROWN glyph etched in
+one corner; a faint thread of gold leaf along the clean top edge. Cold violet inner glow.
+
+### drops_figuur.png
+[STYLE LOCK] A broken obsidian shard, the MIDDLE third of a round emblem: jagged torn edges on BOTH top
+and bottom. Engraved into it, glowing COOL VIOLET-SILVER, the central crossing of the same abstract
+interlocking loyalty-knot. A tiny faint MIRROR glyph etched in one corner; a faint cold reflective
+sheen across the stone. Cold violet inner glow.
+
+### drops_episch.png
+[STYLE LOCK] A broken obsidian shard, the BOTTOM third of a round emblem: a jagged torn TOP edge tapering
+to a downward POINT. Engraved into it, glowing COOL VIOLET-SILVER, the lower loop of the same abstract
+interlocking loyalty-knot. A tiny faint 🜂 fire-triangle glyph etched in one corner; faint ember-cracks.
+Cold violet inner glow.
+
+### vlamwachter_baas.png
+[STYLE LOCK] A broken obsidian shard, the TOP third of a round emblem: a straight clean TOP edge and a
+jagged torn BOTTOM edge. Engraved into it, glowing WARM AMBER-GOLD, the upward tip of an abstract stylised
+vigilant FLAME emblem (a watchful warding flame — abstract, no face). A tiny faint CROWN glyph in one
+corner; a faint thread of gold leaf along the clean top edge. Warm amber inner glow.
+
+### vlamwachter_figuur.png
+[STYLE LOCK] A broken obsidian shard, the MIDDLE third of a round emblem: jagged torn edges top and bottom.
+Engraved into it, glowing WARM AMBER-GOLD, the central body of the same abstract warding-flame emblem. A
+tiny faint MIRROR glyph in one corner; a faint warm reflective sheen across the stone. Warm amber inner glow.
+
+### vlamwachter_episch.png
+[STYLE LOCK] A broken obsidian shard, the BOTTOM third of a round emblem: jagged torn TOP edge tapering to
+a downward POINT. Engraved into it, glowing WARM AMBER-GOLD, the base/embers of the same abstract warding-
+flame emblem. A tiny faint 🜂 fire-triangle glyph in one corner; faint ember-cracks. Warm amber inner glow.
+
+### mosgeest_baas.png
+[STYLE LOCK] A broken obsidian shard, the TOP third of a round emblem: a straight clean TOP edge and a
+jagged torn BOTTOM edge. Engraved into it, glowing EMERALD-GREEN, the top curl of an abstract spiralling
+SPROUT / budding vine emblem (a sigil of growth — abstract, no leaves recognizable as a plant species). A
+tiny faint CROWN glyph in one corner; a faint thread of gold leaf along the clean top edge. Green inner glow.
+
+### mosgeest_figuur.png
+[STYLE LOCK] A broken obsidian shard, the MIDDLE third of a round emblem: jagged torn edges top and bottom.
+Engraved into it, glowing EMERALD-GREEN, the central coil of the same abstract spiralling sprout emblem. A
+tiny faint MIRROR glyph in one corner; a faint cool reflective sheen across the stone. Green inner glow.
+
+### mosgeest_episch.png
+[STYLE LOCK] A broken obsidian shard, the BOTTOM third of a round emblem: jagged torn TOP edge tapering to a
+downward POINT. Engraved into it, glowing EMERALD-GREEN, the root/base of the same abstract spiralling sprout
+emblem. A tiny faint 🜂 fire-triangle glyph in one corner; faint ember-cracks. Green inner glow.
 
 
-WERKWIJZE (zoals de andere full-scene art, bv. relikwieën)
----------------------------------------------------------
-  1. Genereer de drie scherven het liefst in DEZELFDE sessie met hetzelfde stijlblok, zodat
-     ze als één set aanvoelen — verander enkel de objectbeschrijving.
+WERKWIJZE
+---------
+  1. Genereer het liefst PER FAMILIE (de 3 drops samen, dan de 3 vlamwachter, dan de 3 mosgeest) in
+     één sessie, met telkens hetzelfde STYLE LOCK-blok → zo zijn de 3 delen echt één sigil.
   2. Sla op onder exact de bestandsnamen hierboven (PNG) in assets/scherven/.
-  3. Drop in assets/scherven/ → vraag Claude "ruim de nieuwe scherven op"
-     = ENKEL  python .claude/converteer_webp.py   (GEEN verwijder_dambord.py — het is al
-       een vrijstaand object op transparant, net als kaart-/relikwie-art).
-  4. Claude bumpt daarna de service-worker-cache (CACHE = 'slayit-vNN' in sw.js) zodat de
-     nieuwe art op gsm/desktop doorkomt.
+  3. Het zijn vrijstaande objecten op transparant/zwart → ENKEL  python .claude/converteer_webp.py
+     (GEEN verwijder_dambord.py). Daarna bumpt Claude de service-worker-cache.
