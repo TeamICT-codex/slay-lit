@@ -4792,7 +4792,8 @@ function bronIcoon(bron) { return bron === 'baas' ? '👑' : bron === 'figuur' ?
 function toonDrempel() {
   drempelGeplaatst = [null, null, null];
   toonScherm('einde');
-  schermAchtergrond('einde', actBg('kaart'), 0.5, 'center');
+  /* eigen poortscène (de drie nissen + de slapende Wachter) i.p.v. de Act 1-kaartplaat */
+  schermAchtergrond('einde', 'achtergronddrempel.webp', 0.5, 'center');
   Klank.muziek('stil');
   renderDrempel();
 }
