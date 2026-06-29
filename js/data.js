@@ -750,6 +750,15 @@ const KAARTEN = {
  'perkamentslag', 'doorslag_doornen', 'kolenstempel', 'het_origineel_kaart'
 ].forEach(id => KAARTEN[id].held = 'thoverk');
 
+/* Act 2-gating: deze 11 held-eigen Archief-kaarten horen NIET in de Act 1-beloningspool
+   (net als de 4 neutrale Act 2-kaarten die al act:2 dragen). De beloningsgate leest k.act
+   → (!k.act || k.act <= huidigeAct()). Zonder dit lekten o.a. in_drievoud (12 dmg/1 kost) en
+   inktklerk_steek (0-kost 4dmg+2gif) al in Act 1 en domineerden ze de Act 1-kaarten strikt. */
+['afgekeurd', 'in_drievoud', 'originele_handtekening', 'geindexeerd',
+ 'naaperij', 'inktklerk_steek', 'registerrot',
+ 'perkamentslag', 'doorslag_doornen', 'kolenstempel', 'het_origineel_kaart'
+].forEach(id => { KAARTEN[id].act = 2; });
+
 /* ---------- SPEELBARE HELDEN ---------- */
 const SPELERS = {
   slachter: {
