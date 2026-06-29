@@ -191,8 +191,8 @@ body[data-modus="mobiel"] #scherm-gevecht .speler-naam { display: none; }
    16px is het symmetrische compromis (klein ↔ normaal). */
 body[data-modus="mobiel"] #scherm-gevecht #speler-zone { margin-bottom: 2px; }   /* held-voet op gelijke hoogte met de vijanden (de naam ligt nu óp de balk → geen extra naam-rij meer te compenseren) */
 /* klein-vijanden (slijm/rat…) zakken ~8px door hun scale(.82) (origin bottom-center) → til ze terug
-   naar de grondlijn zodat held + normale + grote + kleine vijanden allemaal op één voetlijn staan.
-   (Groot zit al goed gemeten.) De -10px translate staat vóór de scale → visueel ~8px omhoog. */
+   naar de grondlijn zodat held + normale + grote + kleine vijanden allemaal op één voetlijn staan
+   (ook de slijm-adds in een baasgevecht). De -10px translate staat vóór de scale → visueel ~8px omhoog. */
 body[data-modus="mobiel"] #scherm-gevecht .vijand.vijand-klein { transform: scale(.82) translateY(-10px); transform-origin: bottom center; }
 /* VIJAND-NAAM OP DE HP-BALK i.p.v. een losse regel eronder (scheelt een rij in de stapel →
    strakker + beter uitgelijnd, en niet meer los onder het character). De naam ligt als compacte
@@ -369,7 +369,7 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] .is-episch .vijand-art { width: clamp(100px, 32vh, 174px); height: clamp(100px, 32vh, 174px); }
   /* baas groter: hij is HET monster — vh-factor omhoog zodat hij op echte telefoons
      (≈360–500px hoog) imposant oogt; min/max houden 'm leesbaar én onder de topbalk */
-  body[data-modus="mobiel"] .is-baas .vijand-art { width: clamp(104px, 31vh, 190px); height: clamp(104px, 31vh, 190px); }
+  body[data-modus="mobiel"] .is-baas .vijand-art { width: clamp(120px, 42vh, 210px); height: clamp(120px, 42vh, 210px); }
   body[data-modus="mobiel"] #vijanden-rij { gap: 10px; flex-wrap: nowrap; max-width: none; }
   /* (baas: eigen HP-balk wegwerken staat nu onvoorwaardelijk in sectie A, zodat
      het óók in portret-baasgevechten geldt — niet enkel liggend.) */
