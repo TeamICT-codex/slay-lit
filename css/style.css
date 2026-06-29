@@ -1939,6 +1939,26 @@ body.lite .onthul-kaart.bijzonder:not(.open) .kaart-rug { animation: none; }
 .best-nav { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
 .best-nav .knop-stil { min-width: 54px; }
 
+/* ---------- SCHERVEN-COLLECTIE in de Codex (alle 9, 3 trio's) ---------- */
+.codex-scherf-uitleg { color: var(--perkament-dof); font-size: .88rem; line-height: 1.5; margin: 0 0 10px; max-width: 46em; }
+.scherf-cx-rooster { display: flex; flex-wrap: wrap; gap: 14px; }
+.scherf-cx-trio {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 12px; border-radius: 12px;
+  border: 1px solid rgba(170, 140, 255, .28); background: linear-gradient(160deg, rgba(36, 26, 54, .7), rgba(18, 13, 28, .85));
+}
+.scherf-cx-trio.compleet { border-color: rgba(190, 160, 255, .6); box-shadow: 0 0 14px rgba(150, 110, 220, .3); }
+.scherf-cx-trio.ontgrendeld { border-color: rgba(255, 200, 120, .5); box-shadow: 0 0 12px rgba(255, 180, 90, .22); }
+.scherf-cx-slots { display: flex; gap: 8px; }
+.scherf-cx-slot {
+  width: 58px; height: 58px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; border: 1px solid rgba(150, 120, 210, .3); background: rgba(20, 14, 32, .6); overflow: hidden;
+}
+.scherf-cx-slot.leeg { border-style: dashed; color: rgba(185, 165, 235, .45); }
+.scherf-cx-slot img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .5)); }
+.scherf-cx-trio small { color: var(--perkament-dof); font-size: .78rem; }
+.scherf-cx-trio.compleet small { color: #cbb0ff; }
+.scherf-cx-trio.ontgrendeld small { color: #ffd79a; }
+
 /* ---------- de Drempel (scherven-ritueel tussen Act 1 en Act 2) ---------- */
 .drempel-scene { display: flex; flex-direction: column; align-items: center; gap: 13px; max-width: 780px; margin: 0 auto; padding: 10px; }
 .drempel-lore { max-width: 40em; font-style: italic; }

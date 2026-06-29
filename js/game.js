@@ -2726,6 +2726,35 @@ function mysterieRiteHint(mid) {
   return 'Het antwoord wacht in het <b>donker dat je niet dúrft te maken</b> — bij de Erfprins.';
 }
 /* de Codex-sectie "Onopgeloste Mysteries" (lege string als er niets te tonen is) */
+/* SCHERVEN-COLLECTIE in de Codex: alle 9 (3 trio's) — gevonden = fragment-art, rest = ❓.
+   Leest de PLATTE stash (Codex.scherven) + de gedragen tas; het oude mysterieCodexBlok hing aan
+   Codex.mysteries[mid].scherven dat de Drempel-aanpak niet meer vult (→ leeg). Spoilt niet WELKE
+   metgezel een trio wekt (geen namen), wél hoeveel je hebt + dat 3-die-passen een bondgenoot roept. */
+function scherfCodexBlok() {
+  const M = window.MYSTERIES; if (!M) return '';
+  const heeft = sid => scherfStash().includes(sid) || gedragen().includes(sid);
+  const alle = alleScherfIds();
+  const gevonden = alle.filter(heeft).length;
+  const trios = Object.keys(M).map(mid => {
+    const vereist = M[mid].vereist || [];
+    if (!vereist.length) return '';
+    const ontg = isOntgrendeld(mid);
+    const n = vereist.filter(heeft).length;
+    const slots = vereist.map(sid => {
+      const d = scherfDef(sid);
+      return heeft(sid)
+        ? `<div class="scherf-cx-slot vol" data-shart="${sid}" data-tip="${(d && d.codexTekst) || ''}">${d ? bronIcoon(d.bron) : '🜂'}</div>`
+        : `<div class="scherf-cx-slot leeg" data-tip="??? — nog te vinden (${mysterieBronLabel(d && d.bron)})">❓</div>`;
+    }).join('');
+    const klasse = ontg ? 'ontgrendeld' : (n === vereist.length ? 'compleet' : '');
+    const label = ontg ? '✓ bondgenoot ontwaakt' : (n === vereist.length ? '✦ trio compleet — naar De Drempel' : n + '/' + vereist.length);
+    return `<div class="scherf-cx-trio ${klasse}"><div class="scherf-cx-slots">${slots}</div><small>${label}</small></div>`;
+  }).join('');
+  return `<h3 class="codex-kop">🜂 Scherven <small>${gevonden} / ${alle.length}</small></h3>
+    <p class="codex-scherf-uitleg">Drie scherven die samenpassen roepen bij De Drempel (Act 1→2) een bondgenoot op. Wat je veilig bankt, blijft over al je afdalingen heen.</p>
+    <div class="scherf-cx-rooster">${trios}</div>`;
+}
+
 function mysterieCodexBlok() {
   const M = window.MYSTERIES; if (!M) return '';
   const blokken = [];
@@ -2823,7 +2852,7 @@ function toonCodex() {
       const mgart = wit ? 'drops_wit' : (gevallen ? id + '_geest' : id);
       const tip = wit ? ' · 🤍 keerde terug uit het zwart' : (gevallen ? ' · ✝ offerde zich op' : '');
       return `<div class="codex-slot rel-${d.zeld} ${gevallen && !wit ? 'gevallen' : ''}" data-mgart="${mgart}" data-tip="${d.naam}${tip} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${wit ? '🤍' : d.icoon}${gevallen && !wit ? '<span class="codex-kruis">✝</span>' : ''}</div>`;
-    }).join('') + `</div>` + mysterieCodexBlok() + `
+    }).join('') + `</div>` + scherfCodexBlok() + `
     <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt + mgOntdekt === rels.length + dranks.length + mgs.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
     <small>🗝️ = opgeladen: dit relikwie kun je bij een nieuwe run éénmalig meenemen uit het Schrijn.</small></p>`;
   verfraaiItemArt($('#overlay-codex'));   /* incl. het Codex-titelicoon (data-icoon) */
