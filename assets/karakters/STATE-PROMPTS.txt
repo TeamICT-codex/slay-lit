@@ -901,23 +901,37 @@ Pose: the gathered mass comes apart — the trapped souls tear free and stream u
 fading violet wisps, the writhing tendrils going limp, the central void collapsing inward
 to nothing. The hunger finally emptied.
 
+### v2 (magenta-basis): de drempelwachter staat nu op PURE-MAGENTA #FF00FF + VOLLEDIG FIGUUR.
+### Anker de NIEUWE de_drempelwachter.png; behoud zwart-vuur-lichaam, geen magenta/roze op de figuur.
+
 =================== de_drempelwachter_attack.png ===================
-Use the attached reference image (de_drempelwachter.png): the EXACT same Balrog-like threshold
-guardian of black fire and shadow, same horns, same molten-red/violet inner fire, same
-painterly style, facing LEFT, transparent/black. Change ONLY the pose.
-Pose: it cracks its long WHIP of black flame forward in a great arc to the left, the fissures
-across its obsidian body flaring molten RED, wings of black smoke flung wide, roaring —
-"JE KOMT ER NIET LANGS!". Immense, primal.
+Use the attached reference image (de_drempelwachter.png): the EXACT same colossal Balrog-like threshold
+guardian — same cracked obsidian-and-charcoal body with ember-RED + violet inner fire through the
+fissures, same horns, same hollow burning eyes, same furled black-flame wings, same THIN ember rim-light,
+same painterly hand-painted style (NOT photo, NO 3D, no CGI shine), same slight side angle FACING LEFT,
+same FULL-BODY head-to-feet framing, on the same flat PURE-MAGENTA #FF00FF chroma-key background (NO
+magenta/pink anywhere on the body). Change ONLY the pose.
+Pose (ATTACK): it CRACKS its long whip of black flame forward in a great arc to the LEFT, the fissures
+across its obsidian body flaring brighter molten-RED, wings of black flame thrown wide but kept INSIDE
+the frame margin, roaring — "JE KOMT ER NIET LANGS!". Immense, primal. Keep the whip-arc and wings tight
+and contained (no smoke/embers wisping to the edges); ONE closed opaque silhouette for a clean magenta cut.
+Accent: de naar links geslagen zwart-vuur-zweep + fel oplichtende ember-barsten.
 
 =================== de_drempelwachter_hit.png ===================
-Use the attached reference image (de_drempelwachter.png): same creature/style/left.
-Change ONLY the pose.
-Pose: it rears back, the black-fire wings flaring and the ember-cracks across its body
-brightening from the impact, one clawed hand thrown up — staggered but unbroken.
+Use the attached reference image (de_drempelwachter.png): same colossal Balrog guardian / obsidian body /
+horns / inner fire / furled wings / painterly style, FACING LEFT, FULL-BODY, on the same PURE-MAGENTA
+#FF00FF chroma-key background (NO magenta/pink on the body). Change ONLY the pose.
+Pose (HIT — recoil): it rears back from a blow, the black-flame wings flaring and the ember-cracks across
+its body brightening from the impact, one clawed hand thrown up — staggered but unbroken. Everything stays
+tight to the body and INSIDE the frame margin, nothing scattering to the edges.
+Accent: oplichtende ember-barsten + opflakkerende schaduwvleugels bij de klap.
 
 =================== de_drempelwachter_death.png ===================
-Use the attached reference image (de_drempelwachter.png): same creature/style/left.
-Change ONLY the pose.
-Pose: the black fire gutters and dies, the molten-red veins cooling to dead grey-black, the
-colossal horned body crumbling apart into cooling cinders and sinking shadow as the gate
-behind it finally falls quiet.
+Use the attached reference image (de_drempelwachter.png): same colossal Balrog guardian and all its
+features, painterly style, FACING LEFT, FULL-BODY, on the same PURE-MAGENTA #FF00FF chroma-key background
+(NO magenta/pink on the body). Change ONLY the pose.
+Pose (DEATH): the black fire GUTTERS and dies, the molten-red/violet veins cooling to dead grey-black, the
+colossal horned body crumbling apart into cooling cinders and sinking shadow as the gate behind it falls
+quiet. Keep it CONTAINED — a settling collapse tight to the body, INSIDE the frame margin (NOT an explosion
+of debris to the edges), one readable shape for a clean cut.
+Accent: dovend zwart vuur, ember-barsten die naar dood grijs-zwart koelen, ineenzakkende kolossus.
