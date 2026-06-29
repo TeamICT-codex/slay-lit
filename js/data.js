@@ -1647,7 +1647,7 @@ const EVENTS = [
     opties: [
       {
         label: 'Luister naar zijn raadsel', detail: 'Een scherf van een groter geheim.',
-        doe: () => { const sid = vindScherf('figuur'); if (!sid) return 'De figuur is al verstomd.'; const d = scherfDef(sid); return (d ? d.codexTekst : '') + ' Zijn woorden branden zich in je geheugen — je draagt nu een scherf. 🜂'; }
+        doe: () => { const sid = vindScherf('figuur'); if (!sid) return 'De figuur is al verstomd.'; const d = scherfDef(sid); toonScherfReveal(sid, { kop: '🜂 EEN RAADSEL WORDT EEN SCHERF' }); return (d ? d.codexTekst : '') + ' Zijn woorden branden zich in je geheugen — je draagt nu een scherf. 🜂'; }
       },
       { label: 'Loop door', detail: 'Het donker heeft genoeg geheimen.', doe: () => 'Je laat de figuur in zijn duister achter.' }
     ]
@@ -1659,7 +1659,7 @@ const EVENTS = [
     opties: [
       {
         label: 'Tuur in de blinde spiegel', detail: 'Een scherf van een groter geheim.',
-        doe: () => { const sid = vindScherf('figuur'); if (!sid) return 'De spiegel is weer blind.'; const d = scherfDef(sid); return 'Heel even toont de spiegel iets in het zwart. ' + (d ? d.codexTekst : '') + ' 🜂'; }
+        doe: () => { const sid = vindScherf('figuur'); if (!sid) return 'De spiegel is weer blind.'; const d = scherfDef(sid); toonScherfReveal(sid, { kop: '🜂 DE SPIEGEL TOONT EEN SCHERF' }); return 'Heel even toont de spiegel iets in het zwart. ' + (d ? d.codexTekst : '') + ' 🜂'; }
       },
       { label: 'Zeg niets', detail: 'Je vertrouwt het niet.', doe: () => 'Je zwijgt. De spiegelaar vervaagt in het donker.' }
     ]
