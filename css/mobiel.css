@@ -327,18 +327,28 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      breakpoint — zo passen ze vloeiend op élk telefoonformaat (≈320–600px hoog
      liggend) zonder cliffs, en blijft de baas onder de #baas-balk (de min houdt 'm
      leesbaar op piepkleine schermen, de max groot genoeg op grote telefoons/tablets). */
-  body[data-modus="mobiel"] .speler-figuur { width: clamp(92px, 26vh, 138px); height: clamp(92px, 26vh, 138px); }
-  body[data-modus="mobiel"] .vijand-art { width: clamp(64px, 21vh, 112px); height: clamp(64px, 21vh, 112px); }
-  body[data-modus="mobiel"] .is-elite .vijand-art { width: clamp(88px, 24vh, 128px); height: clamp(88px, 24vh, 128px); }
-  body[data-modus="mobiel"] .is-episch .vijand-art { width: clamp(92px, 27vh, 150px); height: clamp(92px, 27vh, 150px); }
+  /* figuren FORS groter (vijanden waren te klein in beeld): vh-factor + max omhoog.
+     Ze groeien vanaf de grondlijn omhoog; de kortere onderbalk (zie #onderbalk hieronder)
+     laat de hele rij bovendien ZAKKEN, zodat naam/hp-balk deels achter de kaartrij mogen
+     vallen (tik-op-figuur toont de statussen toch). */
+  /* vh-factor is een LINEAIRE helling over de schermhoogte: te steil → korte telefoons
+     (≈340–390px hoog liggend) lopen de intent-rij achter de topbalk. 26vh is de robuuste
+     bovengrens die de hele range (≈340–600px) past én de vijanden duidelijk groter zet
+     dan voorheen (87→~108px op een 414px-scherm, +24%). De kortere onderbalk laat de rij
+     bovendien ZAKKEN zodat naam/hp/status deels achter de kaartrij vallen (tik-op-figuur
+     toont de statussen toch — bewuste keuze: grotere tegenstanders in beeld). */
+  body[data-modus="mobiel"] .speler-figuur { width: clamp(92px, 26vh, 146px); height: clamp(92px, 26vh, 146px); }
+  body[data-modus="mobiel"] .vijand-art { width: clamp(74px, 26vh, 144px); height: clamp(74px, 26vh, 144px); }
+  body[data-modus="mobiel"] .is-elite .vijand-art { width: clamp(94px, 29vh, 158px); height: clamp(94px, 29vh, 158px); }
+  body[data-modus="mobiel"] .is-episch .vijand-art { width: clamp(100px, 32vh, 174px); height: clamp(100px, 32vh, 174px); }
   /* baas groter: hij is HET monster — vh-factor omhoog zodat hij op echte telefoons
      (≈360–500px hoog) imposant oogt; min/max houden 'm leesbaar én onder de topbalk */
-  body[data-modus="mobiel"] .is-baas .vijand-art { width: clamp(98px, 30vh, 176px); height: clamp(98px, 30vh, 176px); }
+  body[data-modus="mobiel"] .is-baas .vijand-art { width: clamp(104px, 31vh, 190px); height: clamp(104px, 31vh, 190px); }
   body[data-modus="mobiel"] #vijanden-rij { gap: 10px; flex-wrap: nowrap; max-width: none; }
   /* (baas: eigen HP-balk wegwerken staat nu onvoorwaardelijk in sectie A, zodat
      het óók in portret-baasgevechten geldt — niet enkel liggend.) */
 
-  body[data-modus="mobiel"] #onderbalk { height: 150px; }
+  body[data-modus="mobiel"] #onderbalk { height: 122px; }
   /* de hele kaartrij rust ~1/5 ONDER de schermrand: je tikt een kaart toch aan
      (preview licht 'm volledig op), dus dit wint verticale ruimte voor het
      slagveld zonder leesbaarheid te kosten. De tik-lift is opgekrikt zodat de
@@ -367,5 +377,5 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
    verder van de topbalk/​baasbalk zakken. De HUD/stapels hangen aan de schermbodem
    (bottom-offset), dus die bewegen niet mee. */
 @media (orientation: landscape) and (max-height: 440px) {
-  body[data-modus="mobiel"] #onderbalk { height: 126px; }
+  body[data-modus="mobiel"] #onderbalk { height: 98px; }
 }
