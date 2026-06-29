@@ -190,6 +190,10 @@ body[data-modus="mobiel"] #scherm-gevecht .speler-naam { display: none; }
    verschillende voet-hoogtes (klein lager, groot hoger) → exact uitlijnen met álle maten kan niet;
    16px is het symmetrische compromis (klein ↔ normaal). */
 body[data-modus="mobiel"] #scherm-gevecht #speler-zone { margin-bottom: 2px; }   /* held-voet op gelijke hoogte met de vijanden (de naam ligt nu óp de balk → geen extra naam-rij meer te compenseren) */
+/* klein-vijanden (slijm/rat…) zakken ~8px door hun scale(.82) (origin bottom-center) → til ze terug
+   naar de grondlijn zodat held + normale + grote + kleine vijanden allemaal op één voetlijn staan.
+   (Groot zit al goed gemeten.) De -10px translate staat vóór de scale → visueel ~8px omhoog. */
+body[data-modus="mobiel"] #scherm-gevecht .vijand.vijand-klein { transform: scale(.82) translateY(-10px); transform-origin: bottom center; }
 /* VIJAND-NAAM OP DE HP-BALK i.p.v. een losse regel eronder (scheelt een rij in de stapel →
    strakker + beter uitgelijnd, en niet meer los onder het character). De naam ligt als compacte
    caption met schaduw over de balk; de negatieve margin trekt de hp-balk eronder omhoog. Het
