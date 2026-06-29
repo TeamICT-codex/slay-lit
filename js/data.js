@@ -1642,7 +1642,7 @@ const EVENTS = [
      actieve mysterie → de hint verschilt per metgezel zonder te verklappen wélke. */
   {
     id: 'lantaarndrager', titel: 'De Gedoofde Lantaarndrager', icoon: '🏮',
-    toon: () => huidigeAct() >= 1 && typeof scherfTeVinden === 'function' && scherfTeVinden('figuur'),
+    toon: () => huidigeAct() >= 2 && typeof scherfTeVinden === 'function' && scherfTeVinden('figuur'),
     tekst: 'Een gebogen figuur zit in het donker, een gedóófde lantaarn in de hand. „Iedereen hierbeneden jaagt op iets," fluistert hij. „Maar weet jij wel wát jou volgt? Luister..."',
     opties: [
       {
@@ -1654,7 +1654,7 @@ const EVENTS = [
   },
   {
     id: 'spiegelaar', titel: 'De Naamloze Spiegelaar', icoon: '🪞',
-    toon: () => huidigeAct() >= 1 && typeof scherfTeVinden === 'function' && scherfTeVinden('figuur'),
+    toon: () => huidigeAct() >= 2 && typeof scherfTeVinden === 'function' && scherfTeVinden('figuur'),
     tekst: 'Een gestalte houdt je een blinde spiegel voor. „Alles hierbeneden is na te maken," zegt ze. „Op één ding na — en dát is precies wat jou zoekt. Kijk goed."',
     opties: [
       {

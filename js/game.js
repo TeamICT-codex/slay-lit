@@ -3853,7 +3853,7 @@ async function gevechtGewonnen() {
   /* een episch-vijand-gevecht laat bij winst een episch-scherf vallen (bankt op je stash) */
   if (g.epischScherf) { const sid = vindScherf('episch'); if (sid) toonScherfReveal(sid, { kop: '🜂 DE EPISCHE VIJAND LAAT IETS NA' }); }
   /* Act 1+: elite-winst kan een willekeurige scherf opleveren → je verzamelt ze gaandeweg, ook in Act 1 */
-  else if (g.soort === 'elite' && willekeurig() < 0.5) { const sid = vindScherf(); if (sid) toonScherfReveal(sid, { kop: '🜂 TUSSEN DE RESTEN GLINSTERT IETS' }); }
+  else if (g.soort === 'elite' && huidigeAct() >= 2 && willekeurig() < 0.5) { const sid = vindScherf(); if (sid) toonScherfReveal(sid, { kop: '🜂 TUSSEN DE RESTEN GLINSTERT IETS' }); }
   /* metgezel-HP uit dit gevecht meenemen naar de run-state (gaat mee naar het volgende) */
   if (g.metgezel && !g.metgezel.dood && S.metgezel && !S.metgezel.vluchtig) S.metgezel.hp = g.metgezel.hp;
   if (window.Vista) Vista.pose(g.speler, 'victory', 2.5);

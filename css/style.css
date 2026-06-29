@@ -1904,6 +1904,16 @@ body.lite .onthul-kaart.bijzonder:not(.open) .kaart-rug { animation: none; }
 .scherf-reveal-flavor { max-width: 28em; color: var(--perkament); font-style: italic; font-size: 1.02rem; line-height: 1.5; margin: 0; }
 .scherf-reveal-sub { color: var(--perkament-dof); font-size: .86rem; margin: 0; }
 .scherf-reveal-sluit { margin-top: 4px; }
+/* kort scherm (mobiel liggend ≈≤620px hoog): de reveal-overlays krompen zodat de 'Verder'-knop
+   niet meer onder de schermrand valt — kleinere fragment-art + strakkere tussenruimte/fonts.
+   Geldt op alle drie de reveals (scherf/kaart/vloek). */
+@media (max-height: 620px) {
+  .scherf-reveal-binnen, .kaart-reveal-binnen, .vloek-reveal-binnen { gap: 6px; padding: 8px 16px; }
+  .scherf-reveal-kop, .kaart-reveal-kop, .vloek-reveal-kop { font-size: clamp(1rem, 4vw, 1.35rem); }
+  .scherf-reveal-art { width: clamp(96px, 30vh, 180px); height: clamp(96px, 30vh, 180px); }
+  .scherf-reveal-flavor, .kaart-reveal-flavor, .vloek-reveal-flavor { font-size: .85rem; line-height: 1.32; }
+  .scherf-reveal-sub { font-size: .78rem; }
+}
 
 /* ---------- HET BESTIARIUM (doorbladerbaar artbook) ---------- */
 .best-intro { text-align: center; color: var(--perkament-dof); margin: 0 0 12px; font-size: .96rem; }
