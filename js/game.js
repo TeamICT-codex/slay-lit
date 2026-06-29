@@ -2333,7 +2333,7 @@ function stopGevechtLus() {
 
 /* grootte-variatie: kleine basics krimpen, een paar imposante wezens groeien (puur
    visueel via transform-scale, origin bottom → geen reflow/grondlijn-breuk). Tunebaar. */
-const VIJAND_KLEIN = new Set(['groene_slijm', 'blauwe_slijm', 'grotrat', 'naaper', 'mal_gietsel', 'doorslag_kopie', 'echo', 'kultist', 'pekziel']);
+const VIJAND_KLEIN = new Set(['groene_slijm', 'blauwe_slijm', 'grotrat', 'naaper', 'mal_gietsel', 'doorslag_kopie', 'echo', 'pekziel']);
 const VIJAND_GROOT = new Set(['steengolem', 'dossierwurm', 'de_deadline', 'de_inktvlek', 'grombaard']);
 /* ENTREE-VARIANT per vijand (2D): een eigen binnenkomst op maat van het wezen. Niet vermeld
    = de standaard glij-in-van-rechts. 'geest' = materialiseert traag, ijl, vanuit de zijkant;
