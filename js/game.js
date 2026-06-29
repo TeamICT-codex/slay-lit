@@ -150,7 +150,7 @@ const Codex = Object.assign(
   /* loopbaan over alle runs heen: runs/wins/diepterecord per held, laatste runs,
      en het hoogst-ontgrendelde ascensieniveau per held. Bestaande saves missen
      deze sleutels → Object.assign houdt dan deze defaults aan (migratie). */
-  { relikwieen: [], dranken: [], metgezellen: [], gevallen: [], opgeladen: null, runs: 0, wins: 0, bestDiepte: {}, gesch: [], ascensie: {}, mysteries: {}, scherven: [], erfprinsOntmoetingen: 0, copycatGebroken: false },
+  { relikwieen: [], dranken: [], metgezellen: [], gevallen: [], opgeladen: null, runs: 0, wins: 0, bestDiepte: {}, gesch: [], ascensie: {}, mysteries: {}, scherven: [], gezien: [], erfprinsOntmoetingen: 0, copycatGebroken: false },
   JSON.parse(localStorage.getItem(CODEX_SLEUTEL) || '{}')
 );
 /* migratie: wie al ontdekkingen had, krijgt ze meteen opgeladen in het Schrijn */
@@ -176,12 +176,21 @@ Codex.ascensie = Object.fromEntries(Object.entries(Codex.ascensie || {}).filter(
 Codex.bestDiepte = Object.fromEntries(Object.entries(Codex.bestDiepte || {}).filter(([k]) => _geldigeHeld(k)).map(([k, v]) => [k, Math.max(0, +v || 0)]));
 if (!Array.isArray(Codex.metgezellen)) Codex.metgezellen = [];   /* migratie: oude codex mist deze sleutel */
 if (!Array.isArray(Codex.gevallen)) Codex.gevallen = [];         /* metgezellen die zich opofferden (gedenkplek) */
+if (!Array.isArray(Codex.gezien)) Codex.gezien = [];             /* bestiarium: vijanden die je écht tegenkwam (artbook-gating) */
 Codex.dropsZaadjeNul = !!Codex.dropsZaadjeNul;                    /* grief: is het 'zaadje-nul'-vonkje (eerste doof ná Drops' dood) al ooit getoond? */
 Codex.dropsOfferRun = Math.max(0, +Codex.dropsOfferRun || 0);    /* ijkpunt Drops-de-Witte-grief-gate: numeriek klemmen (corrupte save mag de reünie niet blokkeren) */
 /* het Metgezel-Mysterie: per-metgezel voortgang (scherven/rijp/voltooid) + baas-teller */
 if (typeof Codex.mysteries !== 'object' || !Codex.mysteries || Array.isArray(Codex.mysteries)) Codex.mysteries = {};
 Codex.erfprinsOntmoetingen = Math.max(0, +Codex.erfprinsOntmoetingen || 0);
 function bewaarCodex() { localStorage.setItem(CODEX_SLEUTEL, JSON.stringify(Codex)); }
+
+/* artbook: onthoud welke vijanden je écht hebt ontmoet (cross-run, persistent) — gate voor het
+   Bestiarium. Alleen vijanden met een BESTIARIUM-lore-entry tellen (spawns/naamloze tellen niet). */
+function markeerGezien(id) {
+  if (typeof BESTIARIUM === 'undefined' || !BESTIARIUM[id]) return;
+  if (!Array.isArray(Codex.gezien)) Codex.gezien = [];
+  if (!Codex.gezien.includes(id)) { Codex.gezien.push(id); bewaarCodex(); }
+}
 
 /* ---------- de Dagelijkse afdaling: iedereen speelt dezelfde dag-run ---------- */
 const DAILY_SLEUTEL = 'slayit_daily';
@@ -946,6 +955,67 @@ function toonVloekReveal(kaartId, flavor) {
   ov.querySelector('.vloek-reveal-sluit').onclick = sluit;
   ov.addEventListener('click', e => { if (e.target === ov) sluit(); });
   ov._timer = setTimeout(sluit, 6500);
+  return ov;
+}
+
+/* KAART-REVEAL (boon): een VERKREGEN kaart (offer/altaar/event) komt groot en met GEWICHT in beeld —
+   slam-in + schittering + rariteits-gloed, à la de vloek-reveal maar feestelijk i.p.v. duister. */
+function toonKaartReveal(kaartId, opts) {
+  opts = opts || {};
+  const c = (typeof nieuweKaart === 'function') ? nieuweKaart(kaartId) : { id: kaartId, uid: 'kreveal' };
+  const zeld = (kdef(c) && kdef(c).zeld) || 'gewoon';
+  document.querySelectorAll('.kaart-reveal-overlay, .vloek-reveal-overlay').forEach(n => n.remove());
+  const ov = document.createElement('div');
+  ov.className = 'kaart-reveal-overlay zeld-' + zeld;
+  ov.innerHTML = `
+    <div class="kaart-reveal-binnen">
+      <div class="kaart-reveal-kop">${opts.kop || '✨ EEN KAART KOMT TOT JE'}</div>
+      <div class="kaart-reveal-kaartwrap">
+        <div class="kreveal-straal"></div>
+        <div class="kaart-focus-houder"><div class="focus-rij">
+          ${kaartHtml(c, false).replace('kaart groot', 'kaart groot kaart-focus zeldglans-' + zeld)}
+        </div></div>
+      </div>
+      ${opts.flavor ? `<div class="kaart-reveal-flavor">${opts.flavor}</div>` : ''}
+      <button class="knop-stil kaart-reveal-sluit">Verder ↓</button>
+    </div>`;
+  document.body.appendChild(ov);
+  if (typeof verfraaiKaartIconen === 'function') verfraaiKaartIconen(ov);
+  Klank.sfx(opts.klank || 'schitter'); setTimeout(() => Klank.sfx('schitter'), 220); schudScherm();
+  const sluit = () => { if (!ov.isConnected) return; clearTimeout(ov._timer); ov.classList.add('weg'); setTimeout(() => ov.remove(), 360); };
+  ov.querySelector('.kaart-reveal-sluit').onclick = sluit;
+  ov.addEventListener('click', e => { if (e.target === ov) sluit(); });
+  ov._timer = setTimeout(sluit, 6500);
+  return ov;
+}
+
+/* SCHERF-REVEAL: een gevonden scherf-fragment komt groot en mysterieus in beeld (i.p.v. een vluchtige
+   melding) — de fragment-art slamt in met een violette gloed + de cryptische codextekst eronder. */
+function toonScherfReveal(sid, opts) {
+  opts = opts || {};
+  const d = (typeof scherfDef === 'function') ? scherfDef(sid) : null;
+  document.querySelectorAll('.scherf-reveal-overlay').forEach(n => n.remove());
+  const ov = document.createElement('div');
+  ov.className = 'scherf-reveal-overlay';
+  ov.innerHTML = `
+    <div class="scherf-reveal-binnen">
+      <div class="scherf-reveal-kop">${opts.kop || '🜂 EEN SCHERF KIEST JOU'}</div>
+      <div class="scherf-reveal-art" data-shart="${sid}">${d ? bronIcoon(d.bron) : '🜂'}</div>
+      <div class="scherf-reveal-flavor"><i>${(d && d.codexTekst) || 'Een fragment van iets groters…'}</i></div>
+      <div class="scherf-reveal-sub">Je draagt nu een scherf — neem 'm mee naar de Drempel.</div>
+      <button class="knop-stil scherf-reveal-sluit">Verder ↓</button>
+    </div>`;
+  document.body.appendChild(ov);
+  if (window.laadScherfAfbeelding) {
+    ov.querySelectorAll('[data-shart]').forEach(el => laadScherfAfbeelding(el.dataset.shart, img => {
+      if (img && !el.querySelector('img')) el.innerHTML = `<img src="${img.src}" alt="">`;
+    }));
+  }
+  Klank.sfx('schitter'); setTimeout(() => Klank.sfx('klik'), 260); schudScherm();
+  const sluit = () => { if (!ov.isConnected) return; clearTimeout(ov._timer); ov.classList.add('weg'); setTimeout(() => ov.remove(), 360); };
+  ov.querySelector('.scherf-reveal-sluit').onclick = sluit;
+  ov.addEventListener('click', e => { if (e.target === ov) sluit(); });
+  ov._timer = setTimeout(sluit, 7000);
   return ov;
 }
 
@@ -1921,6 +1991,7 @@ function maakVijand(id, rij) {
     v.gestolen = []; v.gevoed = 0; v.fase = 1; v.terugwinMeter = 0;
     v.maxKlap = 0; v.copyKracht = 0; v.totaalGestolen = 0;
   }
+  markeerGezien(id);   /* artbook: deze vijand staat nu vrij in het Bestiarium */
   return v;
 }
 
@@ -2109,7 +2180,7 @@ function startGevecht(samenstelling, soort, rij) {
        (noteerScherf/checkDropsOntwaak hebben geen daily-gate), dus moet de orakel-
        escalatie consistent meelopen — anders blijft de doof-rite-hint in daily op idx 0. */
     Codex.erfprinsOntmoetingen = (Codex.erfprinsOntmoetingen || 0) + 1; bewaarCodex();
-    const sid = vindScherf('baas'); if (sid) melding('🜂 In de zaal van de Erfprins vind je een scherf (baas).');   /* bankt op je stash → mee te nemen naar de Drempel */
+    const sid = vindScherf('baas'); if (sid) g.baasScherf = sid;   /* bankt op je stash; de weighty reveal volgt bij de overwinning (botst niet met de baas-intro) */
   }
   if (soort === 'baas') misschienBaasIntro(g);   /* enkel als het slagveld zichtbaar is (niet achter de draai-prompt) */
 
@@ -2760,6 +2831,67 @@ function toonCodex() {
   Klank.sfx('klik');
 }
 
+/* ============================================================
+   HET BESTIARIUM — een doorbladerbaar artbook van de vijanden.
+   Een vijand verschijnt PAS nadat je 'm écht hebt ontmoet (Codex.gezien).
+   ============================================================ */
+function bestiariumLijst(act) {
+  return Object.keys(BESTIARIUM).filter(id => (BESTIARIUM[id].act || 1) === act);   /* roster-volgorde */
+}
+function toonBestiarium(act) {
+  act = act || 1;
+  const lijst = bestiariumLijst(act);
+  const gezien = id => (Codex.gezien || []).includes(id);
+  const gezienN = lijst.filter(gezien).length;
+  const slots = lijst.map(id => {
+    const def = VIJANDEN[id], b = BESTIARIUM[id];
+    if (!gezien(id)) return `<div class="best-slot leeg" data-tip="??? — nog niet tegengekomen"><span class="best-art">❓</span><span class="best-naam">???</span></div>`;
+    return `<button class="best-slot" onclick="toonBestiariumPagina('${id}')">
+        <span class="best-art" data-vart="${id}">${def.art || '❓'}</span>
+        <span class="best-naam">${def.naam}</span>
+        <span class="best-soort">${b.soort || ''}</span>
+      </button>`;
+  }).join('');
+  $('#bestiarium-inhoud').innerHTML = `
+    <p class="best-intro">Wat in de diepte huist — maar enkel wat jij met eigen ogen zag. <b>${gezienN} / ${lijst.length}</b> ontdekt.</p>
+    <div class="best-rooster">${slots}</div>
+    <p class="best-voet">${gezienN < lijst.length ? 'Daal verder af om de rest te ontmoeten…' : 'Je kent elke schaduw van de eerste afdaling. 🏆'}</p>`;
+  verfraaiItemArt($('#overlay-bestiarium'));
+  $('#overlay-bestiarium').classList.add('open');
+  Klank.sfx('klik');
+}
+const _BEST_POSES = ['attack', 'hit', 'cast', 'block', 'death'];
+function toonBestiariumPagina(id) {
+  const def = VIJANDEN[id], b = BESTIARIUM[id];
+  if (!def || !b || !(Codex.gezien || []).includes(id)) return;
+  const lijst = bestiariumLijst(b.act || 1).filter(x => (Codex.gezien || []).includes(x));   /* blader enkel door wat je zag */
+  const idx = lijst.indexOf(id);
+  const vorige = lijst[(idx - 1 + lijst.length) % lijst.length];
+  const volgende = lijst[(idx + 1) % lijst.length];
+  const u = (typeof UITSPRAKEN !== 'undefined' && UITSPRAKEN[id]) || null;
+  const citaat = (u && u.start && u.start[0]) || '';
+  const poses = [`<div class="best-pose" data-vart="${id}" data-tip="Basis">${def.art || '❓'}</div>`]
+    .concat(_BEST_POSES.map(p => `<div class="best-pose" data-vart="${id}_${p}" data-optioneel="1" data-tip="${p}"></div>`)).join('');
+  $('#bestiarium-inhoud').innerHTML = `
+    <div class="best-pagina">
+      <div class="best-portret" data-vart="${id}">${def.art || '❓'}</div>
+      <span class="best-soort-chip">${b.soort || ''}${def.hp ? ` · ❤️ ${def.hp[0]}${def.hp[1] !== def.hp[0] ? '–' + def.hp[1] : ''}` : ''}</span>
+      <h3 class="best-titel">${def.naam}${def.titel ? ` <small>— ${def.titel}</small>` : ''}</h3>
+      ${citaat ? `<p class="best-citaat">„${citaat}"</p>` : ''}
+      <p class="best-lore">${b.lore}</p>
+      ${b.notitie ? `<p class="best-notitie">— ${b.notitie}</p>` : ''}
+      <div class="best-poses">${poses}</div>
+      <div class="best-nav">
+        <button class="knop-stil" onclick="toonBestiariumPagina('${vorige}')" data-tip="${VIJANDEN[vorige].naam}">◀</button>
+        <button class="knop-stil" onclick="toonBestiarium(${b.act || 1})">Overzicht</button>
+        <button class="knop-stil" onclick="toonBestiariumPagina('${volgende}')" data-tip="${VIJANDEN[volgende].naam}">▶</button>
+      </div>
+    </div>`;
+  verfraaiItemArt($('#overlay-bestiarium'));
+  $('#overlay-bestiarium').classList.add('open');
+  Klank.sfx('klik');
+}
+
 /* het drankjesboek: zelfde altaarkaart, met de kleur van het brouwsel */
 function bekijkDrank(e, id) {
   if (e) e.preventDefault();
@@ -2824,6 +2956,16 @@ function verfraaiItemArt(wortel) {
     w.querySelectorAll('[data-dart]').forEach(el => {
       laadDrankAfbeelding(el.dataset.dart, img => {
         if (img && !el.querySelector('img')) el.innerHTML = `<img src="${img.src}" alt="">`;
+      });
+    });
+  }
+  /* vijand/karakter-art (bestiarium): data-vart = "<id>" of "<id>_<pose>". Pose-slots zonder
+     eigen art verbergen zich (data-optioneel), zodat alleen bestaande poses tonen. */
+  if (window.laadKarakterAfbeelding) {
+    w.querySelectorAll('[data-vart]').forEach(el => {
+      laadKarakterAfbeelding(el.dataset.vart, img => {
+        if (img && !el.querySelector('img')) el.innerHTML = `<img src="${img.src}" alt="">`;
+        else if (!img && el.dataset.optioneel) el.remove();
       });
     });
   }
@@ -3680,9 +3822,9 @@ async function gevechtGewonnen() {
   if (!g || g.voorbij) return;
   g.voorbij = true;
   /* een episch-vijand-gevecht laat bij winst een episch-scherf vallen (bankt op je stash) */
-  if (g.epischScherf) { const sid = vindScherf('episch'); if (sid) melding('🜂 De epische vijand laat een scherf na (episch).'); }
+  if (g.epischScherf) { const sid = vindScherf('episch'); if (sid) toonScherfReveal(sid, { kop: '🜂 DE EPISCHE VIJAND LAAT IETS NA' }); }
   /* Act 1+: elite-winst kan een willekeurige scherf opleveren → je verzamelt ze gaandeweg, ook in Act 1 */
-  else if (g.soort === 'elite' && willekeurig() < 0.5) { const sid = vindScherf(); if (sid) melding('🜂 Tussen de resten vind je een mysterieuze scherf.'); }
+  else if (g.soort === 'elite' && willekeurig() < 0.5) { const sid = vindScherf(); if (sid) toonScherfReveal(sid, { kop: '🜂 TUSSEN DE RESTEN GLINSTERT IETS' }); }
   /* metgezel-HP uit dit gevecht meenemen naar de run-state (gaat mee naar het volgende) */
   if (g.metgezel && !g.metgezel.dood && S.metgezel && !S.metgezel.vluchtig) S.metgezel.hp = g.metgezel.hp;
   if (window.Vista) Vista.pose(g.speler, 'victory', 2.5);
@@ -3719,6 +3861,7 @@ async function gevechtGewonnen() {
     await slaap(1400);
     flits.remove();
     if (S.gevecht !== g) return;
+    if (g.baasScherf) toonScherfReveal(g.baasScherf, { kop: '🜂 UIT DE NALATENSCHAP VAN DE ERFPRINS' });   /* de baas-scherf krijgt nu pas zijn gewicht — op de kill, na de flits */
     /* (win-rites verwijderd — Vlamwachter/Mosgeest unlock je nu via het Drempel-ritueel) */
     if (S.gevecht !== g) return;
     S.gevecht = null;
@@ -4157,6 +4300,7 @@ function offeraltaarSmeed(offers, tiers) {
   const offerNamen = offers.map(c => knaam(c)).join(' + ');
   if (!nieuwId) { zetFakkel(20); saveSpel(); eventKlaar(`De steen verslindt <b>${offerNamen}</b> maar baart niets — de gloed slaat terug in je fakkel. <b>(+20 licht)</b>`); return; }
   const nk = nieuweKaart(nieuwId); S.dek.push(nk); saveSpel();
+  toonKaartReveal(nk.id, { kop: '🔥 DE STEEN SMEEDT', flavor: '„Dít," fluistert ze, „heb ik voor je gekozen."' });
   eventKlaar(`De steen verslindt <b>${offerNamen}</b>${vloekBonus ? ' (de vloek voedt haar honger)' : ''} en smeedt er één <b>${kdef(nk).zeld}</b> kaart van: <b>${knaam(nk)}</b>. „Dít," fluistert ze, „heb ik voor je gekozen."`);
 }
 

@@ -52,6 +52,7 @@
       <button class="knop-stil" id="knop-daily" onclick="startDaily()">🗓️ Dagelijkse afdaling</button>
       <button class="knop-stil" onclick="toonHelp()">Hoe speel ik?</button>
       <button class="knop-stil" onclick="toonCodex()"><span data-icoon="codex">📖</span> Codex</button>
+      <button class="knop-stil" onclick="toonBestiarium()">📕 Bestiarium</button>
     </div>
     <div id="titel-stats" class="titel-stats"></div>
     <div class="sintel" style="left:12%; animation-duration:7s; animation-delay:0s"></div>
@@ -109,6 +110,13 @@
     <h2 class="scherm-titel"><span data-icoon="codex">📖</span> De Codex</h2>
     <div id="codex-inhoud"></div>
     <button class="knop-groot" onclick="document.getElementById('overlay-codex').classList.remove('open')">Sluiten</button>
+  </div>
+
+  <!-- het bestiarium: doorbladerbaar artbook van ontmoete vijanden -->
+  <div class="overlay" id="overlay-bestiarium">
+    <h2 class="scherm-titel">📕 Het Bestiarium</h2>
+    <div id="bestiarium-inhoud"></div>
+    <button class="knop-groot" onclick="document.getElementById('overlay-bestiarium').classList.remove('open')">Sluiten</button>
   </div>
 
   <!-- relikwieënboek -->

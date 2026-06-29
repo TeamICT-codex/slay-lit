@@ -1417,6 +1417,27 @@ const ONTMOETINGEN = {
   episch: [['het_origineel']]
 };
 
+/* ---------- BESTIARIUM: het artbook (lore per vijand) ----------
+   Vrij te bladeren via 'toonBestiarium', maar een vijand verschijnt PAS nadat je 'm
+   écht bent tegengekomen (Codex.gezien). soort = categorie-label; lore = sfeer (1-2
+   zinnen, in de 'diepte/fakkel'-canon); notitie = droge veldnotitie. Het citaat komt
+   uit UITSPRAKEN[id].start. Act 1 eerst; Act 2 volgt later (zelfde structuur). */
+const BESTIARIUM = {
+  groene_slijm: { act: 1, soort: 'Ongedierte', lore: 'Het eerste wat de diepte je voorschotelt: een klodder hongerige gloed-gal die zich deelt zodra je niet oplet. Onschuldig ogend, eindeloos in aantal.', notitie: 'Trap er niet in — letterlijk.' },
+  blauwe_slijm: { act: 1, soort: 'Ongedierte', lore: 'Een tragere, kille neef van de groene: een druppel bevroren zwaarmoedigheid die de warmte uit je botten wil trekken. Hij rouwt om iets wat hij zelf niet meer weet.', notitie: 'Hij wil dat je blijft. Voor altijd. In het koude.' },
+  grotrat: { act: 1, soort: 'Ongedierte', lore: 'Knaagdieren zo groot als honden, vetgemest op alles wat in de diepte achterblijft. Ze ruiken angst — en jouw fakkel ruikt naar nog veel meer.', notitie: 'Waar één rat is, zijn er tien die je nog niet ziet.' },
+  kultist: { act: 1, soort: 'Schurk', lore: 'Vogelgesnavelde dwepers die vrijwillig afdaalden om de diepte te "dienen". Wat ze aanbidden weet niemand — zij het minst van al.', notitie: 'Ze denken dat het ritueel hén spaart. Het spaart niemand.' },
+  paddenstoelman: { act: 1, soort: 'Schurk', lore: 'Een logge zwam-mens die in het vochtige donker uitbotte. Gif glijdt van hem af; zijn sporen gedijen er juist op.', notitie: 'Vergiftig hem niet — je voedt hem alleen. Sla gewoon.' },
+  bandiet: { act: 1, soort: 'Schurk', lore: 'Niet alles hierbeneden is een monster. Sommigen daalden af om te roven en bleven steken — en grijpen nu naar het enige wat nog waarde heeft: jouw licht.', notitie: '"Je goud óf je leven." Hij neemt allebei, en je fakkel toe.' },
+  steengolem: { act: 1, soort: 'Zware jongen', lore: 'Een wandelend stuk diepte, opgetrokken uit gruis en oude woede. Traag, maar elke klap voelt als instortend gesteente.', notitie: 'Geduld verslaat hem. Haast verplettert jou.' },
+  schaduw: { act: 1, soort: 'Schaduwwezen', lore: 'Geen wezen maar een afwezigheid — wat overblijft waar het licht ooit week. Ze waren hier al lang vóór jou en wachten tot je vlam dooft.', notitie: 'In het donker zijn het er meer. Houd je fakkel bij.' },
+  pekziel: { act: 1, soort: 'Schaduwwezen', lore: 'Een put van zwart pek waarin ooit een ziel verdronk. Gif vindt er geen houvast — het wordt simpelweg opgeslokt door iets dat al leeg is.', notitie: 'Je kunt niets vergiftigen dat al niets meer is.' },
+  grombaard: { act: 1, soort: 'Elite', lore: 'Een knorrige reus die de bovenste catacomben als zijn slaapkamer beschouwt. Wek hem en hij kraakt je als een twijgje, verontwaardigd dat iets zó kleins hem durft te storen.', notitie: 'Hij haat twee dingen: indringers en wakker worden. Jij bent allebei.' },
+  steenwachter: { act: 1, soort: 'Elite', lore: 'Een poortwachter van steen, eeuwen geleden gezet om iets binnen te houden — of buiten. Niemand weet nog wat, en hij vraagt het zich al lang niet meer af.', notitie: 'Hij bewaakt een poort die allang geen kant meer kiest. De wacht eindigt nooit.' },
+  de_verzwolgene: { act: 1, soort: 'Elite', lore: 'Een holte in de vorm van een mens, een leegte die nooit vol raakt. Voer hem gif en hij heelt ervan; hij hongert naar álles wat je draagt.', notitie: 'Hoe meer je hem geeft, hoe groter zijn honger. Geef niets.' },
+  slijmkoning: { act: 1, soort: 'Baas', lore: 'De eerste troon van de afdaling: een berg samengeklonterd slijm die zichzelf kroonde tot heerser van alles wat naar beneden zakte. Wat hij verzwelgt, vergeet hij nooit.', notitie: '„De diepte vergeet niets." Hij ook niet — en jij staat nu op zijn lijst.' }
+};
+
 /* ---------- RELIKWIEËN ---------- */
 /* ---------- RELIKWIEËN ----------
    zeld: start | gewoon | ongewoon | zeldzaam | episch
@@ -1829,7 +1850,7 @@ const EVENTS = [
         label: 'Dupliceer een kaart', detail: 'Voeg een kopie van een willekeurige kaart uit je dek toe.',
         kan: () => S.dek.length < 30,
         reden: () => 'Je dek is al overvol.',
-        doe: () => { const c = kiesUit(S.dek); if (c) { S.dek.push(nieuweKaart(c.id)); return `De machine ratelt en spuwt een doorslag van "${KAARTEN[c.id].naam}" uit. Je dek groeit.`; } return 'De machine ratelt, maar er komt niets uit.'; }
+        doe: () => { const c = kiesUit(S.dek); if (c) { const nk = nieuweKaart(c.id); S.dek.push(nk); toonKaartReveal(nk.id, { kop: '📠 EEN DOORSLAG ROLT ERUIT', klank: 'klik' }); return `De machine ratelt en spuwt een doorslag van "${KAARTEN[c.id].naam}" uit. Je dek groeit.`; } return 'De machine ratelt, maar er komt niets uit.'; }
       },
       {
         label: 'Dupliceer je goud', detail: 'Riskant: meestal +40%, soms −25%.',

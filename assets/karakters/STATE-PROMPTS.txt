@@ -720,7 +720,9 @@ defensive ball of gathered souls. Braced, immovable, hunkered.
 #################### ACT 2 / EVENT-VIJANDEN — POSES (herwerkt + nieuw) ####################
 Reference-anchored: voeg telkens de BASIS-art van dat wezen toe als referentie.
 Stijl = identiek aan de basis: painterly dark-fantasy, NOT photorealistic, no photo,
-no 3D render; facing LEFT; transparante (of effen zwarte) achtergrond; één wezen,
+no 3D render; facing LEFT; NEEM DEZELFDE ACHTERGROND ALS DE BASIS-ART van dat wezen
+(de herwerkte figuren — redacteur/archivaris/spiegelwachter — staan op PURE-MAGENTA
+#FF00FF chroma-key; oudere wezens op transparant/effen zwart); één wezen,
 één gesloten opake silhouet, scherpe contour, ruime marge, GEEN mist/rook/zwevende
 deeltjes; geen grond/schaduw/tekst/kader. Verander ALLEEN de "Pose:"-regel.
 
@@ -739,56 +741,144 @@ Pose: it swings its rigid CLOCK-HAND blade-arm down in a heavy overhead strike t
 the stopped-clock face flaring brighter overdue-red, the black sand in the hourglass torso
 jolting from the force. Kept compact and tight to the body.
 
+### V2 (gehulde inquisiteur-rechter): de poses hieronder horen bij de HERWERKTE basis
+### (chained ledger + dossier-mantel van laden/scrollen + gloeiende rode zegelrij + kap +
+### bril, robe tot de grond) — NIET meer de oude "file-tower op de rug". Anker telkens de
+### NIEUWE de_archivaris.png + houd het VOLLEDIGE figuur (head-to-feet) in beeld.
+
 =================== de_archivaris_attack.png ===================
-Use the attached reference image (de_archivaris.png): the EXACT same colossal archivist,
-same fused file-tower, same spectacled face, same painterly style, facing LEFT, transparent.
+Use the attached reference image (de_archivaris.png): the EXACT same hooded ARCHIVIST-INQUISITOR —
+same heavy raised cowl, same parchment-pale spectacled face with cold-blue eyes, same chained LEDGER,
+same dossier-MANTLE of bound ledgers / rolled scrolls / small chained file-drawers draped over the
+shoulders and down one side, same vertical row of red wax INDEX-SEALS down the front of the robe,
+same floor-length robe, same painterly style, FACING LEFT, same FULL-BODY head-to-feet framing
+(hem/feet in frame, clear margin below), on a transparent (or flat PURE-MAGENTA #FF00FF) background.
 Change ONLY the pose.
-Pose: he swings the enormous CHAINED LEDGER out and around to the left like a great stone
-bludgeon, pages fanning, the index-tags on his tower flaring bright as he "cites" a damning
-entry; leaning forward-left with cold weight. Tower stays fused and readable behind him.
+Pose: he SWEEPS the great chained LEDGER out to the LEFT and open like a pronounced verdict, the
+exposed page flaring cold-blue judgement-script, and the vertical row of red wax index-seals down his
+robe IGNITING brighter one above the other as he "cites" a damning entry; leaning forward-left with
+cold, inevitable weight. The dossier-mantle stays fused and orderly; robe and hem stay tight, NO loose
+flying pages.
 
 =================== de_archivaris_hit.png ===================
-Use the attached reference image (de_archivaris.png): same creature/style/left/transparent.
-Change ONLY the pose.
-Pose: he recoils from a blow, the ziggurat file-tower on his back lurching with a few top
-drawers sliding loose, his stacked spectacles knocked askew, the lit index-tags guttering
-for a moment. Off-balance but still towering.
+Use the attached reference image (de_archivaris.png): same hooded inquisitor-judge / chained ledger /
+dossier-mantle / row of glowing red seals / cracked spectacles / full-body floor-length robe, same
+style, FACING LEFT, full-body head-to-feet, transparent (or PURE-MAGENTA) bg. Change ONLY the pose.
+Pose: he RECOILS from a blow — the chained file-drawers and scrolls of his mantle jolting, one or two
+small drawers sliding loose on their chains, his cracked round spectacles knocked askew, the row of
+red wax seals guttering dim for a moment; off-balance and half-turned but still statuesque, the heavy
+robe swaying. Everything stays tight to the body, nothing scattering to the edges.
 
 =================== de_archivaris_death.png ===================
-Use the attached reference image (de_archivaris.png): same creature/style/left/transparent.
-Change ONLY the pose.
-Pose: the ziggurat file-tower collapses in a slow avalanche down over him, the glowing
-index-tags going out one by one, the gaunt robed figure folding forward and vanishing
-beneath his own archive; bone-grey drawers and ledgers sliding into a settling heap.
+Use the attached reference image (de_archivaris.png): same hooded inquisitor-judge and all his regalia
+(ledger, dossier-mantle, seal-row, spectacles, floor-length robe), same style, FACING LEFT, full-body,
+transparent (or PURE-MAGENTA) bg. Change ONLY the pose.
+Pose: his dossier-mantle COMES APART — drawers, bound ledgers and scrolls sliding off their chains and
+clattering down around him, the vertical row of red index-seals going OUT one by one, the cold-blue
+eyes dimming to dead grey behind the cracked spectacles; the gaunt hooded figure folds forward and
+sinks into the settling heap of his own archive, the floor-length robe collapsing. Kept within the
+frame — a settling pile, NOT an explosion of debris to the edges.
 
-=================== de_archivaris_cast.png   (zijn 'werkt-dossier-bij'-moment) ===================
-Use the attached reference image (de_archivaris.png): same creature/style/left/transparent.
-Change ONLY the pose.
-Pose: he holds the open LEDGER high, a new entry writing ITSELF across the page in glowing
-script, and a fresh row of index-TAGS igniting one by one up the file-tower (the compound —
-"hij vergeet niets"). Solemn, inevitable, the brightest glow climbing higher.
+=================== de_archivaris_cast.png   (zijn 'werkt-dossier-bij'-moment — de compound) ===================
+Use the attached reference image (de_archivaris.png): same hooded inquisitor-judge / chained ledger /
+dossier-mantle / spectacled face / full-body floor-length robe, same style, FACING LEFT, full-body,
+transparent (or PURE-MAGENTA) bg. Change ONLY the pose.
+Pose: he holds the open LEDGER HIGH before him, a new entry writing ITSELF across the page in glowing
+cold-blue script, while a fresh row of red wax index-SEALS ignites one by one UP the front of his robe
+/ mantle (the compound — "hij vergeet niets"); solemn and inevitable, head bowed slightly to the page,
+the brightest glow climbing higher. No swirling particles; the light stays on the seals, eyes and page.
 
 =================== de_archivaris_block.png ===================
-Use the attached reference image (de_archivaris.png): same creature/style/left/transparent.
-Change ONLY the pose.
-Pose: he hunkers and pulls the great file-tower around in front of him like a wall of
-stacked bone-grey drawers and ledgers, spectacled face peering over the top, bracing
-immovably behind his own bureaucracy.
+Use the attached reference image (de_archivaris.png): same hooded inquisitor-judge and all his regalia,
+same style, FACING LEFT, full-body, transparent (or PURE-MAGENTA) bg. Change ONLY the pose.
+Pose: he HUNKERS and sweeps the great chained LEDGER and the draped dossier-mantle (bound drawers and
+scrolls) around to the FRONT like a barricade of bound files, the cowl lowered and the cold-blue
+spectacled gaze peering over the top, bracing IMMOVABLY behind his own bureaucracy. Compact, closed,
+sheltering silhouette; nothing trailing out.
 
 =================== de_redacteur_hit.png ===================
-Use the attached reference image (de_redacteur.png): the EXACT same censor-knight, same
-banded iron plate, same redaction-barred helm, same shears, same painterly style, facing
-LEFT, transparent. Change ONLY the pose.
-Pose: he twists back from a blow, the horizontal redaction-bars across his helm flickering,
-one short censored black-barred strip torn loose, the giant shears swung defensively across
-his chest. Crisp and clean, no clutter.
+Use the attached reference image (de_redacteur.png): the EXACT same tall lean ELEGANT censor-knight —
+same dark iron banded plate, same redaction-barred helm with the cold slit-eye, same single giant black
+REDACTION-SHEARS, same painterly hand-painted dark-fantasy style (NOT photorealistic, no photo, no 3D
+render), same slight side angle clearly FACING LEFT, same FULL-BODY head-to-feet framing (feet visible,
+clear margin below the feet — NOT a waist/thigh crop), same cold blue-grey "system light" + THIN warm
+ember rim-light on the left edge, on the same flat PURE-MAGENTA #FF00FF chroma-key (or transparent)
+background. Change ONLY the pose.
+Pose (HIT — recoil): he twists back from a blow, the horizontal redaction-bars across his helm
+flickering, ONE short censored black-barred strip torn loose (kept tight to the body), the giant shears
+swung defensively across his chest. Off-balance but still elegant; crisp and clean, no clutter, nothing
+scattering to the edges.
+Accent: ZWARTE censuurbalken + de defensief geheven schaar + de flikkerende slit-balken.
 
 =================== de_redacteur_death.png ===================
-Use the attached reference image (de_redacteur.png): same creature/style/left/transparent.
-Change ONLY the pose.
-Pose: he is fully REDACTED — thick black censorship bars sweep across and swallow the whole
-figure, his OWN giant shears snipping him into falling black-barred strips that scatter and
-go dark. Elegant self-erasure.
+Use the attached reference image (de_redacteur.png): the EXACT same tall lean ELEGANT censor-knight —
+same dark iron banded plate over pale blue-grey censor-robes, same smooth helm-face crossed by
+horizontal BLACK REDACTION BARS with the cold slit-eye, same single giant pair of black
+REDACTION-SHEARS, same painterly hand-painted dark-fantasy style (NOT photorealistic, no photo, no 3D
+render), same slight side angle clearly FACING LEFT, same FULL-BODY head-to-feet framing (the entire
+standing figure, feet included, clear margin below the feet — NOT a waist/thigh crop), same cold
+blue-grey "system light" + THIN warm ember rim-light on the left edge, on the same flat PURE-MAGENTA
+#FF00FF chroma-key (or fully transparent) background. Change ONLY the pose.
+Pose (DEATH — elegant self-erasure / "fully redacted"): thick BLACK CENSORSHIP BARS sweep across and
+SWALLOW the whole figure from within, and his OWN giant shears fall mid-snip as he is SNIPPED into
+falling black-barred STRIPS — the helm slit-eye going dark, the body coming apart into clean censored
+ribbons that curl and drift DOWN close to the body and go matte black. Keep it CONTAINED: the strips
+stay tight to the silhouette and INSIDE the frame margin (NOT scattering to the edges), ONE readable
+collapsing shape with sharp opaque edges for a clean cut. Cold and quiet, dignified erasure — no blood,
+no glow-bloom, no smoke. No ground/shadow/text/UI/frame.
+Accent: ZWARTE censuurbalken die de figuur opslokken + de vallende lakzwarte snippers + het dovende
+slit-oog. (Thema: hij wordt door zijn eigen censuur GEREDIGEERD.)
+
+#################### ACT 2 — DE SPIEGELWACHTER (poses; v3 magenta-basis) ####################
+(kaatst jouw schade terug. Anker telkens de NIEUWE spiegelwachter.png + houd alle v3-constraints:
+donker blauw-grijs glas (GEEN pikzwart), magenta bg, painterly/geen 3D, abstracte reflecties.)
+
+=================== spiegelwachter_attack.png ===================
+Use the attached reference image (spiegelwachter.png): the EXACT same solid armoured mirror-SENTINEL of
+DARK BLUE-GREY MIRROR-GLASS / anthracite (deliberately NOT pitch-black, strong internal value-contrast
+with bright COLD blue-white facet-highlights so he reads as a dimensional figure, never a flat black
+blob), same faceless helm-pane with a single cold BLUE-GREY inner glow, same luminous cold-blue hairline
+cracks, same painterly hand-painted dark-fantasy style (NOT photorealistic, no photo, NO 3D render, no
+chrome/CGI shine — painted glass, not a rendered shader), same slight side angle clearly FACING LEFT,
+same FULL-BODY head-to-feet framing (feet visible, clear margin below), same THIN warm ember rim-light on
+the left edge only, on the same flat PURE-MAGENTA #FF00FF chroma-key background (NO magenta/pink anywhere
+on the body). Change ONLY the pose.
+Pose (ATTACK — the reflected strike): he sharply angles his raised flat mirror-forearm / shield-pane
+toward the LEFT and SNAPS a captured cold white-blue light-FLASH straight back out at the unseen foe —
+the ricochet thrown hard, the faceted plates flaring an instant brighter cold-blue with the impact, the
+inner eye-glow sharpening. Render the flash as ONE crisp, hard-edged glint skating ACROSS the glass and
+out to the left, NOT a beam / streak / haze leaving the body. He leans slightly forward-left but stays a
+CLOSED, solid, compact silhouette; cracks and any shards stay tight to the body, nothing scattering.
+Accent: de geheven spiegel-pane + de scherpe terugkaatsende wit-blauwe FLITS naar links + fel
+oplichtende facetten.
+
+=================== spiegelwachter_hit.png ===================
+Use the attached reference image (spiegelwachter.png): same dark blue-grey mirror-sentinel (NOT pitch-
+black), same faceless helm-pane + cold inner glow, same luminous cold-blue cracks, same painterly style
+(NOT photo, NO 3D, no chrome-shine), same slight side angle FACING LEFT, same FULL-BODY head-to-feet,
+same THIN warm ember rim-light on the left, on the same PURE-MAGENTA #FF00FF chroma-key bg. Change ONLY
+the pose.
+Pose (HIT — recoil): he rocks back and half-turns from a blow, the hairline CRACKS spreading and
+brightening into luminous cold-blue webs across his chest and shoulders, one or two small mirror-SHARDS
+breaking loose and hanging CLOSE to the body, the cold inner blue-grey glow flickering for a moment.
+Off-balance but still a solid, closed sentinel; the loose shards stay tight to the silhouette and INSIDE
+the frame margin, nothing scattering to the edges.
+Accent: oplichtende koud-blauwe breuk-webben + één of twee losse scherven dicht bij het lichaam + de
+flikkerende binnen-gloed.
+
+=================== spiegelwachter_death.png ===================
+Use the attached reference image (spiegelwachter.png): same dark blue-grey mirror-sentinel (NOT pitch-
+black), same faceless helm-pane + cold inner glow, same painterly style (NOT photo, NO 3D, no chrome-
+shine), same slight side angle FACING LEFT, same FULL-BODY head-to-feet, same THIN warm ember rim-light
+on the left, on the same PURE-MAGENTA #FF00FF chroma-key bg. Change ONLY the pose.
+Pose (DEATH — the mirror shatters): the whole faceted mirror-body VERBRIJZELT / SHATTERS at once — the
+dark blue-grey glass cracking apart into a CONTAINED burst of falling mirror-SHARDS, each shard catching
+a DIFFERENT warped abstract 'stolen pose' glimmer as it tumbles, the cold inner glow guttering OUT, the
+hollow empty armour-shell buckling and going dark. Keep it CONTAINED and readable: the shards stay tight
+to where the body was and INSIDE the frame margin (NOT an explosion to the edges), then dim to matte
+dark — one collapsing shape with sharp opaque edges for a clean cut. Cold, final, silent.
+Accent: het spiegelglas dat in een regen van scherven uiteenspat (elk een gestolen pose) + de dovende
+binnen-gloed, dan donker.
 
 =================== de_verzwolgene_attack.png  (optioneel — elite) ===================
 Use the attached reference image (de_verzwolgene.png): the EXACT same towering mass of black

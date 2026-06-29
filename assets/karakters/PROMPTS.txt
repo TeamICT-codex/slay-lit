@@ -467,14 +467,77 @@ wegknippen). Houd elk wezen mét marge in het frame (geen wezen dat tot alle ran
   index-tabs jutting from each segment, REARING up to bite. Cold light glows between the pages.
   Accent: bone-YELLOW parchment + red string + bladed paper edges.
 
---- spiegelwachter.png   (De Spiegelwachter — kaatst jouw schade terug · GLAS → EFFEN ZWARTE achtergrond) ---
-  A tall sentinel of polished black MIRROR-GLASS shaped like a faceless armoured guardian, its
-  surface a dark reflective pane throwing back warped COLD reflections of an unseen attacker
-  (you), a cold blow visibly RICOCHETING off its mirror surface back toward the viewer, hairline
-  CRACKS webbing across its chest, shards of broken mirror orbiting it — each shard showing a
-  different STOLEN pose — a single cold blue-grey glow behind the glass where a face should be,
-  sharp glass edges. Reflective, hollow, derivative.
-  Accent: black mirror-glass + cold reflections. NB: glas → genereer op EFFEN ZWARTE achtergrond.
+--- spiegelwachter.png   (De Spiegelwachter — kaatst jouw schade terug · GLAS → PURE-MAGENTA #FF00FF chroma-key) ---
+  [HERMAAKT v3 — de v2 KWAM SLECHT DOOR: ZWART-OP-ZWART. Het lichaam was "polished BLACK MIRROR-GLASS"
+   op een "flat PURE-BLACK background" → de donkere glasfiguur smolt samen met de achtergrond (geen
+   scheiding, modderig silhouet, ONMOGELIJK schoon te cutten: een luma/donker-key vrat de figuur zélf
+   op). Twee fixes. (1) SCHEIDING (zwart → magenta): genereer nu op een PURE-MAGENTA #FF00FF chroma-key
+   i.p.v. zwart; de cutter heeft een gevalideerde magenta-chroma-key-modus die ALLE magenta globaal
+   maskeert, en magenta ligt ver van elke donkere/koele figuurkleur → maximale scheiding + vlekkeloze
+   cut. De oude "alpha-pass / do NOT clip dark edges"-noot is GESCHRAPT (die hoorde bij de zwarte bg).
+   (2) LEESBAARHEIDSLIFT: pikzwart glas las als een platte zwarte blob → het waardebereik is opgetild:
+   DONKER BLAUW-GRIJS / antraciet spiegelglas (NIET pikzwart) met helderdere koude reflecties, facet-
+   highlights, oplichtende breukranden, de koude binnen-gloed én de warme ember-rand → een DIMENSIONALE
+   geharnaste spiegel-ridder, geen silhouet-gat. Behouden uit v2: VOLLEDIG FIGUUR head-to-feet ('three-
+   quarter' was de crop-valkuil → woord vermeden), FACING LEFT, mechaniek = één SCHERPE terugkaatsende
+   licht-FLITS, abstracte reflecties, kleine gegroepeerde scherven binnen de marge, painterly DUBBEL
+   geforceerd, ≠ Echo / ≠ klerken.]
+  A SOLID, upright, broad-shouldered armoured SENTINEL forged entirely of one continuous slab of
+  DARK BLUE-GREY MIRROR-GLASS / anthracite obsidian-plate (deliberately NOT pitch-black — a deep,
+  dimensional steel-blue glass with strong INTERNAL value-contrast, so it reads as a sculpted
+  mirror-knight, never as a flat black blob or a silhouette-hole) — a SINGLE FULL-BODY figure shown
+  HEAD-TO-FEET (the entire standing sentinel inside the frame, legs and FEET visible, clear margin
+  below the feet — NOT a bust or waist/thigh crop), seen at a slight side angle and clearly FACING LEFT
+  (head, torso and gaze turned left toward an unseen attacker, chest angled mostly to the left so he
+  reads as committed to the foe, not facing the camera) — a heavy, CLOSED, compact suit-of-armour
+  silhouette (helm, pauldrons, breastplate, gauntlets), NOT translucent, NOT wispy: a sealed
+  mirror-knight standing rigid and unmoving like a tombstone given armour, a dead sentry that has stood
+  guard for centuries. His whole body is one faceted, opaque slab of dark reflective slate-and-obsidian
+  glass plate, but RAISE THE VALUE RANGE so he reads as a dimensional figure, NOT a hole: strong
+  INTERNAL value contrast across the facets — brighter COLD blue-white highlights riding the raised
+  edges of each faceted plate, crisp specular catch-lights on the pauldrons, breastplate ridges and
+  helm-crest so every plane separates and the form turns in space, the recessed planes falling to deep
+  blue-grey shadow (never to dead pure black). Where a face should be, a smooth FACELESS helm-pane, and
+  behind it a single cold BLUE-GREY inner GLOW smoulders deep in the mirror (the brightest inner light,
+  one quiet eye-light, no bloom). Hairline CRACKS web across its chest and shoulders like a struck
+  mirror about to give, the fracture-lines catching light so they read as bright LUMINOUS cold-blue
+  hairlines, NOT black scratches. The mirror-skin throws back warped, COLD reflections — but keep these
+  ABSTRACT: distorted blue-grey glints and a single warped silhouette-flash only, NEVER a literal
+  recognisable second person or any human figure in the glass. THE MECHANIC (must read instantly — "it
+  reflects your damage back"): one gauntleted forearm is raised flat like a shield-pane, and a cold
+  incoming BLOW is caught RICOCHETING off that polished surface — rendered as a single SHARP, hard-edged
+  white-blue light-FLASH skating ACROSS the glass and snapping back toward the viewer / the LEFT, like a
+  struck mirror throwing the strike straight back; paint it as a crisp opaque glint ON the glass, NOT as
+  a beam, streak, smoke or haze leaving the body. A few small loose mirror-SHARDS hover in a tight
+  GROUPED cluster close against the torso (NOT also around the raised arm — keep one raised limb only so
+  the silhouette stays closed), each shard catching a DIFFERENT warped abstract 'stolen pose' glimmer
+  (the copy/forgery signature), kept SMALL, grouped and ENTIRELY INSIDE the frame margin — NOT scattered
+  toward any edge. The body stays COLD blue-grey; a THIN warm ember rim-light traces ONLY its left
+  contour (the hero's torchglow), the body itself stays COLD. Mood: sepulchral, merciless, mirror-cold —
+  a guardian that punishes you with your own strike.
+  Stylized painterly dark-fantasy concept art with expressive visible brushwork, HAND-PAINTED
+  illustration only — NOT photorealistic, NOT a photograph, no photo textures, NO 3D render, no glossy
+  CGI / ray-traced / chrome-render shine (force the GLASS to read as PAINTED, not rendered — paint the
+  reflections, facet-highlights and cracks as BRUSHSTROKES, not a rendered mirror-shader).
+  CUT-OUT (gehard, magenta): ONE compact, CLOSED, OPAQUE sentinel silhouette with SHARP high-contrast
+  contour edges, on a flat PURE-MAGENTA #FF00FF chroma-key background (the cutter masks all magenta
+  globally — keep the WHOLE figure in dark blue-grey / cool + ember tones with NO magenta or pink
+  anywhere on the body, so the dark blue-grey body sits far from magenta for a vlekkeloze cut and the
+  contour edges read crisp against the magenta and are NOT clipped). The hovering shards stay SMALL,
+  grouped tight and ENTIRELY INSIDE the frame margin (NOT scattered to the edges); the ricochet stays a
+  single crisp light-flash ON the glass. NO mist/smoke/haze/dust/drifting particles/glow-bloom/halo/
+  motion-streaks/lens-flare; nothing fading to any edge; the cracks, shards and ricochet-flash all stay
+  tight to the body; clear empty magenta margin all four sides (including above the head and below the
+  feet — the full standing figure fits inside the frame). No ground/shadow/text/UI/frame. Fills ~90% of
+  a square 1024x1024 canvas.
+  Accent: donker blauw-grijs / antraciet SPIEGELglas (GEEN pikzwart) + heldere koude blauw-witte
+  reflecties, facet-highlights & oplichtende breukranden + koude binnen-gloed achter het vizier + de
+  scherpe terugkaatsende klap-FLITS OP het glas (links) + een kleine cluster scherven (elk een gestolen
+  pose). NB: glas → genereer op PURE-MAGENTA #FF00FF chroma-key (NIET zwart — zwart-op-zwart smolt samen
+  met de bg en was juist de v2-fout). (≠ Echo: de Spiegelwachter is een SOLIDE, gesloten, geharnaste
+  spiegel-wachter met één massief opaak lichaam — GEEN doorschijnende, gestapelde violet-witte na-beeld-
+  lagen; én ≠ klerk-cluster: geen gewaad/papier/inkt maar gepolijst donker spiegelpantser. De geheven
+  spiegel-pane + de terugkaatsende flits zijn het uniekste, direct leesbare signaal.)
 
 --- de_deadline.png   (De Deadline — escaleert elke beurt: tijdsdruk) ---
   [HERMAAKT v2 — playtest: de vorige las als een nette staartklok-meubel, te 'meh'. Nu veel
@@ -512,9 +575,16 @@ wegknippen). Houd elk wezen mét marge in het frame (geen wezen dat tot alle ran
 
 --- de_redacteur.png   (De Redacteur — strijkt je Blok weg · BASIS = schaar-only) ---
   [HERMAAKT — playtest: het pale-blue schild stond permanent in de basis-pose (dat is JOUW Blok,
-   hoort daar niet). BASIS = enkel de schaar; het schild-knipmoment verhuist naar de ATTACK-pose.]
-  A tall, lean, ELEGANT censor-knight in THREE-QUARTER view clearly FACING LEFT (head, torso and
-  gaze turned left toward an unseen foe, right shoulder toward the viewer): dark iron banded plate
+   hoort daar niet). BASIS = enkel de schaar; het schild-knipmoment verhuist naar de ATTACK-pose.
+   v2b — generator kropte 'm op heuphoogte: "three-quarter" sloeg óók op de UITSNEDE (kniestuk), niet
+   enkel de kijkhoek → dat woord weg, nu expliciet VOLLEDIG FIGUUR head-to-feet + voeten in beeld.
+   v2c — achtergrond → PURE-MAGENTA #FF00FF chroma-key: zijn donkere ijzeren wapenrand sneed op een
+   donkere bg modderig uit; op magenta scheidt de contour vlekkeloos.]
+  A single FULL-BODY censor-knight shown HEAD-TO-FEET — the ENTIRE standing figure inside the frame
+  (NOT a bust, NOT cropped at the waist/hips/thighs; the legs and FEET are fully visible with clear
+  empty margin BELOW the feet). Tall, lean and ELEGANT, seen at a slight side angle and clearly
+  FACING LEFT (head, torso and gaze turned left toward an unseen foe, chest angled mostly to the
+  left so he reads as committed to the foe, NOT facing the camera): dark iron banded plate
   over pale blue-grey censor-robes, a smooth featureless helm-face crossed by horizontal BLACK
   REDACTION BARS with one cold slit of pale light between them like a closed eye. POSE (BASE / idle —
   menacing at rest, NO shield, NO cutting action, nothing being severed): both gauntleted hands grip
@@ -527,7 +597,8 @@ wegknippen). Houd elk wezen mét marge in het frame (geen wezen dat tot alle ran
   body + a THIN warm ember rim-light tracing only the left edge (body stays COLD); the slit-eye a
   quiet cold glow, no bloom. Painterly dark-fantasy, NOT photorealistic.
   CUT-OUT: ONE compact, closed, immediately readable silhouette with SHARP OPAQUE contour edges on
-  a flat neutral dark / fully TRANSPARENT background, clear margin all sides. NO mist/smoke/haze/
+  a flat PURE-MAGENTA #FF00FF chroma-key (or fully TRANSPARENT) background — magenta cleanly separates
+  his dark iron edges for the cut — clear margin all sides. NO mist/smoke/haze/
   floating paper/loose particles, nothing fading into the background. No ground/shadow/text/UI/frame.
   Accent: ZWARTE censuurbalken + witte censuur-stroken + de rechtopstaande gesloten lakzwarte
   redactie-schaar. (≠ andere klerken: scherp, gecensureerd, schaar-handig, droog, elegant & clean.)
@@ -535,8 +606,10 @@ wegknippen). Houd elk wezen mét marge in het frame (geen wezen dat tot alle ran
 --- de_redacteur_attack.png   (ATTACK — de Blok-snede; gebruik de basis als referentie) ---
   Use the attached reference image (de_redacteur.png): the EXACT same censor-knight — same banded
   iron plate, same redaction-barred helm, same robe, same giant black redaction-shears, same
-  painterly style, same THREE-QUARTER view FACING LEFT, same flat neutral dark / TRANSPARENT
-  background and same THIN warm ember rim-light along the left edge — change ONLY the Pose.
+  painterly style, same slight side angle clearly FACING LEFT, same FULL-BODY head-to-feet framing
+  (the ENTIRE standing figure visible, legs and FEET included, clear margin below the feet — NOT a
+  waist-up / thigh crop), same flat PURE-MAGENTA #FF00FF chroma-key (or TRANSPARENT) background and
+  same THIN warm ember rim-light along the left edge — change ONLY the Pose.
   POSE (ATTACK — the Block-cut): he THRUSTS the single giant pair of black REDACTION-SHEARS out to
   the LEFT, blades caught MID-SNIP slicing clean THROUGH a pale-BLUE SHIELD just in front of the
   blade tips (this shield is the hero's Block being struck away — it appears ONLY in this attack
@@ -553,10 +626,16 @@ wegknippen). Houd elk wezen mét marge in het frame (geen wezen dat tot alle ran
 
 --- de_archivaris.png   (2e ELITE — De Archivaris: compoundt Kracht, "vergeet niets") ---
   [HERMAAK v2 — minder 'figuur met papierberg', meer een DREIGENDE archivaris-INQUISITEUR: een
-   personage met gezag, niet een stapel. Donkerder, sinister, statig.]
-  A towering, GAUNT, HOODED ARCHIVIST-INQUISITOR — a figure of cold authority and DREAD, three-quarter
-  view clearly FACING LEFT, imposing and statuesque with a CLEAN, READABLE single-figure silhouette
-  (read instantly as a robed JUDGE, never as a pile of paper). He is drowned in deep shadow; only a
+   personage met gezag, niet een stapel. Donkerder, sinister, statig.
+   v2b — zelfde crop-fix als de redacteur: "three-quarter" sloeg óók op de UITSNEDE (kniestuk) → dat
+   woord weg, nu expliciet VOLLEDIG FIGUUR van kap tot robe-zoom in beeld.]
+  A towering, GAUNT, HOODED ARCHIVIST-INQUISITOR — a figure of cold authority and DREAD, shown as a
+  SINGLE FULL-BODY figure from the cowl down to the FLOOR-LENGTH HEM of his robe (the ENTIRE standing
+  figure inside the frame, the heavy robe falling all the way to the ground, clear empty margin BELOW
+  the hem — NOT a bust, NOT cropped at the waist/hips/thighs), seen at a slight side angle and clearly
+  FACING LEFT (head, torso and gaze turned left toward an unseen foe, not facing the camera), imposing
+  and statuesque with a CLEAN, READABLE single-figure silhouette (read instantly as a robed JUDGE,
+  never as a pile of paper). He is drowned in deep shadow; only a
   thin cold edge-light and a faint warm ember rim trace his left contour. Deep within a heavy raised
   COWL/hood his face is a long, hollow, parchment-pale mask, two cracked round SPECTACLES catching a
   single cold glint over deep eye-sockets that hold a quiet, judging COLD-BLUE glow — the brightest,
@@ -613,7 +692,7 @@ ANDER silhouet en ANDERE accentkleur, anders worden het allemaal grijze papierfi
   het_origineel — fel ARCHETYPISCH humanoid (episch, uniek)    · accent: GOUD-en-KARMOZIJN, warm, verzadigd
   stempelaar    — klerk met één REUZE-STEMPEL-arm (asymmetrisch)· accent: BRONS-stempel + RODE waxzegels
   dossierwurm   — lange GESEGMENTEERDE worm (geen humanoid)    · accent: bot-GEEL perkament + rood touw
-  spiegelwachter— GLAZEN wachter (zwarte bg!)                  · accent: zwart SPIEGELglas + koude reflecties
+  spiegelwachter— GLAZEN wachter (MAGENTA-key bg!)            · accent: donker blauw-grijs SPIEGELglas + koude reflecties
   de_deadline   — hoge gebukte KLOK-toren (zandloper-torso)    · accent: zwart ZAND + te-late rode stempels
   de_inktvlek   — lage VORMLOZE plas/ooze (kruipt)             · accent: zwart + ziek GROEN
   de_redacteur  — rechte CENSOR met schaar-hand                · accent: ZWARTE censuurbalken + witte stroken
