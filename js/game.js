@@ -5188,6 +5188,7 @@ function toonHeldKeuze() {
     }));
   }
   verfraaiItemArt($('#schrijn-vak'));
+  verfraaiItemArt($('#scherf-vak'));   /* scherf-art meteen inladen (stond eerder als emoji tot je een scherf aanklikte) */
 }
 
 function bekijkStartdek(id, e) {
