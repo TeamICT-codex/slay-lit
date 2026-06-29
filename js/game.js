@@ -126,12 +126,23 @@ if (location.protocol !== 'file:' && !window.mobiel) {
   document.head.appendChild(_three);
 }
 
+/* veilige lezer voor de persistente localStorage-stores. Een getamperde of corrupte
+   waarde (bv. handmatig gezette ongeldige JSON, of storage-corruptie) mag de module-
+   evaluatie NIET breken: gooit JSON.parse hier op module-niveau, dan wordt de rest van
+   game.js nooit geëvalueerd → geen enkele functie bestaat → volledig dode pagina zonder
+   uitweg. Bij een vangst ruimt hij de corrupte sleutel meteen op (zoals wisSave bij de
+   save) zodat de fout zichzelf heelt op de volgende load. NB: de `|| '{}'` ving enkel een
+   ONTBREKENDE sleutel op, niet een aanwezige-maar-malformde waarde. */
+function veiligLees(sleutel) {
+  try { return JSON.parse(localStorage.getItem(sleutel) || '{}'); }
+  catch (e) { try { localStorage.removeItem(sleutel); } catch (_) {} return {}; }
+}
 const INST = Object.assign(
   /* op mobiel standaard 3D UIT (onspeelbaar daar), maar lite NIET geforceerd:
      lite dooft de animaties, en juist die geven het spel leven. Lite alleen
      bij echt zwakke hardware. Op laptop ongewijzigd want mobiel=false. */
   { lite: standaardLite, d3: !standaardLite && !mobiel, spraak: true, daglicht: mobiel },
-  JSON.parse(localStorage.getItem('slayit_inst') || '{}')
+  veiligLees('slayit_inst')
 );
 /* eenmalige mobiel-migratie: forceer 3D uit (onspeelbaar op telefoon) en zet de
    eerder geforceerde lite-modus weer uit op capabele toestellen — anders blijven
@@ -151,8 +162,14 @@ const Codex = Object.assign(
      en het hoogst-ontgrendelde ascensieniveau per held. Bestaande saves missen
      deze sleutels → Object.assign houdt dan deze defaults aan (migratie). */
   { relikwieen: [], dranken: [], metgezellen: [], gevallen: [], opgeladen: null, runs: 0, wins: 0, bestDiepte: {}, gesch: [], ascensie: {}, mysteries: {}, scherven: [], gezien: [], erfprinsOntmoetingen: 0, copycatGebroken: false },
-  JSON.parse(localStorage.getItem(CODEX_SLEUTEL) || '{}')
+  veiligLees(CODEX_SLEUTEL)
 );
+/* relikwieen/dranken hard naar array klemmen VÓÓR de filter-migratie hieronder: een
+   getamperde codex met bv. "relikwieen": null overschrijft de default [] met null →
+   Codex.relikwieen.filter(...) zou een TypeError op module-niveau gooien (dode pagina).
+   Zelfde defensieve patroon als metgezellen/gevallen/gezien verderop. */
+if (!Array.isArray(Codex.relikwieen)) Codex.relikwieen = [];
+if (!Array.isArray(Codex.dranken)) Codex.dranken = [];
 /* migratie: wie al ontdekkingen had, krijgt ze meteen opgeladen in het Schrijn */
 if (!Array.isArray(Codex.opgeladen)) {
   Codex.opgeladen = Codex.relikwieen.filter(r => window.RELIKWIEEN && RELIKWIEEN[r] && RELIKWIEEN[r].zeld !== 'start');
@@ -196,7 +213,7 @@ function markeerGezien(id) {
 const DAILY_SLEUTEL = 'slayit_daily';
 const Daily = Object.assign(
   { laatsteVoltooid: null, laatsteStart: null, laatsteScore: 0, besteScore: 0, reeks: 0, besteReeks: 0, gesch: [] },
-  JSON.parse(localStorage.getItem(DAILY_SLEUTEL) || '{}')
+  veiligLees(DAILY_SLEUTEL)
 );
 /* saniteer opgeslagen gesch (defensief — getamperde slayit_daily mag niets injecteren) */
 Daily.gesch = (Array.isArray(Daily.gesch) ? Daily.gesch : []).map(g => ({
@@ -462,7 +479,7 @@ function slaap(ms) {
 /* ---------- globale staat ---------- */
 let S = null;
 
-function nieuwSpel(heldId, seedTekst, ascensie) {
+function nieuwSpel(heldId, seedTekst, ascensie, daily) {
   _tbBezitSig = null;   /* nieuwe run → topbalk-bezit zeker opnieuw opbouwen */
   if (!SPELERS[heldId]) heldId = 'slachter';
   const held = SPELERS[heldId];
@@ -475,6 +492,7 @@ function nieuwSpel(heldId, seedTekst, ascensie) {
   S = {
     held: heldId,
     seed,
+    daily: !!daily,        /* meteen gezet (niet post-hoc in startDaily) zodat de scherf-loadout-gate hieronder betrouwbaar is */
     fakkel: 80,
     hp: held.hp, maxHp: held.hp, goud: 99,
     dek: [],
@@ -1526,6 +1544,7 @@ function pootSpoorPayoff() {
    Bewust GEEN scherven-mysterie (alleen de voltooid-vlag), zodat het anders aanvoelt. */
 function magWitTerugkeren() {
   return inGevecht() && S.gevecht
+    && !heeftMetgezel()                                       /* 'terugkeer uit het zwart' alléén als er GEEN levende Drops staat — anders zou drops_wit een nog-aanwezige companion mid-gevecht overschrijven */
     && Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops')
     && !isOntgrendeld('drops_wit')
     && (Codex.runs || 0) > (Codex.dropsOfferRun || 0)        /* grief moet ≥1 volle run landen */
@@ -1724,6 +1743,10 @@ function gebruikDrank(i) {
   const id = S.dranken[i];
   const def = DRANKEN[id];
   if (!def) return;
+  /* een nieuwe drank-tik breekt een lopende doelkeuze af: anders blijft gekozenDrank op een
+     nu-stale slot-index staan terwijl een splice de tas hieronder inkrimpt → een latere
+     vijand-klik leest S.dranken[stale]=undefined → DRANKEN[undefined].drink() crasht. */
+  if (inGevecht()) { S.gevecht.gekozenDrank = null; S.gevecht.gekozenKaart = null; }
   if (def.doel === 'vijand') {
     if (!inGevecht()) { melding('Alleen bruikbaar in een gevecht.'); return; }
     if (S.gevecht.bezig) return;
@@ -2187,7 +2210,7 @@ function startGevecht(samenstelling, soort, rij) {
   /* de metgezel handelt ook op de éérste beurt — even na de entree, zodat
      je 'm ziet binnenkomen voordat hij toeslaat/schildt/geneest */
   if (g.metgezel) setTimeout(() => {
-    if (S.gevecht !== g || g.voorbij) return;
+    if (S.gevecht !== g || g.voorbij || g.bezig) return;   /* g.bezig: speler klikte 'Einde beurt' binnen 650ms → metgezel niet mid-vijandbeurt laten handelen (concurrente mutatie); beginSpelerBeurt draait 'm toch elke beurt */
     metgezelBeurt();
     if (alleVijanden().length === 0) { gevechtGewonnen(); return; }
     renderGevecht();
@@ -2708,11 +2731,17 @@ function mysterieBronLabel(bron) {
 /* het sterkst gevorderde nog-open mysterie (of null) */
 function meestGevorderdeMysterie() {
   const M = window.MYSTERIES; if (!M) return null;
+  /* live platte stash lezen (gebankte + gedragen scherven), NIET het dode
+     Codex.mysteries[mid].scherven dat de Drempel-aanpak niet meer vult — anders bleef de
+     nederlaag-duidingregel ('Verlies wás progressie — n/3') altijd leeg. Zelfde bron als scherfCodexBlok. */
+  const heeft = sid => scherfStash().includes(sid) || gedragen().includes(sid);
   let best = null;
   Object.keys(M).forEach(mid => {
-    const m = Codex.mysteries && Codex.mysteries[mid];
-    if (!m || m.voltooid || !Array.isArray(m.scherven) || !m.scherven.length) return;
-    if (!best || m.scherven.length > best.aantal) best = { mid, aantal: m.scherven.length, rijp: !!m.rijp };
+    if (isOntgrendeld(mid)) return;
+    const vereist = M[mid].vereist || [];
+    const aantal = vereist.filter(heeft).length;
+    if (!aantal) return;
+    if (!best || aantal > best.aantal) best = { mid, aantal, rijp: aantal >= vereist.length };
   });
   return best;
 }
@@ -3187,6 +3216,7 @@ function klikVijand(i) {
     const di = g.gekozenDrank;
     g.gekozenDrank = null;
     const id = S.dranken[di];
+    if (!DRANKEN[id]) { renderGevecht(); return; }   /* vangnet: stale/out-of-bounds index → geen drinkEffect(undefined) */
     S.dranken.splice(di, 1);
     Klank.sfx('drank');
     drinkEffect(id, v);
@@ -4400,7 +4430,7 @@ function rustPook() {
   /* het vuur laait zichtbaar op voor we vertrekken */
   const scene = $('#kv-scene');
   if (scene) scene.classList.add('opgepookt');
-  setTimeout(() => renderKaartScherm(), 1200);
+  setTimeout(() => { if (document.body.dataset.scherm === 'rust') renderKaartScherm(); }, 1200);   /* guard: niet de map over een intussen gestart gevecht/scherm renderen (vertraagde timer-race) */
 }
 function rustGenees(n) {
   if (rustKlaar) return;
@@ -4416,7 +4446,7 @@ function rustGenees(n) {
   Klank.sfx('genees');
   const scene = $('#kv-scene');
   if (scene) scene.classList.add('heelt');
-  setTimeout(() => renderKaartScherm(), 1200);
+  setTimeout(() => { if (document.body.dataset.scherm === 'rust') renderKaartScherm(); }, 1200);   /* guard: niet de map over een intussen gestart gevecht/scherm renderen (vertraagde timer-race) */
 }
 function rustSmeed() {
   kiesKaartUitDek('upgrade', 'Kies een kaart om te smeden', c => {
@@ -4886,8 +4916,15 @@ function volgendeAct(verslagenBaas) {
        die in de daily uit staat (eerlijk veld voor het leaderboard). Een binnen-de-run gevluchte
        metgezel mag wél weer aansluiten. */
     const teruggekeerd = !!(S.metgezel && S.metgezel.vluchtig);
-    const mgid = teruggekeerd ? S.metgezel.id
+    let mgid = teruggekeerd ? S.metgezel.id
       : (S.daily ? null : (S.runMetgezel || (S.runMetgezel = kiesRunMetgezel())));
+    /* een VOORGOED geofferde metgezel (Codex.gevallen) mag NIET via de stale S.runMetgezel-cache
+       herrijzen bij een latere act-overgang — dat breekt de 'geen terugkeer'-belofte van de opoffering.
+       Nu dormant (ACTS_MAX=2 → na de Erfprins volgt toonEinde, niet volgendeAct), maar een landmijn
+       zodra Act 3 live gaat; daarom de cache mee resetten zodat de rotatie een ander kiest. */
+    if (mgid && !teruggekeerd && Array.isArray(Codex.gevallen) && Codex.gevallen.includes(mgid)) {
+      mgid = null; S.runMetgezel = null;
+    }
     if (mgid && METGEZELLEN[mgid]) {
       geefMetgezel(mgid);
       melding(metgezelInstapMelding(mgid, teruggekeerd));
@@ -5041,9 +5078,9 @@ function startDaily() {
   wisSave();
   Daily.laatsteStart = vandaagSleutel(); bewaarDaily();   /* poging verbruikt bij START → geen farmen */
   schrijnKeuzes = [];                       /* geen Schrijn-meeneem in de daily */
+  scherfKeuzes = [];                        /* idem geen scherf-loadout in de daily (eerlijk veld) — anders lekte een eerder in 'Kies je held' geselecteerde scherf de daily in én uit je stash */
   const held = heldVanDag();
-  nieuwSpel(held, dagSeed(), 0);            /* vaste seed, ascensie 0 → eerlijk veld */
-  S.daily = true;
+  nieuwSpel(held, dagSeed(), 0, true);      /* vaste seed, ascensie 0, daily=true → eerlijk veld */
   S.dailyDag = vandaagSleutel();
   melding(`🗓️ Dagelijkse afdaling — held van de dag: ${SPELERS[held].naam}. Geen Schrijn; je score telt mee.`);
   renderKaartScherm();
