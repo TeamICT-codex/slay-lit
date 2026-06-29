@@ -180,6 +180,16 @@ body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk .hp-teks
    door zijn extra naamlabel dat de baas niet heeft. */
 body[data-modus="mobiel"] #scherm-gevecht.baas-actief .vijand-naam,
 body[data-modus="mobiel"] #scherm-gevecht.baas-actief .speler-naam { display: none; }
+/* élk gevecht: de HELDNAAM onder de figuur weg (overbodig — je kent je held), én hij liet de held
+   ~hoger lijken dan de vijanden: zonder dat naamlabel zakt de held-kolom door de bottom-alignment
+   net mee → de voeten van held en vijand komen op één grondlijn. Vijand-namen BLIJVEN (identificatie). */
+body[data-modus="mobiel"] #scherm-gevecht .speler-naam { display: none; }
+/* fijn-uitlijning: zonder naam zakt de held-figuur tegen z'n hp-balk → iets te laag t.o.v. een
+   normale vijand (die z'n naam-rij houdt). Een margin-bottom op de held-kolom tilt 'm via flex-end
+   mee omhoog. LET OP: vijanden staan door de klein/groot-scale (origin bottom-center) zélf al op
+   verschillende voet-hoogtes (klein lager, groot hoger) → exact uitlijnen met álle maten kan niet;
+   16px is het symmetrische compromis (klein ↔ normaal). */
+body[data-modus="mobiel"] #scherm-gevecht #speler-zone { margin-bottom: 16px; }
 
 /* afdaalkaart: de 700px-kaart wordt met zoom op schermbreedte geschaald
    (renderKaartScherm) → geen horizontale scroll meer, enkel verticaal. */
