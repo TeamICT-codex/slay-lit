@@ -3508,12 +3508,13 @@ function _erfprinsRoofKaart(c) {
   const blok = kval(c, 'blok') || 0; if (blok > 0) return { soort: 'blok', n: blok };
   return { soort: 'overig', n: 0 };
 }
-function copycatOpeningsroof(g) {
-  const v = copycatBaas(g); if (!v || g.copycatGebroken) return;
+/* gedeelde graai: verplaats `aantal` willekeurige kaarten uit je trek naar zijn arsenaal
+   (laat ALTIJD ≥2 in je trek → nooit meteen droogtrekken). Geeft het aantal echt geroofde
+   kaarten terug. */
+function _copycatGraai(v, g, aantal) {
   const trek = g.trek || [];
-  /* helft van je dek, maar laat ≥2 kaarten in je trek (nooit meteen droogtrekken) */
-  const aantal = Math.max(0, Math.min(trek.length - 2, Math.round((S.dek.length || trek.length) / 2)));
-  if (aantal <= 0) return;
+  aantal = Math.max(0, Math.min(trek.length - 2, aantal | 0));
+  if (aantal <= 0) return 0;
   const idxs = schud(trek.map((_, i) => i)).slice(0, aantal).sort((a, b) => b - a);   /* hoog→laag → splice-veilig; seeded schud */
   v.gestolen = v.gestolen || [];
   idxs.forEach(i => {
@@ -3521,9 +3522,29 @@ function copycatOpeningsroof(g) {
     const info = _erfprinsRoofKaart(c);
     v.gestolen.push({ id: c.id, naam: kdef(c).naam, soort: info.soort, n: info.n, up: !!c.up });
   });
-  v.totaalGeroofd = v.gestolen.length;
-  v.gestolen.forEach((s, i) => setTimeout(() => kaartVliegFx(s.id, copycatBronEl(), actorEl(v)), 140 + i * 90));
-  baasFaseMoment('DE ROOF', `🎭 „Jouw werk? Het is nu MÍJN werk." — hij grist ${v.gestolen.length} kaart${v.gestolen.length === 1 ? '' : 'en'} uit je dek!`);
+  v.totaalGeroofd = (v.totaalGeroofd || 0) + idxs.length;
+  return idxs.length;
+}
+/* DE ROOF (opening): grist een HELFT van je dek vóór je eerste beurt. */
+function copycatOpeningsroof(g) {
+  const v = copycatBaas(g); if (!v || g.copycatGebroken) return;
+  const n = _copycatGraai(v, g, Math.round((S.dek.length || (g.trek || []).length) / 2));
+  if (!n) return;
+  v.gestolen.slice(-n).forEach((s, i) => setTimeout(() => kaartVliegFx(s.id, copycatBronEl(), actorEl(v)), 140 + i * 90));
+  baasFaseMoment('DE ROOF', `🎭 „Jouw werk? Het is nu MÍJN werk." — hij grist ${n} kaart${n === 1 ? '' : 'en'} uit je dek!`);
+  Klank.sfx('debuff');
+  renderGevecht();
+}
+/* DE NAROOF: raakt zijn geroofde stapel op, dan grist hij OPNIEUW (de helft van wat je nú hebt) →
+   de onslaught deflater niet, je kunt 'm solo niet uitzitten. Dooft pas als je trek te klein is om
+   nog te grissen (<3) → dán valt hij zwak uit (jouw window). De Drops-breker stopt de machine
+   volledig. Geen schade deze beurt (hij her-stockt); telegrafeert als '👀 steelt'. */
+function copycatHerroof(v, g) {
+  if (!v || g.copycatGebroken) return;
+  const n = _copycatGraai(v, g, Math.ceil((g.trek || []).length / 2));
+  if (!n) { fxNummer(actorEl(v), '🎭 niks meer te grissen…', 'fx-debuff'); return; }
+  v.gestolen.slice(-n).forEach((s, i) => setTimeout(() => kaartVliegFx(s.id, copycatBronEl(), actorEl(v)), i * 90));
+  baasFaseMoment('NAROOF', `🎭 „Nog niet leeg?" — hij grist nóg ${n} kaart${n === 1 ? '' : 'en'} uit je dek!`);
   Klank.sfx('debuff');
   renderGevecht();
 }
@@ -3600,11 +3621,16 @@ function copycatKies(v, beurt) {
     const plan = copycatPlagiaatPlan(v, aantal);
     return { type: 'plagiaat', naam: 'Plagiaat', plan, doe: vv => copycatSpeelTerug(vv, g, plan) };
   }
-  /* arsenaal leeg → de roof is uitgeput; hij haalt zelf nog wild uit, maar veel zwakker */
+  /* arsenaal leeg → grist OPNIEUW als je trek het toelaat (sustain: solo niet uit te zitten —
+     je hebt de breker/metgezel nodig); telegrafeert als 👀 steelt, doet die beurt geen schade. */
+  if (!g.copycatGebroken && (g.trek || []).length >= 3) {
+    return { type: 'steel', naam: 'Naroof', doe: vv => copycatHerroof(vv, g) };
+  }
+  /* trek te klein om nog te grissen → hij is uitgeput en haalt zelf nog zwak uit (jouw window) */
   return { type: 'aanval', naam: fase >= 2 ? 'Wild Geschreeuw' : 'Pappie Bellen', dmg: 4 + fase * 4,
     doe: vv => {
-      fxNummer(actorEl(vv), '🎭 niks meer van jou!', 'fx-debuff');
-      if (!g._copycatLeeggemeld) { melding('🎭 Z\'n geroofde stapel is op — hij heeft niks meer van jou. Maak hem af.'); g._copycatLeeggemeld = true; }
+      fxNummer(actorEl(vv), '🎭 niks meer te grissen!', 'fx-debuff');
+      if (!g._copycatLeeggemeld) { melding('🎭 Je dek is te uitgedund om nog te grissen — hij is uitgeput. Maak hem af.'); g._copycatLeeggemeld = true; }
     } };
 }
 
