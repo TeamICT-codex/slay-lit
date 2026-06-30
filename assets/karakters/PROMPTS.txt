@@ -730,3 +730,30 @@ ANDER silhouet en ANDERE accentkleur, anders worden het allemaal grijze papierfi
   de_inktvlek   — lage VORMLOZE plas/ooze (kruipt)             · accent: zwart + ziek GROEN
   de_redacteur  — rechte CENSOR met schaar-hand                · accent: ZWARTE censuurbalken + witte stroken
   de_archivaris — kolossale ARCHIVARIS + plankenberg op rug (grootste, elite) · accent: bot-grijs, TORENHOOG
+
+================ DE ROOF — CINEMATIC UI-ART (optioneel; nu CSS, art = latere upgrade) ================
+Twee losse prop-/overlay-assets voor de Erfprins-roof-cutscene ("De Roof v2"). NU vervangen door
+CSS (emoji-vinger 🫳 + CSS-filters); deze art is een sfeer-upgrade. Bij genereren → pijplijn +
+cache-bump + wire (vervang de emoji/CSS-look). Beide TRANSPARANT via PURE-MAGENTA #FF00FF chroma-key.
+
+  erfprins_vinger — de "vieze vinger" waarmee de Erfprins je kaarten aantikt tijdens de roof.
+    Prompt: A single grotesque aristocrat's HAND-and-forearm, pointing/jabbing DOWNWARD with one
+    extended index finger about to TAP something. Spoiled-heir decadence gone to rot: a too-ornate
+    soiled lace cuff, a heavy crooked signet ring, fingernails long, cracked and ink-stained black.
+    Skin pallid grey-violet, veined, slightly translucent — the hand of someone who never worked a
+    day. Cold Archive palette (grey-violet) with a thin warm ember-red rim-light along the knuckles;
+    a faint inky-black corruption seeping from the fingertip. Painterly storybook villain style,
+    matching the SLAY IT character art. Pointing from top toward bottom (the fingertip is the focal
+    point, near the lower edge). FULL hand-to-elbow, slight side angle. PURE-MAGENTA #FF00FF
+    background, vlekkeloze cut, clear magenta margin all sides, no ground/shadow/text/UI/frame.
+    Fills ~80% of a square 1024x1024 canvas. (donkere figuur → NIET op zwart.)
+
+  kaart_corruptie — een transparante "aantasting"-overlay die OVER een gespeelde kaart kruipt
+    (de gecorrumpeerde retour-kaart). Prompt: A semi-transparent INK-ROT / decay TEXTURE meant to
+    overlay a playing card — black and deep-violet corruption creeping inward from the edges and
+    lower-right corner: tar-like ink tendrils, hairline cracks, mildew blooms, a few charred/burnt
+    flecks, sickly green-black bruising. Denser at the corners, THINNING toward the centre so the
+    card art stays half-readable underneath. NO card, NO border, NO subject — ONLY the corruption
+    texture floating in space. Flat, even lighting, painterly. PURE-MAGENTA #FF00FF background
+    everywhere the texture is absent (so it cuts to transparent); the texture itself is the only
+    content. Rectangular card-proportion footprint (~3:4) centred on a 1024x1024 canvas.

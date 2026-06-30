@@ -1364,6 +1364,8 @@ const UITSPRAKEN = {
      geld, nu steelt hij jóuw kaarten. Hij verafschuwt Drops — trouw kan hij niet kopiëren. */
   _erfprins: {
     intro:  '„EINDELIJK — IEMAND OM VAN AF TE KIJKEN."',
+    woede:  '„Au — je SLÁÁT me?! Onbeschofte parvenu. Goed dan."',
+    roof:   '„Laat eens zien wat je hébt... GEEF HIER. Het wordt nú MÍJN werk."',
     fase2:  '„Wéét je wel wie mijn váder is?! Ik hóéf niks zelf te maken."',
     fase3:  '„ALLES wat jij kan, kan ik óók — ik kopieer het gewoon!"',
     dood:   '„Maar... ik kopieerde alles... waarom verlies ík...?"',
