@@ -737,7 +737,11 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 }
 
 /* ---------- heldenkeuze ---------- */
-#scherm-held { justify-content: center; }
+/* `safe center` i.p.v. `center`: centreert verticaal als alles past, maar lijnt bovenaan uit
+   (geen clip) zodra de inhoud hoger is dan het venster — anders knipt het centreren op een korte
+   laptop (100% zoom) de "Kies je held"-titel + de bovenkant van de portretten weg. overflow-y:auto
+   maakt het dan scrollbaar (de basis-`.scherm` staat op overflow:hidden). */
+#scherm-held { justify-content: safe center; overflow-y: auto; }
 .held-rij {
   display: flex; gap: 28px; flex-wrap: wrap; justify-content: center;
   margin: 10px 0 18px;
