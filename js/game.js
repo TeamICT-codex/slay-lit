@@ -1286,12 +1286,13 @@ function geefMetgezel(id) {
   if (lab) melding(`${def.icoon || '🜂'} ${def.naam} — ${lab} met ${HELDNAAM(S.held)}.`);
   renderTopbalk();
 }
-/* de vrijgespeelde, "meeneembare" metgezellen — drops_wit verdringt drops (z'n rouw-evolutie),
-   vlamwachter en mosgeest staan daar los naast. Volgorde = stabiel voor de rotatie hieronder. */
+/* de vrijgespeelde, "meeneembare" metgezellen voor de auto-rotatie. drops_wit zit hier BEWUST
+   NIET in: hij is geen vaste reisgenoot maar een EENMALIG grief-moment (zie revealDropsWit) — hij
+   keert enkel terug uit het gedoofde licht, nooit automatisch bij act-start. Heb je Drops geofferd
+   (→ drops_wit ontgrendeld), dan is de gewone Drops weg; enkel Vlamwachter/Mosgeest rouleren dan nog. */
 function ontgrendeldeMetgezellen() {
   const lijst = [];
-  if (isOntgrendeld('drops_wit')) lijst.push('drops_wit');
-  else if (isOntgrendeld('drops')) lijst.push('drops');
+  if (isOntgrendeld('drops') && !isOntgrendeld('drops_wit')) lijst.push('drops');
   if (isOntgrendeld('vlamwachter')) lijst.push('vlamwachter');
   if (isOntgrendeld('mosgeest')) lijst.push('mosgeest');
   return lijst;
@@ -3716,9 +3717,10 @@ async function copycatRoofCutscene(g, v, wil) {
     const k = document.createElement('div');
     k.className = 'roof-kaart' + (roofSet.has(i) ? '' : ' veilig');
     k.dataset.idx = i;
-    k.innerHTML = `<span class="rk-icoon">${def.icoon}</span><span class="rk-naam">${knaam(c)}</span>`;
+    k.innerHTML = `<div class="rk-art kaart-icoon" data-kicoon="${c.id}">${def.icoon}</div><span class="rk-naam">${knaam(c)}</span>`;
     waaier.appendChild(k);
   });
+  if (typeof verfraaiKaartIconen === 'function') verfraaiKaartIconen(waaier);   /* echte kaart-art laden i.p.v. de emoji-terugval */
   await slaap(40);
   ov.classList.add('open');
   Klank.sfx('kaart');
@@ -5400,6 +5402,9 @@ function volgendeAct(verslagenBaas) {
     if (mgid && !teruggekeerd && Array.isArray(Codex.gevallen) && Codex.gevallen.includes(mgid)) {
       mgid = null; S.runMetgezel = null;
     }
+    /* Drops de Witte is NOOIT een auto-reisgenoot bij act-start — enkel via zijn grief-terugkeer
+       (revealDropsWit, mid-gevecht). Vangt ook een stale S.runMetgezel='drops_wit' uit oudere saves. */
+    if (mgid === 'drops_wit') { mgid = null; S.runMetgezel = null; }
     if (mgid && METGEZELLEN[mgid]) {
       geefMetgezel(mgid);
       melding(metgezelInstapMelding(mgid, teruggekeerd));
