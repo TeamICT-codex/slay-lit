@@ -436,9 +436,28 @@ wegknippen). Houd elk wezen mét marge in het frame (geen wezen dat tot alle ran
   Accent: molten ORANGE glow in the mould-frame + heavy black iron.
   (Elite → meer poses; _cast = STAMPT zichtbaar een blanco pop-duplicaat uit de borst-mal.)
 
---- mal_gietsel.png   (spawn — vers blanco gietsel; geen poses nodig) ---
-  A small half-formed BLANK cast: a featureless, faceless, smooth hollow humanoid, pale
-  CLAY/WAX-white, soft and unfinished, fresh straight from the mould.
+--- mal_gietsel.png   (spawn — De Mal's verse blanco gietsel; geen poses nodig · HERMAAKT v2) ---
+  [v2 — de v1 kwam met een GRIJZE rechthoekige achtergrond/halo mee die de cutter NIET wegkreeg
+   (bleek-wit figuur op een grijze gradient = geen scheiding, vandaar de grijze box rond het wezen
+   in-game). Fix: genereer op een PURE-MAGENTA #FF00FF chroma-key — magenta ligt ver van het bleke
+   klei-wit → de cutter maskeert alle magenta globaal voor een vlekkeloze contour. GEEN grijze
+   achtergrond/vignet/sokkel/box meer; VOLLEDIG figuurtje head-to-feet i.p.v. onderaan afgesneden.]
+  Stylized painterly dark-fantasy concept art, hand-painted with expressive visible brushwork — NOT
+  photorealistic, not a photograph, no photo textures, NO 3D render, no CGI shine. A SINGLE small
+  half-formed BLANK cast shown FULL-BODY head-to-feet (the entire little standing figure inside the
+  frame, feet/base visible, clear empty margin below the feet): a featureless, FACELESS, smooth
+  hollow humanoid, pale CLAY/WAX-white, soft and unfinished, fresh straight from the mould, with thin
+  wax-drips and an unfinished seam where the mould split. Facing LEFT. Cold blue-grey light + a THIN
+  warm ember rim-light along ONLY the left edge.
+  CUT-OUT (gehard, magenta): ONE compact, CLOSED, OPAQUE silhouette with SHARP contour edges on a
+  flat PURE-MAGENTA #FF00FF chroma-key background (the cutter masks all magenta globally — keep the
+  WHOLE figure pale clay/wax-white + cool/ember tones with NO magenta or pink anywhere on the body).
+  NO grey backdrop, NO gradient, NO vignette, NO rectangular box/halo, NO platform/pedestal/base-disk,
+  NO mist/smoke/haze/loose particles, nothing fading to any edge — clear empty MAGENTA margin all four
+  sides (incl. above the head and below the feet). No ground/shadow/text/UI/frame. Fills ~80% of a
+  square 1024x1024 canvas.
+  Accent: bleek klei/was-wit, glad en onaf, met dunne was-drips. NB: bleke figuur → genereer op
+  PURE-MAGENTA #FF00FF (NIET grijs/wit — grijs smolt samen + gaf de grijze box in-game).
 
 --- het_origineel.png   (EPISCH — Het Origineel: "jij bent een kopie van MIJ"; kaatst jouw klap terug) ---
   The ONE true Original from which the whole Archive's copies derive — and it insists YOU are
