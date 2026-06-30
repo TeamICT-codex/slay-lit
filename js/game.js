@@ -4164,7 +4164,10 @@ function toonKaartKeuze(kaarten, titel, bijKeuze, bijOverslaan, opts = {}) {
     onthuld.add(c.uid);
     el.classList.add('open');
     Klank.sfx('flip');
-    if (kdef(c).zeld === 'zeldzaam') setTimeout(() => Klank.sfx('schitter'), 250);
+    if (bijzondereKaart(c)) {                                  /* SIGNATURE: een speciale reveal-flourish (gouden burst + schitter) */
+      el.classList.add('signatuur-reveal');
+      setTimeout(() => Klank.sfx('schitter'), 200);
+    }
   }
 
   function toonRij() {
@@ -4190,17 +4193,19 @@ function toonKaartKeuze(kaarten, titel, bijKeuze, bijOverslaan, opts = {}) {
         else focus(c);
       };
     });
-    /* booster: de GEWONE kaarten flippen vanzelf één voor één open; de speciale
-       (ongewoon/zeldzaam) blijven omgedraaid liggen tot de speler ze zelf aantikt
-       — een bewust onthul-moment, met de bestaande flip + kleurflits + schitter. */
-    if (opts.onthul) {
-      kaarten.forEach((c, i) => {
-        if (bijzondereKaart(c)) return;
+    /* reveal-gedrag PER PLATFORM:
+       — LAPTOP: alle kaarten flippen vanzelf gespreid open (incl. de signature-kaarten, die
+         hun eigen flourish krijgen in onthul()). Gewone eerst, signature als climax laatst.
+       — MOBIEL: niets auto-flippen → alles blijft GEDEKT mét de gloed; de speler tikt elke
+         kaart zelf open (tactiel onthul-moment — geluidjes + signature-flourish blijven). */
+    if (opts.onthul && document.body.dataset.modus !== 'mobiel') {
+      const volgorde = kaarten.slice().sort((a, b) => (bijzondereKaart(a) ? 1 : 0) - (bijzondereKaart(b) ? 1 : 0));
+      volgorde.forEach((c, i) => {
         setTimeout(() => {
           if (onthuld.has(c.uid) || !ov.classList.contains('open')) return;
           const el = houder.querySelector(`.onthul-kaart[data-uid="${c.uid}"]`);
           if (el) onthul(el, c);
-        }, 550 + i * 500);
+        }, 450 + i * 420);
       });
     }
   }
