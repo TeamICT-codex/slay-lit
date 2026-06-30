@@ -367,8 +367,13 @@ const Vista = (() => {
        lager in beeld staan — op de vloer van de plaat, niet zwevend erboven */
     kijkY = eigenAchtergrond ? 2.35 : 1.8;
     maakActeur(g.speler, g.heldArt || 'speler', { teken: '🤺', spiegel: true }, -3.7, 0.4, 2.5);
-    const n = g.vijanden.length;
-    g.vijanden.forEach((v, i) => {
+    /* enkel LEVENDE vijanden als sprite opbouwen: dode blijven in g.vijanden staan (v.dood=true,
+       voor de sterft-fade), maar een herbouw (voegVijandToe — Doorslag-kopie / Mal-gietsel) mag een
+       reeds afgemaakte vijand NIET opnieuw als sprite tonen. De DOM verbergt 'm wel (sterft=opacity 0),
+       Vista's three.js-sprite niet → dit was de 'dode vijand herrijst'-bug. */
+    const levend = g.vijanden.filter(v => !v.dood);
+    const n = levend.length;
+    levend.forEach((v, i) => {
       const def = VIJANDEN[v.id];
       const schaal = def.baas ? 4.4 : (def.elite ? 3.3 : 2.4);
       const x = n === 1 ? 3.1 : 1.1 + i * (3.9 / (n - 1));

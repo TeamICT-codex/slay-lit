@@ -927,7 +927,9 @@ const VIJANDEN = {
       if (!v.gesplitst && v.hp / v.maxHp <= 0.5) {
         return { naam: 'Doorslaan', type: 'buff', doe: () => {
           v.gesplitst = true; voegVijandToe('doorslag_kopie');
-          melding('📄 Doorslag perst een kopie van zichzelf!');
+          geefStatus(v, 'kwetsbaar', 2);   /* terwijl hij perst ligt hij er open bij: zichtbaar als Kwetsbaar-status + +50% schade als je 'm nu raakt */
+          fxNummer(actorEl(v), '📄 ontzet — kwetsbaar!', 'fx-debuff');
+          melding('📄 Doorslag perst een kopie — en ligt er even open bij! (Kwetsbaar)');
         } };
       }
       return willekeurig() < 0.6 ? { naam: 'Papiersnee', type: 'aanval', dmg: 9 }
@@ -962,8 +964,10 @@ const VIJANDEN = {
     kies: (v, beurt) => {
       /* niet "Gieten" verspillen als het toneel al vol is (voegVijandToe no-opt bij 4) */
       const vol = (S.gevecht.vijanden || []).filter(x => !x.dood).length >= 4;
-      if (beurt % 2 === 0 && !vol) return { naam: 'Gieten', type: 'buff', doe: () => {
-        voegVijandToe('mal_gietsel'); melding('🖨️ De Mal perst er een gietsel uit!');
+      /* MAX 3 gietsels per gevecht — playtest: hij perste er te veel uit */
+      if (beurt % 2 === 0 && !vol && (v.gietsels || 0) < 3) return { naam: 'Gieten', type: 'buff', doe: () => {
+        v.gietsels = (v.gietsels || 0) + 1;
+        voegVijandToe('mal_gietsel'); melding(`🖨️ De Mal perst er een gietsel uit! (${v.gietsels}/3)`);
       } };
       return willekeurig() < 0.6 ? { naam: 'Persen', type: 'aanval', dmg: 13 }
         : { naam: 'Verharden', type: 'blok', blok: 10 };
