@@ -935,3 +935,160 @@ colossal horned body crumbling apart into cooling cinders and sinking shadow as 
 quiet. Keep it CONTAINED — a settling collapse tight to the body, INSIDE the frame margin (NOT an explosion
 of debris to the edges), one readable shape for a clean cut.
 Accent: dovend zwart vuur, ember-barsten die naar dood grijs-zwart koelen, ineenzakkende kolossus.
+
+
+#################### ACT 2 — KOPIEERHEL: AANVALS-POSES (_attack) ####################
+De engine speelt <id>_attack AUTOMATISCH af zodra een vijand uithaalt (pose2D(v,'attack') in
+vijandAanval) — droppen in assets/karakters/ volstaat, geen code nodig (terugval = basis-art).
+Anker telkens de BASIS-art van dat wezen als referentie; behoud silhouet/kleur/kijkrichting
+(LINKS) + de ACHTERGROND van de basis (echo = EFFEN PUUR ZWART; de rest = TRANSPARANT). Verander
+ALLEEN de Pose-regel. ELKE pose = één losse afbeelding (nooit een grid/collage).
+Reeds aanwezig (NIET opnieuw nodig): de_deadline · de_redacteur · de_archivaris · spiegelwachter
+· de_verzwolgene · de_drempelwachter.
+
+>> STIJLANKER (zit in elke prompt hieronder al verwerkt, maar hier los voor het overzicht):
+   Stylized painterly dark-fantasy concept art, hand-painted with expressive visible brushwork,
+   rich painted shading — NOT photorealistic, not a photograph, no photo textures, NO 3D render,
+   no CGI/chrome shine. Single full-body creature, facing LEFT (toward the unseen hero). KOUD
+   Archief-palet: cold blue-grey clerical "system light" with a THIN warm ember rim-light along
+   ONLY the left contour (the hero's torchglow); the body stays COLD — except de_mal (glowing
+   orange) and het_origineel (gold-crimson), which are warm throughout. Theme = NAMAAK/KOPIE
+   (gedupliceerd, gespiegeld, doorgedrukt). Isolated on [achtergrond], ONE closed opaque
+   silhouette with sharp contour edges, clear empty margin all four sides, NO mist/smoke/haze/
+   loose particles fading to the edges, no ground/shadow/text/UI/frame. Fills ~90% of a square
+   1024x1024 canvas. Houd de mechaniek-actie TIGHT tegen het lichaam (niets dat naar de randen lekt).
+
+--- echo_attack.png  (De Echo — herhaalt telkens zijn vorige zet) ---
+Use the attached reference image (echo.png) as the anchor: the EXACT same ghostly multi-layer
+after-image creature, same translucent stacked duplicate silhouettes, same edges glowing faint
+VIOLET-WHITE, same design. Stylized painterly dark-fantasy concept art, hand-painted, expressive
+visible brushwork — NOT photorealistic, no photo, NO 3D render. Single full-body creature, facing
+LEFT. Cold blue-grey light + a THIN warm ember rim-light along the left edge (body stays cold).
+Isolated on an EFFEN PUUR ZWARTE achtergrond (doorschijnend wezen → vanaf zwart rekent de cutter
+de doorschijnendheid uit), clear empty margin all sides, no ground/shadow/text/UI/frame. Fills
+~90% of a 1024x1024 canvas.
+Pose (ATTACK — de herhaalde slag): the layered after-image figure THRUSTS one arm forward to the
+LEFT to strike, and each offset translucent duplicate-layer behind it REPEATS that same lunging
+strike a beat later, fainter each layer — the SAME blow echoed three or four times in a frozen
+motion-blur trail, so the attack itself looks duplicated/repeated. Cold light, not flesh.
+Accent: violet-witte nagloed op de gestapelde doorschijnende lagen die dezelfde uithaal herhalen.
+
+--- doorslag_attack.png  (Doorslag — splitst onder 50% HP in een zwakke kopie) ---
+Use the attached reference image (doorslag.png) as the anchor: the EXACT same flat PAPERY humanoid
+like a living carbon-copy sheet, same torn frayed duplicate-sheet edges, same asymmetry (one crisp
+inked half + one faded smudged CARBON-COPY half), same design. Stylized painterly dark-fantasy
+concept art, hand-painted, expressive brushwork — NOT photorealistic, no photo, NO 3D render.
+Single full-body creature, facing LEFT. Cold blue-grey light + THIN warm ember rim-light on the
+left edge. Isolated on a fully TRANSPARENT background, one closed opaque silhouette, sharp contour,
+clear margin all sides, no ground/shadow/text/UI/frame. Fills ~90% of a 1024x1024 canvas.
+Pose (ATTACK — de doorgedrukte slag): the flat paper figure SLASHES forward to the LEFT using a
+torn razor-sheet EDGE as a blade — and the crisp inked half and the smudged carbon-copy half both
+swing the SAME strike a hair apart, like a duplicate doubled over the original (the blow printed
+twice). Thin, flimsy, bureaucratic but cutting.
+Accent: inkt-BLAUW + carbongrijs, gescheurde dubbelblad-randen, de slag die dubbel doordrukt.
+
+--- naaper_attack.png  (De Naäper — kopieert jouw Kracht) ---
+Use the attached reference image (naaper.png) as the anchor: the EXACT same wiry dark monkey-DEMON
+imp, same matted dark fur, same exaggerated MOCKING too-wide toothy grin, same ONE stolen glowing
+golden muscular ARM of light grafted onto its scrawny limb, same design. Stylized painterly
+dark-fantasy concept art, hand-painted, expressive brushwork — NOT photorealistic, no photo, NO 3D
+render. Single full-body creature, facing LEFT. Cold blue-grey light + THIN warm ember rim-light on
+the left edge. Isolated on a fully TRANSPARENT background, one closed opaque silhouette, sharp
+contour, clear margin all sides, no ground/shadow/text/UI/frame. Fills ~90% of a 1024x1024 canvas.
+Pose (ATTACK — de na-aap-klap): the scrawny imp swings its STOLEN glowing golden muscle-ARM in a
+mocking over-the-top STRONGMAN PUNCH to the LEFT — aping a hero's power-strike with the one bicep
+of stolen light flaring, grin stretched wide, the rest of its body still scrawny and derivative.
+Accent: donkere vacht + ziek-GELE grijns/ogen + de ENE gestolen gouden spier die de klap levert.
+
+--- inktklerk_attack.png  (Inktklerk — drukt Zwak op je met natte inkt) ---
+Use the attached reference image (inktklerk.png) as the anchor: the EXACT same gaunt CLERK-creature
+utterly DRENCHED and DRIPPING with glossy black ink (no rubber stamp — that is the Stempelaar's),
+same sodden robes, same over-printed face with features RUNNING like wet ink, same design. Stylized
+painterly dark-fantasy concept art, hand-painted, expressive brushwork — NOT photorealistic, no
+photo, NO 3D render. Single full-body creature, facing LEFT. Cold blue-grey light + THIN warm ember
+rim-light on the left edge. Isolated on a fully TRANSPARENT background, one closed opaque silhouette,
+sharp contour, clear margin all sides, no ground/shadow/text/UI/frame. Fills ~90% of a 1024x1024
+canvas.
+Pose (ATTACK — de inkt-mep): the drenched clerk LUNGES and SLAPS a bare ink-soaked HAND forward to
+the LEFT, flinging a smeared black hand-print and a running "weak"-blot toward the foe, ink whipping
+off his sleeve, chin and fingertips (kept TIGHT to the body, not bleeding to the edges). Hunched,
+fluid, half-melting, cold inky menace.
+Accent: glanzend ZWARTE natte inkt die overal afdruipt + de uitgestrekte ink-mep-hand naar links.
+
+--- stempelaar_attack.png  (De Stempelaar — drukt Kwetsbaar in je) ---
+Use the attached reference image (stempelaar.png) as the anchor: the EXACT same clerk-CONSTRUCT
+whose entire right ARM is a tall mechanical BRASS-and-iron APPROVAL-STAMP column (no hand), RIGID,
+STIFF and BONE-DRY, hung with RED wax seals and carbon-copy slips, same flat over-printed form-face,
+same design. Stylized painterly dark-fantasy concept art, hand-painted, expressive brushwork — NOT
+photorealistic, no photo, NO 3D render. Single full-body creature, facing LEFT. Cold blue-grey
+light + THIN warm ember rim-light on the left edge. Isolated on a fully TRANSPARENT background, one
+closed opaque silhouette, sharp contour, clear margin all sides, no ground/shadow/text/UI/frame.
+Fills ~90% of a 1024x1024 canvas.
+Pose (ATTACK — de stempelslag): it SLAMS the heavy brass APPROVAL-STAMP arm down-and-forward to the
+LEFT in a hard mechanical stamping strike, a fresh RED wax "vulnerable"-seal impact flaring at the
+point of contact, identical duplicated stamp-marks jolting in the air around the blow. Rigid, dry,
+relentless — bureaucracy as a hammer.
+Accent: BRONS stempelarm + RODE waxzegels + de neergeslagen rode zegel-afdruk (links); droog, hard.
+
+--- dossierwurm_attack.png  (De Dossierwurm — rolt in: +Kracht +Doornen) ---
+Use the attached reference image (dossierwurm.png) as the anchor: the EXACT same long SEGMENTED
+archive-WORM built from stacked bone-YELLOW dossier-sheets and curled scrolls bound with RED string
+and wax seals, same sharp torn paper-EDGES along its flanks (its Doornen), same blunt eyeless head
+of crumpled documents with a circular ink-stained maw, same design. Stylized painterly dark-fantasy
+concept art, hand-painted, expressive brushwork — NOT photorealistic, no photo, NO 3D render. Single
+full-body creature, facing LEFT. Cold blue-grey light + THIN warm ember rim-light on the left edge.
+Isolated on a fully TRANSPARENT background, one closed opaque silhouette, sharp contour, clear margin
+all sides, no ground/shadow/text/UI/frame. Fills ~90% of a 1024x1024 canvas.
+Pose (ATTACK — de bijt-uitval): the segmented paper-worm REARS high and LUNGES its blunt circular
+ink-stained MAW forward to the LEFT to bite, the bladed torn paper-EDGES along its flanks fanning
+out and catching the light (its Doornen bristling), red string and wax seals snapping taut, index-
+tabs jutting. Coiled, lashing, bladed.
+Accent: bot-GEEL perkament + rood touw + de uitgevouwen scherpe papier-randen (Doornen) + de happende muil.
+
+--- de_inktvlek_attack.png  (De Inktvlek — gif) ---
+Use the attached reference image (de_inktvlek.png) as the anchor: the EXACT same low, formless,
+puddle-shaped crawling ink-blot OOZE of glistening black-and-sickly-GREEN ink, same dripping
+corrosive droplets, same smeared dissolving signatures and half-drowned letters floating in its
+body, same design. Stylized painterly dark-fantasy concept art, hand-painted, expressive brushwork —
+NOT photorealistic, no photo, NO 3D render. Single full-body creature, facing LEFT. Cold blue-grey
+light + THIN warm ember rim-light on the left edge. Isolated on a fully TRANSPARENT background, one
+contained closed opaque silhouette, sharp contour, clear empty margin all sides (NOT bleeding to the
+edges), no ground/shadow/text/UI/frame. Fills ~90% of a 1024x1024 canvas.
+Pose (ATTACK — de gif-uithaal): the low ooze SURGES UP into a single reaching clawed LIMB of
+black-and-green ink lashing forward to the LEFT, flinging corrosive POISON droplets and dissolving
+half-drowned letters off the strike — the rest of the blot staying contained with clear margin (a
+clean cut-out contour). Corrosive, derivative, venomous.
+Accent: zwart + ziek-GROEN (gif) + de opgerichte druipende ink-klauw naar links.
+
+--- de_mal_attack.png  (ELITE — De Mal: de matrijs slaat toe) ---
+Use the attached reference image (de_mal.png) as the anchor: the EXACT same hulking industrial
+black-IRON casting-PRESS creature, same hollow rectangular MOULD-FRAME chest glowing MOLTEN ORANGE,
+same heavy riveted iron limbs like a stamping press, same design (the only HOT industrial enemy).
+Stylized painterly dark-fantasy concept art, hand-painted, expressive brushwork — NOT photorealistic,
+no photo, NO 3D render. Single full-body creature, facing LEFT. Cold blue-grey ambient + THIN warm
+ember rim-light on the left edge, but the mould-frame burns MOLTEN ORANGE (this one is warm/hot).
+Isolated on a fully TRANSPARENT background, one massive closed opaque silhouette, sharp contour,
+clear margin all sides, no ground/shadow/text/UI/frame. Fills ~90% of a 1024x1024 canvas.
+Pose (ATTACK — de pers-slag): the hulking iron press DRIVES a massive riveted iron stamping-ARM /
+fist down-and-forward to the LEFT like a crushing press-stroke, the hollow MOULD-FRAME in its chest
+flaring brighter MOLTEN-ORANGE with the force, a hot stamping impact at the point of contact (sparks
+kept tight to the body). Massive, relentless — a factory of fakes swinging.
+Accent: gloeiend ORANJE matrijs-holte + zwaar zwart ijzer + de neergaande ijzeren pers-arm (links).
+
+--- het_origineel_attack.png  (EPISCH — Het Origineel: "jij bent een kopie van MIJ"; kaatst jouw klap terug) ---
+Use the attached reference image (het_origineel.png) as the anchor: the EXACT same tall, regal,
+hyper-VIVID archetypal humanoid — the ONLY fully SATURATED warmly-lit being in a world of cold grey
+fakes, rich GOLD-and-CRIMSON, sharp and perfect, holding a glowing master seal-of-origin / radiant
+source-quill, with pale washed-out grey duplicates of ITSELF peeling away from its silhouette, same
+design. Stylized painterly dark-fantasy concept art, hand-painted, expressive brushwork — NOT
+photorealistic, no photo, NO 3D render. Single full-body figure, facing LEFT. It BLAZES warm
+(gold-crimson, saturated) against the surrounding cold; a thin ember rim on the left. Isolated on a
+fully TRANSPARENT background, one closed opaque silhouette, sharp contour, clear margin all sides,
+no ground/shadow/text/UI/frame. Fills ~90% of a 1024x1024 canvas.
+Pose (ATTACK — de archetypische terugkaats-slag): the radiant gold-crimson Original sweeps its
+glowing master SEAL-OF-ORIGIN / source-quill forward in a commanding, contemptuous strike to the
+LEFT and HURLS an incoming blow straight back as a washed-out grey ECHO (it returns/reflects your
+strike) — its pale duplicate-copies of itself flaring and peeling brighter for the instant, one open
+palm raised. Radiant, arrogant, archetypal — the real thing punishing the "copy".
+Accent: GOUD-en-KARMOZIJN, warm en verzadigd (de enige warme) + de naar links teruggekaatste
+grauwe grijs-echo van jouw klap + opflakkerende bleke kopieën.
