@@ -2719,6 +2719,56 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
   z-index: 6;
 }
 
+/* ============ DE SLIJMKONING — metamorfose-intro (Glenn → Slijmkoning) ============ */
+#baas-intro.baas-intro-morf {
+  position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(20, 30, 14, .92), rgba(4, 6, 4, .985));
+  cursor: pointer; transition: opacity .5s ease;
+}
+#baas-intro.baas-intro-morf.weg { opacity: 0; }
+.morf-wrap { display: flex; flex-direction: column; align-items: center; gap: clamp(10px, 2.2vh, 20px); padding: 3vh 4vw; max-width: 96vw; max-height: 100vh; text-align: center; }
+.morf-wrap > small { font-family: 'Pirata One', serif; letter-spacing: .12em; color: #8fbf7a; opacity: .85; text-transform: uppercase; font-size: clamp(.75rem, 2.3vw, 1.02rem); }
+.morf-podium {
+  position: relative; width: clamp(190px, 36vh, 330px); aspect-ratio: 4 / 5;
+  border-radius: 12px; overflow: hidden; background: #0a0d08;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .7), inset 0 0 0 2px rgba(120, 160, 90, .25);
+}
+.morf-fase {
+  position: absolute; inset: 0; background: center top / cover no-repeat; opacity: 0;
+  transform: scale(1.04); filter: saturate(.92);
+  transition: opacity .9s ease, transform 1.7s ease, filter .9s ease;
+}
+.morf-fase.actief { opacity: 1; transform: scale(1); }
+.morf-koning { background-position: center; }
+.morf-koning.actief { animation: morfKroon 2.6s ease-in-out infinite alternate; }
+@keyframes morfKroon {
+  from { filter: saturate(1.05) brightness(1); }
+  to { filter: saturate(1.2) brightness(1.08) drop-shadow(0 0 24px rgba(150, 220, 80, .65)); }
+}
+.morf-drip {
+  position: absolute; inset: -45% 0 0 0; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+  background: linear-gradient(180deg, rgba(120, 180, 60, 0) 30%, rgba(95, 155, 48, .5) 62%, rgba(70, 130, 35, .88) 100%);
+}
+.morf-drip.drup { animation: morfDrup 1.1s ease-out; }
+@keyframes morfDrup {
+  0% { opacity: 0; transform: translateY(-55%); }
+  35% { opacity: .9; }
+  100% { opacity: 0; transform: translateY(18%); }
+}
+.morf-tekst {
+  min-height: 3em; max-width: 34ch; font-family: 'Alegreya', serif; font-style: italic;
+  color: #d8e6c8; font-size: clamp(.92rem, 2.7vw, 1.18rem); line-height: 1.35; opacity: 0;
+}
+.morf-tekst.in { animation: morfTekstIn .6s ease forwards; }
+@keyframes morfTekstIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.morf-tekst b { color: #bfe89a; font-style: normal; }
+.morf-titel { opacity: 0; transform: scale(.7); }
+.morf-titel.toon { animation: morfTitel .7s cubic-bezier(.2, 1.4, .4, 1) forwards; }
+@keyframes morfTitel { 0% { opacity: 0; transform: scale(.7); } 60% { transform: scale(1.08); } 100% { opacity: 1; transform: scale(1); } }
+.morf-titel h1 { font-family: 'Pirata One', serif; font-size: clamp(1.9rem, 6.6vw, 3.4rem); color: #aef07a; margin: 0; text-shadow: 0 0 26px rgba(120, 200, 60, .8), 0 4px 14px #000; letter-spacing: 2px; }
+.morf-titel span { font-family: 'Alegreya', serif; font-style: italic; color: #c8d8b8; }
+.morf-hint { font-size: .68rem; letter-spacing: .1em; color: rgba(200, 220, 180, .42); text-transform: uppercase; }
+
 /* fase-flits: korte aankondiging midden in het gevecht */
 .baas-flits {
   position: fixed; inset: 0;

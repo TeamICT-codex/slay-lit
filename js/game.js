@@ -2250,12 +2250,64 @@ function startGevecht(samenstelling, soort, rij) {
   }
 }
 
+/* DE SLIJMKONING — metamorfose-intro: Glenn (de eeuwige ja-knikker uit de proloog) →
+   Senior Instemmer (de hand op zijn schouder) → verslijmd → de gekroonde Slijmkoning.
+   De afdaling ÍS de corruptie. Cross-fade per stadium + slijm-drip, klik = overslaan. */
+function toonSlijmkoningIntro(g, b, el) {
+  el.classList.add('baas-intro-morf');
+  const stadia = [
+    { id: 'glenn',           tekst: 'GLENN · medewerker 0042.<br>Hij knikte. Hij glimlachte. Hij stemde overal mee in.' },
+    { id: 'glenn_instemmer', tekst: 'Bevorderd tot <b>Senior Instemmer</b> — voor zijn enige talent: ja-zeggen.<br>De hand op zijn schouder liet nooit meer los.' },
+    { id: 'glenn_slijm',     tekst: 'Hij boog, en boog… tot zijn ruggengraat oploste.<br>Wie altijd meebuigt, verliest zijn vorm.' },
+    { id: 'slijmkoning',     tekst: 'Het systeem dat hem opslokte, kroonde hem koning.<br>Dít blijft er over als je nóóit nee zegt:' },
+  ];
+  el.innerHTML = `<div class="baas-intro-binnen morf-wrap">
+    <small>Act ${huidigeAct()} — ${ACT_NAMEN[huidigeAct()] || 'De Diepte'}</small>
+    <div class="morf-podium">
+      ${stadia.map((s, i) => `<div class="morf-fase${i === 3 ? ' morf-koning' : ''}" data-i="${i}"></div>`).join('')}
+      <div class="morf-drip"></div>
+    </div>
+    <div class="morf-tekst"></div>
+    <div class="morf-titel"><h1>${b.naam}</h1><span>${VIJANDEN[b.id].titel || ''}</span></div>
+    <div class="morf-hint">tik om over te slaan</div>
+  </div>`;
+  $('#scherm-gevecht').appendChild(el);
+  const faseEls = Array.from(el.querySelectorAll('.morf-fase'));
+  const tekstEl = el.querySelector('.morf-tekst');
+  const drip = el.querySelector('.morf-drip');
+  stadia.forEach((s, i) => { if (window.laadKarakterAfbeelding) laadKarakterAfbeelding(s.id, img => { if (img) faseEls[i].style.backgroundImage = `url("${img.src}")`; }); });
+  let timers = [];
+  const STAP = 2300;   /* ms per stadium (tunebaar) */
+  const toonFase = (i) => {
+    faseEls.forEach((f, j) => f.classList.toggle('actief', j === i));
+    tekstEl.innerHTML = stadia[i].tekst;
+    tekstEl.classList.remove('in'); void tekstEl.offsetWidth; tekstEl.classList.add('in');
+    if (i >= 2) { drip.classList.remove('drup'); void drip.offsetWidth; drip.classList.add('drup'); Klank.sfx('gif'); }
+    else Klank.sfx('klik');
+    if (i === 3) {
+      el._koning = true;
+      Klank.sfx('zwareklap'); setTimeout(() => { if (el.isConnected) { Klank.sfx('dood'); schudScherm(); } }, 480);
+      el.querySelector('.morf-titel').classList.add('toon');
+      timers.push(setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(baasUitspraken(b.id).intro); }, 1500));
+    }
+  };
+  const sluit = () => { if (el._dicht) return; el._dicht = true; timers.forEach(clearTimeout); el.classList.add('weg'); setTimeout(() => el.remove(), 500); };
+  stadia.forEach((s, i) => timers.push(setTimeout(() => { if (!el._dicht && !el._koning) toonFase(i); }, 120 + i * STAP)));
+  timers.push(setTimeout(sluit, 120 + 4 * STAP + 1400));
+  el.addEventListener('click', () => {
+    if (el._dicht) return;
+    if (!el._koning) { timers.forEach(clearTimeout); timers = []; toonFase(3); timers.push(setTimeout(sluit, 2600)); }
+    else sluit();
+  });
+}
+
 /* cinematische bazenintro: titelkaart, dreun, beven */
 function toonBaasIntro(g) {
   const b = g.vijanden.find(v => VIJANDEN[v.id].baas);
   if (!b) return;
   const el = document.createElement('div');
   el.id = 'baas-intro';
+  if (b.id === 'slijmkoning') { toonSlijmkoningIntro(g, b, el); return; }   /* metamorfose i.p.v. de generieke titelkaart */
   const isErf = (b.id === 'de_erfprins');
   if (isErf) {
     /* THE COPYCAT presenteert zichzelf als een SPEELKAART — de enige die hij nooit
