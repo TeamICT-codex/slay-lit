@@ -1111,7 +1111,7 @@ const VIJANDEN = {
     }
   },
   de_erfprins: {
-    naam: 'De Erfprins', art: '🤴', hp: [210, 210], baas: true, copycat: true, gifkaats: 0.5,   /* Plagiaat: Gif — kopieert de helft van je gif op jou (+ baas = halve gif-tik) */
+    naam: 'De Erfprins', art: '🤴', hp: [180, 180], baas: true, copycat: true, gifkaats: 0.5,   /* HP terug van 210→180: tegen een gehalveerd dek (Roof-rework) is 210 te veel om te grinden; tunebaar */
     titel: 'Erfgenaam zonder verdienste',
     kies: (v, beurt) => copycatKies(v, beurt)
   },

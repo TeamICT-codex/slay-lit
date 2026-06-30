@@ -3371,7 +3371,7 @@ function checkBaasFase() {
    (de chokepoint — dus ook gif voedt). Drops (rol:'breker') breekt de machine.
    Volledig ontwerp: ONTWERP.md "The Copycat — Act 2-eindbaasmechaniek". */
 
-const COPYCAT_CAP_DMG = { 1: 30, 2: 44, 3: 60 };   /* fase-afhankelijke cap op teruggekaatste schade — opgehoogd voor de Roof-rework ('probeert je af te maken'); tunebaar */
+const COPYCAT_CAP_DMG = { 1: 20, 2: 30, 3: 40 };   /* fase-afhankelijke cap op teruggekaatste schade. Roof-rework: half je dek is al weg → de burst moest terug omlaag (60 was verpletterend tegen een gehalveerd dek). 'Zeer moeilijk maar net winbaar solo'; tunebaar. */
 const COPYCAT_STEEL_CAP = 12;    /* max ooit gestolen per gevecht (anti-leegtrekken) */
 const COPYCAT_ARSENAAL_CAP = 5;  /* max gelijktijdig in het arsenaal */
 const COPYCAT_TERUGWIN = 20;     /* schade aan de baas per teruggewonnen kaart */
