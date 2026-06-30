@@ -908,7 +908,7 @@ function geefGif(actor, n) {
       zwarteZielHint(actor);       /* per-wezen hint (GIFHINTS), 1× per gevecht */
       return;
     }
-    n += (heeftRelikwie('smaragden_ring') ? 1 : 0) + (heeftRelikwie('inktpot') ? 1 : 0);
+    n += (heeftRelikwie('smaragden_ring') ? 1 : 0);   /* inktpot is nu een gif-verspreider (begin v/d beurt), geen +1 meer */
     /* GIF-KAATS (Copycat 'Plagiaat: Gif') / Zwarte-Ziel-COUNTER: kopieert een deel terug op JOU */
     const frac = lantaarn ? 0 : (gd.gifkaats || (gd.zwarteZiel === 'counter' ? 0.5 : 0));
     if (frac && inGevecht() && n > 0) {
@@ -1135,6 +1135,13 @@ function doeSchade(doel, dmg, bron) {
   else if (dmg > 0) Klank.sfx('blok');
   if (bron && (doel.status.doornen || 0) > 0 && !bron.dood) {
     verliesHp(bron, doel.status.doornen);
+  }
+  /* Carbon-afdruk: word je als speler door een vijand geraakt, dan sla je een afdruk —
+     2 extra Doornen-schade terug én je doornen-laag dijt uit (+1). Reactief & uniek.
+     (verliesHp ≠ doeSchade → geen recursie via deze haak.) */
+  if (doel.isSpeler && bron && !bron.isSpeler && !bron.isMetgezel && !bron.dood && heeftRelikwie('carbon_afdruk')) {
+    verliesHp(bron, 2);
+    geefStatus(doel, 'doornen', 1);
   }
   return rest;
 }
@@ -2123,16 +2130,20 @@ function startGevecht(samenstelling, soort, rij) {
 
   if (heeftRelikwie('anker')) g.speler.blok = 10;
   if (heeftRelikwie('warme_mantel') && lichtNiveau() !== 'helder') g.speler.blok += 6;
-  if (heeftRelikwie('krachtsteen')) g.speler.status.kracht = 1;
+  if (heeftRelikwie('krachtsteen')) g.speler.status.kracht = (g.speler.status.kracht || 0) + 1;   /* optellen i.p.v. zetten: stapelt veilig met oorlogsbanier/duivelboomtak, ongeacht volgorde */
   if (heeftRelikwie('oorlogsbanier') && (g.soort === 'elite' || g.soort === 'baas')) {
     g.speler.status.kracht = (g.speler.status.kracht || 0) + 1;
   }
   if (heeftRelikwie('bronzen_schub')) g.speler.status.doornen = 3;
   if (heeftRelikwie('scherpe_dolk')) g.vijanden.forEach(v => v.status.kwetsbaar = 1);
-  /* Act 2 — Het Archief */
-  if (heeftRelikwie('was_zegel')) g.speler.blok += 8;
-  if (heeftRelikwie('stempelkussen')) g.vijanden.forEach(v => v.status.kwetsbaar = (v.status.kwetsbaar || 0) + 1);
-  if (heeftRelikwie('rode_lint')) g.vijanden.forEach(v => v.status.zwak = (v.status.zwak || 0) + 1);
+  /* Act 2 — Het Archief (elk een unieke functie; geen dubbels meer) */
+  /* Was-zegel: blok-behoud i.p.v. start-blok — zie beginSpelerBeurt (beurt 1 reset niet). */
+  /* Stempelkussen: stempelt Kwetsbaar op je eerste aanval per beurt — zie speelKaart. */
+  if (heeftRelikwie('rode_lint')) {                       /* bindt enkel de ZWAKSTE vijand vast */
+    const z = g.vijanden.slice().sort((a, b) => a.hp - b.hp)[0];
+    if (z) { z.status.zwak = (z.status.zwak || 0) + 2; z.status.kwetsbaar = (z.status.kwetsbaar || 0) + 2; }
+  }
+  if (heeftRelikwie('indexkaart')) g.speler.status.geindexeerd = (g.speler.status.geindexeerd || 0) + 1;   /* elke aanval → 1 Blok */
   if (heeftRelikwie('bottenfluit')) g.vijanden.forEach(v => v.status.zwak = 1);
   if (heeftRelikwie('energiekristal')) g.energie += 1;
   /* de kronen tellen ook al in de allereerste beurt mee */
@@ -2154,7 +2165,7 @@ function startGevecht(samenstelling, soort, rij) {
   let eersteTrek = 5;
   if (heeftRelikwie('klavertje')) eersteTrek += 2;
   if (heeftRelikwie('oorlogstrommel')) eersteTrek += 1;
-  if (heeftRelikwie('doorslagpapier')) eersteTrek += 1;   /* "eerste beurt 1 extra" = de openingshand */
+  /* doorslagpapier trekt niet meer extra — het kopieert nu je eerste kaart (zie speelKaart) */
   trekKaarten(eersteTrek);
 
   g.vijanden.forEach(v => v.intent = VIJANDEN[v.id].kies(v, 0));
@@ -2535,7 +2546,7 @@ function intentTekst(v) {
   /* de Fluisterende Schedel ziet wat jij niet ziet; Drops de Witte is je levende licht
      (ook blind zie je elke intent zolang hij leeft) */
   const witLeeft = !!(gMet() && !gMet().dood && gMet().id === 'drops_wit');
-  const niveau = (witLeeft || heeftRelikwie('fluisterende_schedel') || heeftRelikwie('indexkaart')) ? 'helder' : lichtNiveau();
+  const niveau = (witLeeft || heeftRelikwie('fluisterende_schedel')) ? 'helder' : lichtNiveau();
   if (niveau === 'gedoofd') {
     return `<span class="intent intent-duister" data-tip="Het is te donker om de bedoeling te zien">❓</span>`;
   }
@@ -3314,6 +3325,10 @@ async function speelKaart(c, doel) {
      'eerste aanval'); de recast wordt geawait (async multi-hit niet fire-and-forget). */
   if (def.type === 'aanval') {
     g.aanvalDezeBeurt = (g.aanvalDezeBeurt || 0) + 1;
+    if (g.aanvalDezeBeurt === 1 && heeftRelikwie('stempelkussen')) {   /* je eerste aanval per beurt stempelt Kwetsbaar */
+      const stempelDoel = (doel && !doel.dood) ? doel : alleVijanden()[0];
+      if (stempelDoel) { geefStatus(stempelDoel, 'kwetsbaar', 1); fxNummer(actorEl(stempelDoel), '🟥 Kwetsbaar', 'fx-debuff'); }
+    }
     if ((sp().status.geindexeerd || 0) > 0) geefBlok(sp(), sp().status.geindexeerd);
     if (c.id !== 'doorslag_kaart' && (sp().status.doorslag || 0) > 0) {
       const doel2 = (doel && doel.dood) ? alleVijanden()[0] : doel;   /* doel net gedood? mik op een levend */
@@ -3326,6 +3341,14 @@ async function speelKaart(c, doel) {
         if ((sp().status.geindexeerd || 0) > 0) geefBlok(sp(), sp().status.geindexeerd);
       }
     }
+  }
+  /* Doorslagpapier: de allereerste kaart van het gevecht laat een doorslag na — een verse
+     kopie (mét upgrade) glijdt bovenop je trekstapel. Eenmalig per gevecht. */
+  if (heeftRelikwie('doorslagpapier') && !g.doorslagGebruikt && def.type !== 'vloek') {
+    g.doorslagGebruikt = true;
+    const kopie = nieuweKaart(c.id); kopie.up = c.up;
+    g.trek.push(kopie);
+    melding('📄 Doorslagpapier: een kopie glijdt bovenop je trekstapel.');
   }
   pasVonkToe(c);   /* het Vonkaltaar: gebrandmerkte kaart raakt de fakkel (+licht of verbrand+Blok) */
   if (def.type === 'kracht' || def.uitputten || c.uitputtend) {   /* c.uitputtend = per-instance (bv. een door de Erfprins teruggestoken kaart) */
@@ -3876,7 +3899,7 @@ function beginSpelerBeurt() {
   checkBaasFase(); /* gif-schade in de vijandbeurt kan een fasegrens passeren */
   g.beurt++;
   const s = g.speler;
-  s.blok = 0;
+  s.blok = (heeftRelikwie('was_zegel') && g.beurt === 1) ? s.blok : 0;   /* Was-zegel: behoud de overgebleven Blok van je openingsbeurt één beurt langer */
   g.aanvalDezeBeurt = 0;   /* Act 2: Originele Handtekening telt of dit je eerste aanval is */
   g._epidemieGespreid = false;   /* Epidemie mag deze beurt weer 1× verspreiden */
   s.status.doorslag = 0;   /* Doorslag vervalt per beurt — geen carry-over (de kaart zegt "deze beurt") */
@@ -3911,9 +3934,10 @@ function beginSpelerBeurt() {
     fxNummer($('#speler-zone'), '🔥-' + s.status.duivelhart, 'fx-debuff');
   }
   if (heeftRelikwie('mosamulet')) geefBlok(s, 3);
-  /* Act 2 — Het Archief */
-  if (heeftRelikwie('dossierklem')) geefBlok(s, 4);
-  if (heeftRelikwie('carbon_afdruk')) { geefBlok(s, 3); geefStatus(s, 'doornen', 1); }
+  /* Act 2 — Het Archief (elk uniek) */
+  if (heeftRelikwie('dossierklem')) geefStatus(s, 'metaalhuid', 3);   /* groeiende Blok i.p.v. vaste +4 */
+  /* Carbon-afdruk is nu reactief (zie doeSchade), geen start-van-beurt-blok meer */
+  if (heeftRelikwie('inktpot')) alleVijanden().forEach(v => { if ((v.status.gif || 0) > 0) geefGif(v, 1); });   /* inkt verspreidt zich */
   /* het Houten Been wortelt zich vast — ná de blok-reset van beurt 1 */
   if (g.beurt === 1 && heeftRelikwie('houten_been')) geefBlok(s, 4);
   if ((s.status.bloedzuiger || 0) > 0) {
