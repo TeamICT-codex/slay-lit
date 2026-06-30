@@ -2277,7 +2277,7 @@ function toonSlijmkoningIntro(g, b, el) {
   const drip = el.querySelector('.morf-drip');
   stadia.forEach((s, i) => { if (window.laadKarakterAfbeelding) laadKarakterAfbeelding(s.id, img => { if (img) faseEls[i].style.backgroundImage = `url("${img.src}")`; }); });
   let timers = [];
-  const STAP = 2300;   /* ms per stadium (tunebaar) */
+  const STAP = 3900;   /* ms per stadium — ~3,3s leestijd na de tekst-fade (tunebaar); tik = overslaan */
   const toonFase = (i) => {
     faseEls.forEach((f, j) => f.classList.toggle('actief', j === i));
     tekstEl.innerHTML = stadia[i].tekst;
