@@ -2911,10 +2911,17 @@ function toonBestiarium(act) {
         <span class="best-soort">${b.soort || ''}</span>
       </button>`;
   }).join('');
+  /* act-tabs: zodra het Bestiarium meerdere acts bevat, kun je tussen Act 1/Act 2 wisselen */
+  const acts = [...new Set(Object.values(BESTIARIUM).map(b => b.act || 1))].sort((a, b) => a - b);
+  const tabs = acts.length > 1
+    ? `<div class="best-tabs">` + acts.map(a => `<button class="best-tab${a === act ? ' actief' : ''}" onclick="toonBestiarium(${a})">Act ${a} · ${ACT_NAMEN[a] || ''}</button>`).join('') + `</div>`
+    : '';
+  const klaarTekst = act >= 2 ? 'Je kent elke kopie van het Archief. 🏆' : 'Je kent elke schaduw van de eerste afdaling. 🏆';
   $('#bestiarium-inhoud').innerHTML = `
+    ${tabs}
     <p class="best-intro">Wat in de diepte huist — maar enkel wat jij met eigen ogen zag. <b>${gezienN} / ${lijst.length}</b> ontdekt.</p>
     <div class="best-rooster">${slots}</div>
-    <p class="best-voet">${gezienN < lijst.length ? 'Daal verder af om de rest te ontmoeten…' : 'Je kent elke schaduw van de eerste afdaling. 🏆'}</p>`;
+    <p class="best-voet">${gezienN < lijst.length ? 'Daal verder af om de rest te ontmoeten…' : klaarTekst}</p>`;
   verfraaiItemArt($('#overlay-bestiarium'));
   $('#overlay-bestiarium').classList.add('open');
   Klank.sfx('klik');

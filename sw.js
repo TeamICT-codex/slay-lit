@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v32'; /* v32: de_drempelwachter (magenta) + de_verzwolgene_block art LIVE + scherven-collectie in de Codex (9 in 3 trio's, X/9) */
+const CACHE = 'slayit-v33'; /* v33: Act 2-aanvalsposes LIVE (8 kopieerhel-vijanden _attack) + mal_gietsel-rework (magenta-cut, grijze box weg) + Act 2-bestiarium (roster + lore + poses, Act 1/Act 2-tab) */
 const BESTANDEN = [
   '.',
   'index.html',

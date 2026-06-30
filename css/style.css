@@ -1939,6 +1939,10 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
 }
 
 /* ---------- HET BESTIARIUM (doorbladerbaar artbook) ---------- */
+.best-tabs { display: flex; gap: 8px; justify-content: center; margin: 2px 0 12px; flex-wrap: wrap; }
+.best-tab { font-family: 'PirataOne', serif; font-size: 1rem; padding: 5px 16px; border-radius: 999px; border: 1px solid rgba(190, 160, 110, .35); background: rgba(20, 15, 10, .6); color: var(--perkament-dof); cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
+.best-tab:hover { color: var(--perkament); border-color: rgba(255, 190, 100, .5); }
+.best-tab.actief { color: #ffd79a; border-color: rgba(255, 190, 100, .7); background: rgba(60, 40, 20, .5); }
 .best-intro { text-align: center; color: var(--perkament-dof); margin: 0 0 12px; font-size: .96rem; }
 .best-intro b { color: var(--perkament); }
 .best-voet { text-align: center; color: var(--perkament-dof); font-style: italic; margin: 14px 0 0; font-size: .9rem; }
