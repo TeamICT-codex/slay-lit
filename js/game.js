@@ -2280,6 +2280,7 @@ function toonSlijmkoningIntro(g, b, el) {
   const STAP = 3900;   /* ms per stadium — ~3,3s leestijd na de tekst-fade (tunebaar); tik = overslaan */
   const toonFase = (i) => {
     faseEls.forEach((f, j) => f.classList.toggle('actief', j === i));
+    if (i >= 1) { const pod = el.querySelector('.morf-podium'); if (pod) { pod.classList.remove('flits'); void pod.offsetWidth; pod.classList.add('flits'); } }   /* punctueert de verandering */
     tekstEl.innerHTML = stadia[i].tekst;
     tekstEl.classList.remove('in'); void tekstEl.offsetWidth; tekstEl.classList.add('in');
     if (i >= 2) { drip.classList.remove('drup'); void drip.offsetWidth; drip.classList.add('drup'); Klank.sfx('gif'); }
@@ -5316,12 +5317,12 @@ function renderDrempel() {
   }).join('');
   const poolHtml = pool.length
     ? pool.map(sid => { const d = scherfDef(sid); return `<button class="drempel-scherf" onclick="drempelPlaats('${sid}')"><span class="ds-icoon" data-shart="${sid}">${bronIcoon(d && d.bron)}</span><i>${(d && d.codexTekst) || '…'}</i></button>`; }).join('')
-    : `<p class="drempel-leeg">Je draagt nog geen scherven. Vind ze in je afdalingen — drie die samen passen roepen een bondgenoot op.</p>`;
+    : `<p class="drempel-leeg">Je draagt nog geen scherven. Ze liggen verspreid in de diepte — verzamel er drie, en wáág de drempel.</p>`;
   const vol = drempelGeplaatst.filter(Boolean).length === 3;
   $('#scherm-einde').innerHTML = `
     <div class="drempel-scene">
       <h2 class="scherm-titel goud-tekst">🜂 De Drempel</h2>
-      <p class="scherm-sub drempel-lore">Voor je gaapt de poort naar de diepte. „Wie de juiste drie scherven samenbrengt, roept een bondgenoot uit het donker. Wie de verkeerde plaatst, wekt zijn Wachter."</p>
+      <p class="scherm-sub drempel-lore">Voor je gaapt de poort naar de diepte. Drie lege nissen, koud en geduldig. „Voed de drempel met drie scherven," fluistert iets ouds, „en het zwart antwoordt. Maar niet alles dat ontwaakt, is je gunstig gezind — dat besef je pas als het je aankijkt."</p>
       <div class="drempel-nissen">${nissen}</div>
       <p class="drempel-poollabel">${pool.length ? 'Je scherven — plaats er drie:' : ''}</p>
       <div class="drempel-pool">${poolHtml}</div>

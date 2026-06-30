@@ -2757,9 +2757,16 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
 #baas-intro.baas-intro-morf {
   position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;
   background: radial-gradient(ellipse at center, rgba(20, 30, 14, .92), rgba(4, 6, 4, .985));
-  cursor: pointer; pointer-events: auto; transition: opacity .5s ease;   /* auto: overschrijft de geërfde pointer-events:none van #baas-intro → de skip-klik werkt + tikken lekken niet naar het slagveld */
+  cursor: pointer; pointer-events: auto;   /* auto: overschrijft de geërfde pointer-events:none van #baas-intro → de skip-klik werkt + tikken lekken niet naar het slagveld */
+  animation: none; opacity: 1;   /* GEEN geerfde introVervaag (die liet de overlay na 3.6s verdwijnen -> enkel stadium 1 zichtbaar, de rest 'gebeurde' op een onzichtbare overlay). Statisch zichtbaar i.p.v. animatie-afhankelijk. */
+  transition: opacity .5s ease;
 }
-#baas-intro.baas-intro-morf.weg { opacity: 0; }
+#baas-intro.baas-intro-morf .baas-intro-binnen { animation: none; }   /* geen introGroei-zoom op de morf-wrap; de podium scaleert zelf per stadium */
+@keyframes morfOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+#baas-intro.baas-intro-morf.weg { opacity: 0; animation: none; }   /* fade-out via de transition i.p.v. de fill-forwards */
+/* korte flits bij elke stadium-wissel zodat de transformatie duidelijk 'leest' */
+.morf-podium.flits { animation: morfPodiumFlits .55s ease; }
+@keyframes morfPodiumFlits { 0% { filter: brightness(1); } 28% { filter: brightness(1.7) saturate(1.25) drop-shadow(0 0 22px rgba(150, 220, 90, .6)); } 100% { filter: brightness(1); } }
 .morf-wrap { display: flex; flex-direction: column; align-items: center; gap: clamp(10px, 2.2vh, 20px); padding: 3vh 4vw; max-width: 96vw; max-height: 100vh; overflow-y: auto; text-align: center; }
 .morf-wrap > small { font-family: 'Pirata One', serif; letter-spacing: .12em; color: #8fbf7a; opacity: .85; text-transform: uppercase; font-size: clamp(.75rem, 2.3vw, 1.02rem); }
 .morf-podium {
