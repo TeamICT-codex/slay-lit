@@ -1861,6 +1861,40 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
 .zeld-ongewoon .kaart-naam { color: #8fd4ff; }
 .zeld-zeldzaam .kaart-naam { color: var(--goud); text-shadow: 0 0 10px rgba(245, 197, 66, .45); }
 
+/* ---- meervoudige kaartkeuze (de altaren): tik-selecteer + vaste actiebalk ---- */
+#kies-kaarten.meer-modus { margin-bottom: 104px; }
+.meer-kaart { position: relative; cursor: pointer; border-radius: 14px; transition: transform .16s ease; }
+.meer-kaart .kaart.groot { transition: box-shadow .18s ease, filter .18s ease; }
+.meer-kaart:not(.gekozen):hover { transform: translateY(-4px); }
+.meer-kaart.gekozen { transform: translateY(-12px); }
+.meer-kaart.gekozen .kaart.groot { box-shadow: 0 0 0 3px var(--goud), 0 14px 34px rgba(0, 0, 0, .6), 0 0 28px rgba(255, 196, 90, .75); }
+#kies-kaarten.meer-modus:not(.focus-modus) .meer-kaart:not(.gekozen) .kaart.groot { filter: saturate(.9) brightness(.86); }
+.meer-vink {
+  position: absolute; top: -12px; right: -12px; z-index: 5; width: 36px; height: 36px;
+  display: none; align-items: center; justify-content: center; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe08a, #b8841f); color: #2a1a06;
+  font-size: 1.25rem; font-weight: 700; border: 2px solid #2a1a06; box-shadow: 0 3px 12px rgba(0, 0, 0, .6);
+}
+.meer-kaart.gekozen .meer-vink { display: flex; animation: vinkPop .3s cubic-bezier(.2, 1.6, .4, 1); }
+@keyframes vinkPop { 0% { transform: scale(0) rotate(-30deg); } 100% { transform: scale(1) rotate(0); } }
+.meer-zoom-knop {
+  position: absolute; bottom: 10px; right: 10px; z-index: 5; width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(18, 12, 26, .88); color: var(--perkament); border: 1px solid rgba(190, 160, 255, .45);
+  font-size: 1.05rem; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1;
+}
+.meer-zoom-knop:hover { background: rgba(44, 30, 62, .96); transform: scale(1.08); }
+.kies-actiebalk {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 810;
+  display: flex; align-items: center; justify-content: center; gap: clamp(12px, 3vw, 26px);
+  padding: 12px clamp(14px, 4vw, 32px); flex-wrap: wrap;
+  background: linear-gradient(0deg, rgba(8, 5, 12, .99), rgba(8, 5, 12, .9) 70%, rgba(8, 5, 12, .65));
+  border-top: 1px solid rgba(199, 125, 255, .28); backdrop-filter: blur(6px);
+}
+.kies-teller { font-family: 'Pirata One', serif; font-size: clamp(1.05rem, 3.6vw, 1.4rem); color: var(--perkament-dof); letter-spacing: .04em; }
+.kies-teller b { color: var(--perkament); font-size: 1.15em; }
+.kies-teller.klaar b { color: var(--goud); }
+.kies-actiebalk .kies-bevestig:disabled { opacity: .4; cursor: not-allowed; filter: grayscale(.6); }
+
 /* inspectie-zoom: de kaart in vol ornaat */
 #kies-kaarten.focus-modus { align-items: center; }
 .kaart-focus-houder {

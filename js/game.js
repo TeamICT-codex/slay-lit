@@ -4519,6 +4519,109 @@ function toonKaartKeuze(kaarten, titel, bijKeuze, bijOverslaan, opts = {}) {
   evalueerDraaiBlok();   /* een kaartoverzicht (smid/keuze/dek) speelt liggend */
 }
 
+/* ---------- MEERVOUDIGE KAARTKEUZE (de altaren) ----------
+   Kaarten liggen meteen OPEN; je TIKT om te (de)selecteren — duidelijke gekozen-staat
+   (✓-badge + gouden gloed + lift) + een VASTE actiebalk onderaan (teller + bevestig +
+   overslaan) die altijd bereikbaar blijft (geen scroll door het hele dek meer). Een 🔍 per
+   kaart opent een grote bekijk-weergave. opts: { aantal, knop, hint, bijKeuze(array), bijOverslaan } */
+function toonMeerKeuze(kaarten, titel, opts) {
+  opts = opts || {};
+  const aantal = Math.max(1, opts.aantal || 1);
+  const ov = $('#overlay-kies');
+  const houder = $('#kies-kaarten');
+  $('#kies-titel').textContent = titel;
+  $('#kies-hint').textContent = opts.hint || (aantal > 1 ? `Tik ${aantal} kaarten aan om te kiezen.` : 'Tik een kaart aan om te kiezen.');
+  $('#kies-overslaan').style.display = 'none';                 /* eigen overslaan in de actiebalk */
+  const gekozen = new Set();
+  let balk = ov.querySelector('.kies-actiebalk');
+  if (!balk) { balk = document.createElement('div'); balk.className = 'kies-actiebalk'; ov.appendChild(balk); }
+
+  function sluit() {
+    document.onkeydown = null;
+    ov.classList.remove('open');
+    houder.classList.remove('meer-modus', 'focus-modus');
+    const b = ov.querySelector('.kies-actiebalk'); if (b) b.remove();
+    $('#kies-overslaan').style.display = '';
+    evalueerDraaiBlok();
+  }
+
+  function renderBalk() {
+    const n = gekozen.size, klaar = n === aantal;
+    balk.innerHTML = `
+      <span class="kies-teller ${klaar ? 'klaar' : ''}">Gekozen: <b>${n}</b> / ${aantal}</span>
+      <button class="knop-groot kies-bevestig" ${klaar ? '' : 'disabled'}>${opts.knop || '✓ Bevestig'}</button>
+      <button class="knop-stil kies-annuleer">Overslaan</button>`;
+    balk.querySelector('.kies-bevestig').onclick = () => {
+      if (gekozen.size !== aantal) return;
+      const sel = kaarten.filter(c => gekozen.has(c.uid));
+      sluit(); opts.bijKeuze && opts.bijKeuze(sel);
+    };
+    balk.querySelector('.kies-annuleer').onclick = () => { sluit(); opts.bijOverslaan && opts.bijOverslaan(); };
+  }
+
+  function syncGekozen() {                                    /* markeer ALLE kaarten tegen de set (een 1-keuze vervangt → de oude moet ook ontmarkeren) */
+    houder.querySelectorAll('.meer-kaart').forEach(el => {
+      const cc = kaarten.find(k => k.uid == el.dataset.uid);
+      el.classList.toggle('gekozen', !!cc && gekozen.has(cc.uid));
+    });
+  }
+  function kiesToggle(c) {
+    if (gekozen.has(c.uid)) { gekozen.delete(c.uid); Klank.sfx('trek'); return; }
+    if (gekozen.size >= aantal) {
+      if (aantal === 1) gekozen.clear();                       /* één-keuze: vervang meteen */
+      else { melding(`Je kunt er maar ${aantal} kiezen — tik er eerst één weg.`); Klank.sfx('fout'); return; }
+    }
+    gekozen.add(c.uid); Klank.sfx('flip');
+  }
+
+  function render() {
+    houder.classList.remove('focus-modus');
+    houder.classList.add('meer-modus');
+    houder.classList.toggle('weinig', kaarten.length <= 5);
+    houder.innerHTML = kaarten.map(c => `
+      <div class="meer-kaart ${gekozen.has(c.uid) ? 'gekozen' : ''}" data-uid="${c.uid}">
+        ${kaartHtml(c, true)}
+        <div class="meer-vink" aria-hidden="true">✓</div>
+        <button class="meer-zoom-knop" data-uid="${c.uid}" aria-label="Bekijk groot">🔍</button>
+      </div>`).join('');
+    verfraaiKaartIconen(houder);
+    houder.querySelectorAll('.meer-kaart').forEach(el => {
+      el.onclick = e => {
+        if (e.target.closest('.meer-zoom-knop')) return;
+        const c = kaarten.find(k => k.uid == el.dataset.uid); if (!c) return;
+        kiesToggle(c);
+        syncGekozen();
+        renderBalk();
+      };
+    });
+    houder.querySelectorAll('.meer-zoom-knop').forEach(b => {
+      b.onclick = e => { e.stopPropagation(); const c = kaarten.find(k => k.uid == b.dataset.uid); if (c) zoom(c); };
+    });
+    renderBalk();
+  }
+
+  function zoom(c) {
+    houder.classList.add('focus-modus');
+    const isSel = gekozen.has(c.uid);
+    $('#kies-hint').textContent = 'Bekijk de kaart van dichtbij.';
+    houder.innerHTML = `<div class="kaart-focus-houder"><div class="focus-rij">
+        ${kaartHtml(c, false).replace('kaart groot', 'kaart groot kaart-focus zeldglans-' + kdef(c).zeld)}
+      </div>
+      <div class="focus-knoppen">
+        <button class="knop-groot" id="zoom-kies">${isSel ? '✗ Haal uit selectie' : '✓ Kies deze'}</button>
+        <button class="knop-stil" id="zoom-terug">← Terug naar het overzicht</button>
+      </div></div>`;
+    verfraaiKaartIconen(houder);
+    Klank.sfx('trek');
+    $('#zoom-kies').onclick = () => { kiesToggle(c); render(); };
+    $('#zoom-terug').onclick = () => { $('#kies-hint').textContent = opts.hint || ''; render(); };
+  }
+
+  render();
+  ov.classList.add('open');
+  evalueerDraaiBlok();
+}
+
 function toonDek() {
   toonKaartKeuze(S.dek, `Jouw dek (${S.dek.length} kaarten)`, null, () => {}, { bekijkAlleen: true });
 }
@@ -4593,12 +4696,11 @@ function smeedCeremonie(c, daarna) {
 function vonkAltaarKies(gevoed) {
   const kandidaten = S.dek.filter(c => !c.vonk && KAARTEN[c.id] && KAARTEN[c.id].kost !== null);
   if (!kandidaten.length) { eventKlaar('Geen enkele kaart vat nog vlam — alles is al gebrandmerkt of te koud.'); return; }
-  toonKaartKeuze(
-    kandidaten,
-    gevoed ? 'Leg een kaart in de gevoede vlam' : 'Leg een kaart in de vlam',
-    c => vonkAltaarBrand(c, gevoed),
-    () => eventKlaar('Je trekt je hand terug van de hitte. De vlam knettert teleurgesteld na.')
-  );
+  toonMeerKeuze(kandidaten, gevoed ? 'Leg een kaart in de gevoede vlam' : 'Leg een kaart in de vlam', {
+    aantal: 1, knop: '🔥 In de vlam', hint: 'Tik de kaart aan die je in de vlam legt — de vlam kiest zelf de aard.',
+    bijKeuze: sel => vonkAltaarBrand(sel[0], gevoed),
+    bijOverslaan: () => eventKlaar('Je trekt je hand terug van de hitte. De vlam knettert teleurgesteld na.')
+  });
 }
 function vonkAltaarBrand(c, gevoed) {
   const ov = $('#overlay-kies'); if (ov) ov.classList.remove('open');
@@ -4633,12 +4735,11 @@ function vonkAltaarBrand(c, gevoed) {
 function vonkAltaarVloek() {
   const vloeken = S.dek.filter(c => KAARTEN[c.id] && KAARTEN[c.id].type === 'vloek');
   if (!vloeken.length) { eventKlaar('Je draagt geen vloek om te offeren.'); return; }
-  toonKaartKeuze(
-    vloeken,
-    'Welke vloek werp je in de vlam?',
-    c => vonkAltaarVerteer(c),
-    () => eventKlaar('Je houdt de vloek tegen je borst. Nog niet.')
-  );
+  toonMeerKeuze(vloeken, 'Welke vloek werp je in de vlam?', {
+    aantal: 1, knop: '🔥 Werp in de vlam', hint: 'Tik de vloek aan — de vlam verslindt haar en slaat het duister om in licht.',
+    bijKeuze: sel => vonkAltaarVerteer(sel[0]),
+    bijOverslaan: () => eventKlaar('Je houdt de vloek tegen je borst. Nog niet.')
+  });
 }
 function vonkAltaarVerteer(vloek) {
   const ov = $('#overlay-kies'); if (ov) ov.classList.remove('open');
@@ -4681,18 +4782,19 @@ function willekeurigeKaartVanZeld(doelZeld) {
 }
 function offeraltaarVersmelt() {
   if (S.dek.length < 2) { eventKlaar('Je dek is te dun om te versmelten.'); return; }
-  toonKaartKeuze(S.dek.slice(), 'Offer de EERSTE kaart aan de steen', a => {
-    const rest = S.dek.filter(c => c.uid !== a.uid);
-    toonKaartKeuze(rest, 'Offer de TWEEDE kaart', b => offeraltaarSmeed([a, b], 1),
-      () => eventKlaar('Je trekt je tweede offer terug. De steen wacht, geduldig.'));
-  }, () => eventKlaar('Je houdt je kaarten tegen je borst. De steen verkilt.'));
+  toonMeerKeuze(S.dek.slice(), 'Offer 2 kaarten aan de steen', {
+    aantal: 2, knop: '🔥 Versmelt deze 2', hint: 'Tik 2 kaarten aan — de steen verslindt ze en smeedt er één betere van.',
+    bijKeuze: sel => offeraltaarSmeed(sel, 1),
+    bijOverslaan: () => eventKlaar('Je houdt je kaarten tegen je borst. De steen verkilt.')
+  });
 }
 function offeraltaarBloed() {
   if (!(S.hp > 8 && S.dek.length > 1)) { eventKlaar('De steen wijst je bloedoffer af.'); return; }
-  toonKaartKeuze(S.dek.slice(), 'Offer 1 kaart in bloed (−8 HP) — twee tiers hoger', c => {
-    verliesHpBuitenGevecht(8);
-    offeraltaarSmeed([c], 2);
-  }, () => eventKlaar('Je deinst terug van de hongerige muil.'));
+  toonMeerKeuze(S.dek.slice(), 'Offer 1 kaart in bloed', {
+    aantal: 1, knop: '🩸 Offer in bloed (−8 HP)', hint: 'Tik 1 kaart aan — ze stijgt twee tiers, maar het kost je 8 HP.',
+    bijKeuze: sel => { verliesHpBuitenGevecht(8); offeraltaarSmeed(sel, 2); },
+    bijOverslaan: () => eventKlaar('Je deinst terug van de hongerige muil.')
+  });
 }
 function offeraltaarSmeed(offers, tiers) {
   const ov = $('#overlay-kies'); if (ov) ov.classList.remove('open');
