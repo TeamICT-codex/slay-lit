@@ -1068,7 +1068,7 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 .metgezel-hp { width: 92px; }
 .metgezel-intent { min-height: 24px; display: flex; align-items: center; justify-content: center; }
 #metgezel-zone.gevlucht { opacity: .22; filter: grayscale(.85); transition: opacity .7s, filter .7s; }
-.d3-actief #metgezel-zone { z-index: 2; }
+.d3-actief #metgezel-zone { position: fixed; transform: translateX(-50%); width: 150px; min-width: 0; z-index: 2; pointer-events: auto; }
 
 /* ---------- DROPS-GRIEF: het lege as-silhouet + wegdovende pootafdrukken (zie DROPS-DE-WITTE.md §1) ---------- */
 #metgezel-zone.rouw-zone { animation: none; pointer-events: none; justify-content: flex-end; }

@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v34'; /* v34: Slijmkoning METAMORFOSE-intro — 3 nieuwe proloog-afgeleide beelden (glenn/glenn_instemmer/glenn_slijm) voor de Glenn→Slijmkoning-transformatie + Erfprins "De Roof" v2-cinematic */
+const CACHE = 'slayit-v35'; /* v35: force-update — metgezel-fixes (Drops de Witte uit de auto-rotatie + 3D-positionering náást de held) + metamorfose-zichtbaarheid + altaren-UX + reveal-art; verse shell zodat alle recente code zeker binnenkomt */
 const BESTANDEN = [
   '.',
   'index.html',

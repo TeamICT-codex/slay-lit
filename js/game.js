@@ -1700,6 +1700,7 @@ function laadSpel() {
     /* metgezel-state: oude saves missen 'm (→ undefined, ok); een corrupte/onbekende
        metgezel neutraliseren zodat heeftMetgezel() veilig false geeft */
     if (S.metgezel && (typeof S.metgezel !== 'object' || !METGEZELLEN[S.metgezel.id] || typeof S.metgezel.hp !== 'number')) S.metgezel = null;
+    if (S.runMetgezel === 'drops_wit') S.runMetgezel = null;   /* stale cache uit oude saves: de Witte hoort nooit in de auto-rotatie (enkel via het grief-moment) */
     if (S.toevalStaat !== undefined) Toeval.zetStaat(S.toevalStaat);
     return true;
   } catch (e) { return false; }
@@ -2415,6 +2416,13 @@ function gevechtTik(dt) {
     const spacerH = Math.max(0, ps.voetY - ps.topY);
     const maxSpacer = Math.max(36, lijn - ps.topY - (ds.infoH || 130));
     ds.spacer.style.height = Math.min(spacerH, maxSpacer) + 'px';
+  }
+  /* de metgezel heeft GÉÉN 3D-sprite (Vista kent 'm niet) → de DOM-art ís de figuur. Plaats 'm
+     links NÁÁST de held op de grondlijn i.p.v. 'm boven op de held te laten vallen (offsets tunebaar). */
+  if (ps && GDOM.metgezel && g.metgezel && !g.metgezel.dood) {
+    const mw = GDOM.metgezel.wrap;
+    mw.style.left = Math.max(78, ps.x - 168) + 'px';   /* genoeg tussenruimte (held ~178px breed) → geen overlap */
+    mw.style.top = (ps.voetY - 112) + 'px';             /* voeten op de grondlijn (art begint ~24px in de zone, art = 88px) */
   }
 }
 
@@ -5944,6 +5952,7 @@ function instWijzig() {
       /* posities terugzetten naar de flexbox-indeling */
       GDOM.vijanden.forEach(d => { d.wrap.style.left = ''; d.wrap.style.top = ''; d.spacer.style.height = ''; });
       if (GDOM.speler) { GDOM.speler.wrap.style.left = ''; GDOM.speler.wrap.style.top = ''; GDOM.speler.spacer.style.height = ''; }
+      if (GDOM.metgezel) { GDOM.metgezel.wrap.style.left = ''; GDOM.metgezel.wrap.style.top = ''; }   /* terug naar de 2D flex-indeling */
     }
   }
 }
