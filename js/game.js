@@ -2919,6 +2919,7 @@ function toonBestiarium(act) {
   Klank.sfx('klik');
 }
 const _BEST_POSES = ['attack', 'hit', 'cast', 'block', 'death'];
+let _bestPoseStand = {};   /* cyclische pose-stand per vijand-id (bestiarium-portret, à la heldPose) */
 function toonBestiariumPagina(id) {
   const def = VIJANDEN[id], b = BESTIARIUM[id];
   if (!def || !b || !(Codex.gezien || []).includes(id)) return;
@@ -2928,27 +2929,76 @@ function toonBestiariumPagina(id) {
   const volgende = lijst[(idx + 1) % lijst.length];
   const u = (typeof UITSPRAKEN !== 'undefined' && UITSPRAKEN[id]) || null;
   const citaat = (u && u.start && u.start[0]) || '';
-  const poses = [`<div class="best-pose" data-vart="${id}" data-tip="Basis">${def.art || '❓'}</div>`]
-    .concat(_BEST_POSES.map(p => `<div class="best-pose" data-vart="${id}_${p}" data-optioneel="1" data-tip="${p}"></div>`)).join('');
+  const poseWoord = document.body.dataset.modus === 'mobiel' ? '👆 tik' : '🖱️ klik';
   $('#bestiarium-inhoud').innerHTML = `
     <div class="best-pagina">
-      <div class="best-portret" data-vart="${id}">${def.art || '❓'}</div>
+      <button type="button" class="best-portret" data-vart="${id}" onclick="bestPose('${id}', event)" aria-label="Toon ${def.naam} in actie (tik voor z'n poses)">${def.art || '❓'}</button>
+      <div class="best-pose-hint" hidden>${poseWoord} voor z'n poses</div>
       <span class="best-soort-chip">${b.soort || ''}${def.hp ? ` · ❤️ ${def.hp[0]}${def.hp[1] !== def.hp[0] ? '–' + def.hp[1] : ''}` : ''}</span>
       <h3 class="best-titel">${def.naam}${def.titel ? ` <small>— ${def.titel}</small>` : ''}</h3>
       ${citaat ? `<p class="best-citaat">„${citaat}"</p>` : ''}
       <p class="best-lore">${b.lore}</p>
       ${b.notitie ? `<p class="best-notitie">— ${b.notitie}</p>` : ''}
-      <div class="best-poses">${poses}</div>
       <div class="best-nav">
         <button class="knop-stil" onclick="toonBestiariumPagina('${vorige}')" data-tip="${VIJANDEN[vorige].naam}">◀</button>
         <button class="knop-stil" onclick="toonBestiarium(${b.act || 1})">Overzicht</button>
         <button class="knop-stil" onclick="toonBestiariumPagina('${volgende}')" data-tip="${VIJANDEN[volgende].naam}">▶</button>
       </div>
     </div>`;
-  verfraaiItemArt($('#overlay-bestiarium'));
+  verfraaiItemArt($('#overlay-bestiarium'));   /* basis-portret-art inladen (data-vart) */
+  /* ontdek welke poses deze vijand écht heeft → toon de tik-hint pas dan (anders misleidt
+     de hint bij een vijand met enkel een basis-portret). De pose-strip is vervangen door
+     het tikbare portret (cyclt door de bestaande poses, net als de heldenkeuze). */
+  _bestPoseStand[id] = 0;
+  const portretEl = document.querySelector('#bestiarium-inhoud .best-portret');
+  const hintEl = document.querySelector('#bestiarium-inhoud .best-pose-hint');
+  if (window.laadKarakterAfbeelding && portretEl) {
+    _BEST_POSES.forEach(p => laadKarakterAfbeelding(id + '_' + p, img => {
+      if (img && hintEl && hintEl.hidden) { hintEl.hidden = false; portretEl.classList.add('heeft-poses'); }
+    }));
+  }
   $('#overlay-bestiarium').classList.add('open');
   Klank.sfx('klik');
 }
+
+/* tik op het bestiarium-portret → speel de volgende bestaande pose (attack/hit/cast/block/death),
+   cyclisch, met auto-terug naar de basis — precies zoals de levende heldenkeuze (heldPose).
+   Ontbrekende pose-art wordt overgeslagen (laadKarakterAfbeelding geeft null) zodat een tik altijd
+   op een bestaande pose landt; bestaat er geen enkele, dan blijft de basis staan. */
+const _BEST_POSE_SFX = { attack: 'kaart', cast: 'buff', block: 'buff', hit: 'fout', death: 'fout' };
+function bestPose(id, e) {
+  if (e) e.stopPropagation();
+  const def = VIJANDEN[id];
+  const el = document.querySelector('#bestiarium-inhoud .best-portret');
+  if (!def || !el || !window.laadKarakterAfbeelding) return;
+  if (!el.querySelector('img')) return;   /* nog emoji/geen basis-art geladen → niets te poseren */
+  const hint = document.querySelector('#bestiarium-inhoud .best-pose-hint');
+  if (hint) hint.style.visibility = 'hidden';
+  let pogingen = 0;
+  const probeer = () => {
+    if (pogingen++ >= _BEST_POSES.length) return;   /* geen enkele pose-art gevonden → laat de basis staan */
+    const i = (_bestPoseStand[id] || 0) % _BEST_POSES.length;
+    _bestPoseStand[id] = i + 1;
+    const pose = _BEST_POSES[i];
+    laadKarakterAfbeelding(id + '_' + pose, img => {
+      const im = el.querySelector('img');
+      if (!img || !im) { probeer(); return; }       /* deze pose bestaat niet → volgende proberen */
+      im.src = img.src;
+      el.classList.remove('best-portret-poseert'); void el.offsetWidth; el.classList.add('best-portret-poseert');
+      Klank.sfx(_BEST_POSE_SFX[pose] || 'klik');
+      clearTimeout(el._poseTimer);
+      el._poseTimer = setTimeout(() => {
+        laadKarakterAfbeelding(id, terug => {
+          const im3 = el.querySelector('img');
+          if (terug && im3) im3.src = terug.src;
+        });
+        el.classList.remove('best-portret-poseert');
+      }, 1100);
+    });
+  };
+  probeer();
+}
+window.bestPose = bestPose;
 
 /* het drankjesboek: zelfde altaarkaart, met de kleur van het brouwsel */
 function bekijkDrank(e, id) {
