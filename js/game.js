@@ -2153,7 +2153,7 @@ function startGevecht(samenstelling, soort, rij) {
   const lichtStart = lichtNiveau();
   if (heeftRelikwie('schaduwkroon') && ['duister', 'gedoofd'].includes(lichtStart)) g.energie += 1;
   if (heeftRelikwie('kroon_van_sintels') && lichtStart === 'helder') g.energie += 1;
-  if (heeftRelikwie('houten_been')) g.speler.status.doornen = (g.speler.status.doornen || 0) + 1;
+  if (heeftRelikwie('houten_been')) { g.speler.status.doornen = (g.speler.status.doornen || 0) + 1; g.speler.blok += 4; }   /* +1 Doornen én +4 Blok bij start — direct (geen geefBlok: DOM bestaat nog niet) */
   if (heeftRelikwie('duivelboomtak')) g.speler.status.kracht = (g.speler.status.kracht || 0) + 2;
   /* via geefGif zodat de smaragden_ring/inktpot-bonus ÉN gif-immuun/gif-kaats meegerekend
      worden (basis 1; geefGif telt de relic-bonus er zelf bij) */
@@ -3226,6 +3226,18 @@ function bijwerkKaartEl(el, c, klikbaar) {
       vonkEl.style.display = 'none';
     }
   }
+  /* Aangetast-badge (door de Erfprins gecorrumpeerd) — spiegelt de vonk-toggle hierboven,
+     anders verschijnt het 🩸 wél bij inspecteren/zoomen maar niet op de handkaart zelf */
+  const aangetastEl = el.querySelector('.kaart-aangetast');
+  if (aangetastEl) {
+    if (c.aangetast) {
+      aangetastEl.style.display = '';
+      aangetastEl.textContent = '🩸';
+      aangetastEl.dataset.tip = 'Aangetast: door de Erfprins gecorrumpeerd — +1 Energie en uitputtend (eenmalig speelbaar)';
+    } else {
+      aangetastEl.style.display = 'none';
+    }
+  }
   el.querySelector('.kaart-naam').textContent = knaam(c);
   el.querySelector('.kaart-tekst').innerHTML = def.tekst(c);
 }
@@ -3774,7 +3786,7 @@ async function copycatToonGespeeld(k, s) {
 async function copycatSpeelTerug(v, g, plan) {
   pose2D(v, Math.random() < 0.5 ? 'plagiaat' : 'plagiaat_variant', 0.9);   /* cosmetisch → Math.random raakt de seeded RNG niet */
   for (let i = 0; i < (plan || []).length; i++) {
-    if (S.gevecht !== g || g.voorbij) break;
+    if (S.gevecht !== g || g.voorbij || v.dood) break;   /* dode baas speelt niet door (vloek-backfire/doornen kunnen 'm mid-beurt vellen) */
     const k = plan[i];
     const ai = (v.gestolen || []).findIndex(s => s.id === k.id && s.soort === k.soort);
     if (ai < 0) continue;                          /* al weg (bv. door de breker) → skip */
@@ -3787,12 +3799,13 @@ async function copycatSpeelTerug(v, g, plan) {
       if (!v.dood) { fxNummer(actorEl(v), `🌑 jouw ${k.naam} keert! −${schade}`, 'fx-schade'); pose2D(v, 'hit', 0.5); }
       melding(`🎭 Hij speelt je ${k.naam} — maar een vloek laat zich niet kopiëren, en bijt hém!`);
       renderGevecht();
+      if (v.dood) break;   /* de vloek-backfire velde de Erfprins → stop; eindBeurt regelt de victory */
       await slaap(720);
       continue;
     }
     /* 1 — de kaart groot in beeld */
     const wrap = await copycatToonGespeeld(k, s);
-    if (S.gevecht !== g || g.voorbij) { wrap.remove(); return; }
+    if (S.gevecht !== g || g.voorbij || v.dood) { wrap.remove(); return; }
     /* 2 — het effect landt (aanvallen met de Erfprins-bonus) */
     if (k.soort === 'aanval') {
       doeSchade(sp(), k.eindDmg, v);
@@ -3807,7 +3820,7 @@ async function copycatSpeelTerug(v, g, plan) {
       fxNummer(actorEl(v), `🎭 jouw ${k.naam}!`, 'fx-debuff');
     }
     renderGevecht();
-    if (S.gevecht !== g || g.voorbij) { wrap.classList.add('weg'); setTimeout(() => wrap.remove(), 300); return; }
+    if (S.gevecht !== g || g.voorbij || v.dood) { wrap.classList.add('weg'); setTimeout(() => wrap.remove(), 300); return; }   /* doornen-kaats velde de baas → stop, geen corruptie-retour meer */
     /* 3 — gecorrumpeerd retour in je dek (+1 kost, uitputtend, zwart aangetast) */
     wrap.classList.add('corrupt-weg');
     setTimeout(() => wrap.remove(), 620);
@@ -4156,8 +4169,8 @@ function beginSpelerBeurt() {
   if (heeftRelikwie('dossierklem')) geefStatus(s, 'metaalhuid', 3);   /* groeiende Blok i.p.v. vaste +4 */
   /* Carbon-afdruk is nu reactief (zie doeSchade), geen start-van-beurt-blok meer */
   if (heeftRelikwie('inktpot')) alleVijanden().forEach(v => { if ((v.status.gif || 0) > 0) geefGif(v, 1); });   /* inkt verspreidt zich */
-  /* het Houten Been wortelt zich vast — ná de blok-reset van beurt 1 */
-  if (g.beurt === 1 && heeftRelikwie('houten_been')) geefBlok(s, 4);
+  /* het Houten Been geeft zijn +4 Blok nu bij gevechtsstart (zie startGevecht), niet hier —
+     de g.beurt===1-haak vuurde pas op je TWEEDE beurt (off-by-one), terwijl de tekst "begin van elk gevecht" belooft */
   if ((s.status.bloedzuiger || 0) > 0) {
     const vergiftigd = alleVijanden().filter(v => (v.status.gif || 0) > 0).length;
     if (vergiftigd > 0) geneesHp(s.status.bloedzuiger * vergiftigd);

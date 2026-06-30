@@ -2723,10 +2723,10 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
 #baas-intro.baas-intro-morf {
   position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;
   background: radial-gradient(ellipse at center, rgba(20, 30, 14, .92), rgba(4, 6, 4, .985));
-  cursor: pointer; transition: opacity .5s ease;
+  cursor: pointer; pointer-events: auto; transition: opacity .5s ease;   /* auto: overschrijft de geërfde pointer-events:none van #baas-intro → de skip-klik werkt + tikken lekken niet naar het slagveld */
 }
 #baas-intro.baas-intro-morf.weg { opacity: 0; }
-.morf-wrap { display: flex; flex-direction: column; align-items: center; gap: clamp(10px, 2.2vh, 20px); padding: 3vh 4vw; max-width: 96vw; max-height: 100vh; text-align: center; }
+.morf-wrap { display: flex; flex-direction: column; align-items: center; gap: clamp(10px, 2.2vh, 20px); padding: 3vh 4vw; max-width: 96vw; max-height: 100vh; overflow-y: auto; text-align: center; }
 .morf-wrap > small { font-family: 'Pirata One', serif; letter-spacing: .12em; color: #8fbf7a; opacity: .85; text-transform: uppercase; font-size: clamp(.75rem, 2.3vw, 1.02rem); }
 .morf-podium {
   position: relative; width: clamp(190px, 36vh, 330px); aspect-ratio: 4 / 5;
@@ -2768,6 +2768,14 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
 .morf-titel h1 { font-family: 'Pirata One', serif; font-size: clamp(1.9rem, 6.6vw, 3.4rem); color: #aef07a; margin: 0; text-shadow: 0 0 26px rgba(120, 200, 60, .8), 0 4px 14px #000; letter-spacing: 2px; }
 .morf-titel span { font-family: 'Alegreya', serif; font-style: italic; color: #c8d8b8; }
 .morf-hint { font-size: .68rem; letter-spacing: .1em; color: rgba(200, 220, 180, .42); text-transform: uppercase; }
+/* korte landscape-telefoon (<~430px hoog): krimp de podium-floor + dempingen + geen scale-overgroei,
+   zodat de baasnaam-titel + de hint zichtbaar blijven (anders vallen ze onder de schermrand) */
+@media (max-height: 430px) {
+  .morf-wrap { gap: clamp(5px, 1.2vh, 11px); padding: 1.4vh 4vw; }
+  .morf-podium { width: clamp(118px, 30vh, 200px); }
+  .morf-tekst { min-height: 2.3em; }
+  #baas-intro.baas-intro-morf .baas-intro-binnen { animation: none; transform: none; }
+}
 
 /* fase-flits: korte aankondiging midden in het gevecht */
 .baas-flits {
