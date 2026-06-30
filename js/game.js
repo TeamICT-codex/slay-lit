@@ -4831,8 +4831,28 @@ function devSprongAct2() {
   _m.rijp = true; _m.voltooid = false;
   bewaarCodex();
   saveSpel();
-  melding('⚡ DEV: Act 2 + Drops-mysterie RIJP — 150 HP + 2 heeldranken om rustig te testen. Doof je fakkel bij de Erfprins.');
+  melding('⚡ DEV: Act 2 + Drops-mysterie RIJP — 150 HP + 2 heeldranken. (Alt+klik = meteen de Erfprins · Shift+klik = Drops-testcyclus)');
   renderKaartScherm();
+}
+
+/* DEV-SHORTCUT (Alt+klik op het logo): spring meteen SOLO tegen de Erfprins, zodat je de
+   Roof-rework niet door een hele Act 2-run hoeft te bevechten. Geen metgezel/Drops-mutatie
+   (schone solo-test) + een geloofwaardig Act-2-dek (de Roof grist de helft, dus een kaal
+   startdek van 10 maakt de test onspeelbaar) + ruime HP/heeldranken. Weg vóór release. */
+function devErfprins() {
+  if (!S) nieuwSpel('slachter');
+  if (inGevecht()) stopGevechtLus();
+  S.gevecht = null; S.act = 2; S.fakkel = 100;
+  S.maxHp = Math.max(S.maxHp || 0, 150); S.hp = S.maxHp;
+  S.dranken = []; while (S.dranken.length < drankSlots()) S.dranken.push('heeldrank');
+  if (S.dek.length < 16) {
+    const pool = heldPool();
+    let veiligheid = 0;
+    while (S.dek.length < 18 && pool.length && veiligheid++ < 40) S.dek.push(nieuweKaart(kiesUit(pool)));
+  }
+  saveSpel();
+  startGevecht(['de_erfprins'], 'baas', 15);   /* betreedt zelf het gevechtscherm */
+  melding('⚡ DEV: meteen tegen de Erfprins (SOLO, geen metgezel) — 150 HP + 2 heeldranken + opgevuld dek. Test "De Roof".');
 }
 
 /* ============================================================
@@ -4897,8 +4917,9 @@ function devDropsTest() {
    playtest-save blijft schoon). SHIFT+klik = de Drops-testcyclus (die bewust spawnt/schrijft).
    devDropsWis() in de console reset de (cross-run) Drops-Codex weer naar nul. */
 function devLogo(e) {
-  if (e && e.shiftKey) { devDropsTest(); return; }
-  devSprongAct2();
+  if (e && e.altKey) { devErfprins(); return; }       /* Alt+klik = meteen SOLO tegen de Erfprins (schone Roof-test) */
+  if (e && e.shiftKey) { devDropsTest(); return; }     /* Shift+klik = Drops-testcyclus (spawnt/schrijft) */
+  devSprongAct2();                                     /* gewone klik = veilige Act 2-sprong */
 }
 function devDropsWis() {
   _devDropsReset();
