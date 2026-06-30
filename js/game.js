@@ -2204,6 +2204,7 @@ function startGevecht(samenstelling, soort, rij) {
        escalatie consistent meelopen — anders blijft de doof-rite-hint in daily op idx 0. */
     Codex.erfprinsOntmoetingen = (Codex.erfprinsOntmoetingen || 0) + 1; bewaarCodex();
     const sid = vindScherf('baas'); if (sid) g.baasScherf = sid;   /* bankt op je stash; de weighty reveal volgt bij de overwinning (botst niet met de baas-intro) */
+    copycatOpeningsroof(g);   /* DE ROOF: grist meteen een helft van je dek — vóór je eerste beurt, zodat je écht met de andere helft vecht */
   }
   if (soort === 'baas') misschienBaasIntro(g);   /* enkel als het slagveld zichtbaar is (niet achter de draai-prompt) */
 
@@ -3320,7 +3321,7 @@ async function speelKaart(c, doel) {
     }
   }
   pasVonkToe(c);   /* het Vonkaltaar: gebrandmerkte kaart raakt de fakkel (+licht of verbrand+Blok) */
-  if (def.type === 'kracht' || def.uitputten) {
+  if (def.type === 'kracht' || def.uitputten || c.uitputtend) {   /* c.uitputtend = per-instance (bv. een door de Erfprins teruggestoken kaart) */
     g.uitgeput.push(c);
   } else {
     g.afleg.push(c);
@@ -3370,7 +3371,7 @@ function checkBaasFase() {
    (de chokepoint — dus ook gif voedt). Drops (rol:'breker') breekt de machine.
    Volledig ontwerp: ONTWERP.md "The Copycat — Act 2-eindbaasmechaniek". */
 
-const COPYCAT_CAP_DMG = { 1: 26, 2: 34, 3: 46 };   /* fase-afhankelijke cap op teruggekaatste schade — escalatie wordt voelbaar (opgehoogd: hij voelde te zwak) */
+const COPYCAT_CAP_DMG = { 1: 30, 2: 44, 3: 60 };   /* fase-afhankelijke cap op teruggekaatste schade — opgehoogd voor de Roof-rework ('probeert je af te maken'); tunebaar */
 const COPYCAT_STEEL_CAP = 12;    /* max ooit gestolen per gevecht (anti-leegtrekken) */
 const COPYCAT_ARSENAAL_CAP = 5;  /* max gelijktijdig in het arsenaal */
 const COPYCAT_TERUGWIN = 20;     /* schade aan de baas per teruggewonnen kaart */
@@ -3415,7 +3416,7 @@ function kaartVliegFx(kaartId, bronEl, doelEl, opts) {
   const dx = dr.left + dr.width / 2, dy = dr.top + dr.height / 2;
   const def = kaartId && KAARTEN[kaartId];
   const fly = document.createElement('div');
-  fly.className = 'steel-vlieger' + (opts.vloek ? ' vloek' : '') + (opts.terug ? ' terug' : '');
+  fly.className = 'steel-vlieger' + (opts.vloek ? ' vloek' : '') + (opts.terug ? ' terug' : '') + (opts.verbrand ? ' verbrand' : '');
   fly.innerHTML = `<span class="sv-icoon">${(def && def.icoon) || '🎴'}</span><span class="sv-naam">${(def && def.naam) || ''}</span>`;
   fly.style.left = bx + 'px'; fly.style.top = by + 'px';
   fly.style.transform = `translate(-50%,-50%) scale(.5) rotate(${opts.terug ? 8 : -8}deg)`;
@@ -3495,54 +3496,85 @@ function copycatPlagiaatPlan(v, aantal) {
   return (v.gestolen || []).slice().sort((a, b) => snapSterkte(b) - snapSterkte(a)).slice(0, aantal)
     .map(s => ({ id: s.id, naam: s.naam, soort: s.soort, n: s.n, eindDmg: s.soort === 'aanval' ? copycatPlagiaatDmg(v, s.n) : 0 }));
 }
-/* KANAAL 3 — terugspelen: voert het plan uit, gedwongen op de speler (geen vijandAanval,
-   dus geen dubbele act-scaling en de hond wordt nooit geraakt) */
-function copycatSpeelTerug(v, g, plan) {
-  pose2D(v, Math.random() < 0.5 ? 'plagiaat' : 'plagiaat_variant', 0.9);   /* SIGNATURE: wisselt tussen 2 plagiaat-varianten (de Copycat toont steeds een andere 'kopie'); zuiver cosmetisch → Math.random raakt de seeded RNG niet */
-  /* het plan is een BEVROREN snapshot van vorige beurt; sla kaarten over die de speler
-     intussen heeft TERUGGEWONNEN (niet meer in v.gestolen) — anders kaatst hij een net
-     teruggegeven kaart alsnog tegen je terug en doet het terugwin-cadeau teniet. */
-  const beschikbaar = {};
-  (v.gestolen || []).forEach(s => { beschikbaar[s.id] = (beschikbaar[s.id] || 0) + 1; });
-  (plan || []).forEach((k, i) => {
-    if (!(beschikbaar[k.id] > 0)) return;       /* deze instance is teruggewonnen → niet terugkaatsen */
-    beschikbaar[k.id]--;
-    /* zichtbaar (cosmetisch, los van de schade): jouw gestolen kaart vliegt van hém terug naar jou */
-    setTimeout(() => kaartVliegFx(k.id, actorEl(v), copycatBronEl(), { terug: true }), i * 220);
-    if (k.soort === 'aanval') doeSchade(sp(), k.eindDmg, v);
-    else if (k.soort === 'blok') geefBlok(v, k.n);
-    else if (k.soort === 'gif') geefGif(sp(), k.n);
-    else if (k.soort === 'zwak') geefStatus(sp(), 'zwak', k.n);
-    fxNummer(actorEl(v), `🎭 jouw ${k.naam}!`, 'fx-schade');
+/* ---- DE ROOF (opening): de Erfprins grist meteen een willekeurige HELFT van je dek in
+   zijn kopie-stapel en maakt je af met de jouwe. Per gevecht — je trek/afleg worden elk
+   gevecht vers uit S.dek gebouwd, dus na de baas is je dek weer compleet. ---- */
+function _erfprinsRoofKaart(c) {
+  const def = kdef(c);
+  if (def.type === 'vloek') return { soort: 'vloek', n: 0 };
+  const rec = def.kopie;
+  if (rec) { const n = Math.max(0, kval(c, rec.veld) || 0); if (n > 0 || rec.soort !== 'aanval') return { soort: rec.soort, n }; }
+  const dmg = kval(c, 'dmg') || 0; if (dmg > 0) return { soort: 'aanval', n: dmg };
+  const blok = kval(c, 'blok') || 0; if (blok > 0) return { soort: 'blok', n: blok };
+  return { soort: 'overig', n: 0 };
+}
+function copycatOpeningsroof(g) {
+  const v = copycatBaas(g); if (!v || g.copycatGebroken) return;
+  const trek = g.trek || [];
+  /* helft van je dek, maar laat ≥2 kaarten in je trek (nooit meteen droogtrekken) */
+  const aantal = Math.max(0, Math.min(trek.length - 2, Math.round((S.dek.length || trek.length) / 2)));
+  if (aantal <= 0) return;
+  const idxs = schud(trek.map((_, i) => i)).slice(0, aantal).sort((a, b) => b - a);   /* hoog→laag → splice-veilig; seeded schud */
+  v.gestolen = v.gestolen || [];
+  idxs.forEach(i => {
+    const c = trek[i]; trek.splice(i, 1);
+    const info = _erfprinsRoofKaart(c);
+    v.gestolen.push({ id: c.id, naam: kdef(c).naam, soort: info.soort, n: info.n, up: !!c.up });
   });
-  /* WOW: de eerste DUBBELE TERUGKAATSING — hij vecht met jouw deck */
-  if ((plan || []).length >= 2 && !g.copycatDubbelGezien) {
-    g.copycatDubbelGezien = true;
-    baasFaseMoment('JOUW BESTE ZET', '„Kijk — JOUW beste zet. Nu is het MÍJN beste zet."');
-  }
+  v.totaalGeroofd = v.gestolen.length;
+  v.gestolen.forEach((s, i) => setTimeout(() => kaartVliegFx(s.id, copycatBronEl(), actorEl(v)), 140 + i * 90));
+  baasFaseMoment('DE ROOF', `🎭 „Jouw werk? Het is nu MÍJN werk." — hij grist ${v.gestolen.length} kaart${v.gestolen.length === 1 ? '' : 'en'} uit je dek!`);
+  Klank.sfx('debuff');
   renderGevecht();
 }
 
-/* terugwinnen: elke COPYCAT_TERUGWIN schade aan de baas plopt de onderste gestolen
-   kaart terug — vers (nieuwe uid) en KAAL (up:false) in je trekstapel */
-function copycatTerugwin(v, g, n) {
-  if (!v || !Array.isArray(v.gestolen) || !v.gestolen.length) return;
-  v.terugwinMeter = (v.terugwinMeter || 0) + n;
-  while (v.terugwinMeter >= COPYCAT_TERUGWIN && v.gestolen.length) {
-    v.terugwinMeter -= COPYCAT_TERUGWIN;
-    const terug = v.gestolen.shift();
-    const kaart = nieuweKaart(terug.id); kaart.up = false;
-    g.trek.push(kaart);
-    melding(`↩️ Je wint je ${terug.naam} terug!`);
+/* KANAAL 3 — terugspelen: hij speelt geroofde kaarten tégen je, getoond, met de Erfprins-bonus.
+   LOT per kaart: een AANVAL wordt erna dramatisch VERBRAND (eenmalig wapen, weg uit zijn stapel);
+   al het andere (blok/gif/zwak/overig) stuurt hij UITPUTTEND terug in je trek (je krijgt 'm terug,
+   maar single-use). Een geroofde VLOEK laat zich niet kopiëren en bijt HÉM. Geen win-back: overleef
+   tot zijn geroofde stapel op is. */
+function copycatSpeelTerug(v, g, plan) {
+  pose2D(v, Math.random() < 0.5 ? 'plagiaat' : 'plagiaat_variant', 0.9);   /* cosmetisch → Math.random raakt de seeded RNG niet */
+  (plan || []).forEach((k, i) => {
+    const ai = (v.gestolen || []).findIndex(s => s.id === k.id && s.soort === k.soort);
+    if (ai < 0) return;                          /* al weg (bv. door de breker) → skip */
+    const s = v.gestolen[ai]; v.gestolen.splice(ai, 1);   /* hij verbruikt de instance */
+    if (k.soort === 'vloek') {
+      setTimeout(() => kaartVliegFx(k.id, actorEl(v), copycatBronEl(), { vloek: true }), i * 220);
+      const schade = VLOEK_BACKFIRE(v);
+      g._vloekGreep = true;
+      try { verliesHp(v, schade); } finally { g._vloekGreep = false; }
+      if (!v.dood) { fxNummer(actorEl(v), `🌑 jouw ${k.naam} keert! −${schade}`, 'fx-schade'); pose2D(v, 'hit', 0.5); }
+      melding(`🎭 Hij speelt je ${k.naam} — maar een vloek laat zich niet kopiëren, en bijt hém!`);
+      return;
+    }
+    if (k.soort === 'aanval') {
+      setTimeout(() => kaartVliegFx(k.id, actorEl(v), copycatBronEl(), { terug: true, verbrand: true }), i * 220);   /* speelt 'm op je af, dan verbrandt 'ie */
+      doeSchade(sp(), k.eindDmg, v);
+      fxNummer(actorEl(v), `🔥 jouw ${k.naam}! −${k.eindDmg}`, 'fx-schade');
+    } else {
+      setTimeout(() => kaartVliegFx(k.id, actorEl(v), copycatBronEl(), { terug: true }), i * 220);
+      if (k.soort === 'blok') geefBlok(v, k.n);
+      else if (k.soort === 'gif') geefGif(sp(), k.n);
+      else if (k.soort === 'zwak') geefStatus(sp(), 'zwak', k.n);
+      fxNummer(actorEl(v), `🎭 jouw ${k.naam}!`, 'fx-debuff');
+      const kaart = nieuweKaart(k.id); kaart.up = !!s.up; kaart.uitputtend = true;   /* uitgeput terug in je trek (eenmalig) */
+      g.trek.push(kaart);
+      melding(`↩️ Je ${k.naam} valt terug in je dek — maar uitgeput (eenmalig).`);
+    }
+  });
+  if ((plan || []).length >= 2 && !g.copycatDubbelGezien) {
+    g.copycatDubbelGezien = true;
+    baasFaseMoment('JOUW BESTE WERK', '„Twee tegelijk. Allebei van JOU."');
   }
+  renderGevecht();
 }
 
 /* aangeroepen uit verliesHp telkens de Copycat échte schade oploopt: terugwin (alle
    schade) + voeding (bron-gegate: speler piekt, gif voedt half, breker voedt NIET) */
 function copycatNaSchade(v, n, bron) {
   const g = S.gevecht; if (!g) return;
-  if (g._vloekGreep) return;   /* vloek-backfire: bezeert hem, maar voedt hem NIET en geeft geen terugwin */
-  copycatTerugwin(v, g, n);
+  if (g._vloekGreep) return;   /* vloek-backfire: bezeert hem, maar voedt hem NIET (geen win-back in de Roof-rework) */
   if (bron === sp()) {
     g.raakteCopycat = true;
     if (n > (v.maxKlap || 0)) { v.gevoed = (v.gevoed || 0) + Math.floor((n - (v.maxKlap || 0)) / 4); v.maxKlap = n; }
@@ -3552,44 +3584,28 @@ function copycatNaSchade(v, n, bron) {
   /* bron.isMetgezel (de breker): telt alleen voor terugwin, voedt NIET — trouw voedt de dief niet */
 }
 
-/* de beurtkeuze van de Copycat: plagiaat / stelen / pathetische eigen zet.
+/* de beurtkeuze van de Erfprins (Roof-rework): speel geroofde kaarten per fase, óf — als zijn
+   geroofde stapel op is — een zwakke eigen uithaal (jouw window om hem af te maken).
    Puur (geen mutatie) — alle mutatie zit in de it.doe()-haken. */
 function copycatKies(v, beurt) {
   const g = S.gevecht; if (!g) return { type: 'aanval', naam: 'Geschreeuw', dmg: 6 };
   const fase = v.fase || 1;
   const arsenaal = (v.gestolen || []).length;
-  const kanStelen = !g.copycatGebroken && (g.laatstGespeeld || []).length > 0
-    && arsenaal < COPYCAT_ARSENAAL_CAP && (v.totaalGestolen || 0) < COPYCAT_STEEL_CAP;
   const t = v.beurtTeller || 0;
-  const plagiaat = aantal => {
+  if (g.copycatGebroken) return { type: 'aanval', naam: 'Wanhoopsklap', dmg: 6 + (fase >= 3 ? 2 : 0) };
+  if (arsenaal > 0) {
+    /* fase 1 → 1 kaart/beurt · fase 2 → om de beurt 2 · fase 3 → 2 kaarten/beurt */
+    const aantal = fase >= 3 ? Math.min(2, arsenaal)
+      : (fase === 2 && (t % 2 === 1) ? Math.min(2, arsenaal) : 1);
     const plan = copycatPlagiaatPlan(v, aantal);
     return { type: 'plagiaat', naam: 'Plagiaat', plan, doe: vv => copycatSpeelTerug(vv, g, plan) };
-  };
-  const steel = { type: 'steel', naam: 'Afkijken', doe: vv => { if (!copycatSteel(vv, g)) { melding('🎭 De Copycat grist naar je zet… maar grijpt mis, en haalt zelf uit.'); doeSchade(sp(), 4 + fase * 3, vv); } } };
-  /* sterker tegen niet-voedende (bv. gif/chip) dekken: gif jaagt hem wél naar fase 3
-     (copycatNaSchade !bron-tak voedt half), maar zonder kopieerbaar arsenaal viel hij
-     terug op deze magere zet. Nu fase-geschaald 12/18/24 i.p.v. 9/12/15 — voelbaar in
-     fase 3, waar een gestarveerde Erfprins anders tandeloos bleef. */
-  const pathetisch = { type: 'aanval', naam: fase >= 2 ? 'Geschreeuw' : 'Pappie Bellen', dmg: 6 + fase * 6,
-    /* maak ZICHTBAAR dat de kopieer-machine leegloopt — anders lijkt de baas passief/tandeloos */
+  }
+  /* arsenaal leeg → de roof is uitgeput; hij haalt zelf nog wild uit, maar veel zwakker */
+  return { type: 'aanval', naam: fase >= 2 ? 'Wild Geschreeuw' : 'Pappie Bellen', dmg: 4 + fase * 4,
     doe: vv => {
-      fxNummer(actorEl(vv), '🎭 niks om na te bootsen!', 'fx-debuff');
-      if (!g._copycatLeeggemeld) { melding('🎭 De Copycat heeft niks van jou om na te bootsen — dus haalt hij zélf wild uit. Speel kopieerbare kaarten en hij wordt gevaarlijker.'); g._copycatLeeggemeld = true; }
+      fxNummer(actorEl(vv), '🎭 niks meer van jou!', 'fx-debuff');
+      if (!g._copycatLeeggemeld) { melding('🎭 Z\'n geroofde stapel is op — hij heeft niks meer van jou. Maak hem af.'); g._copycatLeeggemeld = true; }
     } };
-  if (g.copycatGebroken) return { type: 'aanval', naam: 'Wanhoopsklap', dmg: 6 + (fase >= 3 ? 2 : 0) };
-  if (fase >= 3 && arsenaal > 0) {
-    if (kanStelen && t % 3 === 2) return steel;
-    return plagiaat(Math.min(2, arsenaal));
-  }
-  if (fase === 2) {
-    if (arsenaal > 0 && (t % 2 === 1 || !kanStelen)) return plagiaat(1);
-    if (kanStelen) return steel;
-    if (arsenaal > 0) return plagiaat(1);
-  }
-  /* fase 1 */
-  if (kanStelen && (arsenaal === 0 || t % 2 === 0)) return steel;
-  if (arsenaal > 0) return plagiaat(1);
-  return pathetisch;
 }
 
 /* fase-escalatie: puur voedings-gedreven, sticky (eenrichting) — vervangt de aegis-fases */
@@ -3612,9 +3628,10 @@ function checkCopycatFase(b, g) {
   }
 }
 
-/* begin van je beurt: óf breker-terugwin (Drops beet al in metgezelBeurt) óf trage
-   mercy-lek — nooit beide. Plus stall-straf + afkoeling tot de fase-bodem. Bij een
-   gebroken machine: tel af tot de herindexering (alleen bij herhaal-runs). */
+/* begin van je beurt: stall-straf + afkoeling tot de fase-bodem + tijds-vloer + fase-check.
+   GEEN mercy-lek meer (Roof-rework: geen win-back — je krijgt enkel de niet-aanval-kaarten
+   uitputtend terug doordat hij ze speelt). Bij een gebroken machine: tel af tot de
+   herindexering (alleen bij herhaal-runs). */
 function copycatBeurtStart(g) {
   const b = copycatBaas(g); if (!b) return;
   if (g.copycatGebroken) {
@@ -3624,7 +3641,6 @@ function copycatBeurtStart(g) {
     }
     return;
   }
-  const breker = levendeBrekerCompanion();
   const raakte = g.raakteCopycat;
   /* stall-straf: deed je vorige beurt geen schade aan hem, dan leert hij traag bij;
      anders koelt zijn voeding licht af (nooit onder de huidige fase-bodem) */
@@ -3634,13 +3650,6 @@ function copycatBeurtStart(g) {
   /* tijds-vloer: hij blijft niet eeuwig in een lage fase hangen door stalling */
   if (g.beurt >= 5 && (b.fase || 1) < 2) b.gevoed = Math.max(b.gevoed || 0, COPYCAT_F2);
   if (g.beurt >= 10 && (b.fase || 1) < 3) b.gevoed = Math.max(b.gevoed || 0, COPYCAT_F3);
-  /* mercy-lek ALLEEN als je hem vorige beurt niet raakte (raakte je hem wél, dan win
-     je al kaarten terug via schade — geen dubbel-cadeau) */
-  if (!breker && !raakte && Array.isArray(b.gestolen) && b.gestolen.length) {
-    const terug = b.gestolen.shift();
-    const kaart = nieuweKaart(terug.id); kaart.up = false;
-    g.trek.push(kaart);
-  }
   checkCopycatFase(b, g);
 }
 
@@ -3652,13 +3661,11 @@ function copycatAntiSoftlock(g) {
     return (kval(c, 'dmg') || 0) > 0 || d.type === 'vaardigheid' || d.type === 'kracht';
   });
   if (speelbaar) return;
-  if (Array.isArray(b.gestolen) && b.gestolen.length) {
-    const terug = b.gestolen.shift();
-    const kaart = nieuweKaart(terug.id); kaart.up = false;
-    g.trek.push(kaart); trekKaarten(1);
-    melding('↩️ Je grist een kaart terug uit de leegte.');
-  } else if (g.afleg.length) {
-    g.trek = schud(g.afleg); g.afleg = []; trekKaarten(1);   /* nog kaarten in de afleg → herschud */
+  /* GEEN kaart uit zijn arsenaal trekken (dat zou win-back zijn) — enkel een echt vangnet
+     zodat je niet vastloopt: herschud je afleg, of geef energie als zelfs dat leeg is. */
+  if (g.afleg.length) {
+    g.trek = schud(g.afleg); g.afleg = []; trekKaarten(1);
+    melding('↩️ Je herschikt wat je nog hebt.');
   } else {
     g.energie += 1;
   }
@@ -3671,7 +3678,7 @@ function copycatBalk(b) {
   }
   const arsenaal = (b.gestolen || []);
   const lijst = arsenaal.length ? ` (${arsenaal.map(s => s.naam).join(', ')})` : '';
-  return `<div class="bb-aegis" data-tip="Het arsenaal: kaarten die de Copycat van je stal en opgewaardeerd terugspeelt. Hoe optimaler jij speelt, hoe sneller hij groeit (fase ${b.fase || 1}). Sla hem voor ${COPYCAT_TERUGWIN} schade om een kaart terug te winnen.">🎭 Arsenaal · ${arsenaal.length}${lijst}</div>`;
+  return `<div class="bb-aegis" data-tip="Geroofd arsenaal: kaarten die de Erfprins uit je dek griste. Aanvallen speelt hij opgewaardeerd terug en verbrandt ze dan; de rest stuurt hij uitgeput naar je trek. Overleef tot zijn stapel op is (fase ${b.fase || 1}).">🎭 Geroofd · ${arsenaal.length}${lijst}</div>`;
 }
 
 function baasFaseMoment(titel, sub) {

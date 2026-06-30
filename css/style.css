@@ -1205,6 +1205,10 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 .steel-vlieger .sv-naam { font-size: .62rem; color: var(--perkament); letter-spacing: .02em; white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
 .steel-vlieger.vloek { border-color: rgba(150, 110, 210, .85); box-shadow: 0 6px 22px rgba(0, 0, 0, .7), 0 0 20px rgba(110, 50, 160, .75); }
 .steel-vlieger.terug { border-color: rgba(255, 130, 95, .75); box-shadow: 0 6px 22px rgba(0, 0, 0, .6), 0 0 16px rgba(255, 100, 55, .55); }
+/* VERBRAND (Erfprins-roof): een geroofde aanval die hij op je speelt, vlamt erna op en verbrandt — eenmalig wapen */
+.steel-vlieger.verbrand { border-color: rgba(255, 150, 50, .92); box-shadow: 0 6px 22px rgba(0, 0, 0, .6), 0 0 26px rgba(255, 120, 30, .85); animation: vliegerVlam .5s ease-in-out infinite alternate; }
+@keyframes vliegerVlam { from { box-shadow: 0 6px 22px rgba(0, 0, 0, .6), 0 0 16px rgba(255, 120, 30, .65); } to { box-shadow: 0 6px 22px rgba(0, 0, 0, .6), 0 0 36px rgba(255, 175, 65, 1); } }
+.steel-vlieger.verbrand.weg { opacity: 0; filter: brightness(2.4) saturate(1.6); }
 .steel-vlieger.weg { opacity: 0; }
 .steel-flits { animation: steelFlits .46s ease; }
 @keyframes steelFlits {
