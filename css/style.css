@@ -1613,6 +1613,10 @@ button:disabled { cursor: not-allowed; opacity: .4; }
      i.p.v. over de randen te bleeden; max 2 regels, anders ellipsis */
   overflow-wrap: anywhere; word-break: break-word; padding: 0 3px; max-width: 100%; box-sizing: border-box;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+/* lange namen op de (kleine) hand-/dekkaarten trapsgewijs verkleinen → passen netjes in 2 regels
+   zonder lelijke mid-woord-afkap; NIET op de grote focus-kaart (die heeft ruimte zat) */
+.kaart:not(.kaart-focus) .kaart-naam.lange-naam { font-size: .84rem; }
+.kaart:not(.kaart-focus) .kaart-naam.xl-naam { font-size: .72rem; letter-spacing: -.01em; }
 .kaart-icoon { font-size: 2.3rem; margin: 6px 0 4px; filter: drop-shadow(0 3px 6px rgba(0,0,0,.6)); }
 /* eigen kaart-art: vol-bleed venster in het frame */
 .kaart-icoon img {
