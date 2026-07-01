@@ -2049,10 +2049,11 @@ function evalueerDraaiBlok() {
     ? (() => { const ev = EVENTS.find(e => e.id === S.huidigEvent); return !!(ev && ev.liggend); })()
     : false;
   let richting = null;
+  let liggReden = null;   /* WAAROM liggend gevraagd wordt → de juiste prompt-tekst (gevecht vs kaarten) */
   if (window.mobiel) {
-    if (kiesOpen) { if (!liggend) richting = 'liggend'; }                   /* een kaartoverzicht (smid/keuze/dek) wil LIGGEND — ook bovenop een portret-encounter */
-    else if (scherm === 'gevecht' && !liggend) richting = 'liggend';        /* gevecht wil liggend */
-    else if (eventLiggend && !liggend) richting = 'liggend';                /* het smid-event wil liggend (anders dekt de prompt het artwork af) */
+    if (kiesOpen) { if (!liggend) { richting = 'liggend'; liggReden = 'kaarten'; } }        /* een kaartoverzicht (smid/keuze/dek) wil LIGGEND — geen gevecht */
+    else if (scherm === 'gevecht' && !liggend) { richting = 'liggend'; liggReden = 'gevecht'; }   /* het gevecht zelf */
+    else if (eventLiggend && !liggend) { richting = 'liggend'; liggReden = 'kaarten'; }     /* een liggend-event (smid/altaar) leidt naar kaarten smeden/kiezen — GEEN gevecht */
     else if (_DRAAI_STAAND_SCHERMEN.includes(scherm) && !eventLiggend && liggend) richting = 'staand'; /* andere encounter wil staand */
   }
   if (!richting || _draaiGenegeerd[richting]) {
@@ -2064,7 +2065,9 @@ function evalueerDraaiBlok() {
   const h2 = el.querySelector('h2'), p = el.querySelector('p'), knop = el.querySelector('button');
   if (h2) h2.textContent = 'Draai je toestel';
   if (p) p.textContent = naarLiggend
-    ? 'Gevechten speel je liggend — zo zie je het slagveld en je kaarten groot en duidelijk.'
+    ? (liggReden === 'gevecht'
+        ? 'Gevechten speel je liggend — zo zie je het slagveld en je kaarten groot en duidelijk.'
+        : 'Dit scherm speel je liggend — zo zie je je kaarten groot en duidelijk.')
     : 'Dit scherm speelt prettiger rechtop — zo zie je alles in één blik.';
   if (knop) knop.textContent = naarLiggend ? 'Toch staand spelen' : 'Toch liggend spelen';
   el.dataset.richting = richting;
