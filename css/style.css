@@ -1608,7 +1608,11 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   border: 2px solid #5a3413;
   box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
 }
-.kaart-naam { font-size: 1rem; color: var(--perkament); margin-top: 2px; text-align: center; line-height: 1.05; }
+.kaart-naam { font-size: 1rem; color: var(--perkament); margin-top: 2px; text-align: center; line-height: 1.05;
+  /* lange samengestelde namen (bv. "Paddenstoelenstoofpotje") mogen afbreken en blijven binnen de kaart
+     i.p.v. over de randen te bleeden; max 2 regels, anders ellipsis */
+  overflow-wrap: anywhere; word-break: break-word; padding: 0 3px; max-width: 100%; box-sizing: border-box;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .kaart-icoon { font-size: 2.3rem; margin: 6px 0 4px; filter: drop-shadow(0 3px 6px rgba(0,0,0,.6)); }
 /* eigen kaart-art: vol-bleed venster in het frame */
 .kaart-icoon img {
