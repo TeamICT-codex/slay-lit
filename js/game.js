@@ -2042,19 +2042,20 @@ function evalueerDraaiBlok() {
   if (!el) return;
   const scherm = document.body.dataset.scherm;
   const liggend = !!(window.matchMedia && matchMedia('(orientation: landscape)').matches);
-  const kiesO = document.getElementById('overlay-kies');
-  const kiesOpen = !!(kiesO && kiesO.classList.contains('open'));   /* kaartoverzicht / smid */
-  /* sommige events (de smid) leiden naar het smeden en spelen dus LIGGEND, niet staand */
+  /* De kaartkeuze-overlay dwingt GEEN oriëntatie meer af: ze erft die van het scherm
+     eronder. Zo kiest een altaar (nu een gewoon staand event) zijn kaarten in PORTRET,
+     terwijl de belonings-kaartkeuze ná een gevecht LIGGEND blijft (beloning nudged niets)
+     → geen constant heen-en-weer draaien tussen gevecht en beloning. Enkel de smid houdt
+     via ev.liggend zijn liggende smeed-ceremonie. */
   const eventLiggend = scherm === 'event' && typeof EVENTS !== 'undefined' && typeof S !== 'undefined' && S && S.huidigEvent
     ? (() => { const ev = EVENTS.find(e => e.id === S.huidigEvent); return !!(ev && ev.liggend); })()
     : false;
   let richting = null;
   let liggReden = null;   /* WAAROM liggend gevraagd wordt → de juiste prompt-tekst (gevecht vs kaarten) */
   if (window.mobiel) {
-    if (kiesOpen) { if (!liggend) { richting = 'liggend'; liggReden = 'kaarten'; } }        /* een kaartoverzicht (smid/keuze/dek) wil LIGGEND — geen gevecht */
-    else if (scherm === 'gevecht' && !liggend) { richting = 'liggend'; liggReden = 'gevecht'; }   /* het gevecht zelf */
-    else if (eventLiggend && !liggend) { richting = 'liggend'; liggReden = 'kaarten'; }     /* een liggend-event (smid/altaar) leidt naar kaarten smeden/kiezen — GEEN gevecht */
-    else if (_DRAAI_STAAND_SCHERMEN.includes(scherm) && !eventLiggend && liggend) richting = 'staand'; /* andere encounter wil staand */
+    if (scherm === 'gevecht' && !liggend) { richting = 'liggend'; liggReden = 'gevecht'; }   /* het gevecht zelf */
+    else if (eventLiggend && !liggend) { richting = 'liggend'; liggReden = 'kaarten'; }     /* de smid: het smeden speelt liggend */
+    else if (_DRAAI_STAAND_SCHERMEN.includes(scherm) && !eventLiggend && liggend) richting = 'staand'; /* events/schat/altaren willen staand */
   }
   if (!richting || _draaiGenegeerd[richting]) {
     el.classList.remove('toon'); el.dataset.richting = '';
@@ -4558,7 +4559,7 @@ function toonMeerKeuze(kaarten, titel, opts) {
 
   function sluit() {
     document.onkeydown = null;
-    ov.classList.remove('open');
+    ov.classList.remove('open', 'kies-meervoud');
     houder.classList.remove('meer-modus', 'focus-modus');
     const b = ov.querySelector('.kies-actiebalk'); if (b) b.remove();
     $('#kies-overslaan').style.display = '';
@@ -4638,7 +4639,7 @@ function toonMeerKeuze(kaarten, titel, opts) {
   }
 
   render();
-  ov.classList.add('open');
+  ov.classList.add('open', 'kies-meervoud');   /* .kies-meervoud → mobiele flex-kolom-layout (scrollend raster + vaste onderbalk) */
   evalueerDraaiBlok();
 }
 
@@ -5147,7 +5148,10 @@ function laadEventArt(ev) {
 }
 
 function renderEvent(ev) {
+  /* art + tekstkolom als twee losse blokken: in portret onder elkaar (art groot bovenaan),
+     in liggend naast elkaar (art links, tekst/knoppen rechts) — zie mobiel.css. */
   let html = `${eventArtHtml(ev)}
+    <div class="event-tekstkolom">
     <h2 class="scherm-titel">${ev.titel}</h2>
     <p class="scherm-sub event-tekst">${ev.tekst}</p>
     <div class="event-opties">`;
@@ -5161,7 +5165,7 @@ function renderEvent(ev) {
       <b>${o.label}</b>${onder}
       ${reden ? `<small class="reden-uit">✕ ${reden}</small>` : ''}</button>`;
   });
-  html += `</div>`;
+  html += `</div></div>`;
   $('#scherm-event').innerHTML = html;
   laadEventArt(ev);
   renderTopbalk();
@@ -5178,9 +5182,10 @@ function eventKlaar(tekst) {
   const ev = EVENTS.find(e => e.id === S.huidigEvent);
   Klank.sfx('flip');
   $('#scherm-event').innerHTML = `${eventArtHtml(ev)}
+    <div class="event-tekstkolom">
     <h2 class="scherm-titel">${ev.titel}</h2>
     <p class="scherm-sub event-tekst event-onthul">${tekst}</p>
-    <button class="knop-groot" onclick="renderKaartScherm()">Verder ➤</button>`;
+    <button class="knop-groot" onclick="renderKaartScherm()">Verder ➤</button></div>`;
   laadEventArt(ev);
   renderTopbalk();
 }

@@ -284,6 +284,37 @@ body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-rug::after { fo
 body[data-modus="mobiel"] #kies-kaarten .kaart.groot.kaart-focus { width: min(300px, 86vw); height: auto; min-height: 0; }
 body[data-modus="mobiel"] #kies-kaarten .kaart.groot.kaart-focus .kaart-icoon img { width: min(254px, 74vw); height: auto; aspect-ratio: 254 / 142; }
 
+/* ---- handkaart-naam: NOOIT midden-woord breken op de smalle mobiele kaart ----
+   overflow-wrap:normal + hyphens houdt woorden heel en breekt hoogstens op een nette
+   lettergreepgrens (nl-hyphenatie via <html lang="nl">). De fontgrootte schaalt per
+   breakpoint mee (zie de gevecht-blokken hieronder) zodat namen als "Wortelgreep"
+   gewoon op één regel passen i.p.v. als "Wortelgree|p" af te breken. */
+body[data-modus="mobiel"] #hand .kaart .kaart-naam {
+  overflow-wrap: normal; word-break: normal; hyphens: auto; -webkit-hyphens: auto;
+}
+
+/* ---- meervoudige kaartkeuze (de altaren): scrollend raster + ECHT vaste onderbalk ----
+   De overlay wordt een flex-kolom waarin ALLEEN het kaartraster scrollt (flex:1;
+   min-height:0; overflow-y:auto) en de actiebalk het laatste in-flow flex-kind is
+   (position:static; margin-top:auto) → de balk kan fysiek nooit meer OVER een kaartrij
+   vallen (de "balk-middenin"-bug in lage landscape). Gescoped op .kies-meervoud zodat de
+   beloning-/dek-/smid-overlays (die de overlay zelf laten scrollen) ongemoeid blijven.
+   Geldt in BEIDE oriëntaties. */
+body[data-modus="mobiel"] #overlay-kies.kies-meervoud.open {
+  flex-direction: column; align-items: stretch; overflow: hidden;
+  padding: 12px 10px 0;
+}
+body[data-modus="mobiel"] #overlay-kies.kies-meervoud #kies-titel,
+body[data-modus="mobiel"] #overlay-kies.kies-meervoud #kies-hint { flex: 0 0 auto; margin: 2px 0; text-align: center; }
+body[data-modus="mobiel"] #overlay-kies.kies-meervoud #kies-kaarten.meer-modus {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  align-content: flex-start; width: 100%; max-width: 100%; margin: 6px 0 0; padding-bottom: 8px;
+}
+body[data-modus="mobiel"] #overlay-kies.kies-meervoud .kies-actiebalk {
+  position: static; flex: 0 0 auto; width: 100%; margin-top: auto;
+  padding: 10px clamp(12px, 4vw, 28px) calc(8px + env(safe-area-inset-bottom));
+}
+
 /* volledig-scherm-schakelaar enkel op touch tonen (desktop heeft F11).
    Basis .inst-mobiel { display:none } staat in style.css. */
 body[data-modus="mobiel"] .inst-mobiel { display: flex; }
@@ -318,6 +349,17 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] #hand .kaart .kaart-icoon img { width: 98px; height: 54px; }
   body[data-modus="mobiel"] #hand .kaart:hover, body[data-modus="mobiel"] #hand .kaart.gekozen { transform: translateY(-64px) scale(1.08); }
   body[data-modus="mobiel"] #hand .kaart.voorbeeld { transform: translateY(-68px); }
+  /* naam-font op de 120px-portretkaart (tekstbreedte ~96px): "Wortelgreep" past op 1 regel.
+     line-height 1.25 zodat de clamp-box de descenders (p/g/j) niet afknipt. */
+  body[data-modus="mobiel"] #hand .kaart .kaart-naam { font-size: .82rem; line-height: 1.25; }
+  body[data-modus="mobiel"] #hand .kaart:not(.kaart-focus) .kaart-naam.lange-naam { font-size: .72rem; }
+  body[data-modus="mobiel"] #hand .kaart:not(.kaart-focus) .kaart-naam.xl-naam { font-size: .64rem; letter-spacing: -.01em; }
+
+  /* event-art in portret: fors bovenaan (schaalt met vh i.p.v. de vaste 235px-band).
+     flex:0 0 auto → de art krimpt NIET als flex-item in de kolom; past niet alles?
+     dan scrollt #scherm-event (overflow-y:auto). */
+  body[data-modus="mobiel"] #scherm-event .event-art { flex: 0 0 auto; margin-top: 14px; width: min(680px, 92vw); height: clamp(210px, 38vh, 420px); }
+  body[data-modus="mobiel"] #scherm-event .event-art.is-portret { flex: 0 0 auto; width: auto; height: clamp(280px, 48vh, 540px); aspect-ratio: 2 / 3; max-width: 82vw; }
 
   body[data-modus="mobiel"] #energie-orb { left: calc(10px + env(safe-area-inset-left)); bottom: 226px; transform: scale(.85); }
   body[data-modus="mobiel"] #knop-eindbeurt { right: calc(10px + env(safe-area-inset-right)); bottom: 230px; min-height: 46px; padding: 11px 20px; font-size: 1.05rem; }
@@ -391,12 +433,39 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] #hand .kaart .kaart-icoon img { width: 84px; height: 46px; }
   body[data-modus="mobiel"] #hand .kaart:hover, body[data-modus="mobiel"] #hand .kaart.gekozen { transform: translateY(-56px) scale(1.1); }
   body[data-modus="mobiel"] #hand .kaart.voorbeeld { transform: translateY(-56px); }
+  /* naam-font op de smalste 104px-liggendkaart (tekstbreedte ~80px) → alles blijft heel.
+     line-height 1.25 tegen descender-afkap door de 2-regel-clamp. */
+  body[data-modus="mobiel"] #hand .kaart .kaart-naam { font-size: .74rem; line-height: 1.25; }
+  body[data-modus="mobiel"] #hand .kaart:not(.kaart-focus) .kaart-naam.lange-naam { font-size: .66rem; }
+  body[data-modus="mobiel"] #hand .kaart:not(.kaart-focus) .kaart-naam.xl-naam { font-size: .58rem; letter-spacing: -.015em; }
   /* breed zat: HUD weer NAAST de hand */
   body[data-modus="mobiel"] #energie-orb { left: calc(14px + env(safe-area-inset-left)); bottom: 88px; transform: scale(.82); }
   body[data-modus="mobiel"] #knop-eindbeurt { right: calc(14px + env(safe-area-inset-right)); bottom: 92px; min-height: 42px; padding: 9px 18px; }
   body[data-modus="mobiel"] #stapel-trek { left: calc(14px + env(safe-area-inset-left)); bottom: 16px; }
   body[data-modus="mobiel"] #stapel-afleg { right: calc(14px + env(safe-area-inset-right)); bottom: 16px; }
   body[data-modus="mobiel"] #scherm-gevecht.baas-actief #beurt-label { margin-top: 58px; }
+
+  /* ---- event LIGGEND: art NAAST de tekst i.p.v. als weggedrukte band erboven ----
+     De korte landscape-hoogte maakte de vaste 235px-band (of de 44vh-portretpostzegel)
+     onleesbaar. Nu: art links op (bijna) volle hoogte, tekst/knoppen rechts in een eigen
+     scrollende kolom. Zo is de art groot en duidelijk zonder erdoorheen te scrollen. */
+  body[data-modus="mobiel"] #scherm-event {
+    flex-direction: row; align-items: center; justify-content: center;
+    gap: 18px; padding: 8px 14px calc(8px + env(safe-area-inset-bottom));
+  }
+  body[data-modus="mobiel"] #scherm-event .event-art,
+  body[data-modus="mobiel"] #scherm-event .event-art.is-landschap {
+    margin-top: 0; flex: 0 0 auto; align-self: center;
+    height: min(74vh, 300px); width: auto; aspect-ratio: 3 / 2; max-width: 48vw;
+  }
+  body[data-modus="mobiel"] #scherm-event .event-art.is-portret {
+    margin-top: 0; flex: 0 0 auto;
+    height: min(84vh, 340px); width: auto; aspect-ratio: 2 / 3; max-width: 34vw;
+  }
+  body[data-modus="mobiel"] #scherm-event .event-tekstkolom {
+    flex: 1 1 0; min-width: 0; max-width: 56vw;
+    justify-content: center; overflow-y: auto; max-height: 100%;
+  }
 }
 
 /* ---------- D. liggend gevecht op een KORTE telefoon (≤440px hoog) ----------

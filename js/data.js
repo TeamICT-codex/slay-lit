@@ -1716,8 +1716,9 @@ const EVENTS = [
     ]
   },
   {
-    id: 'vonkaltaar', titel: 'Het Vonkaltaar', icoon: '🪔', liggend: true,
-    /* liggend:true → het kaartkiezen speelt liggend (anders dekt de portret-draaiprompt het af) */
+    id: 'vonkaltaar', titel: 'Het Vonkaltaar', icoon: '🪔',
+    /* GEEN liggend: het altaar is een staand event → de kaartkeuze speelt in portret
+       (meer verticale ruimte om de art groot te zien en de kaarten te kiezen). */
     tekst: 'Op een laag altaar brandt een vlam die geen hout verteert — koud-blauw aan de randen, hongerig in haar hart. „Leg iets van jezelf erin," sist de hitte, „en ik brand er mijn aard in. Wélke aard? Dat beslist de vlam — niet jij."',
     opties: [
       {
@@ -1742,8 +1743,8 @@ const EVENTS = [
     ]
   },
   {
-    id: 'offeraltaar', titel: 'Het Offeraltaar', icoon: '🗿', liggend: true,
-    /* liggend:true → het kaartkiezen speelt liggend (anders dekt de portret-draaiprompt het af) */
+    id: 'offeraltaar', titel: 'Het Offeraltaar', icoon: '🗿',
+    /* GEEN liggend: staand event → de kaartkeuze speelt in portret (zie vonkaltaar). */
     tekst: 'Een muil van koud zwart steen gaapt in de rotswand, geduldig en oeroud. „Geef," fluistert ze van diep onderin, „en ik geef terug — maar wát ik teruggeef, dat kies ík."',
     opties: [
       {
