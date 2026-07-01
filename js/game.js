@@ -5133,7 +5133,13 @@ function laadEventArt(ev) {
   if (!window.laadEventAfbeelding) return;
   laadEventAfbeelding(_eventArtId || ev.id, img => {     /* de deze-ontmoeting-gekozen variant */
     const el = document.querySelector(`.event-art[data-eart="${ev.id}"]`);
-    if (img && el) el.innerHTML = `<img src="${img.src}" alt="">`;
+    if (!img || !el) return;
+    el.innerHTML = `<img src="${img.src}" alt="">`;
+    /* oriëntatie-bewust kader: portret-art (bv. de koopman, 2:3) krijgt een STAAND paneel zodat
+       kop + figuur heel blijven i.p.v. tot een middenstrook gecropt te worden in de landschap-band */
+    const portret = img.naturalHeight > img.naturalWidth * 1.15;
+    el.classList.toggle('is-portret', portret);
+    el.classList.toggle('is-landschap', !portret);
   });
 }
 
