@@ -1576,7 +1576,7 @@ function revealDropsWit(g, poort) {
   setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasFaseMoment('HERINDEXEREN…', 'TROUW: NOG STEEDS GEEN PRECEDENT.'); }, 4500);
   /* injecteer Drops de Witte midden in het gevecht (zelfde patroon als revealDrops) */
   geefMetgezel('drops_wit');
-  const def = METGEZELLEN.drops_wit;
+  const def = METGEZELLEN.drops_wit; if (!def) return;   /* defensief (zoals geefMetgezel): crash niet als de data ontbreekt */
   { const wmx = metgezelMaxHp('drops_wit'); g.metgezel = { id: 'drops_wit', naam: def.naam, isMetgezel: true, hp: wmx, maxHp: wmx, blok: 0, status: {}, dood: false }; }
   g.metgezel.intent = def.intent ? def.intent(g.metgezel) : null;
   bouwGevechtDom(g);
@@ -2277,7 +2277,7 @@ function toonSlijmkoningIntro(g, b, el) {
   const faseEls = Array.from(el.querySelectorAll('.morf-fase'));
   const tekstEl = el.querySelector('.morf-tekst');
   const drip = el.querySelector('.morf-drip');
-  stadia.forEach((s, i) => { if (window.laadKarakterAfbeelding) laadKarakterAfbeelding(s.id, img => { if (img) faseEls[i].style.backgroundImage = `url("${img.src}")`; }); });
+  stadia.forEach((s, i) => { if (window.laadKarakterAfbeelding) laadKarakterAfbeelding(s.id, img => { if (img && faseEls[i] && faseEls[i].isConnected) faseEls[i].style.backgroundImage = `url("${img.src}")`; }); });   /* isConnected: art die traag laadt terwijl je de intro al wegtikte, schrijft niet naar een losgekoppelde node */
   let timers = [];
   const STAP = 3900;   /* ms per stadium — ~3,3s leestijd na de tekst-fade (tunebaar); tik = overslaan */
   const toonFase = (i) => {
@@ -3856,7 +3856,7 @@ function copycatNaSchade(v, n, bron) {
   if (g._vloekGreep) return;   /* vloek-backfire: bezeert hem, maar voedt hem NIET (geen win-back in de Roof-rework) */
   if (bron === sp()) {
     g.raakteCopycat = true;
-    if (!g.roofGedaan) g.roofPending = true;   /* je EERSTE aanval op de Erfprins ontketent de Roof (afgehandeld in speelKaart) */
+    if (!g.roofGedaan && !v.dood) g.roofPending = true;   /* je EERSTE aanval op de Erfprins ontketent de Roof (afgehandeld in speelKaart) — niet als die klap 'm meteen velt */
     if (n > (v.maxKlap || 0)) { v.gevoed = (v.gevoed || 0) + Math.floor((n - (v.maxKlap || 0)) / 4); v.maxKlap = n; }
   } else if (!bron) {
     v.gevoed = (v.gevoed || 0) + Math.round(n / 2);   /* gif/doornen: voedt half */
