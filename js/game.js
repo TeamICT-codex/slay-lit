@@ -6147,6 +6147,248 @@ document.addEventListener('contextmenu', e => {
   });
 })();
 
+/* ============================================================
+   TOETSENBORD-BESTURING (laptop) — de muis blijft 100% werken.
+   Eén globale keydown-listener die op het ACTIEVE scherm schakelt en de
+   BESTAANDE klik-functies hergebruikt (klikKaart/klikVijand/eindBeurt/
+   gebruikDrank + .click() op de menuknoppen), zodat muis en toets exact
+   dezelfde state-machine delen — geen gedupliceerde logica. Een focus-cursor
+   (.toets-focus) verschijnt zodra je een toets indrukt en verdwijnt weer bij
+   de eerste muisbeweging. Op het mobiele spoor volledig uit.
+
+   Overzicht van de toetsen:
+   · GEVECHT   ← →  blader door je hand · Enter/Spatie = speel (of kies doel) ·
+                bij doelkeuze ← → over de vijanden + Enter · Esc = doelkeuze af ·
+                E = einde beurt · 1-9 = drankje.
+   · MENU'S    ← → ↑ ↓ = door de knoppen/kaarten · Enter = kiezen · 1-9 = sprong ·
+                Esc = 'Verder/Verlaat' (of Terug op de heldkeuze).
+   · HELDKEUZE ← → held · ↑ ↓ = ascensie · Enter = spelen · Esc = terug.
+   · OVERLAYS  Esc sluit · in het Bestiarium bladeren ← → door de pagina's.
+   Vóór release samen met de andere laptop-hulpjes evalueren. */
+(function () {
+  let toetsIdx = 0;        /* focus-index binnen de huidige lijst */
+  let cursorAan = false;   /* de ring verschijnt pas ná een toetsdruk */
+  let laatstScherm = '';   /* scherm-wissel → focus resetten */
+
+  function wisFocus() {
+    document.querySelectorAll('.toets-focus').forEach(el => el.classList.remove('toets-focus'));
+  }
+  function zetFocus(el) {
+    wisFocus();
+    if (!el) return;
+    el.classList.add('toets-focus');
+    if (el.scrollIntoView) { try { el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {} }
+  }
+  /* muisbeweging → de toets-cursor verbergen (de selectie-state in het gevecht
+     blijft staan; enkel de visuele ring verdwijnt) */
+  window.addEventListener('pointermove', () => { if (cursorAan) { cursorAan = false; wisFocus(); } });
+
+  const zichtbaar = el => el && el.offsetParent !== null && !el.disabled;
+
+  /* hoogste open .overlay; overlay-kies regelt z'n eigen toetsen (met rust laten) */
+  function bovensteOverlay() {
+    const open = [...document.querySelectorAll('.overlay.open')].filter(o => o.id !== 'overlay-kies');
+    return open.length ? open[open.length - 1] : null;
+  }
+
+  /* klikbare knoppen/kaarten per menu-/encounterscherm, in DOM-volgorde */
+  function schermLijst(scherm) {
+    let sel = null;
+    if (scherm === 'event') {
+      sel = '#scherm-event .event-knop:not([disabled])';
+      if (!document.querySelector(sel)) sel = '#scherm-event .knop-groot';   /* onthul-fase: enkel 'Verder' */
+    } else if (scherm === 'rust') sel = '#scherm-rust .rust-knop:not([disabled])';
+    else if (scherm === 'schat') sel = '#scherm-schat .knop-groot';           /* dekt open-knop én 'Verder' */
+    else if (scherm === 'winkel') sel = '#scherm-winkel .winkel-item, #scherm-winkel .winkel-blok, #scherm-winkel .knop-groot';
+    else if (scherm === 'beloning') sel = '#scherm-beloning .beloning-item, #scherm-beloning .knop-groot';
+    else if (scherm === 'kaart') sel = '#kaart-vlak .knoop.kan';
+    else if (scherm === 'held') sel = '.held-kaart[data-held]';
+    else if (scherm === 'titel') sel = '.titel-knoppen > button';
+    else if (scherm === 'einde') sel = '#scherm-einde .knop-groot, #scherm-einde .knop-stil';
+    if (!sel) return [];
+    let lijst = [...document.querySelectorAll(sel)].filter(zichtbaar);
+    if (scherm === 'kaart') lijst.sort((a, b) => (parseFloat(a.style.left) || 0) - (parseFloat(b.style.left) || 0));
+    return lijst;
+  }
+
+  /* de 'Verder/Verlaat'-knop van een encounterscherm (Esc-doel) */
+  function exitKnop(scherm) {
+    if (scherm === 'event' || scherm === 'schat' || scherm === 'winkel' || scherm === 'beloning')
+      return document.querySelector('#scherm-' + scherm + ' .knop-groot');
+    return null;
+  }
+
+  /* activeer het gefocuste menu-item via zijn eigen onclick (held → 'Speel als') */
+  function klikMenu(el, scherm) {
+    if (!el) return;
+    if (scherm === 'held') {
+      const knop = el.querySelector('.held-kies');
+      if (knop) knop.click();
+      else if (el.dataset.held && typeof kiesHeld === 'function') kiesHeld(el.dataset.held);
+      return;
+    }
+    el.click();
+  }
+
+  /* ---- GEVECHT ---- */
+  function gevechtToets(e, g) {
+    const k = e.key;
+    if (k === 'e' || k === 'E') { e.preventDefault(); cursorAan = false; wisFocus(); eindBeurt(); return; }
+    if (/^[1-9]$/.test(k)) {
+      const di = parseInt(k, 10) - 1;
+      if (S.dranken && S.dranken[di]) { e.preventDefault(); gebruikDrank(di); }
+      return;
+    }
+    const doelModus = g.gekozenKaart !== null || g.gekozenDrank !== null;
+    const vor = k === 'ArrowLeft' || k === 'ArrowUp';
+    const vol = k === 'ArrowRight' || k === 'ArrowDown';
+
+    if (doelModus) {
+      const vij = [...document.querySelectorAll('#vijanden-rij .vijand')].filter(el => !el.classList.contains('sterft'));
+      if (k === 'Escape') {
+        e.preventDefault();
+        g.gekozenKaart = null; g.gekozenDrank = null; g.voorbeeldKaart = null;
+        renderGevecht();
+        const hand = [...document.querySelectorAll('#hand .kaart')].filter(el => !el.classList.contains('weg-kaart'));
+        cursorAan = true; toetsIdx = Math.min(toetsIdx, Math.max(0, hand.length - 1)); zetFocus(hand[toetsIdx]);
+        return;
+      }
+      if (vor || vol) {
+        e.preventDefault();
+        if (!vij.length) return;
+        if (!cursorAan) { cursorAan = true; toetsIdx = 0; }
+        else toetsIdx = (toetsIdx + (vol ? 1 : -1) + vij.length) % vij.length;
+        zetFocus(vij[toetsIdx]);
+        return;
+      }
+      if (k === 'Enter' || k === ' ') {
+        e.preventDefault();
+        if (!vij.length) return;
+        const el = vij[Math.min(toetsIdx, vij.length - 1)];
+        if (el) klikVijand(parseInt(el.dataset.i, 10));
+        const hand = [...document.querySelectorAll('#hand .kaart')].filter(x => !x.classList.contains('weg-kaart'));
+        cursorAan = true; toetsIdx = 0; zetFocus(hand[0]);
+        return;
+      }
+      return;
+    }
+
+    /* hand-modus */
+    const hand = [...document.querySelectorAll('#hand .kaart')].filter(el => !el.classList.contains('weg-kaart'));
+    if (vor || vol) {
+      e.preventDefault();
+      if (!hand.length) return;
+      if (!cursorAan) { cursorAan = true; if (toetsIdx >= hand.length) toetsIdx = 0; }
+      else toetsIdx = (toetsIdx + (vol ? 1 : -1) + hand.length) % hand.length;
+      zetFocus(hand[toetsIdx]);
+      return;
+    }
+    if (k === 'Enter' || k === ' ') {
+      e.preventDefault();
+      if (!hand.length) return;
+      if (!cursorAan) { cursorAan = true; toetsIdx = 0; zetFocus(hand[0]); return; }  /* 1e druk = cursor tonen */
+      const el = hand[Math.min(toetsIdx, hand.length - 1)];
+      if (!el) return;
+      klikKaart(parseInt(el.dataset.uid, 10));
+      if (S.gevecht && (S.gevecht.gekozenKaart !== null || S.gevecht.gekozenDrank !== null)) {
+        /* doel-kaart → spring naar de eerste vijand */
+        const vij = [...document.querySelectorAll('#vijanden-rij .vijand')].filter(x => !x.classList.contains('sterft'));
+        toetsIdx = 0; zetFocus(vij[0]);
+      } else {
+        const nieuw = [...document.querySelectorAll('#hand .kaart')].filter(x => !x.classList.contains('weg-kaart'));
+        toetsIdx = Math.min(toetsIdx, Math.max(0, nieuw.length - 1)); zetFocus(nieuw[toetsIdx]);
+      }
+      return;
+    }
+    if (k === 'Escape') { e.preventDefault(); cursorAan = false; wisFocus(); }
+  }
+
+  /* ---- MENU-/ENCOUNTERSCHERMEN ---- */
+  function menuToets(e, scherm) {
+    const k = e.key;
+    if (scherm === 'held') {
+      if (k === 'ArrowUp') { e.preventDefault(); if (typeof wijzigAscensie === 'function') wijzigAscensie(1); return; }
+      if (k === 'ArrowDown') { e.preventDefault(); if (typeof wijzigAscensie === 'function') wijzigAscensie(-1); return; }
+      if (k === 'Escape') { e.preventDefault(); if (typeof naarTitel === 'function') naarTitel(); return; }
+    }
+    const lijst = schermLijst(scherm);
+    if (!lijst.length) {
+      if (k === 'Escape') { const x = exitKnop(scherm); if (x) { e.preventDefault(); x.click(); } }
+      return;
+    }
+    const vor = k === 'ArrowLeft' || k === 'ArrowUp';
+    const vol = k === 'ArrowRight' || k === 'ArrowDown';
+    if (vor || vol) {
+      e.preventDefault();
+      if (!cursorAan) { cursorAan = true; toetsIdx = Math.min(toetsIdx, lijst.length - 1); }
+      else toetsIdx = (toetsIdx + (vol ? 1 : -1) + lijst.length) % lijst.length;
+      zetFocus(lijst[toetsIdx]);
+      return;
+    }
+    if (/^[1-9]$/.test(k)) {
+      const idx = parseInt(k, 10) - 1;
+      if (lijst[idx]) { e.preventDefault(); cursorAan = true; toetsIdx = idx; zetFocus(lijst[idx]); klikMenu(lijst[idx], scherm); }
+      return;
+    }
+    if (k === 'Enter' || k === ' ') {
+      e.preventDefault();
+      if (!cursorAan) { cursorAan = true; toetsIdx = Math.min(toetsIdx, lijst.length - 1); zetFocus(lijst[toetsIdx]); return; }
+      klikMenu(lijst[Math.min(toetsIdx, lijst.length - 1)], scherm);
+      return;
+    }
+    if (k === 'Escape') { const x = exitKnop(scherm); if (x) { e.preventDefault(); x.click(); } }
+  }
+
+  /* ---- OVERLAYS (Codex/Bestiarium/Relikwie/Help + bevestig-dialogen) ---- */
+  function overlayToets(e, ov) {
+    const k = e.key;
+    /* een bevestig-/nudge-dialoog: Enter = doorgaan, Esc = annuleren */
+    if (ov.classList.contains('bevestig-overlay')) {
+      const primair = ov.querySelector('.bevestig-ja')
+        || [...ov.querySelectorAll('.nudge-ja')].find(b => !b.classList.contains('nudge-tweede'))
+        || ov.querySelector('.knop-groot');
+      const annuleer = ov.querySelector('.knop-stil') || ov.querySelector('.nudge-tweede');
+      if (k === 'Enter' || k === ' ') { if (primair) { e.preventDefault(); primair.click(); } return; }
+      if (k === 'Escape') { e.preventDefault(); if (annuleer) annuleer.click(); else ov.classList.remove('open'); return; }
+      return;
+    }
+    if (k === 'Escape') {
+      e.preventDefault();
+      if (ov.id === 'overlay-help' && typeof sluitHelp === 'function') sluitHelp();
+      else ov.classList.remove('open');
+      return;
+    }
+    if (ov.id === 'overlay-bestiarium' && (k === 'ArrowLeft' || k === 'ArrowRight')) {
+      const teken = k === 'ArrowLeft' ? '◀' : '▶';
+      const knop = [...ov.querySelectorAll('button')].find(b => b.textContent.indexOf(teken) !== -1 && !b.disabled);
+      if (knop) { e.preventDefault(); knop.click(); }
+    }
+  }
+
+  window.addEventListener('keydown', function (e) {
+    if (window.mobiel) return;                    /* toetsbesturing is voor de laptop */
+    if (e.ctrlKey || e.metaKey || e.altKey) return;   /* laat sneltoetsen (o.a. Ctrl+Shift+M) met rust */
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+
+    if (document.querySelector('#overlay-kies.open')) return;   /* kaartkeuze regelt zichzelf */
+    const ov = bovensteOverlay();
+    if (ov) { overlayToets(e, ov); return; }
+
+    const scherm = document.body.dataset.scherm || '';
+    if (scherm !== laatstScherm) { laatstScherm = scherm; toetsIdx = 0; cursorAan = false; wisFocus(); }
+
+    if (scherm === 'gevecht') {
+      const g = (typeof S !== 'undefined' && S) ? S.gevecht : null;
+      if (g && !g.voorbij) gevechtToets(e, g);
+      return;
+    }
+    if (['event', 'rust', 'schat', 'winkel', 'beloning', 'kaart', 'held', 'titel', 'einde'].indexOf(scherm) !== -1) {
+      menuToets(e, scherm);
+    }
+  });
+})();
+
 /* ---------- opstart ---------- */
 window.addEventListener('DOMContentLoaded', () => {
   pasInstToe();

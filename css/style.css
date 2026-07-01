@@ -1509,6 +1509,30 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   z-index: 99 !important;
   box-shadow: 0 0 0 3px var(--ember), 0 18px 38px rgba(0, 0, 0, .8);
 }
+
+/* ============================================================
+   TOETSENBORD-CURSOR (laptop) — enkel zichtbaar tijdens toetsgebruik.
+   JS (game.js) zet/verwijdert de .toets-focus-klasse; verdwijnt bij de
+   eerste muisbeweging. Gouden ring zodat ze losstaat van de muis-hover.
+   ============================================================ */
+.toets-focus { outline: 3px solid var(--goud); outline-offset: 4px; border-radius: 12px; }
+#hand .kaart.toets-focus {
+  outline: none;
+  transform: translateY(-46px) scale(1.18);
+  z-index: 98 !important;
+  box-shadow: 0 0 0 3px var(--goud), 0 18px 38px rgba(0, 0, 0, .8), 0 0 24px rgba(245, 197, 66, .6);
+}
+#vijanden-rij .vijand.toets-focus { outline: none; }
+#vijanden-rij .vijand.toets-focus .vijand-art {
+  filter: drop-shadow(0 0 12px var(--goud)) drop-shadow(0 0 3px #fff);
+}
+#kaart-vlak .knoop.toets-focus { outline: 3px solid var(--goud); outline-offset: 5px; z-index: 30; }
+.held-kaart.toets-focus { outline: 3px solid var(--goud); outline-offset: 5px; border-radius: 16px; }
+.winkel-item.toets-focus, .winkel-blok.toets-focus, .beloning-item.toets-focus,
+.event-knop.toets-focus, .rust-knop.toets-focus, .titel-knoppen > button.toets-focus,
+.knop-groot.toets-focus, .knop-stil.toets-focus {
+  outline: 3px solid var(--goud); outline-offset: 3px;
+}
 /* nieuwe kaart: 3D-flip het scherm in */
 .kaart.nieuw { animation: kaartflip .45s cubic-bezier(.3,1.3,.5,1); }
 @keyframes kaartflip {
