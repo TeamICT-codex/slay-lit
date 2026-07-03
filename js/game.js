@@ -6130,6 +6130,18 @@ document.addEventListener('contextmenu', e => {
   let toetsIdx = 0;        /* focus-index binnen de huidige lijst */
   let cursorAan = false;   /* de ring verschijnt pas ná een toetsdruk */
   let laatstScherm = '';   /* scherm-wissel → focus resetten */
+  let toetsCtx = '';       /* in welke lijst de cursor leeft ('hand'/'vijand'/'menu-…') —
+                              zonder dit lekte een stale hand-index de doelkeuze in en
+                              voelden de pijltjes omgekeerd (wrap vanaf een willekeurige plek) */
+
+  /* context-wissel: nooit een index of ring uit een ándere lijst meenemen */
+  function wisselCtx(ctx) {
+    if (toetsCtx === ctx) return;
+    toetsCtx = ctx;
+    toetsIdx = 0;
+    cursorAan = false;
+    wisFocus();
+  }
 
   function wisFocus() {
     document.querySelectorAll('.toets-focus').forEach(el => el.classList.remove('toets-focus'));
@@ -6205,20 +6217,26 @@ document.addEventListener('contextmenu', e => {
     const vol = k === 'ArrowRight' || k === 'ArrowDown';
 
     if (doelModus) {
+      /* de doelkeuze is een ANDERE lijst dan de hand: eigen cursor, altijd vanaf
+         het eerste doelwit — nooit een meegelekte hand-index */
+      wisselCtx('vijand');
       const vij = [...document.querySelectorAll('#vijanden-rij .vijand')].filter(el => !el.classList.contains('sterft'));
       if (k === 'Escape') {
         e.preventDefault();
         g.gekozenKaart = null; g.gekozenDrank = null; g.voorbeeldKaart = null;
         renderGevecht();
+        wisselCtx('hand');
         const hand = [...document.querySelectorAll('#hand .kaart')].filter(el => !el.classList.contains('weg-kaart'));
-        cursorAan = true; toetsIdx = Math.min(toetsIdx, Math.max(0, hand.length - 1)); zetFocus(hand[toetsIdx]);
+        cursorAan = true; zetFocus(hand[0]);
         return;
       }
       if (vor || vol) {
         e.preventDefault();
         if (!vij.length) return;
-        if (!cursorAan) { cursorAan = true; toetsIdx = 0; }
-        else toetsIdx = (toetsIdx + (vol ? 1 : -1) + vij.length) % vij.length;
+        if (!cursorAan) { cursorAan = true; toetsIdx = 0; melding('🎯 Kies je doelwit: ◀ ▶ en Enter · Esc = terug'); }
+        /* KLEMMEN, niet wrappen: → gaat altijd naar rechts, ← altijd naar links —
+           met 2 vijanden wisselde de wrap-around bij élke pijl van kant (averechts-gevoel) */
+        else toetsIdx = Math.max(0, Math.min(toetsIdx + (vol ? 1 : -1), vij.length - 1));
         zetFocus(vij[toetsIdx]);
         return;
       }
@@ -6226,27 +6244,32 @@ document.addEventListener('contextmenu', e => {
         e.preventDefault();
         if (!vij.length) return;
         /* geen zichtbare cursor (doelkeuze via de muis gestart, of een re-render
-           veegde de ring weg)? Dan eerst richten — nooit blind op een stale index vuren. */
+           veegde de ring weg)? Dan eerst richten — nooit blind vuren. */
         if (!cursorAan || !document.querySelector('.toets-focus')) {
-          cursorAan = true; toetsIdx = Math.min(toetsIdx, vij.length - 1); zetFocus(vij[toetsIdx]);
+          cursorAan = true; toetsIdx = 0; zetFocus(vij[0]);
+          melding('🎯 Kies je doelwit: ◀ ▶ en Enter · Esc = terug');
           return;
         }
         const el = vij[Math.min(toetsIdx, vij.length - 1)];
         if (el) klikVijand(parseInt(el.dataset.i, 10));
+        wisselCtx('hand');
         const hand = [...document.querySelectorAll('#hand .kaart')].filter(x => !x.classList.contains('weg-kaart'));
-        cursorAan = true; toetsIdx = 0; zetFocus(hand[0]);
+        cursorAan = true; zetFocus(hand[0]);
         return;
       }
       return;
     }
 
     /* hand-modus */
+    wisselCtx('hand');
     const hand = [...document.querySelectorAll('#hand .kaart')].filter(el => !el.classList.contains('weg-kaart'));
     if (vor || vol) {
       e.preventDefault();
       if (!hand.length) return;
       if (!cursorAan) { cursorAan = true; if (toetsIdx >= hand.length) toetsIdx = 0; }
-      else toetsIdx = (toetsIdx + (vol ? 1 : -1) + hand.length) % hand.length;
+      /* ook hier klemmen: de hand is een ruimtelijke waaier — een pijl die aan de
+         rand 'doorschiet' naar de overkant leest als omgekeerd */
+      else toetsIdx = Math.max(0, Math.min(toetsIdx + (vol ? 1 : -1), hand.length - 1));
       zetFocus(hand[toetsIdx]);
       return;
     }
@@ -6259,9 +6282,11 @@ document.addEventListener('contextmenu', e => {
       if (!el) return;
       klikKaart(parseInt(el.dataset.uid, 10));
       if (S.gevecht && (S.gevecht.gekozenKaart !== null || S.gevecht.gekozenDrank !== null)) {
-        /* doel-kaart → spring naar de eerste vijand */
+        /* doel-kaart → spring naar het EERSTE doelwit + zeg wat er verwacht wordt */
+        wisselCtx('vijand');
         const vij = [...document.querySelectorAll('#vijanden-rij .vijand')].filter(x => !x.classList.contains('sterft'));
-        toetsIdx = 0; zetFocus(vij[0]);
+        cursorAan = true; zetFocus(vij[0]);
+        melding('🎯 Kies je doelwit: ◀ ▶ en Enter · Esc = terug');
       } else {
         const nieuw = [...document.querySelectorAll('#hand .kaart')].filter(x => !x.classList.contains('weg-kaart'));
         toetsIdx = Math.min(toetsIdx, Math.max(0, nieuw.length - 1)); zetFocus(nieuw[toetsIdx]);
@@ -6273,6 +6298,7 @@ document.addEventListener('contextmenu', e => {
 
   /* ---- MENU-/ENCOUNTERSCHERMEN ---- */
   function menuToets(e, scherm) {
+    wisselCtx('menu-' + scherm);   /* eigen cursor per scherm — geen lek uit gevecht/ander menu */
     const k = e.key;
     if (scherm === 'held') {
       if (k === 'ArrowUp') { e.preventDefault(); if (typeof wijzigAscensie === 'function') wijzigAscensie(1); return; }

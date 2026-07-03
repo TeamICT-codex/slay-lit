@@ -1520,9 +1520,22 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   z-index: 98 !important;
   box-shadow: 0 0 0 3px var(--goud), 0 18px 38px rgba(0, 0, 0, .8), 0 0 24px rgba(245, 197, 66, .6);
 }
-#vijanden-rij .vijand.toets-focus { outline: none; }
+/* het gefocuste DOELWIT moet onmiskenbaar zijn: een solide, pulserende gouden kader
+   (vervangt op dit ene doelwit de gedeelde rode doelbaar-streepjes — zelfde property,
+   hogere specificiteit) + gouden gloed op de figuur. "Deze raak je met Enter." */
+#vijanden-rij .vijand.toets-focus {
+  outline: 3px solid var(--goud);
+  outline-offset: 6px;
+  border-radius: 14px;
+  background: rgba(245, 197, 66, .10);
+  animation: toetsDoelPuls .9s ease-in-out infinite;
+}
+@keyframes toetsDoelPuls {
+  0%, 100% { outline-color: var(--goud); }
+  50% { outline-color: #fff3c4; }
+}
 #vijanden-rij .vijand.toets-focus .vijand-art {
-  filter: drop-shadow(0 0 12px var(--goud)) drop-shadow(0 0 3px #fff);
+  filter: drop-shadow(0 0 14px var(--goud)) drop-shadow(0 0 3px #fff);
 }
 #kaart-vlak .knoop.toets-focus { outline: 3px solid var(--goud); outline-offset: 5px; z-index: 30; }
 .held-kaart.toets-focus { outline: 3px solid var(--goud); outline-offset: 5px; border-radius: 16px; }
