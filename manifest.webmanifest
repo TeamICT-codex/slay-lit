@@ -1,7 +1,7 @@
 {
   "name": "SLAY LIT — een kaartgevecht in de diepte",
   "short_name": "SLAY LIT",
-  "description": "Nederlandstalige deckbuilder-roguelike: daal af door 13 verdiepingen, bewaak je fakkel en versla De Slijmkoning.",
+  "description": "Nederlandstalige deckbuilder-roguelike: daal af door de diepte, bewaak je fakkel en versla wat er beneden op je wacht.",
   "start_url": ".",
   "display": "fullscreen",
   "display_override": ["fullscreen", "standalone", "minimal-ui"],
