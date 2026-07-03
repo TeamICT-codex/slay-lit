@@ -1148,12 +1148,12 @@ const VIJANDEN = {
 const METGEZELLEN = {
   drops: {
     naam: 'Drops', art: 'drops', icoon: '🐕', zeld: 'episch', maxHp: 26, rol: 'breker',
-    tekst: 'Begin van je beurt: bijt de baas voor 6 — elke klap helpt je gestolen kaarten terug te winnen. Vangt soms een klap op; vlucht als het te zwaar wordt. Zijn offer (De Laatste Sprong) breekt de kopieermachine.',
+    tekst: 'Begin van je beurt: bijt de baas voor 6. Vangt soms een klap op; vlucht als het te zwaar wordt. Zijn offer (De Laatste Sprong) breekt de kopieermachine en geeft je geroofde kaarten terug.',
     lore: 'Geen fakkel kon het wekken — het donker wel. Uit het diepste zwart kroop iets kleins, warms en koppigs, met trouwe ogen. Het had jouw licht nooit nodig. Het bleef.',
     doelbaar: true, dreiging: 0.22,
     beurt(m) {
-      /* bijt bij voorkeur de Copycat-baas — elke klap telt mee om je gestolen
-         kaarten terug te winnen (copycatTerugwin, via verliesHp). Voedt hem NIET. */
+      /* bijt bij voorkeur de Copycat-baas — pure druk op de overlevingsrace
+         (er is bewust GEEN win-back meer; zijn offer geeft je de roof terug). Voedt hem NIET. */
       const d = (typeof copycatBaas === 'function' && copycatBaas(S.gevecht)) || kiesUit(alleVijanden());
       if (d) metgezelAanval(m, d, synergieN('drops', 6));
       if (synergieOptimaal('drops')) geefBlok(sp(), 2);   /* optimaal-perk (Thoverk): trouwe wacht → +2 Blok */

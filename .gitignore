@@ -9,3 +9,8 @@ assets/*/originelen/
 
 # bron-PNG's van vóór de WebP-conversie (lokaal archief)
 assets-bron/
+
+# bewust geparkeerde werkmappen — NOOIT committen (afspraak):
+# de proloog-originelen en het design-system blijven lokaal
+assets/proloog/
+design-system/

@@ -247,18 +247,8 @@ function mys(mid) {
 }
 function mysterieRijp(mid) { return !!mys(mid).rijp; }
 function isOntgrendeld(mid) { return !!mys(mid).voltooid; }
-/* commit een gevonden scherf (idempotent); markeert 'rijp' zodra alle vereiste binnen zijn */
-function noteerScherf(mid, sid) {
-  const def = window.MYSTERIES && MYSTERIES[mid];
-  if (!def || !def.scherven || !def.scherven[sid]) return;   /* onbekend mysterie/scherf → veilig niets */
-  const m = mys(mid);
-  if (m.voltooid || m.scherven.includes(sid)) return;
-  m.scherven.push(sid);
-  if ((def.vereist || []).every(s => m.scherven.includes(s))) m.rijp = true;
-  bewaarCodex();
-  melding('🜂 Een scherf van een groter geheim brandt zich in je geheugen...');
-}
-function noteerRite(mid, vlag) { mys(mid).rite[vlag] = true; bewaarCodex(); }
+/* (noteerScherf + noteerRite — de oude per-mysterie-voortgang — zijn verwijderd:
+   Scherven 2.0 werkt met de platte stash + het Drempel-ritueel hieronder) */
 function ontgrendelMetgezel(mid) { mys(mid).voltooid = true; bewaarCodex(); }
 
 /* SEQUENTIEEL ontdekken: je verzamelt telkens naar ÉÉN metgezel toe. Het actieve mysterie
@@ -268,18 +258,6 @@ const MYSTERIE_VOLGORDE = ['drops', 'vlamwachter', 'mosgeest'];
 function actiefMysterie() {
   return MYSTERIE_VOLGORDE.find(mid => window.MYSTERIES && MYSTERIES[mid] && !isOntgrendeld(mid)) || null;
 }
-/* de scherf-id binnen het actieve mysterie die bij een gegeven bron hoort ('baas'|'figuur'|'episch'),
-   of null als die bron al binnen is of er geen actief mysterie meer is. Bouwblok voor de generieke bronnen. */
-function actiefMysScherf(bron) {
-  const mid = actiefMysterie();
-  if (!mid) return null;
-  const def = MYSTERIES[mid];
-  const sid = (def.vereist || []).find(s => def.scherven[s] && def.scherven[s].bron === bron);
-  if (!sid) return null;
-  if (mys(mid).scherven.includes(sid)) return null;   /* al verzameld → bron is hier 'op' */
-  return { mid, sid };
-}
-
 /* ====== SCHERVEN 2.0 — een platte, inzetbare stash (verbruikbaar; geplaatst bij de Drempel) ======
    De 9 scherven (3 per metgezel) staan al als 'recept' in MYSTERIES[mid].scherven. Hierover een
    platte bag-laag: Codex.scherven = multiset van scherf-ids die je bezit. Bij de Drempel (Act 1→2)
@@ -866,7 +844,10 @@ function pose2DArtEl(actor) {
 }
 const pose2DTimers = new WeakMap();
 function pose2D(actor, state, duur) {
-  if (!actor || d3Actief() || !window.laadKarakterAfbeelding) return;
+  /* de METGEZEL heeft géén Vista-sprite — zijn DOM-figuur (.metgezel-art) ís het beeld,
+     óók in 3D. Zonder deze uitzondering waren al zijn poses (incl. de Laatste Sprong-
+     offer-cinematic) onzichtbaar zodra het 3D-toneel draaide. */
+  if (!actor || (d3Actief() && !actor.isMetgezel) || !window.laadKarakterAfbeelding) return;
   const el = pose2DArtEl(actor); if (!el) return;
   const basis = actor.isSpeler ? huidigeHeld().art
     : (actor.isMetgezel ? METGEZELLEN[actor.id].art : actor.id);
@@ -1438,69 +1419,9 @@ function metgezelOpoffering() {
   );
 }
 
-/* ---------- DARK TWIST: Drops ontwaakt uit het gedoofde licht ----------
-   Mysterie rijp + je laat je fakkel DOVEN in de Erfprins-zaal (de rite) →
-   Drops ontwaakt midden in het gevecht. Eenmalig per run. Aangeroepen waar het
-   licht verandert (zetFakkel) en aan het begin van je beurt. */
-function checkDropsOntwaak() {
-  if (!inGevecht() || S.dropsOntwaakt || heeftMetgezel() || isOntgrendeld('drops')) return;
-  if (!mysterieRijp('drops')) return;
-  const g = S.gevecht;
-  const ep = g.vijanden.find(v => v.id === 'de_erfprins' && !v.dood);
-  if (!ep) return;
-  const niveau = lichtNiveau();
-  /* gedoofd = de zuivere rite; met Eeuwige Lont (klemt op 10) telt 'duister' ook,
-     zodat die build de unlock niet permanent blokkeert */
-  const riteOk = niveau === 'gedoofd' || (niveau === 'duister' && heeftRelikwie('eeuwige_lont'));
-  if (!riteOk) return;
-  S.dropsOntwaakt = true;
-  noteerRite('drops', 'fakkel_gedoofd_bij_erfprins');
-  revealDrops(g);
-}
-function revealDrops(g) {
-  const rev = (window.MYSTERIES && MYSTERIES.drops.eindreveal) || { titel: 'UIT HET GEDOOFDE LICHT', kreet: 'Iets warms kruipt uit het zwart.' };
-  baasFaseMoment(rev.titel, 'Iets in het donker haalt adem. En kiest jou.');
-  baasSpreekt(UITSPRAKEN._erfprins.gedoofd);
-  Klank.sfx('schitter');
-  geefMetgezel('drops');            /* run-state + Codex.ontdek */
-  ontgrendelMetgezel('drops');      /* voortaan komt hij gewoon mee — de grind is eenmalig */
-  /* injecteer hem MIDDEN in het lopende gevecht (zelfde vorm als startGevecht) */
-  const def = METGEZELLEN.drops;
-  const dmx = metgezelMaxHp('drops');
-  g.metgezel = {
-    id: 'drops', naam: def.naam, isMetgezel: true,
-    hp: dmx, maxHp: dmx, blok: 0, status: {}, dood: false,
-  };
-  g.metgezel.intent = def.intent ? def.intent(g.metgezel) : null;
-  bouwGevechtDom(g);                /* herbouw de gevecht-DOM incl. de metgezel-zone */
-  renderGevecht();
-  melding(`🐾 ${rev.kreet} Drops kruipt uit de duisternis — en hij wijkt niet meer van je zij.`);
-}
-
-/* WIN-RITES voor de látere mysteries (Vlamwachter, Mosgeest): hun metgezel ontwaakt niet
-   midden in het gevecht zoals Drops, maar bij het VERSLAAN van de Erfprins onder de juiste
-   voorwaarde. Mysterie moet rijp zijn (alle 3 scherven). Eenmalig — daarna komt de metgezel
-   in volgende runs gewoon mee. Geeft true terug als er net iets ontgrendelde (voor de pauze). */
-function checkBaasRite(g) {
-  const mid = actiefMysterie();
-  if (!mid || mid === 'drops') return false;          /* Drops heeft z'n eigen doof-rite */
-  if (!mysterieRijp(mid) || isOntgrendeld(mid)) return false;
-  if (!g.vijanden.some(v => v.id === 'de_erfprins')) return false;   /* enkel de Erfprins telt */
-  const def = MYSTERIES[mid];
-  let voldaan = false;
-  if (def.rite === 'fakkel_helder') voldaan = (lichtNiveau() === 'helder');   /* tunebaar: fakkel hoog houden */
-  if (def.rite === 'baas_hoge_hp')  voldaan = (S.hp / S.maxHp >= 0.70);        /* tunebaar: gedijen, niet bloeden */
-  if (!voldaan) return false;
-  noteerRite(mid, def.rite);
-  ontgrendelMetgezel(mid);
-  if (typeof ontdek === 'function') ontdek('metgezellen', def.metgezel);   /* Codex-ontdekking (komt vanaf nu in runs mee) */
-  const rev = def.eindreveal || { titel: 'EEN NIEUWE BONDGENOOT', kreet: 'Iets koos jou.' };
-  const naam = (window.METGEZELLEN && METGEZELLEN[def.metgezel] && METGEZELLEN[def.metgezel].naam) || '';
-  baasFaseMoment(rev.titel, rev.kreet);
-  Klank.sfx('schitter');
-  melding(`🜂 ${naam} sluit zich voortaan bij je aan — in elke volgende afdaling.`);
-  return true;
-}
+/* (checkDropsOntwaak + revealDrops + checkBaasRite — de oude doof-/win-rites — zijn
+   verwijderd: alle metgezel-unlocks lopen nu via het Drempel-ritueel. De grief-arc
+   van Drops de Witte (revealDropsWit) staat hieronder en blijft.) */
 
 /* ---------- DROPS-GRIEF: de stille rouw-atmosfeer (zie DROPS-DE-WITTE.md §1) ----------
    Géén teller — puur de bestaande gevallen-gate + de voltooid-vlag van drops_wit. Het spel
@@ -1684,6 +1605,11 @@ function laadSpel() {
        RELIKWIEEN[r]/DRANKEN[d] zonder fallback, een stale id zou de run bricken. */
     S.relikwieen = S.relikwieen.filter(r => RELIKWIEEN[r]);
     S.dranken = S.dranken.filter(d => DRANKEN[d]);
+    /* idem het DEK: kdef(c).naam derefereert KAARTEN[c.id] zonder vangnet — één
+       hernoemd/verwijderd kaart-id in een oude save brickt anders elke hand-render.
+       Volledig leeggefilterd dek = onspeelbaar → structureel falen (nette melding). */
+    S.dek = S.dek.filter(c => c && c.id && KAARTEN[c.id]);
+    if (!S.dek.length) { wisSave(); return false; }
     /* gedragen scherven: gooi onbekende/hernoemde ids weg (anders een loze ❓ in de
        Drempel), én verwijder wat al veilig in de stash zit — een stale save (tab dicht
        tussen baas-win en Drempel) zou anders al-gebankte scherven dubbel herstellen
@@ -2019,12 +1945,12 @@ function maakVijand(id, rij) {
   if (!def.elite && !def.baas && !def.episch) hp += Math.floor(rij * 0.8);   /* episch krijgt geen rij-bonus bovenop ×act */
   if (!def.baas && huidigeAct() > 1) hp = Math.ceil(hp * (1 + 0.30 * (huidigeAct() - 1)));   /* latere acts: taaier */
   if (asc() >= 2 && !def.baas) hp = Math.ceil(hp * 1.12);   /* ascension 2: taaiere vijanden */
-  const v = { id, naam: def.naam, art: def.art, hp, maxHp: hp, blok: 0, status: {}, dood: false, beurtTeller: 0, intent: null, aegis: def.aegis || 0 };
+  const v = { id, naam: def.naam, art: def.art, hp, maxHp: hp, blok: 0, status: {}, dood: false, beurtTeller: 0, intent: null };   /* (aegis-veld weg — geen enkele vijand-def heeft het nog; het oude schild is vervangen door de Copycat-machinerie) */
   if (def.copycat) {
     /* THE COPYCAT-state. Overal elders lui geguard ((v.gestolen||[]), v.gevoed||0, …)
        want Drops kan midden in het gevecht verschijnen — zie [[lookup-bugklasse]]. */
     v.gestolen = []; v.gevoed = 0; v.fase = 1; v.terugwinMeter = 0;
-    v.maxKlap = 0; v.copyKracht = 0; v.totaalGestolen = 0;
+    v.maxKlap = 0; v.copyKracht = 0;   /* (totaalGestolen weg — hoorde bij de verwijderde steel-loop) */
   }
   markeerGezien(id);   /* artbook: deze vijand staat nu vrij in het Bestiarium */
   return v;
@@ -2207,7 +2133,11 @@ function startGevecht(samenstelling, soort, rij) {
     document.querySelectorAll('#vijanden-rij .vijand').forEach((el, i) => {
       triggerEntree(el, 0.1 + i * 0.18);
     });
-    $('#speler-zone').classList.add('entree-links');
+    /* animatie HERSTARTEN via remove+reflow+add: de klasse bleef vroeger staan,
+       waardoor de held-entree enkel in het allereerste gevecht van de sessie speelde */
+    const sz = $('#speler-zone');
+    sz.classList.remove('entree-links'); void sz.offsetWidth;
+    sz.classList.add('entree-links');
   }
   if (gevechtTikAf) gevechtTikAf();
   gevechtTikAf = Tikker.abonneer(gevechtTik);
@@ -2661,31 +2591,50 @@ function statusBadges(actor) {
 }
 
 /* gerichte update: muteert alleen wat veranderd is */
+let _bbExtraSig = null;   /* dirty-guard voor de bazenbalk-extra (arsenaal-/copycat-strook) */
 function renderGevecht() {
   const g = S.gevecht;
   if (!g) return;
 
-  /* bazenbalk: grote levensbalk + fase-pips bovenin */
+  /* bazenbalk: grote levensbalk + fase-pips bovenin.
+     INCREMENTEEL: de structuur bouwt één keer (per baas), daarna alleen waarden
+     bijwerken — een innerHTML-rebuild per render liet de HP-drain-transition nooit
+     spelen en herstartte de woede-puls continu. */
   const bb = $('#baas-balk');
   if (bb) {
     const b = g.soort === 'baas' ? g.vijanden.find(v => VIJANDEN[v.id].baas) : null;
     $('#scherm-gevecht').classList.toggle('baas-actief', !!b);
     if (b) {
       bb.style.display = 'block';
-      bb.dataset.baas = b.id;   /* per-baas kleuring van het HP-hart/de balk (zie css) */
-      bb.innerHTML = `
-        <div class="bb-naam">👑 ${b.naam}</div>
-        ${VIJANDEN[b.id].titel ? `<div class="bb-titel">~ ${VIJANDEN[b.id].titel} ~</div>` : ''}
-        <div class="bb-balk ${(b.fase || 1) >= 3 ? 'bb-woede' : ''}" style="--hp:${Math.max(0, Math.round(b.hp / b.maxHp * 100))}">
-          <div class="bb-vul" style="width:${Math.max(0, b.hp / b.maxHp * 100)}%"></div>
-          <span class="bb-tekst">${b.hp}/${b.maxHp}</span>
-        </div>
-        <div class="bb-fases" data-tip="De baas vecht in drie bedrijven — verzwak hem en zie wat er gebeurt...">
-          ${[1, 2, 3].map(f => `<span class="bb-pip ${(b.fase || 1) >= f ? 'aan' : ''}"></span>`).join('')}
-        </div>
-        ${VIJANDEN[b.id] && VIJANDEN[b.id].copycat ? copycatBalk(b) : ((b.aegis || 0) > 0 ? `<div class="bb-aegis" data-tip="Onaantastbaar.">🟡 ${b.aegis}</div>` : '')}`;
+      if (bb.dataset.baas !== b.id) {   /* nieuwe baas → structuur (her)bouwen */
+        bb.dataset.baas = b.id;         /* per-baas kleuring van het HP-hart/de balk (zie css) */
+        _bbExtraSig = null;
+        bb.innerHTML = `
+          <div class="bb-naam">👑 ${b.naam}</div>
+          ${VIJANDEN[b.id].titel ? `<div class="bb-titel">~ ${VIJANDEN[b.id].titel} ~</div>` : ''}
+          <div class="bb-balk">
+            <div class="bb-vul"></div>
+            <span class="bb-tekst"></span>
+          </div>
+          <div class="bb-fases" data-tip="De baas vecht in drie bedrijven — verzwak hem en zie wat er gebeurt...">
+            ${[1, 2, 3].map(() => `<span class="bb-pip"></span>`).join('')}
+          </div>
+          <div class="bb-extra"></div>`;
+      }
+      const pct = Math.max(0, b.hp / b.maxHp * 100);
+      const balkEl = bb.querySelector('.bb-balk');
+      balkEl.classList.toggle('bb-woede', (b.fase || 1) >= 3);
+      balkEl.style.setProperty('--hp', Math.round(pct));
+      bb.querySelector('.bb-vul').style.width = pct + '%';
+      bb.querySelector('.bb-tekst').textContent = `${b.hp}/${b.maxHp}`;
+      bb.querySelectorAll('.bb-pip').forEach((p, i) => p.classList.toggle('aan', (b.fase || 1) >= i + 1));
+      /* de arsenaal-/copycat-strook alleen herbouwen als de inhoud écht wijzigde */
+      const extra = VIJANDEN[b.id].copycat ? copycatBalk(b) : '';
+      if (extra !== _bbExtraSig) { _bbExtraSig = extra; bb.querySelector('.bb-extra').innerHTML = extra; }
     } else {
       bb.style.display = 'none';
+      bb.dataset.baas = '';
+      _bbExtraSig = null;
     }
   }
 
@@ -3352,12 +3301,16 @@ function klikKaart(uid) {
 
   if (def.doel === 'vijand') {
     const levend = alleVijanden();
-    if (levend.length === 1) { speelKaart(c, levend[0]); return; }
+    /* direct spelen wist een eventuele EERDERE selectie: anders blijft die kaart
+       'gekozen' staan terwijl de energie intussen daalt, en speelt een latere
+       vijand-klik hem zonder dekking (negatieve energie). */
+    if (levend.length === 1) { g.gekozenKaart = null; g.gekozenDrank = null; speelKaart(c, levend[0]); return; }
     g.gekozenKaart = uid;
     g.gekozenDrank = null;
     renderGevecht();
     return;
   }
+  g.gekozenKaart = null; g.gekozenDrank = null;   /* idem: direct-speel-pad wist de stale selectie */
   speelKaart(c, null);
 }
 
@@ -3385,7 +3338,14 @@ function klikVijand(i) {
   if (g.gekozenKaart !== null) {
     const c = g.hand.find(k => k.uid === g.gekozenKaart);
     g.gekozenKaart = null;
-    if (c) speelKaart(c, v);
+    if (!c) return;
+    /* hercheck de dekking: sinds het selecteren kan een andere kaart de energie/fakkel
+       verlaagd hebben — zonder deze check trok speelKaart de kost blind af (negatieve
+       energie, of een licht-kaart die de fakkel door nul brandt). */
+    const cdef = kdef(c);
+    if (kkost(c) > g.energie) { melding('Niet genoeg energie!'); Klank.sfx('fout'); renderGevecht(); return; }
+    if (cdef.licht && S.fakkel < kval(c, 'licht')) { melding('Niet genoeg licht in je fakkel!'); Klank.sfx('fout'); renderGevecht(); return; }
+    speelKaart(c, v);
   }
 }
 
@@ -3451,8 +3411,10 @@ async function speelKaart(c, doel) {
   if (g.roofPending && !g.roofGedaan && !g.voorbij) {
     g.roofPending = false;
     g.bezig = true; renderGevecht();
-    await copycatDeRoof(g);
-    if (S.gevecht === g) g.bezig = false;
+    /* try/finally (zelfde patroon als het gewone async-kaartpad hierboven): één throw
+       in de cinematic mag g.bezig niet laten hangen — dat zou een harde softlock zijn. */
+    try { await copycatDeRoof(g); }
+    finally { if (S.gevecht === g) g.bezig = false; }
     if (S.gevecht === g && !g.voorbij) eindBeurt();
     return;
   }
@@ -3502,9 +3464,6 @@ function checkBaasFase() {
    Volledig ontwerp: ONTWERP.md "The Copycat — Act 2-eindbaasmechaniek". */
 
 const COPYCAT_CAP_DMG = { 1: 20, 2: 30, 3: 40 };   /* fase-afhankelijke cap op teruggekaatste schade. Roof-rework: half je dek is al weg → de burst moest terug omlaag (60 was verpletterend tegen een gehalveerd dek). 'Zeer moeilijk maar net winbaar solo'; tunebaar. */
-const COPYCAT_STEEL_CAP = 12;    /* max ooit gestolen per gevecht (anti-leegtrekken) */
-const COPYCAT_ARSENAAL_CAP = 5;  /* max gelijktijdig in het arsenaal */
-const COPYCAT_TERUGWIN = 20;     /* schade aan de baas per teruggewonnen kaart */
 const COPYCAT_F2 = 6, COPYCAT_F3 = 13;   /* voedings-drempels voor fase 2 / 3 (verlaagd: hij ramt nu sneller op) */
 
 function copycatBaas(g) {
@@ -3512,10 +3471,6 @@ function copycatBaas(g) {
 }
 function copycatFaseBodem(fase) { return fase >= 3 ? COPYCAT_F3 : (fase >= 2 ? COPYCAT_F2 : 0); }
 function snapSterkte(s) { return s.soort === 'aanval' ? (s.n || 0) * 2 : (s.n || 0); }
-function levendeBrekerCompanion() {
-  const m = gMet();
-  return (m && !m.dood && METGEZELLEN[m.id] && METGEZELLEN[m.id].rol === 'breker') ? m : null;
-}
 
 /* KANAAL 1 — observeren: elke stelbare kaart die je speelt landt in de buffer + voedt traag */
 function baasZietKaart(c) {
@@ -3566,54 +3521,9 @@ function copycatBronEl() { return $('#hand') || $('#onderbalk') || $('#speler-zo
    Hij loopt er zélf schade van op (zonder zich eraan te voeden) en de vloek is geconsumeerd.
    → "neem bewust vloeken mee" wordt een echte counter. Tunebaar via VLOEK_BACKFIRE. */
 const VLOEK_BACKFIRE = (v) => 12 + (v.fase || 1) * 5 + Math.max(0, huidigeAct() - 1) * 4;   /* ~17–31 */
-function copycatGristVloek(v, g) {
-  for (const p of ['afleg', 'trek']) {
-    const i = (g[p] || []).findIndex(k => kdef(k).type === 'vloek');
-    if (i < 0) continue;
-    const c = g[p][i]; g[p].splice(i, 1);
-    const def = kdef(c);
-    const schade = VLOEK_BACKFIRE(v);
-    v.totaalGestolen = (v.totaalGestolen || 0) + 1;   /* telt mee tegen de steel-cap (niet oneindig curse-farmen tégen hem) */
-    kaartVliegFx(c.id, copycatBronEl(), actorEl(v), { vloek: true });   /* cosmetisch — loopt los van de schade */
-    melding(`🎭 De Erfprins grist blind je ${def.naam} weg — en de vloek keert zich tégen hém!`);
-    Klank.sfx('debuff');
-    g._vloekGreep = true;                  /* deze schade voedt hem NIET + geen terugwin */
-    try { verliesHp(v, schade); } finally { g._vloekGreep = false; }   /* throw in verliesHp (fx/audio/death-tak) mag de vlag niet laten hangen → anders voedt/terugwint hij nooit meer */
-    if (!v.dood) { fxNummer(actorEl(v), `🌑 ${def.naam}! −${schade}`, 'fx-schade'); pose2D(v, 'hit', 0.5); }
-    renderGevecht();
-    return true;
-  }
-  return false;
-}
-
-/* KANAAL 2 — stelen: grist één instance van het sterkste recent gespeelde type
-   uit je trek/afleg (NOOIT S.dek). Faalt stil als er geen instance beschikbaar is. */
-function copycatSteel(v, g) {
-  if (g.copycatGebroken) return false;
-  if ((v.totaalGestolen || 0) >= COPYCAT_STEEL_CAP || (v.gestolen || []).length >= COPYCAT_ARSENAAL_CAP) return false;
-  /* GREEDY: ligt er een vloek in je stapels? Hij grijpt 'm blind en bezeert zichzelf. */
-  if (copycatGristVloek(v, g)) return true;
-  const pool = (g.laatstGespeeld || []).slice().sort((a, b) => snapSterkte(b) - snapSterkte(a));
-  for (const snap of pool) {
-    let bron = g.trek, idx = g.trek.findIndex(k => k.id === snap.id);
-    if (idx < 0) { bron = g.afleg; idx = g.afleg.findIndex(k => k.id === snap.id); }
-    if (idx < 0) continue;                       /* alle instances in je hand → probeer 't volgende type */
-    bron.splice(idx, 1);
-    if (!Array.isArray(v.gestolen)) v.gestolen = [];
-    v.gestolen.push({ id: snap.id, naam: snap.naam, soort: snap.soort, n: snap.n });
-    v.totaalGestolen = (v.totaalGestolen || 0) + 1;
-    v.gevoed = (v.gevoed || 0) + (snap.kost || 1);
-    const li = g.laatstGespeeld.indexOf(snap); if (li >= 0) g.laatstGespeeld.splice(li, 1);
-    pose2D(v, 'cast', 0.8);
-    kaartVliegFx(snap.id, copycatBronEl(), actorEl(v));        /* zichtbaar: de kaart vliegt naar hem toe */
-    fxNummer(actorEl(v), `🎭 steelt je ${snap.naam}!`, 'fx-debuff');
-    Klank.sfx('debuff');
-    melding(`🎭 De Erfprins grist je ${snap.naam} weg — hij speelt 'm straffer terug!`);
-    renderGevecht();
-    return true;
-  }
-  return false;
-}
+/* (copycatGristVloek + copycatSteel — de oude reactieve per-beurt-steel-loop — zijn
+   verwijderd: de Roof v2 grist in één cinematische graai (copycatDeRoof/_copycatGraai)
+   en de vloek-backfire leeft nu in copycatSpeelTerug, met dezelfde VLOEK_BACKFIRE.) */
 
 /* de eind-schade van een teruggespeelde aanval: +65%, +copyKracht, act-scaling, fase-cap */
 function copycatPlagiaatDmg(v, n) {
@@ -3654,16 +3564,6 @@ function _copycatGraai(v, g, aantal) {
   });
   v.totaalGeroofd = (v.totaalGeroofd || 0) + idxs.length;
   return idxs.length;
-}
-/* DE ROOF (opening): grist een HELFT van je dek vóór je eerste beurt. */
-function copycatOpeningsroof(g) {
-  const v = copycatBaas(g); if (!v || g.copycatGebroken) return;
-  const n = _copycatGraai(v, g, Math.round((S.dek.length || (g.trek || []).length) / 2));
-  if (!n) return;
-  v.gestolen.slice(-n).forEach((s, i) => setTimeout(() => kaartVliegFx(s.id, copycatBronEl(), actorEl(v)), 140 + i * 90));
-  baasFaseMoment('DE ROOF', `🎭 „Jouw werk? Het is nu MÍJN werk." — hij grist ${n} kaart${n === 1 ? '' : 'en'} uit je dek!`);
-  Klank.sfx('debuff');
-  renderGevecht();
 }
 /* DE NAROOF: raakt zijn geroofde stapel op, dan grist hij OPNIEUW (de helft van wat je nú hebt) →
    de onslaught deflater niet, je kunt 'm solo niet uitzitten. Dooft pas als je trek te klein is om
@@ -3965,7 +3865,9 @@ function copycatAntiSoftlock(g) {
   /* GEEN kaart uit zijn arsenaal trekken (dat zou win-back zijn) — enkel een echt vangnet
      zodat je niet vastloopt: herschud je afleg, of geef energie als zelfs dat leeg is. */
   if (g.afleg.length) {
-    g.trek = schud(g.afleg); g.afleg = []; trekKaarten(1);
+    /* SAMENVOEGEN, niet overschrijven: de check hierboven kijkt enkel naar de hand,
+       dus g.trek kan nog kaarten bevatten — die zouden anders stil verdwijnen. */
+    g.trek = schud(g.afleg.concat(g.trek)); g.afleg = []; trekKaarten(1);
     melding('↩️ Je herschikt wat je nog hebt.');
   } else {
     g.energie += 1;
@@ -4022,9 +3924,11 @@ async function eindBeurt() {
   g.gekozenKaart = null; g.gekozenDrank = null; g.voorbeeldKaart = null;
 
   /* DE ROOF — vangnet: eindigde je je eerste beurt zonder de Erfprins te raken, dan rooft hij
-     nu alsnog (zelfde cinematic) vóór hij je kaarten begint te spelen. */
+     nu alsnog (zelfde cinematic) vóór hij je kaarten begint te spelen. try/catch: een fout in
+     de cinematic mag de beurt niet bevriezen (g.bezig staat hier al op true). */
   if (!g.roofGedaan && copycatBaas(g) && !g.copycatGebroken) {
-    await copycatDeRoof(g);
+    try { await copycatDeRoof(g); }
+    catch (e) { console.error(e); }
     if (gestopt()) { g.bezig = false; return; }
   }
 
@@ -4047,7 +3951,11 @@ async function eindBeurt() {
   if (gestopt()) return;
 
   try {
-  for (const v of g.vijanden) {
+  /* SNAPSHOT van de vijandlijst: intents als 'Doorslaan'/'Gieten' spawnen mid-lus een
+     nieuwe vijand (voegVijandToe pusht op g.vijanden) en een live for-of zou die
+     nieuwkomer nog DEZELFDE beurt laten toeslaan — een klap zonder telegraaf. Met de
+     snapshot staat hij één volle spelersbeurt met zichtbare intentie klaar. */
+  for (const v of [...g.vijanden]) {
     if (v.dood || gestopt()) continue;
     v.blok = 0;
 
@@ -5582,6 +5490,17 @@ function startDaily() {
       melding(`🗓️ Je bent vandaag al begonnen — hervat 'm via 🗺️ Doorgaan. Een nieuwe afdaling wacht morgen.`);
     return;
   }
+  /* een LOPENDE gewone run niet stil vernietigen: de wisSave hieronder is permanent
+     (incl. gedragen scherven). Eén bevestiging beschermt tegen een mis-klik op de titel. */
+  const bestaande = (() => { try { return JSON.parse(localStorage.getItem(SAVE_SLEUTEL) || 'null'); } catch (e) { return null; } })();
+  if (bestaande && !bestaande.daily && !startDaily._bevestigd) {
+    bevestig(
+      `Je hebt nog een <b>lopende afdaling</b> (verdieping ${(bestaande.verdieping || 0) + 1}).<br><br>De Dagelijkse afdaling <b>wist die run voorgoed</b> — ook de scherven die je bij je draagt.`,
+      () => { startDaily._bevestigd = true; try { startDaily(); } finally { startDaily._bevestigd = false; } },
+      '🗓️ Toch starten'
+    );
+    return;
+  }
   Klank.sfx('klik');
   wisSave();
   Daily.laatsteStart = vandaagSleutel(); bewaarDaily();   /* poging verbruikt bij START → geen farmen */
@@ -6269,6 +6188,12 @@ document.addEventListener('contextmenu', e => {
       if (k === 'Enter' || k === ' ') {
         e.preventDefault();
         if (!vij.length) return;
+        /* geen zichtbare cursor (doelkeuze via de muis gestart, of een re-render
+           veegde de ring weg)? Dan eerst richten — nooit blind op een stale index vuren. */
+        if (!cursorAan || !document.querySelector('.toets-focus')) {
+          cursorAan = true; toetsIdx = Math.min(toetsIdx, vij.length - 1); zetFocus(vij[toetsIdx]);
+          return;
+        }
         const el = vij[Math.min(toetsIdx, vij.length - 1)];
         if (el) klikVijand(parseInt(el.dataset.i, 10));
         const hand = [...document.querySelectorAll('#hand .kaart')].filter(x => !x.classList.contains('weg-kaart'));
@@ -6291,7 +6216,8 @@ document.addEventListener('contextmenu', e => {
     if (k === 'Enter' || k === ' ') {
       e.preventDefault();
       if (!hand.length) return;
-      if (!cursorAan) { cursorAan = true; toetsIdx = 0; zetFocus(hand[0]); return; }  /* 1e druk = cursor tonen */
+      /* 1e druk (of ring weggeveegd door een re-render) = cursor tonen, nog niet spelen */
+      if (!cursorAan || !document.querySelector('.toets-focus')) { cursorAan = true; toetsIdx = Math.min(toetsIdx, hand.length - 1); zetFocus(hand[toetsIdx]); return; }
       const el = hand[Math.min(toetsIdx, hand.length - 1)];
       if (!el) return;
       klikKaart(parseInt(el.dataset.uid, 10));
@@ -6337,7 +6263,9 @@ document.addEventListener('contextmenu', e => {
     }
     if (k === 'Enter' || k === ' ') {
       e.preventDefault();
-      if (!cursorAan) { cursorAan = true; toetsIdx = Math.min(toetsIdx, lijst.length - 1); zetFocus(lijst[toetsIdx]); return; }
+      /* geen zichtbare ring (1e druk, of een re-render verving de DOM)? eerst tonen,
+         dan pas activeren — nooit een onzichtbaar item aanklikken */
+      if (!cursorAan || !document.querySelector('.toets-focus')) { cursorAan = true; toetsIdx = Math.min(toetsIdx, lijst.length - 1); zetFocus(lijst[toetsIdx]); return; }
       klikMenu(lijst[Math.min(toetsIdx, lijst.length - 1)], scherm);
       return;
     }
@@ -6373,8 +6301,20 @@ document.addEventListener('contextmenu', e => {
   window.addEventListener('keydown', function (e) {
     if (window.mobiel) return;                    /* toetsbesturing is voor de laptop */
     if (e.ctrlKey || e.metaKey || e.altKey) return;   /* laat sneltoetsen (o.a. Ctrl+Shift+M) met rust */
+    /* vastgehouden Enter/Spatie mag niet door menu's/dialogen heen ratelen
+       (pijltjes mogen wél herhalen — fijn om door een lange rij te bladeren) */
+    if (e.repeat && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); return; }
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+
+    /* een baas-intro/cinematic dekt het slagveld af: toetsen mogen er niet doorheen
+       spelen (muisklikken vangt de full-screen overlay zelf al af, het toetsenbord
+       niet). Enter/Spatie/Esc = overslaan via de eigen click-handler van de intro. */
+    const intro = document.getElementById('baas-intro');
+    if (intro && !intro.classList.contains('weg')) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') { e.preventDefault(); intro.click(); }
+      return;
+    }
 
     if (document.querySelector('#overlay-kies.open')) return;   /* kaartkeuze regelt zichzelf */
     const ov = bovensteOverlay();
@@ -6446,8 +6386,11 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   /* iOS kan de audio na backgrounding opnieuw 'suspenden' → bij elk later gebaar
-     opnieuw hervatten (lichtgewicht: checkt enkel de context-state). */
+     opnieuw hervatten (lichtgewicht: checkt enkel de context-state). Óók op keydown:
+     wie na het terugkeren naar de tab enkel het toetsenbord gebruikt, kreeg anders
+     geen geluid meer terug. */
   document.addEventListener('pointerdown', () => { if (window.Klank && Klank.hervat) Klank.hervat(); });
+  document.addEventListener('keydown', () => { if (window.Klank && Klank.hervat) Klank.hervat(); });
 
   /* PWA: alleen via http(s), file:// kan geen service worker */
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {

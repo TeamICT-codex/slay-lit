@@ -660,7 +660,6 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   border-radius: 8px;
   border: 1px solid rgba(214, 178, 120, .6);
 }
-.art-mini.art-groot img { width: 84px; height: 84px; border-radius: 14px; }
 #tb-dranken { display: flex; gap: 4px; align-items: center; margin-left: auto; }
 .drank {
   font-size: 1.3rem;
@@ -1118,7 +1117,6 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   0%, 100% { box-shadow: 0 0 8px rgba(255, 200, 80, .35); }
   50% { box-shadow: 0 0 17px rgba(255, 200, 80, .65); }
 }
-.intent-aegis { color: #ffd873; }
 /* THE COPYCAT: het gebroken-arsenaal-label en de steel-intent */
 .bb-aegis.bb-gebroken {
   background: rgba(120, 120, 140, .15);
@@ -2371,7 +2369,6 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
 .te-duur-item { opacity: .45; }
 
 /* ---------- einde ---------- */
-.einde-icoon { font-size: 6rem; margin-top: 50px; filter: drop-shadow(0 0 30px rgba(255, 200, 80, .4)); }
 .einde-stats {
   display: flex; gap: 34px; margin: 18px 0;
 }

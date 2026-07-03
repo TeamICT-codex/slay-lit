@@ -9,10 +9,15 @@ const Klank = (() => {
   let master, comp, musGain, sfxGain, duckGain, echo, echoTerug;
   let ruisBuffer = null;
 
-  /* instellingen (bewaard in localStorage) */
+  /* instellingen (bewaard in localStorage) — veilig lezen: een corrupte/getamperde
+     store mag de module-evaluatie niet breken (anders bestaat Klank niet en brickt
+     het hele spel — zelfde bugklasse als veiligLees() in game.js). */
   const vol = Object.assign(
     { aan: true, muziek: 0.55, sfx: 0.8 },
-    JSON.parse(localStorage.getItem('slayit_audio') || '{}')
+    (() => {
+      try { return JSON.parse(localStorage.getItem('slayit_audio') || '{}'); }
+      catch (e) { try { localStorage.removeItem('slayit_audio'); } catch (e2) {} return {}; }
+    })()
   );
   function bewaar() { localStorage.setItem('slayit_audio', JSON.stringify(vol)); }
 
@@ -52,6 +57,7 @@ const Klank = (() => {
     setInterval(plan, 200);
     klaar = true;
     pasVolumesToe();
+    pasScene();   /* de vóór-init gezette scène alsnog toepassen (drone-fundament) */
     hervat();
   }
 
@@ -184,10 +190,12 @@ const Klank = (() => {
     });
   }
 
-  function muziek(naam) {
-    if (!SCENES[naam]) naam = 'stil';
-    if (naam === scene) return;
-    scene = naam;
+  /* de huidige scène op de klanklagen toepassen (drone/spanning/tellenraster).
+     Apart van muziek(): init() moet dit óók draaien, want vóór het eerste
+     gebruikersgebaar zet toonScherm de scène al terwijl klaar=false — zonder
+     her-toepassing bleef de drone-laag dan op gain 0 hangen tot de eerstvolgende
+     scène-WISSEL (titelmuziek zonder fundament). */
+  function pasScene() {
     if (!klaar) return;
     const s = SCENES[scene];
     const t = ctx.currentTime;
@@ -197,6 +205,13 @@ const Klank = (() => {
     spanVoice.oscs.forEach((o, i) => o.frequency.setTargetAtTime((s.root || 55) * 8 * (i ? 1.012 : 1), t, 0.8));
     tel = 0; maat = 0;
     volgendeTel = t + 0.1;
+  }
+
+  function muziek(naam) {
+    if (!SCENES[naam]) naam = 'stil';
+    if (naam === scene) return;
+    scene = naam;
+    pasScene();
   }
 
   /* planner: kijkt vooruit en plant noten op het tellenraster */

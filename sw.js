@@ -75,9 +75,16 @@ self.addEventListener('fetch', e => {
         if (antwoord.ok) {
           const kopie = antwoord.clone();
           caches.open(CACHE).then(c => c.put(e.request, kopie)).catch(() => {});
+          return antwoord;
         }
-        return antwoord;
+        /* server gaf een FOUT (404/5xx, bv. een CDN-hikje mid-deploy): val terug op de
+           werkende kopie in de cache i.p.v. de foutpagina door te geven */
+        return caches.match(e.request).then(hit => hit || antwoord);
       })
-      .catch(() => caches.match(e.request))
+      /* offline: cache-terugval. ignoreSearch vangt navigaties met een query-string
+         (gedeelde link met ?param) — die staan onder hun kale URL in de cache; een
+         onbekende navigatie valt terug op de app-shell ('.'). */
+      .catch(() => caches.match(e.request, { ignoreSearch: true })
+        .then(hit => hit || (e.request.mode === 'navigate' ? caches.match('.') : undefined)))
   );
 });

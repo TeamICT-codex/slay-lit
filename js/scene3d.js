@@ -201,7 +201,12 @@ const Vista = (() => {
     return new THREE.CanvasTexture(c);
   }
 
+  /* GEDEELD en gecachet (zoals schaduwTextuur): elke stofwolk-poef maakte vroeger
+     z'n eigen CanvasTexture die nooit gedisposed werd → GPU-textuur-lek per
+     sterfgeval, het hele gevecht/de hele sessie lang. */
+  let gloedTex = null;
   function gloedTextuur() {
+    if (gloedTex) return gloedTex;
     const c = document.createElement('canvas');
     c.width = c.height = 128;
     const x = c.getContext('2d');
@@ -210,7 +215,8 @@ const Vista = (() => {
     g.addColorStop(0.35, 'rgba(255,150,60,.55)');
     g.addColorStop(1, 'rgba(255,120,40,0)');
     x.fillStyle = g; x.fillRect(0, 0, 128, 128);
-    return new THREE.CanvasTexture(c);
+    gloedTex = new THREE.CanvasTexture(c);
+    return gloedTex;
   }
 
   /* gedeelde doorzichtige placeholder: materialen starten altijd MET een map,
@@ -400,6 +406,7 @@ const Vista = (() => {
       }
       a.mat.dispose();
       a.schaduwMat.dispose();
+      a.schaduw.geometry.dispose();   /* elke schaduw heeft z'n eigen PlaneGeometry — anders lekt er GPU-buffer per acteur per gevecht */
     }
     acteurs.clear();
     for (const p of poefjes) {
@@ -637,7 +644,9 @@ const Vista = (() => {
     camera.position.y = 2.6 + Math.sin(tijd * 0.22) * 0.08 + (Math.random() - 0.5) * 0.2 * kick;
     camera.lookAt(0, kijkY, 0);
 
-    renderer.render(scene, camera);
+    /* verborgen tab: de Tikker tikt bewust door (slaap()/vijandbeurten lopen af),
+       maar het GPU-werk is dan pure verspilling — sla enkel de render over */
+    if (!document.hidden) renderer.render(scene, camera);
   }
 
   /* schermpositie van een acteur (px) voor DOM-overlays */

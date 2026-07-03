@@ -302,7 +302,8 @@ body[data-modus="mobiel"] #hand .kaart .kaart-naam {
    Geldt in BEIDE oriëntaties. */
 body[data-modus="mobiel"] #overlay-kies.kies-meervoud.open {
   flex-direction: column; align-items: stretch; overflow: hidden;
-  padding: 12px 10px 0;
+  /* safe-area bovenaan: zonder deze valt de titel in portret achter de notch/camera-cutout */
+  padding: calc(10px + env(safe-area-inset-top)) 10px 0;
 }
 body[data-modus="mobiel"] #overlay-kies.kies-meervoud #kies-titel,
 body[data-modus="mobiel"] #overlay-kies.kies-meervoud #kies-hint { flex: 0 0 auto; margin: 2px 0; text-align: center; }
@@ -360,6 +361,13 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      dan scrollt #scherm-event (overflow-y:auto). */
   body[data-modus="mobiel"] #scherm-event .event-art { flex: 0 0 auto; margin-top: 14px; width: min(680px, 92vw); height: clamp(210px, 38vh, 420px); }
   body[data-modus="mobiel"] #scherm-event .event-art.is-portret { flex: 0 0 auto; width: auto; height: clamp(280px, 48vh, 540px); aspect-ratio: 2 / 3; max-width: 82vw; }
+
+  /* inspect-zoom (kaart bekijken) met ◀ ▶-bladerpijlen: op een smal staand scherm
+     moeten kaart + beide pijlen NAAST elkaar passen (86vw-kaart duwde de pijlen
+     anders buiten beeld — sinds de altaren in portret spelen is dit pad bereikbaar) */
+  body[data-modus="mobiel"] .focus-rij { gap: 10px; }
+  body[data-modus="mobiel"] .focus-pijl { width: 42px; height: 42px; font-size: 1.1rem; flex: 0 0 auto; }
+  body[data-modus="mobiel"] #kies-kaarten .kaart.groot.kaart-focus { width: min(300px, 62vw); }
 
   body[data-modus="mobiel"] #energie-orb { left: calc(10px + env(safe-area-inset-left)); bottom: 226px; transform: scale(.85); }
   body[data-modus="mobiel"] #knop-eindbeurt { right: calc(10px + env(safe-area-inset-right)); bottom: 230px; min-height: 46px; padding: 11px 20px; font-size: 1.05rem; }
@@ -464,7 +472,14 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   }
   body[data-modus="mobiel"] #scherm-event .event-tekstkolom {
     flex: 1 1 0; min-width: 0; max-width: 56vw;
-    justify-content: center; overflow-y: auto; max-height: 100%;
+    justify-content: flex-start; overflow-y: auto; max-height: 100%;
+  }
+  /* centreren via auto-marge-spacers i.p.v. justify-content:center: gecentreerde
+     flex-inhoud die OVERLOOPT verdwijnt boven de scroll-rand (titel onbereikbaar);
+     de spacers centreren korte inhoud en vallen bij overloop netjes weg. */
+  body[data-modus="mobiel"] #scherm-event .event-tekstkolom::before,
+  body[data-modus="mobiel"] #scherm-event .event-tekstkolom::after {
+    content: ''; flex: 0 0 auto; margin: auto;
   }
 }
 
