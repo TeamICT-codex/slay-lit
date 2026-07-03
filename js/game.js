@@ -2956,8 +2956,13 @@ function toonBestiarium(act) {
   $('#overlay-bestiarium').classList.add('open');
   Klank.sfx('klik');
 }
-const _BEST_POSES = ['attack', 'hit', 'cast', 'block', 'death'];
+/* ALLE pose-states waarvoor vijand-art kan bestaan, in dramatische volgorde (acties →
+   reacties → einde). 'gif' hoort erbij: paddenstoelman/pekziel/de_uitgewiste/
+   de_verzwolgene hebben een gif-pose die anders nergens te bekijken valt. */
+const _BEST_POSES = ['attack', 'cast', 'block', 'gif', 'hit', 'death'];
+const _BEST_POSE_NAAM = { attack: 'aanval', cast: 'bezwering', block: 'verdediging', gif: 'vergiftigd', hit: 'geraakt', death: 'sneuvelt' };
 let _bestPoseStand = {};   /* cyclische pose-stand per vijand-id (bestiarium-portret, à la heldPose) */
+let _bestPosesVan = {};    /* per vijand-id: GESONDEERDE lijst van poses waarvoor écht art bestaat */
 function toonBestiariumPagina(id) {
   const def = VIJANDEN[id], b = BESTIARIUM[id];
   if (!def || !b || !(Codex.gezien || []).includes(id)) return;
@@ -2984,55 +2989,87 @@ function toonBestiariumPagina(id) {
       </div>
     </div>`;
   verfraaiItemArt($('#overlay-bestiarium'));   /* basis-portret-art inladen (data-vart) */
-  /* ontdek welke poses deze vijand écht heeft → toon de tik-hint pas dan (anders misleidt
-     de hint bij een vijand met enkel een basis-portret). De pose-strip is vervangen door
-     het tikbare portret (cyclt door de bestaande poses, net als de heldenkeuze). */
+  /* SONDEER welke poses deze vijand écht heeft: de hint toont dan het juiste aantal en
+     bestPose kan deterministisch door de bestaande poses cyclen (elke tik = een échte
+     pose, in vaste volgorde — geen overslaan-hikjes meer). De lader cachet, dus dit is
+     bij een herbezoek gratis. */
   _bestPoseStand[id] = 0;
   const portretEl = document.querySelector('#bestiarium-inhoud .best-portret');
   const hintEl = document.querySelector('#bestiarium-inhoud .best-pose-hint');
+  const toonHint = () => {
+    const n = (_bestPosesVan[id] || []).length;
+    if (n && hintEl && portretEl) {
+      hintEl.textContent = `${poseWoord} voor z'n poses (${n})`;
+      hintEl.hidden = false;
+      portretEl.classList.add('heeft-poses');
+    }
+  };
   if (window.laadKarakterAfbeelding && portretEl) {
-    _BEST_POSES.forEach(p => laadKarakterAfbeelding(id + '_' + p, img => {
-      if (img && hintEl && hintEl.hidden) { hintEl.hidden = false; portretEl.classList.add('heeft-poses'); }
-    }));
+    if (_bestPosesVan[id]) toonHint();
+    else {
+      const gevonden = new Set(); let klaar = 0;
+      _BEST_POSES.forEach(p => laadKarakterAfbeelding(id + '_' + p, img => {
+        if (img) gevonden.add(p);
+        if (++klaar === _BEST_POSES.length) { _bestPosesVan[id] = _BEST_POSES.filter(x => gevonden.has(x)); toonHint(); }
+      }));
+    }
   }
   $('#overlay-bestiarium').classList.add('open');
   Klank.sfx('klik');
 }
 
-/* tik op het bestiarium-portret → speel de volgende bestaande pose (attack/hit/cast/block/death),
-   cyclisch, met auto-terug naar de basis — precies zoals de levende heldenkeuze (heldPose).
-   Ontbrekende pose-art wordt overgeslagen (laadKarakterAfbeelding geeft null) zodat een tik altijd
-   op een bestaande pose landt; bestaat er geen enkele, dan blijft de basis staan. */
-const _BEST_POSE_SFX = { attack: 'kaart', cast: 'buff', block: 'buff', hit: 'fout', death: 'fout' };
+/* tik op het bestiarium-portret → de volgende bestaande pose, cyclisch en in vaste volgorde
+   (aanval → bezwering → verdediging → gif → geraakt → sneuvelt), mét naam-label + teller,
+   en auto-terug naar de basis — precies zoals de levende heldenkeuze (heldPose). De pose-
+   lijst komt uit de sondering van toonBestiariumPagina; loopt die nog, dan valt een vroege
+   tik terug op het oude sla-ontbrekende-over-gedrag. */
+const _BEST_POSE_SFX = { attack: 'kaart', cast: 'buff', block: 'buff', gif: 'gif', hit: 'fout', death: 'dood' };
 function bestPose(id, e) {
   if (e) e.stopPropagation();
-  const def = VIJANDEN[id];
   const el = document.querySelector('#bestiarium-inhoud .best-portret');
-  if (!def || !el || !window.laadKarakterAfbeelding) return;
+  if (!VIJANDEN[id] || !el || !window.laadKarakterAfbeelding) return;
   if (!el.querySelector('img')) return;   /* nog emoji/geen basis-art geladen → niets te poseren */
   const hint = document.querySelector('#bestiarium-inhoud .best-pose-hint');
   if (hint) hint.style.visibility = 'hidden';
+
+  const toon = (pose, nr, totaal) => laadKarakterAfbeelding(id + '_' + pose, img => {
+    const im = el.querySelector('img');
+    if (!img || !im) return;
+    im.src = img.src;
+    /* naam-label (+ teller) zodat je wéét welke pose je ziet */
+    let lbl = el.querySelector('.best-pose-label');
+    if (!lbl) { lbl = document.createElement('span'); lbl.className = 'best-pose-label'; el.appendChild(lbl); }
+    lbl.textContent = (_BEST_POSE_NAAM[pose] || pose) + (totaal > 1 ? ` · ${nr}/${totaal}` : '');
+    lbl.hidden = false;
+    el.classList.remove('best-portret-poseert'); void el.offsetWidth; el.classList.add('best-portret-poseert');
+    Klank.sfx(_BEST_POSE_SFX[pose] || 'klik');
+    clearTimeout(el._poseTimer);
+    el._poseTimer = setTimeout(() => {
+      laadKarakterAfbeelding(id, terug => {
+        const im3 = el.querySelector('img');
+        if (terug && im3) im3.src = terug.src;
+      });
+      el.classList.remove('best-portret-poseert');
+      lbl.hidden = true;
+    }, 1250);
+  });
+
+  const lijst = _bestPosesVan[id];
+  if (lijst) {                             /* gesondeerd → deterministisch cyclen */
+    if (!lijst.length) return;             /* deze vijand heeft géén pose-art */
+    const i = (_bestPoseStand[id] || 0) % lijst.length;
+    _bestPoseStand[id] = i + 1;
+    toon(lijst[i], i + 1, lijst.length);
+    return;
+  }
+  /* sondering nog bezig (trage schijf + snelle tik): sla-ontbrekende-over-vangnet */
   let pogingen = 0;
   const probeer = () => {
-    if (pogingen++ >= _BEST_POSES.length) return;   /* geen enkele pose-art gevonden → laat de basis staan */
+    if (pogingen++ >= _BEST_POSES.length) return;
     const i = (_bestPoseStand[id] || 0) % _BEST_POSES.length;
     _bestPoseStand[id] = i + 1;
     const pose = _BEST_POSES[i];
-    laadKarakterAfbeelding(id + '_' + pose, img => {
-      const im = el.querySelector('img');
-      if (!img || !im) { probeer(); return; }       /* deze pose bestaat niet → volgende proberen */
-      im.src = img.src;
-      el.classList.remove('best-portret-poseert'); void el.offsetWidth; el.classList.add('best-portret-poseert');
-      Klank.sfx(_BEST_POSE_SFX[pose] || 'klik');
-      clearTimeout(el._poseTimer);
-      el._poseTimer = setTimeout(() => {
-        laadKarakterAfbeelding(id, terug => {
-          const im3 = el.querySelector('img');
-          if (terug && im3) im3.src = terug.src;
-        });
-        el.classList.remove('best-portret-poseert');
-      }, 1100);
-    });
+    laadKarakterAfbeelding(id + '_' + pose, img => { if (!img) { probeer(); return; } toon(pose, 0, 1); });
   };
   probeer();
 }
@@ -6295,6 +6332,11 @@ document.addEventListener('contextmenu', e => {
       const teken = k === 'ArrowLeft' ? '◀' : '▶';
       const knop = [...ov.querySelectorAll('button')].find(b => b.textContent.indexOf(teken) !== -1 && !b.disabled);
       if (knop) { e.preventDefault(); knop.click(); }
+    }
+    /* op een bestiarium-detailpagina: Enter/Spatie = het portret aantikken (volgende pose) */
+    if (ov.id === 'overlay-bestiarium' && (k === 'Enter' || k === ' ')) {
+      const portret = ov.querySelector('.best-portret');
+      if (portret) { e.preventDefault(); portret.click(); }
     }
   }
 
