@@ -2919,6 +2919,10 @@ function toonCodex() {
     (gesch.length ? `<div class="codex-runs">` + gesch.map(g =>
       `<div class="codex-run ${g.gewonnen ? 'gewonnen' : ''}"><span>${g.gewonnen ? '👑' : '💀'} ${HELDNAAM(g.held)}</span><small>rij ${g.diepte}${g.asc ? ` · A${g.asc}` : ''} · ${g.seed}</small></div>`
     ).join('') + `</div>` : '') : '';
+  /* de outro: eenmaal gezien → voor altijd herbeleefbaar vanuit de Codex */
+  const outroBlok = (Codex.outroGezien && window.Outro) ? `
+    <h3 class="codex-kop">🕹️ De Opzegtermijn</h3>
+    <p class="codex-loopbaan">Het exitgesprek, 25 jaar te laat. <button class="knop-stil" onclick="herbeleefOutro()">🕹️ Outro herbeleven</button></p>` : '';
   $('#codex-inhoud').innerHTML = loopbaanBlok + `
     <h3 class="codex-kop">🏺 Relikwieën <small>${relOntdekt} / ${rels.length}</small></h3>
     <div class="codex-rooster">` +
@@ -2953,12 +2957,20 @@ function toonCodex() {
       const mgart = wit ? 'drops_wit' : (gevallen ? id + '_geest' : id);
       const tip = wit ? ' · 🤍 keerde terug uit het zwart' : (gevallen ? ' · ✝ offerde zich op' : '');
       return `<div class="codex-slot rel-${d.zeld} ${gevallen && !wit ? 'gevallen' : ''}" data-mgart="${mgart}" data-tip="${d.naam}${tip} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${wit ? '🤍' : d.icoon}${gevallen && !wit ? '<span class="codex-kruis">✝</span>' : ''}</div>`;
-    }).join('') + `</div>` + scherfCodexBlok() + `
+    }).join('') + `</div>` + outroBlok + scherfCodexBlok() + `
     <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt + mgOntdekt === rels.length + dranks.length + mgs.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
     <small>🗝️ = opgeladen: dit relikwie kun je bij een nieuwe run éénmalig meenemen uit het Schrijn.</small></p>`;
   verfraaiItemArt($('#overlay-codex'));   /* incl. het Codex-titelicoon (data-icoon) */
   $('#overlay-codex').classList.add('open');
   Klank.sfx('klik');
+}
+
+/* de outro herbeleven vanuit de Codex — draait ook zonder lopende run
+   (js/outro.js leest S defensief; de gezien-vlag staat al) */
+function herbeleefOutro() {
+  if (!window.Outro || Outro.actief) return;
+  $('#overlay-codex').classList.remove('open');
+  Outro.start(() => naarTitel());
 }
 
 /* ============================================================

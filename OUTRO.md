@@ -402,7 +402,25 @@ einde alsnog — de run-and-gun-verdiepingen zijn dan inkortbaar tot één.
   bestaand eindscherm. Plus: auto-hupje over 1-tegel-obstakels,
   levelwissel-systeem (stoet reist mee), dev-helper `Outro._devHal()`.
   End-to-end geverifieerd in Chromium, nul fouten.
-- Nog te doen: **F3** content (3 echte verdiepingen, 5 vijandtypes,
-  masker-reïntegratie, alle callbacks incl. jeugddroom-archiefkast,
-  Codex-herbeleefknop), **F4** glans (chiptune-scene, dither-overgang +
-  pixel-zoom, sprite-verfijning, mobiel-QA op echt toestel).
+- **F3 — content: GEBOUWD (04-07).** De volledige klim: V-1 HET ARCHIEF →
+  V2 DE KANTOORTUIN (cubicle-doolhof, Glimlachquotum-posters, badge-
+  poortjes die de doorgang blokkeren tot gesloopt) → V3 DE DIRECTIE-ETAGE
+  (trofeeënwanden, glas) → dak-instorting bij de lift (let it burn, vóór
+  het paneel) → serverhal. Vijandenbestand compleet: facturatiedrone,
+  🙂-glimlachtorentje (schiet smiley-kogels), shredderslang (vloerkruiper),
+  kopieerbot (spawnt bleke kopieën; valt de machine, dan vallen de kopieën
+  mee uiteen) + badge-poort-tegels. **Masker-reïntegratie:** de twee
+  losgelaten maskers zitten in cellen (V2 + V3), slopen = aansluiten
+  ("DE GIFMAGIER SLUIT WEER AAN — 'WE PASSEN ONS AAN. ZOALS ALTIJD.'"),
+  wisselen via Q / tik op de HUD-chips; elk masker een eigen signatuur op
+  K: Slachter = boemerang-bijl, Gifmagiër = gifboog die door muren sijpelt,
+  Thoverk = lichtstraal die vooruit brandt. **De jeugddroom-archiefkast**
+  ("VOORZIENING GETROFFEN"): barst open in dwarrelend papier, citeert
+  S.jeugddroom als die ooit bestaat (fallback: het zwartgelakte etiket) —
+  geen enkele tekstregel eromheen. Acht droge bevrijdingsregels, per-level
+  titelkaarten, Codex-blok "🕹️ De Opzegtermijn — Outro herbeleven"
+  (game.js, gated op Codex.outroGezien), dev-helper `Outro._devNiveau(n)`.
+  End-to-end geverifieerd in Chromium (incl. echte liftovergangen), nul
+  fouten.
+- Nog te doen: **F4** glans (chiptune-scene, dither-overgang + pixel-zoom,
+  sprite-verfijning, level-tuning/balans, mobiel-QA op echt toestel).

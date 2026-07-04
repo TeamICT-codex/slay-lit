@@ -20,8 +20,8 @@ const Outro = (() => {
   /* tegeltypes — BETON draagt het gebouw en is onverwoestbaar (je graaft niet
      uit het level), al de rest is sloopbaar. hp per type in TEGEL_HP.
      MACHINE en METER ontploffen bij sloop (meterkast = de grote kettingreactie). */
-  const T = { LUCHT: 0, BETON: 1, GIPS: 2, GLAS: 3, MEUBEL: 4, KAST: 5, MACHINE: 6, HOUT: 7, METER: 8 };
-  const TEGEL_HP = [0, 255, 1, 1, 1, 1, 2, 1, 1];
+  const T = { LUCHT: 0, BETON: 1, GIPS: 2, GLAS: 3, MEUBEL: 4, KAST: 5, MACHINE: 6, HOUT: 7, METER: 8, POSTER: 9, POORT: 10 };
+  const TEGEL_HP = [0, 255, 1, 1, 1, 1, 2, 1, 1, 1, 3];
   const M2_PER_TEGEL = 0.36;          /* de ONTFACTUREERD-teller telt in m² kantoor */
 
   /* ---------- het palet: systeem = beige, wat leeft = kleur ---------- */
@@ -199,6 +199,38 @@ const Outro = (() => {
       '.W..W..W..',
       '.W..W..W..',
       '.l..l..l..'
+    ],
+    kopieerbot: [
+      '.sssssss...',
+      '.sSSSSSs...',
+      '.sScScSs...',
+      '.sSSSSSs...',
+      'sssssssss..',
+      'swwwwwwws..',
+      'sssssssss..',
+      '.sS...Ss...',
+      '.ss...ss...',
+      '...........',
+      '...........',
+      '...........'
+    ],
+    torentje: [
+      '...aa.....',
+      '..ssss....',
+      '.sSzzSs...',
+      '.sSSSSs...',
+      '.ssssss...',
+      '..s..s....',
+      '.ss..ss...',
+      '..........'
+    ],
+    slang: [
+      '..............',
+      'ss..ss..ssss..',
+      'sSssSSssSzSs..',
+      'ssssssssssss..',
+      '.s..s..s..s...',
+      '..............'
     ]
   };
   /* ---------- 3×5 pixel-font (hoofdletters — alle outro-UI is kapitaal) ---------- */
@@ -235,6 +267,9 @@ const Outro = (() => {
   let hitstop = 0, schudT = 0, schudKracht = 0;
   let camX = 0, camY = 0;
   let held = null, drones = [], kogels = [], cocons = [], collegas = [], worp = null;
+  let cellen = [], droomkast = null, gifbal = null;  /* masker-cellen, de jeugddroom-kast, de gifboog */
+  let maskers = ['slachter'], maskerIdx = 0, signKlok = 0, papierWachtrij = 0, papierBron = null;
+  let lvlIdx = 0, wisselDoel = 0, dakval = null;     /* de keten van verdiepingen + de dak-instorting */
   let partikels = [], popups = [], popupWachtrij = 0, popupKlok = 0;
   let bomWachtrij = [], stortWachtrij = [];     /* kettingreacties + instortende kolommen */
   let hal = null;                               /* serverhal-staat (B.A.A.S., ∞, het paneel) */
@@ -273,11 +308,15 @@ const Outro = (() => {
     return c;
   }
 
-  function bakAlles(heldId) {
-    const tint = HELD_TINT[heldId] || HELD_TINT.slachter;
+  function bakAlles() {
     gebakken = {};
     for (const naam in SPRITES) {
-      gebakken[naam] = bakSprite(SPRITES[naam], naam.indexOf('held') === 0 ? tint : null);
+      if (naam.indexOf('held') === 0) {
+        /* de held in alle drie de masker-tinten — wisselen is een blit */
+        for (const mk in HELD_TINT) gebakken[naam + '@' + mk] = bakSprite(SPRITES[naam], HELD_TINT[mk]);
+      } else {
+        gebakken[naam] = bakSprite(SPRITES[naam], null);
+      }
     }
   }
 
@@ -356,10 +395,124 @@ const Outro = (() => {
       soort: 'verdieping',
       kols: B, rijen: H, type, hp,
       spelerStart: { x: 4 * TEGEL, y: (H - 5) * TEGEL },
-      drones: [{ x: 31 * TEGEL, y: 6 * TEGEL }, { x: 56 * TEGEL, y: 8 * TEGEL }, { x: 86 * TEGEL, y: 6 * TEGEL }],
+      vijanden: [
+        { soort: 'drone', x: 31 * TEGEL, y: 6 * TEGEL },
+        { soort: 'drone', x: 56 * TEGEL, y: 8 * TEGEL },
+        { soort: 'slang', x: 86 * TEGEL, y: (H - 3) * TEGEL + 2 }
+      ],
       cocons: [{ x: 25 * TEGEL, y: (H - 5) * TEGEL }, { x: 67 * TEGEL, y: (H - 5) * TEGEL }],
       lift: { x: 103 * TEGEL, y: (H - 8) * TEGEL, b: 4 * TEGEL, h: 5 * TEGEL }
     };
+  }
+
+  /* V2 — DE KANTOORTUIN: cubicle-doolhof, kopieerbots, Glimlachquotum-
+     posters, badge-poortjes die de weg blokkeren, en het eerste masker. */
+  function bouwKantoortuin() {
+    const B = 120, H = 22;
+    const type = new Uint8Array(B * H);
+    const hp = new Uint8Array(B * H);
+    const zet = (x, y, t) => { if (x >= 0 && y >= 0 && x < B && y < H) { type[y * B + x] = t; hp[y * B + x] = TEGEL_HP[t]; } };
+    const vul = (x0, y0, x1, y1, t) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) zet(x, y, t); };
+
+    vul(0, 0, B - 1, 0, T.BETON); vul(0, H - 1, B - 1, H - 1, T.BETON); vul(0, H - 2, B - 1, H - 2, T.BETON);
+    vul(0, 0, 1, H - 1, T.BETON); vul(B - 2, 0, B - 1, H - 1, T.BETON);
+    for (const kx of [30, 62, 92]) { vul(kx, 1, kx, H - 3, T.BETON); vul(kx, H - 7, kx, H - 3, T.LUCHT); }
+
+    /* de cubicle-tuin: lage gipswandjes met posters erop, bureaus ertussen */
+    for (const cx of [8, 16, 24, 36, 44, 52, 68, 76, 84, 98, 106]) {
+      vul(cx, H - 5, cx, H - 3, T.GIPS);
+      if (cx % 16 === 8) zet(cx, H - 6, T.POSTER);
+      zet(cx + 3, H - 3, T.MEUBEL);
+    }
+    /* de badge-poortjes: twee kolom-doorgangen op slot — slopen of niets */
+    for (const px of [30, 92]) { zet(px, H - 3, T.POORT); zet(px, H - 4, T.POORT); zet(px, H - 5, T.POORT); }
+
+    /* een tussenverdieping van hout, met machines en een glaswand */
+    vul(38, 12, 48, 12, T.HOUT); vul(70, 10, 80, 10, T.HOUT); vul(100, 13, 108, 13, T.HOUT);
+    zet(42, 11, T.MACHINE); zet(74, 9, T.MACHINE); zet(104, 12, T.MACHINE);
+    vul(56, 5, 56, H - 6, T.GLAS);
+    for (const [ex, ey] of [[13, H - 3], [33, H - 3], [58, H - 3], [73, 9], [89, H - 3], [111, H - 3]]) zet(ex, ey, T.METER);
+    for (const wx of [20, 48, 78, 102]) zet(wx, 6, T.POSTER);
+
+    return {
+      naam: 'V2 — DE KANTOORTUIN',
+      soort: 'verdieping',
+      kols: B, rijen: H, type, hp,
+      spelerStart: { x: 4 * TEGEL, y: (H - 5) * TEGEL },
+      vijanden: [
+        { soort: 'kopieerbot', x: 40 * TEGEL, y: (H - 5) * TEGEL },
+        { soort: 'kopieerbot', x: 82 * TEGEL, y: (H - 5) * TEGEL },
+        { soort: 'drone', x: 50 * TEGEL, y: 6 * TEGEL },
+        { soort: 'drone', x: 96 * TEGEL, y: 5 * TEGEL },
+        { soort: 'slang', x: 66 * TEGEL, y: (H - 3) * TEGEL + 2 }
+      ],
+      cocons: [{ x: 12 * TEGEL, y: (H - 5) * TEGEL }, { x: 47 * TEGEL, y: (H - 5) * TEGEL }, { x: 87 * TEGEL, y: (H - 5) * TEGEL }],
+      cellen: [{ x: 71 * TEGEL, y: (H - 5) * TEGEL }],
+      lift: { x: 113 * TEGEL, y: (H - 8) * TEGEL, b: 4 * TEGEL, h: 5 * TEGEL }
+    };
+  }
+
+  /* V3 — DE DIRECTIE-ETAGE: torentjes en shredderslangen, het tweede
+     masker, en de archiefkast "VOORZIENING GETROFFEN" — de jeugddromen.
+     Aan het einde stort het dak in (let it burn — vóór het paneel). */
+  function bouwDirectie() {
+    const B = 120, H = 22;
+    const type = new Uint8Array(B * H);
+    const hp = new Uint8Array(B * H);
+    const zet = (x, y, t) => { if (x >= 0 && y >= 0 && x < B && y < H) { type[y * B + x] = t; hp[y * B + x] = TEGEL_HP[t]; } };
+    const vul = (x0, y0, x1, y1, t) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) zet(x, y, t); };
+
+    vul(0, 0, B - 1, 0, T.BETON); vul(0, H - 1, B - 1, H - 1, T.BETON); vul(0, H - 2, B - 1, H - 2, T.BETON);
+    vul(0, 0, 1, H - 1, T.BETON); vul(B - 2, 0, B - 1, H - 1, T.BETON);
+    for (const kx of [40, 78]) { vul(kx, 1, kx, H - 3, T.BETON); vul(kx, H - 8, kx, H - 3, T.LUCHT); }
+
+    /* ruime directiekamers: hoge gipswanden met glazen deuren */
+    for (const wx of [20, 56, 96]) { vul(wx, 3, wx, H - 3, T.GIPS); vul(wx, H - 7, wx, H - 3, T.LUCHT); }
+    vul(66, 4, 66, H - 6, T.GLAS);
+    zet(96, H - 3, T.POORT); zet(96, H - 4, T.POORT); zet(96, H - 5, T.POORT);
+
+    /* de trofeeënwand + kastenrijen van de metrologie */
+    for (const [kx0, kx1] of [[6, 12], [26, 34], [46, 52], [84, 90], [102, 110]]) {
+      for (let x = kx0; x <= kx1; x += 2) { zet(x, H - 3, T.KAST); zet(x, H - 4, T.KAST); }
+    }
+    vul(24, 11, 32, 11, T.HOUT); vul(48, 9, 54, 9, T.HOUT); vul(70, 12, 76, 12, T.HOUT); vul(100, 10, 106, 10, T.HOUT);
+    zet(28, 10, T.MACHINE); zet(51, 8, T.MACHINE); zet(73, 11, T.MACHINE);
+    for (const [ex, ey] of [[14, H - 3], [36, H - 3], [53, 8], [68, H - 3], [93, H - 3], [108, H - 3]]) zet(ex, ey, T.METER);
+    for (const wx of [23, 59, 99]) zet(wx, 5, T.POSTER);
+
+    return {
+      naam: 'V3 — DE DIRECTIE-ETAGE',
+      soort: 'verdieping',
+      dakval: true,
+      kols: B, rijen: H, type, hp,
+      spelerStart: { x: 4 * TEGEL, y: (H - 5) * TEGEL },
+      vijanden: [
+        { soort: 'torentje', x: 30 * TEGEL, y: (H - 4) * TEGEL + 1 },
+        { soort: 'torentje', x: 63 * TEGEL, y: (H - 4) * TEGEL + 1 },
+        { soort: 'torentje', x: 100 * TEGEL, y: (H - 4) * TEGEL + 1 },
+        { soort: 'slang', x: 44 * TEGEL, y: (H - 3) * TEGEL + 2 },
+        { soort: 'slang', x: 86 * TEGEL, y: (H - 3) * TEGEL + 2 },
+        { soort: 'drone', x: 50 * TEGEL, y: 6 * TEGEL },
+        { soort: 'drone', x: 90 * TEGEL, y: 5 * TEGEL }
+      ],
+      cocons: [{ x: 16 * TEGEL, y: (H - 5) * TEGEL }, { x: 58 * TEGEL, y: (H - 5) * TEGEL }, { x: 82 * TEGEL, y: (H - 5) * TEGEL }],
+      cellen: [{ x: 37 * TEGEL, y: (H - 5) * TEGEL }],
+      droomkast: { x: 61 * TEGEL, y: (H - 5) * TEGEL },
+      lift: { x: 113 * TEGEL, y: (H - 8) * TEGEL, b: 4 * TEGEL, h: 5 * TEGEL }
+    };
+  }
+
+  /* de keten: Archief → Kantoortuin → Directie → Serverhal */
+  const VERDIEPINGEN = [bouwTestVerdieping, bouwKantoortuin, bouwDirectie, bouwServerhal];
+
+  function maakVijand(v) {
+    const e = { soort: v.soort, x: v.x, y: v.y, x0: v.x, y0: v.y, t: Math.random() * 6, klok: 1 + Math.random(), dood: false, vx: 0, vy: 0, opGrond: false, loopT: 0 };
+    if (v.soort === 'drone') e.hp = 2;
+    else if (v.soort === 'kopieerbot') { e.hp = 3; e.b = 9; e.h = 9; e.spawnKlok = 2.2; e.kids = 0; }
+    else if (v.soort === 'kopie') { e.hp = 1; e.b = 9; e.h = 9; e.ouder = v.ouder || null; }
+    else if (v.soort === 'torentje') e.hp = 3;
+    else if (v.soort === 'slang') { e.hp = 2; e.richting = 1; }
+    return e;
   }
 
   /* ============================================================
@@ -468,27 +621,35 @@ const Outro = (() => {
     return true;
   }
 
-  /* levelwissel: de stoet bevrijde collega's reist mee naar de hal */
-  function wisselLevel(bouw) {
-    const stoet = collegas.length;
-    lvl = bouw();
-    bakLevel();
-    held.x = lvl.spelerStart.x; held.y = lvl.spelerStart.y;
-    held.vx = held.vy = 0; held.hartjes = 3; held.raakbaar = 1; held.wachtT = 0;
-    drones = lvl.drones.map(d => ({ x: d.x, y: d.y, x0: d.x, y0: d.y, t: Math.random() * 6, klok: 1 + Math.random(), hp: 2, dood: false }));
-    cocons = lvl.cocons.map(c => ({ x: c.x, y: c.y, open: false }));
-    collegas = [];
-    for (let i = 0; i < stoet; i++) collegas.push({ x: held.x - 12 * (i + 1), y: held.y + 3, vx: 0, vy: 0, b: 7, h: 11, opGrond: false, loopT: 0 });
-    kogels = []; partikels = []; popups = []; popupWachtrij = 0; worp = null;
-    bomWachtrij = []; stortWachtrij = [];
-    camX = klem(held.x - BREED / 2, 0, lvl.kols * TEGEL - BREED);
+  /* alle level-gebonden entiteiten (her)laden — gedeeld door start en wissel */
+  function laadLevelEntiteiten() {
+    drones = (lvl.vijanden || []).map(maakVijand);
+    cocons = (lvl.cocons || []).map(c => ({ x: c.x, y: c.y, open: false }));
+    cellen = (lvl.cellen || []).map(c => ({ x: c.x, y: c.y, open: false }));
+    droomkast = lvl.droomkast ? { x: lvl.droomkast.x, y: lvl.droomkast.y, open: false } : null;
+    kogels = []; partikels = []; popups = []; popupWachtrij = 0; worp = null; gifbal = null;
+    bomWachtrij = []; stortWachtrij = []; dakval = null; papierWachtrij = 0; signKlok = 0;
     hal = lvl.soort === 'hal'
       ? { t: 0, baasHits: 0, laatsteHit: -99, regel: null, regelT: 0, flitsT: 0, paneel: false, spawnKlok: 2.5, frames: bakBaas() }
       : null;
   }
 
-  function startWissel() {
-    staat = 'wissel'; wisselT = 0; wisselGebouwd = false;
+  /* levelwissel: de stoet bevrijde collega's reist mee naar de volgende laag */
+  function wisselLevel(idx) {
+    const stoet = collegas.length;
+    lvlIdx = idx;
+    lvl = VERDIEPINGEN[idx]();
+    bakLevel();
+    held.x = lvl.spelerStart.x; held.y = lvl.spelerStart.y;
+    held.vx = held.vy = 0; held.hartjes = 3; held.raakbaar = 1; held.wachtT = 0;
+    laadLevelEntiteiten();
+    collegas = [];
+    for (let i = 0; i < stoet; i++) collegas.push({ x: held.x - 12 * (i + 1), y: held.y + 3, vx: 0, vy: 0, b: 7, h: 11, opGrond: false, loopT: 0 });
+    camX = klem(held.x - BREED / 2, 0, lvl.kols * TEGEL - BREED);
+  }
+
+  function startWissel(doel) {
+    staat = 'wissel'; wisselT = 0; wisselGebouwd = false; wisselDoel = doel;
     sfx('win', 0.5);
   }
   function startConfig() {
@@ -526,7 +687,7 @@ const Outro = (() => {
       regels: [
         'EINDAFREKENING - B.A.A.S.',
         '',
-        dots('1 VERDIEPING', 'AFGESCHREVEN'),
+        dots('3 VERDIEPINGEN', 'AFGESCHREVEN'),
         dots(collegas.length + " COLLEGA'S", 'BEVRIJD'),
         dots('1 SCHAKELAAR', '0U06'),
         dots('TOTAAL', 'ONBETAALBAAR')
@@ -582,6 +743,21 @@ const Outro = (() => {
       cx.fillStyle = '#8a6a1d'; cx.fillRect(px, py, TEGEL, 1); cx.fillRect(px, py + TEGEL - 1, TEGEL, 1);
       cx.fillStyle = '#1d1a12';
       cx.fillRect(px + 4, py + 1, 2, 2); cx.fillRect(px + 3, py + 3, 2, 2); cx.fillRect(px + 4, py + 5, 2, 2);
+    } else if (t === T.POSTER) {
+      /* de Glimlachquotum-poster — jouw werk uit '83, sloopbaar zonder commentaar */
+      cx.fillStyle = '#e8dfc4'; cx.fillRect(px, py, TEGEL, TEGEL);
+      cx.fillStyle = '#c2b797'; cx.fillRect(px, py, TEGEL, 1);
+      cx.fillStyle = '#c9a13a';
+      cx.fillRect(px + 2, py + 2, 1, 1); cx.fillRect(px + 5, py + 2, 1, 1);
+      cx.fillRect(px + 2, py + 4, 4, 1); cx.fillRect(px + 1, py + 3, 1, 1); cx.fillRect(px + 6, py + 3, 1, 1);
+      cx.fillStyle = '#8a7d5e'; cx.fillRect(px + 1, py + 6, 6, 1);
+    } else if (t === T.POORT) {
+      /* het badge-poortje: "BADGE, GRAAG" — blokkeert tot gesloopt */
+      cx.fillStyle = '#77848a'; cx.fillRect(px, py, TEGEL, TEGEL);
+      cx.fillStyle = '#4d585e'; cx.fillRect(px, py, 2, TEGEL); cx.fillRect(px + TEGEL - 2, py, 2, TEGEL);
+      cx.fillStyle = ((tx + ty) % 2) ? '#d43d2a' : '#8f1f1c';
+      cx.fillRect(px + 3, py + 2, 2, 2);
+      cx.fillStyle = '#2c3438'; cx.fillRect(px + 2, py + 5, 4, 1);
     }
     /* schade-craquelé zodra een meertraps-tegel is aangetikt */
     const maxHp = TEGEL_HP[t];
@@ -673,9 +849,9 @@ const Outro = (() => {
     spawnVuurbal(px, py, straal);
     sloopGebied(px, py, straal, 3);
     for (const d of drones) {
-      if (!d.dood && Math.hypot(d.x + 4 - px, d.y + 4 - py) < straal + 8) raakDrone(d, 2);
+      if (!d.dood && Math.hypot(d.x + 4 - px, d.y + 4 - py) < straal + 8) raakVijand(d, 2);
     }
-    for (const c of cocons) misschienCoconOpen(c, px, py, straal + 4);
+    raakInteracties(px, py, straal + 4);
     raakBaasPunt(px, py);
     schud(3); hitstop = Math.max(hitstop, 0.055);
     sfx('zwareklap', 0.04); sfx('dood', 0.12);
@@ -703,7 +879,7 @@ const Outro = (() => {
 
   /* ---------- partikels & popups ---------- */
   const MAX_PARTIKELS = () => (window.mobiel || document.body.classList.contains('lite')) ? 110 : 220;
-  const GRUIS_KLEUR = [null, '#5b574a', '#cfc0a0', '#cfe0e4', '#7a5230', '#8a6a42', '#77848a', '#6d4a2a', '#c9a13a'];
+  const GRUIS_KLEUR = [null, '#5b574a', '#cfc0a0', '#cfe0e4', '#7a5230', '#8a6a42', '#77848a', '#6d4a2a', '#c9a13a', '#e8dfc4', '#77848a'];
   function duwPartikel(p) {
     if (partikels.length >= MAX_PARTIKELS()) partikels.shift();
     partikels.push(p);
@@ -771,7 +947,7 @@ const Outro = (() => {
   }
 
   /* ---------- invoer ---------- */
-  const GAME_TOETSEN = ['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'a', 'd', 'w', 's', 'j', 'k', 'x', 'z'];
+  const GAME_TOETSEN = ['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'a', 'd', 'w', 's', 'j', 'k', 'x', 'z', 'q'];
   function opToetsNeer(e) {
     if (staat === 'uit') return;
     const k = e.key.toLowerCase();
@@ -796,6 +972,7 @@ const Outro = (() => {
       if (!e.repeat && (k === 'w' || k === 'arrowup' || k === ' ')) held && (held.sprongBuf = SPRONGBUFFER);
       if (!e.repeat && (k === 'j' || k === 'x')) vuurBuf = 0.1;
       if (!e.repeat && (k === 'k' || k === 'z')) worpBuf = 0.15;
+      if (!e.repeat && k === 'q') wisselMasker();
       toetsen.add(k);
     }
   }
@@ -830,6 +1007,8 @@ const Outro = (() => {
     if (staat === 'epiloog') { if (epi && epi.klaar) beeindig(); else if (epi) epi.spoed = true; return; }
     if (staat === 'wissel') return;
     const p = canvasPunt(e);
+    /* tik op de masker-chips linksboven = wisselen */
+    if (maskers.length > 1 && p.x < 64 && p.y < 22) { wisselMasker(); return; }
     const z = knopZones();
     for (const naam in z) {
       const dx = p.x - z[naam].x, dy = p.y - z[naam].y;
@@ -895,24 +1074,48 @@ const Outro = (() => {
         const rx = h.x + h.b / 2 + h.richting * 11, ry = h.y + 7;
         const geraakt = sloopGebied(rx, ry, 9, 1);
         for (const d of drones) {
-          if (!d.dood && Math.abs(d.x + 4 - rx) < 12 && Math.abs(d.y + 4 - ry) < 12) raakDrone(d, 1);
+          if (!d.dood && Math.abs(d.x + 4 - rx) < 12 && Math.abs(d.y + 4 - ry) < 12) raakVijand(d, 1);
         }
-        for (const c of cocons) misschienCoconOpen(c, rx, ry, 12);
+        raakInteracties(rx, ry, 12);
         raakBaasPunt(rx, ry);
         if (!geraakt) sfx('smeed', 0.12);
       }
-      /* DE BIJL — worp: boemerang die verder sloopt en terugkeert */
-      if (inp.worpKnop && !worp) {
-        worpBuf = 0;
-        worp = { x: h.x + h.b / 2, y: h.y + 6, vx: h.richting * 170, terug: false, spin: 0 };
-        sfx('energie', 0.2);
+      /* DE SIGNATUUR (K / WORP) — elk masker zijn eigen sloopgereedschap:
+         Slachter = de boemerang-bijl · Gifmagiër = de gifboog die door
+         muren sijpelt · Thoverk = de lichtstraal die vooruit brandt */
+      if (signKlok > 0) signKlok -= dt;
+      if (inp.worpKnop) {
+        const mk = maskers[maskerIdx];
+        if (mk === 'slachter' && !worp) {
+          worpBuf = 0;
+          worp = { x: h.x + h.b / 2, y: h.y + 6, vx: h.richting * 170, terug: false, spin: 0 };
+          sfx('energie', 0.2);
+        } else if (mk === 'gifmagier' && !gifbal && signKlok <= 0) {
+          worpBuf = 0; signKlok = 1.1;
+          gifbal = { x: h.x + h.b / 2, y: h.y + 3, vx: h.richting * 150, vy: -140, t: 1.5, hitKlok: 0 };
+          sfx('energie', 0.2);
+        } else if (mk === 'thoverk' && signKlok <= 0) {
+          worpBuf = 0; signKlok = 1.3;
+          for (let i = 1; i <= 8; i++) bomWachtrij.push({ px: h.x + h.b / 2 + h.richting * i * 11, py: h.y + 7, straal: 6, t: i * 0.035 });
+          sfx('energie', 0.15);
+        }
       }
 
-      /* de lift bereikt = omhoog, naar de serverhal */
+      /* de lift bereikt = omhoog, één laag dichter bij B.A.A.S. — op de
+         directie-etage komt eerst het dak naar beneden (let it burn) */
       const L = lvl.lift;
-      if (L && h.x + h.b > L.x && h.x < L.x + L.b && h.y + h.h > L.y && h.y < L.y + L.h) {
-        startWissel();
+      if (L && !dakval && h.x + h.b > L.x && h.x < L.x + L.b && h.y + h.h > L.y && h.y < L.y + L.h) {
+        if (lvl.dakval) {
+          dakval = { t: 0 };
+          for (let i = 0; i < 12; i++) {
+            bomWachtrij.push({ px: camX + 16 + i * 26 + Math.random() * 10, py: 2 * TEGEL + 6, straal: 12, t: 0.15 + i * 0.14 });
+          }
+          schud(3);
+        } else {
+          startWissel(lvlIdx + 1);
+        }
       }
+      if (dakval) { dakval.t += dt; if (dakval.t > 2.3) { dakval = null; startWissel(lvlIdx + 1); } }
       /* het paneel is open én je staat ervoor → het configscherm */
       if (hal && hal.paneel && h.x + h.b > lvl.luik.x - 3 && h.x < lvl.luik.x + lvl.luik.b + 3 &&
           h.y + h.h > lvl.luik.y - 2 && h.y < lvl.luik.y + lvl.luik.h + 4) {
@@ -938,29 +1141,83 @@ const Outro = (() => {
         worp.y += Math.sin(worp.spin * 0.5) * 6 * dt;
         worp.baasKlok = (worp.baasKlok || 0) - dt;
         sloopGebied(worp.x, worp.y, 6, 1);
-        for (const d of drones) if (!d.dood && Math.abs(d.x + 4 - worp.x) < 10 && Math.abs(d.y + 4 - worp.y) < 10) raakDrone(d, 2);
-        for (const c of cocons) misschienCoconOpen(c, worp.x, worp.y, 10);
+        for (const d of drones) if (!d.dood && Math.abs(d.x + 4 - worp.x) < 10 && Math.abs(d.y + 4 - worp.y) < 10) raakVijand(d, 2);
+        raakInteracties(worp.x, worp.y, 10);
         if (worp.baasKlok <= 0 && raakBaasPunt(worp.x, worp.y)) worp.baasKlok = 0.3;
       }
     }
 
-    /* — facturatiedrones — */
+    /* — de gifboog: een parabool die door alles heen sijpelt — */
+    if (gifbal) {
+      gifbal.t -= dt; gifbal.hitKlok -= dt;
+      gifbal.x += gifbal.vx * dt; gifbal.y += gifbal.vy * dt; gifbal.vy += 400 * dt;
+      sloopGebied(gifbal.x, gifbal.y, 5, 1);
+      if (gifbal.hitKlok <= 0) {
+        for (const d of drones) {
+          if (!d.dood && Math.abs(d.x + 5 - gifbal.x) < 10 && Math.abs(d.y + 4 - gifbal.y) < 10) { raakVijand(d, 2); gifbal.hitKlok = 0.25; break; }
+        }
+        if (gifbal.hitKlok <= 0 && raakBaasPunt(gifbal.x, gifbal.y)) gifbal.hitKlok = 0.3;
+      }
+      raakInteracties(gifbal.x, gifbal.y, 8);
+      if (Math.random() < dt * 24) spawnVonk(gifbal.x, gifbal.y, '#79c045', 1);
+      if (gifbal.t <= 0 || gifbal.y > lvl.rijen * TEGEL) { spawnVonk(gifbal.x, gifbal.y, '#79c045', 10); gifbal = null; }
+    }
+
+    /* — het machinepark: drones, torentjes, slangen, kopieerbots — */
+    const hx = h.x + h.b / 2, hy = h.y + h.h / 2;
+    const nieuweKopieen = [];
     for (const d of drones) {
       if (d.dood) continue;
       d.t += dt;
-      d.y = d.y0 + Math.sin(d.t * 1.7) * 10;
-      d.x = d.x0 + Math.sin(d.t * 0.8) * 14;
-      d.klok -= dt;
-      const dx = (h.x + h.b / 2) - (d.x + 4), dy = (h.y + h.h / 2) - (d.y + 4);
-      const afst = Math.hypot(dx, dy);
-      if (d.klok <= 0 && afst < 95 && h.wachtT <= 0) {
-        d.klok = 1.6 + Math.random() * 0.7;
-        const sn = 72 / (afst || 1);
-        kogels.push({ x: d.x + 4, y: d.y + 6, vx: dx * sn, vy: dy * sn, t: 3 });
-        sfx('blok', 0.1);
+      if (d.soort === 'drone') {
+        d.y = d.y0 + Math.sin(d.t * 1.7) * 10;
+        d.x = d.x0 + Math.sin(d.t * 0.8) * 14;
+        d.klok -= dt;
+        const dx = hx - (d.x + 4), dy = hy - (d.y + 4);
+        const afst = Math.hypot(dx, dy);
+        if (d.klok <= 0 && afst < 95 && h.wachtT <= 0) {
+          d.klok = 1.6 + Math.random() * 0.7;
+          const sn = 72 / (afst || 1);
+          kogels.push({ x: d.x + 4, y: d.y + 6, vx: dx * sn, vy: dy * sn, t: 3 });
+          sfx('blok', 0.1);
+        }
+      } else if (d.soort === 'torentje') {
+        /* jouw Glimlachquotum, nu met loop: schiet 🙂 op alles wat leeft */
+        d.klok -= dt;
+        const afst = Math.hypot(hx - (d.x + 5), hy - (d.y + 3));
+        if (d.klok <= 0 && afst < 115 && h.wachtT <= 0) {
+          d.klok = 1.5;
+          const sn = 80 / (afst || 1);
+          kogels.push({ x: d.x + 5, y: d.y + 2, vx: (hx - d.x - 5) * sn, vy: (hy - d.y - 2) * sn, t: 3, smiley: true });
+          sfx('blok', 0.1);
+        }
+      } else if (d.soort === 'slang') {
+        const voorX = Math.floor((d.x + (d.richting > 0 ? 15 : -2)) / TEGEL);
+        const rij = Math.floor((d.y + 3) / TEGEL);
+        if (solide(tegelOp(voorX, rij)) || !solide(tegelOp(voorX, rij + 1))) d.richting *= -1;
+        else d.x += d.richting * 55 * dt;
+      } else if (d.soort === 'kopieerbot' || d.soort === 'kopie') {
+        const snel = d.soort === 'kopie' ? 46 : 20;
+        d.vx = Math.abs(hx - (d.x + 5)) > 10 ? Math.sign(hx - (d.x + 5)) * snel : 0;
+        d.vy = Math.min(d.vy + ZWAARTEKRACHT * dt, 300);
+        const oudX = d.x;
+        beweeg(d, dt);
+        if (d.opGrond && Math.abs(d.x - oudX) < 0.15 && d.vx !== 0) d.vy = -170;
+        if (d.soort === 'kopieerbot') {
+          d.spawnKlok -= dt;
+          if (d.spawnKlok <= 0 && d.kids < 2 && Math.abs(hx - d.x) < 150) {
+            d.spawnKlok = 3.2; d.kids++;
+            nieuweKopieen.push(maakVijand({ soort: 'kopie', x: d.x, y: d.y, ouder: d }));
+            spawnVonk(d.x + 5, d.y + 4, '#efe9d6', 5);
+            sfx('smeed', 0.1);
+          }
+        }
       }
-      if (h.raakbaar <= 0 && h.wachtT <= 0 && Math.abs(d.x + 4 - (h.x + h.b / 2)) < 8 && Math.abs(d.y + 4 - (h.y + h.h / 2)) < 10) raakHeld();
+      /* contact kost een tik welzijn (torentjes niet: die schieten alleen) */
+      if (d.soort !== 'torentje' && h.raakbaar <= 0 && h.wachtT <= 0 &&
+          Math.abs(d.x + 5 - hx) < 9 && Math.abs(d.y + 4 - hy) < 10) raakHeld();
     }
+    if (nieuweKopieen.length) drones.push(...nieuweKopieen);
 
     /* — 0u06-kogeltjes — */
     for (const k of kogels) {
@@ -993,8 +1250,7 @@ const Outro = (() => {
       hal.spawnKlok -= dt;
       if (!hal.paneel && hal.spawnKlok <= 0 && drones.filter(d => !d.dood).length < 3) {
         hal.spawnKlok = 4;
-        const dx = (5 + Math.random() * 20) * TEGEL;
-        drones.push({ x: dx, y: 3 * TEGEL, x0: dx, y0: 3 * TEGEL, t: Math.random() * 6, klok: 1, hp: 2, dood: false });
+        drones.push(maakVijand({ soort: 'drone', x: (5 + Math.random() * 20) * TEGEL, y: 3 * TEGEL }));
       }
       /* wie zélf stopt met slaan, krijgt het paneel (vangnet: na 18s sowieso) */
       if (!hal.paneel && ((hal.baasHits >= 4 && tijd - hal.laatsteHit > 2.5) || hal.t > 18)) {
@@ -1014,6 +1270,12 @@ const Outro = (() => {
       if (p.soort === 'vuurbal') continue;
       p.x += p.vx * dt; p.y += p.vy * dt;
       if (p.soort === 'rook') { p.vy *= (1 - 0.6 * dt); continue; }
+      if (p.soort === 'papier') {
+        p.vy = Math.min(p.vy + 80 * dt, 24);
+        p.vx *= (1 - 1.5 * dt);
+        p.x += Math.sin(p.t * 3 + p.fase) * 10 * dt;
+        continue;
+      }
       p.vy += ZWAARTEKRACHT * 0.55 * dt * (p.g > 1 ? 1 : 0.3);
       /* puin stuitert één keer op de vloer — dat verkoopt het gewicht */
       if (p.stuit && p.vy > 0 && solide(tegelOp(Math.floor(p.x / TEGEL), Math.floor((p.y + p.g) / TEGEL)))) {
@@ -1037,20 +1299,42 @@ const Outro = (() => {
     }
     if (hudTekstT > 0) { hudTekstT -= dt; if (hudTekstT <= 0) hudTekst = null; }
 
+    /* de jeugddromen dwarrelen één voor één uit de opengebarsten kast */
+    if (papierWachtrij > 0 && papierBron && Math.random() < dt * 14) {
+      papierWachtrij--;
+      duwPartikel({
+        soort: 'papier', x: papierBron.x + Math.random() * 24, y: papierBron.y + Math.random() * 6,
+        vx: (Math.random() - 0.5) * 26, vy: -34 - Math.random() * 40,
+        t: 2.4 + Math.random(), fase: Math.random() * 6
+      });
+    }
+
     const doelCam = klem(h.x + h.b / 2 - BREED / 2, 0, lvl.kols * TEGEL - BREED);
     camX += (doelCam - camX) * Math.min(1, dt * 7);
     camY = klem(lvl.rijen * TEGEL - HOOG, 0, 999);
   }
 
-  function raakDrone(d, schade) {
+  function raakVijand(d, schade) {
     d.hp -= schade;
-    spawnVonk(d.x + 4, d.y + 4, '#ffd23f', 4);
+    spawnVonk(d.x + 5, d.y + 4, '#ffd23f', 4);
     hitstop = Math.max(hitstop, 0.03);
     if (d.hp <= 0) {
       d.dood = true;
-      popupWachtrij += 3;   /* een drone is drie blokjes administratie */
-      bomWachtrij.push({ px: d.x + 4, py: d.y + 4, straal: 11, t: 0.02 });   /* en gaat er Broforce-gewijs uit */
-      spawnGruis(d.x + 4, d.y + 4, T.MACHINE);
+      if (d.soort === 'kopie') {
+        /* een kopie poeft — meer was het nooit */
+        if (d.ouder) d.ouder.kids = Math.max(0, d.ouder.kids - 1);
+        spawnVonk(d.x + 5, d.y + 4, '#efe9d6', 8);
+        popupWachtrij += 1;
+        sfx('blok', 0.05);
+      } else {
+        popupWachtrij += 3;   /* een machine is drie blokjes administratie */
+        bomWachtrij.push({ px: d.x + 5, py: d.y + 4, straal: d.soort === 'kopieerbot' ? 12 : 11, t: 0.02 });
+        spawnGruis(d.x + 5, d.y + 4, T.MACHINE);
+        /* valt de kopieermachine, dan vallen de kopieën mee uiteen */
+        if (d.soort === 'kopieerbot') for (const k of drones) {
+          if (!k.dood && k.soort === 'kopie' && k.ouder === d) { k.dood = true; spawnVonk(k.x + 5, k.y + 4, '#efe9d6', 8); }
+        }
+      }
     } else sfx('klap', 0.05);
   }
 
@@ -1074,10 +1358,65 @@ const Outro = (() => {
       spawnVonk(c.x + 8, c.y + 8, '#5fd0d8', 10);
       spawnGruis(c.x + 8, c.y + 12, T.GIPS);
       collegas.push({ x: c.x + 4, y: c.y + 8, vx: 0, vy: 0, b: 7, h: 11, opGrond: false, loopT: 0 });
-      hudTekst = collegas.length === 1 ? '"...ZOALS IK DUS ZEI -"' : '"IK ZAT HIER SINDS DE TEAMBUILDING."';
+      const REGELS = ['"...ZOALS IK DUS ZEI -"', '"IK ZAT HIER SINDS DE TEAMBUILDING."', '"MIJN NIETMACHINE. DIE IS VAN MIJ."',
+        '"IS HET AL VIJF UUR?"', '"IK HEB NOOIT IN DE CLOUD GELOOFD."', '"EINDELIJK. DE PRINTER DEED HET TOCH AL NIET."',
+        '"WIE FACTUREERT DIT?"', '"IK GA FRIETEN HALEN."'];
+      hudTekst = REGELS[Math.min(collegas.length - 1, REGELS.length - 1)];
       hudTekstT = 2.4;
       sfx('genees', 0.3);
     }
+  }
+
+  /* de maskers: de twee losgelaten delen van jezelf zitten hier ook vast */
+  const MASKER_NAAM = { slachter: 'DE SLACHTER', gifmagier: 'DE GIFMAGIER', thoverk: 'THOVERK' };
+  const MASKER_REGEL = { slachter: '"NU IS HET HUN BEURT."', gifmagier: '"WE PASSEN ONS AAN. ZOALS ALTIJD."', thoverk: '"IK HEB HET LICHT NOG."' };
+  function volgendMasker() { return Object.keys(HELD_TINT).find(m => maskers.indexOf(m) === -1) || null; }
+  function misschienCelOpen(c, px, py, straal) {
+    if (c.open) return;
+    if (Math.abs(c.x + 8 - px) < straal + 8 && Math.abs(c.y + 12 - py) < straal + 12) {
+      c.open = true;
+      const mk = volgendMasker();
+      if (!mk) return;
+      maskers.push(mk);
+      schud(2); hitstop = Math.max(hitstop, 0.05);
+      spawnVonk(c.x + 8, c.y + 10, HELD_TINT[mk].R, 14);
+      hudTekst = MASKER_NAAM[mk] + ' SLUIT WEER AAN - ' + MASKER_REGEL[mk];
+      hudTekstT = 3.2;
+      sfx('genees', 0.2);
+    }
+  }
+
+  /* de archiefkast "VOORZIENING GETROFFEN": duizenden getypte jeugddromen.
+     Geen enkele tekstregel eromheen — het papier doet het werk. */
+  function misschienDroomOpen(px, py, straal) {
+    const k = droomkast;
+    if (!k || k.open) return;
+    if (Math.abs(k.x + 12 - px) < straal + 12 && Math.abs(k.y + 8 - py) < straal + 10) {
+      k.open = true;
+      schud(2); hitstop = Math.max(hitstop, 0.09);
+      papierWachtrij = 26; papierBron = { x: k.x, y: k.y };
+      const droom = (typeof S !== 'undefined' && S && S.jeugddroom)
+        ? '"' + String(S.jeugddroom).toUpperCase().slice(0, 24) + '"'
+        : 'VOORZIENING GETROFFEN';
+      popups.push({ x: k.x + 12, y: k.y - 10, txt: droom, kleur: '#efe9d6', t: 2.8 });
+      sfx('dood', 0.3);
+    }
+  }
+
+  /* alles wat op een klap kan opengaan, in één beweging */
+  function raakInteracties(px, py, straal) {
+    for (const c of cocons) misschienCoconOpen(c, px, py, straal);
+    for (const c of cellen) misschienCelOpen(c, px, py, straal);
+    if (droomkast) misschienDroomOpen(px, py, straal);
+  }
+
+  function wisselMasker() {
+    if (maskers.length < 2 || staat !== 'spel') return;
+    maskerIdx = (maskerIdx + 1) % maskers.length;
+    const mk = maskers[maskerIdx];
+    spawnVonk(held.x + held.b / 2, held.y + 4, HELD_TINT[mk].R, 8);
+    popup(held.x + held.b / 2, held.y - 8, MASKER_NAAM[mk], HELD_TINT[mk].R);
+    sfx('schitter', 0.1);
   }
 
   /* ---------- tekenen ---------- */
@@ -1140,27 +1479,64 @@ const Outro = (() => {
       for (let i = 0; i < 24; i += 4) { ctx.fillRect(c.x - 2 + ox, c.y + i + oy, 1, 2); ctx.fillRect(c.x + 17 + ox, c.y + i + oy, 1, 2); }
     }
 
+    /* masker-cellen: een deel van jou zit hier nog vast */
+    for (const c of cellen) {
+      if (c.open) continue;
+      const mk = volgendMasker();
+      ctx.fillStyle = '#2a2620'; ctx.fillRect(c.x + ox, c.y + oy, 16, 24);
+      ctx.fillStyle = '#1b1813'; ctx.fillRect(c.x + 2 + ox, c.y + 2 + oy, 12, 20);
+      if (mk) { ctx.globalAlpha = 0.5; tekenSprite('held_sta@' + mk, c.x + 4 + ox, c.y + 9 + oy, false); ctx.globalAlpha = 1; }
+      const knipC = (tijd * 2.4) % 1 < 0.5;
+      ctx.fillStyle = knipC ? (mk ? HELD_TINT[mk].R : '#efe9d6') : '#3a352a';
+      for (let i = 0; i < 16; i += 4) { ctx.fillRect(c.x + i + ox, c.y - 2 + oy, 2, 1); ctx.fillRect(c.x + i + ox, c.y + 25 + oy, 2, 1); }
+      for (let i = 0; i < 24; i += 4) { ctx.fillRect(c.x - 2 + ox, c.y + i + oy, 1, 2); ctx.fillRect(c.x + 17 + ox, c.y + i + oy, 1, 2); }
+    }
+
+    /* de archiefkast VOORZIENING GETROFFEN (weg zodra hij openbarst) */
+    if (droomkast && !droomkast.open) {
+      const k2 = droomkast;
+      ctx.fillStyle = '#6b4d2c'; ctx.fillRect(k2.x + ox, k2.y + oy, 24, 16);
+      ctx.fillStyle = '#4a3218'; ctx.fillRect(k2.x + ox, k2.y + 5 + oy, 24, 1); ctx.fillRect(k2.x + ox, k2.y + 11 + oy, 24, 1);
+      ctx.fillStyle = '#e8dfc4'; ctx.fillRect(k2.x + 4 + ox, k2.y + 2 + oy, 16, 2);
+      ctx.fillStyle = '#26221a'; ctx.fillRect(k2.x + 6 + ox, k2.y + 3 + oy, 12, 1);   /* het doorgehaalde etiket */
+    }
+
     /* collega's in de stoet */
     for (const c of collegas) {
       const fr = (c.loopT % 0.5) < 0.25 ? 'collega1' : 'collega2';
       tekenSprite(fr, c.x - 1 + ox, c.y + oy, c.vx < 0);
     }
 
-    /* drones */
+    /* het machinepark */
     for (const d of drones) {
       if (d.dood) continue;
-      tekenSprite(((tijd * 10) | 0) % 2 ? 'drone1' : 'drone2', d.x + ox, d.y + oy);
+      if (d.soort === 'drone') tekenSprite(((tijd * 10) | 0) % 2 ? 'drone1' : 'drone2', d.x + ox, d.y + oy);
+      else if (d.soort === 'torentje') tekenSprite('torentje', d.x + ox, d.y + oy);
+      else if (d.soort === 'slang') tekenSprite('slang', d.x + ox, d.y + oy, d.richting < 0);
+      else {
+        if (d.soort === 'kopie') ctx.globalAlpha = 0.55;
+        tekenSprite('kopieerbot', d.x - 1 + ox, d.y - 1 + oy, false);
+        ctx.globalAlpha = 1;
+      }
     }
 
-    /* 0u06-kogeltjes */
-    ctx.fillStyle = '#ffd23f';
-    for (const k of kogels) ctx.fillRect(Math.round(k.x + ox) - 2, Math.round(k.y + oy) - 2, 4, 4);
+    /* 0u06-kogeltjes (en de 🙂-variant van de torentjes) */
+    for (const k of kogels) {
+      const kx = Math.round(k.x + ox), ky = Math.round(k.y + oy);
+      ctx.fillStyle = '#ffd23f';
+      if (k.smiley) {
+        ctx.fillRect(kx - 2, ky - 2, 5, 5);
+        ctx.fillStyle = '#26221a';
+        ctx.fillRect(kx - 1, ky - 1, 1, 1); ctx.fillRect(kx + 1, ky - 1, 1, 1);
+        ctx.fillRect(kx - 1, ky + 1, 3, 1);
+      } else ctx.fillRect(kx - 2, ky - 2, 4, 4);
+    }
 
     /* de held (knippert kort na een treffer) */
     const h = held;
     if (h.wachtT <= 0 && (h.raakbaar <= 0 || (tijd * 12 | 0) % 2)) {
       const fr = !h.opGrond ? 'held_spring' : (Math.abs(h.vx) > 1 ? ((h.loopT % 1) < 0.5 ? 'held_loop1' : 'held_loop2') : 'held_sta');
-      tekenSprite(fr, h.x + ox - 1, h.y + oy, h.richting < 0);
+      tekenSprite(fr + '@' + maskers[maskerIdx], h.x + ox - 1, h.y + oy, h.richting < 0);
       /* de bijl-zwaai: één wit sloop-boogje vóór de held */
       if (h.zwaaiT > 0) {
         ctx.fillStyle = '#ffffff';
@@ -1171,8 +1547,9 @@ const Outro = (() => {
       }
     }
 
-    /* de boemerang-bijl */
+    /* de boemerang-bijl + de gifboog */
     if (worp) tekenSprite(((worp.spin | 0) % 2) ? 'bijl1' : 'bijl2', worp.x - 4 + ox, worp.y - 4 + oy, worp.vx < 0);
+    if (gifbal) { ctx.fillStyle = '#79c045'; ctx.fillRect(Math.round(gifbal.x + ox) - 2, Math.round(gifbal.y + oy) - 2, 4, 4); }
 
     /* partikels: eerst rook (achter), dan gruis/vonken, dan vuurballen (voor) */
     for (const p of partikels) {
@@ -1183,6 +1560,7 @@ const Outro = (() => {
     }
     for (const p of partikels) {
       if (p.soort === 'rook' || p.soort === 'vuurbal') continue;
+      if (p.soort === 'papier') { ctx.fillStyle = '#efe9d6'; ctx.fillRect(Math.round(p.x + ox), Math.round(p.y + oy), 3, 2); continue; }
       ctx.fillStyle = p.kleur; ctx.fillRect(Math.round(p.x + ox), Math.round(p.y + oy), p.g, p.g);
     }
     for (const p of partikels) {
@@ -1214,6 +1592,15 @@ const Outro = (() => {
   function renderHud() {
     /* hartjes linksboven */
     for (let i = 0; i < 3; i++) ctx.drawImage(gebakken[i < held.hartjes ? 'hart' : 'hart_leeg'], 4 + i * 7, 4);
+    /* de masker-chips: je herenigde zelven (Q of tik = wisselen) */
+    if (maskers.length > 1) {
+      for (let i = 0; i < maskers.length; i++) {
+        ctx.fillStyle = HELD_TINT[maskers[i]].R;
+        ctx.fillRect(4 + i * 9, 12, 7, 7);
+        if (i === maskerIdx) { ctx.strokeStyle = '#efe9d6'; ctx.lineWidth = 1; ctx.strokeRect(3.5 + i * 9, 11.5, 8, 8); }
+      }
+      tekst(ctx, window.mobiel ? 'TIK' : 'Q', 6 + maskers.length * 9, 13, '#6e6a58');
+    }
     /* de serverhal: AANDEELHOUDERSWAARDE: ∞ — en hij beweegt niet */
     if (hal) {
       const lbl = 'AANDEELHOUDERSWAARDE:';
@@ -1379,7 +1766,7 @@ const Outro = (() => {
     }
 
     /* de stoet aan het kot: de held vooraan, de velen erachter */
-    tekenSprite((e.t % 1) < 0.5 ? 'held_sta' : 'held_loop2', 106, 116, true);
+    tekenSprite(((e.t % 1) < 0.5 ? 'held_sta' : 'held_loop2') + '@' + maskers[maskerIdx], 106, 116, true);
     for (let i = 0; i < e.n; i++) {
       tekenSprite((e.t * 2 + i) % 1 < 0.5 ? 'collega1' : 'collega2', 122 + i * 13, 119, true);
     }
@@ -1441,10 +1828,11 @@ const Outro = (() => {
     if (staat === 'intro') { introT += dt; if (introT >= 7.4) startSpel(); render(); return; }
     if (staat === 'wissel') {
       wisselT += dt;
-      if (!wisselGebouwd && wisselT >= 0.7) { wisselGebouwd = true; wisselLevel(bouwServerhal); }
+      if (!wisselGebouwd && wisselT >= 0.7) { wisselGebouwd = true; wisselLevel(wisselDoel); }
       if (wisselT >= 1.6) {
         staat = 'spel';
-        hudTekst = 'B.A.A.S.: "DAAR BENT U. GA UW GANG."'; hudTekstT = 3.2;
+        if (hal) { hudTekst = 'B.A.A.S.: "DAAR BENT U. GA UW GANG."'; hudTekstT = 3.2; }
+        else { hudTekst = lvl.naam; hudTekstT = 2.4; }
       }
       render(); return;
     }
@@ -1502,18 +1890,18 @@ const Outro = (() => {
     ctx = canvas.getContext('2d');
     schermCtx = schermCanvas.getContext('2d');
 
-    const heldId = (typeof S !== 'undefined' && S && S.held) ? S.held : 'slachter';
-    bakAlles(heldId);
-    lvl = bouwTestVerdieping();
+    const heldId = (typeof S !== 'undefined' && S && S.held && HELD_TINT[S.held]) ? S.held : 'slachter';
+    bakAlles();
+    maskers = [heldId]; maskerIdx = 0;
+    lvlIdx = 0; wisselDoel = 0;
+    lvl = VERDIEPINGEN[0]();
     bakLevel();
 
     held = nieuweHeld();
-    drones = lvl.drones.map(d => ({ x: d.x, y: d.y, x0: d.x, y0: d.y, t: Math.random() * 6, klok: 1 + Math.random(), hp: 2, dood: false }));
-    cocons = lvl.cocons.map(c => ({ x: c.x, y: c.y, open: false }));
-    collegas = []; kogels = []; partikels = []; popups = []; worp = null;
-    ontfactureerd = 0; popupWachtrij = 0; hudTekst = null;
-    bomWachtrij = []; stortWachtrij = [];
-    hal = null; wisselT = 0; wisselGebouwd = false; configStap = 0; configT = 0; epi = null;
+    collegas = [];
+    laadLevelEntiteiten();
+    ontfactureerd = 0; hudTekst = null;
+    wisselT = 0; wisselGebouwd = false; configStap = 0; configT = 0; epi = null;
     camX = klem(held.x - BREED / 2, 0, lvl.kols * TEGEL - BREED); camY = lvl.rijen * TEGEL - HOOG;
     tijd = 0; introT = 0; hitstop = 0; accu = 0;
     toetsen.clear(); aanraking = { stickId: null, stickX0: 0, dx: 0, knoppen: {} };
@@ -1568,14 +1956,15 @@ const Outro = (() => {
 
   function slaOver() { beeindig(); }
 
-  /* DEV: rechtstreeks in de serverhal springen (testen zonder de klim) */
-  function _devHal() {
+  /* DEV: rechtstreeks naar een laag springen (testen zonder de klim) */
+  function _devNiveau(n) {
     if (staat === 'uit') return;
     staat = 'spel';
-    wisselLevel(bouwServerhal);
+    wisselLevel(klem(n | 0, 0, VERDIEPINGEN.length - 1));
   }
+  function _devHal() { _devNiveau(3); }
 
-  return { start, beeindig, slaOver, magSpelen, _devHal, get actief() { return staat !== 'uit'; } };
+  return { start, beeindig, slaOver, magSpelen, _devHal, _devNiveau, get actief() { return staat !== 'uit'; } };
 })();
 window.Outro = Outro;
 
