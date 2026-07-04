@@ -384,7 +384,25 @@ einde alsnog — de run-and-gun-verdiepingen zijn dan inkortbaar tot één.
   hele kolom dondert naar beneden), stuiterend puin, ontploffend
   boemerang-keerpunt, geaggregeerde creditnota's ("−0u48") bij massasloop,
   partikelcap 220/110, en tik-buffers zodat één korte tik altijd vuurt.
-- Nog te doen: **F2** finale-spine (serverhal/∞/paneel/config/epiloog),
-  **F3** content (3 echte verdiepingen, 5 vijandtypes, maskers, callbacks,
-  Codex-herbeleefknop), **F4** glans (chiptune-scene, dither-overgang,
-  sprite-verfijning, popup-aggregatie, mobiel-QA op echt toestel).
+- **F2 — finale-spine: GEBOUWD (04-07).** De lift voert nu naar DE
+  SERVERHAL: B.A.A.S. als in code gebakken mainframe (draaiende tape-reels,
+  lampjesgrid, amber glimlach-CRT), kamervullend en onverwoestbaar; elke
+  treffer geeft "+6" en een droge dankregel ("DIT TELT ALS OVERWERK.
+  (0U06)") onder de ∞-HUD; drones blijven beleefd aanvoeren. Wie zélf stopt
+  met slaan (of na 18s) krijgt het ONDERHOUD-luikje met rode stippellijn.
+  Het configscherm: amber terminal, voorgetypte toegangscode (seed), de
+  jubileumpen-zonder-inkt + fakkelkool-handtekening + tweede handtekening
+  (bevrijde collega, of "DE CONCIERGE" zonder stoet), drie flips
+  (SCHEPPING MAXIMALISEREN / DE VELEN / ONBETAALBAAR), "DEZE WIJZIGING IS
+  NIET FACTUREERBAAR." → reboot-flikker → "EEN ONBETAALBAAR LEVEN BEGINT
+  NU." De epiloog: avondlucht, het gehavende hoofdkantoor waar ramen wárm
+  aangaan, het dampende frietkot, de stoet, Drops per vlag (witte hond /
+  pootafdrukken / niets), de omgekeerde EINDAFREKENING ("TOTAAL ...
+  ONBETAALBAAR") en als allerlaatste woord "NIET-FACTUREERBAAR." →
+  bestaand eindscherm. Plus: auto-hupje over 1-tegel-obstakels,
+  levelwissel-systeem (stoet reist mee), dev-helper `Outro._devHal()`.
+  End-to-end geverifieerd in Chromium, nul fouten.
+- Nog te doen: **F3** content (3 echte verdiepingen, 5 vijandtypes,
+  masker-reïntegratie, alle callbacks incl. jeugddroom-archiefkast,
+  Codex-herbeleefknop), **F4** glans (chiptune-scene, dither-overgang +
+  pixel-zoom, sprite-verfijning, mobiel-QA op echt toestel).

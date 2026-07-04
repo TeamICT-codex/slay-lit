@@ -189,6 +189,16 @@ const Outro = (() => {
       'G...G',
       '.G.G.',
       '..G..'
+    ],
+    hond_wit: [
+      'l.........',
+      'lW.....WW.',
+      '.WWWWWWWWW',
+      '.WWWWWWWzW',
+      '.WWWWWWWW.',
+      '.W..W..W..',
+      '.W..W..W..',
+      '.l..l..l..'
     ]
   };
   /* ---------- 3×5 pixel-font (hoofdletters — alle outro-UI is kapitaal) ---------- */
@@ -221,12 +231,15 @@ const Outro = (() => {
   let staat = 'uit';                            /* uit | intro | spel | klaar */
   let naOutro = null;                           /* callback als de outro eindigt */
   let tikkerAf = null, eigenRaf = 0;
-  let tijd = 0, introT = 0, klaarT = 0;
+  let tijd = 0, introT = 0;
   let hitstop = 0, schudT = 0, schudKracht = 0;
   let camX = 0, camY = 0;
   let held = null, drones = [], kogels = [], cocons = [], collegas = [], worp = null;
   let partikels = [], popups = [], popupWachtrij = 0, popupKlok = 0;
   let bomWachtrij = [], stortWachtrij = [];     /* kettingreacties + instortende kolommen */
+  let hal = null;                               /* serverhal-staat (B.A.A.S., ∞, het paneel) */
+  let wisselT = 0, wisselGebouwd = false;       /* de overgang verdieping → serverhal */
+  let configStap = 0, configT = 0, epi = null;  /* het configscherm + de epiloog */
   let ontfactureerd = 0;                        /* m² kantoor */
   let hudTekst = null, hudTekstT = 0;           /* droge regels (bevrijding, respawn) */
   let toetsen = new Set();
@@ -340,12 +353,188 @@ const Outro = (() => {
 
     return {
       naam: 'V-1 — HET ARCHIEF',
+      soort: 'verdieping',
       kols: B, rijen: H, type, hp,
       spelerStart: { x: 4 * TEGEL, y: (H - 5) * TEGEL },
       drones: [{ x: 31 * TEGEL, y: 6 * TEGEL }, { x: 56 * TEGEL, y: 8 * TEGEL }, { x: 86 * TEGEL, y: 6 * TEGEL }],
       cocons: [{ x: 25 * TEGEL, y: (H - 5) * TEGEL }, { x: 67 * TEGEL, y: (H - 5) * TEGEL }],
       lift: { x: 103 * TEGEL, y: (H - 8) * TEGEL, b: 4 * TEGEL, h: 5 * TEGEL }
     };
+  }
+
+  /* ============================================================
+     DE SERVERHAL — het gevecht dat geen gevecht is. B.A.A.S. staat
+     kamervullend en ongeschonden tussen het puin; elke treffer telt
+     zichtbaar OP bij AANDEELHOUDERSWAARDE: ∞ (de tutorial-les, nu
+     gevoeld). Wie zélf stopt met slaan, krijgt het onderhoudspaneel.
+     ============================================================ */
+  function bouwServerhal() {
+    const B = 46, H = 22;
+    const type = new Uint8Array(B * H);
+    const hp = new Uint8Array(B * H);
+    const zet = (x, y, t) => {
+      if (x < 0 || y < 0 || x >= B || y >= H) return;
+      type[y * B + x] = t; hp[y * B + x] = TEGEL_HP[t];
+    };
+    const vul = (x0, y0, x1, y1, t) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) zet(x, y, t); };
+
+    vul(0, 0, B - 1, 0, T.BETON);
+    vul(0, H - 1, B - 1, H - 1, T.BETON);
+    vul(0, H - 2, B - 1, H - 2, T.BETON);
+    vul(0, 0, 1, H - 1, T.BETON);
+    vul(B - 2, 0, B - 1, H - 1, T.BETON);
+
+    /* puin van de sloop hierboven: nog wat sloopbaars voor wie wil */
+    for (const px of [6, 7, 11, 15, 16, 21, 24]) zet(px, H - 3, T.MEUBEL);
+    zet(11, H - 4, T.KAST); zet(16, H - 4, T.KAST);
+
+    /* de voetafdruk van B.A.A.S. is beton: kamervullend, onverwoestbaar */
+    vul(29, 9, 42, H - 3, T.BETON);
+
+    return {
+      naam: 'DE SERVERHAL',
+      soort: 'hal',
+      kols: B, rijen: H, type, hp,
+      spelerStart: { x: 4 * TEGEL, y: (H - 5) * TEGEL },
+      drones: [], cocons: [], lift: null,
+      baas: { x: 29 * TEGEL, y: 9 * TEGEL, b: 14 * TEGEL, h: 10 * TEGEL },
+      luik: { x: 27 * TEGEL - 10, y: (H - 5) * TEGEL + 4, b: 10, h: 20 }
+    };
+  }
+
+  /* B.A.A.S. zelf: in code gebakken mainframe (2 frames — draaiende
+     tape-reels, verschuivende lampjes, en op de CRT: een glimlach). */
+  function bakBaas() {
+    const frames = [];
+    for (let f = 0; f < 2; f++) {
+      const c = document.createElement('canvas');
+      c.width = 112; c.height = 80;
+      const x = c.getContext('2d');
+      x.fillStyle = '#20262b'; x.fillRect(0, 0, 112, 80);
+      for (let k = 0; k < 4; k++) { x.fillStyle = '#2c343b'; x.fillRect(k * 28 + 1, 2, 26, 74); }
+      x.fillStyle = '#12161a';
+      for (let k = 0; k <= 4; k++) x.fillRect(Math.min(k * 28, 110), 0, 2, 80);
+      /* tape-reels op kast 1: donkere schijf, witte ring, draaiende spaken */
+      for (const cx of [14, 42]) {
+        x.fillStyle = '#0e1114'; x.beginPath(); x.arc(cx, 18, 9, 0, 7); x.fill();
+        x.strokeStyle = '#cfc0a0'; x.lineWidth = 1.6;
+        x.beginPath(); x.arc(cx, 18, 8, 0, 7); x.stroke();
+        x.beginPath();
+        if (f === 0) { x.moveTo(cx - 7, 18); x.lineTo(cx + 7, 18); x.moveTo(cx, 11); x.lineTo(cx, 25); }
+        else { x.moveTo(cx - 5, 13); x.lineTo(cx + 5, 23); x.moveTo(cx + 5, 13); x.lineTo(cx - 5, 23); }
+        x.stroke();
+      }
+      /* lampjesgrid op kast 1-2 onder de reels */
+      for (let r = 0; r < 4; r++) for (let i = 0; i < 6; i++) {
+        const w = (r * 7 + i * 3 + f * 2) % 6;
+        x.fillStyle = w < 2 ? '#79c045' : w === 2 ? '#ffb347' : '#171d21';
+        x.fillRect(6 + i * 8, 34 + r * 8, 4, 4);
+      }
+      /* de CRT: amber glimlach — het Glimlachquotum, thuisgekomen */
+      x.fillStyle = '#0d1206'; x.fillRect(62, 12, 44, 30);
+      x.fillStyle = '#ffb347';
+      x.fillRect(74, 20, 3, 4); x.fillRect(91, 20, 3, 4);
+      x.fillRect(75, 30, 18, 2); x.fillRect(73, 28, 3, 2); x.fillRect(92, 28, 3, 2);
+      x.fillStyle = 'rgba(255,179,71,0.10)'; x.fillRect(62, 12 + (f ? 8 : 2), 44, 3);
+      /* ventilatie + kabels onderaan */
+      x.fillStyle = '#0e1114';
+      for (let vy = 58; vy < 76; vy += 4) x.fillRect(62, vy, 44, 2);
+      for (let vx = 6; vx < 56; vx += 7) x.fillRect(vx, 70, 3, 10);
+      frames.push(c);
+    }
+    return frames;
+  }
+
+  /* B.A.A.S.'s droge dank per salvo — het geweld wordt beleefd geboekt */
+  const BAAS_REGELS = [
+    '"DANK VOOR UW INZET."',
+    '"UW ENGAGEMENT IS GENOTEERD."',
+    '"DIT TELT ALS OVERWERK. (0U06)"',
+    '"MOOI. NOG EENS."'
+  ];
+
+  /* een treffer op B.A.A.S.: ∞ beweegt niet, de teller wél omhoog */
+  function raakBaasPunt(px, py) {
+    if (!hal || !lvl.baas || staat !== 'spel') return false;
+    const b = lvl.baas;
+    if (px < b.x - 8 || px > b.x + b.b + 8 || py < b.y - 8 || py > b.y + b.h + 8) return false;
+    hal.baasHits++; hal.laatsteHit = tijd; hal.flitsT = 0.1;
+    popup(b.x + 12 + Math.random() * (b.b - 24), b.y + 6 + Math.random() * 24, '+6', '#ffd23f');
+    sfx('schitter', 0.12);
+    if (hal.baasHits % 4 === 0) {
+      hal.regel = BAAS_REGELS[((hal.baasHits / 4 - 1) | 0) % BAAS_REGELS.length];
+      hal.regelT = 2.6;
+    }
+    return true;
+  }
+
+  /* levelwissel: de stoet bevrijde collega's reist mee naar de hal */
+  function wisselLevel(bouw) {
+    const stoet = collegas.length;
+    lvl = bouw();
+    bakLevel();
+    held.x = lvl.spelerStart.x; held.y = lvl.spelerStart.y;
+    held.vx = held.vy = 0; held.hartjes = 3; held.raakbaar = 1; held.wachtT = 0;
+    drones = lvl.drones.map(d => ({ x: d.x, y: d.y, x0: d.x, y0: d.y, t: Math.random() * 6, klok: 1 + Math.random(), hp: 2, dood: false }));
+    cocons = lvl.cocons.map(c => ({ x: c.x, y: c.y, open: false }));
+    collegas = [];
+    for (let i = 0; i < stoet; i++) collegas.push({ x: held.x - 12 * (i + 1), y: held.y + 3, vx: 0, vy: 0, b: 7, h: 11, opGrond: false, loopT: 0 });
+    kogels = []; partikels = []; popups = []; popupWachtrij = 0; worp = null;
+    bomWachtrij = []; stortWachtrij = [];
+    camX = klem(held.x - BREED / 2, 0, lvl.kols * TEGEL - BREED);
+    hal = lvl.soort === 'hal'
+      ? { t: 0, baasHits: 0, laatsteHit: -99, regel: null, regelT: 0, flitsT: 0, paneel: false, spawnKlok: 2.5, frames: bakBaas() }
+      : null;
+  }
+
+  function startWissel() {
+    staat = 'wissel'; wisselT = 0; wisselGebouwd = false;
+    sfx('win', 0.5);
+  }
+  function startConfig() {
+    staat = 'config'; configStap = 0; configT = 0;
+    drones = []; kogels = []; popups = []; partikels = []; hudTekst = null;
+    if (window.Klank && Klank.muziek) { try { Klank.muziek('stil'); } catch (e) {} }
+    sfx('blok', 0.2);
+  }
+  function configVolgende() {
+    if (configStap >= 6) return;
+    configStap++; configT = 0;
+    sfx(configStap === 6 ? 'energie' : 'blok', 0.05);
+  }
+
+  /* Drops-vlaggen, defensief gelezen (de outro moet ook zonder run draaien) */
+  function dropsWitActief() {
+    try { if (typeof isOntgrendeld === 'function' && isOntgrendeld('drops_wit')) return true; } catch (e) {}
+    return !!(typeof Codex !== 'undefined' && Codex && Array.isArray(Codex.metgezellen) && Codex.metgezellen.includes('drops_wit'));
+  }
+  function dropsGevallen() {
+    return !!(typeof Codex !== 'undefined' && Codex && Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops'));
+  }
+
+  function startEpiloog() {
+    staat = 'epiloog';
+    const dots = (links, rechts) => {
+      let s = links + ' ';
+      while (s.length + rechts.length + 1 < 36) s += '.';
+      return s + ' ' + rechts;
+    };
+    epi = {
+      t: 0, spoed: false, klaar: false,
+      hond: dropsWitActief() ? 'wit' : (dropsGevallen() ? 'poot' : null),
+      n: collegas.length,
+      regels: [
+        'EINDAFREKENING - B.A.A.S.',
+        '',
+        dots('1 VERDIEPING', 'AFGESCHREVEN'),
+        dots(collegas.length + " COLLEGA'S", 'BEVRIJD'),
+        dots('1 SCHAKELAAR', '0U06'),
+        dots('TOTAAL', 'ONBETAALBAAR')
+      ]
+    };
+    epi.totaalTekens = epi.regels.join('').length;
+    partikels = []; popups = [];
+    if (window.Klank && Klank.muziek) { try { Klank.muziek('stil'); } catch (e) {} }
   }
 
   const tegelOp = (tx, ty) => (tx < 0 || ty < 0 || tx >= lvl.kols || ty >= lvl.rijen) ? T.BETON : lvl.type[ty * lvl.kols + tx];
@@ -423,11 +612,21 @@ const Outro = (() => {
       bx.beginPath(); bx.moveTo(x * TEGEL - 6, TEGEL + 4); bx.lineTo(x * TEGEL + 30, TEGEL + 4);
       bx.lineTo(x * TEGEL + 42, bgCanvas.height - 16); bx.lineTo(x * TEGEL - 18, bgCanvas.height - 16); bx.fill();
     }
-    /* de goederenlift (uitgang) op de achtergrond */
+    /* de goederenlift (uitgang) op de achtergrond — de serverhal heeft er geen */
     const L = lvl.lift;
-    bx.fillStyle = '#3f3c30'; bx.fillRect(L.x - 2, L.y - 2, L.b + 4, L.h + 2);
-    bx.fillStyle = '#181510'; bx.fillRect(L.x, L.y, L.b, L.h);
-    bx.fillStyle = '#ffb347'; bx.fillRect(L.x + L.b / 2 - 4, L.y - 6, 8, 3);
+    if (L) {
+      bx.fillStyle = '#3f3c30'; bx.fillRect(L.x - 2, L.y - 2, L.b + 4, L.h + 2);
+      bx.fillStyle = '#181510'; bx.fillRect(L.x, L.y, L.b, L.h);
+      bx.fillStyle = '#ffb347'; bx.fillRect(L.x + L.b / 2 - 4, L.y - 6, 8, 3);
+    }
+    /* de serverhal: kabelgoten en ventilatieschachten op de achtergrond */
+    if (lvl.soort === 'hal') {
+      bx.fillStyle = '#191510';
+      for (let x = 4; x < lvl.kols - 4; x += 9) bx.fillRect(x * TEGEL, 2 * TEGEL, 4, (lvl.rijen - 4) * TEGEL);
+      bx.fillStyle = '#26211a';
+      bx.fillRect(2 * TEGEL, 3 * TEGEL, (lvl.kols - 4) * TEGEL, 3);
+      bx.fillRect(2 * TEGEL, 3 * TEGEL + 6, (lvl.kols - 4) * TEGEL, 2);
+    }
   }
 
   /* ---------- tegels slopen (het hart van de outro) ---------- */
@@ -477,6 +676,7 @@ const Outro = (() => {
       if (!d.dood && Math.hypot(d.x + 4 - px, d.y + 4 - py) < straal + 8) raakDrone(d, 2);
     }
     for (const c of cocons) misschienCoconOpen(c, px, py, straal + 4);
+    raakBaasPunt(px, py);
     schud(3); hitstop = Math.max(hitstop, 0.055);
     sfx('zwareklap', 0.04); sfx('dood', 0.12);
     if (window.Klank && Klank.duck) { try { Klank.duck(0.55, 0.4); } catch (e) {} }
@@ -576,10 +776,23 @@ const Outro = (() => {
     if (staat === 'uit') return;
     const k = e.key.toLowerCase();
     if (k === 'escape') { e.preventDefault(); slaOver(); return; }
-    if (GAME_TOETSEN.indexOf(k) !== -1) {
+    const spelToets = GAME_TOETSEN.indexOf(k) !== -1;
+    /* config & epiloog: elke druk is "verder" (Enter mag daar ook) */
+    if (staat === 'config') {
+      if (!e.repeat && (spelToets || k === 'enter')) { e.preventDefault(); configVolgende(); }
+      return;
+    }
+    if (staat === 'epiloog') {
+      if (!e.repeat && (spelToets || k === 'enter')) {
+        e.preventDefault();
+        if (epi && epi.klaar) beeindig(); else if (epi) epi.spoed = true;
+      }
+      return;
+    }
+    if (staat === 'wissel') { if (spelToets) e.preventDefault(); return; }
+    if (spelToets) {
       e.preventDefault();
       if (staat === 'intro' && !e.repeat) { introT = Math.max(introT, 6.2); return; }   /* intro doorklikken */
-      if (staat === 'klaar' && !e.repeat && klaarT > 0.8) { beeindig(); return; }
       if (!e.repeat && (k === 'w' || k === 'arrowup' || k === ' ')) held && (held.sprongBuf = SPRONGBUFFER);
       if (!e.repeat && (k === 'j' || k === 'x')) vuurBuf = 0.1;
       if (!e.repeat && (k === 'k' || k === 'z')) worpBuf = 0.15;
@@ -613,7 +826,9 @@ const Outro = (() => {
     e.preventDefault();
     if (schermCanvas.setPointerCapture) { try { schermCanvas.setPointerCapture(e.pointerId); } catch (err) {} }
     if (staat === 'intro') { introT = Math.max(introT, 6.2); return; }
-    if (staat === 'klaar' && klaarT > 0.8) { beeindig(); return; }
+    if (staat === 'config') { configVolgende(); return; }
+    if (staat === 'epiloog') { if (epi && epi.klaar) beeindig(); else if (epi) epi.spoed = true; return; }
+    if (staat === 'wissel') return;
     const p = canvasPunt(e);
     const z = knopZones();
     for (const naam in z) {
@@ -658,7 +873,17 @@ const Outro = (() => {
         h.sprongBuf -= dt;
         if (h.coyote > 0) { h.vy = -SPRONGKRACHT; h.coyote = 0; h.sprongBuf = 0; sfx('energie', 0.15); }
       }
+      const wilLopen = inp.links || inp.rechts;
       beweeg(h, dt);
+      /* een bureau van één tegel hoog mag de vaart niet breken: auto-hupje
+         (alleen als de weg erboven vrij is — echte muren blijven muren) */
+      if (h.opGrond && wilLopen && h.vx === 0) {
+        const voorX = h.richting > 0 ? Math.floor((h.x + h.b + 1) / TEGEL) : Math.floor((h.x - 2) / TEGEL);
+        const voetRij = Math.floor((h.y + h.h - 1) / TEGEL);
+        const vrijBoven = !solide(tegelOp(voorX, voetRij - 1)) && !solide(tegelOp(voorX, voetRij - 2)) &&
+          !solide(tegelOp(Math.floor((h.x + h.b / 2) / TEGEL), Math.floor(h.y / TEGEL) - 1));
+        if (solide(tegelOp(voorX, voetRij)) && vrijBoven) h.vy = -150;
+      }
       if (h.vx !== 0 && h.opGrond) h.loopT += dt * 9; else if (h.opGrond) h.loopT = 0;
       if (h.raakbaar > 0) h.raakbaar -= dt;
 
@@ -673,6 +898,7 @@ const Outro = (() => {
           if (!d.dood && Math.abs(d.x + 4 - rx) < 12 && Math.abs(d.y + 4 - ry) < 12) raakDrone(d, 1);
         }
         for (const c of cocons) misschienCoconOpen(c, rx, ry, 12);
+        raakBaasPunt(rx, ry);
         if (!geraakt) sfx('smeed', 0.12);
       }
       /* DE BIJL — worp: boemerang die verder sloopt en terugkeert */
@@ -682,10 +908,16 @@ const Outro = (() => {
         sfx('energie', 0.2);
       }
 
-      /* de lift bereikt = einde van de testverdieping */
+      /* de lift bereikt = omhoog, naar de serverhal */
       const L = lvl.lift;
-      if (h.x + h.b > L.x && h.x < L.x + L.b && h.y + h.h > L.y && h.y < L.y + L.h) {
-        staat = 'klaar'; klaarT = 0; sfx('win', 0.5);
+      if (L && h.x + h.b > L.x && h.x < L.x + L.b && h.y + h.h > L.y && h.y < L.y + L.h) {
+        startWissel();
+      }
+      /* het paneel is open én je staat ervoor → het configscherm */
+      if (hal && hal.paneel && h.x + h.b > lvl.luik.x - 3 && h.x < lvl.luik.x + lvl.luik.b + 3 &&
+          h.y + h.h > lvl.luik.y - 2 && h.y < lvl.luik.y + lvl.luik.h + 4) {
+        startConfig();
+        return;
       }
     }
 
@@ -704,9 +936,11 @@ const Outro = (() => {
       }
       if (worp) {
         worp.y += Math.sin(worp.spin * 0.5) * 6 * dt;
+        worp.baasKlok = (worp.baasKlok || 0) - dt;
         sloopGebied(worp.x, worp.y, 6, 1);
         for (const d of drones) if (!d.dood && Math.abs(d.x + 4 - worp.x) < 10 && Math.abs(d.y + 4 - worp.y) < 10) raakDrone(d, 2);
         for (const c of cocons) misschienCoconOpen(c, worp.x, worp.y, 10);
+        if (worp.baasKlok <= 0 && raakBaasPunt(worp.x, worp.y)) worp.baasKlok = 0.3;
       }
     }
 
@@ -749,6 +983,25 @@ const Outro = (() => {
       if (c.opGrond && Math.abs(c.x - oudX) < 0.2 && c.vx !== 0) c.vy = -180;   /* hupje over een obstakel */
       if (Math.abs(c.x - h.x) > BREED) { c.x = h.x - 12; c.y = h.y; c.vy = 0; }  /* te ver achter → bijtrekken */
       c.loopT += Math.abs(c.vx) > 1 ? dt * 8 : 0;
+    }
+
+    /* — de serverhal: het systeem verdedigt zichzelf beleefd — */
+    if (hal) {
+      hal.t += dt;
+      if (hal.regelT > 0) hal.regelT -= dt;
+      if (hal.flitsT > 0) hal.flitsT -= dt;
+      hal.spawnKlok -= dt;
+      if (!hal.paneel && hal.spawnKlok <= 0 && drones.filter(d => !d.dood).length < 3) {
+        hal.spawnKlok = 4;
+        const dx = (5 + Math.random() * 20) * TEGEL;
+        drones.push({ x: dx, y: 3 * TEGEL, x0: dx, y0: 3 * TEGEL, t: Math.random() * 6, klok: 1, hp: 2, dood: false });
+      }
+      /* wie zélf stopt met slaan, krijgt het paneel (vangnet: na 18s sowieso) */
+      if (!hal.paneel && ((hal.baasHits >= 4 && tijd - hal.laatsteHit > 2.5) || hal.t > 18)) {
+        hal.paneel = true;
+        schud(2); sfx('schitter', 0.1);
+        spawnVonk(lvl.luik.x + 5, lvl.luik.y + 10, '#ffb347', 10);
+      }
     }
 
     /* — kettingreacties & instortingen — */
@@ -848,9 +1101,32 @@ const Outro = (() => {
 
     ctx.fillStyle = '#14110c'; ctx.fillRect(0, 0, BREED, HOOG);
     if (staat === 'intro') { renderIntro(); presenteer(); return; }
+    if (staat === 'config') { renderConfig(); presenteer(); return; }
+    if (staat === 'epiloog') { renderEpiloog(); presenteer(); return; }
 
     ctx.drawImage(bgCanvas, ox, oy);
     ctx.drawImage(tegelCanvas, ox, oy);
+
+    /* B.A.A.S. — kamervullend, ongeschonden, opgewekt */
+    if (hal && lvl.baas) {
+      const B2 = lvl.baas;
+      ctx.drawImage(hal.frames[((tijd * 4) | 0) % 2], B2.x + ox, B2.y + oy);
+      if (hal.flitsT > 0) { ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(B2.x + ox, B2.y + oy, B2.b, B2.h); }
+      if (hal.regelT > 0 && hal.regel) {
+        tekst(ctx, hal.regel, B2.x + B2.b / 2 - tekstBreedte(hal.regel) / 2 + ox, B2.y - 10 + oy, '#79c045');
+      }
+      /* het onderhoudsluikje, omkaderd met de rode stippellijn (het foto-kader) */
+      if (hal.paneel) {
+        const L2 = lvl.luik;
+        ctx.fillStyle = '#181510'; ctx.fillRect(L2.x + ox, L2.y + oy, L2.b, L2.h);
+        ctx.fillStyle = '#ffb347'; ctx.fillRect(L2.x + 2 + ox, L2.y + 9 + oy, 2, 3);
+        const knip2 = (tijd * 2) % 1 < 0.5;
+        ctx.fillStyle = knip2 ? '#d43d2a' : '#8f1f1c';
+        for (let i = 0; i < L2.b; i += 4) { ctx.fillRect(L2.x + i + ox, L2.y - 2 + oy, 2, 1); ctx.fillRect(L2.x + i + ox, L2.y + L2.h + 1 + oy, 2, 1); }
+        for (let i = 0; i < L2.h; i += 4) { ctx.fillRect(L2.x - 2 + ox, L2.y + i + oy, 1, 2); ctx.fillRect(L2.x + L2.b + 1 + ox, L2.y + i + oy, 1, 2); }
+        tekst(ctx, 'ONDERHOUD', L2.x + L2.b / 2 - tekstBreedte('ONDERHOUD') / 2 + ox, L2.y - 9 + oy, '#cfc0a0');
+      }
+    }
 
     /* cocons: rode stippellijn (het foto-kader uit de proloog) */
     for (const c of cocons) {
@@ -925,19 +1201,38 @@ const Outro = (() => {
     for (const p of popups) tekst(ctx, p.txt, Math.round(p.x + ox) - tekstBreedte(p.txt) / 2, Math.round(p.y + oy), p.kleur);
 
     renderHud();
-    if (staat === 'klaar') renderKlaar();
+    /* de levelwissel: uitfaden, omkleden, weer infaden */
+    if (staat === 'wissel') {
+      const a = !wisselGebouwd ? klem(wisselT / 0.6, 0, 1) : klem(1 - (wisselT - 0.7) / 0.8, 0, 1);
+      ctx.fillStyle = 'rgba(6,5,3,' + a.toFixed(2) + ')';
+      ctx.fillRect(0, 0, BREED, HOOG);
+      if (wisselT > 0.4 && wisselT < 1.2) tekst(ctx, 'NAAR BOVEN.', BREED / 2 - tekstBreedte('NAAR BOVEN.') / 2, 86, '#cfc0a0');
+    }
     presenteer();
   }
 
   function renderHud() {
     /* hartjes linksboven */
     for (let i = 0; i < 3; i++) ctx.drawImage(gebakken[i < held.hartjes ? 'hart' : 'hart_leeg'], 4 + i * 7, 4);
-    /* de ONTFACTUREERD-teller: sloop = administratie terugdraaien */
+    /* de serverhal: AANDEELHOUDERSWAARDE: ∞ — en hij beweegt niet */
+    if (hal) {
+      const lbl = 'AANDEELHOUDERSWAARDE:';
+      const kleur = hal.flitsT > 0 ? '#ffffff' : '#ffd23f';
+      const x0 = BREED / 2 - (tekstBreedte(lbl) + 13) / 2;
+      tekst(ctx, lbl, x0, 5, kleur);
+      const ix = x0 + tekstBreedte(lbl) + 7;
+      ctx.strokeStyle = kleur; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(ix, 7.5, 2.3, 0, 7); ctx.stroke();
+      ctx.beginPath(); ctx.arc(ix + 4.2, 7.5, 2.3, 0, 7); ctx.stroke();
+    }
+    /* de ONTFACTUREERD-teller: sloop = administratie terugdraaien
+       (in de hal een regel lager, onder de ∞-meter) */
+    const regY = hal ? 13 : 5;
     const reg = 'ONTFACTUREERD: ' + Math.floor(ontfactureerd) + ' M2 KANTOOR';
-    tekst(ctx, reg, BREED - 4 - tekstBreedte(reg), 5, '#cfc0a0');
+    tekst(ctx, reg, BREED - 4 - tekstBreedte(reg), regY, '#cfc0a0');
     if (collegas.length) {
       const st = 'DE VELEN: ' + collegas.length;
-      tekst(ctx, st, BREED - 4 - tekstBreedte(st), 12, '#5fd0d8');
+      tekst(ctx, st, BREED - 4 - tekstBreedte(st), regY + 7, '#5fd0d8');
     }
     if (hudTekst) {
       const b = tekstBreedte(hudTekst);
@@ -992,20 +1287,131 @@ const Outro = (() => {
     }
   }
 
-  function renderKlaar() {
-    ctx.fillStyle = 'rgba(8,6,4,' + klem(klaarT, 0, 0.78) + ')';
-    ctx.fillRect(0, 0, BREED, HOOG);
-    if (klaarT > 0.5) {
-      tekst(ctx, 'EINDE TESTVERDIEPING', BREED / 2 - tekstBreedte('EINDE TESTVERDIEPING', 2) / 2, 60, '#ffb347', 2);
-      const r1 = 'ONTFACTUREERD: ' + Math.floor(ontfactureerd) + ' M2 KANTOOR';
-      const r2 = 'DE VELEN: ' + collegas.length + ' / ' + cocons.length;
-      tekst(ctx, r1, BREED / 2 - tekstBreedte(r1) / 2, 86, '#cfc0a0');
-      tekst(ctx, r2, BREED / 2 - tekstBreedte(r2) / 2, 96, '#5fd0d8');
-      tekst(ctx, '(FASE 1 - FEEL-PROTOTYPE)', BREED / 2 - tekstBreedte('(FASE 1 - FEEL-PROTOTYPE)') / 2, 112, '#6e6a58');
+  /* ---------- het configscherm: de anticlimax die alles beslecht ---------- */
+  const CONFIG_RIJEN = [
+    { label: 'DOELFUNCTIE', oud: 'WINSTMAXIMALISATIE', nieuw: 'SCHEPPING MAXIMALISEREN' },
+    { label: 'BEGUNSTIGDE', oud: 'DE AANDEELHOUDER', nieuw: 'DE VELEN' },
+    { label: 'WAARDE VAN EEN MENS', oud: '0 - AFGESCHREVEN', nieuw: 'ONBETAALBAAR' }
+  ];
+  function renderConfig() {
+    ctx.fillStyle = '#060503'; ctx.fillRect(0, 0, BREED, HOOG);
+    /* de reboot: eerst een korte flikker, dan de ene zin */
+    if (configStap >= 6) {
+      if (configT < 0.5 && ((configT * 18) | 0) % 2) { ctx.fillStyle = '#141008'; ctx.fillRect(0, 0, BREED, HOOG); return; }
+      if (configT > 0.7) {
+        const r = 'EEN ONBETAALBAAR LEVEN BEGINT NU.';
+        tekst(ctx, r, BREED / 2 - tekstBreedte(r) / 2, 86, '#ffb347');
+      }
+      return;
     }
-    if (klaarT > 1.2 && ((klaarT * 2) | 0) % 2) {
+    const A = '#ffb347', GRIJS = '#6e6a58', WIT = '#efe9d6';
+    ctx.strokeStyle = 'rgba(255,179,71,0.35)'; ctx.lineWidth = 1;
+    ctx.strokeRect(8.5, 8.5, BREED - 17, HOOG - 17);
+    tekst(ctx, 'B.A.A.S. V8.7 - CONFIGURATIE', 16, 16, A);
+    tekst(ctx, 'LAATSTE WIJZIGING: 25 JAAR GELEDEN.', 16, 26, GRIJS);
+    tekst(ctx, 'DOOR: U.', 16, 34, A);
+    /* de toegangscode staat al voorgetypt — hij kent u beter dan uzelf */
+    const seed = (typeof S !== 'undefined' && S && S.seed) ? String(S.seed).toUpperCase() : '0042';
+    const cursor = configStap === 0 && ((tijd * 2) | 0) % 2 ? '_' : '';
+    tekst(ctx, 'TOEGANGSCODE: ' + seed + cursor, 16, 48, WIT);
+    if (configStap >= 1) {
+      tekst(ctx, 'TOEGANG VERLEEND.', 16, 56, '#79c045');
+      tekst(ctx, collegas.length ? 'TWEEDE HANDTEKENING: EEN BEVRIJDE COLLEGA.' : 'TWEEDE HANDTEKENING: DE CONCIERGE.', 16, 66, GRIJS);
+      tekst(ctx, 'UW JUBILEUMPEN GAF GEEN INKT.', 16, 74, GRIJS);
+      tekst(ctx, 'GETEKEND MET DE KOOL VAN UW FAKKEL.', 16, 82, WIT);
+    }
+    for (let i = 0; i < 3; i++) {
+      const rij = CONFIG_RIJEN[i], y = 98 + i * 10;
+      const om = configStap >= i + 2;
+      tekst(ctx, rij.label + ':', 16, y, GRIJS);
+      const vx = 16 + tekstBreedte(rij.label + ': ');
+      if (om) tekst(ctx, rij.nieuw, vx, y, A);
+      else tekst(ctx, '[ ' + rij.oud + ' ]', vx, y, configStap === i + 1 ? WIT : GRIJS);
+    }
+    if (configStap >= 5) {
+      tekst(ctx, 'WEET U HET ZEKER?', 16, 134, WIT);
+      tekst(ctx, 'DEZE WIJZIGING IS NIET FACTUREERBAAR.', 16, 142, GRIJS);
+      if (((tijd * 2) | 0) % 2) tekst(ctx, '[ OPSLAAN EN OPNIEUW OPSTARTEN (0U06) ]', 16, 154, A);
+    } else {
       const hint = window.mobiel ? 'TIK OM VERDER TE GAAN' : 'DRUK OP EEN TOETS';
-      tekst(ctx, hint, BREED / 2 - tekstBreedte(hint) / 2, 140, '#6e6a58');
+      if (((tijd * 1.6) | 0) % 2) tekst(ctx, hint, BREED - 16 - tekstBreedte(hint), HOOG - 16, GRIJS);
+    }
+  }
+
+  /* ---------- de epiloog: het frietkot, de stoet, de omgekeerde factuur ---------- */
+  function renderEpiloog() {
+    const e = epi; if (!e) return;
+    /* avondlucht in banden, gloed aan de horizon */
+    const banden = [['#141026', 0, 58], ['#241634', 58, 92], ['#4a2420', 92, 116], ['#7a3c22', 116, 130]];
+    for (const [k, y0, y1] of banden) { ctx.fillStyle = k; ctx.fillRect(0, y0, BREED, y1 - y0); }
+    ctx.fillStyle = '#191410'; ctx.fillRect(0, 130, BREED, HOOG - 130);
+    ctx.fillStyle = '#241d14'; ctx.fillRect(0, 130, BREED, 3);
+
+    /* het halfgesloopte hoofdkantoor: gehavende toren, ramen die wárm aangaan */
+    for (let cx = 205; cx < 300; cx += 8) {
+      const hgt = 100 - ((cx * 13) % 4) * 9 - (cx > 268 ? 22 : 0);
+      ctx.fillStyle = '#0f0d0a'; ctx.fillRect(cx, 130 - hgt, 8, hgt);
+    }
+    for (let wy = 46; wy < 118; wy += 12) for (let wx = 210; wx < 292; wx += 12) {
+      if ((wx * 7 + wy * 3) % 11 < 3 && e.t > 3 + ((wx + wy) % 6) * 0.7) {
+        ctx.fillStyle = '#ffb347'; ctx.fillRect(wx, wy, 4, 5);
+      }
+    }
+    /* rook uit de bres */
+    for (let i = 0; i < 3; i++) {
+      const fase = (e.t * 7 + i * 16) % 46;
+      ctx.fillStyle = 'rgba(90,84,70,' + (0.32 * (1 - fase / 46)).toFixed(2) + ')';
+      ctx.beginPath(); ctx.arc(250 + i * 9 + fase * 0.2, 34 - fase * 0.7, 3 + fase / 9, 0, 7); ctx.fill();
+    }
+
+    /* het frietkot — de laatste eerlijke plek, licht áán */
+    ctx.fillStyle = 'rgba(255,210,63,0.07)'; ctx.beginPath(); ctx.arc(70, 118, 44, 0, 7); ctx.fill();
+    ctx.fillStyle = '#4a3320'; ctx.fillRect(38, 96, 64, 34);
+    for (let i = 0; i < 8; i++) { ctx.fillStyle = i % 2 ? '#efe9d6' : '#c9302c'; ctx.fillRect(38 + i * 8, 90, 8, 7); }
+    ctx.fillStyle = '#ffd23f'; ctx.fillRect(46, 104, 48, 16);
+    ctx.fillStyle = '#33251a'; ctx.fillRect(52, 82, 7, 9);
+    tekst(ctx, 'FRIET', 60, 76, '#ffd23f');
+    /* damp uit de schouw */
+    for (let i = 0; i < 3; i++) {
+      const fase = (e.t * 9 + i * 13) % 40;
+      ctx.fillStyle = 'rgba(207,192,160,' + (0.3 * (1 - fase / 40)).toFixed(2) + ')';
+      ctx.beginPath(); ctx.arc(55 + Math.sin(e.t + i) * 3, 80 - fase * 0.8, 2 + fase / 10, 0, 7); ctx.fill();
+    }
+
+    /* de stoet aan het kot: de held vooraan, de velen erachter */
+    tekenSprite((e.t % 1) < 0.5 ? 'held_sta' : 'held_loop2', 106, 116, true);
+    for (let i = 0; i < e.n; i++) {
+      tekenSprite((e.t * 2 + i) % 1 < 0.5 ? 'collega1' : 'collega2', 122 + i * 13, 119, true);
+    }
+    /* Drops, per vlag: de witte hond zit ernaast — of alleen zijn spoor */
+    if (e.hond === 'wit') tekenSprite('hond_wit', 92, 122, false);
+    else if (e.hond === 'poot') {
+      ctx.fillStyle = 'rgba(239,233,214,0.75)';
+      for (let i = 0; i < 8; i++) {
+        if (e.t > 2 + i * 0.5) { const px = 292 - i * 24; ctx.fillRect(px, 135 + (i % 2), 2, 1); ctx.fillRect(px + 3, 134 + (i % 2), 2, 1); }
+      }
+    }
+
+    /* de omgekeerde factuur ratelt uit de dot-matrix */
+    ctx.fillStyle = '#e8e0c8'; ctx.fillRect(10, 8, 152, 62);
+    ctx.fillStyle = '#c9bda0'; ctx.fillRect(10, 8, 152, 2);
+    let budget = Math.max(0, Math.floor((e.t - 1.2) * 26));
+    if (e.spoed || e.klaar) budget = 9999;
+    let ty = 14;
+    for (const regel of e.regels) {
+      const n = Math.min(regel.length, budget);
+      budget -= n;
+      if (n > 0) tekst(ctx, regel.slice(0, n), 14, ty, '#26221a');
+      ty += 9;
+    }
+    if (budget >= 0 && Math.floor((e.t - 1.2) * 26) < e.totaalTekens && ((tijd * 10) | 0) % 3 === 0) sfx('blok', 0.14);
+
+    /* de allerlaatste woorden van het spel */
+    if (e.klaar) {
+      const w = 'NIET-FACTUREERBAAR.';
+      if (((e.t * 1.2) | 0) % 2) tekst(ctx, w, BREED / 2 - tekstBreedte(w) / 2, 158, '#efe9d6');
+      const hint = window.mobiel ? 'TIK OM AF TE SLUITEN' : 'DRUK OP EEN TOETS';
+      tekst(ctx, hint, BREED / 2 - tekstBreedte(hint) / 2, 170, 'rgba(110,106,88,0.8)');
     }
   }
 
@@ -1033,7 +1439,28 @@ const Outro = (() => {
     if (staat === 'uit' || document.hidden) return;
     tijd += dt;
     if (staat === 'intro') { introT += dt; if (introT >= 7.4) startSpel(); render(); return; }
-    if (staat === 'klaar') { klaarT += dt; render(); return; }
+    if (staat === 'wissel') {
+      wisselT += dt;
+      if (!wisselGebouwd && wisselT >= 0.7) { wisselGebouwd = true; wisselLevel(bouwServerhal); }
+      if (wisselT >= 1.6) {
+        staat = 'spel';
+        hudTekst = 'B.A.A.S.: "DAAR BENT U. GA UW GANG."'; hudTekstT = 3.2;
+      }
+      render(); return;
+    }
+    if (staat === 'config') {
+      configT += dt;
+      if (configStap >= 6 && configT >= 2.6) { startEpiloog(); render(); return; }
+      render(); return;
+    }
+    if (staat === 'epiloog') {
+      if (epi) {
+        epi.t += epi.spoed && !epi.klaar ? dt * 30 : dt;
+        const printEind = 1.2 + epi.totaalTekens / 26;
+        if (!epi.klaar && epi.t > printEind + 0.8) epi.klaar = true;
+      }
+      render(); return;
+    }
     if (hitstop > 0) { hitstop -= dt; render(); return; }
     if (schudT > 0) { schudT -= dt; if (schudT <= 0) schudKracht = 0; }
     accu = Math.min(accu + dt, 0.12);
@@ -1085,8 +1512,10 @@ const Outro = (() => {
     cocons = lvl.cocons.map(c => ({ x: c.x, y: c.y, open: false }));
     collegas = []; kogels = []; partikels = []; popups = []; worp = null;
     ontfactureerd = 0; popupWachtrij = 0; hudTekst = null;
+    bomWachtrij = []; stortWachtrij = [];
+    hal = null; wisselT = 0; wisselGebouwd = false; configStap = 0; configT = 0; epi = null;
     camX = klem(held.x - BREED / 2, 0, lvl.kols * TEGEL - BREED); camY = lvl.rijen * TEGEL - HOOG;
-    tijd = 0; introT = 0; klaarT = 0; hitstop = 0; accu = 0;
+    tijd = 0; introT = 0; hitstop = 0; accu = 0;
     toetsen.clear(); aanraking = { stickId: null, stickX0: 0, dx: 0, knoppen: {} };
 
     if (typeof toonScherm === 'function') toonScherm('outro');
@@ -1139,7 +1568,14 @@ const Outro = (() => {
 
   function slaOver() { beeindig(); }
 
-  return { start, beeindig, slaOver, magSpelen, get actief() { return staat !== 'uit'; } };
+  /* DEV: rechtstreeks in de serverhal springen (testen zonder de klim) */
+  function _devHal() {
+    if (staat === 'uit') return;
+    staat = 'spel';
+    wisselLevel(bouwServerhal);
+  }
+
+  return { start, beeindig, slaOver, magSpelen, _devHal, get actief() { return staat !== 'uit'; } };
 })();
 window.Outro = Outro;
 
