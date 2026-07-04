@@ -1672,3 +1672,52 @@ no text. Fills ~90% of a square 1024x1024 canvas.
 
 Pose: swinging a blunt, hollow cast-iron arm forward LEFT in a mindless obedient
 blow, faceless and expressionless, a puff of cold foundry-ash rising off it.
+
+
+##################################################################
+###### NAGEKOMEN: BLOCK-POSES (elites/episch die écht blokken) ###
+###### de_hofnar · de_gouden_garde · het_spreekgestoelte #########
+##################################################################
+De engine speelt <id>_block af zodra het wezen Blok krijgt. Deze drie hebben
+een blok-zet in hun kit (Hofnar +6 Blok bij vloektrek · Garde "Gouden muur" 12 ·
+Spreekgestoelte "Bijval eisen" 12) en verdienen dus een block-pose. Zelfde
+werkwijze: base-afbeelding als referentie, facing LEFT, ~90% van 1024x1024.
+
+
+=================== de_hofnar_block.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: throwing up a mocking defensive guard, motley cape swept across as a
+flimsy shield while cackling, skull-bells raised, a thin barrier of green
+curse-sigils flickering in front of him — cowardly and jeering, blocking with a
+laugh.
+
+
+================ de_gouden_garde_block.png ===============
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: planting the gilded halberd and hunkering behind a wall of its own
+overlapping golden parade-shields and medals, the eyeless golden mask forward,
+molten-red light blazing off the immovable gilded barricade — a wall of blind
+loyalty.
+
+
+============= het_spreekgestoelte_block.png ==============
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: its gilded front panels folding shut like shutters and its banner-poles
+crossing in front as a barricade, glowing slogan-ribbons wrapping tight around
+it, demanding applause as a shield — the carved mouths clamped silent behind
+gold.
