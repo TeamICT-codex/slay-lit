@@ -1535,3 +1535,140 @@ PLAYING CARD and slowly TEARING it in half with two tiny golden hands, the
 card's light guttering out between the halves, his grin at maximum unearned
 smugness — grander and crueller than his attack. (Speelt af op het permanente-
 kaartverwijdering-moment, zoals de_erfprins_plagiaat bij de Roof.)
+
+
+##################################################################
+###### NAGEKOMEN: ATTACK-POSES VOOR DE GEWONE VIJANDEN ###########
+###### (Act 1 + Act 2 — deze hadden enkel _death) ################
+##################################################################
+Zelfde werkwijze: hang de BASIS-afbeelding van het wezen aan als referentie.
+Vijanden kijken naar LINKS (net als hun basis). Act 1-wezens ~85%, Act 2 ~90%
+van 1024x1024. Opslaan onder exact de bestandsnaam boven het blok.
+
+
+==================== groene_slijm_attack.png ====================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~85% of a square 1024x1024 canvas.
+
+Pose: lunging forward and to the LEFT, its jelly body stretching into a wide
+toothy open-mouthed chomp, the goofy grin turned fierce, bright green goo
+splattering off with the motion.
+
+==================== blauwe_slijm_attack.png ====================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~85% of a square 1024x1024 canvas.
+
+Pose: rearing up tall and slamming its heavy cold teardrop-body forward to the
+LEFT, icy blue droplets flinging outward in a freezing spray, the pouty face
+set into a grim scowl.
+
+======================= grotrat_attack.png ======================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~85% of a square 1024x1024 canvas.
+
+Pose: leaping forward LEFT, jaws gaping to bare its long yellow incisors, front
+claws slashing out, the red eye gleaming, tail lashing behind for balance.
+
+======================= kultist_attack.png ======================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~85% of a square 1024x1024 canvas.
+
+Pose: lunging to the LEFT with a ritual dagger raised in one clawed hand, the
+bird-beak mask thrust forward, purple runes on the robe flaring, wide sleeves
+whipping with the strike.
+
+======================= schaduw_attack.png ======================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~85% of a square 1024x1024 canvas.
+
+Pose: surging forward as a reaching mass of clawed darkness toward the LEFT,
+tendrils of shadow stretching ahead of it, the cold void-eyes fixed, its form
+thinning as it strikes.
+
+====================== steengolem_attack.png ====================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~85% of a square 1024x1024 canvas.
+
+Pose: swinging one massive stone fist down and forward to the LEFT, rock
+grinding and cracking at the shoulder, a burst of dust and rubble, the whole
+boulder-body twisting into the blow.
+
+==================== paddenstoelman_attack.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~85% of a square 1024x1024 canvas.
+
+Pose: swinging a heavy club-like fungal arm forward LEFT while venting a thick
+burst of glowing spores from its cap, the spore-cloud driving ahead of the blow.
+
+======================= pekziel_attack.png ======================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~85% of a square 1024x1024 canvas.
+
+Pose: hurling a whip-like lash of black tar out toward the LEFT, its formless
+body stretching thin into the strike, an empty hollow where a face should be.
+
+======================= bandiet_attack.png ======================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~85% of a square 1024x1024 canvas.
+
+Pose: lunging to the LEFT with a curved dagger thrust forward in one hand, the
+other hand snatching greedily for an unseen torch, a hungry snarl, ragged cloak
+flaring with the motion.
+
+===================== de_uitgewiste_attack.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: lashing out with a half-erased inky hand toward the LEFT, part of its body
+dissolving into a struck-through black smear mid-strike, the redaction-line
+across its name flaring.
+
+===================== doorslag_kopie_attack.png =================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: throwing a flimsy, weak paper-slap forward LEFT, the bleached carbon-copy
+body crumpling with the effort, faded ink flaking off — visibly the lesser copy.
+
+===================== mal_gietsel_attack.png ====================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: swinging a blunt, hollow cast-iron arm forward LEFT in a mindless obedient
+blow, faceless and expressionless, a puff of cold foundry-ash rising off it.
