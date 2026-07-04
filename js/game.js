@@ -6051,19 +6051,21 @@ document.addEventListener('contextmenu', e => {
   }, true);
 })();
 
-/* touch: je held of een vijand VASTHOUDEN maakt de kaarthand even doorzichtig,
-   zodat je de statussen, hp en intenties eronder duidelijk ziet (op een smal
-   gsm-scherm dekken de kaarten die soms af). Loslaten herstelt meteen. Een korte
-   tik blijft gewoon 'richten/aanvallen' (vandaar de hold-drempel); een peek op
-   een vijand mag dus géén kaart spelen — de klik erna onderdrukken we. */
+/* touch: je held of een vijand VASTHOUDEN maakt de kaarthand ÉN de bezit-rij
+   (relikwieën + drankjes in de topbalk) even doorzichtig, zodat je de statussen,
+   hp en intenties eronder duidelijk ziet — op een smal gsm-scherm dekken de
+   kaarten die af, en een volle relikwieënrij dekt de intentie-iconen af (bv. bij
+   de Slijmkoning). Loslaten herstelt meteen. De klasse staat op BODY (niet op
+   #scherm-gevecht): de topbalk leeft buiten het gevechtsscherm. Een korte tik
+   blijft gewoon 'richten/aanvallen' (vandaar de hold-drempel); een peek op een
+   vijand mag dus géén kaart spelen — de klik erna onderdrukken we. */
 (() => {
   let timer = null, actief = false, gekeken = false;
-  const scherm = () => $('#scherm-gevecht');
   const opFiguur = t => t && t.closest && t.closest('#speler-zone, #vijanden-rij .vijand');
-  const toon = () => { const s = scherm(); if (s) { s.classList.add('statuskijk'); actief = true; gekeken = true; } };
+  const toon = () => { document.body.classList.add('statuskijk'); actief = true; gekeken = true; };
   const verberg = () => {
     clearTimeout(timer); timer = null; actief = false;
-    const s = scherm(); if (s) s.classList.remove('statuskijk');
+    document.body.classList.remove('statuskijk');
   };
   document.addEventListener('pointerdown', e => {
     if (e.pointerType !== 'touch') return;

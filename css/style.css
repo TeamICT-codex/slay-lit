@@ -1463,11 +1463,16 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   perspective: 950px;
   transition: opacity .15s ease;
 }
-/* status-peek: je held of een vijand vasthouden (touch) maakt de kaarthand even
-   doorzichtig zodat de statussen, hp en intenties eronder leesbaar worden.
-   Loslaten herstelt. De klasse wordt enkel door touch-gebaren gezet (game.js),
-   dus op desktop verandert er niets. */
-#scherm-gevecht.statuskijk #hand { opacity: .14; pointer-events: none; }
+/* status-peek: je held of een vijand vasthouden (touch) maakt de kaarthand ÉN de
+   bezit-rij (relikwieën + drankjes) even doorzichtig zodat de statussen, hp en
+   intenties eronder leesbaar worden — een volle relikwieënrij dekte anders de
+   intentie-iconen af (bv. bij de Slijmkoning). Loslaten herstelt. De klasse staat
+   op BODY (de topbalk leeft buiten #scherm-gevecht) en wordt enkel door
+   touch-gebaren gezet (game.js), dus op desktop verandert er niets. */
+body.statuskijk #hand { opacity: .14; pointer-events: none; }
+#tb-relikwieen, #tb-dranken { transition: opacity .15s ease; }
+body.statuskijk #tb-relikwieen,
+body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
 .kaart {
   width: 138px; height: 192px;
   margin: 0 -14px;
