@@ -1511,6 +1511,18 @@ Pose: collapsing to one knee on the slaughter-block, the golden mane deflating,
 the endless crimson sash tangling around him like a noose, self-minted medals
 raining off, the underlight dying to embers — his small hands, at last, empty.
 
+================== de_dicktator_block.png ================
+Use the attached reference image: the EXACT same character, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body character, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: throwing up a barrier of gold — his small gauntleted hands crossing before
+him as a wall of glowing golden decree-seals snaps up like a shield (declaring
+himself UNTOUCHABLE), the endless crimson sash swept across as a curtain,
+molten-red light blazing off the gilded guard, chin raised in unbearable smugness.
+
 ------- de_dicktator_intro.png  (TITELPLAAT — mét achtergrond, GEEN transparant) -------
 Use the attached reference image for the tyrant's design. Stylized hand-painted
 dark-fantasy key art, NOT photorealistic, no photo, no 3D render, no text.
