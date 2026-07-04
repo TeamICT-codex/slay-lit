@@ -422,5 +422,21 @@ einde alsnog — de run-and-gun-verdiepingen zijn dan inkortbaar tot één.
   (game.js, gated op Codex.outroGezien), dev-helper `Outro._devNiveau(n)`.
   End-to-end geverifieerd in Chromium (incl. echte liftovergangen), nul
   fouten.
-- Nog te doen: **F4** glans (chiptune-scene, dither-overgang + pixel-zoom,
-  sprite-verfijning, level-tuning/balans, mobiel-QA op echt toestel).
+- **F4 — glans: GEBOUWD (04-07).** De **chiptune**: nieuwe chip-tak in de
+  Klank-planner (audio.js) met 16e-noten-raster — de jingle in mineur als
+  square-lead, triangle-bas in achtsten, noise-drums, arpeggio; **gelaagd
+  riser-systeem** via `Klank.zetChipLagen`: V-1 = bas+kick, V2 = +drums+arp,
+  V3 = +lead, de serverhal dunt uit tot een kale bas, en de epiloog speelt
+  hetzelfde motief **in majeur** ('outro_slot', het muziekdoosje uit de
+  frietkot-radio). Alles routeert door musGain (volumeslider + ducking
+  gelden). **Regie**: de intro dithert zich in drie stappen scherp
+  (onbenoemd), en de stijlbreuk-UIT is er: bij het paneel bevriest het
+  wereldbeeld en zoomt de camera op één amberkleurige pixel van de
+  service-CRT tot die de terminal wórdt. **Sprites**: per masker een eigen
+  hoofddeksel (band / kap / hoedje), [ ]-glyphs in het pixelfont,
+  slang-spawn-fix. **Mobiel**: rooktest in touch-emulatie groen (tik-zones,
+  virtuele knoppen); QA op een écht toestel blijft voor Thomas.
+- Nog open (bewust): speaker-tegels die muzieklagen doven (leuk-om-te-
+  hebben), fijnbalans van de verdiepingen na echt spelen, en de
+  proloog-vlaggen (S.jeugddroom, sprong/geduwd) die pas bij de
+  proloog-bouw gevuld worden — de outro leest ze dan vanzelf.

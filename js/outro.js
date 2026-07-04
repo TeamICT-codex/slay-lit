@@ -39,17 +39,17 @@ const Outro = (() => {
 
   /* heldkleur per masker — 'R'/'Q' in sprite-maps worden hierdoor vervangen */
   const HELD_TINT = {
-    slachter:  { R: '#c9302c', Q: '#8f1f1c' },
-    gifmagier: { R: '#79c045', Q: '#4c7f2a' },
-    thoverk:   { R: '#ff9c3f', Q: '#b96a24' }
+    slachter:  { R: '#c9302c', Q: '#8f1f1c', M: '#7a1512' },   /* de band */
+    gifmagier: { R: '#79c045', Q: '#4c7f2a', M: '#3d6a20' },   /* de kap */
+    thoverk:   { R: '#ff9c3f', Q: '#b96a24', M: '#ffd23f' }    /* het hoedje */
   };
 
   /* ---------- pixel-sprites (string-maps, bij init gebakken) ---------- */
   const SPRITES = {
     held_sta: [
-      '..kkkk..',
-      '.kkffkk.',
-      '.kffff..',
+      '..MMMM..',
+      '.MMffMM.',
+      '.kffffk.',
       '..ffff..',
       '..RRRR..',
       '.RRRRRR.',
@@ -63,9 +63,9 @@ const Outro = (() => {
       '.kk..kk.'
     ],
     held_loop1: [
-      '..kkkk..',
-      '.kkffkk.',
-      '.kffff..',
+      '..MMMM..',
+      '.MMffMM.',
+      '.kffffk.',
       '..ffff..',
       '..RRRR..',
       '.RRRRRR.',
@@ -79,9 +79,9 @@ const Outro = (() => {
       '........'
     ],
     held_loop2: [
-      '..kkkk..',
-      '.kkffkk.',
-      '.kffff..',
+      '..MMMM..',
+      '.MMffMM.',
+      '.kffffk.',
       '..ffff..',
       '..RRRR..',
       '.RRRRRR.',
@@ -95,9 +95,9 @@ const Outro = (() => {
       '..kkkk..'
     ],
     held_spring: [
-      '..kkkk..',
-      '.kkffkk.',
-      '.kffff..',
+      '..MMMM..',
+      '.MMffMM.',
+      '.kffffk.',
       '..ffff..',
       '.fRRRRf.',
       '.RRRRRR.',
@@ -252,6 +252,7 @@ const Outro = (() => {
     '-': '000000111000000', '+': '000010111010000', '!': '010010010000010',
     '?': '110001010000010', '/': '001001010100100', "'": '010010000000000',
     '"': '101101000000000', '(': '010100100100010', ')': '010001001001010',
+    '[': '110100100100110', ']': '011001001001011',
     ' ': '000000000000000'
   };
 
@@ -270,6 +271,7 @@ const Outro = (() => {
   let cellen = [], droomkast = null, gifbal = null;  /* masker-cellen, de jeugddroom-kast, de gifboog */
   let maskers = ['slachter'], maskerIdx = 0, signKlok = 0, papierWachtrij = 0, papierBron = null;
   let lvlIdx = 0, wisselDoel = 0, dakval = null;     /* de keten van verdiepingen + de dak-instorting */
+  let mozaiek = null, zoomFoto = null, zoomPunt = null;   /* dither-intro + de pixel-zoom naar de terminal */
   let partikels = [], popups = [], popupWachtrij = 0, popupKlok = 0;
   let bomWachtrij = [], stortWachtrij = [];     /* kettingreacties + instortende kolommen */
   let hal = null;                               /* serverhal-staat (B.A.A.S., ∞, het paneel) */
@@ -398,7 +400,7 @@ const Outro = (() => {
       vijanden: [
         { soort: 'drone', x: 31 * TEGEL, y: 6 * TEGEL },
         { soort: 'drone', x: 56 * TEGEL, y: 8 * TEGEL },
-        { soort: 'slang', x: 86 * TEGEL, y: (H - 3) * TEGEL + 2 }
+        { soort: 'slang', x: 81 * TEGEL, y: (H - 3) * TEGEL + 2 }
       ],
       cocons: [{ x: 25 * TEGEL, y: (H - 5) * TEGEL }, { x: 67 * TEGEL, y: (H - 5) * TEGEL }],
       lift: { x: 103 * TEGEL, y: (H - 8) * TEGEL, b: 4 * TEGEL, h: 5 * TEGEL }
@@ -491,7 +493,7 @@ const Outro = (() => {
         { soort: 'torentje', x: 63 * TEGEL, y: (H - 4) * TEGEL + 1 },
         { soort: 'torentje', x: 100 * TEGEL, y: (H - 4) * TEGEL + 1 },
         { soort: 'slang', x: 44 * TEGEL, y: (H - 3) * TEGEL + 2 },
-        { soort: 'slang', x: 86 * TEGEL, y: (H - 3) * TEGEL + 2 },
+        { soort: 'slang', x: 81 * TEGEL, y: (H - 3) * TEGEL + 2 },
         { soort: 'drone', x: 50 * TEGEL, y: 6 * TEGEL },
         { soort: 'drone', x: 90 * TEGEL, y: 5 * TEGEL }
       ],
@@ -654,12 +656,19 @@ const Outro = (() => {
   }
   function startConfig() {
     staat = 'config'; configStap = 0; configT = 0;
+    /* stijlbreuk-UIT: het laatste wereldbeeld bevriezen en inzoomen op één
+       amberkleurige pixel van de service-CRT — tot die de terminal wórdt */
+    zoomFoto = document.createElement('canvas');
+    zoomFoto.width = BREED; zoomFoto.height = HOOG;
+    zoomFoto.getContext('2d').drawImage(canvas, 0, 0);
+    zoomPunt = { x: klem(lvl.luik.x + 5 - Math.round(camX), 8, BREED - 8), y: klem(lvl.luik.y + 10 - Math.round(camY), 8, HOOG - 8) };
     drones = []; kogels = []; popups = []; partikels = []; hudTekst = null;
     if (window.Klank && Klank.muziek) { try { Klank.muziek('stil'); } catch (e) {} }
     sfx('blok', 0.2);
   }
   function configVolgende() {
     if (configStap >= 6) return;
+    if (configStap === 0 && configT < 1) return;   /* de zoom eerst laten landen */
     configStap++; configT = 0;
     sfx(configStap === 6 ? 'energie' : 'blok', 0.05);
   }
@@ -695,7 +704,8 @@ const Outro = (() => {
     };
     epi.totaalTekens = epi.regels.join('').length;
     partikels = []; popups = [];
-    if (window.Klank && Klank.muziek) { try { Klank.muziek('stil'); } catch (e) {} }
+    /* de jingle voor het eerst zuiver en in majeur — uit de frietkot-radio */
+    if (window.Klank && Klank.muziek) { try { Klank.muziek('outro_slot'); } catch (e) {} }
   }
 
   const tegelOp = (tx, ty) => (tx < 0 || ty < 0 || tx >= lvl.kols || ty >= lvl.rijen) ? T.BETON : lvl.type[ty * lvl.kols + tx];
@@ -1439,7 +1449,21 @@ const Outro = (() => {
     }
 
     ctx.fillStyle = '#14110c'; ctx.fillRect(0, 0, BREED, HOOG);
-    if (staat === 'intro') { renderIntro(); presenteer(); return; }
+    if (staat === 'intro') {
+      renderIntro();
+      /* de administratieve resolutie: het beeld dithert zich scherp (onbenoemd) */
+      if (introT < 1.5 && mozaiek) {
+        const f = introT < 0.6 ? 8 : introT < 1.1 ? 4 : 2;
+        const mw = Math.ceil(BREED / f), mh = Math.ceil(HOOG / f);
+        const mx = mozaiek.getContext('2d');
+        mx.imageSmoothingEnabled = false;
+        mx.clearRect(0, 0, mw, mh);
+        mx.drawImage(canvas, 0, 0, BREED, HOOG, 0, 0, mw, mh);
+        ctx.fillStyle = '#14110c'; ctx.fillRect(0, 0, BREED, HOOG);
+        ctx.drawImage(mozaiek, 0, 0, mw, mh, 0, 0, BREED, HOOG);
+      }
+      presenteer(); return;
+    }
     if (staat === 'config') { renderConfig(); presenteer(); return; }
     if (staat === 'epiloog') { renderEpiloog(); presenteer(); return; }
 
@@ -1682,6 +1706,21 @@ const Outro = (() => {
   ];
   function renderConfig() {
     ctx.fillStyle = '#060503'; ctx.fillRect(0, 0, BREED, HOOG);
+    if (configStap === 0 && configT < 0.9 && zoomFoto) {
+      const f = 1 + configT * configT * 30;
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.translate(BREED / 2, HOOG / 2); ctx.scale(f, f); ctx.translate(-zoomPunt.x, -zoomPunt.y);
+      ctx.globalAlpha = Math.max(0, 1 - configT * 0.9);
+      ctx.drawImage(zoomFoto, 0, 0);
+      ctx.restore(); ctx.globalAlpha = 1;
+      const r = Math.max(2, configT * configT * 300);
+      ctx.fillStyle = '#ffb347';
+      ctx.globalAlpha = Math.min(1, configT * 2);
+      ctx.fillRect(BREED / 2 - r / 2, HOOG / 2 - r / 2, r, r);
+      ctx.globalAlpha = 1;
+      return;
+    }
     /* de reboot: eerst een korte flikker, dan de ene zin */
     if (configStap >= 6) {
       if (configT < 0.5 && ((configT * 18) | 0) % 2) { ctx.fillStyle = '#141008'; ctx.fillRect(0, 0, BREED, HOOG); return; }
@@ -1833,6 +1872,8 @@ const Outro = (() => {
         staat = 'spel';
         if (hal) { hudTekst = 'B.A.A.S.: "DAAR BENT U. GA UW GANG."'; hudTekstT = 3.2; }
         else { hudTekst = lvl.naam; hudTekstT = 2.4; }
+        /* de riser: elke verdieping een muzieklaag erbij; de hal dunt uit */
+        if (window.Klank && Klank.zetChipLagen) { try { Klank.muziek('outro'); Klank.zetChipLagen(hal ? 0 : Math.min(3, lvlIdx + 1)); } catch (e) {} }
       }
       render(); return;
     }
@@ -1859,7 +1900,8 @@ const Outro = (() => {
 
   function startSpel() {
     staat = 'spel';
-    if (window.Klank && Klank.muziek) { try { Klank.muziek('stil'); } catch (e) {} }
+    /* de eerste echte chiptune van het spel: de jingle als strijdlied, laag 1 */
+    if (window.Klank && Klank.muziek) { try { Klank.muziek('outro'); Klank.zetChipLagen && Klank.zetChipLagen(1); } catch (e) {} }
   }
 
   /* ---------- levenscyclus ---------- */
@@ -1889,6 +1931,9 @@ const Outro = (() => {
     canvas.width = BREED; canvas.height = HOOG;
     ctx = canvas.getContext('2d');
     schermCtx = schermCanvas.getContext('2d');
+    mozaiek = document.createElement('canvas');
+    mozaiek.width = BREED; mozaiek.height = HOOG;
+    zoomFoto = null; zoomPunt = null;
 
     const heldId = (typeof S !== 'undefined' && S && S.held && HELD_TINT[S.held]) ? S.held : 'slachter';
     bakAlles();
@@ -1949,6 +1994,7 @@ const Outro = (() => {
     }
     const skip = document.getElementById('outro-skip');
     if (skip) skip.style.display = 'none';
+    if (window.Klank && Klank.muziek) { try { Klank.muziek('stil'); } catch (e) {} }
     const cb = naOutro; naOutro = null;
     if (cb) cb();
     else if (typeof naarTitel === 'function') naarTitel();

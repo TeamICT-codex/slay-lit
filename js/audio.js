@@ -152,7 +152,13 @@ const Klank = (() => {
     rust:    { droneVol: 0.07, root: 65.4, schaal: [0, 4, 7, 9, 14], bpm: 40, padKans: 0.6, plukKans: 0.3, puls: false, spanning: 0 },
     gevecht: { droneVol: 0.13, root: 55, schaal: [0, 3, 5, 7, 10], bpm: 84, padKans: 0.5, plukKans: 0.15, puls: true, spanning: 0.3 },
     elite:   { droneVol: 0.15, root: 51.9, schaal: [0, 1, 5, 7, 8], bpm: 96, padKans: 0.55, plukKans: 0.12, puls: true, spanning: 0.6 },
-    baas:    { droneVol: 0.17, root: 41.2, schaal: [0, 1, 5, 7, 8], bpm: 104, padKans: 0.7, plukKans: 0.1, puls: true, spanning: 1 }
+    baas:    { droneVol: 0.17, root: 41.2, schaal: [0, 1, 5, 7, 8], bpm: 104, padKans: 0.7, plukKans: 0.1, puls: true, spanning: 1 },
+    /* de outro (js/outro.js): de eerste échte chiptune van het spel — de
+       bedrijfsjingle als 8-bit strijdlied in mineur (subdiv 4 = 16e noten;
+       lagen stapelen per verdieping via zetChipLagen). 'outro_slot' is
+       hetzelfde motief in majeur, traag en zacht — de reboot/epiloog. */
+    outro:      { droneVol: 0, root: 110, bpm: 152, subdiv: 4, chip: 'strijd' },
+    outro_slot: { droneVol: 0, root: 110, bpm: 66,  subdiv: 2, chip: 'slot' }
   };
   /* akkoorden als halve-toon-afstanden boven de grondtoon */
   const PROGRESSIE = [[0, 3, 7], [-2, 2, 5], [3, 7, 10], [-4, 0, 5]];
@@ -221,7 +227,7 @@ const Klank = (() => {
     if (!s || !s.bpm) return;
     /* na mute of een lange pauze: niet alle gemiste noten inhalen */
     if (volgendeTel < ctx.currentTime - 0.3) volgendeTel = ctx.currentTime + 0.05;
-    const telDuur = 60 / s.bpm;
+    const telDuur = 60 / s.bpm / (s.subdiv || 1);
     while (volgendeTel < ctx.currentTime + 0.9) {
       plaatsTel(volgendeTel, s);
       volgendeTel += telDuur;
@@ -230,7 +236,73 @@ const Klank = (() => {
     }
   }
 
+  /* ---------- de chiptune (outro) ----------
+     Pure square/triangle-stemmen + ruis-drums, geroosterd op 16e noten.
+     Alles routeert naar musGain (volumeslider + ducking gelden dus ook hier). */
+  const CHIP_MEL = [   /* de jingle in mineur — 2 maten van 16 stappen */
+    12, null, 7, null, 8, null, 7, null, 5, null, 3, null, 5, 7, null, null,
+    12, null, 7, null, 8, null, 10, null, 12, null, 15, null, 12, null, null, null
+  ];
+  const CHIP_MEL_SLOT = [   /* dezelfde contour, eindelijk in majeur */
+    12, null, 7, null, 9, null, 7, null, 5, null, 4, null, 5, 7, null, null,
+    12, null, 7, null, 9, null, 11, null, 12, null, 16, null, 12, null, null, null
+  ];
+  const CHIP_AKK = [[0, 3, 7], [0, 3, 7], [-4, 0, 5], [-2, 2, 5]];   /* per 8 stappen */
+  let chipLagen = 3;   /* 0 = uitgedunde hal · 1 = bas+kick · 2 = +drums+arp · 3 = +lead */
+
+  function chipNoot(t, freq, duur, vorm, sterkte, glijNaar) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = vorm; o.frequency.setValueAtTime(freq, t);
+    if (glijNaar) o.frequency.exponentialRampToValueAtTime(Math.max(20, glijNaar), t + duur);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(sterkte, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + duur);
+    o.connect(g); g.connect(musGain);
+    o.start(t); o.stop(t + duur + 0.05);
+  }
+  function chipRuis(t, duur, type, freq, sterkte) {
+    const b = ctx.createBufferSource(); b.buffer = ruisBuffer;
+    const f = ctx.createBiquadFilter(); f.type = type; f.frequency.setValueAtTime(freq, t);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(sterkte, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + duur);
+    b.connect(f); f.connect(g); g.connect(musGain);
+    b.start(t, Math.random() * 0.5); b.stop(t + duur + 0.05);
+  }
+
+  function plaatsChipTel(t, s) {
+    const stap = tel % 32;
+    if (s.chip === 'slot') {
+      /* het muziekdoosje: de jingle zuiver, traag, zonder drums */
+      const n = CHIP_MEL_SLOT[stap];
+      if (n !== null) chipNoot(t, s.root * 4 * Math.pow(2, n / 12), 0.6, 'triangle', 0.045);
+      if (stap % 16 === 0) chipNoot(t, s.root, 1.4, 'triangle', 0.05);
+      return;
+    }
+    const akkoord = CHIP_AKK[(stap >> 3) & 3];
+    if (chipLagen >= 1) {
+      /* triangle-bas in achtsten + kick — het fundament */
+      if (stap % 2 === 0) chipNoot(t, s.root * Math.pow(2, akkoord[0] / 12), 0.16, 'triangle', 0.07);
+      if (stap % 4 === 0) { chipNoot(t, 150, 0.14, 'square', 0.11, 42); chipRuis(t, 0.08, 'lowpass', 300, 0.06); }
+    } else {
+      /* de serverhal: alles weg behalve een kale bas — het gevecht is voorbij */
+      if (stap % 8 === 0) chipNoot(t, s.root * Math.pow(2, akkoord[0] / 12), 0.6, 'triangle', 0.045);
+    }
+    if (chipLagen >= 2) {
+      if (stap % 8 === 4) chipRuis(t, 0.09, 'highpass', 1800, 0.05);            /* snare */
+      if (stap % 2 === 1) chipRuis(t, 0.03, 'highpass', 7000, 0.018);           /* hihat */
+      chipNoot(t, s.root * 2 * Math.pow(2, (akkoord[stap % 3] + 12) / 12), 0.09, 'square', 0.02);   /* arp */
+    }
+    if (chipLagen >= 3) {
+      const n = CHIP_MEL[stap];
+      if (n !== null) chipNoot(t, s.root * 2 * Math.pow(2, n / 12), 0.22, 'square', 0.05);
+    }
+  }
+  function zetChipLagen(n) { chipLagen = Math.max(0, Math.min(3, n | 0)); }
+
   function plaatsTel(t, s) {
+    if (s.chip) { plaatsChipTel(t, s); return; }
     /* hartslag-puls in gevechten op tel 1 en 5 */
     if (s.puls && tel % 4 === 0) {
       const o = ctx.createOscillator(), g = ctx.createGain();
@@ -298,7 +370,7 @@ const Klank = (() => {
 
   /* ---------- publiek ---------- */
   return {
-    init, hervat, sfx, muziek, duck, zetDuister,
+    init, hervat, sfx, muziek, duck, zetDuister, zetChipLagen,
     get klaar() { return klaar; },
     get vol() { return vol; },
     zet(sleutel, waarde) { vol[sleutel] = waarde; bewaar(); pasVolumesToe(); },
