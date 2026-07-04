@@ -18,9 +18,10 @@ const Outro = (() => {
   const COYOTE = 0.12, SPRONGBUFFER = 0.12;
 
   /* tegeltypes — BETON draagt het gebouw en is onverwoestbaar (je graaft niet
-     uit het level), al de rest is sloopbaar. hp per type in TEGEL_HP. */
-  const T = { LUCHT: 0, BETON: 1, GIPS: 2, GLAS: 3, MEUBEL: 4, KAST: 5, MACHINE: 6, HOUT: 7 };
-  const TEGEL_HP = [0, 255, 1, 1, 1, 1, 2, 1];
+     uit het level), al de rest is sloopbaar. hp per type in TEGEL_HP.
+     MACHINE en METER ontploffen bij sloop (meterkast = de grote kettingreactie). */
+  const T = { LUCHT: 0, BETON: 1, GIPS: 2, GLAS: 3, MEUBEL: 4, KAST: 5, MACHINE: 6, HOUT: 7, METER: 8 };
+  const TEGEL_HP = [0, 255, 1, 1, 1, 1, 2, 1, 1];
   const M2_PER_TEGEL = 0.36;          /* de ONTFACTUREERD-teller telt in m² kantoor */
 
   /* ---------- het palet: systeem = beige, wat leeft = kleur ---------- */
@@ -225,9 +226,11 @@ const Outro = (() => {
   let camX = 0, camY = 0;
   let held = null, drones = [], kogels = [], cocons = [], collegas = [], worp = null;
   let partikels = [], popups = [], popupWachtrij = 0, popupKlok = 0;
+  let bomWachtrij = [], stortWachtrij = [];     /* kettingreacties + instortende kolommen */
   let ontfactureerd = 0;                        /* m² kantoor */
   let hudTekst = null, hudTekstT = 0;           /* droge regels (bevrijding, respawn) */
   let toetsen = new Set();
+  let vuurBuf = 0, worpBuf = 0;   /* een ultrakorte tik mag nooit verloren gaan */
   let aanraking = { stickId: null, stickX0: 0, dx: 0, knoppen: {} };
   let sfxKlok = {};                             /* per-naam cooldown: geen 40 klappen per frame */
   let devModus = false;
@@ -331,6 +334,10 @@ const Outro = (() => {
     /* machines (2 hp): prikklokken/servers op de vloer en op platforms */
     for (const [mx, my] of [[15, H - 3], [30, 12], [47, 9], [63, 12], [74, 8], [93, H - 3]]) zet(mx, my, T.MACHINE);
 
+    /* meterkasten: de kettingreactie-kandidaten — naast wanden en kastenrijen,
+       zodat één goede klap een halve verdieping doet omvallen */
+    for (const [ex, ey] of [[13, H - 3], [29, H - 3], [37, H - 3], [46, 9], [58, H - 3], [72, H - 3], [91, H - 3]]) zet(ex, ey, T.METER);
+
     return {
       naam: 'V-1 — HET ARCHIEF',
       kols: B, rijen: H, type, hp,
@@ -380,6 +387,12 @@ const Outro = (() => {
     } else if (t === T.HOUT) {
       cx.fillStyle = '#6d4a2a'; cx.fillRect(px, py, TEGEL, TEGEL / 2);
       cx.fillStyle = '#54371f'; cx.fillRect(px, py + 3, TEGEL, 1);
+    } else if (t === T.METER) {
+      /* de meterkast: geel, gevaarlijk, vráágt erom */
+      cx.fillStyle = '#c9a13a'; cx.fillRect(px, py, TEGEL, TEGEL);
+      cx.fillStyle = '#8a6a1d'; cx.fillRect(px, py, TEGEL, 1); cx.fillRect(px, py + TEGEL - 1, TEGEL, 1);
+      cx.fillStyle = '#1d1a12';
+      cx.fillRect(px + 4, py + 1, 2, 2); cx.fillRect(px + 3, py + 3, 2, 2); cx.fillRect(px + 4, py + 5, 2, 2);
     }
     /* schade-craquelé zodra een meertraps-tegel is aangetikt */
     const maxHp = TEGEL_HP[t];
@@ -429,11 +442,54 @@ const Outro = (() => {
     ontfactureerd += M2_PER_TEGEL;
     popupWachtrij++;
     spawnGruis(tx * TEGEL + 4, ty * TEGEL + 4, t);
+    /* alles wat óp deze tegel stond komt zo dadelijk naar beneden: de
+       instort-golf rolt met een korte vertraging omhoog (Broforce-cascade) */
+    stortWachtrij.push({ tx, ty: ty - 1, t: 0.06 + Math.random() * 0.04 });
+    /* machines en meterkasten ontploffen — de meterkast fors, mét ketting */
+    if (t === T.METER) bomWachtrij.push({ px: tx * TEGEL + 4, py: ty * TEGEL + 4, straal: 15, t: 0.1 });
+    else if (t === T.MACHINE) bomWachtrij.push({ px: tx * TEGEL + 4, py: ty * TEGEL + 4, straal: 10, t: 0.05 });
     sfx(t === T.GLAS ? 'blok' : 'zwareklap', t === T.GLAS ? 0.05 : 0.09);
     if (window.Klank && Klank.duck) { try { Klank.duck(0.35, 0.25); } catch (e) {} }
-    schud(t === T.MACHINE ? 2.6 : 1.6);
-    if (t === T.MACHINE) hitstop = Math.max(hitstop, 0.04);
+    schud(1.6);
     return true;
+  }
+
+  /* de instort-golf: een tegel zonder steun eronder brokkelt alsnog af,
+     zodat een wand of kastenstapel kolom voor kolom naar beneden dondert */
+  function verwerkInstort(dt) {
+    if (!stortWachtrij.length) return;
+    const rest = [];
+    for (const s of stortWachtrij) {
+      s.t -= dt;
+      if (s.t > 0) { rest.push(s); continue; }
+      const t = tegelOp(s.tx, s.ty);
+      if (t !== T.LUCHT && t !== T.BETON && tegelOp(s.tx, s.ty + 1) === T.LUCHT) raakTegel(s.tx, s.ty, 99);
+    }
+    stortWachtrij = rest;
+  }
+
+  /* de explosie: vuurbal + rook + schokgolf die tegels wegvaagt en drones
+     meeneemt. De held voelt er niets van — dit is een viering, geen straf. */
+  function explosie(px, py, straal) {
+    spawnVuurbal(px, py, straal);
+    sloopGebied(px, py, straal, 3);
+    for (const d of drones) {
+      if (!d.dood && Math.hypot(d.x + 4 - px, d.y + 4 - py) < straal + 8) raakDrone(d, 2);
+    }
+    for (const c of cocons) misschienCoconOpen(c, px, py, straal + 4);
+    schud(3); hitstop = Math.max(hitstop, 0.055);
+    sfx('zwareklap', 0.04); sfx('dood', 0.12);
+    if (window.Klank && Klank.duck) { try { Klank.duck(0.55, 0.4); } catch (e) {} }
+  }
+  function verwerkBommen(dt) {
+    if (!bomWachtrij.length) return;
+    const rest = [];
+    for (const b of bomWachtrij) {
+      b.t -= dt;
+      if (b.t > 0) rest.push(b);
+      else explosie(b.px, b.py, b.straal);
+    }
+    bomWachtrij = rest;
   }
 
   /* sloop een blok van bxh tegels rond een pixelpunt */
@@ -446,25 +502,41 @@ const Outro = (() => {
   }
 
   /* ---------- partikels & popups ---------- */
-  const MAX_PARTIKELS = () => (window.mobiel || document.body.classList.contains('lite')) ? 80 : 150;
-  const GRUIS_KLEUR = [null, '#5b574a', '#cfc0a0', '#cfe0e4', '#7a5230', '#8a6a42', '#77848a', '#6d4a2a'];
+  const MAX_PARTIKELS = () => (window.mobiel || document.body.classList.contains('lite')) ? 110 : 220;
+  const GRUIS_KLEUR = [null, '#5b574a', '#cfc0a0', '#cfe0e4', '#7a5230', '#8a6a42', '#77848a', '#6d4a2a', '#c9a13a'];
+  function duwPartikel(p) {
+    if (partikels.length >= MAX_PARTIKELS()) partikels.shift();
+    partikels.push(p);
+  }
   function spawnGruis(px, py, t) {
-    const n = t === T.GLAS ? 7 : 5;
+    const n = t === T.GLAS ? 8 : 6;
     for (let i = 0; i < n; i++) {
-      if (partikels.length >= MAX_PARTIKELS()) partikels.shift();
-      partikels.push({
+      duwPartikel({
+        soort: 'gruis',
         x: px, y: py,
-        vx: (Math.random() - 0.5) * 90, vy: -30 - Math.random() * 70,
-        t: 0.7 + Math.random() * 0.5, kleur: GRUIS_KLEUR[t] || '#cfc0a0',
-        g: 2 + ((Math.random() * 2) | 0)
+        vx: (Math.random() - 0.5) * 110, vy: -40 - Math.random() * 90,
+        t: 0.8 + Math.random() * 0.6, kleur: GRUIS_KLEUR[t] || '#cfc0a0',
+        g: 2 + ((Math.random() * 2) | 0), stuit: t !== T.GLAS
       });
     }
   }
   function spawnVonk(px, py, kleur, n) {
     for (let i = 0; i < (n || 6); i++) {
-      if (partikels.length >= MAX_PARTIKELS()) partikels.shift();
-      partikels.push({ x: px, y: py, vx: (Math.random() - 0.5) * 130, vy: (Math.random() - 0.5) * 130, t: 0.35 + Math.random() * 0.3, kleur: kleur || '#ffb347', g: 1 });
+      duwPartikel({ soort: 'vonk', x: px, y: py, vx: (Math.random() - 0.5) * 130, vy: (Math.random() - 0.5) * 130, t: 0.35 + Math.random() * 0.3, kleur: kleur || '#ffb347', g: 1 });
     }
+  }
+  /* de vuurbal: witte kern die uitzet naar oranje + traag stijgende rook */
+  function spawnVuurbal(px, py, straal) {
+    duwPartikel({ soort: 'vuurbal', x: px, y: py, t: 0.32, maxT: 0.32, r: straal + 7 });
+    for (let i = 0; i < 4; i++) {
+      duwPartikel({
+        soort: 'rook', x: px + (Math.random() - 0.5) * straal, y: py + (Math.random() - 0.5) * straal,
+        vx: (Math.random() - 0.5) * 14, vy: -12 - Math.random() * 16,
+        t: 0.9 + Math.random() * 0.7, maxT: 1.6, r: 3 + Math.random() * 4
+      });
+    }
+    spawnVonk(px, py, '#ffd23f', 10);
+    spawnVonk(px, py, '#ff7a2f', 8);
   }
   function popup(px, py, txt, kleur) {
     popups.push({ x: px, y: py, txt, kleur: kleur || '#9fe06a', t: 0.9 });
@@ -509,6 +581,8 @@ const Outro = (() => {
       if (staat === 'intro' && !e.repeat) { introT = Math.max(introT, 6.2); return; }   /* intro doorklikken */
       if (staat === 'klaar' && !e.repeat && klaarT > 0.8) { beeindig(); return; }
       if (!e.repeat && (k === 'w' || k === 'arrowup' || k === ' ')) held && (held.sprongBuf = SPRONGBUFFER);
+      if (!e.repeat && (k === 'j' || k === 'x')) vuurBuf = 0.1;
+      if (!e.repeat && (k === 'k' || k === 'z')) worpBuf = 0.15;
       toetsen.add(k);
     }
   }
@@ -517,8 +591,8 @@ const Outro = (() => {
   function invoer() {
     const links = toetsen.has('arrowleft') || toetsen.has('a') || aanraking.dx < -6;
     const rechts = toetsen.has('arrowright') || toetsen.has('d') || aanraking.dx > 6;
-    const vuur = toetsen.has('j') || toetsen.has('x') || !!aanraking.knoppen.vuur;
-    const worpKnop = toetsen.has('k') || toetsen.has('z') || !!aanraking.knoppen.worp;
+    const vuur = toetsen.has('j') || toetsen.has('x') || aanraking.knoppen.vuur !== undefined || vuurBuf > 0;
+    const worpKnop = toetsen.has('k') || toetsen.has('z') || aanraking.knoppen.worp !== undefined || worpBuf > 0;
     return { links, rechts, vuur, worpKnop };
   }
 
@@ -547,6 +621,8 @@ const Outro = (() => {
       if (dx * dx + dy * dy <= z[naam].r * z[naam].r * 1.7) {
         aanraking.knoppen[naam] = e.pointerId;
         if (naam === 'spring' && held) held.sprongBuf = SPRONGBUFFER;
+        if (naam === 'vuur') vuurBuf = 0.1;
+        if (naam === 'worp') worpBuf = 0.15;
         return;
       }
     }
@@ -566,6 +642,8 @@ const Outro = (() => {
   function updateSpel(dt) {
     const inp = invoer();
     const h = held;
+    if (vuurBuf > 0) vuurBuf -= dt;
+    if (worpBuf > 0) worpBuf -= dt;
 
     /* — de held — */
     if (h.wachtT > 0) {   /* "u wordt even in de wacht gezet" (respawn) */
@@ -588,7 +666,7 @@ const Outro = (() => {
       h.zwaaiKlok -= dt;
       if (h.zwaaiT > 0) h.zwaaiT -= dt;
       if (inp.vuur && h.zwaaiKlok <= 0) {
-        h.zwaaiKlok = 0.16; h.zwaaiT = 0.1;
+        h.zwaaiKlok = 0.12; h.zwaaiT = 0.09; vuurBuf = 0;
         const rx = h.x + h.b / 2 + h.richting * 11, ry = h.y + 7;
         const geraakt = sloopGebied(rx, ry, 9, 1);
         for (const d of drones) {
@@ -599,6 +677,7 @@ const Outro = (() => {
       }
       /* DE BIJL — worp: boemerang die verder sloopt en terugkeert */
       if (inp.worpKnop && !worp) {
+        worpBuf = 0;
         worp = { x: h.x + h.b / 2, y: h.y + 6, vx: h.richting * 170, terug: false, spin: 0 };
         sfx('energie', 0.2);
       }
@@ -616,7 +695,7 @@ const Outro = (() => {
       worp.x += worp.vx * dt;
       if (!worp.terug) {
         worp.vx *= (1 - 2.6 * dt);
-        if (Math.abs(worp.vx) < 30) worp.terug = true;
+        if (Math.abs(worp.vx) < 30) { worp.terug = true; explosie(worp.x, worp.y, 11); }   /* het keerpunt knalt */
       } else {
         const doel = h.x + h.b / 2;
         worp.vx += (doel > worp.x ? 1 : -1) * 480 * dt;
@@ -672,16 +751,35 @@ const Outro = (() => {
       c.loopT += Math.abs(c.vx) > 1 ? dt * 8 : 0;
     }
 
+    /* — kettingreacties & instortingen — */
+    verwerkBommen(dt);
+    verwerkInstort(dt);
+
     /* — partikels / popups / camera — */
-    for (const p of partikels) { p.t -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += ZWAARTEKRACHT * 0.55 * dt * (p.g > 1 ? 1 : 0.3); }
+    for (const p of partikels) {
+      p.t -= dt;
+      if (p.soort === 'vuurbal') continue;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      if (p.soort === 'rook') { p.vy *= (1 - 0.6 * dt); continue; }
+      p.vy += ZWAARTEKRACHT * 0.55 * dt * (p.g > 1 ? 1 : 0.3);
+      /* puin stuitert één keer op de vloer — dat verkoopt het gewicht */
+      if (p.stuit && p.vy > 0 && solide(tegelOp(Math.floor(p.x / TEGEL), Math.floor((p.y + p.g) / TEGEL)))) {
+        p.vy *= -0.42; p.vx *= 0.6; p.stuit = false;
+      }
+    }
     partikels = partikels.filter(p => p.t > 0 && p.y < lvl.rijen * TEGEL);
     for (const p of popups) { p.t -= dt; p.y -= 14 * dt; }
     popups = popups.filter(p => p.t > 0);
     popupKlok -= dt;
     if (popupWachtrij > 0 && popupKlok <= 0) {
-      popupKlok = 0.08;
-      popupWachtrij--;
-      popup(h.x + h.b / 2 + (Math.random() - 0.5) * 24, h.y - 6 - Math.random() * 10, '-0U06');
+      popupKlok = 0.09;
+      /* massasloop wordt geaggregeerd gefactureerd: −0u06 per blokje,
+         bij een lawine één gebundelde creditnota ("−0u48") */
+      const n = popupWachtrij >= 4 ? Math.min(popupWachtrij, 20) : 1;
+      popupWachtrij -= n;
+      const minuten = n * 6, u = (minuten / 60) | 0, m = minuten % 60;
+      popup(h.x + h.b / 2 + (Math.random() - 0.5) * 24, h.y - 6 - Math.random() * 10,
+        '-' + u + 'U' + (m < 10 ? '0' : '') + m);
       sfx('schitter', 0.25);
     }
     if (hudTekstT > 0) { hudTekstT -= dt; if (hudTekstT <= 0) hudTekst = null; }
@@ -697,11 +795,9 @@ const Outro = (() => {
     hitstop = Math.max(hitstop, 0.03);
     if (d.hp <= 0) {
       d.dood = true;
-      schud(2.2);
-      spawnVonk(d.x + 4, d.y + 4, '#ff7a2f', 12);
-      spawnGruis(d.x + 4, d.y + 4, T.MACHINE);
       popupWachtrij += 3;   /* een drone is drie blokjes administratie */
-      sfx('zwareklap', 0.05);
+      bomWachtrij.push({ px: d.x + 4, py: d.y + 4, straal: 11, t: 0.02 });   /* en gaat er Broforce-gewijs uit */
+      spawnGruis(d.x + 4, d.y + 4, T.MACHINE);
     } else sfx('klap', 0.05);
   }
 
@@ -802,8 +898,28 @@ const Outro = (() => {
     /* de boemerang-bijl */
     if (worp) tekenSprite(((worp.spin | 0) % 2) ? 'bijl1' : 'bijl2', worp.x - 4 + ox, worp.y - 4 + oy, worp.vx < 0);
 
-    /* partikels */
-    for (const p of partikels) { ctx.fillStyle = p.kleur; ctx.fillRect(Math.round(p.x + ox), Math.round(p.y + oy), p.g, p.g); }
+    /* partikels: eerst rook (achter), dan gruis/vonken, dan vuurballen (voor) */
+    for (const p of partikels) {
+      if (p.soort !== 'rook') continue;
+      const a = klem(p.t / p.maxT, 0, 1);
+      ctx.fillStyle = 'rgba(90,84,70,' + (0.5 * a).toFixed(2) + ')';
+      ctx.beginPath(); ctx.arc(Math.round(p.x + ox), Math.round(p.y + oy), p.r * (1.6 - a * 0.6), 0, 7); ctx.fill();
+    }
+    for (const p of partikels) {
+      if (p.soort === 'rook' || p.soort === 'vuurbal') continue;
+      ctx.fillStyle = p.kleur; ctx.fillRect(Math.round(p.x + ox), Math.round(p.y + oy), p.g, p.g);
+    }
+    for (const p of partikels) {
+      if (p.soort !== 'vuurbal') continue;
+      const fase = 1 - p.t / p.maxT;                 /* 0 = net geknald, 1 = uitgedoofd */
+      const r = 3 + p.r * fase;
+      ctx.fillStyle = fase < 0.3 ? '#ffffff' : fase < 0.6 ? '#ffd23f' : '#ff7a2f';
+      ctx.beginPath(); ctx.arc(Math.round(p.x + ox), Math.round(p.y + oy), r, 0, 7); ctx.fill();
+      if (fase < 0.55) {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(Math.round(p.x + ox), Math.round(p.y + oy), r * 0.45, 0, 7); ctx.fill();
+      }
+    }
 
     /* popups ("-0U06") */
     for (const p of popups) tekst(ctx, p.txt, Math.round(p.x + ox) - tekstBreedte(p.txt) / 2, Math.round(p.y + oy), p.kleur);

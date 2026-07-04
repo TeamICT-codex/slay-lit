@@ -376,6 +376,14 @@ einde alsnog — de run-and-gun-verdiepingen zijn dan inkortbaar tot één.
   dot-matrix-intro met titelkaart, skipknop, touch-zones (stick + 3 knoppen),
   dev-shortcut `devOutro()` in de console. Integratiehaak in
   `gevechtGewonnen` (registratie vóór de outro, `Codex.outroGezien`).
+- **F1b — carnage-pass (04-07, op Thomas' aanwijzing "VEEL over-the-top
+  Broforce-destructie"):** echte explosies (vuurbal wit→oranje + rook +
+  vonken), **meterkasten** als kettingreactie-tegels, machines en drones die
+  ontploffen en terrein meenemen, **instort-cascade** (tegel zonder steun
+  brokkelt met rollende vertraging af — een wand sloop je onderaan en de
+  hele kolom dondert naar beneden), stuiterend puin, ontploffend
+  boemerang-keerpunt, geaggregeerde creditnota's ("−0u48") bij massasloop,
+  partikelcap 220/110, en tik-buffers zodat één korte tik altijd vuurt.
 - Nog te doen: **F2** finale-spine (serverhal/∞/paneel/config/epiloog),
   **F3** content (3 echte verdiepingen, 5 vijandtypes, maskers, callbacks,
   Codex-herbeleefknop), **F4** glans (chiptune-scene, dither-overgang,
