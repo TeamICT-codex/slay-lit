@@ -105,6 +105,12 @@
   <div class="scherm" id="scherm-schat"></div>
   <div class="scherm" id="scherm-einde"></div>
 
+  <!-- de outro "De Opzegtermijn": pixel-sloop op een eigen canvas (js/outro.js) -->
+  <div class="scherm" id="scherm-outro">
+    <canvas id="outro-canvas" width="320" height="180"></canvas>
+    <button id="outro-skip" class="knop-stil" onclick="Outro.slaOver()" style="display:none">⏭ Overslaan</button>
+  </div>
+
   <!-- de codex: verzamelboek over alle runs heen -->
   <div class="overlay" id="overlay-codex">
     <h2 class="scherm-titel"><span data-icoon="codex">📖</span> De Codex</h2>
@@ -201,6 +207,7 @@
   <script src="js/audio.js"></script>
   <script src="js/scene3d.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/outro.js"></script>
   <script src="js/game.js"></script>
 </body>
 </html>

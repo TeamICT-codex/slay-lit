@@ -12,6 +12,7 @@ const BESTANDEN = [
   'js/audio.js',
   'js/scene3d.js',
   'js/data.js',
+  'js/outro.js',
   'js/game.js',
   'assets/fonts/fonts.css',
   'assets/fonts/PirataOne-400-normal.woff2',
