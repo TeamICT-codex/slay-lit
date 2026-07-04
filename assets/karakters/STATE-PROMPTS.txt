@@ -1721,3 +1721,163 @@ Pose: its gilded front panels folding shut like shutters and its banner-poles
 crossing in front as a barricade, glowing slogan-ribbons wrapping tight around
 it, demanding applause as a shield — the carved mouths clamped silent behind
 gold.
+
+
+##################################################################
+###### NAGEKOMEN: CAST/BLOCK-POSES ###############################
+###### Act 3-buffers + Act 1/2-elites (die casten/blokken) #######
+##################################################################
+De engine speelt <id>_cast bij een buff/debuff-zet en <id>_block bij een
+blok-zet. Deze wezens doen zo'n zet maar misten de pose. Base als referentie,
+facing LEFT, ~90% van 1024x1024. LET OP: de_fluisteraar + spiegelwachter op
+EFFEN ZWARTE achtergrond (rook/glas-uitzondering), de rest transparant.
+
+
+#################### ACT 3 ####################
+
+=================== de_omroeper_cast.png =================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: throwing his head back and BELLOWING a decree up through the bronze horn,
+glowing red proclamation-runes and sound-rings radiating outward over unseen
+allies to embolden them, the regime seal flaring, chest puffed — not aimed at a
+target but broadcasting.
+
+=================== de_omroeper_block.png ================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: bracing the great bronze horn crosswise in front of him like a shield,
+hunched behind it, thin sound-rings forming a protective wall, the regime tabard
+drawn in tight.
+
+================= de_fluisteraar_cast.png ===============
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a SOLID PURE-BLACK background (keep the smoke edges
+intact), no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: both hands spreading violet whisper-smoke wide and weaving it into a
+slowly drifting coil of slanderous words that curls away toward the LEFT
+(planting the lie), the empty hood tilted, the smoke thickening.
+
+=============== de_vaandeldrager_cast.png ===============
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: raising the huge crimson banner high overhead with both arms, the golden
+tyrant-face catching a molten updraft, waves of red inspiration radiating from
+the cloth over unseen allies (rallying them), the iron slit-visor tilted up.
+
+================= de_ophitser_cast.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: thrusting both fists up in a rabble-rousing shout, the ember-veins in his
+ash-grey skin flaring brighter, sparks and cinders whirling up around him
+(whipping up fury), the bandolier of stolen torches glowing.
+
+=============== de_gouden_garde_cast.png ================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: snapping into a rigid ceremonial parade-stance, the gilded halberd planted
+upright, the golden armor and medals visibly hardening and thickening with a
+cold gleam (reinforcing its plating), the eyeless golden mask forward.
+
+
+#################### ACT 1 / 2 — ELITES & OPVALLEND ####################
+
+===================== de_mal_block.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: the great iron casting-press clamping shut, its glowing-orange matrix-core
+dimming to a hard cold shell, black iron plates locking together like a sealed
+mold — impenetrable, braced ironwork.
+
+================ de_drempelwachter_block.png ============
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: planting itself as an immovable wall of ash and old flame across the
+threshold, arms crossed, the molten cracks running through its body flaring
+brighter into a searing barrier — "JE KOMT ER NIET LANGS."
+
+================ spiegelwachter_block.png ===============
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a SOLID PURE-BLACK background (keep the dark glass edges
+intact), no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: turning its flat dark mirror-surface toward the LEFT as a polished shield,
+the black glass gleaming and hardening, warped cold reflections sliding across
+it, the hairline cracks sealing over — a reflective guard.
+
+=================== doorslag_block.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: folding its flimsy papery body over on itself into a thick stacked
+barricade of layered carbon-sheets, edges squared off, bracing behind the pile —
+paperwork as armour.
+
+=================== doorslag_cast.png ===================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: straining and PRESSING a pale ghost-copy of itself out of its own body as
+if under an unseen iron stylus, duplicate ink-lines bleeding through, laid open
+and flimsy as it splits — mid-duplication.
+
+================== stempelaar_block.png =================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: hunkering behind a hastily stacked wall of red-sealed dossiers and
+carbon-slips, the brass approval-stamp arm braced across them like a bar — a cold
+defensive guard.
+
+================== stempelaar_cast.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: raising the massive brass approval-stamp high and bringing it down onto an
+unseen document to the LEFT, a wax-red SEAL bursting outward from the impact
+(branding the target) — cold, triumphant bureaucracy.
