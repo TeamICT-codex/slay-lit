@@ -1092,3 +1092,446 @@ strike) — its pale duplicate-copies of itself flaring and peeling brighter for
 palm raised. Radiant, arrogant, archetypal — the real thing punishing the "copy".
 Accent: GOUD-en-KARMOZIJN, warm en verzadigd (de enige warme) + de naar links teruggekaatste
 grauwe grijs-echo van jouw klap + opflakkerende bleke kopieën.
+
+
+##################################################################
+#################### ACT 3 — HET SLACHTBLOK ######################
+##################################################################
+Werkwijze IDENTIEK aan Act 1/2: hang bij ELKE generatie de BASIS-afbeelding
+van het wezen aan als referentie (de_omroeper.png, de_rechter.png, ...) — dat
+borgt design, materiaal, kleur en het gesmolten-rode Act 3-onderlicht. Genereer
+per wezen in één sessie, sla op onder EXACT de bestandsnaam boven het blok,
+drop in assets/karakters/, en vraag daarna "ruim de nieuwe karakters op".
+
+Vijanden kijken naar LINKS (net als hun basis). Vult ~90% van 1024x1024.
+Poses per tier (zoals Act 1/2):
+  - GEWONE 8 wezens   -> _attack + _death
+  - ELITE de_rechter  -> _attack _hit _cast _block _death
+  - ELITE de_hofnar   -> _attack _hit _cast _death
+  - EPISCH spreekgest. -> _attack _hit _cast _death
+  - BAAS de_dicktator -> _attack _cast _hit _death + _intro (titelplaat) + _decreet (signature)
+UITZONDERING: de_fluisteraar staat (net als echo) op EFFEN ZWARTE achtergrond
+i.p.v. transparant — zo blijven z'n rook-randen heel.
+
+
+#################### DE OMROEPER ####################
+
+================= de_omroeper_attack.png =================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: leaning far forward, the great bronze speaking-horn thrust toward the
+LEFT, mouth stretched wide, a blast of glowing red sound-waves and spittle
+erupting from the horn as if the sound itself were the blow.
+
+================= de_omroeper_death.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: the bronze horn cracked and split down its length, the last cry escaping
+as thin grey smoke, his gaunt body folding shut like an emptied bellows, the
+regime seal on his tabard going dull.
+
+
+#################### HET KLAPVEE ####################
+
+================= het_klapvee_attack.png =================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: surging forward LEFT, dozens of its hands SLAMMING together at once in a
+single thunderous clap, every blank grinning face turned toward the target,
+tiny regime pennants shaking with the shock.
+
+================= het_klapvee_death.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: the hands going still one by one, the identical grins sliding off like
+loose masks, the whole clapping mound sagging and coming apart into a heap of
+separate, silent hands.
+
+
+#################### DE ZONDEBOK ####################
+
+================= de_zondebok_attack.png =================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: lowering its horned head and charging a short headbutt to the LEFT, the
+strapped-on load of ledgers and stones swinging, chains snapping taut, the
+painted white target on its chest thrust forward.
+
+================= de_zondebok_death.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: the chains snapping and the crushing load of others' guilt sliding off
+its back, the beast sinking down almost gratefully, the white target on its
+chest fading, its eyes finally at peace.
+
+
+#################### DE AANKLAGER ####################
+
+================ de_aanklager_attack.png =================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: thrusting the enormous accusing bone FINGER forward toward the LEFT, its
+tip flaring hot like a brand, the unrolled scroll of charges snapping straight,
+robes of verdict-slips flying.
+
+================= de_aanklager_death.png =================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: the giant accusing finger crumbling to bone-dust from the tip down, the
+scroll of charges unrolling empty and blowing away, the wraith collapsing into
+its own tangle of verdict-ribbons.
+
+
+#################### DE FLUISTERAAR  (EFFEN ZWARTE achtergrond!) ####################
+
+================ de_fluisteraar_attack.png ===============
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a SOLID PURE-BLACK background (keep the smoke edges
+intact), no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: leaning in close as if to an unseen ear on the LEFT, a long ribbon of
+violet whisper-smoke lancing out of the empty hood like a thrown dagger,
+forming half-legible slanderous words in the air.
+
+================ de_fluisteraar_death.png ================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a SOLID PURE-BLACK background (keep the smoke edges
+intact), no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: the whisper-smoke reversing and being drawn BACK INTO the empty hood, the
+cloak deflating and collapsing flat, the last word left unfinished, only a
+fading violet glow where a mouth should be.
+
+
+#################### DE VAANDELDRAGER ####################
+
+=============== de_vaandeldrager_attack.png ==============
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: swinging the huge crimson banner-pole down and forward LEFT like a spear,
+the golden woven tyrant-face on the cloth snapping taut in the molten updraft,
+the iron slit-visor lowered.
+
+=============== de_vaandeldrager_death.png ===============
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: the great banner catching fire and the golden face melting into running
+droplets, the featureless bearer sinking to one knee, still gripping the bare,
+burning pole.
+
+
+#################### DE OPHITSER ####################
+
+================= de_ophitser_attack.png =================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: mid-hurl, flinging a stolen burning torch toward the LEFT, harsh red fire
+trailing from it, the bandolier of more stolen flames swinging across his
+chest, an eager manic grin.
+
+================= de_ophitser_death.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: his own bandolier of stolen torches catching alight all at once and
+engulfing him, the wiry figure burning down into a black ash-silhouette inside
+his own harsh red fire.
+
+
+#################### DE GOUDEN GARDE ####################
+
+=============== de_gouden_garde_attack.png ===============
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: stepping into a heavy overhead halberd-strike toward the LEFT, the gilded
+halberd sweeping down, molten-red light blazing off every polished-gold edge,
+the eyeless golden mask expressionless.
+
+=============== de_gouden_garde_death.png ================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: the parade-gold running off him like melting wax to reveal the hollow
+armour beneath, the empty golden suit clattering and folding in on itself,
+self-awarded medals scattering.
+
+
+#################### DE RECHTER  (ELITE) ####################
+
+================= de_rechter_attack.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: the massive black iron gavel raised high and SMASHING down toward the
+LEFT, molten sparks bursting where it lands, wine-red robes flaring, the
+blindfold pushed up on his forehead.
+
+=================== de_rechter_hit.png ===================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: rocked back a half-step, the brass scales swinging wildly, one hand
+gripping his black iron collar-yoke, an affronted scowl — as if being struck
+were a breach of procedure.
+
+================== de_rechter_cast.png ===================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: holding the brass scales high and pressing his golden thumb down onto one
+pan, a cold blue-white verdict-light gathering above him (pronouncing the
+VONNIS), robes billowing.
+
+================== de_rechter_block.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: hunkered behind the great iron gavel held crosswise as a shield, wine-red
+robes drawn in tight, the black collar-yoke braced — immovable and bureaucratic.
+
+================== de_rechter_death.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: the scales finally tipping the HONEST way and dragging him over, the giant
+gavel slipping from his hand and splitting his own stone dais, robes collapsing,
+the blindfold falling over his eyes at last.
+
+
+#################### DE HOFNAR  (ELITE) ####################
+
+================== de_hofnar_attack.png ==================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: flinging two glowing sickly-green curse-sigils toward the LEFT like thrown
+knives, mid-cackle, skull-bells jangling, the enormous painted smile stretched
+wide over a snarling mouth.
+
+=================== de_hofnar_hit.png ====================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: doubled over as if struck mid-joke, the painted smile cracking, one
+skull-bell flying off, motley askew, a flash of the real furious face beneath
+the paint.
+
+================== de_hofnar_cast.png ====================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: juggling three green curse-sigils in a glowing arc overhead (weaving a
+mocking SPOTLIED), one leg cocked in a jeering dance-step, the struck-through
+names on his legging catching red light.
+
+================== de_hofnar_death.png ===================
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: the painted smile flaking away and the skull-bells falling silent one by
+one, the jester sinking into a low, genuine, final bow — the only honest thing
+he ever did.
+
+
+#################### HET SPREEKGESTOELTE  (EPISCH) ####################
+
+============= het_spreekgestoelte_attack.png =============
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: the two heavy manuscript-lecterns swinging forward like fists toward the
+LEFT, every carved mouth on its golden front panel screaming at once, a
+shockwave of glowing slogan-ribbons blasting out.
+
+============== het_spreekgestoelte_hit.png ===============
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: the iron scaffold shuddering, gilded panels cracking, several carved
+mouths gaping mid-word, slogan-ribbons snapping and fraying, violet lightning
+stuttering above it.
+
+============== het_spreekgestoelte_cast.png ==============
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: banner-poles rising from its back like a crown, a vortex of glowing
+slogan-ribbons spiralling up and out over an unseen crowd (a DONDERREDE),
+molten red light flooding up through the grate below.
+
+============= het_spreekgestoelte_death.png ==============
+Use the attached reference image: the EXACT same creature, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: all its carved mouths screaming over each other until the golden panels
+BURST apart, the slogan-ribbons falling as dead grey streamers, the iron
+scaffold buckling and going dark.
+
+
+#################### DE DICKTATOR  (BAAS) ####################
+
+================= de_dicktator_attack.png ================
+Use the attached reference image: the EXACT same character, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body character, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: a sweeping downward CHOP of the arm as if his tiny pointing finger were an
+axe-blade, the endless crimson sash whipping, molten sparks erupting where the
+gesture lands to the LEFT — his word IS the blade.
+
+================== de_dicktator_cast.png =================
+Use the attached reference image: the EXACT same character, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body character, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: both small golden gauntlets thrown theatrically wide, a swarm of glowing
+sickly-green curse-seals and stamped decrees spiralling up around him, golden
+mane bristling, head thrown back mid-tirade.
+
+=================== de_dicktator_hit.png =================
+Use the attached reference image: the EXACT same character, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body character, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: staggering back a half-step, one small hand snatching at the slipping
+self-awarded laurel, the smug smirk cracking into red-faced indignant fury —
+HOW DARE YOU.
+
+================== de_dicktator_death.png ================
+Use the attached reference image: the EXACT same character, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body character, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: collapsing to one knee on the slaughter-block, the golden mane deflating,
+the endless crimson sash tangling around him like a noose, self-minted medals
+raining off, the underlight dying to embers — his small hands, at last, empty.
+
+------- de_dicktator_intro.png  (TITELPLAAT — mét achtergrond, GEEN transparant) -------
+Use the attached reference image for the tyrant's design. Stylized hand-painted
+dark-fantasy key art, NOT photorealistic, no photo, no 3D render, no text.
+Portrait-ish plate that FILLS the frame (this is a boss title card, background
+ALLOWED — not isolated).
+
+Scene: the DICKtator standing high on the black slaughter-block platform, small
+arms raised in triumph over a sea of blurred clapping crowd-silhouettes below,
+colossal golden statues of himself flanking left and right, violet lightning
+crowning the gothic spire behind him, harsh molten-red light blasting up from
+the grates — pure rally spectacle, menacing and faintly ridiculous.
+
+----- de_dicktator_decreet.png  (SIGNATURE — transparant; zijn pronkstuk) -----
+Use the attached reference image: the EXACT same character, same design, colors,
+materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body character, centered,
+facing the viewer/LEFT, isolated on a fully transparent background, no ground,
+no shadow, no text. Fills ~90% of a square 1024x1024 canvas.
+
+Pose: holding up a glowing golden DECREE that bears the ghostly image of a
+PLAYING CARD and slowly TEARING it in half with two tiny golden hands, the
+card's light guttering out between the halves, his grin at maximum unearned
+smugness — grander and crueller than his attack. (Speelt af op het permanente-
+kaartverwijdering-moment, zoals de_erfprins_plagiaat bij de Roof.)
