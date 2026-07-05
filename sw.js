@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v35'; /* v35: force-update — metgezel-fixes (Drops de Witte uit de auto-rotatie + 3D-positionering náást de held) + metamorfose-zichtbaarheid + altaren-UX + reveal-art; verse shell zodat alle recente code zeker binnenkomt */
+const CACHE = 'slayit-v36'; /* v36: De Deadline base-art opnieuw gesneden (oude webp was een mottige mislukte cut van de vorige art; nieuwe = schone dambord-cut van het donkere reaper-origineel op wit) — REPLACET gecachete art, dus bump verplicht */
 const BESTANDEN = [
   '.',
   'index.html',
