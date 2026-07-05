@@ -49,7 +49,7 @@ const Outro = (() => {
     held_sta: [
       '..MMMM..',
       '.MMffMM.',
-      '.kffffk.',
+      '.kfzfzk.',
       '..ffff..',
       '..RRRR..',
       '.RRRRRR.',
@@ -65,7 +65,7 @@ const Outro = (() => {
     held_loop1: [
       '..MMMM..',
       '.MMffMM.',
-      '.kffffk.',
+      '.kfzfzk.',
       '..ffff..',
       '..RRRR..',
       '.RRRRRR.',
@@ -81,7 +81,7 @@ const Outro = (() => {
     held_loop2: [
       '..MMMM..',
       '.MMffMM.',
-      '.kffffk.',
+      '.kfzfzk.',
       '..ffff..',
       '..RRRR..',
       '.RRRRRR.',
@@ -97,7 +97,7 @@ const Outro = (() => {
     held_spring: [
       '..MMMM..',
       '.MMffMM.',
-      '.kffffk.',
+      '.kfzfzk.',
       '..ffff..',
       '.fRRRRf.',
       '.RRRRRR.',
@@ -296,6 +296,23 @@ const Outro = (() => {
     try { Klank.sfx(naam); } catch (e) {}
   }
 
+  /* een 1px donkere omlijning rond elke gevulde pixel: sprites lezen
+     meteen los van de achtergrond (dé pixel-art-leesbaarheidstruc) */
+  function omlijn(c) {
+    const w = c.width, h = c.height, x = c.getContext('2d');
+    const d = x.getImageData(0, 0, w, h), p = d.data;
+    const vol = i => p[i * 4 + 3] > 40;
+    const rand = [];
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+      const idx = j * w + i;
+      if (vol(idx)) continue;
+      if ((i > 0 && vol(idx - 1)) || (i < w - 1 && vol(idx + 1)) || (j > 0 && vol(idx - w)) || (j < h - 1 && vol(idx + w))) rand.push(idx);
+    }
+    for (const idx of rand) { p[idx * 4] = 12; p[idx * 4 + 1] = 10; p[idx * 4 + 2] = 7; p[idx * 4 + 3] = 235; }
+    x.putImageData(d, 0, 0);
+    return c;
+  }
+
   function bakSprite(rijen, tint) {
     const h = rijen.length, w = rijen[0].length;
     const c = document.createElement('canvas');
@@ -308,7 +325,7 @@ const Outro = (() => {
       cx.fillStyle = kleur;
       cx.fillRect(x, y, 1, 1);
     }
-    return c;
+    return omlijn(c);
   }
 
   function bakAlles() {
@@ -326,17 +343,21 @@ const Outro = (() => {
   /* tekst in het 3×5-font (alleen hoofdletters; onbekende tekens = spatie) */
   function tekst(cx, str, x, y, kleur, schaal) {
     schaal = schaal || 1;
-    cx.fillStyle = kleur;
     str = String(str).toUpperCase();
-    let px = x;
-    for (const ch of str) {
-      const gl = FONT[ch] || FONT[' '];
-      for (let i = 0; i < 15; i++) {
-        if (gl[i] === '1') cx.fillRect(px + (i % 3) * schaal, y + ((i / 3) | 0) * schaal, schaal, schaal);
+    /* eerst de slagschaduw, dan de kleur: leesbaar op elke drukke achtergrond */
+    for (const schaduw of [1, 0]) {
+      cx.fillStyle = schaduw ? 'rgba(8,6,4,0.9)' : kleur;
+      let px = x + schaduw * schaal;
+      const py = y + schaduw * schaal;
+      for (const ch of str) {
+        const gl = FONT[ch] || FONT[' '];
+        for (let i = 0; i < 15; i++) {
+          if (gl[i] === '1') cx.fillRect(px + (i % 3) * schaal, py + ((i / 3) | 0) * schaal, schaal, schaal);
+        }
+        px += 4 * schaal;
       }
-      px += 4 * schaal;
     }
-    return px - x;
+    return tekstBreedte(str, schaal);
   }
   const tekstBreedte = (str, schaal) => String(str).length * 4 * (schaal || 1) - (schaal || 1);
 
@@ -746,8 +767,10 @@ const Outro = (() => {
       cx.fillStyle = ((tx + ty) % 2) ? '#ffb347' : '#5fd0d8';        /* knipperlampje */
       cx.fillRect(px + 5, py + 2, 2, 2);
     } else if (t === T.HOUT) {
-      cx.fillStyle = '#6d4a2a'; cx.fillRect(px, py, TEGEL, TEGEL / 2);
-      cx.fillStyle = '#54371f'; cx.fillRect(px, py + 3, TEGEL, 1);
+      cx.fillStyle = '#8a5a2e'; cx.fillRect(px, py, TEGEL, TEGEL);
+      cx.fillStyle = '#c98f4a'; cx.fillRect(px, py, TEGEL, 1);
+      cx.fillStyle = '#54371f'; cx.fillRect(px, py + TEGEL - 2, TEGEL, 2);
+      cx.fillStyle = '#6d4a2a'; cx.fillRect(px + ((tx % 2) ? 1 : 4), py + 4, 2, 1);
     } else if (t === T.METER) {
       /* de meterkast: geel, gevaarlijk, vráágt erom */
       cx.fillStyle = '#c9a13a'; cx.fillRect(px, py, TEGEL, TEGEL);
@@ -770,6 +793,12 @@ const Outro = (() => {
       cx.fillRect(px + 3, py + 2, 2, 2);
       cx.fillStyle = '#2c3438'; cx.fillRect(px + 2, py + 5, 4, 1);
     }
+    /* rim-light: elke tegel met lucht erboven krijgt een lichte bovenrand —
+       vloeren en platformen lezen zo in één oogopslag */
+    if (t !== T.GLAS && !solide(tegelOp(tx, ty - 1))) {
+      cx.fillStyle = 'rgba(255,238,196,0.38)';
+      cx.fillRect(px, py, TEGEL, 1);
+    }
     /* schade-craquelé zodra een meertraps-tegel is aangetikt */
     const maxHp = TEGEL_HP[t];
     const nu = lvl.hp[ty * lvl.kols + tx];
@@ -789,8 +818,8 @@ const Outro = (() => {
     bgCanvas = document.createElement('canvas');
     bgCanvas.width = tegelCanvas.width; bgCanvas.height = tegelCanvas.height;
     const bx = bgCanvas.getContext('2d');
-    bx.fillStyle = '#211d15'; bx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
-    bx.fillStyle = '#2a251b';
+    bx.fillStyle = '#171310'; bx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+    bx.fillStyle = '#1f1a12';
     for (let x = 0; x < lvl.kols; x += 6) bx.fillRect(x * TEGEL, 0, TEGEL, bgCanvas.height);
     for (let x = 8; x < lvl.kols - 8; x += 14) {          /* TL-bakken aan het plafond */
       bx.fillStyle = '#3a352a'; bx.fillRect(x * TEGEL, TEGEL, 24, 3);
@@ -825,6 +854,7 @@ const Outro = (() => {
     if (lvl.hp[i] > 0) { tekenTegel(tx, ty); sfx('klap', 0.05); return true; }
     lvl.type[i] = T.LUCHT;
     tekenTegel(tx, ty);
+    tekenTegel(tx, ty + 1);   /* de tegel eronder krijgt nu een lichtrand */
     ontfactureerd += M2_PER_TEGEL;
     popupWachtrij++;
     spawnGruis(tx * TEGEL + 4, ty * TEGEL + 4, t);
