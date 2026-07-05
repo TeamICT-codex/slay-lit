@@ -312,6 +312,7 @@ function vindScherf(bron) {
   if (!nieuw.length) return null;   /* je hebt al alles van deze bron → niets te vinden */
   const sid = kiesUit(nieuw);
   draagScherf(sid);
+  if (typeof saveSpel === 'function') saveSpel();   /* meteen persisteren: geen verlies meer bij herladen vóór de volgende save */
   return sid;
 }
 /* is er nog een scherf van deze bron die je NIET bezit? (gate voor de figuur-events) */
