@@ -290,8 +290,14 @@ function neemUitStash(sid) { const a = scherfStash(); const i = a.indexOf(sid); 
 function neemGedragen(sid) { const a = gedragen(); const i = a.indexOf(sid); if (i >= 0) { a.splice(i, 1); return true; } return false; }
 /* bank alle gedragen scherven veilig op de stash (bij het verlaten van de Drempel + bij winst) */
 function bankGedragen() { gedragen().slice().forEach(bankScherf); if (S) S.scherven = []; }
-/* run-start loadout: verplaats gekozen scherven van de stash naar je gedragen tas (nu staan ze op het spel) */
-function laadScherfLoadout(ids) { (ids || []).forEach(sid => { if (neemUitStash(sid)) draagScherf(sid); }); }
+/* run-start loadout: verplaats gekozen scherven van de stash naar je gedragen tas (nu staan ze op het spel).
+   We onthouden WELKE bewust zijn meegebracht (S.loadoutScherven): die zijn de inzet → kwijt bij dood. Wat je
+   NADIEN tíjdens de run vindt is GEEN loadout en blijft bij dood behouden (zie toonEinde). */
+function laadScherfLoadout(ids) {
+  const gebracht = [];
+  (ids || []).forEach(sid => { if (neemUitStash(sid)) { draagScherf(sid); gebracht.push(sid); } });
+  if (S) S.loadoutScherven = gebracht;
+}
 /* welke metgezel hoort bij 3 geplaatste scherf-ids? (exact, nog-niet-vrij trio) → mid of null */
 function scherfTrio(ids) {
   const set = (ids || []).filter(Boolean);
@@ -5451,7 +5457,14 @@ function toonEinde(gewonnen, verslagenBaas) {
   if (!S.runGeregistreerd) {
     uitslag = registreerRun(gewonnen);
     if (S.daily) { const du = registreerDaily(gewonnen); S.dailyNieuweTop = du.nieuweTop; wisSave(); }
-    if (gewonnen) bankGedragen();   /* overleefd → gedragen scherven (bv. in Act 2 gevonden) bankt veilig op de stash */
+    if (gewonnen) bankGedragen();   /* overleefd → ALLE gedragen scherven bankt veilig op de stash */
+    else {
+      /* DOOD: wat je tíjdens de run VOND blijft behouden (bank het), enkel de bewust MEEGEBRACHTE
+         loadout is de inzet en gaat verloren. Zo groeit je verzameling ook bij een mislukte afdaling. */
+      const loadout = (S.loadoutScherven || []);
+      gedragen().slice().filter(sid => !loadout.includes(sid)).forEach(bankScherf);
+      if (S) S.scherven = [];
+    }
     S.runGeregistreerd = true;
   }
   const besteHeld = (Codex.bestDiepte && Codex.bestDiepte[S.held]) || 0;
