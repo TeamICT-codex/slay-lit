@@ -576,7 +576,7 @@ function pv(c, veld) {
 /* null-veilig: wordt ook vóór een run aangeroepen (startdek bekijken) */
 function heeftRelikwie(id) { return !!(S && S.relikwieen && S.relikwieen.includes(id)); }
 function relikwieSchadeBonus() { return heeftRelikwie('stalen_vuist') ? 1 : 0; }
-function drankSlots() { return heeftRelikwie('veldfles') ? 3 : 2; }
+function drankSlots() { return heeftRelikwie('veldfles') ? 4 : 3; }   /* basis 3 (playtest); veldfles +1 → 4 */
 
 function geefRelikwie(id, vanSchrijn) {
   if (!S.relikwieen.includes(id)) S.relikwieen.push(id);
@@ -4267,7 +4267,7 @@ async function gevechtGewonnen() {
     return;
   }
 
-  let goud = g.soort === 'elite' ? rnd(28, 40) : rnd(12, 22);
+  let goud = g.soort === 'elite' ? rnd(34, 48) : rnd(16, 26);   /* iets guller na gevechten (playtest) */
   if (asc() >= 4) goud = Math.floor(goud * 0.75);   /* ascension 4: schrale buit */
   if (g.gedoofd) goud = Math.floor(goud * 1.5);
   if (heeftRelikwie('gelukspoot')) goud = Math.floor(goud * 1.25);

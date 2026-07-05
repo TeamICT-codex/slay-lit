@@ -1952,6 +1952,25 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
 .kies-teller.klaar b { color: var(--goud); }
 .kies-actiebalk .kies-bevestig:disabled { opacity: .4; cursor: not-allowed; filter: grayscale(.6); }
 
+/* laptop-fix voor dezelfde "balk-middenin"-bug als op mobiel: .kies-actiebalk is
+   position:fixed;bottom:0, maar de .overlay-backdrop-filter maakt een containing
+   block → op laptop hangt "bottom:0" aan de te-hoge overlay-box i.p.v. de viewport,
+   dus de balk zweeft middenin met kaarten eronder. Oplossing = de mobiele aanpak
+   ook hier: #overlay-kies wordt een flex-kolom waarin enkel het kaartraster scrollt
+   en de actiebalk een IN-FLOW onderbalk is. Gescoped op .kies-meervoud → beloning-/
+   dek-/smid-overlays blijven ongemoeid. (Mobiel heeft z'n eigen, specifiekere regels
+   met safe-area/touch — die winnen daar.) */
+#overlay-kies.kies-meervoud.open { align-items: stretch; overflow: hidden; }
+#overlay-kies.kies-meervoud #kies-titel,
+#overlay-kies.kies-meervoud #kies-hint { flex: 0 0 auto; }
+#overlay-kies.kies-meervoud #kies-kaarten.meer-modus {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  align-content: flex-start; margin-bottom: 0;
+}
+#overlay-kies.kies-meervoud .kies-actiebalk {
+  position: static; flex: 0 0 auto; width: 100%; margin-top: auto;
+}
+
 /* inspectie-zoom: de kaart in vol ornaat */
 #kies-kaarten.focus-modus { align-items: center; }
 .kaart-focus-houder {
