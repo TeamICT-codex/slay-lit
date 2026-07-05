@@ -494,18 +494,25 @@ window.karakterSvg = karakterSvg;
    met de juiste naam (bv. grotrat.png) en het vervangt de
    ingebouwde SVG automatisch, in 2D én 3D.
    ============================================================ */
-const KARAKTER_FOTOS = { basis: 'assets/karakters/', cache: {} };
+const KARAKTER_FOTOS = { basis: 'assets/karakters/', cache: {}, mislukt: {} };
+/* een mislukte laadpoging (art bestaat nog niet) werd voorheen PERMANENT als null
+   gecachet → net-gedeployede poses bleven een hele sessie onzichtbaar (in gevecht
+   ÉN bestiarium) tot een harde herlaad. Nu met een korte TTL: hooguit 1 herpoging
+   per ~20s per id → nieuwe art verschijnt binnen de sessie vanzelf, zonder 404-hameren. */
+const _ART_MISLUKT_TTL = 20000;
 function laadKarakterAfbeelding(id, cb) {
   const c = KARAKTER_FOTOS.cache;
-  if (id in c) { cb(c[id]); return; }
+  if (id in c) { cb(c[id]); return; }                                   /* positieve hit: altijd hergebruiken */
+  const m = KARAKTER_FOTOS.mislukt[id];
+  if (m && Date.now() - m < _ART_MISLUKT_TTL) { cb(null); return; }      /* verse mislukking: niet hameren */
   const probeer = (ext, anders) => {
     const img = new Image();
-    img.onload = () => { c[id] = img; cb(img); };
+    img.onload = () => { c[id] = img; delete KARAKTER_FOTOS.mislukt[id]; cb(img); };
     img.onerror = anders;
     img.src = KARAKTER_FOTOS.basis + id + '.' + ext;
   };
   /* webp = de geoptimaliseerde vorm; png = verse drops vóór conversie */
-  probeer('webp', () => probeer('png', () => { c[id] = null; cb(null); }));
+  probeer('webp', () => probeer('png', () => { KARAKTER_FOTOS.mislukt[id] = Date.now(); cb(null); }));
 }
 window.laadKarakterAfbeelding = laadKarakterAfbeelding;
 
@@ -514,16 +521,18 @@ window.laadKarakterAfbeelding = laadKarakterAfbeelding;
    id als naam (PNG of JPG) en het verschijnt in het spel.
    ============================================================ */
 function maakArtLader(basis) {
-  const cache = {};
+  const cache = {}, mislukt = {};   /* mislukt = TTL-cache (zie _ART_MISLUKT_TTL) → net-gedropte art verschijnt vanzelf */
   return function (id, cb) {
     if (id in cache) { cb(cache[id]); return; }
+    const m = mislukt[id];
+    if (m && Date.now() - m < _ART_MISLUKT_TTL) { cb(null); return; }
     const probeer = (ext, anders) => {
       const img = new Image();
-      img.onload = () => { cache[id] = img; cb(img); };
+      img.onload = () => { cache[id] = img; delete mislukt[id]; cb(img); };
       img.onerror = anders;
       img.src = basis + id + '.' + ext;
     };
-    probeer('webp', () => probeer('png', () => probeer('jpg', () => { cache[id] = null; cb(null); })));
+    probeer('webp', () => probeer('png', () => probeer('jpg', () => { mislukt[id] = Date.now(); cb(null); })));
   };
 }
 window.laadKaartAfbeelding = maakArtLader('assets/kaarten/');
