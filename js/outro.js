@@ -234,26 +234,27 @@ const Outro = (() => {
     ]
   };
   /* ---------- 3×5 pixel-font (hoofdletters — alle outro-UI is kapitaal) ---------- */
+  /* ---------- 5×7 dot-matrix-font (leesbaar, ook op 320px) ---------- */
   const FONT = {
-    A: '010101111101101', B: '110101110101110', C: '011100100100011',
-    D: '110101101101110', E: '111100110100111', F: '111100110100100',
-    G: '011100101101011', H: '101101111101101', I: '111010010010111',
-    J: '001001001101010', K: '101110100110101', L: '100100100100111',
-    M: '101111111101101', N: '101111111111101', O: '010101101101010',
-    P: '110101110100100', Q: '010101101010001', R: '110101110110101',
-    S: '011100010001110', T: '111010010010010', U: '101101101101111',
-    V: '101101101101010', W: '101101111111101', X: '101101010101101',
-    Y: '101101010010010', Z: '111001010100111',
-    '0': '111101101101111', '1': '010110010010111', '2': '110001010100111',
-    '3': '111001011001111', '4': '101101111001001', '5': '111100110001110',
-    '6': '011100111101111', '7': '111001010100100', '8': '010101010101010',
-    '9': '111101111001110',
-    ':': '000010000010000', '.': '000000000000010', ',': '000000000010100',
-    '-': '000000111000000', '+': '000010111010000', '!': '010010010000010',
-    '?': '110001010000010', '/': '001001010100100', "'": '010010000000000',
-    '"': '101101000000000', '(': '010100100100010', ')': '010001001001010',
-    '[': '110100100100110', ']': '011001001001011',
-    ' ': '000000000000000'
+    A:[14,17,17,31,17,17,17],B:[30,17,17,30,17,17,30],C:[14,17,16,16,16,17,14],
+    D:[30,17,17,17,17,17,30],E:[31,16,16,30,16,16,31],F:[31,16,16,30,16,16,16],
+    G:[14,17,16,23,17,17,15],H:[17,17,17,31,17,17,17],I:[14,4,4,4,4,4,14],
+    J:[7,2,2,2,2,18,12],K:[17,18,20,24,20,18,17],L:[16,16,16,16,16,16,31],
+    M:[17,27,21,21,17,17,17],N:[17,25,21,19,17,17,17],O:[14,17,17,17,17,17,14],
+    P:[30,17,17,30,16,16,16],Q:[14,17,17,17,21,18,13],R:[30,17,17,30,20,18,17],
+    S:[15,16,16,14,1,1,30],T:[31,4,4,4,4,4,4],U:[17,17,17,17,17,17,14],
+    V:[17,17,17,17,17,10,4],W:[17,17,17,21,21,27,17],X:[17,17,10,4,10,17,17],
+    Y:[17,17,10,4,4,4,4],Z:[31,1,2,4,8,16,31],
+    '0':[14,17,19,21,25,17,14],'1':[4,12,4,4,4,4,14],'2':[14,17,1,6,8,16,31],
+    '3':[14,17,1,6,1,17,14],'4':[2,6,10,18,31,2,2],'5':[31,16,30,1,1,17,14],
+    '6':[6,8,16,30,17,17,14],'7':[31,1,2,4,8,8,8],'8':[14,17,17,14,17,17,14],
+    '9':[14,17,17,15,1,2,12],
+    ':':[0,4,0,0,0,4,0],'.':[0,0,0,0,0,6,6],',':[0,0,0,0,0,4,8],
+    '-':[0,0,0,14,0,0,0],'+':[0,4,4,31,4,4,0],'=':[0,0,31,0,31,0,0],
+    '!':[4,4,4,4,4,0,4],'?':[14,17,1,2,4,0,4],'/':[1,1,2,4,8,16,16],
+    "'":[4,4,0,0,0,0,0],'"':[10,10,0,0,0,0,0],
+    '(':[2,4,8,8,8,4,2],')':[8,4,2,2,2,4,8],'[':[14,8,8,8,8,8,14],']':[14,2,2,2,2,2,14],
+    ' ':[0,0,0,0,0,0,0]
   };
 
   /* ---------- module-staat ---------- */
@@ -351,15 +352,15 @@ const Outro = (() => {
       const py = y + schaduw * schaal;
       for (const ch of str) {
         const gl = FONT[ch] || FONT[' '];
-        for (let i = 0; i < 15; i++) {
-          if (gl[i] === '1') cx.fillRect(px + (i % 3) * schaal, py + ((i / 3) | 0) * schaal, schaal, schaal);
+        for (let r = 0; r < 7; r++) for (let b = 0; b < 5; b++) {
+          if (gl[r] & (16 >> b)) cx.fillRect(px + b * schaal, py + r * schaal, schaal, schaal);
         }
-        px += 4 * schaal;
+        px += 6 * schaal;
       }
     }
     return tekstBreedte(str, schaal);
   }
-  const tekstBreedte = (str, schaal) => String(str).length * 4 * (schaal || 1) - (schaal || 1);
+  const tekstBreedte = (str, schaal) => String(str).length * 6 * (schaal || 1) - (schaal || 1);
 
   /* ============================================================
      LEVEL — V-1 HET ARCHIEF (testverdieping van het feel-prototype)
@@ -708,7 +709,7 @@ const Outro = (() => {
     staat = 'epiloog';
     const dots = (links, rechts) => {
       let s = links + ' ';
-      while (s.length + rechts.length + 1 < 36) s += '.';
+      while (s.length + rechts.length + 1 < 24) s += '.';
       return s + ' ' + rechts;
     };
     epi = {
@@ -1023,8 +1024,9 @@ const Outro = (() => {
     const links = toetsen.has('arrowleft') || toetsen.has('a') || aanraking.dx < -6;
     const rechts = toetsen.has('arrowright') || toetsen.has('d') || aanraking.dx > 6;
     const vuur = toetsen.has('j') || toetsen.has('x') || aanraking.knoppen.vuur !== undefined || vuurBuf > 0;
+    const omhoog = toetsen.has('arrowup') || toetsen.has('w') || aanraking.knoppen.spring !== undefined;
     const worpKnop = toetsen.has('k') || toetsen.has('z') || aanraking.knoppen.worp !== undefined || worpBuf > 0;
-    return { links, rechts, vuur, worpKnop };
+    return { links, rechts, vuur, worpKnop, omhoog };
   }
 
   /* touch: linkerhelft = loop-strook, rechtsonder drie knoppen */
@@ -1112,7 +1114,9 @@ const Outro = (() => {
       if (h.zwaaiT > 0) h.zwaaiT -= dt;
       if (inp.vuur && h.zwaaiKlok <= 0) {
         h.zwaaiKlok = 0.12; h.zwaaiT = 0.09; vuurBuf = 0;
-        const rx = h.x + h.b / 2 + h.richting * 11, ry = h.y + 7;
+        h.zwaaiOmhoog = inp.omhoog;   /* houd omhoog in = boven je slaan (plafonds!) */
+        const rx = inp.omhoog ? h.x + h.b / 2 : h.x + h.b / 2 + h.richting * 11;
+        const ry = inp.omhoog ? h.y - 9 : h.y + 7;
         const geraakt = sloopGebied(rx, ry, 9, 1);
         for (const d of drones) {
           if (!d.dood && Math.abs(d.x + 4 - rx) < 12 && Math.abs(d.y + 4 - ry) < 12) raakVijand(d, 1);
@@ -1600,10 +1604,17 @@ const Outro = (() => {
       /* de bijl-zwaai: één wit sloop-boogje vóór de held */
       if (h.zwaaiT > 0) {
         ctx.fillStyle = '#ffffff';
-        const bx = h.x + h.b / 2 + h.richting * 8 + ox, by = h.y + 3 + oy;
-        ctx.fillRect(bx, by, h.richting * 8, 2);
-        ctx.fillRect(bx + h.richting * 6, by + 3, h.richting * 4, 2);
-        ctx.fillRect(bx + h.richting * 2, by + 6, h.richting * 6, 2);
+        if (h.zwaaiOmhoog) {
+          const bx = h.x + ox - 2, by = h.y - 8 + oy;
+          ctx.fillRect(bx, by + 2, 2, 6);
+          ctx.fillRect(bx + 3, by, 6, 2);
+          ctx.fillRect(bx + 10, by + 2, 2, 6);
+        } else {
+          const bx = h.x + h.b / 2 + h.richting * 8 + ox, by = h.y + 3 + oy;
+          ctx.fillRect(bx, by, h.richting * 8, 2);
+          ctx.fillRect(bx + h.richting * 6, by + 3, h.richting * 4, 2);
+          ctx.fillRect(bx + h.richting * 2, by + 6, h.richting * 6, 2);
+        }
       }
     }
 
@@ -1679,7 +1690,7 @@ const Outro = (() => {
     tekst(ctx, reg, BREED - 4 - tekstBreedte(reg), regY, '#cfc0a0');
     if (collegas.length) {
       const st = 'DE VELEN: ' + collegas.length;
-      tekst(ctx, st, BREED - 4 - tekstBreedte(st), regY + 7, '#5fd0d8');
+      tekst(ctx, st, BREED - 4 - tekstBreedte(st), regY + 9, '#5fd0d8');
     }
     /* de besturingshint: twee regels, alleen op de eerste verdieping */
     if (hintT > 0 && lvlIdx === 0 && staat === 'spel') {
@@ -1787,8 +1798,8 @@ const Outro = (() => {
     ctx.strokeStyle = 'rgba(255,179,71,0.35)'; ctx.lineWidth = 1;
     ctx.strokeRect(8.5, 8.5, BREED - 17, HOOG - 17);
     tekst(ctx, 'B.A.A.S. V8.7 - CONFIGURATIE', 16, 16, A);
-    tekst(ctx, 'LAATSTE WIJZIGING: 25 JAAR GELEDEN.', 16, 26, GRIJS);
-    tekst(ctx, 'DOOR: U.', 16, 34, A);
+    tekst(ctx, 'LAATSTE WIJZIGING: 25 JAAR GELEDEN.', 16, 27, GRIJS);
+    tekst(ctx, 'DOOR: U.', 16, 36, A);
     /* de toegangscode staat al voorgetypt — hij kent u beter dan uzelf */
     const seed = (typeof S !== 'undefined' && S && S.seed) ? String(S.seed).toUpperCase() : '0042';
     const cursor = configStap === 0 && ((tijd * 2) | 0) % 2 ? '_' : '';
@@ -1872,16 +1883,16 @@ const Outro = (() => {
     }
 
     /* de omgekeerde factuur ratelt uit de dot-matrix */
-    ctx.fillStyle = '#e8e0c8'; ctx.fillRect(10, 8, 152, 62);
-    ctx.fillStyle = '#c9bda0'; ctx.fillRect(10, 8, 152, 2);
+    ctx.fillStyle = '#e8e0c8'; ctx.fillRect(8, 6, 168, 68);
+    ctx.fillStyle = '#c9bda0'; ctx.fillRect(8, 6, 168, 2);
     let budget = Math.max(0, Math.floor((e.t - 1.2) * 26));
     if (e.spoed || e.klaar) budget = 9999;
     let ty = 14;
     for (const regel of e.regels) {
       const n = Math.min(regel.length, budget);
       budget -= n;
-      if (n > 0) tekst(ctx, regel.slice(0, n), 14, ty, '#26221a');
-      ty += 9;
+      if (n > 0) tekst(ctx, regel.slice(0, n), 12, ty, '#26221a');
+      ty += 10;
     }
     if (budget >= 0 && Math.floor((e.t - 1.2) * 26) < e.totaalTekens && ((tijd * 10) | 0) % 3 === 0) sfx('blok', 0.14);
 
