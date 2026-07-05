@@ -1679,20 +1679,27 @@ function renderTopbalk() {
 /* drank-drinkmoment: de fles verschijnt groot centraal in beeld met een kleur-
    explosie in de drankkleur (def.kleur), en dooft dan. Puur cosmetisch (pointer-
    events none), fixed t.o.v. het scherm → werkt in én buiten gevecht. */
-function drankMoment(def) {
+function drankMoment(id, def) {
+  def = def || DRANKEN[id];
   if (!def) return;
   const el = document.createElement('div');
   el.className = 'drank-moment';
   el.style.setProperty('--dkleur', def.kleur || '#ffd24a');
-  el.innerHTML = `<span class="dm-gloed"></span><span class="dm-fles">${def.icoon || '🧪'}</span>`
+  el.innerHTML = `<span class="dm-gloed"></span>`
+    + `<span class="dm-fles">${def.icoon || '🧪'}</span>`   /* emoji-terugval; wordt vervangen door de art als die er is */
     + `<span class="dm-naam">${def.naam || ''}</span>`;
   document.body.appendChild(el);
+  /* toon de ÉCHTE drank-artwork groot i.p.v. de emoji (valt terug op emoji zonder art) */
+  if (window.laadDrankAfbeelding) laadDrankAfbeelding(id, img => {
+    const fles = el.querySelector('.dm-fles');
+    if (img && fles) { fles.textContent = ''; fles.classList.add('dm-heeft-art'); fles.style.backgroundImage = `url("${img.src}")`; }
+  });
   if (window.Klank) Klank.sfx('schitter');   /* korte glinster boven op de 'drank'-slok */
   setTimeout(() => el.remove(), 1100);
 }
 
 function drinkEffect(id, doel) {
-  drankMoment(DRANKEN[id]);   /* toon het drink-moment vóór het effect landt */
+  drankMoment(id);   /* toon het drink-moment (drank-artwork groot in beeld) vóór het effect landt */
   DRANKEN[id].drink(doel);
   if (heeftRelikwie('vijzel_en_stamper')) {
     DRANKEN[id].drink(doel);
