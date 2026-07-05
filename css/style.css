@@ -2963,6 +2963,60 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
   100% { opacity: 0; transform: translateY(-12px); }
 }
 
+/* ---------- drank-drinkmoment: klik op een drank → de fles verschijnt groot centraal
+   in beeld, kantelt (slok) en spat open in de drankkleur (--dkleur), dan weg. Eén
+   cosmetisch moment, pointer-events:none, fixed t.o.v. het scherm (werkt in én buiten
+   gevecht). Blijft ook in lite leven: het is een korte one-shot, geen doorlopende lus. */
+.drank-moment {
+  position: fixed; left: 50%; top: 44%;
+  transform: translate(-50%, -50%);
+  z-index: 90; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center;
+  animation: drankMomentFade 1.05s ease forwards;
+}
+.drank-moment .dm-gloed {
+  position: absolute; top: 38%; left: 50%;
+  width: clamp(180px, 52vmin, 300px); height: clamp(180px, 52vmin, 300px);
+  transform: translate(-50%, -50%) scale(.3);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--dkleur) 0%, transparent 66%);
+  filter: blur(3px);
+  animation: drankGloed 1.05s ease forwards;
+}
+.drank-moment .dm-fles {
+  font-size: clamp(3.6rem, 15vmin, 6rem); line-height: 1;
+  filter: drop-shadow(0 5px 12px rgba(0, 0, 0, .6)) drop-shadow(0 0 22px var(--dkleur));
+  animation: drankSlok 1.05s cubic-bezier(.32, .9, .35, 1) forwards;
+}
+.drank-moment .dm-naam {
+  margin-top: 8px;
+  font-family: 'Pirata One', cursive;
+  font-size: clamp(1.2rem, 5vmin, 1.7rem); letter-spacing: .04em;
+  color: var(--dkleur);
+  text-shadow: 0 0 16px var(--dkleur), 0 2px 5px rgba(0, 0, 0, .9);
+  white-space: nowrap;
+  animation: drankNaam 1.05s ease forwards;
+}
+@keyframes drankMomentFade { 0% { opacity: 0; } 12% { opacity: 1; } 74% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes drankSlok {
+  0%   { transform: scale(.45) translateY(26px) rotate(0deg); }
+  22%  { transform: scale(1.16) translateY(0) rotate(0deg); }
+  50%  { transform: scale(1.12) translateY(-4px) rotate(-26deg); }
+  68%  { transform: scale(1.12) translateY(-4px) rotate(-6deg); }
+  100% { transform: scale(1.22) translateY(-20px) rotate(0deg); }
+}
+@keyframes drankGloed {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(.3); }
+  30%  { opacity: .82; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.95); }
+}
+@keyframes drankNaam {
+  0%   { opacity: 0; transform: translateY(10px); }
+  26%  { opacity: 1; transform: translateY(0); }
+  76%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+
 /* duister-vignet: het donker kruipt vanaf de schermranden naar binnen,
    met nadruk op de zijkanten. Boven de schermen (z 1), onder topbalk (50),
    overlays (800) en meldingen (950). Onderaan uitgemaskeerd zodat hand en

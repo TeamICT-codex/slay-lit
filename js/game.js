@@ -1676,7 +1676,23 @@ function renderTopbalk() {
 }
 
 /* Vijzel en Stamper: elk drankje werkt dubbel */
+/* drank-drinkmoment: de fles verschijnt groot centraal in beeld met een kleur-
+   explosie in de drankkleur (def.kleur), en dooft dan. Puur cosmetisch (pointer-
+   events none), fixed t.o.v. het scherm → werkt in én buiten gevecht. */
+function drankMoment(def) {
+  if (!def) return;
+  const el = document.createElement('div');
+  el.className = 'drank-moment';
+  el.style.setProperty('--dkleur', def.kleur || '#ffd24a');
+  el.innerHTML = `<span class="dm-gloed"></span><span class="dm-fles">${def.icoon || '🧪'}</span>`
+    + `<span class="dm-naam">${def.naam || ''}</span>`;
+  document.body.appendChild(el);
+  if (window.Klank) Klank.sfx('schitter');   /* korte glinster boven op de 'drank'-slok */
+  setTimeout(() => el.remove(), 1100);
+}
+
 function drinkEffect(id, doel) {
+  drankMoment(DRANKEN[id]);   /* toon het drink-moment vóór het effect landt */
   DRANKEN[id].drink(doel);
   if (heeftRelikwie('vijzel_en_stamper')) {
     DRANKEN[id].drink(doel);
