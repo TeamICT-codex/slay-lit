@@ -20,8 +20,8 @@ const Outro = (() => {
   /* tegeltypes — BETON draagt het gebouw en is onverwoestbaar (je graaft niet
      uit het level), al de rest is sloopbaar. hp per type in TEGEL_HP.
      MACHINE en METER ontploffen bij sloop (meterkast = de grote kettingreactie). */
-  const T = { LUCHT: 0, BETON: 1, GIPS: 2, GLAS: 3, MEUBEL: 4, KAST: 5, MACHINE: 6, HOUT: 7, METER: 8, POSTER: 9, POORT: 10 };
-  const TEGEL_HP = [0, 5, 1, 1, 1, 1, 2, 1, 1, 1, 3];   /* beton = taai maar sloopbaar: kolommen kunnen om */
+  const T = { LUCHT: 0, BETON: 1, GIPS: 2, GLAS: 3, MEUBEL: 4, KAST: 5, MACHINE: 6, HOUT: 7, METER: 8, POSTER: 9, POORT: 10, PLANT: 11 };
+  const TEGEL_HP = [0, 5, 1, 1, 1, 1, 2, 1, 1, 1, 3, 1];   /* beton = taai maar sloopbaar: kolommen kunnen om */
   const M2_PER_TEGEL = 0.36;          /* de ONTFACTUREERD-teller telt in m² kantoor */
 
   /* ---------- het palet: systeem = beige, wat leeft = kleur ---------- */
@@ -34,7 +34,7 @@ const Outro = (() => {
     'h': '#7a5230', 'H': '#54371f',
     'l': '#cfe0e4', 's': '#9aa7ab', 'S': '#5f6d72',
     'f': '#f2c9a0', 'd': '#4a6fa5', 'D': '#32507a',
-    'W': '#ffffff'
+    'W': '#ffffff', 'v': '#8a5fc9'
   };
 
   /* heldkleur per masker — 'R'/'Q' in sprite-maps worden hierdoor vervangen */
@@ -224,6 +224,24 @@ const Outro = (() => {
       '.ss..ss...',
       '..........'
     ],
+    slijm: [
+      '...pppp...',
+      '..pppppp..',
+      '.pWpzppzp.',
+      '.pppppppp.',
+      'pppGppGppp',
+      '.pp.pp.pp.'
+    ],
+    kaart: [
+      'kkkkkkkk',
+      'kwwwwwwk',
+      'kwvvvvwk',
+      'kwvzzvwk',
+      'kwvvvvwk',
+      'kwwvvwwk',
+      'kwwwwwwk',
+      'kkkkkkkk'
+    ],
     slang: [
       '..............',
       'ss..ss..ssss..',
@@ -402,6 +420,7 @@ const Outro = (() => {
     }
     /* bureaus (meubel, 1 hoog) tussen de kasten */
     for (const mx of [17, 19, 21, 55, 57, 62, 64, 96, 98]) zet(mx, H - 3, T.MEUBEL);
+    for (const px2 of [12, 36, 54, 97]) zet(px2, H - 3, T.PLANT);
 
     /* houten tussenplatforms om op te springen */
     vul(28, 13, 34, 13, T.HOUT);
@@ -424,7 +443,8 @@ const Outro = (() => {
       vijanden: [
         { soort: 'drone', x: 31 * TEGEL, y: 6 * TEGEL },
         { soort: 'drone', x: 56 * TEGEL, y: 8 * TEGEL },
-        { soort: 'slang', x: 81 * TEGEL, y: (H - 3) * TEGEL + 2 }
+        { soort: 'slang', x: 81 * TEGEL, y: (H - 3) * TEGEL + 2 },
+        { soort: 'slijm', x: 44 * TEGEL, y: (H - 4) * TEGEL }
       ],
       cocons: [{ x: 25 * TEGEL, y: (H - 5) * TEGEL }, { x: 67 * TEGEL, y: (H - 5) * TEGEL }],
       lift: { x: 103 * TEGEL, y: (H - 8) * TEGEL, b: 4 * TEGEL, h: 5 * TEGEL }
@@ -450,6 +470,7 @@ const Outro = (() => {
       if (cx % 16 === 8) zet(cx, H - 6, T.POSTER);
       zet(cx + 3, H - 3, T.MEUBEL);
     }
+    for (const px2 of [10, 27, 55, 86, 109]) zet(px2, H - 3, T.PLANT);
     /* de badge-poortjes: twee kolom-doorgangen op slot — slopen of niets */
     for (const px of [30, 92]) { zet(px, H - 3, T.POORT); zet(px, H - 4, T.POORT); zet(px, H - 5, T.POORT); }
 
@@ -470,7 +491,9 @@ const Outro = (() => {
         { soort: 'kopieerbot', x: 82 * TEGEL, y: (H - 5) * TEGEL },
         { soort: 'drone', x: 50 * TEGEL, y: 6 * TEGEL },
         { soort: 'drone', x: 96 * TEGEL, y: 5 * TEGEL },
-        { soort: 'slang', x: 66 * TEGEL, y: (H - 3) * TEGEL + 2 }
+        { soort: 'slang', x: 66 * TEGEL, y: (H - 3) * TEGEL + 2 },
+        { soort: 'slijm', x: 22 * TEGEL, y: (H - 4) * TEGEL },
+        { soort: 'slijm', x: 74 * TEGEL, y: (H - 4) * TEGEL }
       ],
       cocons: [{ x: 12 * TEGEL, y: (H - 5) * TEGEL }, { x: 47 * TEGEL, y: (H - 5) * TEGEL }, { x: 87 * TEGEL, y: (H - 5) * TEGEL }],
       cellen: [{ x: 71 * TEGEL, y: (H - 5) * TEGEL }],
@@ -505,6 +528,8 @@ const Outro = (() => {
     zet(28, 10, T.MACHINE); zet(51, 8, T.MACHINE); zet(73, 11, T.MACHINE);
     for (const [ex, ey] of [[14, H - 3], [36, H - 3], [53, 8], [68, H - 3], [93, H - 3], [108, H - 3]]) zet(ex, ey, T.METER);
     for (const wx of [23, 59, 99]) zet(wx, 5, T.POSTER);
+    for (const px2 of [11, 33, 55, 103]) zet(px2, H - 3, T.PLANT);
+    zet(26, 10, T.PLANT); zet(74, 11, T.PLANT);   /* zelfs op de platforms staat er groen */
 
     return {
       naam: 'V3 — DE DIRECTIE-ETAGE',
@@ -519,7 +544,9 @@ const Outro = (() => {
         { soort: 'slang', x: 44 * TEGEL, y: (H - 3) * TEGEL + 2 },
         { soort: 'slang', x: 81 * TEGEL, y: (H - 3) * TEGEL + 2 },
         { soort: 'drone', x: 50 * TEGEL, y: 6 * TEGEL },
-        { soort: 'drone', x: 90 * TEGEL, y: 5 * TEGEL }
+        { soort: 'drone', x: 90 * TEGEL, y: 5 * TEGEL },
+        { soort: 'kaart', x: 27 * TEGEL, y: 9 * TEGEL },
+        { soort: 'kaart', x: 72 * TEGEL, y: 8 * TEGEL }
       ],
       cocons: [{ x: 16 * TEGEL, y: (H - 5) * TEGEL }, { x: 58 * TEGEL, y: (H - 5) * TEGEL }, { x: 82 * TEGEL, y: (H - 5) * TEGEL }],
       cellen: [{ x: 37 * TEGEL, y: (H - 5) * TEGEL }],
@@ -538,6 +565,8 @@ const Outro = (() => {
     else if (v.soort === 'kopie') { e.hp = 1; e.b = 9; e.h = 9; e.ouder = v.ouder || null; }
     else if (v.soort === 'torentje') e.hp = 3;
     else if (v.soort === 'slang') { e.hp = 2; e.richting = 1; }
+    else if (v.soort === 'slijm') { e.hp = 2; e.b = 9; e.h = 6; }
+    else if (v.soort === 'kaart') { e.hp = 1; }
     return e;
   }
 
@@ -566,6 +595,7 @@ const Outro = (() => {
     /* puin van de sloop hierboven: nog wat sloopbaars voor wie wil */
     for (const px of [6, 7, 11, 15, 16, 21, 24]) zet(px, H - 3, T.MEUBEL);
     zet(11, H - 4, T.KAST); zet(16, H - 4, T.KAST);
+    for (const px2 of [9, 19, 26]) zet(px2, H - 3, T.PLANT);   /* de serverhal-planten: iemand gaf ze water */
 
     /* de voetafdruk van B.A.A.S. is beton: kamervullend, onverwoestbaar */
     vul(29, 9, 42, H - 3, T.BETON);
@@ -787,6 +817,12 @@ const Outro = (() => {
       cx.fillRect(px + 2, py + 2, 1, 1); cx.fillRect(px + 5, py + 2, 1, 1);
       cx.fillRect(px + 2, py + 4, 4, 1); cx.fillRect(px + 1, py + 3, 1, 1); cx.fillRect(px + 6, py + 3, 1, 1);
       cx.fillStyle = '#8a7d5e'; cx.fillRect(px + 1, py + 6, 6, 1);
+    } else if (t === T.PLANT) {
+      /* de kantoorficus: het enige dat hier ooit echt groeide */
+      cx.fillStyle = '#79c045'; cx.fillRect(px + 2, py, 4, 2); cx.fillRect(px + 1, py + 1, 2, 2); cx.fillRect(px + 5, py + 1, 2, 2);
+      cx.fillStyle = '#4c7f2a'; cx.fillRect(px + 3, py + 2, 2, 2);
+      cx.fillStyle = '#a04e28'; cx.fillRect(px + 2, py + 4, 4, 3);
+      cx.fillStyle = '#7a3a1c'; cx.fillRect(px + 2, py + 4, 4, 1); cx.fillRect(px + 1, py + 7, 6, 1);
     } else if (t === T.POORT) {
       /* het badge-poortje: "BADGE, GRAAG" — blokkeert tot gesloopt */
       cx.fillStyle = '#77848a'; cx.fillRect(px, py, TEGEL, TEGEL);
@@ -926,7 +962,7 @@ const Outro = (() => {
 
   /* ---------- partikels & popups ---------- */
   const MAX_PARTIKELS = () => (window.mobiel || document.body.classList.contains('lite')) ? 110 : 220;
-  const GRUIS_KLEUR = [null, '#5b574a', '#cfc0a0', '#cfe0e4', '#7a5230', '#8a6a42', '#77848a', '#6d4a2a', '#c9a13a', '#e8dfc4', '#77848a'];
+  const GRUIS_KLEUR = [null, '#5b574a', '#cfc0a0', '#cfe0e4', '#7a5230', '#8a6a42', '#77848a', '#6d4a2a', '#c9a13a', '#e8dfc4', '#77848a', '#79c045'];
   function duwPartikel(p) {
     if (partikels.length >= MAX_PARTIKELS()) partikels.shift();
     partikels.push(p);
@@ -1253,6 +1289,18 @@ const Outro = (() => {
         const rij = Math.floor((d.y + 3) / TEGEL);
         if (solide(tegelOp(voorX, rij)) || !solide(tegelOp(voorX, rij + 1))) d.richting *= -1;
         else d.x += d.richting * 55 * dt;
+      } else if (d.soort === 'slijm') {
+        /* een ontsnapt onderdaantje van de Slijmkoning — hupst je achterna */
+        d.vy = Math.min(d.vy + ZWAARTEKRACHT * dt, 300);
+        d.klok -= dt;
+        if (d.opGrond && d.klok <= 0) { d.klok = 0.9 + Math.random() * 0.5; d.vy = -190; d.vx = Math.sign(hx - d.x) * 44; sfx('gif', 0.4); }
+        if (d.opGrond) d.vx *= (1 - 6 * dt);
+        beweeg(d, dt);
+      } else if (d.soort === 'kaart') {
+        /* een vloekkaart uit je eigen dek — fladdert en duikt */
+        d.y = d.y0 + Math.sin(d.t * 2.2) * 14;
+        d.x += Math.sign(hx - d.x) * 26 * dt;
+        d.x0 = d.x;
       } else if (d.soort === 'kopieerbot' || d.soort === 'kopie') {
         const snel = d.soort === 'kopie' ? 46 : 20;
         d.vx = Math.abs(hx - (d.x + 5)) > 10 ? Math.sign(hx - (d.x + 5)) * snel : 0;
@@ -1382,7 +1430,17 @@ const Outro = (() => {
     hitstop = Math.max(hitstop, 0.03);
     if (d.hp <= 0) {
       d.dood = true;
-      if (d.soort === 'kopie') {
+      if (d.soort === 'slijm') {
+        spawnVonk(d.x + 5, d.y + 3, '#79c045', 14);
+        spawnGruis(d.x + 5, d.y + 3, T.PLANT);
+        popupWachtrij += 1;
+        sfx('gif', 0.1);
+      } else if (d.soort === 'kaart') {
+        spawnVonk(d.x + 4, d.y + 4, '#8a5fc9', 10);
+        for (let i = 0; i < 6; i++) duwPartikel({ soort: 'papier', x: d.x + Math.random() * 8, y: d.y + Math.random() * 8, vx: (Math.random() - 0.5) * 30, vy: -20 - Math.random() * 30, t: 1.6 + Math.random(), fase: Math.random() * 6 });
+        popupWachtrij += 1;
+        sfx('flip', 0.1);
+      } else if (d.soort === 'kopie') {
         /* een kopie poeft — meer was het nooit */
         if (d.ouder) d.ouder.kids = Math.max(0, d.ouder.kids - 1);
         spawnVonk(d.x + 5, d.y + 4, '#efe9d6', 8);
@@ -1596,6 +1654,8 @@ const Outro = (() => {
       if (d.soort === 'drone') tekenSprite(((tijd * 10) | 0) % 2 ? 'drone1' : 'drone2', d.x + ox, d.y + oy);
       else if (d.soort === 'torentje') tekenSprite('torentje', d.x + ox, d.y + oy);
       else if (d.soort === 'slang') tekenSprite('slang', d.x + ox, d.y + oy, d.richting < 0);
+      else if (d.soort === 'slijm') tekenSprite('slijm', d.x + ox, d.y + oy - (d.opGrond ? 0 : 1), false);
+      else if (d.soort === 'kaart') { const w2 = Math.abs(Math.sin(d.t * 3)); ctx.save(); ctx.translate(d.x + 4 + ox, d.y + 4 + oy); ctx.scale(Math.max(0.3, w2), 1); ctx.drawImage(gebakken.kaart, -4, -4); ctx.restore(); }
       else {
         if (d.soort === 'kopie') ctx.globalAlpha = 0.55;
         tekenSprite('kopieerbot', d.x - 1 + ox, d.y - 1 + oy, false);
