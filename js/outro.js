@@ -21,7 +21,7 @@ const Outro = (() => {
      uit het level), al de rest is sloopbaar. hp per type in TEGEL_HP.
      MACHINE en METER ontploffen bij sloop (meterkast = de grote kettingreactie). */
   const T = { LUCHT: 0, BETON: 1, GIPS: 2, GLAS: 3, MEUBEL: 4, KAST: 5, MACHINE: 6, HOUT: 7, METER: 8, POSTER: 9, POORT: 10 };
-  const TEGEL_HP = [0, 255, 1, 1, 1, 1, 2, 1, 1, 1, 3];
+  const TEGEL_HP = [0, 5, 1, 1, 1, 1, 2, 1, 1, 1, 3];   /* beton = taai maar sloopbaar: kolommen kunnen om */
   const M2_PER_TEGEL = 0.36;          /* de ONTFACTUREERD-teller telt in m² kantoor */
 
   /* ---------- het palet: systeem = beige, wat leeft = kleur ---------- */
@@ -848,9 +848,11 @@ const Outro = (() => {
 
   /* ---------- tegels slopen (het hart van de outro) ---------- */
   function raakTegel(tx, ty, kracht) {
-    if (tx < 1 || ty < 1 || tx >= lvl.kols - 1 || ty >= lvl.rijen - 2) return false;
+    if (tx < 2 || ty < 1 || tx >= lvl.kols - 2 || ty >= lvl.rijen - 2) return false;
     const i = ty * lvl.kols + tx, t = lvl.type[i];
-    if (t === T.LUCHT || t === T.BETON) return false;
+    if (t === T.LUCHT) return false;
+    /* B.A.A.S. zelf blijft staan — zijn voetafdruk is heilig (het punt) */
+    if (lvl.baas && tx * TEGEL >= lvl.baas.x && tx * TEGEL < lvl.baas.x + lvl.baas.b && ty * TEGEL >= lvl.baas.y) return false;
     lvl.hp[i] = Math.max(0, lvl.hp[i] - (kracht || 1));
     if (lvl.hp[i] > 0) { tekenTegel(tx, ty); sfx('klap', 0.05); return true; }
     lvl.type[i] = T.LUCHT;
@@ -866,6 +868,7 @@ const Outro = (() => {
     if (t === T.METER) bomWachtrij.push({ px: tx * TEGEL + 4, py: ty * TEGEL + 4, straal: 15, t: 0.1 });
     else if (t === T.MACHINE) bomWachtrij.push({ px: tx * TEGEL + 4, py: ty * TEGEL + 4, straal: 10, t: 0.05 });
     sfx(t === T.GLAS ? 'blok' : 'zwareklap', t === T.GLAS ? 0.05 : 0.09);
+    if (t === T.BETON) { schud(2.6); hitstop = Math.max(hitstop, 0.03); }
     if (window.Klank && Klank.duck) { try { Klank.duck(0.35, 0.25); } catch (e) {} }
     schud(1.6);
     return true;

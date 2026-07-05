@@ -338,6 +338,17 @@ het feel-contract.
 serverhal-beat + configscherm + epiloog (allemaal goedkoop, scripted) het
 einde alsnog — de run-and-gun-verdiepingen zijn dan inkortbaar tot één.
 
+## Playtest-wensen Thomas (05-07, in behandeling)
+1. **Zottere visuals** — meer spektakel/kleur in de carnage en het decor.
+2. **Betere aanduiding bevrijdbare coworkers** — de cocons moeten schreeuwen
+   "sla mij open" (pijl/gloed/HELP-bordje).
+3. **Splashscherm bij een nieuwe bro** — Broforce-stijl held-unlock-kaart
+   wanneer een masker aansluit (groot portret + naam + regel).
+4. **Zottere wapens** — meer variatie/overdrijving in het arsenaal.
+Al gedaan uit eerdere feedback: 5×7-font, omhoog slaan, sprite-omlijning,
+rim-light, besturingshint, focus-fix, beton/kolommen sloopbaar (hp 5,
+schil + B.A.A.S. blijven staan).
+
 ## Risico's
 1. **Tweede engine = scope-monster** → grid-alles, domme vijanden
    (patrouille + richt-en-vuur), hard 3-verdiepingen-contract.
