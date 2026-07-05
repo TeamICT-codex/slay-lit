@@ -1626,16 +1626,12 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
 .kaart.kaart-verduisterd { position: relative; }
 .kaart.kaart-verduisterd > * { visibility: hidden; }
 .kaart.kaart-verduisterd::after {
-  content: '🌫️';
+  content: '';
   position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 2.4rem;
-  background:
-    radial-gradient(ellipse at 50% 32%, rgba(70,60,92,.55), transparent 72%),
-    repeating-linear-gradient(135deg, #15101d 0 7px, #0d0913 7px 14px);
+  /* De Redacteur-cover: hij heeft je kaart DOORGEHAALD. Volvlak-art i.p.v. het oude 🌫️. */
+  background: #0d0913 url('../assets/kaarten/verduisterd.webp') center / cover no-repeat;
   border-radius: inherit;
   border: 1px solid rgba(120, 110, 150, .35);
-  color: rgba(195, 185, 215, .5);
   pointer-events: none;
   box-shadow: inset 0 0 26px rgba(0, 0, 0, .72);
 }
