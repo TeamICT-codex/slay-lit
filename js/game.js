@@ -76,19 +76,24 @@ function actBg(slot) {
 }
 
 /* ---------- instellingen ---------- */
-const standaardLite =
-  (navigator.hardwareConcurrency || 8) <= 4 ||
-  (navigator.deviceMemory || 8) <= 4 ||
-  (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-
 /* mobiel/touch staat los van de hardware-heuristiek: een coarse pointer
    (vinger) of een mobiele user-agent. Op een laptop is dit false, dus de
    defaults hieronder blijven exact zoals voorheen. Globaal beschikbaar zodat
-   scene3d zijn renderer kan verzachten en latere touch-fixes hem hergebruiken. */
+   scene3d zijn renderer kan verzachten en latere touch-fixes hem hergebruiken.
+   Wordt VÓÓR standaardLite bepaald zodat de lite-drempel mobiel-bewust kan zijn. */
 const mobiel =
   (window.matchMedia && matchMedia('(pointer: coarse)').matches) ||
   /Android|iPhone|iPad|iPod|Mobile|Silk/i.test(navigator.userAgent || '');
 window.mobiel = mobiel;
+
+/* lite = zwakke hardware of OS-reduced-motion. Op MOBIEL is de RAM/cores-drempel
+   te streng: Chrome clampt navigator.deviceMemory grof (talloze capabele telefoons
+   melden gewoon 4) -> daar enkel bij écht zwak (<=1 GB / <=2 cores) of expliciete
+   reduced-motion naar lite. Op laptop ongewijzigd (<=4). */
+const standaardLite =
+  (navigator.hardwareConcurrency || 8) <= (mobiel ? 2 : 4) ||
+  (navigator.deviceMemory || 8) <= (mobiel ? 1 : 4) ||
+  (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 /* het presentatiespoor: laptop (gedeelde basis) of mobiel (css/mobiel.css).
    Synchroon hier gezet — game.js draait als laatste body-script, vóór de
@@ -144,11 +149,13 @@ const INST = Object.assign(
   { lite: standaardLite, d3: !standaardLite && !mobiel, spraak: true, daglicht: mobiel },
   veiligLees('slayit_inst')
 );
-/* eenmalige mobiel-migratie: forceer 3D uit (onspeelbaar op telefoon) en zet de
-   eerder geforceerde lite-modus weer uit op capabele toestellen — anders blijven
-   alle gevechtsanimaties dood. Vlag zodat het maar één keer ingrijpt. */
-if (mobiel && !INST.mobielHersteld) {
-  INST.mobielHersteld = true;
+/* mobiel-migratie: forceer 3D uit (onspeelbaar op telefoon) en zet lite weer uit op
+   capabele toestellen — anders blijven alle gevechtsanimaties dood. De vlag heet
+   bewust 'mobielHersteld2' (opvolger van v1): zo herevalueert deze migratie ééns
+   opnieuw met de VERSOEPELDE mobiele lite-drempel, zodat telefoons die eerder
+   onterecht in lite bleven hangen (deviceMemory==4) hun animaties terugkrijgen. */
+if (mobiel && !INST.mobielHersteld2) {
+  INST.mobielHersteld2 = true;
   INST.d3 = false;
   if (!standaardLite) INST.lite = false;
   try { localStorage.setItem('slayit_inst', JSON.stringify(INST)); } catch (e) {}

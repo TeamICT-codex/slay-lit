@@ -3155,8 +3155,10 @@ body[data-scherm="einde"] #licht-vignet { opacity: 0 !important; }
 /* ---------- lite-modus (zwakkere hardware / reduced motion) ---------- */
 body.lite::after { display: none; }
 body.lite .sintel { display: none; }
-body.lite .vijand-art,
-body.lite .speler-figuur,
+/* de goedkope idle-adem + uithaal van de FIGUREN (transform-only: translate+scale)
+   blijven OOK in lite leven — anders oogt het spel op zwakke/mobiele toestellen
+   'dood' (juist de klacht: het slijm ademt niet meer). Enkel de duurdere sfeer-
+   animaties (kampvuurflikker/titelglow/energie-orb/intent-puls) doven in lite. */
 body.lite .kampvuur,
 body.lite .titel-groot,
 body.lite #energie-orb,
