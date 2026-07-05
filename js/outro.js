@@ -850,6 +850,13 @@ const Outro = (() => {
     camX = klem(held.x - BREED / 2, 0, lvl.kols * TEGEL - BREED);
   }
 
+  /* de bindteksten: het besef, verdieping per verdieping erin gehamerd */
+  const BINDREGELS = {
+    1: 'SOMS IS GEWELD GEWOON DE OPLOSSING.',
+    2: 'ELK BLOKJE VAN 6 WAS ER EENTJE VAN ONS.',
+    3: 'DE ENKELEN WONEN HOOG. NU NIET MEER LANG.',
+    4: 'ZONDER ONS - DE VELEN - ZIJN ZE NIETS.'
+  };
   function startWissel(doel) {
     staat = 'wissel'; wisselT = 0; wisselGebouwd = false; wisselDoel = doel;
     sfx('win', 0.5);
@@ -894,16 +901,24 @@ const Outro = (() => {
     for (const [k, y0, y1] of banden) { ctx.fillStyle = k; ctx.fillRect(0, y0, BREED, y1 - y0); }
     /* de gevel van je eigen gebouw schuift omhoog: eerst vrije val, dan chute */
     const chute = valT > 1.1;
-    const snelheid = chute ? 55 : 240;
     const scroll = (valT < 1.1 ? valT * 240 : 264 + (valT - 1.1) * 55);
-    ctx.fillStyle = '#100d0a'; ctx.fillRect(20, 0, 120, HOOG);
-    ctx.fillStyle = '#1c1712'; ctx.fillRect(20, 0, 4, HOOG); ctx.fillRect(136, 0, 4, HOOG);
+    /* fase 3 (vanaf 5s): de toren stort COMPLEET in, van boven naar beneden */
+    const instort = valT > 5 ? Math.min(150, (valT - 5) * 46) : -30;
+    if (valT > 5 && valT < 8.6) {
+      ctx.save();
+      ctx.translate(Math.round((Math.random() - 0.5) * 4), Math.round((Math.random() - 0.5) * 4));
+      if (((valT * 4) | 0) !== (((valT - 0.016) * 4) | 0)) sfx('zwareklap', 0.05);
+    }
+    const torenTop = Math.max(0, instort);
+    ctx.fillStyle = '#100d0a'; ctx.fillRect(20, torenTop, 120, HOOG - torenTop);
+    ctx.fillStyle = '#1c1712'; ctx.fillRect(20, torenTop, 4, HOOG - torenTop); ctx.fillRect(136, torenTop, 4, HOOG - torenTop);
     /* de herstel-golf: de machine staat op CREATIE en het is al te zien —
        boven de golf worden de ramen warm en loopt de gevel groen uit */
     const golf = valT > 2.4 ? (valT - 2.4) * 46 : -30;
     for (let ry = -24; ry < HOOG + 24; ry += 24) {
       const wy = ry + (scroll % 24);
       for (let wx = 32; wx < 130; wx += 18) {
+        if (wy < instort) continue;
         const zaad = (wx * 13 + Math.floor((ry - scroll) / 24) * 7) % 10;
         if (wy < golf) {
           ctx.fillStyle = '#2a2118'; ctx.fillRect(wx, wy, 8, 10);
@@ -916,10 +931,45 @@ const Outro = (() => {
       }
     }
     /* groene vonkjes op de golf-lijn */
-    if (golf > 0 && golf < HOOG) {
+    if (golf > 0 && golf < HOOG && valT < 5) {
       ctx.fillStyle = '#9fe06a';
       for (let i = 0; i < 6; i++) ctx.fillRect(24 + ((i * 53 + (valT * 90 | 0)) % 112), golf + Math.sin(valT * 8 + i) * 3, 2, 2);
     }
+    /* de slooplijn: stofwolken en brokken die naar beneden donderen */
+    if (valT > 5 && instort < 150) {
+      for (let i = 0; i < 7; i++) {
+        ctx.fillStyle = 'rgba(138,125,94,' + (0.3 + (i % 3) * 0.12).toFixed(2) + ')';
+        ctx.beginPath(); ctx.arc(24 + ((i * 41 + (valT * 60 | 0)) % 112), instort + Math.sin(valT * 6 + i) * 5, 5 + (i % 4) * 3, 0, 7); ctx.fill();
+      }
+      ctx.fillStyle = '#3a352a';
+      for (let i = 0; i < 6; i++) {
+        const bval = (valT * 170 + i * 53) % 90;
+        ctx.fillRect(30 + ((i * 67) % 100), instort + bval, 4, 4);
+      }
+    }
+    /* de puinhoop groeit onderaan mee */
+    if (valT > 5.4) {
+      const ph = Math.min(34, (valT - 5.4) * 12);
+      for (let px3 = 20; px3 < 140; px3 += 4) {
+        const afst3 = Math.abs(px3 - 80);
+        const hgt3 = Math.max(0, ph - afst3 * 0.4 + ((px3 * 13) % 3) * 2);
+        ctx.fillStyle = (px3 * 7) % 5 ? '#171310' : '#3a352a';
+        ctx.fillRect(px3, HOOG - hgt3, 4, hgt3);
+      }
+    }
+    /* en dan, uit het puin: groei */
+    if (valT > 8.6) {
+      const rank = Math.min(56, (valT - 8.6) * 20);
+      ctx.fillStyle = '#4c7f2a';
+      for (let gy = 0; gy < rank; gy += 3) {
+        ctx.fillRect(78 + Math.sin(gy * 0.14) * 5, HOOG - 30 - gy, 3, 3);
+        if (gy % 9 === 0) { ctx.fillStyle = '#79c045'; ctx.fillRect(83 + Math.sin(gy * 0.14) * 5, HOOG - 30 - gy, 3, 2); ctx.fillStyle = '#4c7f2a'; }
+      }
+      if (rank > 30) { ctx.fillStyle = '#ff9c3f'; ctx.fillRect(77 + Math.sin(rank * 0.14) * 5, HOOG - 32 - rank, 4, 4); }
+      ctx.fillStyle = '#9fe06a';
+      for (let i = 0; i < 5; i++) ctx.fillRect(60 + ((i * 37 + (valT * 40 | 0)) % 60), HOOG - 34 - ((valT * 26 + i * 17) % rank || 0), 2, 2);
+    }
+    if (valT > 5 && valT < 8.6) ctx.restore();
     /* rook die voorbij trekt */
     for (let i = 0; i < 4; i++) {
       const fase = (valT * 40 + i * 47) % 200;
@@ -947,16 +997,20 @@ const Outro = (() => {
       ctx.drawImage(spr, -4, -7);
       ctx.restore();
     }
-    if (valT > 3.6 && valT < 6.4) {
-      const r3 = 'DE MACHINE MAAKT NU.';
-      tekst(ctx, r3, BREED / 2 - tekstBreedte(r3) / 2, 162, 'rgba(159,224,106,0.9)');
+    if (valT > 5.6 && valT < 8.4) {
+      const r4 = 'ZONDER ONS: NIETS.';
+      tekst(ctx, r4, BREED / 2 - tekstBreedte(r4) / 2, 30, '#efe9d6', 2);
+    }
+    if (valT > 9.2 && valT < 12) {
+      const r3 = 'DE MACHINE MAAKT NU. KIJK.';
+      tekst(ctx, r3, BREED / 2 - tekstBreedte(r3) / 2, 30, 'rgba(159,224,106,0.95)');
     }
     if (valT > 1.1 && valT < 3.4) {
       const r = 'DE VAL, MAAR DAN VRIJWILLIG. EN ZACHT.';
       tekst(ctx, r, BREED / 2 - tekstBreedte(r) / 2, 150, 'rgba(207,192,160,0.85)');
     }
     /* uitfaden naar de epiloog */
-    if (valT > 7) { ctx.fillStyle = 'rgba(8,6,4,' + klem((valT - 7), 0, 1).toFixed(2) + ')'; ctx.fillRect(0, 0, BREED, HOOG); }
+    if (valT > 11.8) { ctx.fillStyle = 'rgba(8,6,4,' + klem((valT - 11.8) * 1.3, 0, 1).toFixed(2) + ')'; ctx.fillRect(0, 0, BREED, HOOG); }
   }
 
   function startEpiloog() {
@@ -976,6 +1030,7 @@ const Outro = (() => {
         dots('4 VERDIEPINGEN', 'AFGESCHREVEN'),
         dots(collegas.length + " COLLEGA'S", 'BEVRIJD'),
         dots('1 SCHAKELAAR', '0U06'),
+        dots('ZONDER ONS', 'NIETS'),
         dots('TOTAAL', 'ONBETAALBAAR')
       ]
     };
@@ -1299,7 +1354,7 @@ const Outro = (() => {
     if (staat === 'wissel') { if (spelToets) e.preventDefault(); return; }
     if (spelToets) {
       e.preventDefault();
-      if (staat === 'intro' && !e.repeat) { introT = introT >= 6.1 ? 7.4 : 6.2; return; }   /* intro doorklikken (2e druk = meteen) */
+      if (staat === 'intro' && !e.repeat) { introT = introT >= 10.2 ? 11.6 : 10.4; return; }   /* intro doorklikken (2e druk = meteen) */
       if (!e.repeat && (k === 'w' || k === 'arrowup' || k === ' ')) held && (held.sprongBuf = SPRONGBUFFER);
       if (!e.repeat && (k === 'j' || k === 'x')) vuurBuf = 0.1;
       if (!e.repeat && (k === 'k' || k === 'z')) worpBuf = 0.15;
@@ -1334,7 +1389,7 @@ const Outro = (() => {
     if (staat === 'uit') return;
     e.preventDefault();
     if (schermCanvas.setPointerCapture) { try { schermCanvas.setPointerCapture(e.pointerId); } catch (err) {} }
-    if (staat === 'intro') { introT = introT >= 6.1 ? 7.4 : 6.2; return; }
+    if (staat === 'intro') { introT = introT >= 10.2 ? 11.6 : 10.4; return; }
     if (staat === 'config') { configVolgende(); return; }
     if (staat === 'val') { if (valT > 1.5) startEpiloog(); return; }
     if (staat === 'epiloog') { if (epi && epi.klaar) beeindig(); else if (epi) epi.spoed = true; return; }
@@ -1621,10 +1676,8 @@ const Outro = (() => {
       if (Math.abs(p.x + 4 - hx) < 10 && Math.abs(p.y + 4 - hy) < 12) {
         p.op = true;
         upgrades[p.soort]++;
-        hitstop = Math.max(hitstop, 0.06);
+        splash = { t: 2.1, kaart: p.soort };   /* de kaart-splash: even tonen wat je won */
         spawnVonk(p.x + 4, p.y + 4, '#ffd23f', 12);
-        const NAAM2 = { koffie: 'KOFFIE! SNELLER LOPEN + SLAAN', mail: 'SNEL EEN MAILTJE! JE ZWAAI SCHIET POST', over: 'OVERUREN! GROTERE EXPLOSIES' };
-        popups.push({ x: p.x + 4, y: p.y - 10, txt: 'KAART: ' + NAAM2[p.soort], kleur: '#ffd23f', t: 2.6 });
         sfx('schitter', 0.05); sfx('kaart', 0.05);
       }
     }
@@ -2044,8 +2097,23 @@ const Outro = (() => {
     /* popups ("-0U06") */
     for (const p of popups) tekst(ctx, p.txt, Math.round(p.x + ox) - tekstBreedte(p.txt) / 2, Math.round(p.y + oy), p.kleur);
 
+    /* de kaart-splash: een kaart uit het oude leven, nu een wapen */
+    if (splash && splash.kaart) {
+      const a2 = klem(splash.t / 0.3, 0, 1);
+      ctx.fillStyle = 'rgba(8,6,4,' + (0.72 * a2).toFixed(2) + ')';
+      ctx.fillRect(0, 60, BREED, 60);
+      ctx.fillStyle = '#ffd23f';
+      ctx.fillRect(0, 60, BREED, 2); ctx.fillRect(0, 118, BREED, 2);
+      const ks = gebakken['kaart_' + splash.kaart];
+      if (ks) { ctx.imageSmoothingEnabled = false; ctx.drawImage(ks, 52, 68, 32, 32); }
+      const KN = { koffie: 'KOFFIE', mail: 'SNEL EEN MAILTJE', over: 'OVERUREN' };
+      const KE = { koffie: 'SNELLER LOPEN. SNELLER SLAAN.', mail: 'JE ZWAAI VERSTUURT NU POST. CC: ALLES.', over: 'GROTERE EXPLOSIES. HET IS TOCH AL LAAT.' };
+      tekst(ctx, 'KAART GEVONDEN', 96, 68, '#8a8168');
+      tekst(ctx, KN[splash.kaart], 96, 80, '#ffd23f', 2);
+      tekst(ctx, KE[splash.kaart], 96, 100, '#efe9d6');
+    }
     /* de bro-splash: Broforce-stijl unlock-kaart, de wereld houdt de adem in */
-    if (splash) {
+    else if (splash) {
       const a = klem(splash.t / 0.3, 0, 1);
       ctx.fillStyle = 'rgba(8,6,4,' + (0.72 * a).toFixed(2) + ')';
       ctx.fillRect(0, 56, BREED, 68);
@@ -2068,10 +2136,19 @@ const Outro = (() => {
     renderHud();
     /* de levelwissel: uitfaden, omkleden, weer infaden */
     if (staat === 'wissel') {
-      const a = !wisselGebouwd ? klem(wisselT / 0.6, 0, 1) : klem(1 - (wisselT - 0.7) / 0.8, 0, 1);
+      const a = !wisselGebouwd ? klem(wisselT / 0.6, 0, 1) : klem(1 - (wisselT - 2.7) / 0.7, 0, 1);
       ctx.fillStyle = 'rgba(6,5,3,' + a.toFixed(2) + ')';
       ctx.fillRect(0, 0, BREED, HOOG);
-      if (wisselT > 0.4 && wisselT < 1.2) tekst(ctx, 'NAAR BOVEN.', BREED / 2 - tekstBreedte('NAAR BOVEN.') / 2, 86, '#cfc0a0');
+      if (wisselT > 0.4 && wisselT < 1.1) tekst(ctx, 'NAAR BOVEN.', BREED / 2 - tekstBreedte('NAAR BOVEN.') / 2, 86, '#cfc0a0');
+      /* de titelkaart + het bindwoord, groot en in het zwart — nooit in de weg */
+      if (wisselGebouwd && wisselT > 1.1 && wisselT < 3.1) {
+        const n1 = lvl.naam;
+        tekst(ctx, n1.slice(0, Math.floor((wisselT - 1.1) * 24)), BREED / 2 - tekstBreedte(n1) / 2, 74, '#ffb347');
+        const bind = BINDREGELS[wisselDoel];
+        if (bind && wisselT > 1.7) {
+          tekst(ctx, bind.slice(0, Math.floor((wisselT - 1.7) * 30)), BREED / 2 - tekstBreedte(bind) / 2, 94, '#efe9d6');
+        }
+      }
     }
     presenteer();
   }
@@ -2126,10 +2203,11 @@ const Outro = (() => {
       ctx.globalAlpha = 1;
     }
     if (hudTekst) {
-      const b = tekstBreedte(hudTekst);
-      ctx.fillStyle = 'rgba(10,8,5,0.72)';
-      ctx.fillRect(BREED / 2 - b / 2 - 4, HOOG - 30, b + 8, 11);
-      tekst(ctx, hudTekst, BREED / 2 - b / 2, HOOG - 27, '#efe9d6');
+      /* de verhaalbalk: vaste strook helemaal onderaan, uit de weg van het spel */
+      ctx.fillStyle = 'rgba(8,6,4,0.82)';
+      ctx.fillRect(0, HOOG - 12, BREED, 12);
+      ctx.fillStyle = 'rgba(255,179,71,0.5)'; ctx.fillRect(0, HOOG - 12, BREED, 1);
+      tekst(ctx, hudTekst, BREED / 2 - tekstBreedte(hudTekst) / 2, HOOG - 10, '#efe9d6');
     }
     /* virtuele knoppen op touch */
     if (window.mobiel) {
@@ -2154,8 +2232,11 @@ const Outro = (() => {
   function renderIntro() {
     const regels = [
       { t: 0.6, txt: 'B.A.A.S.: "BEDANKT VOOR UW GEDULD."', kleur: '#79c045' },
-      { t: 2.2, txt: '"IK HAAL U UIT DE WACHT."', kleur: '#79c045' },
-      { t: 3.8, txt: '"UW EXITGESPREK STAAT GEPLAND: HEDEN. (0U06)"', kleur: '#79c045' }
+      { t: 2.0, txt: '"IK HAAL U UIT DE WACHT."', kleur: '#79c045' },
+      { t: 3.4, txt: '"UW EXITGESPREK STAAT GEPLAND: HEDEN. (0U06)"', kleur: '#79c045' },
+      { t: 5.2, txt: 'SLA ALLES VAN HET SYSTEEM KORT EN KLEIN.', kleur: '#efe9d6' },
+      { t: 6.6, txt: "BEVRIJD JE COLLEGA'S. KLIM NAAR BOVEN.", kleur: '#efe9d6' },
+      { t: 8.0, txt: 'EN ZET DE MACHINE GOED. VOORGOED.', kleur: '#ffb347' }
     ];
     let y = 52;
     for (const r of regels) {
@@ -2166,9 +2247,9 @@ const Outro = (() => {
       }
       y += 12;
     }
-    if (introT > 5.2) {
+    if (introT > 9.4) {
       const titel = 'DE OPZEGTERMIJN';
-      const n = Math.min(titel.length, Math.floor((introT - 5.2) * 16));
+      const n = Math.min(titel.length, Math.floor((introT - 9.4) * 16));
       tekst(ctx, titel.slice(0, n), BREED / 2 - tekstBreedte(titel, 2) / 2, 104, '#ffb347', 2);
       tekst(ctx, 'OUTRO', BREED / 2 - tekstBreedte('OUTRO') / 2, 96, '#a08d68');
     }
@@ -2176,7 +2257,7 @@ const Outro = (() => {
       const hint = window.mobiel ? 'TIK = DOORSPOELEN' : 'ELKE TOETS = DOORSPOELEN';
       if (((introT * 2) | 0) % 2) tekst(ctx, hint, BREED / 2 - tekstBreedte(hint) / 2, 164, '#454136');
     }
-    if (introT > 6.6) {
+    if (introT > 10.6) {
       const hint = window.mobiel ? 'TIK OM TE BEGINNEN' : 'DRUK OP EEN TOETS';
       if (((introT * 2) | 0) % 2) tekst(ctx, hint, BREED / 2 - tekstBreedte(hint) / 2, 140, '#6e6a58');
     }
@@ -2224,20 +2305,21 @@ const Outro = (() => {
     ctx.strokeStyle = 'rgba(255,179,71,0.35)'; ctx.lineWidth = 1;
     ctx.strokeRect(8.5, 8.5, BREED - 17, HOOG - 17);
     tekst(ctx, 'B.A.A.S. V8.7 - CONFIGURATIE', 16, 16, A);
-    tekst(ctx, 'LAATSTE WIJZIGING: 25 JAAR GELEDEN.', 16, 27, GRIJS);
-    tekst(ctx, 'DOOR: U.', 16, 36, A);
+    tekst(ctx, 'LAATSTE WIJZIGING: 25 JAAR GELEDEN.', 16, 26, GRIJS);
+    tekst(ctx, 'DOOR: U.', 16, 35, A);
+    tekst(ctx, 'DAARNA MISBRUIKT DOOR: SLIJMKONING, ERFPRINS, DICKTATOR.', 16, 45, '#d43d2a');
+    tekst(ctx, 'INSTELLING: ALLES STROOMT NAAR DE ENKELEN.', 16, 54, '#d43d2a');
     /* de toegangscode staat al voorgetypt — hij kent u beter dan uzelf */
     const seed = (typeof S !== 'undefined' && S && S.seed) ? String(S.seed).toUpperCase() : '0042';
     const cursor = configStap === 0 && ((tijd * 2) | 0) % 2 ? '_' : '';
-    tekst(ctx, 'TOEGANGSCODE: ' + seed + cursor, 16, 48, WIT);
+    tekst(ctx, 'TOEGANGSCODE: ' + seed + cursor, 16, 66, WIT);
     if (configStap >= 1) {
-      tekst(ctx, 'TOEGANG VERLEEND.', 16, 56, '#79c045');
-      tekst(ctx, collegas.length ? 'TWEEDE HANDTEKENING: EEN BEVRIJDE COLLEGA.' : 'TWEEDE HANDTEKENING: DE CONCIERGE.', 16, 66, GRIJS);
-      tekst(ctx, 'UW JUBILEUMPEN GAF GEEN INKT.', 16, 74, GRIJS);
-      tekst(ctx, 'GETEKEND MET DE KOOL VAN UW FAKKEL.', 16, 82, WIT);
+      tekst(ctx, 'TOEGANG VERLEEND.', 16, 75, '#79c045');
+      tekst(ctx, (collegas.length ? 'TWEEDE HANDTEKENING: EEN BEVRIJDE COLLEGA' : 'TWEEDE HANDTEKENING: DE CONCIERGE') + ' - DE VELEN.', 16, 84, GRIJS);
+      tekst(ctx, 'GETEKEND MET FAKKELKOOL. (UW PEN GAF GEEN INKT.)', 16, 93, WIT);
     }
     for (let i = 0; i < 5; i++) {
-      const rij = CONFIG_RIJEN[i], y = 90 + i * 11;
+      const rij = CONFIG_RIJEN[i], y = 104 + i * 10;
       const om = configStap >= i + 2;
       tekst(ctx, rij.label + ':', 16, y, GRIJS);
       const vx = 16 + tekstBreedte(rij.label + ': ');
@@ -2245,8 +2327,8 @@ const Outro = (() => {
       else tekst(ctx, '[ ' + rij.oud + ' ]', vx, y, configStap === i + 1 ? WIT : GRIJS);
     }
     if (configStap >= 7) {
-      tekst(ctx, 'WEET U HET ZEKER? DEZE WIJZIGING IS NIET FACTUREERBAAR.', 16, 148, GRIJS);
-      if (((tijd * 2) | 0) % 2) tekst(ctx, '[ OPSLAAN EN OPNIEUW OPSTARTEN (0U06) ]', 16, 158, A);
+      tekst(ctx, 'WEET U HET ZEKER? DEZE WIJZIGING IS NIET FACTUREERBAAR.', 16, 158, GRIJS);
+      if (((tijd * 2) | 0) % 2) tekst(ctx, '[ OPSLAAN EN OPNIEUW OPSTARTEN (0U06) ]', 16, 167, A);
     } else {
       const hint = window.mobiel ? 'TIK OM VERDER TE GAAN' : 'DRUK OP EEN TOETS';
       if (((tijd * 1.6) | 0) % 2) tekst(ctx, hint, BREED - 16 - tekstBreedte(hint), HOOG - 16, GRIJS);
@@ -2265,25 +2347,31 @@ const Outro = (() => {
     ctx.fillStyle = '#191410'; ctx.fillRect(0, 130, BREED, HOOG - 130);
     ctx.fillStyle = '#241d14'; ctx.fillRect(0, 130, BREED, 3);
 
-    /* het halfgesloopte hoofdkantoor: gehavende toren, ramen die wárm aangaan */
-    for (let cx = 205; cx < 300; cx += 8) {
-      const hgt = 100 - ((cx * 13) % 4) * 9 - (cx > 268 ? 22 : 0);
-      ctx.fillStyle = '#0f0d0a'; ctx.fillRect(cx, 130 - hgt, 8, hgt);
+    /* het hoofdkantoor is een puinhoop — compleet kapot, symbolisch en echt */
+    for (let px2 = 205; px2 < 300; px2 += 4) {
+      const afst2 = Math.abs(px2 - 252);
+      const hgt2 = Math.max(6, 44 - afst2 * 0.75 + ((px2 * 13) % 3) * 3);
+      ctx.fillStyle = (px2 * 7) % 5 ? '#171310' : '#3a352a';
+      ctx.fillRect(px2, 130 - hgt2, 4, hgt2);
+      if ((px2 * 11) % 7 === 0) { ctx.fillStyle = '#8a7d5e'; ctx.fillRect(px2, 130 - hgt2, 3, 2); }
     }
-    for (let wy = 46; wy < 118; wy += 12) for (let wx = 210; wx < 292; wx += 12) {
-      if ((wx * 7 + wy * 3) % 11 < 3 && e.t > 3 + ((wx + wy) % 6) * 0.7) {
-        ctx.fillStyle = '#ffb347'; ctx.fillRect(wx, wy, 4, 5);
-      }
+    /* groen kruipt over het puin, en uit het hart groeit een jonge boom */
+    for (let px2 = 212; px2 < 296; px2 += 10) {
+      const rank2 = Math.min(14, e.t * 5);
+      ctx.fillStyle = '#4c7f2a'; ctx.fillRect(px2, 112 + ((px2 * 3) % 10) - rank2 / 2, 2, rank2);
+      ctx.fillStyle = '#79c045'; ctx.fillRect(px2 + 2, 114 + ((px2 * 3) % 10) - rank2 / 2, 2, 2);
     }
-    /* de machine maakt: klimop en bloemen groeien zichtbaar over het gebouw */
-    for (let cx = 205; cx < 300; cx += 8) {
-      const hgt = 100 - ((cx * 13) % 4) * 9 - (cx > 268 ? 22 : 0);
-      const groei = Math.min(hgt, e.t * 9);
-      ctx.fillStyle = '#4c7f2a'; ctx.fillRect(cx, 130 - groei, 2, groei);
+    const boom = Math.min(38, Math.max(0, (e.t - 1.2) * 9));
+    ctx.fillStyle = '#7a5230'; ctx.fillRect(250, 92 + (38 - boom), 3, boom + 4);
+    if (boom > 10) {
+      ctx.fillStyle = '#4c7f2a'; ctx.beginPath(); ctx.arc(251, 92 + (38 - boom), Math.min(13, boom / 2.4), 0, 7); ctx.fill();
       ctx.fillStyle = '#79c045';
-      for (let gy = 130 - groei; gy < 126; gy += 7) ctx.fillRect(cx + 2, gy + ((cx + gy) % 3), 2, 2);
-      if (groei > 18 && cx % 16 === 13) { ctx.fillStyle = '#ff9c3f'; ctx.fillRect(cx + 1, 132 - groei, 2, 2); }
-      if (groei > 30 && cx % 24 === 5) { ctx.fillStyle = '#c9302c'; ctx.fillRect(cx + 3, 142 - groei, 2, 2); }
+      ctx.beginPath(); ctx.arc(245, 96 + (38 - boom), Math.min(9, boom / 3.4), 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(258, 97 + (38 - boom), Math.min(8, boom / 3.6), 0, 7); ctx.fill();
+      if (boom > 26) {
+        ctx.fillStyle = '#ff9c3f'; ctx.fillRect(244, 90 + (38 - boom), 2, 2); ctx.fillRect(257, 94 + (38 - boom), 2, 2);
+        ctx.fillStyle = '#c9302c'; ctx.fillRect(251, 86 + (38 - boom), 2, 2);
+      }
     }
     /* vogels in de ochtend */
     for (let i = 0; i < 3; i++) {
@@ -2327,7 +2415,7 @@ const Outro = (() => {
     }
 
     /* de omgekeerde factuur ratelt uit de dot-matrix */
-    ctx.fillStyle = '#e8e0c8'; ctx.fillRect(8, 6, 168, 68);
+    ctx.fillStyle = '#e8e0c8'; ctx.fillRect(8, 6, 168, 80);
     ctx.fillStyle = '#c9bda0'; ctx.fillRect(8, 6, 168, 2);
     let budget = Math.max(0, Math.floor((e.t - 1.2) * 26));
     if (e.spoed || e.klaar) budget = 9999;
@@ -2372,11 +2460,11 @@ const Outro = (() => {
   function outroTik(dt) {
     if (staat === 'uit' || document.hidden) return;
     tijd += dt;
-    if (staat === 'intro') { introT += dt; if (introT >= 7.4) startSpel(); render(); return; }
+    if (staat === 'intro') { introT += dt; if (introT >= 11.6) startSpel(); render(); return; }
     if (staat === 'wissel') {
       wisselT += dt;
       if (!wisselGebouwd && wisselT >= 0.7) { wisselGebouwd = true; wisselLevel(wisselDoel); }
-      if (wisselT >= 1.6) {
+      if (wisselT >= 3.4) {
         staat = 'spel';
         if (hal) { hudTekst = 'B.A.A.S.: "DAAR BENT U. GA UW GANG."'; hudTekstT = 3.2; }
         else { hudTekst = lvl.naam; hudTekstT = 2.4; }
@@ -2392,7 +2480,7 @@ const Outro = (() => {
     }
     if (staat === 'val') {
       valT += dt;
-      if (valT >= 8) startEpiloog();
+      if (valT >= 12.6) startEpiloog();
       render(); return;
     }
     if (staat === 'epiloog') {
