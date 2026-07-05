@@ -315,7 +315,7 @@ const Vista = (() => {
 
     /* optionele state-afbeeldingen: <artId>_<state>.png (bv. speler_attack.png) */
     if (window.laadKarakterAfbeelding) {
-      const states = ['attack', 'hit', 'death', 'poison', 'block', 'victory', 'cast', 'wounded'];
+      const states = ['attack', 'hit', 'death', 'poison', 'gif', 'block', 'victory', 'cast', 'wounded'];   /* 'gif' = eenmalige immuun/kaats-reactiepose (los van 'poison' = aanhoudende vergiftigde stand) */
       /* signature-kaarten hebben een eigen pose (alleen helden) */
       if (sleutel.isSpeler) states.push('beulswerk', 'moederslang', 'flame');
       states.forEach(st => {
@@ -368,6 +368,7 @@ const Vista = (() => {
     gevechtEind();
     /* eigen plaat fullscreen achter het canvas? dan de zaal weg en doorzichtig renderen */
     zaalGroep.visible = !eigenAchtergrond;
+    if (stof) stof.visible = !eigenAchtergrond;   /* stof hoort bij de procedurele zaal; achter een geschilderde plaat weg (+ spaart de per-frame update-lus) */
     renderer.setClearColor(0x0d0a12, eigenAchtergrond ? 0 : 1);
     /* bij een geschilderde plaat kijkt de camera hoger, zodat de figuren
        lager in beeld staan — op de vloer van de plaat, niet zwevend erboven */
@@ -489,13 +490,15 @@ const Vista = (() => {
       v.material.opacity = Math.min(1, 0.2 + lichtNu);
     });
 
-    const sp = stof.geometry.attributes.position;
-    for (let i = 0; i < sp.count; i++) {
-      let y = sp.getY(i) + dt * 0.16;
-      if (y > 7) y = 0;
-      sp.setY(i, y);
+    if (stof.visible) {
+      const sp = stof.geometry.attributes.position;
+      for (let i = 0; i < sp.count; i++) {
+        let y = sp.getY(i) + dt * 0.16;
+        if (y > 7) y = 0;
+        sp.setY(i, y);
+      }
+      sp.needsUpdate = true;
     }
-    sp.needsUpdate = true;
 
     for (const [actor, a] of acteurs) {
       if (a.dood) {
@@ -649,12 +652,19 @@ const Vista = (() => {
     if (!document.hidden) renderer.render(scene, camera);
   }
 
-  /* schermpositie van een acteur (px) voor DOM-overlays */
+  /* schermpositie van een acteur (px) voor DOM-overlays. Hergebruikt één Vector3
+     i.p.v. per aanroep (2× per acteur per frame) een verse te alloceren → 0 GC-druk.
+     LAZY: NIET bij module-init aanmaken — three.min.js wordt lui geladen ná dit script,
+     dus THREE bestaat nog niet als de IIFE draait (een new THREE.Vector3() hier zou de
+     hele Vista-module bij het laden crashen). Pas bij de eerste projecteer-call (runtime,
+     THREE geladen) aanmaken. */
+  let _projV = null;
   function projecteer(x, y, z) {
-    const v = new THREE.Vector3(x, y, z).project(camera);
+    if (!_projV) _projV = new THREE.Vector3();
+    _projV.set(x, y, z).project(camera);
     return {
-      x: (v.x * 0.5 + 0.5) * window.innerWidth,
-      y: (-v.y * 0.5 + 0.5) * window.innerHeight
+      x: (_projV.x * 0.5 + 0.5) * window.innerWidth,
+      y: (-_projV.y * 0.5 + 0.5) * window.innerHeight
     };
   }
   function schermPos(actor) {

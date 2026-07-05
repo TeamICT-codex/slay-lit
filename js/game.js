@@ -206,7 +206,7 @@ Codex.dropsOfferRun = Math.max(0, +Codex.dropsOfferRun || 0);    /* ijkpunt Drop
 /* het Metgezel-Mysterie: per-metgezel voortgang (scherven/rijp/voltooid) + baas-teller */
 if (typeof Codex.mysteries !== 'object' || !Codex.mysteries || Array.isArray(Codex.mysteries)) Codex.mysteries = {};
 Codex.erfprinsOntmoetingen = Math.max(0, +Codex.erfprinsOntmoetingen || 0);
-function bewaarCodex() { localStorage.setItem(CODEX_SLEUTEL, JSON.stringify(Codex)); }
+function bewaarCodex() { try { localStorage.setItem(CODEX_SLEUTEL, JSON.stringify(Codex)); } catch (e) { /* opslag optioneel (quota/privé-modus) — nooit de scherf-/codex-flow laten crashen */ } }
 
 /* artbook: onthoud welke vijanden je écht hebt ontmoet (cross-run, persistent) — gate voor het
    Bestiarium. Alleen vijanden met een BESTIARIUM-lore-entry tellen (spawns/naamloze tellen niet). */
@@ -289,7 +289,7 @@ function draagScherf(sid) { if (!scherfDef(sid)) return false; const a = gedrage
 function neemUitStash(sid) { const a = scherfStash(); const i = a.indexOf(sid); if (i >= 0) { a.splice(i, 1); bewaarCodex(); return true; } return false; }
 function neemGedragen(sid) { const a = gedragen(); const i = a.indexOf(sid); if (i >= 0) { a.splice(i, 1); return true; } return false; }
 /* bank alle gedragen scherven veilig op de stash (bij het verlaten van de Drempel + bij winst) */
-function bankGedragen() { gedragen().slice().forEach(bankScherf); if (S) S.scherven = []; }
+function bankGedragen() { gedragen().slice().forEach(bankScherf); if (S) { S.scherven = []; S.loadoutScherven = []; } }   /* na een veilige bank is niks meer 'inzet' → wis de loadout-markering (anders kapt een later HERvonden scherf met een stale loadout-id ten onrechte weg bij dood) */
 /* run-start loadout: verplaats gekozen scherven van de stash naar je gedragen tas (nu staan ze op het spel).
    We onthouden WELKE bewust zijn meegebracht (S.loadoutScherven): die zijn de inzet → kwijt bij dood. Wat je
    NADIEN tíjdens de run vindt is GEEN loadout en blijft bij dood behouden (zie toonEinde). */
@@ -902,7 +902,8 @@ function geefGif(actor, n) {
     /* GIF-IMMUUN (sporen/inkt) — tenzij de Zielslantaarn de afweer breekt */
     if (!lantaarn && gd.gifImmuun) {
       fxNummer(actorEl(actor), '🚫 gif-immuun', 'fx-blok');
-      pose2D(actor, 'gif', 0.8);   /* immuun-reactie-pose: de sporen/inkt verteren het gif */
+      if (window.Vista) Vista.pose(actor, 'gif', 0.8);
+      pose2D(actor, 'gif', 0.8);   /* immuun-reactie-pose (2D + 3D): de sporen/inkt verteren het gif */
       zwarteZielHint(actor);       /* per-wezen hint (GIFHINTS), 1× per gevecht */
       return;
     }
@@ -3938,13 +3939,14 @@ function copycatAntiSoftlock(g) {
   if (speelbaar) return;
   /* GEEN kaart uit zijn arsenaal trekken (dat zou win-back zijn) — enkel een echt vangnet
      zodat je niet vastloopt: herschud je afleg, of geef energie als zelfs dat leeg is. */
-  if (g.afleg.length) {
+  if (g.afleg.length || g.trek.length) {
     /* SAMENVOEGEN, niet overschrijven: de check hierboven kijkt enkel naar de hand,
-       dus g.trek kan nog kaarten bevatten — die zouden anders stil verdwijnen. */
+       dus g.trek kan nog kaarten bevatten — die zouden anders stil verdwijnen. Ook als
+       g.afleg leeg is maar g.trek nog kaarten heeft, trekken we (geen gratis energie). */
     g.trek = schud(g.afleg.concat(g.trek)); g.afleg = []; trekKaarten(1);
     melding('↩️ Je herschikt wat je nog hebt.');
   } else {
-    g.energie += 1;
+    g.energie += 1;   /* echt niks meer om te trekken → dan pas het energie-vangnet */
   }
 }
 
@@ -4042,16 +4044,18 @@ async function eindBeurt() {
         /* ZWARTE ZIEL (episch): de corruptie VERZWELGT het gif → het wezen HEELT i.p.v. schade. */
         v.hp = Math.min(v.maxHp || v.hp, v.hp + gif);
         fxNummer(actorEl(v), '🕳️ verzwelgt +' + gif, 'fx-blok');
-        pose2D(v, 'gif', 0.9);          /* reactie-pose: de leegte slurpt je gif op en zwelt */
+        if (window.Vista) Vista.pose(v, 'gif', 0.9);
+        pose2D(v, 'gif', 0.9);          /* reactie-pose (2D + 3D): de leegte slurpt je gif op en zwelt */
         zwarteZielHint(v);              /* per-wezen hint, 1× per gevecht */
       } else {
         /* verminder (Zwarte Ziel, gewone) OF baas/gifWeerstand → halve gif-tik. De Zielslantaarn
            breekt de SITUATIONELE counters (immuun/kaats/absorbeer/verminder, via zz=null hierboven)
            maar NIET de statische baas-halvering: een baas blijft innerlijk sterk tegen gif. */
-        const halveer = (zz === 'verminder') || gd.baas || gd.gifWeerstand;
+        const halveer = (zz === 'verminder') || gd.baas;
         if (halveer && zz === 'verminder') {
           fxNummer(actorEl(v), '🕳️ ½ gif', 'fx-blok');
-          pose2D(v, 'gif', 0.9);        /* reactie-pose: het wezen dempt de helft van je gif */
+          if (window.Vista) Vista.pose(v, 'gif', 0.9);
+          pose2D(v, 'gif', 0.9);        /* reactie-pose (2D + 3D): het wezen dempt de helft van je gif */
           zwarteZielHint(v);
         } else if (halveer && !g._gifWeerstandGemeld) {
           melding('🛡️ De baas weerstaat de helft van het gif.'); g._gifWeerstandGemeld = true;
@@ -4064,7 +4068,7 @@ async function eindBeurt() {
       if (gestopt()) return;
       if (v.dood) {
         /* De Zielslantaarn vangt de vrijgekomen ziel van een vergiftigde-corrupte vijand → +2 Kracht */
-        if (lantaarn && (gd.zwarteZiel || gd.gifImmuun || gd.gifkaats || gd.gifWeerstand)) {
+        if (lantaarn && (gd.zwarteZiel || gd.gifImmuun || gd.gifkaats)) {
           geefStatus(sp(), 'kracht', 2); fxNummer($('#speler-zone'), '🏮 +2 Kracht', 'fx-buff');
         }
         if (alleVijanden().length === 0) { gevechtGewonnen(); return; }
@@ -4349,7 +4353,7 @@ function renderBeloning() {
   if (b.goud > 0) html += `<button class="beloning-item" onclick="pakGoud()">🪙 ${b.goud} goud</button>`;
   if (b.relikwie) {
     const rd = RELIKWIEEN[b.relikwie];
-    html += `<button class="beloning-item" onclick="pakRelikwie()"><span class="art-mini rel-${rd.zeld}" data-rart="${b.relikwie}">${rd.icoon}</span> ${rd.naam} <span class="schaarste-chip rel-${rd.zeld}">${SCHAARSTE_LABEL[rd.zeld]}</span><small>${rd.tekst}</small></button>`;
+    html += `<button class="beloning-item" onclick="pakRelikwie()"><span class="art-mini rel-${rd.zeld}" data-rart="${b.relikwie}">${rd.icoon}</span> ${rd.naam} <span class="schaarste-chip rel-${rd.zeld}">${SCHAARSTE_LABEL[rd.zeld] || 'Relikwie'}</span><small>${rd.tekst}</small></button>`;
   }
   if (b.drank) html += `<button class="beloning-item" onclick="pakDrank()"><span class="art-mini" data-dart="${b.drank}">${DRANKEN[b.drank].icoon}</span> ${DRANKEN[b.drank].naam}<small>${DRANKEN[b.drank].tekst}</small></button>`;
   if (b.kaarten) html += `<button class="beloning-item beloning-kaartkeuze" onclick="toonKaartBeloning()">🃏 Kies een kaart <small>${b.kaarten.length} opties — je fakkel bepaalt hoeveel je er ziet</small></button>`;
@@ -4948,7 +4952,7 @@ function onthulSchat() {
         <div class="schat-buit rel-${d.zeld}" onclick="toonRelikwieBoek('${r}')" data-tip="Klik voor het volledige verhaal">
           <div class="schat-stralen"></div>
           <div class="schat-icoon" data-rart="${r}">${d.icoon}</div>
-          <span class="schaarste-chip rel-${d.zeld}">${SCHAARSTE_LABEL[d.zeld]}</span>
+          <span class="schaarste-chip rel-${d.zeld}">${SCHAARSTE_LABEL[d.zeld] || 'Relikwie'}</span>
           <h3>${d.naam}</h3>
           <p class="boek-effect">${d.tekst}</p>
           ${d.lore ? `<p class="boek-lore">„${d.lore}"</p>` : ''}
@@ -5013,7 +5017,7 @@ function renderWinkel() {
     const d = RELIKWIEEN[item.id];
     const kan = S.goud >= item.prijs;
     return `<button class="winkel-blok ${kan ? '' : 'te-duur-item'}" onclick="koopRelikwie(${i})">
-      <span class="winkel-icoon rel-${d.zeld}" data-rart="${item.id}">${d.icoon}</span><b>${d.naam}</b><span class="schaarste-chip rel-${d.zeld}">${SCHAARSTE_LABEL[d.zeld]}</span><small>${d.tekst}</small><div class="prijs">🪙 ${item.prijs}</div></button>`;
+      <span class="winkel-icoon rel-${d.zeld}" data-rart="${item.id}">${d.icoon}</span><b>${d.naam}</b><span class="schaarste-chip rel-${d.zeld}">${SCHAARSTE_LABEL[d.zeld] || 'Relikwie'}</span><small>${d.tekst}</small><div class="prijs">🪙 ${item.prijs}</div></button>`;
   }).join('');
   html += w.dranken.map((item, i) => {
     if (!item) return '';
@@ -5202,7 +5206,7 @@ function devSprongAct2() {
   _m.rijp = true; _m.voltooid = false;
   bewaarCodex();
   saveSpel();
-  melding('⚡ DEV: Act 2 + Drops-mysterie RIJP — 150 HP + 2 heeldranken. (Alt+klik = meteen de Erfprins · Shift+klik = Drops-testcyclus)');
+  melding('⚡ DEV: Act 2 + Drops-mysterie RIJP — 150 HP + 3 heeldranken. (Alt+klik = meteen de Erfprins · Shift+klik = Drops-testcyclus)');
   renderKaartScherm();
 }
 
@@ -5223,7 +5227,7 @@ function devErfprins() {
   }
   saveSpel();
   startGevecht(['de_erfprins'], 'baas', 15);   /* betreedt zelf het gevechtscherm */
-  melding('⚡ DEV: meteen tegen de Erfprins (SOLO, geen metgezel) — 150 HP + 2 heeldranken + opgevuld dek. Test "De Roof".');
+  melding('⚡ DEV: meteen tegen de Erfprins (SOLO, geen metgezel) — 150 HP + 3 heeldranken + opgevuld dek. Test "De Roof".');
 }
 
 /* ============================================================
@@ -6254,6 +6258,7 @@ document.addEventListener('contextmenu', e => {
     const k = e.key;
     if (k === 'e' || k === 'E') { e.preventDefault(); cursorAan = false; wisFocus(); eindBeurt(); return; }
     if (/^[1-9]$/.test(k)) {
+      if (e.repeat) { e.preventDefault(); return; }   /* ingehouden cijfer mag niet meerdere drankjes leegdrinken */
       const di = parseInt(k, 10) - 1;
       if (S.dranken && S.dranken[di]) { e.preventDefault(); gebruikDrank(di); }
       return;
@@ -6361,11 +6366,12 @@ document.addEventListener('contextmenu', e => {
     if (vor || vol) {
       e.preventDefault();
       if (!cursorAan) { cursorAan = true; toetsIdx = Math.min(toetsIdx, lijst.length - 1); }
-      else toetsIdx = (toetsIdx + (vol ? 1 : -1) + lijst.length) % lijst.length;
+      else toetsIdx = Math.max(0, Math.min(toetsIdx + (vol ? 1 : -1), lijst.length - 1));   /* KLEMMEN i.p.v. wrappen — consistent met de gevecht-cursor (geen averechts-gevoel op korte rijen) */
       zetFocus(lijst[toetsIdx]);
       return;
     }
     if (/^[1-9]$/.test(k)) {
+      if (e.repeat) { e.preventDefault(); return; }   /* ingehouden cijfer = één activatie */
       const idx = parseInt(k, 10) - 1;
       if (lijst[idx]) { e.preventDefault(); cursorAan = true; toetsIdx = idx; zetFocus(lijst[idx]); klikMenu(lijst[idx], scherm); }
       return;
@@ -6508,7 +6514,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
   /* PWA: alleen via http(s), file:// kan geen service worker */
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js').then(() => {
+      /* een nieuwe SW doet skipWaiting()+clients.claim() → zodra hij de pagina overneemt
+         herladen we één keer, zodat een deploy (nieuwe code/CSS/art) meteen landt i.p.v.
+         pas na een cold start. Guard tegen de dubbel-reload-lus. */
+      let herladen = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (herladen) return; herladen = true; location.reload();
+      });
+    }).catch(() => {});
   }
 
   naarTitel();

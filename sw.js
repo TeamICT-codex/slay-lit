@@ -2,10 +2,9 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v36'; /* v36: De Deadline base-art opnieuw gesneden (oude webp was een mottige mislukte cut van de vorige art; nieuwe = schone dambord-cut van het donkere reaper-origineel op wit) — REPLACET gecachete art, dus bump verplicht */
+const CACHE = 'slayit-v37'; /* v37: grondige audit-fixes (anti-softlock trekt i.p.v. gratis energie · drank/menu-toets repeat-guard · SW-controllerchange-reload zodat een open client de nieuwe build meteen krijgt · 3D krijgt de gif-reactiepose · dode gifWeerstand-conditie weg · SCHAARSTE-fallbacks · projecteer/stof-perf) + de eerder ongebumpte wijzigingen (drank-drinkmoment + drankartwork · intent-pill-fix · scherf-persist/dood-bank · Redacteur-cover verduisterd.webp) */
 const BESTANDEN = [
   '.',
-  'index.html',
   'css/style.css',
   'css/mobiel.css',
   'js/lib/three.min.js',
