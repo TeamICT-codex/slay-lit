@@ -867,10 +867,10 @@ const Outro = (() => {
     sfx('blok', 0.2);
   }
   function configVolgende() {
-    if (configStap >= 7) return;
+    if (configStap >= 8) return;
     if (configStap === 0 && configT < 1) return;   /* de zoom eerst laten landen */
     configStap++; configT = 0;
-    sfx(configStap === 7 ? 'energie' : 'blok', 0.05);
+    sfx(configStap === 8 ? 'energie' : 'blok', 0.05);
   }
 
   /* Drops-vlaggen, defensief gelezen (de outro moet ook zonder run draaien) */
@@ -898,14 +898,27 @@ const Outro = (() => {
     const scroll = (valT < 1.1 ? valT * 240 : 264 + (valT - 1.1) * 55);
     ctx.fillStyle = '#100d0a'; ctx.fillRect(20, 0, 120, HOOG);
     ctx.fillStyle = '#1c1712'; ctx.fillRect(20, 0, 4, HOOG); ctx.fillRect(136, 0, 4, HOOG);
+    /* de herstel-golf: de machine staat op CREATIE en het is al te zien —
+       boven de golf worden de ramen warm en loopt de gevel groen uit */
+    const golf = valT > 2.4 ? (valT - 2.4) * 46 : -30;
     for (let ry = -24; ry < HOOG + 24; ry += 24) {
       const wy = ry + (scroll % 24);
       for (let wx = 32; wx < 130; wx += 18) {
         const zaad = (wx * 13 + Math.floor((ry - scroll) / 24) * 7) % 10;
-        if (zaad < 3) { ctx.fillStyle = '#ff7a2f'; ctx.fillRect(wx, wy, 8, 10); ctx.fillStyle = '#ffd23f'; ctx.fillRect(wx + 2, wy + 3, 4, 4); }
+        if (wy < golf) {
+          ctx.fillStyle = '#2a2118'; ctx.fillRect(wx, wy, 8, 10);
+          ctx.fillStyle = '#ffb347'; ctx.fillRect(wx + 2, wy + 2, 4, 6);
+          if (zaad < 4) { ctx.fillStyle = '#79c045'; ctx.fillRect(wx - 2, wy + 4, 2, 6); ctx.fillRect(wx + 8, wy, 2, 7); }
+          if (zaad === 4) { ctx.fillStyle = '#ff9c3f'; ctx.fillRect(wx + 9, wy + 2, 2, 2); }
+        } else if (zaad < 3) { ctx.fillStyle = '#ff7a2f'; ctx.fillRect(wx, wy, 8, 10); ctx.fillStyle = '#ffd23f'; ctx.fillRect(wx + 2, wy + 3, 4, 4); }
         else if (zaad < 5) ctx.fillStyle = '#0a0806', ctx.fillRect(wx, wy, 8, 10);
         else { ctx.fillStyle = '#2a2118'; ctx.fillRect(wx, wy, 8, 10); }
       }
+    }
+    /* groene vonkjes op de golf-lijn */
+    if (golf > 0 && golf < HOOG) {
+      ctx.fillStyle = '#9fe06a';
+      for (let i = 0; i < 6; i++) ctx.fillRect(24 + ((i * 53 + (valT * 90 | 0)) % 112), golf + Math.sin(valT * 8 + i) * 3, 2, 2);
     }
     /* rook die voorbij trekt */
     for (let i = 0; i < 4; i++) {
@@ -933,6 +946,10 @@ const Outro = (() => {
       if (!chute) ctx.rotate(valT * 5);
       ctx.drawImage(spr, -4, -7);
       ctx.restore();
+    }
+    if (valT > 3.6 && valT < 6.4) {
+      const r3 = 'DE MACHINE MAAKT NU.';
+      tekst(ctx, r3, BREED / 2 - tekstBreedte(r3) / 2, 162, 'rgba(159,224,106,0.9)');
     }
     if (valT > 1.1 && valT < 3.4) {
       const r = 'DE VAL, MAAR DAN VRIJWILLIG. EN ZACHT.';
@@ -2167,6 +2184,7 @@ const Outro = (() => {
 
   /* ---------- het configscherm: de anticlimax die alles beslecht ---------- */
   const CONFIG_RIJEN = [
+    { label: 'MODUS', oud: 'DESTRUCTIE', nieuw: 'CREATIE' },
     { label: 'DOELFUNCTIE', oud: 'WINSTMAXIMALISATIE', nieuw: 'SCHEPPING MAXIMALISEREN' },
     { label: 'BEGUNSTIGDE', oud: 'DE AANDEELHOUDER', nieuw: 'DE VELEN' },
     { label: 'MODEL', oud: 'TECHNOCRATISCH BEHEER', nieuw: 'CREATIEVE SAMENLEVING' },
@@ -2190,11 +2208,15 @@ const Outro = (() => {
       return;
     }
     /* de reboot: eerst een korte flikker, dan de ene zin */
-    if (configStap >= 7) {
+    if (configStap >= 8) {
       if (configT < 0.5 && ((configT * 18) | 0) % 2) { ctx.fillStyle = '#141008'; ctx.fillRect(0, 0, BREED, HOOG); return; }
       if (configT > 0.7) {
         const r = 'EEN ONBETAALBAAR LEVEN BEGINT NU.';
-        tekst(ctx, r, BREED / 2 - tekstBreedte(r) / 2, 86, '#ffb347');
+        tekst(ctx, r, BREED / 2 - tekstBreedte(r) / 2, 80, '#ffb347');
+      }
+      if (configT > 1.6) {
+        const r2 = 'MODUS: CREATIE - HERSTEL GESTART.';
+        tekst(ctx, r2, BREED / 2 - tekstBreedte(r2) / 2, 94, '#79c045');
       }
       return;
     }
@@ -2214,17 +2236,17 @@ const Outro = (() => {
       tekst(ctx, 'UW JUBILEUMPEN GAF GEEN INKT.', 16, 74, GRIJS);
       tekst(ctx, 'GETEKEND MET DE KOOL VAN UW FAKKEL.', 16, 82, WIT);
     }
-    for (let i = 0; i < 4; i++) {
-      const rij = CONFIG_RIJEN[i], y = 92 + i * 11;
+    for (let i = 0; i < 5; i++) {
+      const rij = CONFIG_RIJEN[i], y = 90 + i * 11;
       const om = configStap >= i + 2;
       tekst(ctx, rij.label + ':', 16, y, GRIJS);
       const vx = 16 + tekstBreedte(rij.label + ': ');
       if (om) tekst(ctx, rij.nieuw, vx, y, A);
       else tekst(ctx, '[ ' + rij.oud + ' ]', vx, y, configStap === i + 1 ? WIT : GRIJS);
     }
-    if (configStap >= 6) {
-      tekst(ctx, 'WEET U HET ZEKER? DEZE WIJZIGING IS NIET FACTUREERBAAR.', 16, 142, GRIJS);
-      if (((tijd * 2) | 0) % 2) tekst(ctx, '[ OPSLAAN EN OPNIEUW OPSTARTEN (0U06) ]', 16, 154, A);
+    if (configStap >= 7) {
+      tekst(ctx, 'WEET U HET ZEKER? DEZE WIJZIGING IS NIET FACTUREERBAAR.', 16, 148, GRIJS);
+      if (((tijd * 2) | 0) % 2) tekst(ctx, '[ OPSLAAN EN OPNIEUW OPSTARTEN (0U06) ]', 16, 158, A);
     } else {
       const hint = window.mobiel ? 'TIK OM VERDER TE GAAN' : 'DRUK OP EEN TOETS';
       if (((tijd * 1.6) | 0) % 2) tekst(ctx, hint, BREED - 16 - tekstBreedte(hint), HOOG - 16, GRIJS);
@@ -2235,8 +2257,11 @@ const Outro = (() => {
   function renderEpiloog() {
     const e = epi; if (!e) return;
     /* avondlucht in banden, gloed aan de horizon */
-    const banden = [['#141026', 0, 58], ['#241634', 58, 92], ['#4a2420', 92, 116], ['#7a3c22', 116, 130]];
+    /* de dageraad: de eerste ochtend van de creatieve samenleving */
+    const banden = [['#1e3a5c', 0, 50], ['#5c4a7a', 50, 86], ['#c9764a', 86, 116], ['#e8b45c', 116, 130]];
     for (const [k, y0, y1] of banden) { ctx.fillStyle = k; ctx.fillRect(0, y0, BREED, y1 - y0); }
+    ctx.fillStyle = 'rgba(255,210,63,0.25)'; ctx.beginPath(); ctx.arc(46, 96, 22, 0, 7); ctx.fill();
+    ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(46, 96, 11, 0, 7); ctx.fill();
     ctx.fillStyle = '#191410'; ctx.fillRect(0, 130, BREED, HOOG - 130);
     ctx.fillStyle = '#241d14'; ctx.fillRect(0, 130, BREED, 3);
 
@@ -2250,20 +2275,27 @@ const Outro = (() => {
         ctx.fillStyle = '#ffb347'; ctx.fillRect(wx, wy, 4, 5);
       }
     }
-    /* vlammen in de bressen: het gebouw is echt naar de kloten */
-    for (let i = 0; i < 5; i++) {
-      const fx2 = 214 + ((i * 37) % 78);
-      const fy2 = 52 + ((i * 53) % 60);
-      if (((e.t * 7 + i * 3) | 0) % 3 !== 0) {
-        ctx.fillStyle = '#ff7a2f'; ctx.fillRect(fx2, fy2, 4, 5);
-        ctx.fillStyle = '#ffd23f'; ctx.fillRect(fx2 + 1, fy2 + 1, 2, 2);
-      }
+    /* de machine maakt: klimop en bloemen groeien zichtbaar over het gebouw */
+    for (let cx = 205; cx < 300; cx += 8) {
+      const hgt = 100 - ((cx * 13) % 4) * 9 - (cx > 268 ? 22 : 0);
+      const groei = Math.min(hgt, e.t * 9);
+      ctx.fillStyle = '#4c7f2a'; ctx.fillRect(cx, 130 - groei, 2, groei);
+      ctx.fillStyle = '#79c045';
+      for (let gy = 130 - groei; gy < 126; gy += 7) ctx.fillRect(cx + 2, gy + ((cx + gy) % 3), 2, 2);
+      if (groei > 18 && cx % 16 === 13) { ctx.fillStyle = '#ff9c3f'; ctx.fillRect(cx + 1, 132 - groei, 2, 2); }
+      if (groei > 30 && cx % 24 === 5) { ctx.fillStyle = '#c9302c'; ctx.fillRect(cx + 3, 142 - groei, 2, 2); }
     }
-    /* rook uit de bres */
+    /* vogels in de ochtend */
     for (let i = 0; i < 3; i++) {
-      const fase = (e.t * 7 + i * 16) % 46;
-      ctx.fillStyle = 'rgba(90,84,70,' + (0.32 * (1 - fase / 46)).toFixed(2) + ')';
-      ctx.beginPath(); ctx.arc(250 + i * 9 + fase * 0.2, 34 - fase * 0.7, 3 + fase / 9, 0, 7); ctx.fill();
+      const bx2 = ((e.t * 16 + i * 90) % 380) - 20, by2 = 26 + i * 11 + Math.sin(e.t * 3 + i) * 2;
+      ctx.fillStyle = '#26221a';
+      ctx.fillRect(bx2, by2, 2, 1); ctx.fillRect(bx2 + 2, by2 - 1, 2, 1); ctx.fillRect(bx2 + 4, by2, 2, 1);
+    }
+    /* geen rook meer — groene creatie-sparkles stijgen uit het gebouw op */
+    for (let i = 0; i < 4; i++) {
+      const fase = (e.t * 9 + i * 13) % 46;
+      ctx.fillStyle = 'rgba(159,224,106,' + (0.6 * (1 - fase / 46)).toFixed(2) + ')';
+      ctx.fillRect(236 + i * 14 + Math.sin(e.t * 2 + i) * 4, 42 - fase * 0.7, 2, 2);
     }
 
     /* het frietkot — de laatste eerlijke plek, licht áán */
@@ -2355,7 +2387,7 @@ const Outro = (() => {
     }
     if (staat === 'config') {
       configT += dt;
-      if (configStap >= 7 && configT >= 2.6) { startVal(); render(); return; }
+      if (configStap >= 8 && configT >= 2.6) { startVal(); render(); return; }
       render(); return;
     }
     if (staat === 'val') {
