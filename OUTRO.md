@@ -338,6 +338,21 @@ het feel-contract.
 serverhal-beat + configscherm + epiloog (allemaal goedkoop, scripted) het
 einde alsnog — de run-and-gun-verdiepingen zijn dan inkortbaar tot één.
 
+## Playtest-ronde 2 (05-07): GEBOUWD
+Ladders + klim-physics (omhoog/omlaag, springen laat los) · niveaus in de
+levels (dekken/mezzanines) · nieuwe verdieping **V3 DE FACTURATIE** (drie
+werkvloeren boven elkaar) · de keten is nu V-1 → V2 → V3 → V4 → **HET
+PENTHOUSE**: outdoor dak-finale met avondlucht, maan, skyline, vlammen uit
+het eigen gebouw en **B.A.A.S. zichtbaar kapot maar levend** (deuk,
+scheuren, dode lampjes, halve glimlach, rook, haperende spreekregels) —
+dáár staat het paneel. Config heeft een vierde flip: MODEL: TECHNOCRATISCH
+BEHEER → **CREATIEVE SAMENLEVING**. Na de reboot: **de valscherm-sprong**
+van het dak langs de brandende gevel ("DE VAL, MAAR DAN VRIJWILLIG. EN
+ZACHT.") → de epiloog (nu mét vlammen in het gebouw). Plus verzamelbare
+**upgrade-kaarten** (deckbuilder-knipoog): ☕ Koffie = sneller lopen+slaan,
+✉️ Snel een mailtje = je zwaai schiet post, 🔥 Overuren = grotere
+explosies — stapelbaar, verspreid over de verdiepingen, teller in de HUD.
+
 ## Playtest-wensen Thomas (05-07, in behandeling)
 1. **Zottere visuals** — meer spektakel/kleur in de carnage en het decor.
 2. **Betere aanduiding bevrijdbare coworkers** — de cocons moeten schreeuwen
