@@ -272,6 +272,7 @@ const Outro = (() => {
   let maskers = ['slachter'], maskerIdx = 0, signKlok = 0, papierWachtrij = 0, papierBron = null;
   let lvlIdx = 0, wisselDoel = 0, dakval = null;     /* de keten van verdiepingen + de dak-instorting */
   let mozaiek = null, zoomFoto = null, zoomPunt = null;   /* dither-intro + de pixel-zoom naar de terminal */
+  let hintT = 0;                                           /* besturingshint op de eerste verdieping */
   let partikels = [], popups = [], popupWachtrij = 0, popupKlok = 0;
   let bomWachtrij = [], stortWachtrij = [];     /* kettingreacties + instortende kolommen */
   let hal = null;                               /* serverhal-staat (B.A.A.S., ∞, het paneel) */
@@ -978,7 +979,7 @@ const Outro = (() => {
     if (staat === 'wissel') { if (spelToets) e.preventDefault(); return; }
     if (spelToets) {
       e.preventDefault();
-      if (staat === 'intro' && !e.repeat) { introT = Math.max(introT, 6.2); return; }   /* intro doorklikken */
+      if (staat === 'intro' && !e.repeat) { introT = introT >= 6.1 ? 7.4 : 6.2; return; }   /* intro doorklikken (2e druk = meteen) */
       if (!e.repeat && (k === 'w' || k === 'arrowup' || k === ' ')) held && (held.sprongBuf = SPRONGBUFFER);
       if (!e.repeat && (k === 'j' || k === 'x')) vuurBuf = 0.1;
       if (!e.repeat && (k === 'k' || k === 'z')) worpBuf = 0.15;
@@ -1012,7 +1013,7 @@ const Outro = (() => {
     if (staat === 'uit') return;
     e.preventDefault();
     if (schermCanvas.setPointerCapture) { try { schermCanvas.setPointerCapture(e.pointerId); } catch (err) {} }
-    if (staat === 'intro') { introT = Math.max(introT, 6.2); return; }
+    if (staat === 'intro') { introT = introT >= 6.1 ? 7.4 : 6.2; return; }
     if (staat === 'config') { configVolgende(); return; }
     if (staat === 'epiloog') { if (epi && epi.klaar) beeindig(); else if (epi) epi.spoed = true; return; }
     if (staat === 'wissel') return;
@@ -1308,6 +1309,11 @@ const Outro = (() => {
       sfx('schitter', 0.25);
     }
     if (hudTekstT > 0) { hudTekstT -= dt; if (hudTekstT <= 0) hudTekst = null; }
+    if (hintT > 0) {
+      hintT -= dt;
+      /* zodra er gelopen én gesloopt is, mag de hint snel weg */
+      if (ontfactureerd > 1 && Math.abs(h.x - lvl.spelerStart.x) > 40) hintT = Math.min(hintT, 2);
+    }
 
     /* de jeugddromen dwarrelen één voor één uit de opengebarsten kast */
     if (papierWachtrij > 0 && papierBron && Math.random() < dt * 14) {
@@ -1645,6 +1651,19 @@ const Outro = (() => {
       const st = 'DE VELEN: ' + collegas.length;
       tekst(ctx, st, BREED - 4 - tekstBreedte(st), regY + 7, '#5fd0d8');
     }
+    /* de besturingshint: twee regels, alleen op de eerste verdieping */
+    if (hintT > 0 && lvlIdx === 0 && staat === 'spel') {
+      const a = klem(hintT, 0, 1);
+      const r1 = window.mobiel ? 'LINKS SLEPEN = LOPEN' : 'PIJLTJES/AD = LOPEN - W/SPATIE = SPRINGEN';
+      const r2 = window.mobiel ? 'KNOPPEN RECHTS: SPRING - SLOOP - WORP' : 'J = SLOPEN (HOUD IN) - K = WORP - Q = MASKER';
+      const br = Math.max(tekstBreedte(r1), tekstBreedte(r2));
+      ctx.fillStyle = 'rgba(10,8,5,' + (0.6 * a).toFixed(2) + ')';
+      ctx.fillRect(BREED / 2 - br / 2 - 4, 20, br + 8, 19);
+      ctx.globalAlpha = a;
+      tekst(ctx, r1, BREED / 2 - tekstBreedte(r1) / 2, 23, '#efe9d6');
+      tekst(ctx, r2, BREED / 2 - tekstBreedte(r2) / 2, 31, '#ffb347');
+      ctx.globalAlpha = 1;
+    }
     if (hudTekst) {
       const b = tekstBreedte(hudTekst);
       ctx.fillStyle = 'rgba(10,8,5,0.72)';
@@ -1691,6 +1710,10 @@ const Outro = (() => {
       const n = Math.min(titel.length, Math.floor((introT - 5.2) * 16));
       tekst(ctx, titel.slice(0, n), BREED / 2 - tekstBreedte(titel, 2) / 2, 104, '#ffb347', 2);
       tekst(ctx, 'OUTRO', BREED / 2 - tekstBreedte('OUTRO') / 2, 96, '#a08d68');
+    }
+    if (introT > 1.6) {
+      const hint = window.mobiel ? 'TIK = DOORSPOELEN' : 'ELKE TOETS = DOORSPOELEN';
+      if (((introT * 2) | 0) % 2) tekst(ctx, hint, BREED / 2 - tekstBreedte(hint) / 2, 164, '#454136');
     }
     if (introT > 6.6) {
       const hint = window.mobiel ? 'TIK OM TE BEGINNEN' : 'DRUK OP EEN TOETS';
@@ -1900,6 +1923,7 @@ const Outro = (() => {
 
   function startSpel() {
     staat = 'spel';
+    hintT = 14;   /* de besturingshint op V-1, tot de speler loopt en sloopt */
     /* de eerste echte chiptune van het spel: de jingle als strijdlied, laag 1 */
     if (window.Klank && Klank.muziek) { try { Klank.muziek('outro'); Klank.zetChipLagen && Klank.zetChipLagen(1); } catch (e) {} }
   }
