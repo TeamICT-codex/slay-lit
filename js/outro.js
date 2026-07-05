@@ -273,7 +273,8 @@ const Outro = (() => {
   let maskers = ['slachter'], maskerIdx = 0, signKlok = 0, papierWachtrij = 0, papierBron = null;
   let lvlIdx = 0, wisselDoel = 0, dakval = null;     /* de keten van verdiepingen + de dak-instorting */
   let mozaiek = null, zoomFoto = null, zoomPunt = null;   /* dither-intro + de pixel-zoom naar de terminal */
-  let hintT = 0;                                           /* besturingshint op de eerste verdieping */
+  let hintT = 0;
+  let splash = null, schermFlits = 0;   /* bro-unlock-splash + witte knalflits */                                           /* besturingshint op de eerste verdieping */
   let partikels = [], popups = [], popupWachtrij = 0, popupKlok = 0;
   let bomWachtrij = [], stortWachtrij = [];     /* kettingreacties + instortende kolommen */
   let hal = null;                               /* serverhal-staat (B.A.A.S., ∞, het paneel) */
@@ -891,7 +892,8 @@ const Outro = (() => {
   /* de explosie: vuurbal + rook + schokgolf die tegels wegvaagt en drones
      meeneemt. De held voelt er niets van — dit is een viering, geen straf. */
   function explosie(px, py, straal) {
-    spawnVuurbal(px, py, straal);
+    schermFlits = Math.max(schermFlits, 0.09);
+    spawnVuurbal(px, py, straal + 4);
     sloopGebied(px, py, straal, 3);
     for (const d of drones) {
       if (!d.dood && Math.hypot(d.x + 4 - px, d.y + 4 - py) < straal + 8) raakVijand(d, 2);
@@ -956,8 +958,9 @@ const Outro = (() => {
         t: 0.9 + Math.random() * 0.7, maxT: 1.6, r: 3 + Math.random() * 4
       });
     }
-    spawnVonk(px, py, '#ffd23f', 10);
-    spawnVonk(px, py, '#ff7a2f', 8);
+    spawnVonk(px, py, '#ffd23f', 14);
+    spawnVonk(px, py, '#ff7a2f', 10);
+    spawnVonk(px, py, '#ffffff', 6);
   }
   function popup(px, py, txt, kleur) {
     popups.push({ x: px, y: py, txt, kleur: kleur || '#9fe06a', t: 0.9 });
@@ -1140,11 +1143,11 @@ const Outro = (() => {
           sfx('energie', 0.2);
         } else if (mk === 'gifmagier' && !gifbal && signKlok <= 0) {
           worpBuf = 0; signKlok = 1.1;
-          gifbal = { x: h.x + h.b / 2, y: h.y + 3, vx: h.richting * 150, vy: -140, t: 1.5, hitKlok: 0 };
+          gifbal = { x: h.x + h.b / 2, y: h.y + 3, vx: h.richting * 150, vy: -140, t: 1.5, hitKlok: 0, splits: true };
           sfx('energie', 0.2);
         } else if (mk === 'thoverk' && signKlok <= 0) {
           worpBuf = 0; signKlok = 1.3;
-          for (let i = 1; i <= 8; i++) bomWachtrij.push({ px: h.x + h.b / 2 + h.richting * i * 11, py: h.y + 7, straal: 6, t: i * 0.035 });
+          for (let i = 1; i <= 10; i++) bomWachtrij.push({ px: h.x + h.b / 2 + h.richting * i * 11, py: h.y + 7, straal: 7, t: i * 0.03 });
           sfx('energie', 0.15);
         }
       }
@@ -1178,7 +1181,7 @@ const Outro = (() => {
       worp.x += worp.vx * dt;
       if (!worp.terug) {
         worp.vx *= (1 - 2.6 * dt);
-        if (Math.abs(worp.vx) < 30) { worp.terug = true; explosie(worp.x, worp.y, 11); }   /* het keerpunt knalt */
+        if (Math.abs(worp.vx) < 30) { worp.terug = true; explosie(worp.x, worp.y, 15); }   /* het keerpunt knalt — hard */
       } else {
         const doel = h.x + h.b / 2;
         worp.vx += (doel > worp.x ? 1 : -1) * 480 * dt;
@@ -1208,7 +1211,13 @@ const Outro = (() => {
       }
       raakInteracties(gifbal.x, gifbal.y, 8);
       if (Math.random() < dt * 24) spawnVonk(gifbal.x, gifbal.y, '#79c045', 1);
-      if (gifbal.t <= 0 || gifbal.y > lvl.rijen * TEGEL) { spawnVonk(gifbal.x, gifbal.y, '#79c045', 10); gifbal = null; }
+      /* de waaier: op het hoogste punt splitst de gifboog in drie */
+      if (gifbal && gifbal.splits && gifbal.vy > 0) {
+        gifbal.splits = false;
+        explosie(gifbal.x, gifbal.y, 8);
+        gifbal.vx *= 1.3;
+      }
+      if (gifbal && (gifbal.t <= 0 || gifbal.y > lvl.rijen * TEGEL)) { explosie(gifbal.x, gifbal.y, 10); gifbal = null; }
     }
 
     /* — het machinepark: drones, torentjes, slangen, kopieerbots — */
@@ -1431,10 +1440,11 @@ const Outro = (() => {
       const mk = volgendMasker();
       if (!mk) return;
       maskers.push(mk);
+      maskerIdx = maskers.length - 1;   /* meteen in je nieuwe zelf */
+      splash = { t: 2.4, mk };
       schud(2); hitstop = Math.max(hitstop, 0.05);
       spawnVonk(c.x + 8, c.y + 10, HELD_TINT[mk].R, 14);
-      hudTekst = MASKER_NAAM[mk] + ' SLUIT WEER AAN - ' + MASKER_REGEL[mk];
-      hudTekstT = 3.2;
+
       sfx('genees', 0.2);
     }
   }
@@ -1540,6 +1550,12 @@ const Outro = (() => {
       ctx.fillStyle = '#38332a'; ctx.fillRect(c.x + ox, c.y + oy, 16, 24);
       ctx.fillStyle = '#221f19'; ctx.fillRect(c.x + 2 + ox, c.y + 2 + oy, 12, 20);
       tekenSprite('collega1', c.x + 4 + ox, c.y + 12 + oy, false);
+      /* onmiskenbaar: HELP! + bobbend pijltje boven elke gevangen collega */
+      const bob = Math.round(Math.sin(tijd * 4) * 2);
+      tekst(ctx, 'HELP!', c.x + 8 - tekstBreedte('HELP!') / 2 + ox, c.y - 14 + bob + oy, '#ffd23f');
+      ctx.fillStyle = '#ffd23f';
+      ctx.fillRect(c.x + 6 + ox, c.y - 6 + bob + oy, 4, 2);
+      ctx.fillRect(c.x + 7 + ox, c.y - 4 + bob + oy, 2, 2);
       const knip = (tijd * 2) % 1 < 0.5;
       ctx.fillStyle = knip ? '#d43d2a' : '#8f1f1c';
       for (let i = 0; i < 16; i += 4) { ctx.fillRect(c.x + i + ox, c.y - 2 + oy, 2, 1); ctx.fillRect(c.x + i + ox, c.y + 25 + oy, 2, 1); }
@@ -1652,6 +1668,27 @@ const Outro = (() => {
     /* popups ("-0U06") */
     for (const p of popups) tekst(ctx, p.txt, Math.round(p.x + ox) - tekstBreedte(p.txt) / 2, Math.round(p.y + oy), p.kleur);
 
+    /* de bro-splash: Broforce-stijl unlock-kaart, de wereld houdt de adem in */
+    if (splash) {
+      const a = klem(splash.t / 0.3, 0, 1);
+      ctx.fillStyle = 'rgba(8,6,4,' + (0.72 * a).toFixed(2) + ')';
+      ctx.fillRect(0, 56, BREED, 68);
+      ctx.fillStyle = HELD_TINT[splash.mk].R;
+      ctx.fillRect(0, 56, BREED, 2); ctx.fillRect(0, 122, BREED, 2);
+      const spr = gebakken['held_sta@' + splash.mk];
+      if (spr) { ctx.imageSmoothingEnabled = false; ctx.drawImage(spr, 34, 64, spr.width * 3, spr.height * 3); }
+      tekst(ctx, 'NIEUWE BRO!', 72, 64, '#ffd23f');
+      tekst(ctx, MASKER_NAAM[splash.mk], 72, 76, HELD_TINT[splash.mk].R, 2);
+      tekst(ctx, MASKER_REGEL[splash.mk], 72, 96, '#efe9d6');
+      tekst(ctx, window.mobiel ? 'TIK OP DE CHIPS = WISSELEN' : 'Q = WISSELEN', 72, 110, '#8a8168');
+      if (((tijd * 8) | 0) % 2) { ctx.fillStyle = 'rgba(255,210,63,0.12)'; ctx.fillRect(0, 58, BREED, 62); }
+    }
+    /* de knalflits over het hele beeld */
+    if (schermFlits > 0) {
+      ctx.fillStyle = 'rgba(255,244,214,' + (schermFlits * 3).toFixed(2) + ')';
+      ctx.fillRect(0, 0, BREED, HOOG);
+      schermFlits -= 0.016;
+    }
     renderHud();
     /* de levelwissel: uitfaden, omkleden, weer infaden */
     if (staat === 'wissel') {
@@ -1957,6 +1994,7 @@ const Outro = (() => {
       }
       render(); return;
     }
+    if (splash) { splash.t -= dt; if (splash.t <= 0) splash = null; render(); return; }
     if (hitstop > 0) { hitstop -= dt; render(); return; }
     if (schudT > 0) { schudT -= dt; if (schudT <= 0) schudKracht = 0; }
     accu = Math.min(accu + dt, 0.12);
