@@ -2558,7 +2558,11 @@ const Outro = (() => {
     zoomFoto = null; zoomPunt = null;
 
     proloog = leesProloog();
-    const heldId = (typeof S !== 'undefined' && S && S.held && HELD_TINT[S.held]) ? S.held : 'slachter';
+    /* start-masker: een lopende run wint; anders de proloog-heldenkeuze
+       (woede/gif/vlucht of de game-ids), anders de Slachter */
+    const HELD_MAP = { woede: 'slachter', gif: 'gifmagier', vlucht: 'thoverk', slachter: 'slachter', gifmagier: 'gifmagier', thoverk: 'thoverk' };
+    const heldId = (typeof S !== 'undefined' && S && S.held && HELD_TINT[S.held]) ? S.held
+      : (HELD_MAP[proloog.held] || 'slachter');
     bakAlles();
     maskers = [heldId]; maskerIdx = 0;
     lvlIdx = 0; wisselDoel = 0;
