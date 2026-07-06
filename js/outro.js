@@ -324,6 +324,7 @@ const Outro = (() => {
   let hintT = 0;
   let splash = null, schermFlits = 0;
   let valT = 0;
+  let proloog = {};                                /* overdracht uit de proloog (localStorage) */
   let pickups = [], post = [];                     /* upgrade-kaarten + mailtjes-projectielen */
   let upgrades = { koffie: 0, mail: 0, over: 0 };  /* kaarten die je aanvallen pimpen */                          /* de valscherm-sprong van het dak */   /* bro-unlock-splash + witte knalflits */                                           /* besturingshint op de eerste verdieping */
   let partikels = [], popups = [], popupWachtrij = 0, popupKlok = 0;
@@ -889,6 +890,13 @@ const Outro = (() => {
     return !!(typeof Codex !== 'undefined' && Codex && Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops'));
   }
 
+  /* de overdracht uit de proloog: sleutel 'slayit_proloog' =
+     { jeugddroom: string, uitweg: 'sprong'|'geduwd' } — alles optioneel */
+  function leesProloog() {
+    try { return JSON.parse(localStorage.getItem('slayit_proloog') || 'null') || {}; }
+    catch (e) { return {}; }
+  }
+
   /* DE SPRONG — de val uit de proloog, nu vrijwillig. En zacht. */
   function startVal() {
     staat = 'val'; valT = 0;
@@ -1023,6 +1031,7 @@ const Outro = (() => {
     epi = {
       t: 0, spoed: false, klaar: false,
       hond: dropsWitActief() ? 'wit' : (dropsGevallen() ? 'poot' : null),
+      droom: ((typeof S !== 'undefined' && S && S.jeugddroom) || proloog.jeugddroom || null),
       n: collegas.length,
       regels: [
         'EINDAFREKENING - B.A.A.S.',
@@ -1872,8 +1881,9 @@ const Outro = (() => {
       k.open = true;
       schud(2); hitstop = Math.max(hitstop, 0.09);
       papierWachtrij = 26; papierBron = { x: k.x, y: k.y };
-      const droom = (typeof S !== 'undefined' && S && S.jeugddroom)
-        ? '"' + String(S.jeugddroom).toUpperCase().slice(0, 24) + '"'
+      const droomBron = (typeof S !== 'undefined' && S && S.jeugddroom) || proloog.jeugddroom;
+      const droom = droomBron
+        ? '"' + String(droomBron).toUpperCase().slice(0, 24) + '"'
         : 'VOORZIENING GETROFFEN';
       popups.push({ x: k.x + 12, y: k.y - 10, txt: droom, kleur: '#efe9d6', t: 2.8 });
       sfx('dood', 0.3);
@@ -2234,6 +2244,11 @@ const Outro = (() => {
       { t: 0.6, txt: 'B.A.A.S.: "BEDANKT VOOR UW GEDULD."', kleur: '#79c045' },
       { t: 2.0, txt: '"IK HAAL U UIT DE WACHT."', kleur: '#79c045' },
       { t: 3.4, txt: '"UW EXITGESPREK STAAT GEPLAND: HEDEN. (0U06)"', kleur: '#79c045' },
+      ...(proloog.uitweg === 'sprong'
+        ? [{ t: 4.4, txt: '"DOSSIER HEROPEND: U SPRONG. CORRECTIE AANVAARD."', kleur: '#79c045' }]
+        : proloog.uitweg === 'geduwd'
+        ? [{ t: 4.4, txt: '"DOSSIER HEROPEND: U WERD GEDUWD. DAT WISTEN WE."', kleur: '#79c045' }]
+        : []),
       { t: 5.2, txt: 'SLA ALLES VAN HET SYSTEEM KORT EN KLEIN.', kleur: '#efe9d6' },
       { t: 6.6, txt: "BEVRIJD JE COLLEGA'S. KLIM NAAR BOVEN.", kleur: '#efe9d6' },
       { t: 8.0, txt: 'EN ZET DE MACHINE GOED. VOORGOED.', kleur: '#ffb347' }
@@ -2393,6 +2408,10 @@ const Outro = (() => {
     ctx.fillStyle = '#ffd23f'; ctx.fillRect(46, 104, 48, 16);
     ctx.fillStyle = '#33251a'; ctx.fillRect(52, 82, 7, 9);
     tekst(ctx, 'FRIET', 60, 76, '#ffd23f');
+    if (e.droom) {
+      const gezocht = 'GEZOCHT: ' + String(e.droom).toUpperCase().slice(0, 22) + '. GEEN ERVARING VEREIST.';
+      tekst(ctx, gezocht, BREED / 2 - tekstBreedte(gezocht) / 2, 143, 'rgba(239,233,214,0.85)');
+    }
     /* damp uit de schouw */
     for (let i = 0; i < 3; i++) {
       const fase = (e.t * 9 + i * 13) % 40;
@@ -2538,6 +2557,7 @@ const Outro = (() => {
     mozaiek.width = BREED; mozaiek.height = HOOG;
     zoomFoto = null; zoomPunt = null;
 
+    proloog = leesProloog();
     const heldId = (typeof S !== 'undefined' && S && S.held && HELD_TINT[S.held]) ? S.held : 'slachter';
     bakAlles();
     maskers = [heldId]; maskerIdx = 0;
