@@ -597,6 +597,33 @@ const ACHTERGRONDEN = {
     beloning: 'Act 2 achtergronden/Overwinningsachtergrond2gewoon.webp',
     overwinning: 'Act 2 achtergronden/Overwinningsachtergrond2episch.webp',
     nederlaag: 'Act 2 achtergronden/Achtergrond nederlaag ACT2.webp'
+  },
+  /* Act 3 — Het Slachtblok. Art staat klaar; de act zelf is nog niet gebouwd
+     (ACTS_MAX=2), dus dit blok is slapend tot de Act 3-bouw. `finale` is de
+     aparte plaat voor het DICKtator-eindgevecht. */
+  act3: {
+    kaart: 'Act 3 achtergronden/Achtergrond ACT 3 laadscherm.webp',
+    gevecht: [
+      'Act 3 achtergronden/Gevechtstijl Act 3 stijl 1.webp',
+      'Act 3 achtergronden/Gevechtstijl Act 3 stijl 2.webp',
+      'Act 3 achtergronden/Gevechtstijl Act 3 stijl 3.webp',
+      'Act 3 achtergronden/Gevechtstijl Act 3 stijl 4.webp'
+    ],
+    episch: [
+      'Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 1.webp',
+      'Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 2.webp',
+      'Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 3.webp'
+    ],
+    finale: 'Act 3 achtergronden/Achtergrond ACT 3 FINALE.webp',
+    winkel: 'Act 3 achtergronden/Achtergrond verkoper ACT3.webp',
+    winkelEasterEgg: 'Act 3 achtergronden/Achtergrond verkoper ACT3 easter egg.webp',
+    event: 'Act 3 achtergronden/Achtergrondvraagtekenencounter ACT3.webp',
+    eventRelikwie: 'Act 3 achtergronden/Achtergrondvraagtekenrelikwieartefact ACT3.webp',
+    rust: 'Act 3 achtergronden/Achtergrondrust3.webp',
+    schat: 'Act 3 achtergronden/Achtergrondschatkist3.webp',
+    beloning: 'Act 3 achtergronden/Overwinningsachtergrond3gewoon.webp',
+    overwinning: 'Act 3 achtergronden/Overwinningsachtergrond3episch.webp',
+    nederlaag: 'Act 3 achtergronden/Achtergrond nederlaag ACT3.webp'
   }
 };
 window.ACHTERGRONDEN = ACHTERGRONDEN;

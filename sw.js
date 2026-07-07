@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v37'; /* v37: grondige audit-fixes (anti-softlock trekt i.p.v. gratis energie · drank/menu-toets repeat-guard · SW-controllerchange-reload zodat een open client de nieuwe build meteen krijgt · 3D krijgt de gif-reactiepose · dode gifWeerstand-conditie weg · SCHAARSTE-fallbacks · projecteer/stof-perf) + de eerder ongebumpte wijzigingen (drank-drinkmoment + drankartwork · intent-pill-fix · scherf-persist/dood-bank · Redacteur-cover verduisterd.webp) */
+const CACHE = 'slayit-v38'; /* v38: grote art-drop — de_deadline_attack HERSTELD (witte-spook-cut vervangen; op wit hergenereerd), nieuwe gif-reactieposes de_inktvlek_gif + spiegelwachter_gif, en de volledige Act 3-scèneset (16 kaarten + 10 relikwieën + 4 events + 6 achtergronden, slapend tot de Act 3-bouw; act3-blok in ACHTERGRONDEN klaargezet) */
 const BESTANDEN = [
   '.',
   'css/style.css',

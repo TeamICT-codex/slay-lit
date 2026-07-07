@@ -380,6 +380,21 @@ DEATH-POSE per wezen (<id>_death — zelfde wezen/stijl/links/transparant, allee
   het_origineel — (episch) barst als een mal; het goud-karmozijn verkleurt grijs, z'n kopieën verwaaien — "ook het origineel was maar een kopie."
   de_archivaris — (elite) de plankenberg stort als een aardverschuiving over hem heen; de oplichtende tags doven één voor één.
 
+REACTIE/ATTACK-POSES (gedropt + verwerkt 7 juli 2026 — zelfde wezen/stijl/links, alleen de Pose-regel anders):
+  de_deadline_attack — ⚠ op FLAT WHITE (of magenta) gegenereerd, NOOIT op zwart: het figuur is zelf
+    bijna zwart, dus zwart-op-zwart is onuitsnijdbaar (die fout stond eerst live als wit spook).
+    Pose: the great scything blade raised high and about to sweep down to the LEFT, the clock-face
+    eye flaring red, claws spread wide, hourglass sand streaming sideways with the motion, tattered
+    robe whipping — a swift "your time is up" strike.
+  de_inktvlek_gif    — de gif-IMMUUN-reactie (dambord-bg, standaard cut). Pose: incoming luminous-green
+    venom is being DRUNK IN and neutralised by the ink — the green poison bleeding harmlessly into the
+    black ink-body and going inert, the blot swelling and rippling as it absorbs the dose. Unbothered.
+  spiegelwachter_gif — de gif-KAATS-reactie, op EFFEN ZWART gegenereerd (fel kristalfiguur op zwart
+    kán: de cutter heeft nu een zwart-key — ZWART-set in verwijder_dambord.py, drempels 12/30 strak
+    houden anders kruipt de fill via donkere pantsernaden het figuur binnen). Pose: angling its flat
+    mirror-shield toward the LEFT so the incoming green venom REFLECTS straight back — a spray of
+    luminous green poison bouncing off the polished glass toward the attacker. Defiant, deflecting.
+
 ============ DE VIJANDEN — volledige, geoptimaliseerde prompts (alle 14 + 2 spawns) ============
 Begin elke prompt met het UNIEKE silhouet (niet met "a creature in the archive"). Koud
 Archief-palet + warme ember-rand + transparant + facing LEFT (zie de kop hierboven). De
