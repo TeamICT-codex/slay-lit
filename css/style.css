@@ -68,6 +68,18 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 .scherm.actief { display: flex; }
 #scherm-titel { top: 0; }
 
+/* ---------- de outro "De Opzegtermijn" (js/outro.js) ----------
+   Eén integer-opgeschaald pixel-canvas, gecentreerd met letterbox; de
+   ruis-overlay (body::after) blijft er bewust overheen liggen als CRT-korrel. */
+#scherm-outro { top: 0; background: #0b0a07; justify-content: center; }
+#outro-canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  touch-action: none;
+  max-width: 100%; max-height: 100%;
+}
+#outro-skip { position: absolute; top: calc(8px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); z-index: 5; opacity: .75; }
+
 .scherm-titel {
   font-size: 2.6rem;
   color: var(--ember-fel);
@@ -3084,6 +3096,7 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
 /* buiten de run heeft de fakkel niets te vertellen */
 body[data-scherm="titel"] #licht-vignet,
 body[data-scherm="held"] #licht-vignet,
+body[data-scherm="outro"] #licht-vignet,
 body[data-scherm="einde"] #licht-vignet { opacity: 0 !important; }
 #scherm-gevecht.d3-actief #vista-canvas { display: block; }
 #scherm-gevecht > #beurt-label,

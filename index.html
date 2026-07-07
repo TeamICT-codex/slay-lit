@@ -50,6 +50,7 @@
       <button class="knop-groot" onclick="startNieuw()">⚔️ Nieuw avontuur</button>
       <button class="knop-groot" id="knop-doorgaan" onclick="doorgaan()" style="display:none">🗺️ Doorgaan</button>
       <button class="knop-stil" id="knop-daily" onclick="startDaily()">🗓️ Dagelijkse afdaling</button>
+      <button class="knop-stil" onclick="location.href='proloog/'">📜 Proloog</button>
       <button class="knop-stil" onclick="toonHelp()">Hoe speel ik?</button>
       <button class="knop-stil" onclick="toonCodex()"><span data-icoon="codex">📖</span> Codex</button>
       <button class="knop-stil" onclick="toonBestiarium()">📕 Bestiarium</button>
@@ -104,6 +105,12 @@
   <div class="scherm" id="scherm-event"></div>
   <div class="scherm" id="scherm-schat"></div>
   <div class="scherm" id="scherm-einde"></div>
+
+  <!-- de outro "De Opzegtermijn": pixel-sloop op een eigen canvas (js/outro.js) -->
+  <div class="scherm" id="scherm-outro">
+    <canvas id="outro-canvas" width="320" height="180"></canvas>
+    <button id="outro-skip" class="knop-stil" onclick="Outro.slaOver()" style="display:none">⏭ Overslaan</button>
+  </div>
 
   <!-- de codex: verzamelboek over alle runs heen -->
   <div class="overlay" id="overlay-codex">
@@ -201,6 +208,7 @@
   <script src="js/audio.js"></script>
   <script src="js/scene3d.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/outro.js"></script>
   <script src="js/game.js"></script>
 </body>
 </html>

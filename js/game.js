@@ -168,7 +168,7 @@ const Codex = Object.assign(
   /* loopbaan over alle runs heen: runs/wins/diepterecord per held, laatste runs,
      en het hoogst-ontgrendelde ascensieniveau per held. Bestaande saves missen
      deze sleutels → Object.assign houdt dan deze defaults aan (migratie). */
-  { relikwieen: [], dranken: [], metgezellen: [], gevallen: [], opgeladen: null, runs: 0, wins: 0, bestDiepte: {}, gesch: [], ascensie: {}, mysteries: {}, scherven: [], gezien: [], erfprinsOntmoetingen: 0, copycatGebroken: false },
+  { relikwieen: [], dranken: [], metgezellen: [], gevallen: [], opgeladen: null, runs: 0, wins: 0, bestDiepte: {}, gesch: [], ascensie: {}, mysteries: {}, scherven: [], gezien: [], erfprinsOntmoetingen: 0, copycatGebroken: false, outroGezien: false },
   veiligLees(CODEX_SLEUTEL)
 );
 /* relikwieen/dranken hard naar array klemmen VÓÓR de filter-migratie hieronder: een
@@ -206,6 +206,7 @@ Codex.dropsOfferRun = Math.max(0, +Codex.dropsOfferRun || 0);    /* ijkpunt Drop
 /* het Metgezel-Mysterie: per-metgezel voortgang (scherven/rijp/voltooid) + baas-teller */
 if (typeof Codex.mysteries !== 'object' || !Codex.mysteries || Array.isArray(Codex.mysteries)) Codex.mysteries = {};
 Codex.erfprinsOntmoetingen = Math.max(0, +Codex.erfprinsOntmoetingen || 0);
+Codex.outroGezien = !!Codex.outroGezien;   /* de outro ("De Opzegtermijn") speelt één keer, bij de eerste clear */
 function bewaarCodex() { try { localStorage.setItem(CODEX_SLEUTEL, JSON.stringify(Codex)); } catch (e) { /* opslag optioneel (quota/privé-modus) — nooit de scherf-/codex-flow laten crashen */ } }
 
 /* artbook: onthoud welke vijanden je écht hebt ontmoet (cross-run, persistent) — gate voor het
@@ -1580,7 +1581,7 @@ const SCHERM_MUZIEK = {
 function toonScherm(naam) {
   $$('.scherm').forEach(el => el.classList.remove('actief'));
   $('#scherm-' + naam).classList.add('actief');
-  $('#topbalk').style.display = (naam === 'titel') ? 'none' : 'flex';
+  $('#topbalk').style.display = (naam === 'titel' || naam === 'outro') ? 'none' : 'flex';
   document.body.dataset.scherm = naam;   /* o.a. voor het fakkel-vignet */
   zetLichtVisueel();
   evalueerDraaiBlok();                    /* combat=liggend, encounters=staand */
@@ -2017,7 +2018,7 @@ function evalueerDraaiBlok() {
   let richting = null;
   let liggReden = null;   /* WAAROM liggend gevraagd wordt → de juiste prompt-tekst (gevecht vs kaarten) */
   if (window.mobiel) {
-    if (scherm === 'gevecht' && !liggend) { richting = 'liggend'; liggReden = 'gevecht'; }   /* het gevecht zelf */
+    if ((scherm === 'gevecht' || scherm === 'outro') && !liggend) { richting = 'liggend'; liggReden = scherm === 'outro' ? 'outro' : 'gevecht'; }   /* het gevecht zelf + de outro-sloop */
     else if (eventLiggend && !liggend) { richting = 'liggend'; liggReden = 'kaarten'; }     /* de smid: het smeden speelt liggend */
     else if (_DRAAI_STAAND_SCHERMEN.includes(scherm) && !eventLiggend && liggend) richting = 'staand'; /* events/schat/altaren willen staand */
   }
@@ -2030,7 +2031,9 @@ function evalueerDraaiBlok() {
   const h2 = el.querySelector('h2'), p = el.querySelector('p'), knop = el.querySelector('button');
   if (h2) h2.textContent = 'Draai je toestel';
   if (p) p.textContent = naarLiggend
-    ? (liggReden === 'gevecht'
+    ? (liggReden === 'outro'
+        ? 'Dit slotstuk speel je liggend — zo zie je het hele gebouw.'
+        : liggReden === 'gevecht'
         ? 'Gevechten speel je liggend — zo zie je het slagveld en je kaarten groot en duidelijk.'
         : 'Dit scherm speel je liggend — zo zie je je kaarten groot en duidelijk.')
     : 'Dit scherm speelt prettiger rechtop — zo zie je alles in één blik.';
@@ -2916,6 +2919,10 @@ function toonCodex() {
     (gesch.length ? `<div class="codex-runs">` + gesch.map(g =>
       `<div class="codex-run ${g.gewonnen ? 'gewonnen' : ''}"><span>${g.gewonnen ? '👑' : '💀'} ${HELDNAAM(g.held)}</span><small>rij ${g.diepte}${g.asc ? ` · A${g.asc}` : ''} · ${g.seed}</small></div>`
     ).join('') + `</div>` : '') : '';
+  /* de outro: eenmaal gezien → voor altijd herbeleefbaar vanuit de Codex */
+  const outroBlok = (Codex.outroGezien && window.Outro) ? `
+    <h3 class="codex-kop">🕹️ De Opzegtermijn</h3>
+    <p class="codex-loopbaan">Het exitgesprek, 25 jaar te laat. <button class="knop-stil" onclick="herbeleefOutro()">🕹️ Outro herbeleven</button></p>` : '';
   $('#codex-inhoud').innerHTML = loopbaanBlok + `
     <h3 class="codex-kop">🏺 Relikwieën <small>${relOntdekt} / ${rels.length}</small></h3>
     <div class="codex-rooster">` +
@@ -2950,12 +2957,20 @@ function toonCodex() {
       const mgart = wit ? 'drops_wit' : (gevallen ? id + '_geest' : id);
       const tip = wit ? ' · 🤍 keerde terug uit het zwart' : (gevallen ? ' · ✝ offerde zich op' : '');
       return `<div class="codex-slot rel-${d.zeld} ${gevallen && !wit ? 'gevallen' : ''}" data-mgart="${mgart}" data-tip="${d.naam}${tip} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${wit ? '🤍' : d.icoon}${gevallen && !wit ? '<span class="codex-kruis">✝</span>' : ''}</div>`;
-    }).join('') + `</div>` + scherfCodexBlok() + `
+    }).join('') + `</div>` + outroBlok + scherfCodexBlok() + `
     <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt + mgOntdekt === rels.length + dranks.length + mgs.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
     <small>🗝️ = opgeladen: dit relikwie kun je bij een nieuwe run éénmalig meenemen uit het Schrijn.</small></p>`;
   verfraaiItemArt($('#overlay-codex'));   /* incl. het Codex-titelicoon (data-icoon) */
   $('#overlay-codex').classList.add('open');
   Klank.sfx('klik');
+}
+
+/* de outro herbeleven vanuit de Codex — draait ook zonder lopende run
+   (js/outro.js leest S defensief; de gezien-vlag staat al) */
+function herbeleefOutro() {
+  if (!window.Outro || Outro.actief) return;
+  $('#overlay-codex').classList.remove('open');
+  Outro.start(() => naarTitel());
 }
 
 /* ============================================================
@@ -4278,6 +4293,20 @@ async function gevechtGewonnen() {
     S.gevecht = null;
     if (huidigeAct() < ACTS_MAX) {
       volgendeAct(verslagenBaas);   /* nog een act → episch verder afdalen */
+    } else if (window.Outro && Outro.magSpelen()) {
+      /* eerste clear → de outro "De Opzegtermijn" (js/outro.js) speelt vóór het
+         eindscherm. Loopbaan/daily/scherven EERST registreren: een reload
+         middenin de outro mag de win nooit kosten (toonEinde blijft daarna
+         idempotent via de S.runGeregistreerd-guard; de uitslag reist mee voor
+         het diepterecord-lintje). */
+      wisSave();
+      if (!S.runGeregistreerd) {
+        S._uitslagVooraf = registreerRun(true);
+        if (S.daily) { const du = registreerDaily(true); S.dailyNieuweTop = du.nieuweTop; }
+        bankGedragen();
+        S.runGeregistreerd = true;
+      }
+      Outro.start(() => toonEinde(true, verslagenBaas));
     } else {
       wisSave();
       toonEinde(true, verslagenBaas);   /* laatste act verslagen → echte overwinning (toon de juiste baasnaam) */
@@ -5456,8 +5485,9 @@ function toonEinde(gewonnen, verslagenBaas) {
   Klank.muziek('stil');
   const st = S.stats;
   const held = huidigeHeld();
-  /* loopbaan bijwerken — exact één keer per run (guard op S) */
-  let uitslag = { nieuwRecord: false, beste: 0 };
+  /* loopbaan bijwerken — exact één keer per run (guard op S). Speelde de outro
+     eerst, dan is er al geregistreerd en reist de uitslag mee via S._uitslagVooraf. */
+  let uitslag = S._uitslagVooraf || { nieuwRecord: false, beste: 0 };
   if (!S.runGeregistreerd) {
     uitslag = registreerRun(gewonnen);
     if (S.daily) { const du = registreerDaily(gewonnen); S.dailyNieuweTop = du.nieuweTop; wisSave(); }
@@ -5563,7 +5593,17 @@ function naarTitel() {
   }
 }
 
-function startNieuw() { toonHeldKeuze(); }
+function startNieuw() {
+  /* de eerste keer gaat de proloog vóór de afdaling (PROLOOG.md: firstRun);
+     wie hem al speelde (of bewust oversloeg) daalt meteen af */
+  try {
+    if (!localStorage.getItem('slayit_proloog') && !localStorage.getItem('slayit_proloog_over')) {
+      location.href = 'proloog/';
+      return;
+    }
+  } catch (e) {}
+  toonHeldKeuze();
+}
 
 /* ---------- de Dagelijkse afdaling: vaste dag-seed, held van de dag, Schrijn UIT,
    score telt mee. Eén scorende poging per dag. ---------- */
@@ -6421,6 +6461,9 @@ document.addEventListener('contextmenu', e => {
   window.addEventListener('keydown', function (e) {
     if (window.mobiel) return;                    /* toetsbesturing is voor de laptop */
     if (e.ctrlKey || e.metaKey || e.altKey) return;   /* laat sneltoetsen (o.a. Ctrl+Shift+M) met rust */
+    /* de outro (js/outro.js) heeft een eigen keydown/keyup-state-machine — de
+       menu-router en de Enter/Spatie-repeat-onderdrukking blijven erbuiten */
+    if (document.body.dataset.scherm === 'outro') return;
     /* vastgehouden Enter/Spatie mag niet door menu's/dialogen heen ratelen
        (pijltjes mogen wél herhalen — fijn om door een lange rij te bladeren) */
     if (e.repeat && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); return; }
