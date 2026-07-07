@@ -1095,8 +1095,232 @@ grauwe grijs-echo van jouw klap + opflakkerende bleke kopieën.
 
 
 ##################################################################
-#################### ACT 3 — HET SLACHTBLOK ######################
+########## HIT-POSES — GEWONE VIJANDEN ACT 1 + 2 #################
 ##################################################################
+(18 poses, toegevoegd 7 juli 2026. De game speelt <id>_hit bij ELKE klap
+— pose2D(doel,'hit') — met terugval op de basis; dit is dus zichtbare
+combat-polish voor álle gewone vijanden. Elites/bazen hebben hun hit al.
+Werkwijze: hang telkens de BASIS-afbeelding als referentie aan, sla op
+onder EXACT de bestandsnaam boven het blok, drop in assets/karakters/.
+⚠ Afwijkende achtergronden: schaduw_hit = EFFEN ZWART (luma-key);
+de_deadline_hit + pekziel_hit = FLAT WHITE of magenta (donkere figuren,
+zwart-op-zwart is onuitsnijdbaar — de deadline-attack-les).)
+
+=================== groene_slijm_hit.png ===================
+Use the attached reference image (groene_slijm.png): the EXACT same glossy emerald-green SLIME blob
+with its gaping maw, same painterly hand-painted dark-fantasy style (NOT photorealistic, no photo, no
+3D render), same warm torchlight rim-lighting (deep purples, charcoal, ember orange), same slight side
+angle clearly FACING LEFT, same full-body framing with clear margin all sides, isolated on a fully
+transparent background. Change ONLY the pose.
+Pose (HIT — recoil): the blob is SQUASHED sideways by an unseen blow — a deep dent in its flank, one
+fat glob of green slime knocked clean off and hanging CLOSE to the body, shock-ripples rolling across
+the glossy surface, the gaping maw wobbling slack. Compact silhouette, nothing scattering to the edges.
+Accent: de deuk + de losgeslagen slijmklodder + schokgolf-rimpels over het glanzende groen.
+
+=================== blauwe_slijm_hit.png ===================
+Use the attached reference image (blauwe_slijm.png): the EXACT same glossy cobalt-BLUE slime blob,
+same painterly hand-painted dark-fantasy style (NOT photorealistic, no photo, no 3D render), same warm
+torchlight rim-lighting, same slight side angle clearly FACING LEFT, same full-body framing with clear
+margin, isolated on a fully transparent background. Change ONLY the pose.
+Pose (HIT — recoil): a deep crater punched into the cobalt body, a tight splash-crown of blue droplets
+rising close to the silhouette and already falling back in, waves rippling through the gel, the maw
+knocked slack sideways. Compact, contained, nothing scattering to the edges.
+Accent: de inslag-krater + de strakke splash-kroon van blauwe druppels + rollende gel-golven.
+
+=================== grotrat_hit.png ===================
+Use the attached reference image (grotrat.png): the EXACT same giant hunched CAVE-RAT — same mangy
+fur, same naked tail and yellowed teeth, same painterly hand-painted dark-fantasy style (NOT
+photorealistic, no photo, no 3D render), same warm torchlight rim-lighting, same slight side angle
+clearly FACING LEFT, same full-body framing with clear margin, isolated on a fully transparent
+background. Change ONLY the pose.
+Pose (HIT — recoil): flinching back onto its haunches from a blow, head whipped aside in a pained
+squeal, mangy fur bristling in a ridge along its spine, one paw clutched to the struck flank, the
+naked tail curling tight around its body. Compact silhouette, nothing scattering.
+Accent: de opgezette vacht-kam + de pijnlijke grijns met gele tanden + de strak krullende staart.
+
+=================== kultist_hit.png ===================
+Use the attached reference image (kultist.png): the EXACT same hooded CULTIST — same deep-purple
+ritual robes, same ritual dagger, same painterly hand-painted dark-fantasy style (NOT photorealistic,
+no photo, no 3D render), same warm torchlight rim-lighting, same slight side angle clearly FACING
+LEFT, same full-body head-to-feet framing (feet visible, clear margin below), isolated on a fully
+transparent background. Change ONLY the pose.
+Pose (HIT — recoil): staggering back from a blow, the hood thrown half off a gaunt shocked face, the
+ritual dagger flung up in a hasty defensive cross, robes swirling TIGHT around the body, one knee
+buckling. Compact, closed silhouette; nothing trailing to the edges.
+Accent: de half afgeworpen kap + het defensieve dolk-kruis + strak wervelende paarse gewaden.
+
+=================== paddenstoelman_hit.png ===================
+Use the attached reference image (paddenstoelman.png): the EXACT same MUSHROOM-MAN — same great
+spotted cap, same spongy pale body, same painterly hand-painted dark-fantasy style (NOT
+photorealistic, no photo, no 3D render), same warm torchlight rim-lighting, same slight side angle
+clearly FACING LEFT, same full-body framing with clear margin, isolated on a fully transparent
+background. Change ONLY the pose.
+Pose (HIT — recoil): the great cap SNAPS back from the impact like a struck bell, a single tight puff
+of pale spores bursting up CLOSE against the cap's rim, the spongy body dented and rebounding, stubby
+arms flailing for balance. Spores stay in one compact puff hugging the cap — nothing drifting to the
+edges.
+Accent: de teruggeklapte hoed + de ene strakke sporenwolk tegen de hoedrand + het deukende sponslijf.
+
+=================== bandiet_hit.png ===================
+Use the attached reference image (bandiet.png): the EXACT same scarred dungeon BANDIT — same leathers
+and daggers, same painterly hand-painted dark-fantasy style (NOT photorealistic, no photo, no 3D
+render), same warm torchlight rim-lighting, same slight side angle clearly FACING LEFT, same full-body
+head-to-feet framing (feet visible, clear margin below), isolated on a fully transparent background.
+Change ONLY the pose.
+Pose (HIT — recoil): reeling back from a punch, head snapped aside, one hand clutching his jaw, the
+other dagger-hand windmilling for balance, one dagger slipping from his grip and hanging just below
+his open hand (kept tight to the body), a snarl of pain. Compact silhouette, nothing scattering.
+Accent: de omklapte kop + de grijpende hand aan de kaak + de vallende dolk vlak onder de losse greep.
+
+=================== steengolem_hit.png ===================
+Use the attached reference image (steengolem.png): the EXACT same hulking STONE GOLEM — same cracked
+boulder-body, same glowing seams, same painterly hand-painted dark-fantasy style (NOT photorealistic,
+no photo, no 3D render), same warm torchlight rim-lighting, same slight side angle clearly FACING
+LEFT, same full-body framing with clear margin, isolated on a fully transparent background. Change
+ONLY the pose.
+Pose (HIT — recoil): rocked back a half-step by the blow, stone CHIPS and a few fist-sized shards
+knocked off the struck shoulder and hanging CLOSE to the body, the cracks across its chest flaring
+brighter ember-orange for the instant, head guard-lowered. Heavy, grounded recoil — shards stay tight
+to the silhouette, nothing flying to the edges.
+Accent: de afgeslagen steenschilfers dicht op het lijf + fel opgloeiende ember-naden.
+
+=================== schaduw_hit.png   (⚠ op EFFEN ZWARTE achtergrond — luma-key, zoals de andere schaduw-poses) ===================
+Use the attached reference image (schaduw.png): the EXACT same translucent SHADOW-WRAITH of drifting
+dark smoke with its faint glowing eyes, same painterly hand-painted dark-fantasy style (NOT
+photorealistic, no photo, no 3D render), same slight side angle clearly FACING LEFT, same full-body
+framing with clear margin, rendered on a SOLID PURE-BLACK background (the wraith is translucent — the
+cutter keys it from brightness). Change ONLY the pose.
+Pose (HIT — recoil): the smoky body is TORN half open at the chest by the blow — wisps rippling
+violently outward then curling back, the form bending backward as if blown by wind, the glowing eyes
+flickering thin, the shape already re-knitting itself. Keep the smoke gathered in ONE readable figure,
+not dissolving to the edges.
+Accent: de opengereten rook-borst + heftig rimpelende slierten + dunne flikkerende ogen.
+
+=================== pekziel_hit.png   (⚠ op FLAT WHITE of magenta — pikzwart teer op zwart is onuitsnijdbaar) ===================
+Use the attached reference image (pekziel.png): the EXACT same dripping TAR-creature — same glistening
+pitch-black pitch, same smouldering inner embers, same painterly hand-painted dark-fantasy style (NOT
+photorealistic, no photo, no 3D render), same warm torchlight rim-lighting, same slight side angle
+clearly FACING LEFT, same full-body framing with clear margin. Render on a FLAT WHITE (or
+pure-magenta #FF00FF) background — NOT black: the figure itself is near-black. Change ONLY the pose.
+Pose (HIT — recoil): a crater SPLASHED into its tar chest, thick black pitch spraying up in a tight
+crown that is already oozing back down into the body, the whole form sagging sideways off-balance,
+the inner embers flaring through the wound. Compact, contained — the tar-crown hugs the silhouette,
+nothing splattering to the edges.
+Accent: de teer-krater + de strakke pek-kroon die terugvloeit + opflakkerende embers in de wond.
+
+=================== echo_hit.png   (doorschijnend → effen zwarte achtergrond toegestaan, zoals de andere echo-poses) ===================
+Use the attached reference image (echo.png): the EXACT same ghostly figure made of three-or-four
+stacked translucent AFTER-IMAGE layers with faint violet-white glowing edges, same painterly
+hand-painted dark-fantasy style (NOT photorealistic, no photo, no 3D render), same cold blue-grey
+"system light" + THIN warm ember rim-light on the left edge, same slight side angle clearly FACING
+LEFT, same full-body framing with clear margin, isolated on a fully transparent background (solid
+black is acceptable if the generator refuses transparency). Change ONLY the pose.
+Pose (HIT — recoil): the stacked after-image layers are knocked OUT OF SYNC by the blow — fanning
+apart like dropped playing cards, one outer layer flung wider and going faint, the "real" middle
+flickering, all layers bending back from the impact. Keep every layer inside the frame margin.
+Accent: de uiteengeslagen na-beeld-lagen + één wegvagende buitenlaag + violet-witte flikkerranden.
+
+=================== doorslag_hit.png ===================
+Use the attached reference image (doorslag.png): the EXACT same flat PAPERY carbon-copy humanoid —
+one half crisp ink, the other half a smudged faded duplicate, same torn duplicate-sheet edges, same
+painterly hand-painted dark-fantasy style (NOT photorealistic, no photo, no 3D render), same cold
+blue-grey "system light" + THIN warm ember rim-light on the left edge, same slight side angle clearly
+FACING LEFT, same full-body head-to-feet framing, isolated on a fully transparent background. Change
+ONLY the pose.
+Pose (HIT — recoil): the papery body CRUMPLES at the point of impact like struck paper — a deep
+concertina-fold across the chest, a fresh tear starting at one frayed edge, the smudged carbon-half
+smearing further out of register with the inked half, arms thrown back flat. Compact, contained.
+Accent: de kreukvouw dwars over de borst + de beginnende scheur + de verder verschuivende carbon-helft.
+
+=================== naaper_hit.png ===================
+Use the attached reference image (naaper.png): the EXACT same scrawny IMP with its one oversized
+STOLEN GOLDEN muscular arm, same painterly hand-painted dark-fantasy style (NOT photorealistic, no
+photo, no 3D render), same cold blue-grey "system light" + THIN warm ember rim-light on the left edge,
+same slight side angle clearly FACING LEFT, same full-body framing with clear margin, isolated on a
+fully transparent background. Change ONLY the pose.
+Pose (HIT — recoil): knocked back off one foot, the stolen golden muscle-arm FLICKERING and half
+DEFLATING for the instant (the borrowed strength failing), the scrawny true body cowering behind it,
+free arm shielding its face. The gold dims visibly toward grey at the edges. Compact silhouette.
+Accent: de flakkerende, half leeglopende gouden spier-arm + het krimpende schriele lijf erachter.
+
+=================== inktklerk_hit.png ===================
+Use the attached reference image (inktklerk.png): the EXACT same robed CLERK of flowing black INK,
+same painterly hand-painted dark-fantasy style (NOT photorealistic, no photo, no 3D render), same
+cold blue-grey "system light" + THIN warm ember rim-light on the left edge, same slight side angle
+clearly FACING LEFT, same full-body framing with clear margin, isolated on a fully transparent
+background. Change ONLY the pose.
+Pose (HIT — recoil): the ink-body SLOSHES from the blow — the robed form rippling like struck liquid,
+the face running and distorting mid-cry, a few fat ink-droplets thrown up CLOSE to the silhouette and
+falling back in, the clutched ledger/quill pressed protectively to the chest. Compact, contained.
+Accent: het klotsende inktlijf + het uitlopende gezicht + dikke druppels strak tegen het silhouet.
+
+=================== stempelaar_hit.png ===================
+Use the attached reference image (stempelaar.png): the EXACT same bureaucrat with the heavy brass
+STAMP-ARM, same painterly hand-painted dark-fantasy style (NOT photorealistic, no photo, no 3D
+render), same cold blue-grey "system light" + THIN warm ember rim-light on the left edge, same slight
+side angle clearly FACING LEFT, same full-body head-to-feet framing, isolated on a fully transparent
+background. Change ONLY the pose.
+Pose (HIT — recoil): knocked off-balance mid-stamp — the heavy brass stamp-arm flailing high over his
+head, a fan of forms clutched to his chest with the free hand, eyes boggling over crooked spectacles,
+one foot lifted as he tips backward. A couple of loose papers hang tight to the body. Compact.
+Accent: de hoog maaiende messing stempelarm + de geklemde formulieren-waaier + de scheve bril.
+
+=================== dossierwurm_hit.png ===================
+Use the attached reference image (dossierwurm.png): the EXACT same long SEGMENTED archive-WORM built
+from stacked bone-yellow dossier-sheets bound with red string and wax seals, same blunt eyeless
+document-head, same painterly hand-painted dark-fantasy style (NOT photorealistic, no photo, no 3D
+render), same cold blue-grey "system light" + THIN warm ember rim-light on the left edge, same slight
+side angle clearly FACING LEFT, same full-body framing with clear margin, isolated on a fully
+transparent background. Change ONLY the pose.
+Pose (HIT — recoil): the segments CONCERTINA — compressed hard at the point of impact, the worm's
+front half rearing back and recoiling, a handful of dossier-sheets bursting loose from the struck
+segment and hanging CLOSE to the flank, red string snapping taut. Compact; the loose sheets stay
+tight to the body, nothing flying to the edges.
+Accent: de ingedrukte harmonicasegmenten + losgeslagen dossiervellen dicht op de flank + knappend
+rood touw.
+
+=================== de_deadline_hit.png   (⚠ op FLAT WHITE of magenta — NIET op zwart: bijna-zwart figuur, de attack-les) ===================
+Use the attached reference image (de_deadline.png): the EXACT same tall dark clockwork REAPER — same
+black tattered iron robe, same cracked CLOCK-FACE head with the glowing red numerals inside the iron
+cowl, same hourglass-and-gears torso, same wicked claws and thin clock-hand blade, same painterly
+hand-painted dark-fantasy style (NOT photorealistic, no photo, no 3D render), same slight side angle
+clearly FACING LEFT, same FULL-BODY framing (clear margin below). Render on a FLAT WHITE (or
+pure-magenta #FF00FF) background — NOT black: the figure itself is nearly black. Change ONLY the pose.
+Pose (HIT — recoil): staggered back by the blow — the cracked clock-face flaring a furious RED, one
+or two glass splinters breaking from the dial and hanging close to the cowl, the black sand inside
+the hourglass-torso JOLTED sideways against the glass, claws thrown wide for balance, tattered robe
+snapping back. Compact, contained; nothing scattering to the edges.
+Accent: de fel-rood opvlammende gebarsten wijzerplaat + het opzij klotsende zwarte zand in de
+zandloper + glassplinters strak bij de kap.
+
+=================== de_inktvlek_hit.png ===================
+Use the attached reference image (de_inktvlek.png): the EXACT same low crawling INK-BLOT ooze of
+glistening black-and-sickly-green ink with half-dissolved signatures floating in its body, same
+painterly hand-painted dark-fantasy style (NOT photorealistic, no photo, no 3D render), same cold
+blue-grey "system light" + THIN warm ember rim-light, same slight side angle clearly FACING LEFT,
+same contained-blot framing with clear margin, isolated on a fully transparent background. Change
+ONLY the pose.
+Pose (HIT — recoil): the blot is SPLASHED half apart by the blow — a bite-shaped chunk of ink blown
+out of its reaching limb and already re-pooling back toward the body, the drowned signatures
+scattering and swirling INSIDE the ink, a tight ring of dark droplets around the impact. Everything
+stays gathered near the body — one readable splash, nothing spraying to the frame edges.
+Accent: de weggeslagen inkt-hap die terugvloeit + rondtollende handtekeningen ín de vlek + een
+strakke druppelring.
+
+=================== de_uitgewiste_hit.png ===================
+Use the attached reference image (de_uitgewiste.png): the EXACT same half-ERASED figure with its
+horizontal black REDACTION BARS, same faded photocopy-grey body, same painterly hand-painted
+dark-fantasy style (NOT photorealistic, no photo, no 3D render), same cold blue-grey "system light" +
+THIN warm ember rim-light on the left edge, same slight side angle clearly FACING LEFT, same
+full-body framing with clear margin, isolated on a fully transparent background. Change ONLY the pose.
+Pose (HIT — recoil): the blow knocks the REDACTION BARS out of line — bars flickering, slipping
+askew and stuttering like a jammed photocopy, the half-erased silhouette guttering fainter where it
+is struck (revealing NOTHING beneath, only blanker absence), the figure bending back with one
+smeared arm raised. Compact, closed silhouette; the bars stay on the body.
+Accent: de verschoven, flikkerende censuurbalken + het weg-gutterende halfgewiste lijf + de gesmeerde
+afweer-arm.
+
+
 Werkwijze IDENTIEK aan Act 1/2: hang bij ELKE generatie de BASIS-afbeelding
 van het wezen aan als referentie (de_omroeper.png, de_rechter.png, ...) — dat
 borgt design, materiaal, kleur en het gesmolten-rode Act 3-onderlicht. Genereer
