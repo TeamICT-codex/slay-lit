@@ -1032,6 +1032,29 @@ const Outro = (() => {
       ctx.fillStyle = 'rgba(90,84,70,0.25)';
       ctx.beginPath(); ctx.arc(150 + i * 30, HOOG - fase, 6 + i * 2, 0, 7); ctx.fill();
     }
+    /* DE VELEN springen mee: elke bevrijde collega daalt aan een eigen parachute.
+       Ze bloeien open zodra de held zijn chute trekt en zweven mee tot de dageraad. */
+    if (chute && collegas.length && valT < 11.6) {
+      const velen = Math.min(collegas.length, 14);
+      const CHUTE_KL = ['#5fd0d8', '#79c045', '#ffd23f', '#e0836a', '#a86fe0'];
+      const stap3 = 182 / velen;   /* gelijkmatig verdeeld over 18..200, links van de held */
+      for (let i = 0; i < velen; i++) {
+        const fase = i * 1.3;
+        const cx3 = 18 + (i + 0.5) * stap3 + Math.sin(valT * 1.4 + fase) * 5;
+        const cy3 = 50 + ((i * 3) % 5) * 15 + Math.sin(valT * 2 + fase) * 3;
+        const kl = CHUTE_KL[i % CHUTE_KL.length];
+        ctx.fillStyle = kl;
+        ctx.beginPath(); ctx.arc(cx3 + 3, cy3 - 13, 12, Math.PI, 0); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(cx3 - 9, cy3 - 13, 24, 1);
+        ctx.strokeStyle = 'rgba(207,192,160,0.65)'; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx3 - 8, cy3 - 12); ctx.lineTo(cx3 + 1, cy3 + 1);
+        ctx.moveTo(cx3 + 14, cy3 - 12); ctx.lineTo(cx3 + 5, cy3 + 1);
+        ctx.stroke();
+        tekenSprite(((valT * 3 + i) % 1) < 0.5 ? 'collega1' : 'collega2', cx3 - 1, cy3, false);
+      }
+    }
+
     /* de held: eerst tuimelend, dan rustig onder het valscherm */
     const hx2 = 210 + Math.sin(valT * 1.6) * (chute ? 8 : 2);
     const hy2 = chute ? 74 + Math.sin(valT * 2.2) * 3 : 40 + valT * 30;
@@ -1388,7 +1411,7 @@ const Outro = (() => {
       x: lvl.spelerStart.x, y: lvl.spelerStart.y, vx: 0, vy: 0,
       b: 7, h: 14, richting: 1, opGrond: false,
       coyote: 0, sprongBuf: 0, loopT: 0,
-      zwaaiT: 0, zwaaiKlok: 0,
+      zwaaiT: 0, zwaaiKlok: 0, dubbelOp: true, dubbelT: 0,
       hartjes: 3, raakbaar: 0, wachtT: 0
     };
   }
@@ -1527,16 +1550,26 @@ const Outro = (() => {
       if (h.klimt && !opLadder) h.klimt = false;
       if (h.klimt) {
         h.vy = inp.omhoog ? -58 : omlaag ? 58 : 0;
-        h.coyote = COYOTE;
+        h.coyote = COYOTE; h.dubbelOp = true;
         if (h.sprongBuf > 0) { h.vy = -SPRONGKRACHT * 0.75; h.klimt = false; h.sprongBuf = 0; sfx('energie', 0.15); }
       } else {
         h.vy = Math.min(h.vy + ZWAARTEKRACHT * dt, 300);
-        if (h.opGrond) h.coyote = COYOTE; else h.coyote -= dt;
+        if (h.opGrond) { h.coyote = COYOTE; h.dubbelOp = true; } else h.coyote -= dt;
         if (h.sprongBuf > 0) {
           h.sprongBuf -= dt;
           if (h.coyote > 0) { h.vy = -SPRONGKRACHT; h.coyote = 0; h.sprongBuf = 0; sfx('energie', 0.15); }
+          else if (h.dubbelOp) {
+            /* DE DUBBELJUMP — een tweede sprong in de lucht, met een ring van vonken */
+            h.vy = -SPRONGKRACHT * 0.9; h.dubbelOp = false; h.sprongBuf = 0;
+            spawnSchok(h.x + h.b / 2, h.y + h.h, 9);
+            spawnVonk(h.x + h.b / 2, h.y + h.h - 1, '#ffd23f', 8);
+            spawnVonk(h.x + h.b / 2, h.y + h.h - 1, '#ffffff', 4);
+            h.dubbelT = 0.22;   /* korte spin-flair in de render */
+            sfx('energie', 0.12);
+          }
         }
       }
+      if (h.dubbelT > 0) h.dubbelT -= dt;
       const wilLopen = inp.links || inp.rechts;
       beweeg(h, dt);
       /* een bureau van één tegel hoog mag de vaart niet breken: auto-hupje
@@ -2207,7 +2240,15 @@ const Outro = (() => {
     const h = held;
     if (h.wachtT <= 0 && (h.raakbaar <= 0 || (tijd * 12 | 0) % 2)) {
       const fr = !h.opGrond ? 'held_spring' : (Math.abs(h.vx) > 1 ? ((h.loopT % 1) < 0.5 ? 'held_loop1' : 'held_loop2') : 'held_sta');
-      tekenSprite(fr + '@' + maskers[maskerIdx], h.x + ox - 1, h.y + oy, h.richting < 0);
+      const naam = fr + '@' + maskers[maskerIdx];
+      if (h.dubbelT > 0 && gebakken[naam]) {
+        /* de dubbeljump: een snelle salto rond het middelpunt */
+        const spr = gebakken[naam], cx = Math.round(h.x + h.b / 2 + ox), cy = Math.round(h.y + h.h / 2 + oy);
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(h.richting * (1 - h.dubbelT / 0.22) * Math.PI * 2);
+        ctx.imageSmoothingEnabled = false; ctx.drawImage(spr, -spr.width / 2 - 1, -spr.height / 2); ctx.restore();
+      } else {
+        tekenSprite(naam, h.x + ox - 1, h.y + oy, h.richting < 0);
+      }
       /* de bijl-zwaai: één wit sloop-boogje vóór de held */
       if (h.zwaaiT > 0) {
         ctx.fillStyle = '#ffffff';
@@ -2843,8 +2884,16 @@ const Outro = (() => {
     if (window.Klank && Klank.zetChipLagen) { try { Klank.muziek('outro'); Klank.zetChipLagen(hal ? 0 : Math.min(3, lvlIdx + 1)); } catch (e) {} }
   }
   function _devHal() { _devNiveau(VERDIEPINGEN.length - 1); }
+  /* DEV: het valscherm testen met N bevrijde collega's aan de parachutes */
+  function _devVal(aantal) {
+    if (staat === 'uit') return;
+    const n = klem((aantal | 0) || 6, 0, 20);
+    collegas = [];
+    for (let i = 0; i < n; i++) collegas.push({ x: 0, y: 0, vx: 0, vy: 0, b: 7, h: 11, opGrond: false, loopT: 0 });
+    startVal();
+  }
 
-  return { start, beeindig, slaOver, magSpelen, _devHal, _devNiveau, get actief() { return staat !== 'uit'; } };
+  return { start, beeindig, slaOver, magSpelen, _devHal, _devNiveau, _devVal, get actief() { return staat !== 'uit'; } };
 })();
 window.Outro = Outro;
 
