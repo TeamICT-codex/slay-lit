@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v38'; /* v38: grote art-drop — de_deadline_attack HERSTELD (witte-spook-cut vervangen; op wit hergenereerd), nieuwe gif-reactieposes de_inktvlek_gif + spiegelwachter_gif, en de volledige Act 3-scèneset (16 kaarten + 10 relikwieën + 4 events + 6 achtergronden, slapend tot de Act 3-bouw; act3-blok in ACHTERGRONDEN klaargezet) */
+const CACHE = 'slayit-v39'; /* v39: de outro "De Opzegtermijn" (js/outro.js) + de proloog (proloog/index.html, standalone) in de shell, met firstRun-gate en titelknop — gerebased bovenop v38 (de grote Act 3-art-drop + herstelde deadline-attack) */
 const BESTANDEN = [
   '.',
   'css/style.css',
@@ -13,6 +13,7 @@ const BESTANDEN = [
   'js/scene3d.js',
   'js/data.js',
   'js/outro.js',
+  'proloog/index.html',
   'js/game.js',
   'assets/fonts/fonts.css',
   'assets/fonts/PirataOne-400-normal.woff2',

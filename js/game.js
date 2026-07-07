@@ -5593,7 +5593,17 @@ function naarTitel() {
   }
 }
 
-function startNieuw() { toonHeldKeuze(); }
+function startNieuw() {
+  /* de eerste keer gaat de proloog vóór de afdaling (PROLOOG.md: firstRun);
+     wie hem al speelde (of bewust oversloeg) daalt meteen af */
+  try {
+    if (!localStorage.getItem('slayit_proloog') && !localStorage.getItem('slayit_proloog_over')) {
+      location.href = 'proloog/';
+      return;
+    }
+  } catch (e) {}
+  toonHeldKeuze();
+}
 
 /* ---------- de Dagelijkse afdaling: vaste dag-seed, held van de dag, Schrijn UIT,
    score telt mee. Eén scorende poging per dag. ---------- */
