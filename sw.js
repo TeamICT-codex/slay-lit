@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v45'; /* v45: mobiele Erfprins-fixes (playtest) — de Geroofd-strook is op mobiel een compacte chip (namen in de tik-tooltip; laptop kapt met ellipsis) zodat de prins vrij in beeld staat, en de Roof-overlay knipt niet meer af (justify safe center + overflow-scroll + compactere kop/kaarten + safe-area op mobiel) */
+const CACHE = 'slayit-v46'; /* v46: HET SLACHTBLOK — je eigen kaart smeden (R3.6/Inscryption-knipoog): offer 2 kaarten (vernietigd voor de run) → smeedbudget → max 2 effectmodules + kost-keuze → ZELF de naam typen + icoon kiezen. Altaar vóór de Act 3-baas, doods-smeden op het nederlaagscherm (kaart wacht in de Codex, grafsteen-sectie, reist mee en vervangt een startkaart), daily's uit */
 const BESTANDEN = [
   '.',
   'css/style.css',

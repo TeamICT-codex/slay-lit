@@ -617,3 +617,11 @@ de BESTIARIUM-entries bestaan.
 `converteer_webp.py` → cache-bump. Achtergronden/kaarten/relikwieën/events = scènes,
 geen cut-out. Bestandsnamen mét spaties zijn oké voor achtergronden (bestaande
 conventie), vijanden/kaarten/relikwieën/events lowercase zonder spaties.
+
+### Extra slot (optioneel) — de smeedkamer van het Slachtblok
+
+```
+Achtergrondslachtblok-smeden.png   (liggend ~1920x1080 — overlay-doek voor het kaartsmeden; tot de drop draait de smeedkamer op een gradient)
+  Stylized painterly digital illustration for a dark fantasy card game, hand-painted concept art with expressive visible brushwork. NOT photorealistic, no photo, no 3D render.
+  A CLOSE, intimate view of the scarred oaken SLAUGHTER-BLOCK as a FORGE-ALTAR: the great block fills the lower third like a workbench, two empty card-shaped RECESSES carved side by side into the wood (where the offered cards will lie), old axe-grooves glowing faint molten red from within, a small soft AMBER candle-lantern at the edge (the hero's light), chains and a fallen executioner's axe pushed aside in the shadows. Dark basalt and storm-violet gloom behind — the centre-bottom stays calm and dark for UI. Palette: black basalt + molten ember-red UP-underlight + storm-violet + one soft amber flame. No text, no frame, no UI.
+```

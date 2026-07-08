@@ -1280,6 +1280,53 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   100% { filter: brightness(.3) saturate(.4); transform: translateY(-42px) scale(.4) rotate(10deg); opacity: 0; }
 }
 .roof-kaart.weg { opacity: 0; pointer-events: none; }
+/* ---------- HET SLACHTBLOK: de smeedkamer (hergebruikt het roof-overlay-doek) ---------- */
+.slachtblok-overlay { background: radial-gradient(ellipse at center bottom, rgba(70, 18, 8, .88), rgba(8, 4, 4, .97)); }
+.slachtblok-overlay .roof-kop { color: #ffd7c2; text-shadow: 0 2px 14px rgba(226, 84, 44, .85); }
+.slachtblok-overlay .roof-kaart { cursor: pointer; }
+.slachtblok-overlay .roof-kaart.gekozen { border-color: rgba(255, 120, 50, .95); box-shadow: 0 0 22px rgba(255, 100, 30, .9); }
+.sb-waarde { color: var(--goud); font-size: .6rem; }
+.sb-balk { display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.sb-modules { display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)); gap: 8px; max-width: min(92vw, 640px); }
+.sb-module {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 6px 10px; border-radius: 10px;
+  background: rgba(30, 16, 12, .8); border: 1px solid rgba(255, 140, 80, .3);
+  color: var(--perkament); font-size: .85rem;
+}
+.sb-module.actief { border-color: rgba(255, 150, 60, .85); box-shadow: 0 0 12px rgba(255, 120, 40, .35); }
+.sb-module.uit { opacity: .38; }
+.sb-stepper { display: flex; gap: 6px; align-items: center; }
+.sb-stepper b { min-width: 26px; text-align: center; color: #ffcf9e; }
+.sb-stepper button {
+  width: 26px; height: 26px; border-radius: 7px; border: 1px solid rgba(255, 150, 80, .5);
+  background: rgba(60, 26, 14, .9); color: #ffd7b0; font-size: 1rem; line-height: 1; cursor: pointer;
+}
+.sb-onder { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; justify-content: center; max-width: min(92vw, 640px); }
+.sb-kost, .sb-iconen { display: flex; gap: 5px; align-items: center; color: var(--perkament-dof); font-size: .85rem; flex-wrap: wrap; }
+.sb-kost button, .sb-iconen button {
+  min-width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(255, 150, 80, .4);
+  background: rgba(40, 20, 12, .9); color: #ffd7b0; cursor: pointer; font-size: .95rem;
+}
+.sb-kost button.aan, .sb-iconen button.aan { border-color: var(--goud); box-shadow: 0 0 10px rgba(245, 197, 66, .55); }
+#sb-naam {
+  padding: 8px 12px; border-radius: 9px; min-width: 200px;
+  background: rgba(20, 10, 8, .92); border: 1px solid rgba(255, 160, 90, .5);
+  color: var(--perkament); font-family: 'Alegreya', serif; font-size: 1rem;
+}
+.sb-doodsknop { border-color: #c8385a; }
+/* de Codex-grafstenen */
+.codex-slachtblok { display: flex; gap: 10px; flex-wrap: wrap; }
+.sb-grafsteen {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 9px 13px; border-radius: 10px 10px 3px 3px;
+  background: linear-gradient(180deg, rgba(52, 40, 46, .85), rgba(24, 18, 22, .95));
+  border: 1px solid rgba(170, 150, 160, .4); border-bottom-width: 3px;
+  color: var(--perkament); font-size: .9rem; max-width: 320px;
+}
+.sb-grafsteen small { color: var(--perkament-dof); font-size: .72rem; }
+.sb-grafsteen.gebrandmerkt { border-color: var(--goud); box-shadow: 0 0 14px rgba(245, 197, 66, .3); }
+
 .vieze-vinger {
   position: fixed; z-index: 702; pointer-events: none; font-size: clamp(2rem, 5vw, 3rem);
   transform: translate(-50%, -120%) rotate(8deg); opacity: 0;

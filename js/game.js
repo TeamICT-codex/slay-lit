@@ -335,6 +335,15 @@ function registreerRun(gewonnen) {
   const diepte = (S && S.verdieping) || 0;
   Codex.runs = (Codex.runs || 0) + 1;
   if (gewonnen) Codex.wins = (Codex.wins || 0) + 1;
+  /* HET SLACHTBLOK: win je mét een op het altaar gesmede kaart, dan wordt die
+     GEBRANDMERKT in de Codex (één slot per held — de diepte onthoudt één naam) */
+  if (gewonnen && S && S.gesmeed) {
+    const runKaart = (S.dek || []).find(c => S.gesmeed[c.id]);
+    if (runKaart) {
+      Codex.slachtblok = Codex.slachtblok || {};
+      Codex.slachtblok[h] = Object.assign({}, S.gesmeed[runKaart.id], { gebrandmerkt: true });
+    }
+  }
   Codex.bestDiepte = Codex.bestDiepte || {};
   const nieuwRecord = diepte > (Codex.bestDiepte[h] || 0);
   if (nieuwRecord) Codex.bestDiepte[h] = diepte;
@@ -505,6 +514,18 @@ function nieuwSpel(heldId, seedTekst, ascensie, daily) {
     scherven: []           /* GEDRAGEN scherven deze run (inzet — kwijt bij dood; geplaatst bij de Drempel) */
   };
   held.dek.forEach(id => S.dek.push(nieuweKaart(id)));
+
+  /* HET SLACHTBLOK: de gesmede kaart uit de Codex reist mee — ze VERVANGT een
+     startkaart (het basisdek groeit nooit). Niet op een daily (eerlijk veld). */
+  if (!daily && Codex.slachtblok && Codex.slachtblok[heldId]) {
+    const spec = Codex.slachtblok[heldId];
+    const gid = 'gesmeed_codex_' + heldId;
+    registreerGesmeed(gid, spec);
+    const idx = S.dek.findIndex(c => kdef(c).type !== 'vloek');   /* de eerste basiskaart sneuvelt */
+    if (idx >= 0) S.dek.splice(idx, 1);
+    S.dek.push(nieuweKaart(gid));
+    melding(`🪓 Uit de Codex: „${spec.naam}" reist mee — gesmeed op het Slachtblok.`);
+  }
 
   /* het Schrijn: gekozen relikwieën gaan mee en verbruiken hun lading */
   const meegenomen = schrijnKeuzes.filter(r => Codex.opgeladen.includes(r));
@@ -1642,6 +1663,10 @@ function laadSpel() {
        RELIKWIEEN[r]/DRANKEN[d] zonder fallback, een stale id zou de run bricken. */
     S.relikwieen = S.relikwieen.filter(r => RELIKWIEEN[r]);
     S.dranken = S.dranken.filter(d => DRANKEN[d]);
+    /* GESMEDE kaarten (het Slachtblok) éérst herregistreren — hun dynamische
+       defs bestaan niet in de statische KAARTEN, dus zonder dit gooit de
+       sanering hieronder ze weg */
+    laadGesmedeKaarten();
     /* idem het DEK: kdef(c).naam derefereert KAARTEN[c.id] zonder vangnet — één
        hernoemd/verwijderd kaart-id in een oude save brickt anders elke hand-render.
        Volledig leeggefilterd dek = onspeelbaar → structureel falen (nette melding). */
@@ -1998,7 +2023,18 @@ function kiesNodeEcht(id) {
         if (S.gevecht) S.gevecht.epischScherf = true;   /* bij winst valt een episch-scherf (zie gevechtGewonnen) */
         break;
       }
-      case 'baas': startGevecht([huidigeBaas().id], 'baas', n.r); break;
+      case 'baas': {
+        /* HET SLACHTBLOK: één vast smeed-moment vóór de Act 3-finale — de
+           laatste keuze voor de troonzaal (niet in daily's; éénmalig per run) */
+        if (huidigeAct() >= 3 && !S.slachtblokGedaan && !S.daily) {
+          S.slachtblokGedaan = true;
+          saveSpel();
+          toonSlachtblok('altaar', () => startGevecht([huidigeBaas().id], 'baas', n.r));
+          break;
+        }
+        startGevecht([huidigeBaas().id], 'baas', n.r);
+        break;
+      }
       case 'rust': toonRust(); break;
       case 'winkel': toonWinkel(); break;
       case 'schat': toonSchat(); break;
@@ -3027,6 +3063,16 @@ function toonCodex() {
   const outroBlok = (Codex.outroGezien && window.Outro) ? `
     <h3 class="codex-kop">🕹️ De Opzegtermijn</h3>
     <p class="codex-loopbaan">Het exitgesprek, 25 jaar te laat. <button class="knop-stil" onclick="herbeleefOutro()">🕹️ Outro herbeleven</button></p>` : '';
+  /* HET SLACHTBLOK: de gesmede kaart per held — grafsteen van de offers */
+  const sbEntries = Object.entries(Codex.slachtblok || {});
+  const slachtblokBlok = sbEntries.length ? `
+    <h3 class="codex-kop">🪓 Het Slachtblok</h3>
+    <div class="codex-slachtblok">${sbEntries.map(([h, sp2]) => `
+      <div class="sb-grafsteen ${sp2.gebrandmerkt ? 'gebrandmerkt' : ''}">
+        <b>${sp2.icoon} ${sp2.naam}${sp2.gebrandmerkt ? ' ✦' : ''}</b>
+        <small>${HELDNAAM(h)} · gesmeed uit ${(sp2.offers || []).join(' en ')} · ${sp2.datum || ''}</small>
+        <small class="sbg-regel">${sp2.gebrandmerkt ? 'Gebrandmerkt — de diepte onthoudt deze naam.' : 'Wacht op de volgende afdaling.'}</small>
+      </div>`).join('')}</div>` : '';
   $('#codex-inhoud').innerHTML = loopbaanBlok + `
     <h3 class="codex-kop">🏺 Relikwieën <small>${relOntdekt} / ${rels.length}</small></h3>
     <div class="codex-rooster">` +
@@ -3061,7 +3107,7 @@ function toonCodex() {
       const mgart = wit ? 'drops_wit' : (gevallen ? id + '_geest' : id);
       const tip = wit ? ' · 🤍 keerde terug uit het zwart' : (gevallen ? ' · ✝ offerde zich op' : '');
       return `<div class="codex-slot rel-${d.zeld} ${gevallen && !wit ? 'gevallen' : ''}" data-mgart="${mgart}" data-tip="${d.naam}${tip} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${wit ? '🤍' : d.icoon}${gevallen && !wit ? '<span class="codex-kruis">✝</span>' : ''}</div>`;
-    }).join('') + `</div>` + outroBlok + scherfCodexBlok() + `
+    }).join('') + `</div>` + slachtblokBlok + outroBlok + scherfCodexBlok() + `
     <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt + mgOntdekt === rels.length + dranks.length + mgs.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
     <small>🗝️ = opgeladen: dit relikwie kun je bij een nieuwe run éénmalig meenemen uit het Schrijn.</small></p>`;
   verfraaiItemArt($('#overlay-codex'));   /* incl. het Codex-titelicoon (data-icoon) */
@@ -4558,7 +4604,7 @@ function nederlaag() {
 function heldPool() {
   return Object.keys(KAARTEN).filter(id => {
     const k = KAARTEN[id];
-    return !['basis', 'vloek'].includes(k.zeld) && (!k.held || k.held === S.held) && (!k.act || k.act <= huidigeAct());
+    return !['basis', 'vloek', 'gesmeed'].includes(k.zeld) && (!k.held || k.held === S.held) && (!k.act || k.act <= huidigeAct());
   });
 }
 
@@ -5434,6 +5480,211 @@ function eventKlaar(tekst) {
    zodat testen geen volledige Act 1-run kost. Zoek 'DEV-SHORTCUT' om alles
    (deze functie + de onclick op .tb-logo in index.html) in één keer te wissen.
    ============================================================ */
+/* ============================================================
+   HET SLACHTBLOK — je eigen kaart smeden (R3.6, de Inscryption-knipoog).
+   Offer 2 kaarten uit je dek — VERNIETIGD voor de rest van de run — en
+   smeed uit hun waarde één kaart met een ZELFGEKOZEN NAAM. Twee momenten:
+   het altaar vóór de Act 3-baas (kaart speelt meteen mee) en de dood in
+   de diepte (de kaart wacht in de Codex, één slot per held). Daily's: uit.
+   ============================================================ */
+const SMEED_MODULES = {
+  schade:    { naam: 'Schade',      icoon: '⚔️', perPunt: 4, doel: true },
+  gif:       { naam: 'Gif',         icoon: '☣️', perPunt: 2, doel: true },
+  zwak:      { naam: 'Zwak',        icoon: '💫', perPunt: 1, doel: true },
+  kwetsbaar: { naam: 'Kwetsbaar',   icoon: '🟥', perPunt: 1, doel: true },
+  blok:      { naam: 'Blok',        icoon: '🛡️', perPunt: 4 },
+  doornen:   { naam: 'Doornen',     icoon: '🌵', perPunt: 2 },
+  trek:      { naam: 'Trek kaarten', icoon: '🃏', perPunt: 1 },
+  genees:    { naam: 'Genees',      icoon: '💚', perPunt: 3 },
+  licht:     { naam: 'Licht',       icoon: '🔥', perPunt: 8 }
+};
+const SMEED_ICONEN = ['🗡️', '🪓', '🔥', '☠️', '🌑', '⚡', '🐺', '🌹', '🦴', '👁️', '🕯️', '🖤'];
+function offerWaarde(c) {
+  const zp = { gewoon: 1, ongewoon: 2, zeldzaam: 4, episch: 4 }[kdef(c).zeld] || 1;
+  return zp + (c.up ? 1 : 0);
+}
+function gesmeedTekst(spec) {
+  const delen = spec.modules.map(m => {
+    const d = SMEED_MODULES[m.m], n = m.p * d.perPunt;
+    if (m.m === 'schade') return `Doe <b>${n}</b> schade`;
+    if (m.m === 'gif') return `Geef <b>${n}</b> Gif`;
+    if (m.m === 'zwak') return `Geef Zwak <b>${n}</b>`;
+    if (m.m === 'kwetsbaar') return `Geef Kwetsbaar <b>${n}</b>`;
+    if (m.m === 'blok') return `Krijg <b>${n}</b> Blok`;
+    if (m.m === 'doornen') return `Krijg Doornen <b>${n}</b>`;
+    if (m.m === 'trek') return `Trek <b>${n}</b> kaart${n > 1 ? 'en' : ''}`;
+    if (m.m === 'genees') return `Genees <b>${n}</b> HP`;
+    if (m.m === 'licht') return `+<b>${n}</b> licht`;
+    return '';
+  });
+  return delen.join('. ') + '.';
+}
+/* registreer de dynamische kaart-def — ook nodig bij het LADEN van een save
+   (de dek-sanering in laadSpel gooit onbekende ids anders weg) */
+function registreerGesmeed(id, spec) {
+  KAARTEN[id] = {
+    naam: spec.naam, zeld: 'gesmeed', gesmeed: true,
+    kost: spec.kost, icoon: spec.icoon,
+    type: spec.modules.some(m => SMEED_MODULES[m.m].doel) ? 'aanval' : 'vaardigheid',
+    tekst: () => gesmeedTekst(spec),
+    flavor: `Gesmeed op het Slachtblok, uit ${spec.offers.join(' en ')}.`,
+    speel: (c, doel) => {
+      spec.modules.forEach(m => {
+        const n = m.p * SMEED_MODULES[m.m].perPunt;
+        if (m.m === 'schade') aanvalOp(doel, n);
+        else if (m.m === 'gif') { if (doel && !doel.dood) geefGif(doel, n); }
+        else if (m.m === 'zwak') { if (doel && !doel.dood) geefStatus(doel, 'zwak', n); }
+        else if (m.m === 'kwetsbaar') { if (doel && !doel.dood) geefStatus(doel, 'kwetsbaar', n); }
+        else if (m.m === 'blok') geefBlok(sp(), n);
+        else if (m.m === 'doornen') geefStatus(sp(), 'doornen', n);
+        else if (m.m === 'trek') trekKaarten(n);
+        else if (m.m === 'genees') geneesHp(n);
+        else if (m.m === 'licht') zetFakkel(n);
+      });
+    }
+  };
+}
+function laadGesmedeKaarten() {
+  Object.entries((S && S.gesmeed) || {}).forEach(([id, spec]) => registreerGesmeed(id, spec));
+  Object.entries(Codex.slachtblok || {}).forEach(([held, spec]) => registreerGesmeed('gesmeed_codex_' + held, spec));
+}
+
+/* de smeedkamer-overlay. modus: 'altaar' (kaart meteen in het dek) of
+   'dood' (kaart wacht in de Codex). naSluit = vervolg (bv. het baasgevecht). */
+let _smeed = null;
+function toonSlachtblok(modus, naSluit) {
+  _smeed = { modus, naSluit, offers: [], punten: {}, kost: 1, icoon: SMEED_ICONEN[0], stap: 1 };
+  let ov = document.getElementById('overlay-slachtblok');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'overlay-slachtblok';
+    ov.className = 'roof-overlay slachtblok-overlay';
+    document.body.appendChild(ov);
+  }
+  renderSlachtblok();
+  requestAnimationFrame(() => ov.classList.add('open'));
+  Klank.sfx('zwareklap');
+}
+function smeedBudget() { return _smeed.offers.reduce((t, c) => t + offerWaarde(c), 0) + (_smeed.kost === 2 ? 2 : 0) - (_smeed.kost === 0 ? 2 : 0); }
+function smeedBesteed() { return Object.values(_smeed.punten).reduce((t, p) => t + p, 0); }
+function renderSlachtblok() {
+  const ov = document.getElementById('overlay-slachtblok');
+  const s = _smeed;
+  if (!ov || !s) return;
+  if (s.stap === 1) {
+    /* stap 1: kies 2 offers uit je dek (vernietigd!) */
+    ov.innerHTML = `
+      <div class="roof-kop">🪓 HET SLACHTBLOK<small>${s.modus === 'dood' ? '„De diepte biedt een laatste ruil." Offer twee kaarten uit je gevallen dek.' : 'Leg twee kaarten op het blok. Ze worden VERNIETIGD — voor de rest van de run.'}</small></div>
+      <div class="roof-waaier">${S.dek.map(c => `
+        <div class="roof-kaart sb-kaart ${s.offers.includes(c) ? 'gekozen' : ''}" data-uid="${c.uid}">
+          <div class="rk-art">${kval(c, 'icoon') || '🃏'}</div>
+          <div class="rk-naam">${knaam(c)}</div>
+          <small class="sb-waarde">${offerWaarde(c)} pt</small>
+        </div>`).join('')}</div>
+      <div class="sb-balk">
+        <button class="knop-stil" onclick="sluitSlachtblok(false)">Loop voorbij</button>
+        <button class="knop-groot" ${s.offers.length === 2 ? '' : 'disabled'} onclick="_smeed.stap = 2; renderSlachtblok()">🪓 Offer (${s.offers.length}/2)</button>
+      </div>`;
+    ov.querySelectorAll('.sb-kaart').forEach(el => el.onclick = () => {
+      const c = S.dek.find(k => k.uid === +el.dataset.uid);
+      if (!c) return;
+      if (s.offers.includes(c)) s.offers = s.offers.filter(x => x !== c);
+      else if (s.offers.length < 2) s.offers.push(c);
+      Klank.sfx('klik');
+      renderSlachtblok();
+    });
+  } else {
+    /* stap 2: verdeel het budget, kies kost + icoon, typ de naam */
+    const budget = smeedBudget(), over = budget - smeedBesteed();
+    ov.innerHTML = `
+      <div class="roof-kop">🪓 SMEED JE KAART<small>Offerwaarde: <b>${budget}</b> punten — nog <b>${over}</b> te besteden. Max 2 effecten.</small></div>
+      <div class="sb-modules">${Object.entries(SMEED_MODULES).map(([mid, d]) => {
+        const p = s.punten[mid] || 0;
+        const actieveModules = Object.keys(s.punten).filter(k => s.punten[k] > 0);
+        const slotVol = actieveModules.length >= 2 && !p;
+        return `<div class="sb-module ${p ? 'actief' : ''} ${slotVol ? 'uit' : ''}">
+          <span>${d.icoon} ${d.naam}</span>
+          <span class="sb-stepper">
+            <button ${p ? '' : 'disabled'} onclick="smeedPunt('${mid}', -1)">−</button>
+            <b>${p ? p * d.perPunt : '·'}</b>
+            <button ${(over > 0 && !slotVol) ? '' : 'disabled'} onclick="smeedPunt('${mid}', 1)">+</button>
+          </span>
+        </div>`;
+      }).join('')}</div>
+      <div class="sb-onder">
+        <label class="sb-kost">Kost: ${[0, 1, 2].map(k => `<button class="${s.kost === k ? 'aan' : ''}" onclick="_smeed.kost=${k}; renderSlachtblok()" data-tip="${k === 0 ? '0 energie kost 2 punten' : k === 2 ? '2 energie geeft 2 punten extra' : 'standaard'}">${k}⚡</button>`).join('')}</label>
+        <label class="sb-iconen">${SMEED_ICONEN.map(i => `<button class="${s.icoon === i ? 'aan' : ''}" onclick="_smeed.icoon='${i}'; renderSlachtblok()">${i}</button>`).join('')}</label>
+        <input id="sb-naam" maxlength="20" placeholder="Naam je kaart…" value="${s.naam || ''}" autocomplete="off">
+      </div>
+      <div class="sb-balk">
+        <button class="knop-stil" onclick="_smeed.stap = 1; _smeed.punten = {}; renderSlachtblok()">◂ Andere offers</button>
+        <button class="knop-groot" id="sb-smeed" ${smeedBesteed() > 0 ? '' : 'disabled'} onclick="smeedKaart()">🔥 SMEED</button>
+      </div>`;
+    const inp = ov.querySelector('#sb-naam');
+    inp.oninput = () => { s.naam = inp.value; };
+  }
+}
+function smeedPunt(mid, d) {
+  const s = _smeed;
+  if (!s || !SMEED_MODULES[mid]) return;
+  /* harde grenzen (de knoppen zijn al gedisabled, maar vertrouw ze niet):
+     nooit boven het budget, nooit meer dan 2 actieve modules */
+  if (d > 0) {
+    if (smeedBesteed() >= smeedBudget()) return;
+    const actief = Object.keys(s.punten).filter(k => s.punten[k] > 0);
+    if (actief.length >= 2 && !s.punten[mid]) return;
+  }
+  s.punten[mid] = Math.max(0, (s.punten[mid] || 0) + d);
+  if (!s.punten[mid]) delete s.punten[mid];
+  Klank.sfx('klik');
+  renderSlachtblok();
+}
+function smeedKaart() {
+  const s = _smeed;
+  if (!s || smeedBesteed() === 0 || smeedBesteed() > smeedBudget()) return;   /* nooit gratis of boven budget smeden */
+  const naam = (s.naam || '').trim().replace(/[<>&"]/g, '') || 'De Naamloze';   /* naam belandt in innerHTML → strip markup-tekens */
+  const spec = {
+    naam, icoon: s.icoon, kost: s.kost,
+    modules: Object.entries(s.punten).filter(([, p]) => p > 0).map(([m, p]) => ({ m, p })),
+    offers: s.offers.map(knaam),
+    datum: new Date().toLocaleDateString('nl-BE')
+  };
+  /* de offers sterven — voorgoed deze run */
+  S.dek = S.dek.filter(c => !s.offers.includes(c));
+  schudScherm(); Klank.sfx('zwareklap'); setTimeout(() => Klank.sfx('schitter'), 400);
+  if (s.modus === 'dood') {
+    /* de kaart wacht in de Codex op je volgende run (één slot per held) */
+    Codex.slachtblok = Codex.slachtblok || {};
+    Codex.slachtblok[S.held] = spec;
+    bewaarCodex();
+    registreerGesmeed('gesmeed_codex_' + S.held, spec);
+    melding(`🪓 „${naam}" is gesmeed — de kaart wacht in de Codex op je volgende afdaling.`);
+  } else {
+    const id = 'gesmeed_run_' + (++S.uid);
+    S.gesmeed = S.gesmeed || {};
+    S.gesmeed[id] = spec;
+    registreerGesmeed(id, spec);
+    S.dek.push(nieuweKaart(id));
+    saveSpel();
+    toonKaartReveal(id, { kop: '🪓 GESMEED OP HET SLACHTBLOK', klank: 'schitter' });
+  }
+  sluitSlachtblok(true);
+}
+function sluitSlachtblok(gesmeed) {
+  const ov = document.getElementById('overlay-slachtblok');
+  const na = _smeed && _smeed.naSluit;
+  _smeed = null;
+  if (ov) { ov.classList.remove('open'); setTimeout(() => ov.remove(), 450); }
+  if (!gesmeed) Klank.sfx('klik');
+  if (na) setTimeout(na, gesmeed ? 900 : 250);
+}
+/* DEV: het Slachtblok direct testen — devSlachtblok() in de console */
+function devSlachtblok() {
+  if (!S) nieuwSpel('slachter');
+  if (S.dek.length < 8) { const pool = heldPool(); let v = 0; while (S.dek.length < 12 && v++ < 30) S.dek.push(nieuweKaart(kiesUit(pool))); }
+  toonSlachtblok('altaar', null);
+}
+
 function devSprongAct2() {
   if (!S) nieuwSpel('slachter');
   if (inGevecht()) stopGevechtLus();
@@ -5831,6 +6082,8 @@ function toonEinde(gewonnen, verslagenBaas) {
     <p class="einde-seed">Seed: ${S.seed} · ${held.naam}</p>
     <div class="einde-knoppen">
       ${S.daily ? '' : '<button class="knop-groot" onclick="startNieuw()">⚔️ Opnieuw afdalen</button>'}
+      ${(!gewonnen && huidigeAct() >= 3 && !S.daily && S.dek.length >= 3 && !S.doodsSmeedGedaan)
+        ? `<button class="knop-groot sb-doodsknop" onclick="S.doodsSmeedGedaan = true; toonSlachtblok('dood', null); this.remove()">🪓 De laatste ruil</button>` : ''}
       <button class="knop-stil" onclick="kopieerUitdaagcode()" data-tip="Deel deze seed — speel dezelfde run">📋 Uitdaagcode</button>
       <button class="knop-stil" onclick="naarTitel()">Naar het begin</button>
     </div>
