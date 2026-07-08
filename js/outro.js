@@ -457,6 +457,20 @@ const Outro = (() => {
     return tekstBreedte(str, schaal);
   }
   const tekstBreedte = (str, schaal) => String(str).length * 6 * (schaal || 1) - (schaal || 1);
+  /* woord-afbreking: tekst binnen maxBr px houden, over meerdere regels.
+     Geeft de y ná de laatste regel terug (zodat de aanroeper kan doorstapelen). */
+  function tekstWrap(cx, str, x, y, kleur, maxBr, regelH, schaal) {
+    const s = schaal || 1, rh = regelH || 9;
+    const woorden = String(str).split(' ');
+    let regel = '', ry = y;
+    for (const w of woorden) {
+      const test = regel ? regel + ' ' + w : w;
+      if (regel && tekstBreedte(test, s) > maxBr) { tekst(cx, regel, x, ry, kleur, s); regel = w; ry += rh; }
+      else regel = test;
+    }
+    if (regel) { tekst(cx, regel, x, ry, kleur, s); ry += rh; }
+    return ry;
+  }
 
   /* ============================================================
      LEVEL — V-1 HET ARCHIEF (testverdieping van het feel-prototype)
@@ -2042,7 +2056,7 @@ const Outro = (() => {
 
   /* de maskers: de twee losgelaten delen van jezelf zitten hier ook vast */
   const MASKER_NAAM = { slachter: 'DE SLACHTER', gifmagier: 'DE GIFMAGIER', thoverk: 'THOVERK' };
-  const MASKER_REGEL = { slachter: '"NU IS HET HUN BEURT."', gifmagier: '"WE PASSEN ONS AAN. ZOALS ALTIJD."', thoverk: '"IK HEB HET LICHT NOG."' };
+  const MASKER_REGEL = { slachter: '"NU IS HET HUN BEURT."', gifmagier: '"WE PASSEN ONS AAN. ZOALS ALTIJD."', thoverk: '"VUURTJE NODIG? FLAME!"' };
   function volgendMasker() { return Object.keys(HELD_TINT).find(m => maskers.indexOf(m) === -1) || null; }
   function misschienCelOpen(c, px, py, straal) {
     if (c.open) return;
@@ -2381,7 +2395,7 @@ const Outro = (() => {
       const KE = { koffie: 'SNELLER LOPEN. SNELLER SLAAN.', mail: 'JE ZWAAI VERSTUURT NU POST. CC: ALLES.', over: 'GROTERE EXPLOSIES. HET IS TOCH AL LAAT.', schok: 'ELKE ZWAAI SLAAT EEN SCHOKGOLF DOOR DE ZAAL.', bonus: 'SLOOP LAAT NU IETS TERUGVLOEIEN: HARTJES.' };
       tekst(ctx, 'KAART GEVONDEN', 96, 68, '#8a8168');
       tekst(ctx, KN[splash.kaart], 96, 80, '#ffd23f', 2);
-      tekst(ctx, KE[splash.kaart], 96, 100, '#efe9d6');
+      tekstWrap(ctx, KE[splash.kaart], 96, 98, '#efe9d6', 216, 9);   /* breekt netjes af binnen het vak */
     }
     /* de bro-splash: Broforce-stijl unlock-kaart, de wereld houdt de adem in */
     else if (splash) {
@@ -2490,11 +2504,21 @@ const Outro = (() => {
       ctx.globalAlpha = 1;
     }
     if (hudTekst) {
-      /* de verhaalbalk: vaste strook helemaal onderaan, uit de weg van het spel */
-      ctx.fillStyle = 'rgba(8,6,4,0.82)';
-      ctx.fillRect(0, HOOG - 12, BREED, 12);
-      ctx.fillStyle = 'rgba(255,179,71,0.5)'; ctx.fillRect(0, HOOG - 12, BREED, 1);
-      tekst(ctx, hudTekst, BREED / 2 - tekstBreedte(hudTekst) / 2, HOOG - 10, '#efe9d6');
+      /* de verhaalbalk: strook onderaan, breekt af naar max 2 regels zodat
+         een lange verhaalregel niet buiten beeld loopt */
+      const maxBr = BREED - 12;
+      const woorden = String(hudTekst).split(' ');
+      const regels = []; let r = '';
+      for (const w of woorden) {
+        const test = r ? r + ' ' + w : w;
+        if (r && tekstBreedte(test) > maxBr) { regels.push(r); r = w; } else r = test;
+      }
+      if (r) regels.push(r);
+      const n = Math.min(regels.length, 2);
+      const hoogte = 3 + n * 9, top = HOOG - hoogte;
+      ctx.fillStyle = 'rgba(8,6,4,0.82)'; ctx.fillRect(0, top, BREED, hoogte);
+      ctx.fillStyle = 'rgba(255,179,71,0.5)'; ctx.fillRect(0, top, BREED, 1);
+      for (let i = 0; i < n; i++) tekst(ctx, regels[i], BREED / 2 - tekstBreedte(regels[i]) / 2, top + 3 + i * 9, '#efe9d6');
     }
     /* virtuele knoppen op touch */
     if (window.mobiel) {
@@ -2599,7 +2623,7 @@ const Outro = (() => {
     tekst(ctx, 'B.A.A.S. V8.7 - CONFIGURATIE', 16, 16, A);
     tekst(ctx, 'LAATSTE WIJZIGING: 25 JAAR GELEDEN.', 16, 26, GRIJS);
     tekst(ctx, 'DOOR: U.', 16, 35, A);
-    tekst(ctx, 'DAARNA MISBRUIKT DOOR: SLIJMKONING, ERFPRINS, DICKTATOR.', 16, 45, '#d43d2a');
+    tekst(ctx, 'MISBRUIKT DOOR: SLIJMKONING, ERFPRINS, DICKTATOR', 16, 45, '#d43d2a');
     tekst(ctx, 'INSTELLING: ALLES STROOMT NAAR DE ENKELEN.', 16, 54, '#d43d2a');
     /* de toegangscode staat al voorgetypt — hij kent u beter dan uzelf */
     const seed = (typeof S !== 'undefined' && S && S.seed) ? String(S.seed).toUpperCase() : '0042';
@@ -2607,7 +2631,7 @@ const Outro = (() => {
     tekst(ctx, 'TOEGANGSCODE: ' + seed + cursor, 16, 66, WIT);
     if (configStap >= 1) {
       tekst(ctx, 'TOEGANG VERLEEND.', 16, 75, '#79c045');
-      tekst(ctx, (collegas.length ? 'TWEEDE HANDTEKENING: EEN BEVRIJDE COLLEGA' : 'TWEEDE HANDTEKENING: DE CONCIERGE') + ' - DE VELEN.', 16, 84, GRIJS);
+      tekst(ctx, (collegas.length ? 'TWEEDE HANDTEKENING: EEN COLLEGA' : 'TWEEDE HANDTEKENING: DE CONCIERGE') + ' - DE VELEN.', 16, 84, GRIJS);
       tekst(ctx, 'GETEKEND MET FAKKELKOOL. (UW PEN GAF GEEN INKT.)', 16, 93, WIT);
     }
     for (let i = 0; i < 5; i++) {
@@ -2619,7 +2643,7 @@ const Outro = (() => {
       else tekst(ctx, '[ ' + rij.oud + ' ]', vx, y, configStap === i + 1 ? WIT : GRIJS);
     }
     if (configStap >= 7) {
-      tekst(ctx, 'WEET U HET ZEKER? DEZE WIJZIGING IS NIET FACTUREERBAAR.', 16, 158, GRIJS);
+      tekst(ctx, 'WEET U HET ZEKER? DIT IS NIET FACTUREERBAAR.', 16, 158, GRIJS);
       if (((tijd * 2) | 0) % 2) tekst(ctx, '[ OPSLAAN EN OPNIEUW OPSTARTEN (0U06) ]', 16, 167, A);
     } else {
       const hint = window.mobiel ? 'TIK OM VERDER TE GAAN' : 'DRUK OP EEN TOETS';
