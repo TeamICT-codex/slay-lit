@@ -4152,8 +4152,12 @@ function copycatBalk(b) {
     return `<div class="bb-aegis bb-gebroken" data-tip="De kopieermachine is gebroken — trouw was niet te indexeren.">🎭 machine gebroken</div>`;
   }
   const arsenaal = (b.gestolen || []);
-  const lijst = arsenaal.length ? ` (${arsenaal.map(s => s.naam).join(', ')})` : '';
-  return `<div class="bb-aegis" data-tip="Geroofd arsenaal: kaarten die de Erfprins uit je dek griste. Aanvallen speelt hij opgewaardeerd terug en verbrandt ze dan; de rest stuurt hij uitgeput naar je trek. Overleef tot zijn stapel op is (fase ${b.fase || 1}).">🎭 Geroofd · ${arsenaal.length}${lijst}</div>`;
+  const namen = arsenaal.map(s => s.naam).join(', ');
+  /* mobiel: alleen het aantal (de volle lijst maakte een brede sliert dwars door
+     de prins — playtest); de namen verhuizen daar naar de tik-tooltip */
+  const inline = (!window.mobiel && arsenaal.length) ? ` (${namen})` : '';
+  const tipNamen = (window.mobiel && arsenaal.length) ? ` Nu in zijn greep: ${namen}.` : '';
+  return `<div class="bb-aegis" data-tip="Geroofd arsenaal: kaarten die de Erfprins uit je dek griste. Aanvallen speelt hij opgewaardeerd terug en verbrandt ze dan; de rest stuurt hij uitgeput naar je trek. Overleef tot zijn stapel op is (fase ${b.fase || 1}).${tipNamen}">🎭 Geroofd · ${arsenaal.length}${inline}</div>`;
 }
 
 function baasFaseMoment(titel, sub) {

@@ -164,6 +164,17 @@ body[data-modus="mobiel"] #baas-balk .bb-aegis {
   max-width: 44vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   font-size: .72rem; padding: 2px 8px;
 }
+/* DE ROOF-overlay op de krappe liggende hoogte: kop compacter, kaarten kleiner,
+   safe-area-padding — samen met justify-content:safe center (style.css) blijft
+   de titel altijd in beeld en scrollt de rest netjes (playtest: kapte raar af) */
+body[data-modus="mobiel"] .roof-overlay {
+  gap: 8px;
+  padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+}
+body[data-modus="mobiel"] .roof-kop { font-size: clamp(1.05rem, 3.4vw, 1.5rem); gap: 3px; }
+body[data-modus="mobiel"] .roof-kop small { font-size: clamp(.68rem, 1.9vw, .85rem); }
+body[data-modus="mobiel"] .roof-kaart { width: clamp(50px, 9vw, 72px); padding: 5px 4px; }
+body[data-modus="mobiel"] .roof-waaier { gap: 6px; }
 /* instellingen-paneel niet breder dan een smalle telefoon (min-width:340px lekte rechts eruit) */
 body[data-modus="mobiel"] .inst-paneel { min-width: 0; width: min(340px, 92vw); padding: 18px 16px; }
 

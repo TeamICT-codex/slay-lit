@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v44'; /* v44: ACT 3 IS LIVE (ACTS_MAX=3) — de DICKtator: HET DECREET (permanente kaartverwijdering, elke 3e beurt, fase 3 elke 2e), Karaktermoord schaalt op laster in je stapels, 3 fases met de jeugddroom-terugkeer uit de proloog, staatsieportret-intro, FINALE-achtergrond; outro speelt nu ná de DICKtator. Dev: Ctrl+Alt+klik = devDicktator */
+const CACHE = 'slayit-v45'; /* v45: mobiele Erfprins-fixes (playtest) — de Geroofd-strook is op mobiel een compacte chip (namen in de tik-tooltip; laptop kapt met ellipsis) zodat de prins vrij in beeld staat, en de Roof-overlay knipt niet meer af (justify safe center + overflow-scroll + compactere kop/kaarten + safe-area op mobiel) */
 const BESTANDEN = [
   '.',
   'css/style.css',

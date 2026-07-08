@@ -1127,6 +1127,8 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   color: #ffd873; font-size: .85rem; letter-spacing: .03em;
   text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
   animation: aegisGloei 2.2s ease-in-out infinite;
+  /* ook op laptop nooit een schermbrede sliert: kap de lijst netjes af (de tooltip heeft de rest) */
+  max-width: min(520px, 46vw); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom;
 }
 @keyframes aegisGloei {
   0%, 100% { box-shadow: 0 0 8px rgba(255, 200, 80, .35); }
@@ -1240,10 +1242,15 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 /* ============ DE ROOF — deck-opening cutscene (Roof-rework v2) ============ */
 .roof-overlay {
   position: fixed; inset: 0; z-index: 700;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(14px, 3.2vh, 32px);
+  display: flex; flex-direction: column; align-items: center; gap: clamp(14px, 3.2vh, 32px);
+  /* 'safe center': centreert normaal, maar wordt flex-start zodra de inhoud
+     hoger is dan het scherm — anders knipt de kop onbereikbaar af (playtest) */
+  justify-content: safe center;
   background: radial-gradient(ellipse at center, rgba(44, 10, 54, .84), rgba(6, 4, 10, .96));
   opacity: 0; transition: opacity .42s ease; padding: 4vh 3vw;
+  overflow-y: auto;
 }
+.roof-overlay > * { flex-shrink: 0; }   /* flex-center + overflow: zonder dit worden kop/rijen platgedrukt */
 .roof-overlay.open { opacity: 1; }
 .roof-overlay.sluit { opacity: 0; transition: opacity .6s ease; }
 .roof-kop {
