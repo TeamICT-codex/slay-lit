@@ -1029,7 +1029,7 @@ const Outro = (() => {
     staat = 'epiloog';
     const dots = (links, rechts) => {
       let s = links + ' ';
-      while (s.length + rechts.length + 1 < 24) s += '.';
+      while (s.length + rechts.length + 1 < 28) s += '.';   /* 28 past de langste regel (4 VERDIEPINGEN … AFGESCHREVEN) */
       return s + ' ' + rechts;
     };
     epi = {
@@ -2440,9 +2440,10 @@ const Outro = (() => {
       }
     }
 
-    /* de omgekeerde factuur ratelt uit de dot-matrix */
-    ctx.fillStyle = '#e8e0c8'; ctx.fillRect(8, 6, 168, 80);
-    ctx.fillStyle = '#c9bda0'; ctx.fillRect(8, 6, 168, 2);
+    /* de omgekeerde factuur ratelt uit de dot-matrix (180 breed: de langste
+       regel is 28 tekens à 6px vanaf x=12 → 180 dekt hem mét marge) */
+    ctx.fillStyle = '#e8e0c8'; ctx.fillRect(8, 6, 180, 80);
+    ctx.fillStyle = '#c9bda0'; ctx.fillRect(8, 6, 180, 2);
     let budget = Math.max(0, Math.floor((e.t - 1.2) * 26));
     if (e.spoed || e.klaar) budget = 9999;
     let ty = 14;

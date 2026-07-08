@@ -4312,6 +4312,17 @@ async function gevechtGewonnen() {
         bankGedragen();
         S.runGeregistreerd = true;
       }
+      /* pending-einde: herlaadt de speler middenin de outro (save is gewist!),
+         dan is de win geregistreerd maar het einde-scherm weg — bewaar de
+         essentie zodat de boot er alsnog een felicitatie van kan maken.
+         toonEinde ruimt de sleutel op bij het normale pad. */
+      try {
+        localStorage.setItem('slayit_einde_pending', JSON.stringify({
+          held: S.held, baas: (verslagenBaas && verslagenBaas.naam) || null,
+          seed: S.seed, daily: !!S.daily,
+          record: !!(S._uitslagVooraf && S._uitslagVooraf.nieuwRecord)
+        }));
+      } catch (e) {}
       /* eerst het scherf-/vloek-reveal-moment laten aflopen (auto-sluit na ±7s
          of een klik) — anders hangt die overlay over de startende outro én
          wordt het reveal-moment zelf platgewalst */
@@ -5505,6 +5516,8 @@ function toonActOvergang(verslagenBaas, reveal) {
 
 function toonEinde(gewonnen, verslagenBaas) {
   toonScherm('einde');
+  /* het normale pad haalt het einde-scherm → de pending-felicitatie mag weg */
+  try { localStorage.removeItem('slayit_einde_pending'); } catch (e) {}
   /* winst = de epische plaat, verlies = de nederlaag-plaat (per act) */
   schermAchtergrond('einde', gewonnen ? actBg('overwinning') : actBg('nederlaag'),
     gewonnen ? 0.45 : 0.5);
@@ -6613,5 +6626,23 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   naarTitel();
+  /* herlaadde de speler middenin de outro? De win is geregistreerd maar het
+     einde-scherm is nooit getoond — geef de felicitatie alsnog (compact). */
+  try {
+    const pending = JSON.parse(localStorage.getItem('slayit_einde_pending') || 'null');
+    if (pending) {
+      localStorage.removeItem('slayit_einde_pending');
+      /* eigen langlevende toast (8s): dit is het enige spoor van de win die de
+         reload opslokte — 2,6s standaard-melding is daarvoor te vluchtig */
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'toast';
+        el.textContent = `👑 Overwinning geboekt: ${HELDNAAM(pending.held)} versloeg ${pending.baas || 'de eindbaas'}${pending.record ? ' — nieuw diepterecord!' : ''} (seed ${pending.seed || '—'})`;
+        $('#meldingen').appendChild(el);
+        setTimeout(() => el.classList.add('weg'), 8000);
+        setTimeout(() => el.remove(), 8500);
+      }, 900);
+    }
+  } catch (e) {}
   if (window.mobiel) setTimeout(toonSchermNudge, 1200);
 });

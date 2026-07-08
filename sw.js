@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v40'; /* v40: grote post-merge-debugronde (20-agent-audit) — 12 outro/proloog/audio/SW-fixes (o.a. reveal-overlay-sequencing vóór de outro, draai-blok-pauze, blur-input-reset, stoet-spawn-klem, duister-lek uit de chiptune, proloog-cache onder 'proloog/', uitgestelde SW-reload) + Drops-extra's: kampvuur-geest (rust) en drops_wit_victory */
+const CACHE = 'slayit-v41'; /* v41: pending-einde (reload middenin de outro → felicitatie-toast bij de volgende boot i.p.v. een stil verdwenen einde-scherm) + factuur-payoff past nu op het papier (dots 28 + 180px breed). v40 was de grote post-merge-debugronde (20-agent-audit, 16 fixes) + Drops-extra's */
 const BESTANDEN = [
   '.',
   'css/style.css',
