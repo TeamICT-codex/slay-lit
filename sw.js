@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v41'; /* v41: pending-einde (reload middenin de outro → felicitatie-toast bij de volgende boot i.p.v. een stil verdwenen einde-scherm) + factuur-payoff past nu op het papier (dots 28 + 180px breed). v40 was de grote post-merge-debugronde (20-agent-audit, 16 fixes) + Drops-extra's */
+const CACHE = 'slayit-v42'; /* v42: het playtest-vierluik — 🜂 scherven-teller in de topbalk (klik = Codex), Dossier-event +45 goud/−6 Max HP, De Mal's PERS-moment (dreun + gloeiende matrijs-flits + banner), en een eigen violette intro-titelkaart voor EPISCHE gevechten (naam + typering + openingszin) */
 const BESTANDEN = [
   '.',
   'css/style.css',

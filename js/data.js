@@ -967,7 +967,17 @@ const VIJANDEN = {
       /* MAX 3 gietsels per gevecht — playtest: hij perste er te veel uit */
       if (beurt % 2 === 0 && !vol && (v.gietsels || 0) < 3) return { naam: 'Gieten', type: 'buff', doe: () => {
         v.gietsels = (v.gietsels || 0) + 1;
-        voegVijandToe('mal_gietsel'); melding(`🖨️ De Mal perst er een gietsel uit! (${v.gietsels}/3)`);
+        /* het PERS-moment mag gevoeld worden (playtest): dreun + gloeiende
+           matrijs-flits op De Mal zelf, dan pas kruipt het gietsel eruit */
+        if (typeof schudScherm === 'function') schudScherm();
+        if (typeof Klank !== 'undefined' && Klank.sfx) Klank.sfx('zwareklap');
+        const mel = (typeof actorEl === 'function') ? actorEl(v) : null;
+        if (mel) { mel.classList.remove('pers-moment'); void mel.offsetWidth; mel.classList.add('pers-moment'); setTimeout(() => mel.classList.remove('pers-moment'), 1300); }
+        if (typeof baasFaseMoment === 'function') baasFaseMoment('DE PERS SLAAT NEER', 'Gloeiend heet kruipt er wéér een kopie uit de matrijs...');
+        setTimeout(() => {
+          if (!S.gevecht || S.gevecht.voorbij || v.dood) return;
+          voegVijandToe('mal_gietsel'); melding(`🖨️ De Mal perst er een gietsel uit! (${v.gietsels}/3)`);
+        }, 650);
       } };
       return willekeurig() < 0.6 ? { naam: 'Persen', type: 'aanval', dmg: 13 }
         : { naam: 'Verharden', type: 'blok', blok: 10 };
@@ -1868,8 +1878,17 @@ const EVENTS = [
     tekst: 'Op een stenen lessenaar ligt een half-ingevuld dossier — jóuw naam staat er bovenaan, in een vreemde hand. De onderste helft is nog leeg.',
     opties: [
       {
-        label: 'Teken het af', detail: 'Krijg 25 goud. Maar wie tekent, bindt zich.',
-        doe: () => { S.goud += 25; if (willekeurig() < 0.5) { const v = geefLichtVloek(); return `Je zet je krabbel. 25 goud glijdt over de tafel... en een kille clausule kruipt je dek in: "${v}".`; } return 'Je zet je krabbel. 25 goud glijdt over de tafel. De inkt droogt verdacht snel.'; }
+        label: 'Teken het af', detail: 'Krijg 45 goud. Maar wie tekent, tekent een stuk van zichzelf weg (−6 Max HP).',
+        kan: () => S.maxHp > 20,
+        reden: () => 'Er is te weinig van je over om nog weg te tekenen.',
+        doe: () => {
+          /* playtest: meer goud, maar het verlies moet voelbaar zijn — MAX HP,
+             niet zomaar HP (zelfde patroon als de ascensie-aderlating) */
+          S.goud += 45;
+          S.maxHp = Math.max(1, S.maxHp - 6);
+          if (S.hp > S.maxHp) S.hp = S.maxHp;
+          return 'Je zet je krabbel. 45 goud glijdt over de tafel — en de clausule onderaan neemt een stuk van je mee. Voorgoed. (−6 Max HP)';
+        }
       },
       {
         label: 'Wis je naam uit', detail: 'Verlies 7 HP, maar je fakkel laait op (+20 licht).',

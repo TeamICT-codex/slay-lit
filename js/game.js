@@ -1663,6 +1663,18 @@ function renderTopbalk() {
   }
   $('#tb-goud').innerHTML = `🪙 ${S.goud}`;
   $('#tb-verdieping').innerHTML = `🏔️ ${S.verdieping}`;
+  /* mysterie-scherven in de basis-UI (playtest: "waar zijn mijn scherven?"):
+     gedragen = bij je (bankt bij Drempel/overwinning), stash = al veilig */
+  const tbS = $('#tb-scherven');
+  if (tbS) {
+    const ged = (typeof gedragen === 'function') ? gedragen().length : 0;
+    const veilig = (Codex.scherven || []).length;
+    if (ged || veilig) {
+      tbS.style.display = '';
+      tbS.innerHTML = `🜂 ${ged}${veilig ? `<small class="tbs-stash">+${veilig}</small>` : ''}`;
+      tbS.dataset.tip = `Mysterie-scherven: ${ged} bij je (banken bij de Drempel of een overwinning; gevonden scherven overleven ook een dood) · ${veilig} veilig in je stash. Klik voor de Codex.`;
+    } else tbS.style.display = 'none';
+  }
   /* alles wat je bezit is ontdekt — dekt elke verwervingsroute */
   S.relikwieen.forEach(r => ontdek('relikwieen', r));
   S.dranken.forEach(d => ontdek('dranken', d));
@@ -2055,11 +2067,42 @@ function speelTochStaand() {
    slagveld echt zichtbaar is; anders wacht 'ie tot de prompt weg is (draaien of
    "toch zo spelen"). Eén keer per gevecht via g.baasIntroGespeeld. */
 function misschienBaasIntro(g) {
-  if (!g || g.voorbij || g.baasIntroGespeeld || g.soort !== 'baas') return;
+  if (!g || g.voorbij || g.baasIntroGespeeld) return;
+  if (g.soort !== 'baas' && g.soort !== 'episch') return;
   const db = document.getElementById('draai-blok');
   if (db && db.classList.contains('toon')) return;
   g.baasIntroGespeeld = true;
-  toonBaasIntro(g);
+  if (g.soort === 'baas') toonBaasIntro(g); else toonEpischIntro(g);
+}
+
+/* de EPISCHE vijand krijgt zijn eigen onthulling (playtest: "de intro's voor de
+   epische monsters mogen cooler") — zelfde doek als de baas-intro, maar met de
+   violette episch-signatuur, de bestiarium-typering en zijn openingszin. */
+function toonEpischIntro(g) {
+  const b = g.vijanden[0];
+  if (!b || !VIJANDEN[b.id]) return;
+  const lore = (typeof BESTIARIUM !== 'undefined' && BESTIARIUM[b.id]) || {};
+  const zin = (UITSPRAKEN[b.id] && UITSPRAKEN[b.id].start && UITSPRAKEN[b.id].start[0]) || '';
+  const el = document.createElement('div');
+  el.id = 'baas-intro';
+  el.classList.add('episch-intro');
+  el.innerHTML = `<div class="baas-intro-binnen">
+    <small>✦ EPISCH GEVECHT ✦</small>
+    <h1>${b.naam}</h1>
+    <span>${lore.soort || VIJANDEN[b.id].titel || ''}</span>
+    ${zin ? `<em class="ei-quote">„${zin}"</em>` : ''}
+  </div>`;
+  $('#scherm-gevecht').appendChild(el);
+  /* het wezen doemt groot op, zoals de baas-onthulling */
+  const art = actorEl(b) && actorEl(b).querySelector('.vijand-art');
+  if (art) {
+    art.classList.remove('baas-onthuld'); void art.offsetWidth;
+    art.classList.add('baas-onthuld');
+    setTimeout(() => art.classList.remove('baas-onthuld'), 2800);
+  }
+  Klank.sfx('schitter');
+  setTimeout(() => { Klank.sfx('zwareklap'); schudScherm(); }, 600);
+  setTimeout(() => el.remove(), 3200);
 }
 
 let _draaiHertekenTimer = null;
@@ -2198,7 +2241,7 @@ function startGevecht(samenstelling, soort, rij) {
     /* DE ROOF gebeurt NIET meer hier — ze wordt nu cinematisch getriggerd door je eerste aanval
        (copycatNaSchade → speelKaart → copycatDeRoof), met een vangnet bovenin eindBeurt. */
   }
-  if (soort === 'baas') misschienBaasIntro(g);   /* enkel als het slagveld zichtbaar is (niet achter de draai-prompt) */
+  if (soort === 'baas' || soort === 'episch') misschienBaasIntro(g);   /* enkel als het slagveld zichtbaar is (niet achter de draai-prompt) */
 
   /* de metgezel handelt ook op de éérste beurt — even na de entree, zodat
      je 'm ziet binnenkomen voordat hij toeslaat/schildt/geneest */
