@@ -239,6 +239,8 @@ body[data-modus="mobiel"] .held-aura { width: 210px; height: 210px; top: -50px; 
 body[data-modus="mobiel"] .event-opties { width: 100%; max-width: 92vw; }
 body[data-modus="mobiel"] .rust-knop,
 body[data-modus="mobiel"] .event-knop { padding: 16px 18px; font-size: 1.15rem; }
+/* de kampvuur-geest van Drops: kleiner op de telefoon, iets uit de rand */
+body[data-modus="mobiel"] .kv-geest { width: 104px; height: 120px; right: -6px; }
 
 body[data-modus="mobiel"] .einde-stats { gap: 12px 20px; flex-wrap: wrap; justify-content: center; margin: 12px 0; }
 body[data-modus="mobiel"] .einde-stats b { font-size: 1.7rem; }

@@ -397,7 +397,9 @@ const Outro = (() => {
   /* tekst in het 3×5-font (alleen hoofdletters; onbekende tekens = spatie) */
   function tekst(cx, str, x, y, kleur, schaal) {
     schaal = schaal || 1;
-    str = String(str).toUpperCase();
+    /* gedachtestreepjes zitten niet in het 5x7-font — normaliseer, anders
+       vallen ze stil weg (verdiepingsnamen, seed-strings) */
+    str = String(str).replace(/[—–]/g, '-').toUpperCase();
     /* eerst de slagschaduw, dan de kleur: leesbaar op elke drukke achtergrond */
     for (const schaduw of [1, 0]) {
       cx.fillStyle = schaduw ? 'rgba(8,6,4,0.9)' : kleur;
@@ -847,7 +849,9 @@ const Outro = (() => {
     held.vx = held.vy = 0; held.hartjes = 3; held.raakbaar = 1; held.wachtT = 0;
     laadLevelEntiteiten();
     collegas = [];
-    for (let i = 0; i < stoet; i++) collegas.push({ x: held.x - 12 * (i + 1), y: held.y + 3, vx: 0, vy: 0, b: 7, h: 11, opGrond: false, loopT: 0 });
+    /* spawn-x klemmen: zonder klem belandt collega 2+ ín/achter de linker betonmuur
+       (tegels 0-1) en jaagt de AABB-snap hem het level uit tot de bijtrek-teleport */
+    for (let i = 0; i < stoet; i++) collegas.push({ x: Math.max(2 * TEGEL + 1, held.x - 12 * (i + 1)), y: held.y + 3, vx: 0, vy: 0, b: 7, h: 11, opGrond: false, loopT: 0 });
     camX = klem(held.x - BREED / 2, 0, lvl.kols * TEGEL - BREED);
   }
 
@@ -1361,9 +1365,10 @@ const Outro = (() => {
       return;
     }
     if (staat === 'wissel') { if (spelToets) e.preventDefault(); return; }
+    /* intro: ELKE toets spoelt door (zoals de hint belooft) — ook Enter e.d. */
+    if (staat === 'intro' && !e.repeat) { e.preventDefault(); introT = introT >= 10.2 ? 11.6 : 10.4; return; }
     if (spelToets) {
       e.preventDefault();
-      if (staat === 'intro' && !e.repeat) { introT = introT >= 10.2 ? 11.6 : 10.4; return; }   /* intro doorklikken (2e druk = meteen) */
       if (!e.repeat && (k === 'w' || k === 'arrowup' || k === ' ')) held && (held.sprongBuf = SPRONGBUFFER);
       if (!e.repeat && (k === 'j' || k === 'x')) vuurBuf = 0.1;
       if (!e.repeat && (k === 'k' || k === 'z')) worpBuf = 0.15;
@@ -1372,6 +1377,8 @@ const Outro = (() => {
     }
   }
   function opToetsOp(e) { toetsen.delete(e.key.toLowerCase()); }
+  /* focusverlies (alt-tab) mist keyups → alle gehouden input loslaten */
+  function opFocusWeg() { toetsen.clear(); aanraking = { stickId: null, stickX0: 0, dx: 0, knoppen: {} }; }
 
   function invoer() {
     const links = toetsen.has('arrowleft') || toetsen.has('a') || aanraking.dx < -6;
@@ -2478,6 +2485,10 @@ const Outro = (() => {
   let accu = 0;
   function outroTik(dt) {
     if (staat === 'uit' || document.hidden) return;
+    /* het mobiele draai-blok toont? dan pauzeren — anders tikt de eenmalige
+       intro (en zelfs de gameplay) onzichtbaar weg terwijl de speler draait */
+    const db = document.getElementById('draai-blok');
+    if (db && db.classList.contains('toon')) return;
     tijd += dt;
     if (staat === 'intro') { introT += dt; if (introT >= 11.6) startSpel(); render(); return; }
     if (staat === 'wissel') {
@@ -2515,7 +2526,8 @@ const Outro = (() => {
     if (schudT > 0) { schudT -= dt; if (schudT <= 0) schudKracht = 0; }
     accu = Math.min(accu + dt, 0.12);
     const stap = 1 / 60;
-    while (accu >= stap) { updateSpel(stap); accu -= stap; }
+    /* staat-check in de lus: startWissel/startConfig mag de rest van de accu niet meer opeten */
+    while (accu >= stap && staat === 'spel') { updateSpel(stap); accu -= stap; }
     render();
   }
 
@@ -2537,17 +2549,18 @@ const Outro = (() => {
     devModus = !!(opties && opties.dev);
     naOutro = typeof cb === 'function' ? cb : null;
 
-    /* de eerste-clear-vlag meteen vastleggen (mét bewaarCodex): een reload
-       middenin mag de outro niet in een herhaal-lus zetten; herbeleven kan
-       straks altijd via de Codex (fase 2) of devOutro(). */
+    const scherm = document.getElementById('scherm-outro');
+    schermCanvas = document.getElementById('outro-canvas');
+    if (!scherm || !schermCanvas) { if (naOutro) naOutro(); return; }
+
+    /* de eerste-clear-vlag PAS na de DOM-check vastleggen (mét bewaarCodex):
+       een gefaalde start mag de eenmalige auto-play niet verbruiken; een reload
+       middenin zet de outro niet in een herhaal-lus; herbeleven kan altijd
+       via de Codex of devOutro(). */
     if (!devModus && typeof Codex !== 'undefined' && Codex && !Codex.outroGezien) {
       Codex.outroGezien = true;
       if (typeof bewaarCodex === 'function') { try { bewaarCodex(); } catch (e) {} }
     }
-
-    const scherm = document.getElementById('scherm-outro');
-    schermCanvas = document.getElementById('outro-canvas');
-    if (!scherm || !schermCanvas) { if (naOutro) naOutro(); return; }
 
     canvas = document.createElement('canvas');
     canvas.width = BREED; canvas.height = HOOG;
@@ -2577,6 +2590,9 @@ const Outro = (() => {
     wisselT = 0; wisselGebouwd = false; configStap = 0; configT = 0; epi = null;
     camX = klem(held.x - BREED / 2, 0, lvl.kols * TEGEL - BREED); camY = lvl.rijen * TEGEL - HOOG;
     tijd = 0; introT = 0; hitstop = 0; accu = 0;
+    /* volledige presentatie-reset — anders speelt een HERbeleving vrijwel zonder
+       sfx (sfxKlok-throttles staan nog op de eind-tijd van de vorige run) */
+    sfxKlok = {}; splash = null; schermFlits = 0; schudT = 0; schudKracht = 0;
     toetsen.clear(); aanraking = { stickId: null, stickX0: 0, dx: 0, knoppen: {} };
 
     if (typeof toonScherm === 'function') toonScherm('outro');
@@ -2586,6 +2602,7 @@ const Outro = (() => {
 
     window.addEventListener('keydown', opToetsNeer);
     window.addEventListener('keyup', opToetsOp);
+    window.addEventListener('blur', opFocusWeg);   /* alt-tab: gemiste keyups → geen spook-input */
     schermCanvas.addEventListener('pointerdown', opPointerNeer);
     schermCanvas.addEventListener('pointermove', opPointerBeweeg);
     schermCanvas.addEventListener('pointerup', opPointerOp);
@@ -2613,6 +2630,7 @@ const Outro = (() => {
     if (eigenRaf) { cancelAnimationFrame(eigenRaf); eigenRaf = 0; }
     window.removeEventListener('keydown', opToetsNeer);
     window.removeEventListener('keyup', opToetsOp);
+    window.removeEventListener('blur', opFocusWeg);
     window.removeEventListener('resize', schaalCanvas);
     if (schermCanvas) {
       schermCanvas.removeEventListener('pointerdown', opPointerNeer);
@@ -2635,6 +2653,8 @@ const Outro = (() => {
     if (staat === 'uit') return;
     staat = 'spel';
     wisselLevel(klem(n | 0, 0, VERDIEPINGEN.length - 1));
+    /* zelfde muziek-hook als de gewone levelwissel (chiptune + juiste lagen) */
+    if (window.Klank && Klank.zetChipLagen) { try { Klank.muziek('outro'); Klank.zetChipLagen(hal ? 0 : Math.min(3, lvlIdx + 1)); } catch (e) {} }
   }
   function _devHal() { _devNiveau(VERDIEPINGEN.length - 1); }
 

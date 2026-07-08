@@ -466,3 +466,37 @@ schil + B.A.A.S. blijven staan).
   hebben), fijnbalans van de verdiepingen na echt spelen, en de
   proloog-vlaggen (S.jeugddroom, sprong/geduwd) die pas bij de
   proloog-bouw gevuld worden — de outro leest ze dan vanzelf.
+
+## Post-merge-debugronde (8 juli 2026, cache v40) — 20-agent-audit verwerkt
+
+Gefixt in deze repo: reveal-overlay-sequencing vóór Outro.start · draai-blok
+pauzeert de outro-tik · blur wist gehouden input · stoet-spawn-klem bij
+levelwissel · intro spoelt op élke toets · em/en-dash-normalisatie in het
+5x7-font · herbeleef-reset (sfxKlok/splash/flits/schud) · accu-lus stopt bij
+staatwissel · outroGezien pas ná de DOM-check · dev-shortcuts zetten de
+chiptune · duister-zweving uit de chip-scènes · chip-lookahead 1,8s
+(verborgen tab) · probe-write in de firstRun-gate (anti-redirect-lus) ·
+SW-reload uitgesteld tijdens gevecht/outro · proloog gecachet onder
+'proloog/' + best-effort-install + index.html-resolutie offline · de brug
+verrijkt het contract met de heldkeuze (choices.held uit slaylit_proloog_v2)
+en stopt zijn poll zodra DAAL AF staat.
+
+NOG OPEN — kan alleen op het design-account (de proloog-bundel is gesealed):
+- `held` rechtstreeks in het slayit_proloog-contract schrijven (de brug
+  vangt het nu op, maar bij de herbouw hoort het in de app zelf).
+- De STORE-write (slaylit_proloog_v2) in een try/catch (crasht nu op een
+  volle/geblokkeerde storage) + idx/maxReached klemmen bij het laden
+  (out-of-range crasht de mount).
+
+NOG OPEN — ontwerpbeslissingen (Thomas):
+- bouwServerhal + BAAS_REGELS (niet-kapot) + de 'hal'-bakLevel-tak zijn nu
+  onbereikbare dode code (~60 regels): de penthouse-finale verving de aparte
+  serverhal-verdieping. Kiezen: verwijderen, of de hal als extra tussenlaag
+  in VERDIEPINGEN hangen (dan klopt de ongeschonden-∞-beat uit dit doc weer).
+- Reload middenin de outro: de win is veilig geregistreerd, maar het
+  einde-scherm (stats/seed/uitdaagcode/daily-paneel) verschijnt dan nooit —
+  acceptabele trade-off of een 'slayit_einde_pending'-herstel waard?
+- Veteranen (pre-v39-spelers) krijgen bij hun eerstvolgende "Nieuw avontuur"
+  één keer de proloog (bewuste PR-keuze; overslaan kan rechtsboven).
+- Factuur-payoff: dots()-breedte 24 is te smal voor de langste regel
+  (cosmetisch, 3px overloop) — meenemen bij de eerstvolgende outro-polish.

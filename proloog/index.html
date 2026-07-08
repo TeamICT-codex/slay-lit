@@ -197,13 +197,25 @@ document.addEventListener('DOMContentLoaded', async function() {
       'border:1px solid #454136;padding:5px 10px;cursor:pointer;font:13px "Courier New",monospace;opacity:.8}';
     document.head.appendChild(stijl);
   }
+  /* de app schrijft {jeugddroom, uitweg} \u2014 de heldkeuze (choices.held) zit
+     (nog) niet in dat contract maar w\u00E9l in de eigen voortgang; verrijk de
+     overdracht zodat de outro het juiste startmasker kan kiezen */
+  function verrijkMetHeld() {
+    try {
+      var contract = JSON.parse(localStorage.getItem('slayit_proloog') || 'null');
+      if (!contract || contract.held) return;
+      var v2 = JSON.parse(localStorage.getItem('slaylit_proloog_v2') || 'null');
+      var held = v2 && v2.choices && v2.choices.held;
+      if (held) { contract.held = String(held); localStorage.setItem('slayit_proloog', JSON.stringify(contract)); }
+    } catch (e) {}
+  }
   function plak() {
     maak();
     if (!document.getElementById('brug-afdalen')) {
       var knop = document.createElement('button');
       knop.id = 'brug-afdalen';
       knop.textContent = '\u2694\uFE0F DAAL AF \u25B8';
-      knop.onclick = function () { location.href = '../index.html'; };
+      knop.onclick = function () { verrijkMetHeld(); location.href = '../index.html'; };
       document.body.appendChild(knop);
     }
     if (!document.getElementById('brug-skip')) {
@@ -218,10 +230,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     try {
       var k = document.getElementById('brug-afdalen');
-      if (k && localStorage.getItem('slayit_proloog')) k.style.display = 'block';
+      if (k && localStorage.getItem('slayit_proloog')) {
+        k.style.display = 'block';
+        verrijkMetHeld();
+        /* beide knoppen staan en DAAL AF is zichtbaar \u2192 de poll is klaar */
+        if (document.getElementById('brug-skip') && brugPoll) { clearInterval(brugPoll); brugPoll = null; }
+      }
     } catch (e) {}
   }
-  setInterval(plak, 700);
+  var brugPoll = setInterval(plak, 700);
   if (document.readyState === 'complete') plak();
   else window.addEventListener('load', function () { setTimeout(plak, 300); });
 })();

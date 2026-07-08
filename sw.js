@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v39'; /* v39: de outro "De Opzegtermijn" (js/outro.js) + de proloog (proloog/index.html, standalone) in de shell, met firstRun-gate en titelknop — gerebased bovenop v38 (de grote Act 3-art-drop + herstelde deadline-attack) */
+const CACHE = 'slayit-v40'; /* v40: grote post-merge-debugronde (20-agent-audit) — 12 outro/proloog/audio/SW-fixes (o.a. reveal-overlay-sequencing vóór de outro, draai-blok-pauze, blur-input-reset, stoet-spawn-klem, duister-lek uit de chiptune, proloog-cache onder 'proloog/', uitgestelde SW-reload) + Drops-extra's: kampvuur-geest (rust) en drops_wit_victory */
 const BESTANDEN = [
   '.',
   'css/style.css',
@@ -13,7 +13,6 @@ const BESTANDEN = [
   'js/scene3d.js',
   'js/data.js',
   'js/outro.js',
-  'proloog/index.html',
   'js/game.js',
   'assets/fonts/fonts.css',
   'assets/fonts/PirataOne-400-normal.woff2',
@@ -27,6 +26,10 @@ const BESTANDEN = [
   'assets/icoon-512-maskable.png',
   'manifest.webmanifest'
 ];
+/* de proloog (±2,9 MB, standalone) apart en BEST-EFFORT: onder de URL 'proloog/'
+   (waar de gate en de titelknop echt naartoe navigeren — cache.match is exact),
+   en een gefaalde download mag de kern-install niet laten mislukken */
+const ZWAAR = ['proloog/'];
 /* NB: een versiebump laat 'activate' de oude cache wissen (één keer art-her-download).
    Bewust hier: de gsm bleef op een oude build hangen omdat de oude shell in de cache
    bleef zitten. De code-fetch hieronder gebruikt nu cache:'reload' zodat online ALTIJD
@@ -34,9 +37,13 @@ const BESTANDEN = [
 
 self.addEventListener('install', e => {
   /* shell vers ophalen (cache:'reload') zodat de install niet zelf een oude
-     HTTP-gecachte versie inmetselt */
+     HTTP-gecachte versie inmetselt. Kern = atomair (addAll); het zware deel
+     (de proloog) best-effort via allSettled — een hapering op trage mobiel
+     mag de hele install niet laten falen (de fetch-handler cachet hem dan
+     alsnog bij het eerste echte bezoek). */
   e.waitUntil(caches.open(CACHE)
-    .then(c => c.addAll(BESTANDEN.map(u => new Request(u, { cache: 'reload' }))))
+    .then(c => c.addAll(BESTANDEN.map(u => new Request(u, { cache: 'reload' })))
+      .then(() => Promise.allSettled(ZWAAR.map(u => c.add(new Request(u, { cache: 'reload' }))))))
     .then(() => self.skipWaiting()));
 });
 
@@ -84,8 +91,15 @@ self.addEventListener('fetch', e => {
       })
       /* offline: cache-terugval. ignoreSearch vangt navigaties met een query-string
          (gedeelde link met ?param) — die staan onder hun kale URL in de cache; een
+         map-navigatie ('proloog/') en zijn index.html zijn uitwisselbaar; een
          onbekende navigatie valt terug op de app-shell ('.'). */
       .catch(() => caches.match(e.request, { ignoreSearch: true })
+        .then(hit => {
+          if (hit) return hit;
+          const pad = new URL(e.request.url).pathname;
+          if (pad.endsWith('/')) return caches.match(pad + 'index.html', { ignoreSearch: true });
+          if (pad.endsWith('/index.html')) return caches.match(pad.slice(0, -10), { ignoreSearch: true });
+        })
         .then(hit => hit || (e.request.mode === 'navigate' ? caches.match('.') : undefined)))
   );
 });

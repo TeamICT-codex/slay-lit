@@ -623,6 +623,9 @@ const ACHTERGRONDEN = {
     schat: 'Act 3 achtergronden/Achtergrondschatkist3.webp',
     beloning: 'Act 3 achtergronden/Overwinningsachtergrond3gewoon.webp',
     overwinning: 'Act 3 achtergronden/Overwinningsachtergrond3episch.webp',
+    /* reserve (bewust niet gewired): 'Overwinningsachtergrond3episch alternatief.webp'
+       — het veroverde beulsplatform frontaal; kandidaat voor ná het DICKtator-
+       finale-gevecht als de Act 3-bouw een aparte finale-overwinning wil */
     nederlaag: 'Act 3 achtergronden/Achtergrond nederlaag ACT3.webp'
   }
 };

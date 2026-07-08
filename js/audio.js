@@ -207,7 +207,7 @@ const Klank = (() => {
     const t = ctx.currentTime;
     drone.gain.gain.setTargetAtTime(s.droneVol || 0, t, 1.2);
     drone.oscs.forEach(o => o.frequency.setTargetAtTime(s.root || 55, t, 0.8));
-    spanVoice.gain.gain.setTargetAtTime((s.spanning || 0) * 0.022 + (duister ? 0.02 : 0), t, 1.5);
+    spanVoice.gain.gain.setTargetAtTime((s.spanning || 0) * 0.022 + (duister && !s.chip ? 0.02 : 0), t, 1.5);   /* chip-scenes (outro): geen duister-zweving door de chiptune */
     spanVoice.oscs.forEach((o, i) => o.frequency.setTargetAtTime((s.root || 55) * 8 * (i ? 1.012 : 1), t, 0.8));
     tel = 0; maat = 0;
     volgendeTel = t + 0.1;
@@ -228,7 +228,9 @@ const Klank = (() => {
     /* na mute of een lange pauze: niet alle gemiste noten inhalen */
     if (volgendeTel < ctx.currentTime - 0.3) volgendeTel = ctx.currentTime + 0.05;
     const telDuur = 60 / s.bpm / (s.subdiv || 1);
-    while (volgendeTel < ctx.currentTime + 0.9) {
+    /* chip-scenes plannen verder vooruit: in een verborgen tab wordt de
+       planner tot 1x/s gethrottled — 0,9s lookahead stottert dan net */
+    while (volgendeTel < ctx.currentTime + (s.chip ? 1.8 : 0.9)) {
       plaatsTel(volgendeTel, s);
       volgendeTel += telDuur;
       tel++;
@@ -364,7 +366,7 @@ const Klank = (() => {
     if (!klaar) return;
     const s = SCENES[scene] || {};
     const t = ctx.currentTime;
-    spanVoice.gain.gain.setTargetAtTime((s.spanning || 0) * 0.022 + (aan ? 0.02 : 0), t, 1.2);
+    spanVoice.gain.gain.setTargetAtTime((s.spanning || 0) * 0.022 + (aan && !s.chip ? 0.02 : 0), t, 1.2);   /* chip-scenes: geen duister-zweving (zie pasScene) */
     drone.filter.frequency.setTargetAtTime(aan ? 115 : 170, t, 1);
   }
 

@@ -232,6 +232,19 @@ PERSONAGE (identiek houden over de poses):
 
 
 ----------------------------------------------------------------------------------
+DROPS — EXTRA POSES (verwerkt 7 juli 2026, uit de reserve-drop van 22 juni):
+  drops_geest_rust.webp  — de doorschijnender ZITTENDE geest (blauwgrijs, sintel-ster op
+    de borst). Gebruikt op het RUST-scherm: zolang Drops gevallen is en De Witte nog niet
+    terugkeerde, zit zijn geest stil bij het kampvuur (grief-moment; .rust-geest in CSS).
+  drops_wit_victory.webp — Drops de Witte BLIJ (staart omhoog, bek open). Speelt bij een
+    gewonnen gevecht via de generieke metgezel-victory-pose (pose2D valt stil terug voor
+    metgezellen zonder victory-art).
+  NB de andere twee reserves (drops_death_leap / drops_death_sacrifice) bleken duplicaten
+  van de al-live drops_death / drops_offer — die blijven in originelen/ als archief.
+  ⚠ drops_wit-cut-les: witte hond op wit dambord wordt door de agressieve wit-passes van
+  verwijder_dambord.py OPGEGETEN — gebruik dan een eenmalige strikte neutraal-key
+  (enkel kleurloze lichte tinten floodfillen; de vacht is blauwig en blijft zo staan).
+
 LATERE METGEZELLEN (zelfde aanpak): voeg een nieuw blok toe, zet de definitie in
 METGEZELLEN (js/data.js) met dezelfde 'art'-naam, en drop assets/metgezellen/<art>.png
 (+ optioneel <art>_attack/_hit/_death.png in dezelfde stijl en kijkrichting).

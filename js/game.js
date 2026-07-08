@@ -4255,6 +4255,12 @@ async function gevechtGewonnen() {
   if (g.metgezel && !g.metgezel.dood && S.metgezel && !S.metgezel.vluchtig) S.metgezel.hp = g.metgezel.hp;
   if (window.Vista) Vista.pose(g.speler, 'victory', 2.5);
   pose2D(g.speler, 'victory', 2.5);
+  /* de metgezel viert mee — pose2D valt stil terug voor wie geen victory-art
+     heeft (nu enkel drops_wit: de blije witte hond) */
+  if (g.metgezel && !g.metgezel.dood) {
+    if (window.Vista) Vista.pose(g.metgezel, 'victory', 2.5);
+    pose2D(g.metgezel, 'victory', 2.5);
+  }
   heldFx('hfx-victory', 2500);
   renderGevecht();
   await slaap(700);
@@ -4306,7 +4312,14 @@ async function gevechtGewonnen() {
         bankGedragen();
         S.runGeregistreerd = true;
       }
-      Outro.start(() => toonEinde(true, verslagenBaas));
+      /* eerst het scherf-/vloek-reveal-moment laten aflopen (auto-sluit na ±7s
+         of een klik) — anders hangt die overlay over de startende outro én
+         wordt het reveal-moment zelf platgewalst */
+      const wachtOpReveal = () => {
+        if (document.querySelector('.scherf-reveal-overlay, .vloek-reveal-overlay')) { setTimeout(wachtOpReveal, 250); return; }
+        Outro.start(() => toonEinde(true, verslagenBaas));
+      };
+      wachtOpReveal();
     } else {
       wisSave();
       toonEinde(true, verslagenBaas);   /* laatste act verslagen → echte overwinning (toon de juiste baasnaam) */
@@ -4868,6 +4881,11 @@ function toonRust() {
   const vonken = Array.from({ length: 14 }, () =>
     `<span class="kv-vonk" style="--vx:${(Math.random() * 70 - 35).toFixed(0)}px; --vzw:${(Math.random() * 50 - 25).toFixed(0)}px; --vd:${(1.6 + Math.random() * 2.2).toFixed(2)}s; animation-delay:${(Math.random() * 3).toFixed(2)}s"></span>`
   ).join('');
+  /* Drops' geest bij het kampvuur — alleen in het grief-venster: hij offerde zich
+     (Codex.gevallen) en De Witte is nog niet teruggekeerd. Stil aanwezig, geen tekst. */
+  const geestRouw = Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops')
+    && !isOntgrendeld('drops_wit')
+    && !(Array.isArray(Codex.metgezellen) && Codex.metgezellen.includes('drops_wit'));
   $('#scherm-rust').innerHTML = `
     <h2 class="scherm-titel">Rustplaats</h2>
     ${S.act === 2 ? '<p class="scherm-sub">De enige minuut die niemand archiveert.</p>' : ''}
@@ -4884,6 +4902,7 @@ function toonRust() {
         <span class="kv-hout kvh1"></span>
         <span class="kv-hout kvh2"></span>
       </div>
+      ${geestRouw ? '<div class="kv-geest" id="kv-geest"></div>' : ''}
     </div>
     <div class="rust-opties">
       <button class="rust-knop" onclick="rustGenees(${heel})">
@@ -4896,6 +4915,13 @@ function toonRust() {
         ${kanPoken ? '' : '<small class="reden-uit">✕ Je fakkel is al vol.</small>'}</button>
     </div>`;
   verfraaiItemArt($('#scherm-rust'));   /* eigen iconen-art uit assets/iconen/ inladen (emoji blijft als terugval) */
+  if (geestRouw && window.laadMetgezelAfbeelding) {
+    /* de geest verschijnt pas als de art er echt is — mislukt de load, dan blijft de div leeg/onzichtbaar */
+    laadMetgezelAfbeelding('drops_geest_rust', img => {
+      const el = $('#kv-geest');
+      if (img && el) el.innerHTML = `<img src="${img.src}" alt="">`;
+    });
+  }
   if (window.laadKarakterAfbeelding) {
     /* zit er een rust-pose (<held>_rest.png)? die eerst, anders de basis */
     const zet = img => {
@@ -5595,8 +5621,13 @@ function naarTitel() {
 
 function startNieuw() {
   /* de eerste keer gaat de proloog vóór de afdaling (PROLOOG.md: firstRun);
-     wie hem al speelde (of bewust oversloeg) daalt meteen af */
+     wie hem al speelde (of bewust oversloeg) daalt meteen af.
+     PROBE-WRITE eerst: als setItem gooit (vol/privé-modus) kan de proloog zijn
+     sleutels nooit wegschrijven → zonder deze check zit je in een eeuwige
+     redirect-lus proloog↔game. Storage kapot? Dan gewoon meteen afdalen. */
   try {
+    localStorage.setItem('slayit_probe', '1');
+    localStorage.removeItem('slayit_probe');
     if (!localStorage.getItem('slayit_proloog') && !localStorage.getItem('slayit_proloog_over')) {
       location.href = 'proloog/';
       return;
@@ -6560,10 +6591,23 @@ window.addEventListener('DOMContentLoaded', () => {
     navigator.serviceWorker.register('sw.js').then(() => {
       /* een nieuwe SW doet skipWaiting()+clients.claim() → zodra hij de pagina overneemt
          herladen we één keer, zodat een deploy (nieuwe code/CSS/art) meteen landt i.p.v.
-         pas na een cold start. Guard tegen de dubbel-reload-lus. */
+         pas na een cold start. Guard tegen de dubbel-reload-lus. MAAR nooit midden
+         in een gevecht of de eenmalige outro (save is daar al gewist!): dan uitstellen
+         tot een rustig scherm (titel/kaart/einde). */
       let herladen = false;
+      const magHerladen = () => {
+        const scherm = document.body.dataset.scherm;
+        return !(scherm === 'gevecht' || scherm === 'outro' || (window.Outro && Outro.actief));
+      };
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (herladen) return; herladen = true; location.reload();
+        if (herladen) return;
+        if (magHerladen()) { herladen = true; location.reload(); return; }
+        /* uitgesteld: check elke 5s tot de speler het gevecht/de outro uit is */
+        const wacht = setInterval(() => {
+          if (!magHerladen()) return;
+          clearInterval(wacht);
+          if (!herladen) { herladen = true; location.reload(); }
+        }, 5000);
       });
     }).catch(() => {});
   }
