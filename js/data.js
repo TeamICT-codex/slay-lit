@@ -616,6 +616,15 @@ const KAARTEN = {
     tekst: () => `Onbespeelbaar. Neemt ruimte in je hand in.`,
     speel: () => {}
   },
+  /* Act 3 — de vloek van het regime: vijanden fluisteren hem gevecht-lokaal in je
+     stapels (verdwijnt na het gevecht), events geven hem permanent. De Act 3-kaarten
+     (Brandstapel/Schuldverschuiving/Volkswoede) maken er brandstof van. */
+  laster: {
+    naam: 'Laster', type: 'vloek', zeld: 'vloek', kost: null, icoon: '🗣️',
+    tekst: () => `Onbespeelbaar. Neemt ruimte in je hand in.`,
+    flavor: 'Je hebt het niet gedaan. Dat doet er niet toe.',
+    speel: () => {}
+  },
   /* --- LICHT-VLOEKEN — een licht-economie die je naar het midden-band knijpt.
      Onspeelbaar; de effecten vuren via de begin/eind-beurt-haken (game.js), niet via speel(). --- */
   schaduwsmet: {
@@ -1140,6 +1149,129 @@ const VIJANDEN = {
         ? { naam: 'Vlammenzweep', type: 'aanval', dmg: 15 }
         : { naam: 'Schaduwgreep', type: 'aanval', dmg: 9, doe: () => geefStatus(sp(), 'kwetsbaar', 1) };
     }
+  },
+
+  /* ============ ACT 3 — HET SLACHTBLOK (het hof van de DICKtator) ============
+     Thema = de MACHT en haar meelopers: buffs voor elkaar, schuld voor jou.
+     Vertrekwaarden uit ACT3-PROMPTBIB.md — playtest-tunebaar. */
+  de_omroeper: {
+    naam: 'De Omroeper', art: '📯', hp: [22, 27],
+    /* opent het gevecht met de Afkondiging: het hele hof +1 Kracht */
+    kies: (v) => {
+      if (!v.afgekondigd) return { naam: 'Afkondiging', type: 'buff', doe: () => {
+        v.afgekondigd = true;
+        S.gevecht.vijanden.forEach(x => { if (!x.dood) geefStatus(x, 'kracht', 1); });
+        melding('📯 „HOORT!" — het regime spreekt: alle vijanden +1 Kracht.');
+      } };
+      return willekeurig() < 0.6 ? { naam: 'Schreeuw', type: 'aanval', dmg: 8 } : { naam: 'Oproep', type: 'blok', blok: 7 };
+    }
+  },
+  het_klapvee: {
+    naam: 'Het Klapvee', art: '👏', hp: [26, 32],
+    /* de menigte klapt harder naarmate er meer staan te klappen */
+    kies: (v) => {
+      const anderen = S.gevecht.vijanden.filter(x => !x.dood && x !== v).length;
+      return anderen > 0
+        ? { naam: 'Applaus', type: 'aanval', dmg: 4 + 2 * anderen }
+        : { naam: 'Aarzelend klapje', type: 'aanval', dmg: 3 };
+    }
+  },
+  de_zondebok: {
+    naam: 'De Zondebok', art: '🐐', hp: [18, 24],
+    /* dreiging-mechaniek: vangt 50% van je klappen op ANDEREN op (haak in aanvalOp) */
+    kies: () => ({ naam: 'Kopstoot', type: 'aanval', dmg: 6 }),
+    bijDood: () => {
+      /* satire: de schuld is weggedragen — de rest wordt driester */
+      S.gevecht.vijanden.forEach(x => { if (!x.dood) geefStatus(x, 'kracht', 1); });
+      melding('🐐 De schuld is weggedragen — de rest wordt driester (+1 Kracht).');
+    }
+  },
+  de_aanklager: {
+    naam: 'De Aanklager', art: '☝️', hp: [24, 29],
+    kies: (v, beurt) => beurt % 3 === 0
+      ? { naam: 'Requisitoir', type: 'aanval', dmg: 4, doe: () => { geefStatus(sp(), 'kwetsbaar', 2); geefStatus(sp(), 'zwak', 1); } }
+      : { naam: 'Beschuldiging', type: 'aanval', dmg: 5, doe: () => geefStatus(sp(), 'kwetsbaar', 1) }
+  },
+  de_fluisteraar: {
+    naam: 'De Fluisteraar', art: '🌫️', hp: [20, 26],
+    /* stopt de vloek 'laster' in je AFLEG — gevecht-lokaal (niet in S.dek), dus
+       hij verdwijnt vanzelf na het gevecht; de events geven 'm wél permanent */
+    kies: (v, beurt) => beurt % 2 === 1
+      ? { naam: 'Laster', type: 'buff', doe: () => {
+          S.gevecht.afleg.push(nieuweKaart('laster'));
+          Klank.sfx('debuff');
+          melding('🌫️ Een gefluisterde leugen kruipt in je aflegstapel...');
+        } }
+      : { naam: 'Steek in de rug', type: 'aanval', dmg: 9 }
+  },
+  de_vaandeldrager: {
+    naam: 'De Vaandeldrager', art: '🚩', hp: [28, 34],
+    /* het vaandel hoog: elke stoot buft de rest — prioridoelwit */
+    kies: (v) => ({ naam: 'Vaandelstoot', type: 'aanval', dmg: 8, doe: () => {
+      S.gevecht.vijanden.forEach(x => { if (!x.dood && x !== v) geefStatus(x, 'kracht', 1); });
+    } })
+  },
+  de_ophitser: {
+    naam: 'De Ophitser', art: '🔥', hp: [23, 28],
+    /* nieuw dreigingstype: hij brandt jóuw LICHT weg */
+    kies: (v) => willekeurig() < 0.55
+      ? { naam: 'Fakkelroof', type: 'aanval', dmg: 4, doe: () => { zetFakkel(-6); melding('🔥 De Ophitser brandt je licht weg! (−6 licht)'); } }
+      : { naam: 'Opruiing', type: 'buff', doe: () => {
+          geefStatus(v, 'kracht', 1);
+          const maat = kiesUit(S.gevecht.vijanden.filter(x => !x.dood && x !== v));
+          if (maat) geefStatus(maat, 'kracht', 1);
+        } }
+  },
+  de_gouden_garde: {
+    naam: 'De Gouden Garde', art: '🛡️', hp: [34, 40],
+    kies: (v, beurt) => {
+      if (beurt % 3 === 0) return { naam: 'Formatie', type: 'buff', doe: () => geefStatus(v, 'metaalhuid', 2) };
+      return willekeurig() < 0.5
+        ? { naam: 'Gouden muur', type: 'blok', blok: 12 }
+        : { naam: 'Hellebaardslag', type: 'aanval', dmg: 12 };
+    }
+  },
+  /* elite — De Rechter: het showproces. Stapelt bewijslast en telegrafeert het VONNIS,
+     dat schaalt op jóuw Zwak/Kwetsbaar-stapels — hou jezelf schoon of blok op de maat. */
+  de_rechter: {
+    naam: 'De Rechter', art: '⚖️', hp: [86, 94], elite: true,
+    titel: 'De uitspraak stond al vast',
+    kies: (v, beurt) => {
+      if (beurt % 3 === 0) {
+        const st = (S.gevecht.speler.status.zwak || 0) + (S.gevecht.speler.status.kwetsbaar || 0);
+        return { naam: 'VONNIS', type: 'aanval', dmg: 8 + 4 * st };
+      }
+      return { naam: 'Bewijslast', type: 'buff', doe: () => { geefStatus(sp(), 'zwak', 1); geefStatus(sp(), 'kwetsbaar', 1); } };
+    }
+  },
+  /* elite — De Hofnar: hof-goedgekeurde wreedheid. Zingt leugens je TREK in en
+     lacht (+Blok, haak in trekKaarten) telkens jij een vloek trekt. */
+  de_hofnar: {
+    naam: 'De Hofnar', art: '🃏', hp: [78, 86], elite: true,
+    titel: 'Lach dan — iederéén lacht',
+    kies: (v, beurt) => beurt % 2 === 1
+      ? { naam: 'Spotlied', type: 'buff', doe: () => {
+          const g = S.gevecht;
+          g.trek.splice(Math.floor(willekeurig() * (g.trek.length + 1)), 0, nieuweKaart('laster'));
+          geefStatus(v, 'kracht', 1);
+          Klank.sfx('debuff');
+          melding('🃏 De Hofnar zingt een spotlied — een leugen schuift tussen je kaarten.');
+        } }
+      : { naam: 'Kwinkslag', type: 'aanval', dmg: 6, hits: 2 }
+  },
+  /* episch — Het Spreekgestoelte: de levende katheder die decennia toespraken
+     absorbeerde — en spreekt met de STEM van de DICKtator (foreshadow). */
+  het_spreekgestoelte: {
+    naam: 'Het Spreekgestoelte', art: '🎙️', hp: [84, 92], episch: true,
+    kies: (v, beurt) => {
+      const stap = beurt % 3;
+      if (stap === 0) return { naam: 'Slogan', type: 'buff', doe: () => { geefStatus(sp(), 'zwak', 1); geefStatus(v, 'kracht', 2); } };
+      if (stap === 1) return { naam: 'Donderrede', type: 'aanval', dmg: 14 };
+      return { naam: 'Bijval eisen', type: 'blok', blok: 12, doe: () => {
+        S.gevecht.afleg.push(nieuweKaart('laster'));
+        melding('🎙️ „APPLAUS." — een leugen kruipt in je aflegstapel.');
+      } };
+    }
   }
 };
 
@@ -1361,6 +1493,18 @@ const UITSPRAKEN = {
   /* het gietsel en de kopie zwijgen bewust (niets ín om te spreken); de Wachter niet */
   doorslag_kopie: { start: ['...ook ik... ben nooit genoeg...'], dood: ['...welke laag... was ik...?'] },
   de_drempelwachter: { start: ['VERKEERD. ANTWOORD.', 'Wie de drempel met leugens voedt, voedt MIJ.'], dood: ['De drempel... staat... open...'] },
+  /* Act 3 — het Slachtblok */
+  de_omroeper:       { start: ['HOORT! De heerser spreekt door mij!', 'STILTE voor de afkondiging!'], dood: ['...wie roept er... nu om...'] },
+  het_klapvee:       { start: ['*klapt omdat de rest klapt*', '*klapt harder*'], dood: ['...mag ik... stoppen...?'] },
+  de_zondebok:       { start: ['Ik heb het niet gedaan. Ik doe het nooit.', 'Sla maar. Dat doet iedereen.'], dood: ['...eindelijk... niet mijn schuld...'] },
+  de_aanklager:      { start: ['JIJ daar. Ja, JIJ.', 'De aanklacht schrijft zichzelf.'], dood: ['...bezwaar... toegewezen...'] },
+  de_fluisteraar:    { start: ['Ze zeggen dingen over je...', 'Sst. Luister niet. Of juist wel.'], dood: ['...wie fluistert er... over mij...'] },
+  de_vaandeldrager:  { start: ['Het gezicht op het doek ziet álles.', 'Het vaandel valt NOOIT.'], dood: ['...het doek... scheurt...'] },
+  de_ophitser:       { start: ['Brandt het al? Het moet branden!', 'Jouw vlammetje eerst!'], dood: ['...zo koud... ineens...'] },
+  de_gouden_garde:   { start: ['Voor de heerser. Wat de vraag ook was.', 'De muur wijkt niet.'], dood: ['...het goud... was hol...'] },
+  de_rechter:        { start: ['De uitspraak stond al vast. De zitting is beleefdheid.', 'Orde. ORDE.'], dood: ['...in beroep... gaan ze... in beroep...'] },
+  de_hofnar:         { start: ['Lach dan. Iederéén lacht.', 'Deze grap gaat over JOU.'], dood: ['...die was... goed...'] },
+  het_spreekgestoelte: { start: ['WIE MAAKTE JULLIE GROOT? — HIJ.', 'HOOR DE STEM. BUIG VOOR DE STEM.'], dood: ['...de stem... was nooit... van mij...'] },
   _duister: ['...wij zien jou wél...', '...kom dichter, lichtje...', '...jouw vlam is bijna op...', '...het donker heeft tanden...'],
   _held: {
     overkill: ['Daar. Opgeruimd.', 'Wie volgt?', 'De diepte mag hem houden.'],
@@ -1441,6 +1585,15 @@ const ONTMOETINGEN = {
     zwaar:  [['doorslag', 'naaper'], ['echo', 'echo', 'inktklerk'], ['doorslag', 'inktklerk'], ['naaper', 'naaper'], ['dossierwurm', 'spiegelwachter'], ['stempelaar', 'naaper'], ['de_deadline', 'de_redacteur'], ['de_inktvlek', 'de_inktvlek'], ['de_uitgewiste', 'doorslag']],
     elite:  [['de_mal'], ['de_mal', 'echo'], ['de_archivaris'], ['de_archivaris', 'echo'], ['de_verzwolgene'], ['de_verzwolgene', 'echo']]
   },
+  /* Act 3 — het Slachtblok: het hof van de DICKtator. De buffers (omroeper/
+     vaandeldrager/ophitser) maken elke groep gevaarlijker naarmate je wacht. */
+  act3: {
+    midden: [['de_omroeper', 'het_klapvee'], ['de_zondebok', 'het_klapvee'], ['de_aanklager'], ['de_fluisteraar'], ['het_klapvee', 'het_klapvee'], ['de_ophitser'], ['de_omroeper', 'de_zondebok']],
+    laat:   [['de_vaandeldrager', 'het_klapvee'], ['de_aanklager', 'de_fluisteraar'], ['de_gouden_garde'], ['de_ophitser', 'de_zondebok'], ['de_omroeper', 'de_aanklager'], ['de_fluisteraar', 'het_klapvee'], ['de_gouden_garde', 'de_zondebok']],
+    zwaar:  [['de_vaandeldrager', 'de_gouden_garde'], ['de_aanklager', 'de_ophitser', 'het_klapvee'], ['de_gouden_garde', 'de_fluisteraar'], ['de_vaandeldrager', 'de_aanklager'], ['de_omroeper', 'de_gouden_garde'], ['de_ophitser', 'de_ophitser']],
+    elite:  [['de_rechter'], ['de_rechter', 'de_zondebok'], ['de_hofnar'], ['de_hofnar', 'het_klapvee']],
+    episch: [['het_spreekgestoelte']]
+  },
   /* episch-node (Act 2): de mysterie-vijand die de drops_episch-scherf laat vallen */
   episch: [['het_origineel']]
 };
@@ -1483,7 +1636,19 @@ const BESTIARIUM = {
   de_archivaris: { act: 2, soort: 'Elite', lore: 'Een gehulde archivaris-inquisiteur met een geketend grootboek en een mantel van dossiers. Hij vergeet niets, vergeeft niets, en zet elke beurt een nieuwe rode zegel bij — zijn macht stapelt en stapelt.', notitie: 'Hoe langer hij leeft, hoe harder hij slaat. Sla snel toe.' },
   de_drempelwachter: { act: 2, soort: 'Wachter', lore: 'Niet alles wat je met scherven wekt, is je gunstig gezind. Voed je de drempel met een vals trio, dan krijgt hij een gezicht: as, oude vlam, en de rotsvaste overtuiging dat jíj de leugen bent die moet worden tegengehouden.', notitie: 'De prijs van een fout ritueel: drie scherven verbrand — en dan dít nog. Om de derde beurt komt het Drempelvuur; tel mee en blok op de maat.' },
   het_origineel: { act: 2, soort: 'Episch', lore: 'Het ene ware origineel waarvan heel het Archief zijn bleke kopieën aftrekt — en het houdt vol dat JIJ de namaak bent. Het straalt warm goud-karmozijn in een wereld van koud grijs, en kaatst je eigen klap terug als een vergeelde echo.', notitie: 'Het weerkaatst je sterkste klap. Verdeel je schade i.p.v. alles in één slag.' },
-  de_erfprins: { act: 2, soort: 'Baas', lore: 'De onverdiende erfgenaam van het Archief: een verwend jong dat zelf nooit iets maakte en nu je halve dek rooft om je ermee af te maken. Zonder iets om na te apen is hij niets — mét jouw werk is hij dodelijk.', notitie: 'Hij steelt je beste kaarten. Een trouwe metgezel breekt zijn machine; trouw valt niet te kopiëren.' }
+  de_erfprins: { act: 2, soort: 'Baas', lore: 'De onverdiende erfgenaam van het Archief: een verwend jong dat zelf nooit iets maakte en nu je halve dek rooft om je ermee af te maken. Zonder iets om na te apen is hij niets — mét jouw werk is hij dodelijk.', notitie: 'Hij steelt je beste kaarten. Een trouwe metgezel breekt zijn machine; trouw valt niet te kopiëren.' },
+  /* Act 3 — het Slachtblok */
+  de_omroeper: { act: 3, soort: 'Meeloper', lore: 'Zijn rechterarm vergroeide tot een bronzen roeptoeter en zijn eigen stem is hij al jaren kwijt. Wat eruit galmt is de wil van de heerser — hard genoeg om de rest driester te maken.', notitie: 'Zijn Afkondiging buft het hele hof. Snoer hem vroeg de mond.' },
+  het_klapvee: { act: 3, soort: 'Meeloper', lore: 'Tientallen handen en identieke glimlachjes, opgestapeld tot één wezen zonder hoofd. Het klapt omdat de rest klapt. Alleen is het zielig; in massa is het dodelijk.', notitie: 'Klapt harder per levende bondgenoot. Dun eerst de kudde uit.' },
+  de_zondebok: { act: 3, soort: 'Meeloper', lore: 'Een pikzwarte bok onder andermans schuld, met een wit geschilderd doelwit op de borst en kettingen naar meesters buiten beeld. Hij deed niets — hij draagt alles.', notitie: 'Vangt de helft van je klappen op anderen op. En sterft hij, dan is "de schuld weggedragen": de rest wordt driester.' },
+  de_aanklager: { act: 3, soort: 'Hofhouding', lore: 'Zijn hele rechterarm loopt uit in één beschuldigende wijsvinger van gebleekt bot, gloeiend heet aan de punt. De aanklachtrol op de vloer wordt elke zitting langer.', notitie: 'Stapelt Kwetsbaar (en Zwak) op je. Precies wat het VONNIS van de Rechter nodig heeft — hou jezelf schoon.' },
+  de_fluisteraar: { act: 3, soort: 'Hofhouding', lore: 'Een lege kap met een vage violette gloed waar een gezicht hoort, en linten rook die halfleesbare lasterpraat vormen. Wat hij fluistert, kruipt in je stapels.', notitie: 'Stopt de vloek Laster in je aflegstapel. Die verdwijnt ná het gevecht — maar zit intussen wél in je hand.' },
+  de_vaandeldrager: { act: 3, soort: 'Hofhouding', lore: 'Achter het reusachtige karmozijnen doek met het gouden gezicht van de tyran schuilt een vizier zonder ogen. Hij is niemand — het vaandel is alles, en het maakt de rest sterker.', notitie: 'Elke Vaandelstoot buft zijn bondgenoten. Prioridoelwit nummer één.' },
+  de_ophitser: { act: 3, soort: 'Hofhouding', lore: 'Asgrauwe huid vol embers-aders en een bandelier gestolen fakkels. Hij verbrandt wat anderen nodig hebben om warm te blijven — te beginnen met jóuw licht.', notitie: 'Zijn Fakkelroof brandt je fakkel weg (−6 licht). In het donker word je duurder betaald — maar zie je minder.' },
+  de_gouden_garde: { act: 3, soort: 'Hofhouding', lore: 'Absurd opgepoetst paradepantser en een gouden masker zonder oogsleuven: loyaliteit heeft geen zicht nodig. De medailles liggen als visschubben over de borst.', notitie: 'Een muur van blok en metaalhuid. Gif of gestage druk breekt hem sneller dan één grote klap.' },
+  de_rechter: { act: 3, soort: 'Elite', lore: 'Een rechter-beul in wijnrode toga, de blinddoek omhóóg geschoven op het voorhoofd — hij ziet precies wat hij wil zien. De gouden duim drukt de weegschaal al eeuwen dezelfde kant op.', notitie: 'Elke derde beurt valt het VONNIS: 8 + 4 per Zwak/Kwetsbaar-stapel op jou. Ontsmet jezelf, of blok op de maat.' },
+  de_hofnar: { act: 3, soort: 'Elite', lore: 'Belletjes vervangen door grijnzende schedeltjes, één broekspijp vol doorgehaalde namen, en een geschilderde glimlach over een mond die niet lacht. Zijn grappen zijn vloeken — en ze gaan over jou.', notitie: 'Zingt Laster je trekstapel in en lacht (+Blok) telkens jij een vloek trekt. Verbrand zijn leugens snel.' },
+  het_spreekgestoelte: { act: 3, soort: 'Episch', lore: 'Een verguld spreekgestoelte dat decennia toespraken opzoog tot het zélf ging spreken — monden vol slogans over het hele gouden front. En de stem... de stem is niet de zijne.', notitie: 'Slogans verzwakken je en sterken hem. Wie goed luistert, herkent de stem van wat boven het Slachtblok wacht.' }
 };
 
 /* ---------- RELIKWIEËN ---------- */

@@ -1051,6 +1051,16 @@ function geefBlok(actor, n) {
 /* speler valt vijand aan */
 function aanvalOp(doel, basis) {
   if (!doel || doel.dood) return;
+  /* DE ZONDEBOK (Act 3): draagt andermans schuld — 50% van je klappen op
+     ANDEREN belanden op hem. Vóór alle visuals/modifiers, zodat animatie,
+     Kwetsbaar-berekening en terugkaats allemaal het echte doelwit zien. */
+  if (S.gevecht && doel.id !== 'de_zondebok' && !doel.isSpeler && !doel.isMetgezel) {
+    const bok = S.gevecht.vijanden.find(x => !x.dood && x.id === 'de_zondebok');
+    if (bok && willekeurig() < 0.5) {
+      fxNummer(actorEl(bok), '🐐 draagt de schuld', 'fx-blok');
+      doel = bok;
+    }
+  }
   if (window.Vista) Vista.aanval(sp(), doel);
   pose2D(sp(), 'attack', 0.5);
   const fig = $('#speler-figuur');
@@ -1209,6 +1219,9 @@ function verliesHp(doel, n, bron) {
       doel.dood = true;
       Klank.sfx('dood');
       if (UITSPRAKEN[doel.id]) spreek(doel, UITSPRAKEN[doel.id].dood, 0.4);
+      /* per-vijand dood-haak (data-gestuurd; bv. de Zondebok: "de schuld is
+         weggedragen" → de rest +1 Kracht). Defensief: nooit de dood-flow breken. */
+      if (VIJANDEN[doel.id] && VIJANDEN[doel.id].bijDood) { try { VIJANDEN[doel.id].bijDood(doel); } catch (e) {} }
       if (window.Vista) Vista.sterf(doel);
       pose2D(doel, 'death', 3);
       if (el) el.classList.add('sterft');
@@ -1568,7 +1581,7 @@ function kiesGevechtAchtergrond(soort) {
   const A = window.ACHTERGRONDEN;
   if (!A) return null;
   const set = A['act' + huidigeAct()] || A.act1;
-  const pool = (soort === 'elite' || soort === 'baas') ? set.episch : set.gevecht;
+  const pool = (soort === 'elite' || soort === 'baas' || soort === 'episch') ? set.episch : set.gevecht;
   if (!pool || !pool.length) return null;
   return ACHTERGRONDEN.basis + kiesUit(pool);
 }
@@ -1955,19 +1968,25 @@ function kiesNodeEcht(id) {
         /* latere acts schuiven de moeilijkheidstier omhoog (Act 2 begint al in 'midden') */
         const er = n.r + (huidigeAct() - 1) * 5;
         const moeilijkheid = er < 3 ? 'vroeg' : (er < 6 ? 'midden' : (er < 9 ? 'laat' : 'zwaar'));
-        /* Act 2+ trekt uit z'n eigen roster (de kopieerhel) i.p.v. opgeschaalde Act 1-vijanden */
-        const tabel = (huidigeAct() >= 2 && ONTMOETINGEN.act2) ? ONTMOETINGEN.act2 : ONTMOETINGEN;
+        /* elke act trekt uit z'n eigen roster (act2 = kopieerhel, act3 = slachtblok);
+           ontbreekt een tier in de act-tabel, dan valt hij terug op de Act 1-laag */
+        const tabel = ONTMOETINGEN['act' + huidigeAct()] || ONTMOETINGEN;
         startGevecht(kiesUit(tabel[moeilijkheid] || ONTMOETINGEN[moeilijkheid]), 'gevecht', n.r);
         break;
       }
       case 'elite': {
-        const eliteTabel = (huidigeAct() >= 2 && ONTMOETINGEN.act2 && ONTMOETINGEN.act2.elite) ? ONTMOETINGEN.act2.elite : ONTMOETINGEN.elite;
+        const actTabel = ONTMOETINGEN['act' + huidigeAct()];
+        const eliteTabel = (actTabel && actTabel.elite) ? actTabel.elite : ONTMOETINGEN.elite;
         startGevecht(kiesUit(eliteTabel), 'elite', n.r);
         break;
       }
       case 'episch': {
-        /* de mysterie-vijand; bij winst valt z'n scherf (zie gevechtGewonnen) */
-        startGevecht(kiesUit(ONTMOETINGEN.episch || [['het_origineel']]), 'elite', n.r);
+        /* de mysterie-vijand; bij winst valt z'n scherf (zie gevechtGewonnen).
+           Per act een eigen episch-wezen (act3 = het Spreekgestoelte); terugval
+           op de globale pool (het Origineel). */
+        const actTabel = ONTMOETINGEN['act' + huidigeAct()];
+        const epischPool = (actTabel && actTabel.episch) || ONTMOETINGEN.episch || [['het_origineel']];
+        startGevecht(kiesUit(epischPool), 'episch', n.r);
         if (S.gevecht) S.gevecht.epischScherf = true;   /* bij winst valt een episch-scherf (zie gevechtGewonnen) */
         break;
       }
@@ -2150,7 +2169,7 @@ function startGevecht(samenstelling, soort, rij) {
   if (heeftRelikwie('anker')) g.speler.blok = 10;
   if (heeftRelikwie('warme_mantel') && lichtNiveau() !== 'helder') g.speler.blok += 6;
   if (heeftRelikwie('krachtsteen')) g.speler.status.kracht = (g.speler.status.kracht || 0) + 1;   /* optellen i.p.v. zetten: stapelt veilig met oorlogsbanier/duivelboomtak, ongeacht volgorde */
-  if (heeftRelikwie('oorlogsbanier') && (g.soort === 'elite' || g.soort === 'baas')) {
+  if (heeftRelikwie('oorlogsbanier') && (g.soort === 'elite' || g.soort === 'baas' || g.soort === 'episch')) {
     g.speler.status.kracht = (g.speler.status.kracht || 0) + 1;
   }
   if (heeftRelikwie('bronzen_schub')) g.speler.status.doornen = 3;
@@ -2226,7 +2245,7 @@ function startGevecht(samenstelling, soort, rij) {
   if (gevechtTikAf) gevechtTikAf();
   gevechtTikAf = Tikker.abonneer(gevechtTik);
 
-  Klank.muziek(soort === 'baas' ? 'baas' : (soort === 'elite' ? 'elite' : 'gevecht'));
+  Klank.muziek(soort === 'baas' ? 'baas' : (soort === 'elite' || soort === 'episch' ? 'elite' : 'gevecht'));
   toonScherm('gevecht');
   zetLichtVisueel();
   renderGevecht();
@@ -2617,8 +2636,14 @@ function trekKaarten(n) {
       g.trek = schud(g.afleg);
       g.afleg = [];
     }
-    g.hand.push(g.trek.pop());
+    const c = g.trek.pop();
+    g.hand.push(c);
     Klank.sfx('trek');
+    /* DE HOFNAR (Act 3): trek jij een vloek, dan lacht hij — +6 Blok */
+    if (kdef(c).type === 'vloek') {
+      const nar = g.vijanden.find(x => !x.dood && x.id === 'de_hofnar');
+      if (nar) { geefBlok(nar, 6); fxNummer(actorEl(nar), '🃏 lacht (+6🛡️)', 'fx-blok'); }
+    }
   }
 }
 
@@ -4381,7 +4406,7 @@ async function gevechtGewonnen() {
     return;
   }
 
-  let goud = g.soort === 'elite' ? rnd(34, 48) : rnd(16, 26);   /* iets guller na gevechten (playtest) */
+  let goud = (g.soort === 'elite' || g.soort === 'episch') ? rnd(34, 48) : rnd(16, 26);   /* iets guller na gevechten (playtest); episch beloont als elite */
   if (asc() >= 4) goud = Math.floor(goud * 0.75);   /* ascension 4: schrale buit */
   if (g.gedoofd) goud = Math.floor(goud * 1.5);
   if (heeftRelikwie('gelukspoot')) goud = Math.floor(goud * 1.25);
@@ -4391,7 +4416,7 @@ async function gevechtGewonnen() {
   S.beloning = {
     goud,
     kaarten: trekKaartBeloning(),
-    relikwie: g.soort === 'elite' ? willekeurigRelikwie({ ongewoon: 50, zeldzaam: 38, episch: 12 }) : null,
+    relikwie: (g.soort === 'elite' || g.soort === 'episch') ? willekeurigRelikwie({ ongewoon: 50, zeldzaam: 38, episch: 12 }) : null,
     drank: (willekeurig() < 0.3 && S.dranken.length < drankSlots()) ? kiesUit(Object.keys(DRANKEN)) : null
   };
   S.gevecht = null;
@@ -5403,7 +5428,29 @@ function devDropsTest() {
 function devLogo(e) {
   if (e && e.altKey) { devErfprins(); return; }       /* Alt+klik = meteen SOLO tegen de Erfprins (schone Roof-test) */
   if (e && e.shiftKey) { devDropsTest(); return; }     /* Shift+klik = Drops-testcyclus (spawnt/schrijft) */
+  if (e && e.ctrlKey) { devSprongAct3(); return; }     /* Ctrl+klik = Act 3-sprong (Slachtblok-test) */
   devSprongAct2();                                     /* gewone klik = veilige Act 2-sprong */
+}
+
+/* DEV-SHORTCUT: spring meteen naar Act 3 (het Slachtblok) om het nieuwe roster te
+   testen. NB: zolang ACTS_MAX=2 kom je hier alleen via deze sprong; de baas-node
+   valt terug op de Slijmkoning tot de DICKtator gebouwd is (fase 2). Weg vóór release. */
+function devSprongAct3() {
+  if (!S) nieuwSpel('slachter');
+  if (inGevecht()) stopGevechtLus();
+  S.gevecht = null;
+  S.act = 3;
+  S.fakkel = 100;
+  S.pos = null;
+  S.maxHp = Math.max(S.maxHp || 0, 150);
+  S.hp = S.maxHp;
+  S.dranken = [];
+  while (S.dranken.length < drankSlots()) S.dranken.push('heeldrank');
+  delete S.beloning; delete S.winkel; delete S.huidigEvent;
+  S.kaart = genereerKaart();   /* act-bewust → de Act 3-ladder */
+  saveSpel();
+  melding('⚡ DEV: Act 3 — Het Slachtblok. 150 HP + volle heeldranken. (Baas-node = nog de Slijmkoning tot de DICKtator er is.)');
+  renderKaartScherm();
 }
 function devDropsWis() {
   _devDropsReset();

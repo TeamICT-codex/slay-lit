@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v42'; /* v42: het playtest-vierluik — 🜂 scherven-teller in de topbalk (klik = Codex), Dossier-event +45 goud/−6 Max HP, De Mal's PERS-moment (dreun + gloeiende matrijs-flits + banner), en een eigen violette intro-titelkaart voor EPISCHE gevechten (naam + typering + openingszin) */
+const CACHE = 'slayit-v43'; /* v43: ACT 3 FASE 1 — het Slachtblok-skelet: 11 vijanden (omroeper/klapvee/zondebok/aanklager/fluisteraar/vaandeldrager/ophitser/gouden garde + elites rechter/hofnar + episch spreekgestoelte), vloek 'laster', act3-pools, per-act episch, zondebok/hofnar/bijDood-haken, bestiarium-tab 3, Ctrl+klik-devsprong. ACTS_MAX blijft 2 tot de DICKtator er is (fase 2) */
 const BESTANDEN = [
   '.',
   'css/style.css',
