@@ -2849,6 +2849,13 @@ body.lite .kv-geest { animation: none; opacity: .45; }
   text-align: center;
   animation: bikDeal .85s cubic-bezier(.2, .9, .3, 1.1) both;
 }
+/* het STAATSIEPORTRET van de DICKtator: verguld, gesmolten-rood onderlicht */
+.bik-kaart.bik-goud {
+  background: linear-gradient(165deg, #3e2a10, #1c0f0a);
+  border: 3px double var(--goud);
+  box-shadow: 0 0 46px rgba(245, 197, 66, .5), 0 -14px 40px rgba(226, 84, 44, .35) inset, 0 18px 50px rgba(0, 0, 0, .75);
+}
+.baas-intro-dicktator { background: radial-gradient(ellipse at center bottom, rgba(90, 24, 10, .55), rgba(12, 6, 6, .94)); }
 @keyframes bikDeal {
   0% { opacity: 0; transform: translateY(46px) rotateY(82deg) scale(.82); }
   100% { opacity: 1; transform: translateY(0) rotateY(0) scale(1); }

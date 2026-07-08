@@ -59,11 +59,12 @@ const RIJEN = 15, KOLS = 7;   /* afdaling iets langer (13→15): meer gevechten/
 const SAVE_SLEUTEL = 'slayit_save_v1';
 
 /* ---------- acts (meerdere verdiepingen-ladders na elkaar) ---------- */
-const ACTS_MAX = 2;                       /* verhoog naar 3 zodra Act 3 klaar is */
+const ACTS_MAX = 3;                       /* Act 3 is LIVE — de outro speelt nu ná de DICKtator */
 const ACT_NAMEN = { 1: 'De Diepte', 2: 'Het Archief', 3: 'Het Slachtblok' };
 const BAAS_PER_ACT = {
   1: { id: 'slijmkoning', naam: 'De Slijmkoning' },
-  2: { id: 'de_erfprins', naam: 'De Erfprins' }
+  2: { id: 'de_erfprins', naam: 'De Erfprins' },
+  3: { id: 'de_dicktator', naam: 'de DICKtator' }
 };
 function huidigeAct() { return (S && S.act) || 1; }
 function huidigeBaas() { return BAAS_PER_ACT[huidigeAct()] || BAAS_PER_ACT[1]; }
@@ -783,7 +784,11 @@ function baasSpreekt(tekst) {
   setTimeout(() => el.remove(), 3200);
 }
 /* het juiste baas-script (per baas een eigen stem) */
-function baasUitspraken(id) { return (id === 'de_erfprins') ? UITSPRAKEN._erfprins : UITSPRAKEN._baas; }
+function baasUitspraken(id) {
+  if (id === 'de_erfprins') return UITSPRAKEN._erfprins;
+  if (id === 'de_dicktator') return UITSPRAKEN._dicktator;
+  return UITSPRAKEN._baas;
+}
 
 function zetLichtVisueel() {
   const niveau = lichtNiveau();
@@ -1581,6 +1586,9 @@ function kiesGevechtAchtergrond(soort) {
   const A = window.ACHTERGRONDEN;
   if (!A) return null;
   const set = A['act' + huidigeAct()] || A.act1;
+  /* het eindgevecht van een act mag een eigen FINALE-plaat hebben (act 3: het
+     slachtblok-platform van de DICKtator) — anders de epische pool */
+  if (soort === 'baas' && set.finale) return ACHTERGRONDEN.basis + set.finale;
   const pool = (soort === 'elite' || soort === 'baas' || soort === 'episch') ? set.episch : set.gevecht;
   if (!pool || !pool.length) return null;
   return ACHTERGRONDEN.basis + kiesUit(pool);
@@ -2348,6 +2356,34 @@ function toonBaasIntro(g) {
   const el = document.createElement('div');
   el.id = 'baas-intro';
   if (b.id === 'slijmkoning') { toonSlijmkoningIntro(g, b, el); return; }   /* metamorfose i.p.v. de generieke titelkaart */
+  const isDick = (b.id === 'de_dicktator');
+  if (isDick) {
+    /* de DICKtator presenteert zichzelf als STAATSIEPORTRET — de introplaat
+       (de_dicktator_intro, mét eigen achtergrond) in een vergulde lijst */
+    el.classList.add('baas-intro-dicktator');
+    el.innerHTML = `<div class="baas-intro-binnen bik-wrap">
+      <small>Act ${huidigeAct()} — ${ACT_NAMEN[huidigeAct()] || 'Het Slachtblok'}</small>
+      <div class="bik-kaart bik-goud">
+        <div class="bik-tag">ZELFBENOEMD · ZELFGEKROOND · ZELFVOLDAAN</div>
+        <div class="bik-art">👑</div>
+        <div class="bik-naam">${b.naam}</div>
+        <div class="bik-titel">${VIJANDEN[b.id].titel || ''}</div>
+        <div class="bik-flavor">„Wat hij afschrijft, bestaat niet meer."</div>
+      </div>
+    </div>`;
+    $('#scherm-gevecht').appendChild(el);
+    if (window.laadKarakterAfbeelding) {
+      laadKarakterAfbeelding('de_dicktator_intro', img => {
+        const bik = el.querySelector('.bik-art');
+        if (img && bik) { bik.style.backgroundImage = `url("${img.src}")`; bik.textContent = ''; bik.classList.add('heeft-art'); }
+      });
+    }
+    Klank.sfx('zwareklap');
+    setTimeout(() => { Klank.sfx('dood'); schudScherm(); }, 700);
+    setTimeout(() => el.remove(), 3600);
+    setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(baasUitspraken(b.id).intro); }, 3900);
+    return;
+  }
   const isErf = (b.id === 'de_erfprins');
   if (isErf) {
     /* THE COPYCAT presenteert zichzelf als een SPEELKAART — de enige die hij nooit
@@ -3935,6 +3971,83 @@ function copycatNaSchade(v, n, bron) {
 /* de beurtkeuze van de Erfprins (Roof-rework): speel geroofde kaarten per fase, óf — als zijn
    geroofde stapel op is — een zwakke eigen uithaal (jouw window om hem af te maken).
    Puur (geen mutatie) — alle mutatie zit in de it.doe()-haken. */
+/* ============================================================
+   DE DICKTATOR — het brein van de Act 3-eindbaas.
+   Kern: HET DECREET (elke 3e beurt, getelegrafeerd) schrijft een kaart
+   PERMANENT af — het bewaarde contrast met de Erfprins-roof 'per gevecht'.
+   Daarnaast de vloeken-as: Karaktermoord schaalt op de laster in je stapels.
+   Drie fases op HP (aankondiging + escalatie); bij fase 2 keert de
+   JEUGDDROOM uit de proloog terug — voorziening getroffen, afgeschreven.
+   ============================================================ */
+function vloekenInGevecht(g) {
+  return g.trek.concat(g.hand, g.afleg).filter(c => kdef(c).type === 'vloek').length;
+}
+function dicktatorFase(v) {
+  const p = v.hp / (v.maxHp || 1);
+  return p > 0.66 ? 1 : (p > 0.33 ? 2 : 3);
+}
+/* de jeugddroom: een lopende run wint, anders de proloog-overdracht */
+function jeugddroomTekst() {
+  if (S && S.jeugddroom) return S.jeugddroom;
+  try {
+    const p = JSON.parse(localStorage.getItem('slayit_proloog') || 'null');
+    return (p && p.jeugddroom) || null;
+  } catch (e) { return null; }
+}
+function dicktatorDecreet(v) {
+  const g = S.gevecht; if (!g || g.voorbij) return;
+  const kandidaten = S.dek.filter(c => kdef(c).type !== 'vloek');
+  if (!kandidaten.length) return;
+  const c = kiesUit(kandidaten);
+  /* PERMANENT: uit je run-dek én uit alle gevechtsstapels (zelfde referentie) */
+  S.dek = S.dek.filter(x => x !== c);
+  g.trek = g.trek.filter(x => x !== c);
+  g.hand = g.hand.filter(x => x !== c);
+  g.afleg = g.afleg.filter(x => x !== c);
+  g.uitgeput = g.uitgeput.filter(x => x !== c);
+  pose2D(v, 'decreet', 1.6);   /* de signature-pose (de_dicktator_decreet-art) */
+  baasFaseMoment('HET DECREET', `„${kdef(c).naam}" — afgeschreven. Voorgoed.`);
+  baasSpreekt(kiesUit(UITSPRAKEN._dicktator.decreet));
+  saveSpel();
+  renderGevecht();
+}
+function dicktatorKies(v, beurt) {
+  const g = S.gevecht; if (!g) return { type: 'aanval', naam: 'Wijzend vonnis', dmg: 10 };
+  /* fase-aankondiging (eenmalig per fase) + de jeugddroom-terugkeer bij fase 2 */
+  const fase = dicktatorFase(v);
+  if (fase > (v.faseGezien || 1)) {
+    v.faseGezien = fase;
+    baasFaseMoment(fase === 2 ? 'DE LAUWERKRANS VERSCHUIFT' : 'DE LAATSTE TIRADE', '');
+    baasSpreekt(fase === 2 ? UITSPRAKEN._dicktator.fase2 : UITSPRAKEN._dicktator.fase3);
+    if (fase === 2) {
+      const droom = jeugddroomTekst();
+      if (droom) setTimeout(() => {
+        if (S.gevecht === g && !g.voorbij) baasSpreekt(`„Uw jeugddroom — ‚${droom}'. Voorziening getroffen. AFGESCHREVEN."`);
+      }, 3400);
+    }
+  }
+  const t = (v.beurtTeller = (v.beurtTeller || 0) + 1);
+  /* HET DECREET: elke 3e beurt (fase 3: elke 2e) — getelegrafeerd. Bij een
+     uitgemergeld dek (≤ 6 speelbare kaarten) valt hij terug op de Executie:
+     hij kan je niet verder afschrijven, dus hij hakt zelf. */
+  const decreetBeurt = fase >= 3 ? (t % 2 === 0) : (t % 3 === 0);
+  if (decreetBeurt) {
+    const speelbaar = S.dek.filter(c => kdef(c).type !== 'vloek').length;
+    if (speelbaar > 6) return { naam: 'HET DECREET', type: 'buff', doe: () => dicktatorDecreet(v) };
+    return { naam: 'EXECUTIE', type: 'aanval', dmg: 18 };
+  }
+  /* de vloeken-as + het gewone hof-repertoire */
+  const vloeken = vloekenInGevecht(g);
+  const r = willekeurig();
+  if (r < 0.4) return { naam: 'Karaktermoord', type: 'aanval', dmg: 9 + 2 * vloeken };
+  if (r < 0.7) return { naam: 'Lasterdecreet', type: 'buff', doe: () => {
+    g.trek.splice(Math.floor(willekeurig() * (g.trek.length + 1)), 0, nieuweKaart('laster'));
+    geefStatus(v, 'kracht', 1);
+    melding('👑 Een gestempeld lasterdecreet schuift tussen je kaarten.');
+  } };
+  return { naam: 'Gouden garde', type: 'blok', blok: 14 };
+}
+
 function copycatKies(v, beurt) {
   const g = S.gevecht; if (!g) return { type: 'aanval', naam: 'Geschreeuw', dmg: 6 };
   /* vóór DE ROOF: hij neemt je op en wácht tot je toeslaat — je eerste aanval ontketent
@@ -5426,10 +5539,39 @@ function devDropsTest() {
    playtest-save blijft schoon). SHIFT+klik = de Drops-testcyclus (die bewust spawnt/schrijft).
    devDropsWis() in de console reset de (cross-run) Drops-Codex weer naar nul. */
 function devLogo(e) {
+  if (e && e.ctrlKey && e.altKey) { devDicktator(); return; }   /* Ctrl+Alt+klik = meteen de DICKtator */
   if (e && e.altKey) { devErfprins(); return; }       /* Alt+klik = meteen SOLO tegen de Erfprins (schone Roof-test) */
   if (e && e.shiftKey) { devDropsTest(); return; }     /* Shift+klik = Drops-testcyclus (spawnt/schrijft) */
   if (e && e.ctrlKey) { devSprongAct3(); return; }     /* Ctrl+klik = Act 3-sprong (Slachtblok-test) */
   devSprongAct2();                                     /* gewone klik = veilige Act 2-sprong */
+}
+
+/* DEV-SHORTCUT: meteen tegen de DICKtator — met een geloofwaardig dek (het Decreet
+   vreet kaarten, dus een kaal startdek van 10 maakt de test zinloos) + ruime HP.
+   Ook als devDicktator() in de console. Weg vóór release. */
+function devDicktator() {
+  if (!S) nieuwSpel('slachter');
+  if (inGevecht()) stopGevechtLus();
+  S.gevecht = null;
+  S.act = 3;
+  S.fakkel = 100;
+  S.pos = null;
+  S.maxHp = Math.max(S.maxHp || 0, 150);
+  S.hp = S.maxHp;
+  S.dranken = [];
+  while (S.dranken.length < drankSlots()) S.dranken.push('heeldrank');
+  delete S.beloning; delete S.winkel; delete S.huidigEvent;
+  /* dek aandikken tot ±20 kaarten zodat het Decreet iets te vreten heeft
+     (zelfde patroon als devErfprins: uit de eigen heldPool) */
+  if (S.dek.length < 18) {
+    const pool = heldPool();
+    let veiligheid = 0;
+    while (S.dek.length < 20 && pool.length && veiligheid++ < 40) S.dek.push(nieuweKaart(kiesUit(pool)));
+  }
+  S.kaart = genereerKaart();
+  saveSpel();
+  melding('⚡ DEV: rechtstreeks naar de DICKtator — 150 HP, dek aangedikt tot 20.');
+  startGevecht(['de_dicktator'], 'baas', 12);
 }
 
 /* DEV-SHORTCUT: spring meteen naar Act 3 (het Slachtblok) om het nieuwe roster te

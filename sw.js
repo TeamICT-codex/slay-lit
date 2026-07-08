@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v43'; /* v43: ACT 3 FASE 1 — het Slachtblok-skelet: 11 vijanden (omroeper/klapvee/zondebok/aanklager/fluisteraar/vaandeldrager/ophitser/gouden garde + elites rechter/hofnar + episch spreekgestoelte), vloek 'laster', act3-pools, per-act episch, zondebok/hofnar/bijDood-haken, bestiarium-tab 3, Ctrl+klik-devsprong. ACTS_MAX blijft 2 tot de DICKtator er is (fase 2) */
+const CACHE = 'slayit-v44'; /* v44: ACT 3 IS LIVE (ACTS_MAX=3) — de DICKtator: HET DECREET (permanente kaartverwijdering, elke 3e beurt, fase 3 elke 2e), Karaktermoord schaalt op laster in je stapels, 3 fases met de jeugddroom-terugkeer uit de proloog, staatsieportret-intro, FINALE-achtergrond; outro speelt nu ná de DICKtator. Dev: Ctrl+Alt+klik = devDicktator */
 const BESTANDEN = [
   '.',
   'css/style.css',

@@ -1138,6 +1138,15 @@ const VIJANDEN = {
     titel: 'Erfgenaam zonder verdienste',
     kies: (v, beurt) => copycatKies(v, beurt)
   },
+  /* BAAS ACT 3 — de DICKtator: het geparkeerde ontwerp gaat live. Kern = HET
+     DECREET (PERMANENTE kaartverwijdering — het bewaarde contrast met de
+     Erfprins-roof 'per gevecht') + de vloeken-as (zijn Karaktermoord schaalt op
+     de laster die zijn hof over je uitstortte). Brein: dicktatorKies (game.js). */
+  de_dicktator: {
+    naam: 'de DICKtator', art: '👑', hp: [210, 210], baas: true,
+    titel: 'Heerser van het Slachtblok',
+    kies: (v, beurt) => dicktatorKies(v, beurt)
+  },
   /* DE DREMPELWACHTER — Balrog-stijl poortwachter; ontwaakt bij een FOUT scherf-trio op de Drempel
      (zie toonDrempel). Alleen via dat event gespawnd, niet in ONTMOETINGEN. Zwaar maar verslaanbaar. */
   de_drempelwachter: {
@@ -1517,6 +1526,15 @@ const UITSPRAKEN = {
     fase3: '„MIJN TROON. MIJN DIEPTE."',
     dood:  '„De diepte... vergeet... niets..."'
   },
+  /* de DICKtator: de ladder's eindvorm — dreigend én net iets belachelijk.
+     Zijn woord is een pen: wat hij afschrijft, bestaat niet meer. */
+  _dicktator: {
+    intro: '„ZO. Het niet-factureerbare element. JIJ."',
+    fase2: '„U vecht? U VECHT? Dat stond niet in uw functieomschrijving."',
+    fase3: '„IK BEN HET SLACHTBLOK. IK BEN DE LADDER. IK BEN ALLES."',
+    dood:  '„Maar... zonder mij... zijn jullie... niets...?"',
+    decreet: ['„AFGESCHREVEN."', '„Voorziening getroffen."', '„Dat had u niet meer nodig."']
+  },
   /* De Erfprins = THE COPYCAT: nepo-baby die nooit iets zelf maakte. Eerst pappies
      geld, nu steelt hij jóuw kaarten. Hij verafschuwt Drops — trouw kan hij niet kopiëren. */
   _erfprins: {
@@ -1648,7 +1666,8 @@ const BESTIARIUM = {
   de_gouden_garde: { act: 3, soort: 'Hofhouding', lore: 'Absurd opgepoetst paradepantser en een gouden masker zonder oogsleuven: loyaliteit heeft geen zicht nodig. De medailles liggen als visschubben over de borst.', notitie: 'Een muur van blok en metaalhuid. Gif of gestage druk breekt hem sneller dan één grote klap.' },
   de_rechter: { act: 3, soort: 'Elite', lore: 'Een rechter-beul in wijnrode toga, de blinddoek omhóóg geschoven op het voorhoofd — hij ziet precies wat hij wil zien. De gouden duim drukt de weegschaal al eeuwen dezelfde kant op.', notitie: 'Elke derde beurt valt het VONNIS: 8 + 4 per Zwak/Kwetsbaar-stapel op jou. Ontsmet jezelf, of blok op de maat.' },
   de_hofnar: { act: 3, soort: 'Elite', lore: 'Belletjes vervangen door grijnzende schedeltjes, één broekspijp vol doorgehaalde namen, en een geschilderde glimlach over een mond die niet lacht. Zijn grappen zijn vloeken — en ze gaan over jou.', notitie: 'Zingt Laster je trekstapel in en lacht (+Blok) telkens jij een vloek trekt. Verbrand zijn leugens snel.' },
-  het_spreekgestoelte: { act: 3, soort: 'Episch', lore: 'Een verguld spreekgestoelte dat decennia toespraken opzoog tot het zélf ging spreken — monden vol slogans over het hele gouden front. En de stem... de stem is niet de zijne.', notitie: 'Slogans verzwakken je en sterken hem. Wie goed luistert, herkent de stem van wat boven het Slachtblok wacht.' }
+  het_spreekgestoelte: { act: 3, soort: 'Episch', lore: 'Een verguld spreekgestoelte dat decennia toespraken opzoog tot het zélf ging spreken — monden vol slogans over het hele gouden front. En de stem... de stem is niet de zijne.', notitie: 'Slogans verzwakken je en sterken hem. Wie goed luistert, herkent de stem van wat boven het Slachtblok wacht.' },
+  de_dicktator: { act: 3, soort: 'Baas', lore: 'De vergulde demagoog-koning op de top van de ladder: zelfbenoemde lauwerkrans, zelfgeslagen medailles, opvallend kleine handen in véél te grote gouden handschoenen. Zijn woord is een pen — wat hij afschrijft, bestaat niet meer. Ook jouw kaarten. Ook jouw dromen.', notitie: 'HET DECREET schrijft élke derde beurt een kaart PERMANENT af. Verbrand zijn laster, hou je dek lean, en maak het kort — tijd is zijn wapen.' }
 };
 
 /* ---------- RELIKWIEËN ---------- */
