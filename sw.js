@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v46'; /* v46: HET SLACHTBLOK — je eigen kaart smeden (R3.6/Inscryption-knipoog): offer 2 kaarten (vernietigd voor de run) → smeedbudget → max 2 effectmodules + kost-keuze → ZELF de naam typen + icoon kiezen. Altaar vóór de Act 3-baas, doods-smeden op het nederlaagscherm (kaart wacht in de Codex, grafsteen-sectie, reist mee en vervangt een startkaart), daily's uit */
+const CACHE = 'slayit-v47'; /* v47: ACT 3 FASE 3 — de DICKtator-counter-build: 15 kaarten (vloek-synergie bij neutraal: Volkswoede/Brandstapel/Schuldverschuiving + per held 4), 10 relikwieën (Zondebokvel weigert de 1e vloek · Galgentouw-executie <10% · Poster-gratis-eerste · Martelaarskroon +4 blok per vloek-trek · Brandmerkijzer · Kop van Jut · Oorkonde · Gouden Handdruk · Volkslied +1⚡ · Kroon der Martelaren 4 AoE per uitgeputte vloek) + 4 events (Schavot/Verkiezing/Pamflet/Overloper — verraad koopt goud met laster); Archief-events → enkel act 2 */
 const BESTANDEN = [
   '.',
   'css/style.css',

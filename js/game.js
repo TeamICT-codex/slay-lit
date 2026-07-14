@@ -572,6 +572,8 @@ function kkost(c) {
   if ((def.licht || def.vuur) && heeftRelikwie('levend_vuur')) kost = Math.max(0, kost - 1);
   /* Aangetast (door de Erfprins gecorrumpeerd): loodzwaar — +1 Energie */
   if (c.aangetast) kost += 1;
+  /* De Overschreven Poster: het eerste woord is altijd gratis */
+  if (heeftRelikwie('propagandaposter') && S.gevecht && !S.gevecht.posterGebruikt) kost = 0;
   return kost;
 }
 /* VONK-ENTING (het Vonkaltaar): per-kaart fakkelkracht. c.vonk > 0 = Heldering
@@ -613,6 +615,11 @@ function geefRelikwie(id, vanSchrijn) {
   if (id === 'spaarvarken') S.goud += 100;
   if (id === 'bloedrobijn') { S.maxHp += 8; S.hp += 8; }
   if (id === 'het_grootboek') { S.maxHp += 12; S.hp += 12; }   /* Act 2: Het Grootboek */
+  if (id === 'de_gouden_handdruk') {   /* Act 3: de afkoopsom — genereus en verminkend */
+    S.goud += 120;
+    S.maxHp = Math.max(1, S.maxHp - 8);
+    if (S.hp > S.maxHp) S.hp = S.maxHp;
+  }
   /* echt gevonden (niet uit het Schrijn meegenomen) = lading herladen */
   if (!vanSchrijn) laadSchrijnOp(id);
   renderTopbalk();
@@ -959,18 +966,39 @@ function zwarteZielHint(actor) {
 
 /* LICHT-VLOEK toekennen (verwerving via de Archief-events): willekeurig uit de drie,
    pusht 'm naar het dek en geeft de naam terug voor de event-tekst. */
-function geefLichtVloek() {
-  const id = kiesUit(['schaduwsmet', 'mottenvlam', 'doofpot']);
+/* DE CENTRALE VLOEK-POORT: elke PERMANENTE vloek (dek-toevoeging) loopt hierlangs.
+   Het Zondebokvel (Act 3) weigert de eerste per run. Geeft de kaartnaam terug,
+   of null als het vel de vloek droeg. */
+function geefDekVloek(id) {
+  if (heeftRelikwie('zondebokvel') && !S.zondebokGebruikt) {
+    S.zondebokGebruikt = true;
+    melding('🐐 Het Zondebokvel draagt de vloek in jouw plaats.');
+    return null;
+  }
   S.dek.push(nieuweKaart(id));
   return KAARTEN[id].naam;
+}
+function geefLichtVloek() {
+  return geefDekVloek(kiesUit(['schaduwsmet', 'mottenvlam', 'doofpot']));
 }
 
 /* GENERIEKE VLOEK (incl. Pijn + de licht-vloeken) — voor vloek-bronnen door het hele
    spel verweven (Act 1+). Alle vloeken zijn weg te slopen bij de Oude Smid. */
 function geefVloek() {
-  const id = kiesUit(['pijn', 'schaduwsmet', 'mottenvlam', 'doofpot']);
-  S.dek.push(nieuweKaart(id));
-  return KAARTEN[id].naam;
+  return geefDekVloek(kiesUit(['pijn', 'schaduwsmet', 'mottenvlam', 'doofpot']));
+}
+
+/* een vloek uit de hand UITPUTTEN (Brandstapel/Schuldverschuiving) — en de
+   Kroon der Martelaren laat elke verbrande vloek terugslaan */
+function putVloekUit(c) {
+  const g = S.gevecht;
+  if (!g) return;
+  g.hand = g.hand.filter(k => k.uid !== c.uid);
+  g.uitgeput.push(c);
+  if (heeftRelikwie('kroon_der_martelaren')) {
+    alleVijanden().forEach(v => verliesHp(v, 4));
+    fxNummer($('#speler-zone'), '✨ de namen slaan terug', 'fx-blok');
+  }
 }
 
 /* VLOEK-REVEAL: toon een nieuw verworven vloek dramatisch als grote kaart (card-flip, à la
@@ -1099,8 +1127,15 @@ function aanvalOp(doel, basis) {
     dmg += 4;
     S.gevecht.wetsteenGebruikt = true;
   }
+  /* Het Hakblok (Act 3-kracht): je éérste aanval elke beurt hakt harder */
+  if ((sp().status.hakblok || 0) > 0 && !S.gevecht._hakblokGebruikt) {
+    dmg += sp().status.hakblok;
+    S.gevecht._hakblokGebruikt = true;
+  }
   if ((sp().status.zwak || 0) > 0) dmg = Math.floor(dmg * 0.75);
   if ((doel.status.kwetsbaar || 0) > 0) dmg = Math.floor(dmg * 1.5);
+  /* Het Brandmerkijzer: je merk drukt door waar het pantser al openligt */
+  if (heeftRelikwie('brandmerkijzer') && (doel.status.kwetsbaar || 0) > 0) dmg += 3;
   if (S.gevecht) S.gevecht.laatsteSpelerDmg = dmg;   /* Het Origineel kaatst dit terug */
   const echt = doeSchade(doel, Math.max(0, dmg), sp());
   S.stats.schade += echt;
@@ -1237,6 +1272,12 @@ function verliesHp(doel, n, bron) {
     if (S.hp <= 0 && inGevecht()) nederlaag();
   } else {
     doel.hp = Math.max(0, doel.hp - n);
+    /* Het Galgentouw (Act 3): vijanden (geen bazen) onder 10% HP sterven meteen — de executie */
+    if (doel.hp > 0 && heeftRelikwie('galgentouw') && VIJANDEN[doel.id] && !VIJANDEN[doel.id].baas
+        && doel.hp <= Math.ceil((doel.maxHp || 1) * 0.1)) {
+      doel.hp = 0;
+      fxNummer(actorEl(doel), '🪢 de executie', 'fx-schade');
+    }
     /* THE COPYCAT voedt zich met jouw schade — chokepoint, dus ook gif loopt hierlangs.
        copycatNaSchade regelt voeding (bron-gegate) + terugwin van je gestolen kaarten. */
     if (doel.hp > 0 && VIJANDEN[doel.id] && VIJANDEN[doel.id].copycat
@@ -2225,6 +2266,10 @@ function startGevecht(samenstelling, soort, rij) {
     const z = g.vijanden.slice().sort((a, b) => a.hp - b.hp)[0];
     if (z) { z.status.zwak = (z.status.zwak || 0) + 2; z.status.kwetsbaar = (z.status.kwetsbaar || 0) + 2; }
   }
+  if (heeftRelikwie('kop_van_jut')) {                     /* de STERKSTE krijgt de kermis-klap */
+    const st = g.vijanden.slice().sort((a, b) => b.hp - a.hp)[0];
+    if (st) { st.status.kwetsbaar = (st.status.kwetsbaar || 0) + 2; st.status.zwak = (st.status.zwak || 0) + 1; }
+  }
   if (heeftRelikwie('indexkaart')) g.speler.status.geindexeerd = (g.speler.status.geindexeerd || 0) + 1;   /* elke aanval → 1 Blok */
   if (heeftRelikwie('bottenfluit')) g.vijanden.forEach(v => v.status.zwak = 1);
   if (heeftRelikwie('energiekristal')) g.energie += 1;
@@ -2715,6 +2760,8 @@ function trekKaarten(n) {
     if (kdef(c).type === 'vloek') {
       const nar = g.vijanden.find(x => !x.dood && x.id === 'de_hofnar');
       if (nar) { geefBlok(nar, 6); fxNummer(actorEl(nar), '🃏 lacht (+6🛡️)', 'fx-blok'); }
+      /* De Martelaarskroon: wie de laster draagt zonder te knielen, draagt een kroon */
+      if (heeftRelikwie('martelaarskroon')) { geefBlok(sp(), 4); fxNummer($('#speler-zone'), '👑 +4 Blok', 'fx-blok'); }
     }
   }
 }
@@ -3593,6 +3640,8 @@ async function speelKaart(c, doel) {
   const g = S.gevecht;
   const def = kdef(c);
   g.energie -= kkost(c);
+  /* De Overschreven Poster: de gratis eerste kaart is nu verbruikt */
+  if (heeftRelikwie('propagandaposter') && !g.posterGebruikt) g.posterGebruikt = true;
   vliegKaart(GDOM.hand.get(c.uid), doel ? actorEl(doel) : $('#speler-zone'));
   g.hand = g.hand.filter(k => k.uid !== c.uid);
   Klank.sfx('kaart');
@@ -4245,6 +4294,12 @@ async function eindBeurt() {
   g.bezig = true;
   g.gekozenKaart = null; g.gekozenDrank = null; g.voorbeeldKaart = null;
 
+  /* De Laatste Vonk (Act 3-kracht): aan het einde van elke beurt gloeit je fakkel op */
+  if ((g.speler.status.laatstevonk || 0) > 0) {
+    zetFakkel(g.speler.status.laatstevonk);
+    fxNummer($('#speler-zone'), '✨🔥+' + g.speler.status.laatstevonk, 'fx-buff');
+  }
+
   /* DE ROOF — vangnet: eindigde je je eerste beurt zonder de Erfprins te raken, dan rooft hij
      nu alsnog (zelfde cinematic) vóór hij je kaarten begint te spelen. try/catch: een fout in
      de cinematic mag de beurt niet bevriezen (g.bezig staat hier al op true). */
@@ -4386,6 +4441,7 @@ function beginSpelerBeurt() {
   s.blok = (heeftRelikwie('was_zegel') && g.beurt === 1) ? s.blok : 0;   /* Was-zegel: behoud de overgebleven Blok van je openingsbeurt één beurt langer */
   g.aanvalDezeBeurt = 0;   /* Act 2: Originele Handtekening telt of dit je eerste aanval is */
   g._epidemieGespreid = false;   /* Epidemie mag deze beurt weer 1× verspreiden */
+  g._hakblokGebruikt = false;    /* Het Hakblok slijpt elke beurt een verse eerste snede */
   s.status.doorslag = 0;   /* Doorslag vervalt per beurt — geen carry-over (de kaart zegt "deze beurt") */
 
   if ((s.status.gif || 0) > 0) {
@@ -4464,6 +4520,11 @@ function beginSpelerBeurt() {
   if (motN > 0 && lichtNu === 'helder') {
     geefStatus(s, 'kwetsbaar', motN);      /* je felle vlam maakt je een doelwit voor de motten */
     melding('🦟 Je felle vlam lokt de Mottenvlam — je staat in het volle licht.');
+  }
+  /* Het Volkslied (Act 3): waar de laster het dikst ligt, klinkt het lied het luidst */
+  if (heeftRelikwie('het_volkslied') && g.hand.filter(c => kdef(c).type === 'vloek').length >= 2) {
+    g.energie += 1;
+    fxNummer($('#speler-zone'), '🎺 +1 energie', 'fx-buff');
   }
   g.jongleurOp = false; /* Fakkeljongleur is weer klaar voor zijn act */
   copycatAntiSoftlock(g);   /* THE COPYCAT: je houdt altijd minstens 1 speelbare kaart */
@@ -4569,7 +4630,17 @@ async function gevechtGewonnen() {
     return;
   }
 
+  /* De Oorkonde van Verzet (Act 3): elke gevallen schrik van het regime zet een handtekening bij */
+  if ((g.soort === 'elite' || g.soort === 'episch') && heeftRelikwie('oorkonde_van_verzet')) {
+    S.maxHp += 1; S.hp = Math.min(S.maxHp, S.hp + 1); S.goud += 10;
+    melding('📜 De Oorkonde van Verzet: +1 Max HP en +10 goud.');
+  }
   let goud = (g.soort === 'elite' || g.soort === 'episch') ? rnd(34, 48) : rnd(16, 26);   /* iets guller na gevechten (playtest); episch beloont als elite */
+  /* De Overloper (Act 3-event): zijn sleutels laten de eerstvolgende elite-kluis dubbel tellen */
+  if (S.overloperDubbel && (g.soort === 'elite' || g.soort === 'episch')) {
+    goud *= 2; S.overloperDubbel = false;
+    melding('🗝️ De sleutels van de Overloper: de kluis telt dubbel.');
+  }
   if (asc() >= 4) goud = Math.floor(goud * 0.75);   /* ascension 4: schrale buit */
   if (g.gedoofd) goud = Math.floor(goud * 1.5);
   if (heeftRelikwie('gelukspoot')) goud = Math.floor(goud * 1.25);

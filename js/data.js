@@ -625,6 +625,140 @@ const KAARTEN = {
     flavor: 'Je hebt het niet gedaan. Dat doet er niet toe.',
     speel: () => {}
   },
+
+  /* ============ ACT 3 — HET SLACHTBLOK (de DICKtator-counter-build) ============
+     De vloek-synergie zit bewust bij NEUTRAAL: iedereen kan de counter draften.
+     putVloekUit() (game.js) stuurt vloeken naar uitgeput — en triggert de
+     Kroon der Martelaren. */
+  volkswoede: {
+    naam: 'Volkswoede', type: 'aanval', zeld: 'gewoon', act: 3, kost: 1, doel: 'vijand', icoon: '✊',
+    dmg: 5, per: 3, up: { dmg: 7, per: 4 }, kopie: { soort: 'aanval', veld: 'dmg' },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade, +${kval(c, 'per')} per vloek in je hand.`,
+    flavor: 'Ze noemden het oproer. Het was gewoon iedereen tegelijk.',
+    speel: (c, t) => {
+      const vloeken = S.gevecht.hand.filter(k => kdef(k).type === 'vloek').length;
+      aanvalOp(t, kval(c, 'dmg') + vloeken * kval(c, 'per'));
+    }
+  },
+  brandstapel: {
+    naam: 'Brandstapel', type: 'vaardigheid', zeld: 'ongewoon', act: 3, kost: 1, icoon: '🔥',
+    dmg: 6, up: { dmg: 8 },
+    tekst: c => `Put álle vloeken uit je hand uit. Doe ${kval(c, 'dmg')} schade aan ALLE vijanden per verbrande vloek.`,
+    flavor: 'Wat ze je aansmeerden, brandt uitstekend.',
+    speel: c => {
+      const g = S.gevecht;
+      const vloeken = g.hand.filter(k => kdef(k).type === 'vloek');
+      vloeken.forEach(k => putVloekUit(k));
+      if (vloeken.length) alleVijanden().forEach(v => verliesHp(v, kval(c, 'dmg') * vloeken.length));
+      else melding('Geen vloeken in je hand — de brandstapel blijft koud.');
+    }
+  },
+  schuldverschuiving: {
+    naam: 'Schuldverschuiving', type: 'vaardigheid', zeld: 'ongewoon', act: 3, kost: 1, doel: 'vijand', icoon: '⚖️',
+    n: 2, up: { n: 3 },
+    tekst: c => `Put 1 vloek uit je hand uit: het doelwit krijgt ${kval(c, 'n')} Zwak en ${kval(c, 'n')} Kwetsbaar.`,
+    flavor: 'Iemand moet hangen. Waarom jij?',
+    kan: () => S.gevecht && S.gevecht.hand.some(k => kdef(k).type === 'vloek'),
+    reden: () => 'Je hebt geen vloek in je hand om door te schuiven.',
+    speel: (c, t) => {
+      const vloek = S.gevecht.hand.find(k => kdef(k).type === 'vloek');
+      if (!vloek) return;
+      putVloekUit(vloek);
+      geefStatus(t, 'zwak', kval(c, 'n'));
+      geefStatus(t, 'kwetsbaar', kval(c, 'n'));
+    }
+  },
+  ontslagbrief: {
+    naam: 'Ontslagbrief', type: 'aanval', zeld: 'ongewoon', act: 3, kost: 1, doel: 'vijand', icoon: '✉️', held: 'slachter',
+    dmg: 12, up: { dmg: 16 }, kopie: { soort: 'aanval', veld: 'dmg' },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Sterft het doelwit hieraan, trek dan 2 kaarten.`,
+    flavor: '„U bent vrijgesteld." — Nee. Jíj bent vrijgesteld.',
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); if (t.dood || t.hp <= 0) trekKaarten(2); }
+  },
+  het_hakblok: {
+    naam: 'Het Hakblok', type: 'kracht', zeld: 'ongewoon', act: 3, kost: 1, icoon: '🪵', held: 'slachter',
+    n: 4, up: { n: 6 },
+    tekst: c => `Je éérste aanval elke beurt doet +${kval(c, 'n')} schade.`,
+    flavor: 'Hun blok. Jouw snijplank.',
+    speel: c => { geefStatus(sp(), 'hakblok', kval(c, 'n')); }
+  },
+  martelaarsbloed: {
+    naam: 'Martelaarsbloed', type: 'aanval', zeld: 'zeldzaam', act: 3, kost: 0, doel: 'vijand', icoon: '🩸', held: 'slachter',
+    dmg: 16, prijs: 3, up: { dmg: 20 },
+    tekst: c => `Verlies ${kval(c, 'prijs')} HP. Doe ${pv(c, 'dmg')} schade.`,
+    flavor: 'Bloed dat je zélf geeft, kan niemand je afnemen.',
+    speel: (c, t) => { verliesHp(sp(), kval(c, 'prijs')); aanvalOp(t, kval(c, 'dmg')); }
+  },
+  tribunaal: {
+    naam: 'Tribunaal', type: 'aanval', zeld: 'gewoon', act: 3, kost: 2, icoon: '🔨', held: 'slachter',
+    dmg: 7, bonus: 2, up: { dmg: 9, bonus: 2 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade aan ALLE vijanden, +${kval(c, 'bonus')} aan Kwetsbare.`,
+    flavor: 'Iedereen tegelijk terecht. Zo doen zij het toch ook?',
+    speel: c => {
+      alleVijanden().forEach(v => aanvalOp(v, kval(c, 'dmg') + ((v.status.kwetsbaar || 0) > 0 ? kval(c, 'bonus') : 0)));
+    }
+  },
+  lastercampagne: {
+    naam: 'Lastercampagne', type: 'vaardigheid', zeld: 'ongewoon', act: 3, kost: 1, icoon: '📰', held: 'gifmagier',
+    gif: 3, zw: 1, up: { gif: 4, zw: 2 },
+    tekst: c => `Geef ALLE vijanden ${kval(c, 'gif')} Gif en ${kval(c, 'zw')} Zwak.`,
+    flavor: 'Een leugen per pamflet. Een pamflet per deur.',
+    speel: c => { alleVijanden().forEach(v => { geefGif(v, kval(c, 'gif')); geefStatus(v, 'zwak', kval(c, 'zw')); }); }
+  },
+  gifpamflet: {
+    naam: 'Gifpamflet', type: 'aanval', zeld: 'gewoon', act: 3, kost: 0, doel: 'vijand', icoon: '📃', held: 'gifmagier',
+    dmg: 3, gif: 3, up: { gif: 5 }, kopie: { soort: 'aanval', veld: 'dmg' },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade en geef ${kval(c, 'gif')} Gif. Trek 1 kaart.`,
+    flavor: 'Gratis meegenomen. Duur gelezen.',
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefGif(t, kval(c, 'gif')); trekKaarten(1); }
+  },
+  karaktermoord: {
+    naam: 'Karaktermoord', type: 'aanval', zeld: 'zeldzaam', act: 3, kost: 1, doel: 'vijand', icoon: '🎭', held: 'gifmagier',
+    dmg: 6, max: 8, up: { dmg: 9, max: 12 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade. Verdubbel het Gif op het doelwit (tot +${kval(c, 'max')}).`,
+    flavor: 'De man overleeft het. De naam niet.',
+    speel: (c, t) => {
+      aanvalOp(t, kval(c, 'dmg'));
+      if (!t.dood) { const extra = Math.min(t.status.gif || 0, kval(c, 'max')); if (extra > 0) geefGif(t, extra); }
+    }
+  },
+  de_gifbeker: {
+    naam: 'De Gifbeker', type: 'aanval', zeld: 'ongewoon', act: 3, kost: 2, doel: 'vijand', icoon: '🏆', held: 'gifmagier',
+    dmg: 10, gif: 6, up: { dmg: 13, gif: 8 },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade en geef ${kval(c, 'gif')} Gif.`,
+    flavor: 'Op uw gezondheid. Op úw gezondheid, drink.',
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefGif(t, kval(c, 'gif')); }
+  },
+  fakkeloptocht: {
+    naam: 'Fakkeloptocht', type: 'vaardigheid', zeld: 'ongewoon', act: 3, kost: 1, icoon: '🕯️', held: 'thoverk',
+    dmg: 8, licht: 4, up: { dmg: 10 },
+    tekst: c => `Verbrand ${kval(c, 'licht')} licht: doe ${kval(c, 'dmg')} schade aan ALLE vijanden.`,
+    flavor: 'Eén zachte vlam de straat op. Toen nog één.',
+    kan: () => S.fakkel >= 4,
+    reden: () => 'Je fakkel is te zwak om uit te delen.',
+    speel: c => { zetFakkel(-kval(c, 'licht')); alleVijanden().forEach(v => verliesHp(v, kval(c, 'dmg'))); }
+  },
+  tegenvuur: {
+    naam: 'Tegenvuur', type: 'vaardigheid', zeld: 'gewoon', act: 3, kost: 1, icoon: '🛡️', held: 'thoverk',
+    blok: 8, doorn: 2, up: { blok: 11, doorn: 3 },
+    tekst: c => `Krijg ${kval(c, 'blok')} Blok en ${kval(c, 'doorn')} Doornen.`,
+    flavor: 'Hun vuur vreet. Het onze verwarmt — en prikt.',
+    speel: c => { geefBlok(sp(), kval(c, 'blok')); geefStatus(sp(), 'doornen', kval(c, 'doorn')); }
+  },
+  de_laatste_vonk: {
+    naam: 'De Laatste Vonk', type: 'kracht', zeld: 'zeldzaam', act: 3, kost: 2, icoon: '✨', held: 'thoverk',
+    n: 5, up: { n: 8 },
+    tekst: c => `Aan het einde van elke beurt: +${kval(c, 'n')} licht.`,
+    flavor: 'Ze factureerden alles. Behalve dit.',
+    speel: c => { geefStatus(sp(), 'laatstevonk', kval(c, 'n')); }
+  },
+  asregen: {
+    naam: 'Asregen', type: 'aanval', zeld: 'ongewoon', act: 3, kost: 1, doel: 'vijand', icoon: '🌋', held: 'thoverk',
+    dmg: 10, zw: 1, up: { dmg: 13, zw: 2 }, kopie: { soort: 'aanval', veld: 'dmg' },
+    tekst: c => `Doe ${pv(c, 'dmg')} schade en geef ${kval(c, 'zw')} Zwak.`,
+    flavor: 'Alles wat opgaat in rook, komt neer als as.',
+    speel: (c, t) => { aanvalOp(t, kval(c, 'dmg')); geefStatus(t, 'zwak', kval(c, 'zw')); }
+  },
   /* --- LICHT-VLOEKEN — een licht-economie die je naar het midden-band knijpt.
      Onspeelbaar; de effecten vuren via de begin/eind-beurt-haken (game.js), niet via speel(). --- */
   schaduwsmet: {
@@ -807,6 +941,8 @@ const STATUSINFO = {
   doornen:     { naam: 'Doornen',     icoon: '🌵', goed: true,  uitleg: 'Aanvallers krijgen zoveel schade terug.' },
   metaalhuid:  { naam: 'Metaalhuid',  icoon: '🦾', goed: true,  uitleg: 'Krijgt aan het einde van elke beurt zoveel Blok.' },
   demonenvorm: { naam: 'Demonenvorm', icoon: '😈', goed: true,  uitleg: 'Krijgt aan het begin van elke beurt zoveel Kracht.' },
+  hakblok:     { naam: 'Het Hakblok', icoon: '🪵', goed: true,  uitleg: 'Je éérste aanval elke beurt doet zoveel extra schade.' },
+  laatstevonk: { naam: 'De Laatste Vonk', icoon: '✨', goed: true, uitleg: 'Krijgt aan het einde van elke beurt zoveel licht.' },
   sporenkring: { naam: 'Sporenkring', icoon: '🍄', goed: true,  uitleg: 'Geeft aan het begin van elke beurt alle vijanden zoveel Zwak.' },
   duivelhart:  { naam: 'Duivelhart',  icoon: '🌳', goed: true,  uitleg: 'Geeft aan het begin van elke beurt zoveel Kracht, maar verbrandt evenveel licht.' },
   gifklieren:  { naam: 'Gifklieren',  icoon: '🧫', goed: true,  uitleg: 'Geeft aan het begin van elke beurt alle vijanden zoveel Gif.' },
@@ -1798,7 +1934,29 @@ const RELIKWIEEN = {
   het_grootboek:  { naam: 'Het Grootboek', icoon: '📕', zeld: 'episch', tekst: 'Bij oppakken: +12 Max HP. Genees 8 HP na elk gevecht.',
     lore: 'Elke naam die de diepte ooit opslokte staat erin, regel na regel, tot in het oneindige. Sla het open en het schrijft jóuw naam bij — niet bij de doden, nog niet.' },
   zielslantaarn:  { naam: 'De Zielslantaarn', icoon: '🏮', zeld: 'episch', tekst: 'Je Gif negeert ALLE gif-afweer (immuniteit, weerstand, absorptie, Zwarte-Ziel-weerkaatsing). Sterft een wezen met zo\'n afweer aan je gif: +2 Kracht.',
-    lore: 'Een lantaarn die geen vlam draagt maar zielen. Het zwart dat anderen verzwelgt, schenkt zij aan jou — regel na regel, ziel na ziel.' }
+    lore: 'Een lantaarn die geen vlam draagt maar zielen. Het zwart dat anderen verzwelgt, schenkt zij aan jou — regel na regel, ziel na ziel.' },
+
+  /* ============ ACT 3 — HET SLACHTBLOK (de vloek-synergie-as = de DICKtator-counter) ============ */
+  zondebokvel:    { naam: 'Het Zondebokvel', icoon: '🐐', zeld: 'gewoon', tekst: 'De eerste vloek die je deze run zou ontvangen, wordt geweigerd.',
+    lore: 'Een lap zwart geitenvel met een geschilderd wit doelwit. Iemand droeg elke schuld die niet de zijne was. Nu draagt het vel er ééntje voor jou.' },
+  galgentouw:     { naam: 'Het Galgentouw', icoon: '🪢', zeld: 'gewoon', tekst: 'Vijanden (geen bazen) onder 10% HP sterven meteen — de executie.',
+    lore: 'Doorgesneden vlak vóór het strakke moment. De strop onthoudt hoe het moest — en maakt het af waar jij ophoudt.' },
+  propagandaposter: { naam: 'De Overschreven Poster', icoon: '📰', zeld: 'gewoon', tekst: 'De eerste kaart die je elk gevecht speelt, kost 0 energie.',
+    lore: 'Over het gouden gezicht heen kalkte iemand één woord. Het eerste woord is altijd gratis — daarna kost spreken.' },
+  martelaarskroon: { naam: 'De Martelaarskroon', icoon: '👑', zeld: 'ongewoon', tekst: 'Telkens je een vloek trekt: +4 Blok.',
+    lore: 'Doorniig ijzer met vonkjes warm licht tussen de weerhaken. Wie de laster draagt zonder te knielen, draagt een kroon.' },
+  brandmerkijzer: { naam: 'Het Brandmerkijzer', icoon: '🔥', zeld: 'ongewoon', tekst: 'Je aanvallen op Kwetsbare doelwitten doen +3 schade.',
+    lore: 'Het zegel gloeit nog van hún hand. Nu drukt het jouw merk — precies waar het pantser al openligt.' },
+  kop_van_jut:    { naam: 'De Kop van Jut', icoon: '🔨', zeld: 'ongewoon', tekst: 'Bij gevechtsstart krijgt het sterkste doelwit 2 Kwetsbaar en 1 Zwak.',
+    lore: 'Op de kermis van het regime sloeg iedereen op dezelfde vergulde kop. Iedereen krijgt één slag. Deze is de jouwe.' },
+  oorkonde_van_verzet: { naam: 'De Oorkonde van Verzet', icoon: '📜', zeld: 'ongewoon', tekst: 'Na elke elite-overwinning: +1 Max HP en +10 goud.',
+    lore: 'Tientallen onbeholpen handtekeningen, verzegeld met fakkel-as. Elke gevallen schrik van het regime zet er stilletjes eentje bij.' },
+  de_gouden_handdruk: { naam: 'De Gouden Handdruk', icoon: '🤝', zeld: 'zeldzaam', tekst: 'Bij oppakken: +120 goud, −8 Max HP.',
+    lore: 'Twee gevouwen handschoenen van massief goud, afgehakt aan beide polsen. Genereus en verminkend — zoals elke afkoopsom.' },
+  het_volkslied:  { naam: 'Het Volkslied', icoon: '🎺', zeld: 'zeldzaam', tekst: 'Begin je je beurt met 2 of meer vloeken in je hand: +1 energie.',
+    lore: 'Een gedeukte hoorn, door duizend handen gegaan. Het lied dat ze verboden klinkt het luidst waar de laster het dikst ligt.' },
+  kroon_der_martelaren: { naam: 'De Kroon der Martelaren', icoon: '✨', zeld: 'episch', tekst: 'Telkens een vloek wordt uitgeput: 4 schade aan ALLE vijanden.',
+    lore: 'Een zwevende krans van klein warm vuur — elke vlam een naam die het regime wou schrappen. Verbrand hun laster, en de namen slaan terug.' }
 };
 
 /* ---------- DRANKJES ---------- */
@@ -2049,7 +2207,7 @@ const EVENTS = [
     opties: [
       {
         label: 'Doorzoek het lijk', detail: 'Krijg 60 goud, maar ook een vloek.',
-        doe: () => { S.goud += 60; const v = geefVloek(); return `Je vindt 60 goud... maar een kille rilling trekt door je botten. Je dek bevat nu "${v}".`; }
+        doe: () => { S.goud += 60; const v = geefVloek(); return v ? `Je vindt 60 goud... maar een kille rilling trekt door je botten. Je dek bevat nu "${v}".` : 'Je vindt 60 goud... en het Zondebokvel vangt de kille rilling op.'; }
       },
       { label: 'Laat hem rusten', detail: 'Niets gebeurt.', doe: () => 'Je vouwt zijn handen over zijn borst en loopt verder.' }
     ]
@@ -2058,7 +2216,7 @@ const EVENTS = [
   /* ===== Act 2 — Het Archief (alleen Act 2+) ===== */
   {
     id: 'onafgewerkte_dossier', titel: 'Het Onafgewerkte Dossier', icoon: '📂',
-    toon: () => huidigeAct() >= 2,
+    toon: () => huidigeAct() === 2,   /* Archief-flavor: Act 3 heeft zijn eigen vier */
     tekst: 'Op een stenen lessenaar ligt een half-ingevuld dossier — jóuw naam staat er bovenaan, in een vreemde hand. De onderste helft is nog leeg.',
     opties: [
       {
@@ -2085,7 +2243,7 @@ const EVENTS = [
   },
   {
     id: 'kopieermachine', titel: 'De Kopieermachine', icoon: '🖨️',
-    toon: () => huidigeAct() >= 2,
+    toon: () => huidigeAct() === 2,   /* Archief-flavor */
     tekst: 'Een rammelend monster van tandwielen en inktrollen staat te draaien in een nis. Stop er iets in, en het perst er een doorslag van uit.',
     opties: [
       {
@@ -2105,7 +2263,7 @@ const EVENTS = [
   },
   {
     id: 'naamloze_klerk', titel: 'De Naamloze Klerk', icoon: '🖋️',
-    toon: () => huidigeAct() >= 2,
+    toon: () => huidigeAct() === 2,   /* Archief-flavor */
     tekst: 'Achter een stenen loket zit een klerk zonder gezicht — waar een gelaat hoort, alleen glad perkament. Hij heft een stempel en wacht.',
     opties: [
       {
@@ -2114,14 +2272,14 @@ const EVENTS = [
       },
       {
         label: 'Vraag om je dossier', detail: 'Misschien een relikwie — of een berisping.',
-        doe: () => { if (willekeurig() < 0.55) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `De klerk schuift je dossier door het loket. Erin: ${RELIKWIEEN[r].naam}!`; } S.goud += 50; return 'Je dossier is leeg op 50 goud aan onkostenvergoeding na.'; } verliesHpBuitenGevecht(5); const v = geefLichtVloek(); return `De klerk stempelt AFGEKEURD op je verzoek. −5 HP en een clausule "${v}" erbij.`; }
+        doe: () => { if (willekeurig() < 0.55) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `De klerk schuift je dossier door het loket. Erin: ${RELIKWIEEN[r].naam}!`; } S.goud += 50; return 'Je dossier is leeg op 50 goud aan onkostenvergoeding na.'; } verliesHpBuitenGevecht(5); const v = geefLichtVloek(); return v ? `De klerk stempelt AFGEKEURD op je verzoek. −5 HP en een clausule "${v}" erbij.` : 'De klerk stempelt AFGEKEURD op je verzoek. −5 HP — maar het Zondebokvel slikt de clausule in.'; }
       },
       { label: 'Loop weg', detail: 'Niets gebeurt.', doe: () => 'Je laat de gezichtloze klerk wachten. Hij zal je naam onthouden.' }
     ]
   },
   {
     id: 'verloren_origineel', titel: 'Het Verloren Origineel', icoon: '📜',
-    toon: () => huidigeAct() >= 2,
+    toon: () => huidigeAct() === 2,   /* Archief-flavor */
     tekst: 'Tussen oneindige bleke doorslagen gloeit één enkel vel warm en goudkleurig — een origineel, levend, dat aan één hoek oplicht alsof het ademt.',
     opties: [
       {
@@ -2135,6 +2293,107 @@ const EVENTS = [
         doe: () => { zetFakkel(30); return 'Je houdt het warme vel bij je fakkel. Het enige onfactureerbare licht voedt het andere. (+30 licht)'; }
       },
       { label: 'Laat het waar het hoort', detail: 'Niets gebeurt.', doe: () => 'Je laat het origineel gloeien tussen zijn kopieën.' }
+    ]
+  },
+
+  /* ============ ACT 3 — HET SLACHTBLOK (verraad koop je met je naam: laster) ============ */
+  {
+    id: 'het_schavot', titel: 'Het Schavot', icoon: '🪓',
+    toon: () => huidigeAct() >= 3,
+    tekst: 'Op een leeg nachtplein staat het schavot. De bijl leunt ONBEHEERD tegen het blok; de veroordeelde knielt er nog, kettingen slap. Eén zachte lantaarn binnen handbereik.',
+    opties: [
+      {
+        label: 'Bevrijd de veroordeelde', detail: 'Verlies 8 HP. Hij vergeet het niet.',
+        kan: () => S.hp > 10,
+        reden: () => 'Je bent te zwak om de kettingen te breken.',
+        doe: () => {
+          verliesHpBuitenGevecht(8);
+          if (willekeurig() < 0.6) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `De kettingen snijden je open, maar hij drukt je iets in de handen: ${RELIKWIEEN[r].naam}. Dan is hij weg, het donker in.`; } }
+          S.goud += 40;
+          return 'De kettingen snijden je open. Hij heeft niets om te geven behalve wat hij ooit verstopte: 40 goud — en een blik die je nooit vergeet.';
+        }
+      },
+      {
+        label: 'Neem de bijl', detail: 'Eén willekeurige kaart wordt VOORGOED verwijderd. +60 goud.',
+        kan: () => S.dek.length > 5,
+        reden: () => 'Je dek is te dun om nog iets af te schrijven.',
+        doe: () => {
+          const kandidaten = S.dek.filter(c => KAARTEN[c.id].type !== 'vloek');
+          const c = kiesUit(kandidaten.length ? kandidaten : S.dek);
+          S.dek = S.dek.filter(x => x !== c);
+          S.goud += 60;
+          return `Je tilt de bijl. Hij valt zwaarder dan verwacht: „${KAARTEN[c.id].naam}" — afgeschreven, voorgoed. Onder het blok ligt het handgeld: 60 goud.`;
+        }
+      },
+      { label: 'Loop stil voorbij', detail: 'Niets gebeurt.', doe: () => 'Je loopt voorbij. De lantaarn flakkert, alsof ze het onthoudt.' }
+    ]
+  },
+  {
+    id: 'de_verkiezing', titel: 'De Verkiezing', icoon: '🗳️',
+    toon: () => huidigeAct() >= 3,
+    tekst: 'Twee vergulde urnen op een bazalten podium, allebei al OVERVOL met identieke, goudgezegelde stembiljetten. Onder het podium, half verborgen, is een derde gleuf ruw in de steen gesneden.',
+    opties: [
+      {
+        label: 'Stem urne A', detail: '+30 goud „aanwezigheidspremie". En je naam op een lijst.',
+        doe: () => { S.goud += 30; if (willekeurig() < 0.5) { const v = geefDekVloek('laster'); if (v) { toonVloekReveal('laster'); return 'De teller knikt goedkeurend en betaalt je premie: 30 goud. Achter je krast een pen — jouw naam, een lijst, een leugen.'; } } return 'De teller knikt goedkeurend en betaalt je premie: 30 goud. De uitslag stond al vast.'; }
+      },
+      {
+        label: 'Stem urne B', detail: '+30 goud „aanwezigheidspremie". En je naam op een lijst.',
+        doe: () => { S.goud += 30; if (willekeurig() < 0.5) { const v = geefDekVloek('laster'); if (v) { toonVloekReveal('laster'); return 'De teller knikt exact even goedkeurend en betaalt exact dezelfde premie: 30 goud. B, A — de uitslag kent het verschil niet.'; } } return 'De teller knikt exact even goedkeurend: 30 goud. De urnen worden straks toch samengegoten.'; }
+      },
+      {
+        label: 'De derde gleuf', detail: 'Stop je LICHT erin (−20). Wat eruit komt, is niet geteld.',
+        kan: () => S.fakkel >= 60,
+        reden: () => 'De gleuf is te donker — je fakkel moet feller branden (60+).',
+        doe: () => { zetFakkel(-20); const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `Je giet je licht in de gleuf. Iets onder het podium slikt, en schuift iets terug: ${RELIKWIEEN[r].naam}. Niet geteld. Niet gezien.`; } S.goud += 80; return 'Je giet je licht in de gleuf. Van onder het podium schuift een buidel terug: 80 goud. Niet geteld. Niet gezien.'; }
+      }
+    ]
+  },
+  {
+    id: 'het_pamflet', titel: 'Het Pamflet', icoon: '🖨️',
+    toon: () => huidigeAct() >= 3,
+    tekst: 'In een bazalten kelder ratelt een verborgen handpers. Verse pamfletten hangen aan waslijnen te drogen. Boven het valluik: hard rood licht. Hier beneden: één zachte kaars, en inktvlekken op alles.',
+    opties: [
+      {
+        label: 'Druk mee', detail: 'Smeed 1 willekeurige kaart (gratis upgrade). 35% kans: gesnapt.',
+        kan: () => S.dek.some(c => !c.up && KAARTEN[c.id].up),
+        reden: () => 'Al je kaarten zijn al gesmeed — je hand is hier niets waard.',
+        doe: () => {
+          const kandidaten = S.dek.filter(c => !c.up && KAARTEN[c.id].up);
+          const c = kiesUit(kandidaten);
+          c.up = true;
+          if (willekeurig() < 0.35) { const v = geefDekVloek('laster'); if (v) { toonVloekReveal('laster'); return `Je draait de pers: „${KAARTEN[c.id].naam}" komt er scherper uit (+). Maar boven klapt het luik — iemand heeft je gezien.`; } }
+          return `Je draait de pers tot je armen branden: „${KAARTEN[c.id].naam}" komt er scherper uit (+). De drukker knikt. Meer niet. Genoeg.`;
+        }
+      },
+      {
+        label: 'Verklik de drukker', detail: '+80 goud. Gegarandeerd een vloek — verraad kost je naam.',
+        doe: () => { S.goud += 80; const v = geefDekVloek('laster'); if (v) toonVloekReveal('laster'); return v ? 'De premie is vorstelijk: 80 goud. De pers valt stil. Jouw naam fluistert voortaan mee in elke kelder.' : 'De premie is vorstelijk: 80 goud. Het Zondebokvel draagt de schande — maar jij weet het nog wel.'; }
+      },
+      { label: 'Duik terug de schaduw in', detail: 'Niets gebeurt.', doe: () => 'Je trekt je terug. Beneden ratelt de pers door — koppig, zacht, onbetaalbaar.' }
+    ]
+  },
+  {
+    id: 'de_overloper', titel: 'De Overloper', icoon: '🗝️',
+    toon: () => huidigeAct() >= 3,
+    tekst: 'Een gouden gardist staat in een schaduwboog — helm ÁF, onder zijn arm. Een moe, menselijk gezicht. Hij houdt je een sleutelbos en een gevouwen kaart voor. Zijn hellebaard leunt vergeten tegen de muur.',
+    opties: [
+      {
+        label: 'Koop de sleutels', detail: '−40 goud. Je eerstvolgende elite-buit telt DUBBEL.',
+        kan: () => S.goud >= 40,
+        reden: () => 'Je hebt geen 40 goud.',
+        doe: () => { S.goud -= 40; S.overloperDubbel = true; return 'Hij weegt je goud niet eens. „De kluizen tellen op wat de wacht niet ziet." De eerstvolgende elite-buit telt dubbel.'; }
+      },
+      {
+        label: 'Vraag de route', detail: '+30 licht — de kortste weg door de patrouilles.',
+        kan: () => S.fakkel < 100,
+        reden: () => 'Je fakkel is al vol — je hebt zijn route niet nodig.',
+        doe: () => { zetFakkel(30); return 'Hij tekent drie lijnen op je hand. „Daar staat niemand. Daar kijkt niemand. Daar wíl niemand staan." Je verspilt geen druppel olie. (+30 licht)'; }
+      },
+      {
+        label: 'Meld hem aan', detail: '+100 goud + een vloek. De duurste keuze van de act.',
+        doe: () => { S.goud += 100; const v = geefDekVloek('laster'); if (v) toonVloekReveal('laster'); return v ? 'Honderd goudstukken, keurig geteld. Ze nemen hem zonder geweld mee — hij kijkt je niet eens aan. Dat is het ergste.' : 'Honderd goudstukken, keurig geteld. Het Zondebokvel draagt je naam weg — maar zijn blik neem je mee.'; }
+      }
     ]
   }
 ];
