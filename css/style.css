@@ -1327,6 +1327,58 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 .sb-grafsteen small { color: var(--perkament-dof); font-size: .72rem; }
 .sb-grafsteen.gebrandmerkt { border-color: var(--goud); box-shadow: 0 0 14px rgba(245, 197, 66, .3); }
 
+/* ---------- HET DECREET-MOMENT: stempel + verbranding ---------- */
+.decreet-overlay { background: radial-gradient(ellipse at center, rgba(70, 14, 8, .88), rgba(10, 4, 4, .97)); }
+.decreet-overlay .vloek-reveal-kop { color: #ffd7a0; text-shadow: 0 2px 16px rgba(245, 197, 66, .8); }
+.decreet-kaartwrap { position: relative; transition: filter .5s ease, transform .5s ease, opacity .6s ease; }
+.decreet-stempel {
+  position: absolute; top: 38%; left: 50%;
+  transform: translate(-50%, -50%) rotate(-14deg) scale(6);
+  padding: 6px 18px; border: 4px solid #e23c2c; border-radius: 6px;
+  color: #ff5540; font-family: 'Pirata One', serif; font-size: clamp(1.4rem, 4vw, 2.2rem);
+  letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
+  opacity: 0; pointer-events: none; mix-blend-mode: screen;
+  text-shadow: 0 0 18px rgba(255, 60, 30, .9);
+}
+.decreet-kaartwrap.gestempeld .decreet-stempel { animation: stempelSlam .28s cubic-bezier(.2, 1.6, .4, 1) forwards; }
+@keyframes stempelSlam {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(-14deg) scale(6); }
+  100% { opacity: 1; transform: translate(-50%, -50%) rotate(-14deg) scale(1); }
+}
+.decreet-kaartwrap.verbrandt { filter: brightness(2.4) saturate(1.7) sepia(.6); transform: scale(.82) rotate(3deg); opacity: 0; }
+body.lite .decreet-stempel { animation: none; opacity: 1; transform: translate(-50%, -50%) rotate(-14deg) scale(1); }
+
+/* ---------- smeedkamer 2.0: werkbank + live preview ---------- */
+.sb-werkbank { display: flex; gap: clamp(12px, 3vw, 30px); align-items: center; justify-content: center; flex-wrap: wrap; max-width: min(94vw, 900px); }
+.sb-preview { display: flex; flex-direction: column; align-items: center; gap: 4px; transition: filter .4s ease; }
+.sb-preview .kaart-focus-houder { transform: scale(.82); transform-origin: center top; margin-bottom: -30px; }
+.sb-preview.gloeit { filter: drop-shadow(0 0 22px rgba(255, 140, 50, .55)); }
+.sb-preview-label { color: #d9a06b; font-style: italic; font-size: .78rem; }
+.sb-negatief { color: #ff5540 !important; }
+
+/* de meeneem-tegel op het heldkeuze-scherm (naast het Schrijn) */
+.sb-meeneem { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
+.sb-meeneem-icoon { font-size: 1.5rem; line-height: 1.1; }
+.sb-meeneem-naam { font-size: .78rem; max-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-meeneem small { color: var(--perkament-dof); font-size: .68rem; }
+.sb-meeneem.gekozen { border-color: var(--goud); box-shadow: 0 0 14px rgba(245, 197, 66, .5); }
+
+/* ---------- het leaderboard ---------- */
+.lb-kolommen { display: flex; gap: clamp(14px, 4vw, 44px); justify-content: center; flex-wrap: wrap; width: min(860px, 94vw); }
+.lb-kolom { flex: 1 1 300px; min-width: 280px; }
+.lb-rij {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 12px; border-radius: 9px; margin-bottom: 5px;
+  background: rgba(30, 22, 40, .65); border: 1px solid rgba(160, 130, 200, .25);
+  color: var(--perkament); font-size: .92rem;
+}
+.lb-rij b { min-width: 52px; color: #ffd873; }
+.lb-rij small { margin-left: auto; color: var(--perkament-dof); }
+.lb-rij.lb-top { border-color: var(--goud); box-shadow: 0 0 12px rgba(245, 197, 66, .3); }
+.lb-rang { min-width: 30px; text-align: center; }
+.lb-leeg, .lb-records, .lb-voet { color: var(--perkament-dof); font-size: .85rem; }
+.lb-voet { text-align: center; max-width: 560px; }
+
 .vieze-vinger {
   position: fixed; z-index: 702; pointer-events: none; font-size: clamp(2rem, 5vw, 3rem);
   transform: translate(-50%, -120%) rotate(8deg); opacity: 0;

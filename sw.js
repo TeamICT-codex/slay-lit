@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v47'; /* v47: ACT 3 FASE 3 — de DICKtator-counter-build: 15 kaarten (vloek-synergie bij neutraal: Volkswoede/Brandstapel/Schuldverschuiving + per held 4), 10 relikwieën (Zondebokvel weigert de 1e vloek · Galgentouw-executie <10% · Poster-gratis-eerste · Martelaarskroon +4 blok per vloek-trek · Brandmerkijzer · Kop van Jut · Oorkonde · Gouden Handdruk · Volkslied +1⚡ · Kroon der Martelaren 4 AoE per uitgeputte vloek) + 4 events (Schavot/Verkiezing/Pamflet/Overloper — verraad koopt goud met laster); Archief-events → enkel act 2 */
+const CACHE = 'slayit-v48'; /* v48: playtest-ronde eindgame — DICKtator 240 HP + DE HERVERKIEZING (herrijst 1× op 40%, wanhoopsfase); HET DECREET-drama (de afgeschreven kaart GROOT in beeld + rode stempel + verbranding); smeedkamer 2.0 (echte kaart-art in de offers, LIVE preview-kaart, kost-prijzen: 0⚡ −3pt / 2⚡ +2pt); gesmede kaart meeneembaar via het heldkeuze-scherm met 3 LADINGEN; daily +2 dag-seeded relikwieën; lokaal 🏆 LEADERBOARD (dagscores + runs + deel-knop) */
 const BESTANDEN = [
   '.',
   'css/style.css',

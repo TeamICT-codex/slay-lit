@@ -1279,7 +1279,7 @@ const VIJANDEN = {
      Erfprins-roof 'per gevecht') + de vloeken-as (zijn Karaktermoord schaalt op
      de laster die zijn hof over je uitstortte). Brein: dicktatorKies (game.js). */
   de_dicktator: {
-    naam: 'de DICKtator', art: '👑', hp: [210, 210], baas: true,
+    naam: 'de DICKtator', art: '👑', hp: [240, 240], baas: true,   /* playtest: 210 was te makkelijk; hij herrijst nu ook éénmalig (DE HERVERKIEZING) */
     titel: 'Heerser van het Slachtblok',
     kies: (v, beurt) => dicktatorKies(v, beurt)
   },
@@ -1668,6 +1668,7 @@ const UITSPRAKEN = {
     intro: '„ZO. Het niet-factureerbare element. JIJ."',
     fase2: '„U vecht? U VECHT? Dat stond niet in uw functieomschrijving."',
     fase3: '„IK BEN HET SLACHTBLOK. IK BEN DE LADDER. IK BEN ALLES."',
+    herrijzenis: '„Herverkozen. Unaniem. Wie zou er ook ANDERS zijn?"',
     dood:  '„Maar... zonder mij... zijn jullie... niets...?"',
     decreet: ['„AFGESCHREVEN."', '„Voorziening getroffen."', '„Dat had u niet meer nodig."']
   },
