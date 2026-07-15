@@ -412,34 +412,48 @@ function heldVanDag() {
    Deterministisch uit de datum (aparte salt, los van de held-keuze) → iedereen
    in het syndicaat speelt vandaag onder DEZELFDE wet. De risico-wetten betalen
    een transparante scorebonus uit (uitgesplitst op het eindescherm). */
+/* elke wet wordt UITGEVAARDIGD door een van de drie eindbazen (afzender +
+   citaat voeden de proclamatie-overlay bij de start van de daily) */
 const DAGWETTEN = {
   amalgaam: {
     naam: 'HET AMALGAAM', icoon: '🎭',
-    kort: 'De gilden mengen hun kunsten: drie vreemde kaarten in je startdek, en elke kaartbeloning en winkel put uit ALLE helden.'
+    kort: 'De gilden mengen hun kunsten: drie vreemde kaarten in je startdek, en elke kaartbeloning en winkel put uit ALLE helden.',
+    baas: 'de_erfprins', baasArt: 'de_erfprins_intro',
+    quote: 'Gilden-grenzen? Afgeschaft. Alles is toch al van MIJ — vandaag mag jij er heel even bij.'
   },
   glas: {
     naam: 'GLAZEN ZIELEN', icoon: '💥',
     kort: 'Alles breekt sneller: elke klap doet anderhalf keer zoveel pijn — ook die op jou.',
-    scoreBonus: 0.10
+    scoreBonus: 0.10,
+    baas: 'slijmkoning', baasArt: 'slijmkoning',
+    quote: 'Alles smelt. Alles breekt. Vandaag… ietsje sneller.'
   },
   duister: {
     naam: 'HET DONKER KRUIPT', icoon: '🕯️',
     kort: 'De diepte vreet licht: elk fakkelverlies telt dubbel. Wie het haalt, scoort een kwart extra.',
-    scoreBonus: 0.25
+    scoreBonus: 0.25,
+    baas: 'de_dicktator', baasArt: 'de_dicktator_intro',
+    quote: 'Licht is een voorrecht. Bij decreet: INGETROKKEN.'
   },
   stormloop: {
     naam: 'DE STORMLOOP', icoon: '⚡',
-    kort: 'Vier energie per beurt — maar de diepte stuurt taaiere vijanden (+25% HP).'
+    kort: 'Vier energie per beurt — maar de diepte stuurt taaiere vijanden (+25% HP).',
+    baas: 'de_dicktator', baasArt: 'de_dicktator_intro',
+    quote: 'Vier tandjes hoger! Wie achterblijft, wordt afgeschreven.'
   },
   goudkoorts: {
     naam: 'DE GOUDKOORTS', icoon: '🪙',
     kort: 'Je start berooid (0 goud), maar gevechten betalen dubbel en de koopman geeft 30% korting.',
-    scoreBonus: 0.10
+    scoreBonus: 0.10,
+    baas: 'de_erfprins', baasArt: 'de_erfprins_intro',
+    quote: 'Berooid beginnen — zo voelt het als iemand je erfenis rooft. Wen eraan.'
   },
   besmetting: {
     naam: 'DE BESMETTING', icoon: '☣️',
     kort: 'Een Laster-vloek nestelt zich in je startdek — maar de dag schenkt een dérde relikwie en een vijfde extra score.',
-    scoreBonus: 0.20
+    scoreBonus: 0.20,
+    baas: 'slijmkoning', baasArt: 'slijmkoning',
+    quote: 'Eén druppel van mij reist mee in je dek. Voel je het al kriebelen?'
   }
 };
 /* de rotatie weegt HET AMALGAAM dubbel: de blend-dag is het pronkstuk */
@@ -453,6 +467,70 @@ function wetVanDag() {
 const dagwetActief = id => !!(S && S.daily && S.dagwet === id);
 /* dev: devDagwet('amalgaam') vóór de daily-start forceert een wet (null wist) */
 function devDagwet(id) { wetVanDag._force = id || null; return id ? DAGWETTEN[id] : 'gewist'; }
+
+/* ---------- DE PROCLAMATIE: de eindbaas vaardigt de dagwet uit ----------
+   Fullscreen-moment bij de start van elke daily (i.p.v. wegdrijvende toasts):
+   zegel-slam, de wet in kapitalen, het citaat van de uitvaardigende baas, de
+   geschenken van de dag en één knop: DAAL AF. Herlezen kan via de 📜-chip. */
+function toonDagwetProclamatie(replay) {
+  const wet = (S && S.daily && S.dagwet && DAGWETTEN[S.dagwet]) || null;
+  if (!wet) return;
+  const oud = document.getElementById('dagwet-proc');
+  if (oud) oud.remove();
+  const baasNaam = (VIJANDEN[wet.baas] && VIJANDEN[wet.baas].naam) || 'de diepte';
+  const geschenken = Array.isArray(S.dagwetGeschenken) ? S.dagwetGeschenken : [];
+  const vreemd = Array.isArray(S.dagwetVreemd) ? S.dagwetVreemd : [];
+  const synRegel = (window.Online && Online.isLid())
+    ? 'Heel het syndicaat vecht vandaag onder deze wet — je score telt mee op het bord.'
+    : 'Iedereen daalt vandaag onder dezelfde wet af. Hoe diep durf jij?';
+  const el = document.createElement('div');
+  el.id = 'dagwet-proc';
+  el.innerHTML = `
+    <div class="dwp-vignet"></div>
+    <div class="dwp-kaart">
+      <small class="dwp-boven">— DE DIEPTE VAARDIGT UIT —</small>
+      <div class="dwp-zegel"><span>${wet.icoon}</span></div>
+      <h1 class="dwp-naam">${wet.naam}</h1>
+      <div class="dwp-baas">
+        <div class="dwp-portret">${(VIJANDEN[wet.baas] && VIJANDEN[wet.baas].art) || '👁️'}</div>
+        <blockquote class="dwp-quote">„${wet.quote}"<cite>— ${baasNaam}</cite></blockquote>
+      </div>
+      <p class="dwp-effect">${wet.kort}</p>
+      <div class="dwp-chips">
+        ${wet.scoreBonus ? `<span class="dwp-chip dwp-bonus">⚖️ +${Math.round(wet.scoreBonus * 100)}% score</span>` : ''}
+        ${geschenken.length ? `<span class="dwp-chip">🎁 ${geschenken.join(' · ')}</span>` : ''}
+        ${vreemd.length ? `<span class="dwp-chip">🎭 in je dek: ${vreemd.join(' · ')}</span>` : ''}
+        <span class="dwp-chip">🗡️ ${SPELERS[S.held] ? SPELERS[S.held].naam : ''}</span>
+      </div>
+      <button class="knop-groot dwp-knop" onclick="sluitDagwetProclamatie()">⚔️ DAAL AF</button>
+      <small class="dwp-syn">${synRegel}</small>
+    </div>`;
+  document.body.appendChild(el);
+  /* het staatsieportret van de afzender laadt asynchroon in (emoji-terugval) */
+  if (window.laadKarakterAfbeelding && wet.baasArt) {
+    laadKarakterAfbeelding(wet.baasArt, img => {
+      const p = el.querySelector('.dwp-portret');
+      if (img && p) { p.style.backgroundImage = `url("${img.src}")`; p.textContent = ''; p.classList.add('heeft-art'); }
+    });
+  }
+  /* geforceerde reflow i.p.v. requestAnimationFrame: rAF vuurt niet in een
+     verborgen/achtergrond-tab → de overlay bleef dan onzichtbaar op opacity 0 */
+  void el.offsetWidth;
+  el.classList.add('toon');
+  if (!replay && !INST.lite) {
+    Klank.sfx('zwareklap');
+    setTimeout(() => { Klank.sfx('dood'); if (typeof schudScherm === 'function') schudScherm(); }, 620);
+  } else {
+    Klank.sfx('klik');
+  }
+}
+function sluitDagwetProclamatie() {
+  const el = document.getElementById('dagwet-proc');
+  if (!el) return;
+  Klank.sfx('klik');
+  el.classList.add('weg');
+  setTimeout(() => el.remove(), 480);
+}
 /* vandaag al voltooid OF al begonnen (een afgebroken poging blokkeert een verse
    herstart met dezelfde seed → geen score-farmen; hervatten kan via Doorgaan). */
 function dailyAlGespeeld() {
@@ -2157,14 +2235,16 @@ function renderTopbalk() {
       tbS.dataset.tip = `Mysterie-scherven: ${ged} bij je (banken bij de Drempel of een overwinning; gevonden scherven overleven ook een dood) · ${veilig} veilig in je stash. Klik voor de Codex.`;
     } else tbS.style.display = 'none';
   }
-  /* de Dagwet-chip: alleen tijdens een dagelijkse afdaling zichtbaar */
+  /* de Dagwet-chip: alleen tijdens een dagelijkse afdaling zichtbaar;
+     tikken heropent de proclamatie */
   const tbW = $('#tb-dagwet');
   if (tbW) {
     const wet = (S.daily && S.dagwet && DAGWETTEN[S.dagwet]) || null;
     if (wet) {
       tbW.style.display = '';
       tbW.innerHTML = `📜${wet.icoon}`;
-      tbW.dataset.tip = `DAGWET — ${wet.naam}: ${wet.kort}${wet.scoreBonus ? ` (scorebonus +${Math.round(wet.scoreBonus * 100)}%)` : ''}`;
+      tbW.onclick = () => toonDagwetProclamatie(true);
+      tbW.dataset.tip = `DAGWET — ${wet.naam}: ${wet.kort}${wet.scoreBonus ? ` (scorebonus +${Math.round(wet.scoreBonus * 100)}%)` : ''} · tik om de proclamatie te herlezen`;
     } else tbW.style.display = 'none';
   }
   /* alles wat je bezit is ontdekt — dekt elke verwervingsroute */
@@ -6718,7 +6798,7 @@ function pasDagwetStartToe(wetId) {
       if (idx >= 0) S.dek.splice(idx, 1);
       S.dek.push(nieuweKaart(id));
     });
-    if (gekozen.length) setTimeout(() => melding(`🎭 Vreemde kunsten in je dek: ${gekozen.map(id => KAARTEN[id].naam).join(' · ')}`), 2900);
+    S.dagwetVreemd = gekozen.map(id => KAARTEN[id].naam);   /* de proclamatie toont ze */
   } else if (wetId === 'goudkoorts') {
     S.goud = 0;   /* berooid het duister in — de dubbele buit moet het goedmaken */
   } else if (wetId === 'besmetting') {
@@ -6767,10 +6847,10 @@ function startDaily() {
   const dagRelikwieen = [];
   const relAantal = wetId === 'besmetting' ? 3 : 2;
   for (let i = 0; i < relAantal; i++) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); dagRelikwieen.push(RELIKWIEEN[r].naam); } }
-  melding(`🗓️ Dagelijkse afdaling — held van de dag: ${SPELERS[held].naam}. Geen Schrijn; je score telt mee.`);
-  if (dagRelikwieen.length) setTimeout(() => melding(`🎁 De dag schenkt: ${dagRelikwieen.join(' · ')}`), 900);
-  setTimeout(() => melding(`${wet.icoon} DAGWET — ${wet.naam}: ${wet.kort}`), 1900);
+  S.dagwetGeschenken = dagRelikwieen;   /* in S → de proclamatie kan ze ook ná een herlaad tonen */
   renderKaartScherm();
+  /* geen wegdrijvende toasts maar DE PROCLAMATIE: de baas vaardigt de wet uit */
+  toonDagwetProclamatie();
 }
 
 function kopieerUitdaagcode() {

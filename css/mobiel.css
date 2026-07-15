@@ -25,6 +25,13 @@
 body[data-modus="mobiel"] .asc-knop { width: 48px; height: 48px; font-size: 1.6rem; }
 body[data-modus="mobiel"] .ascensie-stepper { gap: 20px; }
 
+/* de dagwet-proclamatie op touch: vrijwel schermvullend, ademruimte voor de
+   duim (grote DAAL AF-knop), chips iets kleiner zodat ze niet stapelen */
+body[data-modus="mobiel"] .dwp-kaart { width: 94vw; padding: 20px 16px 18px; }
+body[data-modus="mobiel"] .dwp-knop { width: 100%; padding: 14px 0; font-size: 1.05rem; }
+body[data-modus="mobiel"] .dwp-chip { font-size: .74rem; }
+body[data-modus="mobiel"] .dwp-baas { gap: 10px; }
+
 /* titelscherm in liggende stand op een korte telefoon: scrollbaar + gecomprimeerd,
    zodat titel/knoppen/loopbaan-regel altijd bereikbaar zijn (overliep eerder). */
 @media (orientation: landscape) and (max-height: 600px) {

@@ -148,12 +148,110 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 /* mysterie-scherven-teller: gedragen groot, stash klein erachter; klik = Codex */
 #tb-scherven { color: #b9a7e0; cursor: pointer; }
 #tb-scherven .tbs-stash { color: var(--perkament-dof); font-size: .72em; margin-left: 2px; opacity: .85; }
-#tb-dagwet { cursor: help; }   /* de Dagwet-chip (alleen tijdens een daily) */
+#tb-dagwet { cursor: pointer; }   /* de Dagwet-chip (alleen tijdens een daily; tik = proclamatie) */
 .lb-vandaag {
   text-align: center; color: var(--perkament-dof); font-size: .92rem;
   margin: -4px 0 10px; cursor: help;
 }
 .lb-vandaag b { color: #ffd7a0; letter-spacing: .05em; }
+
+/* ---------- DE PROCLAMATIE: de eindbaas vaardigt de dagwet uit ----------
+   choreografie: vignet → zegel-SLAM → naam → citaat → effect/chips → knop */
+#dagwet-proc {
+  position: fixed; inset: 0; z-index: 940;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .35s ease;
+}
+#dagwet-proc.toon { opacity: 1; }
+#dagwet-proc.weg { opacity: 0; transition: opacity .45s ease; pointer-events: none; }
+.dwp-vignet {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 115%, rgba(226, 84, 44, .32), transparent 55%),
+    radial-gradient(ellipse at center, rgba(8, 5, 8, .88) 40%, rgba(3, 2, 3, .97));
+}
+.dwp-kaart {
+  position: relative; width: min(600px, 92vw); max-height: 92dvh; overflow-y: auto;
+  padding: 26px 30px 24px; text-align: center;
+  background: linear-gradient(175deg, #241a1c, #17100f 55%, #1d1214);
+  border: 1px solid rgba(226, 140, 90, .38); border-radius: 16px;
+  box-shadow: 0 0 70px rgba(226, 84, 44, .28), 0 24px 60px rgba(0, 0, 0, .7), inset 0 1px 0 rgba(255, 210, 160, .12);
+}
+.dwp-kaart > * { opacity: 0; animation: dwpOp .5s ease forwards; }
+.dwp-boven {
+  display: block; color: var(--perkament-dof); letter-spacing: .35em; font-size: .68rem;
+  animation-delay: .05s;
+}
+.dwp-zegel {
+  width: 92px; height: 92px; margin: 14px auto 6px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 2.6rem;
+  background: radial-gradient(circle at 35% 30%, #a8341c, #6d1d0f 62%, #4a130a);
+  box-shadow: 0 0 0 3px rgba(226, 120, 70, .55), 0 0 0 8px rgba(120, 40, 20, .35), 0 6px 24px rgba(0, 0, 0, .6), inset 0 -4px 10px rgba(0, 0, 0, .45);
+  animation: dwpZegelSlam .55s cubic-bezier(.2, 1.6, .35, 1) .15s forwards;
+  rotate: -8deg;
+}
+.dwp-naam {
+  font-family: 'Pirata One', 'Alegreya', serif; font-weight: 400;
+  font-size: clamp(2rem, 6.5vw, 3.1rem); letter-spacing: .06em; line-height: 1.05;
+  color: #ffd7a0; margin: 6px 0 2px;
+  text-shadow: 0 0 22px rgba(226, 84, 44, .65), 0 3px 0 rgba(0, 0, 0, .55);
+  animation: dwpNaamSlam .45s cubic-bezier(.2, 1.4, .4, 1) .55s forwards;
+}
+.dwp-baas {
+  display: flex; gap: 14px; align-items: center; justify-content: center;
+  margin: 12px auto 4px; max-width: 460px; text-align: left;
+  animation-delay: .9s;
+}
+.dwp-portret {
+  flex: 0 0 76px; width: 76px; height: 76px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 2.2rem;
+  background: rgba(0, 0, 0, .5) center / cover no-repeat;
+  border: 1px solid rgba(226, 140, 90, .45);
+  box-shadow: 0 -8px 22px rgba(226, 84, 44, .35) inset, 0 4px 14px rgba(0, 0, 0, .55);
+}
+.dwp-portret.heeft-art { background-position: center 12%; background-size: 150%; }
+.dwp-quote { font-style: italic; color: var(--perkament); font-size: .98rem; line-height: 1.4; }
+.dwp-quote cite { display: block; margin-top: 4px; font-style: normal; color: #e2542c; font-size: .82rem; letter-spacing: .06em; }
+.dwp-effect { color: var(--perkament-dof); font-size: .92rem; max-width: 480px; margin: 10px auto 0; animation-delay: 1.1s; }
+.dwp-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 12px 0 4px; animation-delay: 1.25s; }
+.dwp-chip {
+  padding: 4px 12px; border-radius: 999px; font-size: .8rem; color: var(--perkament);
+  background: rgba(60, 40, 34, .55); border: 1px solid rgba(226, 140, 90, .3);
+}
+.dwp-chip.dwp-bonus { color: #ffd24a; border-color: rgba(255, 210, 74, .45); background: rgba(90, 70, 20, .4); }
+.dwp-knop { margin-top: 14px; animation: dwpOp .5s ease 1.4s forwards, dwpPuls 2.2s ease-in-out 2s infinite; }
+.dwp-syn { display: block; margin-top: 10px; color: var(--perkament-dof); font-size: .78rem; animation-delay: 1.55s; }
+@keyframes dwpOp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes dwpZegelSlam {
+  0% { opacity: 0; transform: scale(3.2); }
+  60% { opacity: 1; transform: scale(.92); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes dwpNaamSlam {
+  0% { opacity: 0; transform: scale(1.6); filter: blur(3px); }
+  100% { opacity: 1; transform: scale(1); filter: none; }
+}
+@keyframes dwpPuls {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(226, 84, 44, 0); }
+  50% { box-shadow: 0 0 26px 4px rgba(226, 84, 44, .5); }
+}
+/* lite / reduced motion: alles meteen zichtbaar, geen slams */
+body.lite #dagwet-proc .dwp-kaart > *,
+body.lite #dagwet-proc .dwp-zegel { animation: none; opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  #dagwet-proc .dwp-kaart > *, #dagwet-proc .dwp-zegel { animation: none; opacity: 1; transform: none; }
+}
+/* korte (liggende telefoon-)schermen: compacter zodat alles zonder scrollen past */
+@media (max-height: 560px) {
+  .dwp-kaart { padding: 14px 20px 14px; }
+  .dwp-zegel { width: 58px; height: 58px; font-size: 1.7rem; margin: 8px auto 2px; }
+  .dwp-naam { font-size: clamp(1.5rem, 4.5vh, 2rem); }
+  .dwp-portret { flex-basis: 54px; width: 54px; height: 54px; font-size: 1.6rem; }
+  .dwp-quote { font-size: .86rem; }
+  .dwp-effect { font-size: .84rem; margin-top: 6px; }
+  .dwp-knop { margin-top: 8px; }
+  .dwp-syn { margin-top: 6px; }
+}
 #tb-relikwieen { display: flex; gap: 4px; font-size: 1.25rem; }
 /* ---------- relikwie-schaarste ---------- */
 .rel-start    { --relk: 232, 93, 117; }

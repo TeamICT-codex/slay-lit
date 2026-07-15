@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v51'; /* v51: DE DAGWETTEN — elke dagelijkse afdaling valt onder één dag-seeded wet (iedereen dezelfde): HET AMALGAAM (alle helden-kaarten gemengd: 3 vreemde startkaarten + gemengde beloningen/winkel, dubbel gewogen in de rotatie), GLAZEN ZIELEN (schade ×1.5 beide kanten, +10% score), HET DONKER KRUIPT (lichtverlies ×2, +25% score), DE STORMLOOP (4 energie, vijanden +25% HP), DE GOUDKOORTS (0 startgoud, dubbele buit, winkel −30%, +10%), DE BESMETTING (laster-vloek in startdek, 3e dag-relikwie, +20%). Zichtbaar: 📜-chip in de topbalk, dagwet-regel in het leaderboard + daily-knop-tooltip, bonus uitgesplitst op het eindescherm. Dev: devDagwet(id) */
+const CACHE = 'slayit-v52'; /* v52: DE PROCLAMATIE — de dagwet wordt niet meer als toast gemeld maar door de EINDBAAS uitgevaardigd in een fullscreen-moment bij de daily-start: vignet met gesmolten onderlicht, zegel-SLAM (+ schudScherm), de wet in Pirata-kapitalen, staatsieportret + citaat van de afzender (Erfprins→amalgaam/goudkoorts, Slijmkoning→glas/besmetting, DICKtator→duister/stormloop), geschenk-chips, DAAL AF-knop met pulse, syndicaat-regel. Herlezen via de 📜-chip in de topbalk; lite/reduced-motion = alles statisch; compact op korte schermen; reflow i.p.v. rAF (achtergrond-tab-bug) */
 const BESTANDEN = [
   '.',
   'css/style.css',
