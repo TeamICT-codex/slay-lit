@@ -440,6 +440,12 @@ function registreerDaily(gewonnen) {
   Daily.gesch.unshift({ dag, score: totaal, gewonnen: !!gewonnen, diepte: S.verdieping || 0, held: S.held || 'slachter' });
   Daily.gesch = Daily.gesch.slice(0, 30);   /* het leaderboard toont een maand geschiedenis */
   bewaarDaily();
+  /* HET SYNDICAAT: de score meteen het bord op (fire-and-forget — offline of
+     zonder lidmaatschap gebeurt er stilletjes niets) */
+  if (window.Online && Online.isLid()) {
+    Online.stuurScore({ dag, score: totaal, held: S.held, diepte: S.verdieping || 0, gewonnen: !!gewonnen, seed: S.seed })
+      .then(ok => { if (ok) melding('🔥 Je score staat op het syndicaatsbord.'); });
+  }
   return { totaal, reeks: Daily.reeks, besteReeks: Daily.besteReeks, nieuweTop };
 }
 
@@ -474,9 +480,10 @@ function toonLeaderboard() {
   }
   ov.innerHTML = `
     <h2 class="scherm-titel">🏆 Het Leaderboard</h2>
+    ${synSectieHtml()}
     <div class="lb-kolommen">
       <div class="lb-kolom">
-        <h3 class="codex-kop">🗓️ Dagelijkse afdalingen <small>beste ${Math.min(10, dailies.length)} · reeks ${Daily.reeks || 0} · beste reeks ${Daily.besteReeks || 0}</small></h3>
+        <h3 class="codex-kop">🗓️ Dit toestel <small>beste ${Math.min(10, dailies.length)} · reeks ${Daily.reeks || 0} · beste reeks ${Daily.besteReeks || 0}</small></h3>
         ${dailyRijen}
       </div>
       <div class="lb-kolom">
@@ -485,13 +492,125 @@ function toonLeaderboard() {
         ${besteHelden ? `<p class="lb-records">🏔️ Diepterecords — ${besteHelden}</p>` : ''}
       </div>
     </div>
-    <p class="lb-voet">Scores leven op dít toestel. Deel je beste dag met de kopieerknop en daag je vrienden uit met dezelfde seed.</p>
+    <p class="lb-voet">${window.Online && Online.isLid() ? 'Het syndicaat ziet alles. Stoef verstandig.' : 'Scores leven op dít toestel. Deel je beste dag met de kopieerknop en daag je vrienden uit met dezelfde seed.'}</p>
     <div class="einde-knoppen">
       ${dailies.length ? `<button class="knop-stil" onclick="kopieerLeaderboardScore()">📋 Deel je topscore</button>` : ''}
       <button class="knop-groot" onclick="document.getElementById('overlay-leaderboard').classList.remove('open')">Sluiten</button>
     </div>`;
   ov.classList.add('open');
+  if (window.Online && Online.isLid()) vulSyndicaat();
   Klank.sfx('klik');
+}
+
+/* ============================================================
+   HET SYNDICAAT — de sociale laag van het leaderboard (js/online.js).
+   Vrienden stichten een syndicaat met een code, stoefen op het
+   dagpodium en dagen elkaar uit met een strijdkreet.
+   ============================================================ */
+/* remote strings komen van andere spelers → ALTIJD escapen vóór innerHTML */
+function escSyn(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function synSectieHtml() {
+  if (!window.Online || !Online.actief()) return '';
+  if (!Online.isLid()) {
+    return `<div class="syn-vak syn-join">
+      <h3 class="codex-kop">🔥 Het Syndicaat <small>het onderlinge verzet — stoef met je vrienden</small></h3>
+      <p class="syn-uitleg">Sticht een syndicaat en deel de code, of sluit je aan bij dat van je vrienden. Elke dagelijkse afdaling telt mee op jullie gezamenlijke podium.</p>
+      <div class="syn-formulier">
+        <input id="syn-naam" maxlength="20" placeholder="Je strijdnaam…" autocomplete="off">
+        <span class="syn-code-rij">
+          <input id="syn-code" maxlength="24" placeholder="Syndicaat-code…" autocomplete="off">
+          <button class="knop-stil" data-tip="Verzin een verse code — deel hem daarna met je vrienden" onclick="document.getElementById('syn-code').value = Online.verzinCode()">🎲</button>
+        </span>
+        <button class="knop-groot" onclick="doeSynJoin()">⚔️ Sluit je aan</button>
+      </div>
+    </div>`;
+  }
+  const l = Online.lid();
+  return `<div class="syn-vak">
+    <h3 class="codex-kop">🔥 Het Syndicaat <small>⚔️ ${escSyn(l.naam)} · code <b class="syn-codechip" data-tip="Deel deze code — wie hem invoert, vecht op jullie bord">${escSyn(l.code)}</b></small></h3>
+    <div id="syn-inhoud"><p class="syn-laadt">De duiven zijn onderweg…</p></div>
+    <div class="syn-knoppen">
+      <button class="knop-stil" onclick="kopieerStrijdkreet()">📣 Kopieer de strijdkreet</button>
+      <button class="knop-stil syn-verlaat" onclick="synVerlaat()">Verlaat het syndicaat</button>
+    </div>
+  </div>`;
+}
+
+function doeSynJoin() {
+  const naam = (document.getElementById('syn-naam') || {}).value;
+  const code = (document.getElementById('syn-code') || {}).value;
+  const l = Online.wordLid(naam, code);
+  if (!l) { melding('⚠️ Kies een strijdnaam én een code van minstens 3 tekens.'); return; }
+  melding(`🔥 Welkom bij syndicaat ${l.code}, ${l.naam}. Deel de code — en laat ze bloeden.`);
+  Klank.sfx('schitter');
+  toonLeaderboard();
+}
+function synVerlaat() {
+  Online.verlaat();
+  melding('Je verliet het syndicaat. De code blijft werken voor wie blijft.');
+  toonLeaderboard();
+}
+function kopieerStrijdkreet() {
+  const l = Online.lid(); if (!l) return;
+  const top = (Daily.gesch || []).slice().sort((a, b) => b.score - a.score)[0];
+  const scoreDeel = top ? ` Mijn beste dag: ${top.score} punten.` : '';
+  const tekst = `⚔️ SLAY LIT — syndicaat ${l.code}.${scoreDeel} Sluit je aan via 🏆 Leaderboard en versla me: https://teamict-codex.github.io/slay-lit/`;
+  try { navigator.clipboard.writeText(tekst); melding('📣 Strijdkreet gekopieerd — plak en provoceer!'); }
+  catch (e) { melding('Kopiëren lukte niet: ' + tekst); }
+}
+
+/* een wapenfeit → een stoef-regel (het sociale hart: laat ze elkaar jennen) */
+function synStoefRegel(r) {
+  const n = escSyn(r.naam);
+  if (r.gewonnen) return kiesUit([
+    `👑 ${n} onthoofdde de DICKtator — ${r.score} punten. Buig.`,
+    `👑 ${n} liep de outro binnen met ${r.score} punten. Applaus is verplicht.`,
+    `👑 ${n} won. Alweer. ${r.score} punten. Irritant, hè.`
+  ]);
+  if ((r.diepte || 0) >= 10) return kiesUit([
+    `⚔️ ${n} vocht tot rij ${r.diepte} — ${r.score} punten. Respect.`,
+    `⚔️ ${n} kwam tot rij ${r.diepte} (${r.score} pt). Zó dichtbij.`
+  ]);
+  return kiesUit([
+    `💀 ${n} viel op rij ${r.diepte || 0} (${r.score} pt). De diepte lacht.`,
+    `💀 ${n} — rij ${r.diepte || 0}, ${r.score} punten. Morgen beter?`
+  ]);
+}
+
+async function vulSyndicaat() {
+  const el = document.getElementById('syn-inhoud');
+  if (!el) return;
+  try {
+    const dag = vandaagSleutel();
+    const [vandaag, ooit, recent] = await Promise.all([Online.dagTop(dag), Online.allerTijden(), Online.feed()]);
+    if (!document.getElementById('syn-inhoud')) return;   /* overlay intussen dicht */
+    const podium = (vandaag || []).slice(0, 3);
+    const rest = (vandaag || []).slice(3);
+    const treden = [1, 0, 2].map(i => {
+      const r = podium[i];
+      if (!r) return `<div class="syn-trede syn-leeg p${i + 1}"><span class="syn-vraag">?</span><small>vrij</small></div>`;
+      return `<div class="syn-trede p${i + 1}">
+        <span class="syn-kroon">${['🥇', '🥈', '🥉'][i]}</span>
+        <b class="syn-naam">${escSyn(r.naam)}</b>
+        <span class="syn-score">${r.score | 0}</span>
+        <small>${r.gewonnen ? '👑 won' : 'rij ' + (r.diepte | 0)} · ${HELDNAAM(escSyn(r.held))}</small>
+      </div>`;
+    }).join('');
+    const restRijen = rest.map((r, i) => `<div class="lb-rij"><span class="lb-rang">${i + 4}.</span><b>${r.score | 0}</b><span>${escSyn(r.naam)}</span><small>${r.gewonnen ? '👑' : 'rij ' + (r.diepte | 0)}</small></div>`).join('');
+    const ooitRijen = (ooit || []).slice(0, 5).map((r, i) => `<div class="lb-rij ${i === 0 ? 'lb-top' : ''}"><span class="lb-rang">${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'}</span><b>${r.score | 0}</b><span>${escSyn(r.naam)}</span><small>${escSyn(r.dag)}</small></div>`).join('') || '<p class="lb-leeg">Nog geen scores — wees de eerste.</p>';
+    const stoef = (recent || []).slice(0, 5).map(r => `<p class="syn-stoef">${synStoefRegel(r)}</p>`).join('') || '<p class="lb-leeg">Nog geen wapenfeiten. Iemand moet de eerste zijn…</p>';
+    el.innerHTML = `
+      <div class="syn-podium">${treden}</div>
+      ${podium.length === 0 ? '<p class="syn-podium-leeg">Het podium van vandaag staat leeg — de eerste afdaling pakt goud. 🥇</p>' : ''}
+      ${restRijen}
+      <div class="syn-onder">
+        <div class="syn-kolom"><h4>🏛️ Aller tijden</h4>${ooitRijen}</div>
+        <div class="syn-kolom"><h4>📣 Het gestoef</h4>${stoef}</div>
+      </div>`;
+  } catch (e) {
+    if (el) el.innerHTML = '<p class="lb-leeg">⚠️ Het syndicaat is onbereikbaar (offline?). Je lokale bord hieronder werkt gewoon.</p>';
+  }
 }
 function kopieerLeaderboardScore() {
   const top = (Daily.gesch || []).slice().sort((a, b) => b.score - a.score)[0];

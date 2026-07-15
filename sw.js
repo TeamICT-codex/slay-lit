@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v48'; /* v48: playtest-ronde eindgame — DICKtator 240 HP + DE HERVERKIEZING (herrijst 1× op 40%, wanhoopsfase); HET DECREET-drama (de afgeschreven kaart GROOT in beeld + rode stempel + verbranding); smeedkamer 2.0 (echte kaart-art in de offers, LIVE preview-kaart, kost-prijzen: 0⚡ −3pt / 2⚡ +2pt); gesmede kaart meeneembaar via het heldkeuze-scherm met 3 LADINGEN; daily +2 dag-seeded relikwieën; lokaal 🏆 LEADERBOARD (dagscores + runs + deel-knop) */
+const CACHE = 'slayit-v49'; /* v49: HET SYNDICAAT — online sociaal leaderboard via Supabase (js/online.js, kale PostgREST-fetch, geen dependency): sticht/join een syndicaat met een code, dagpodium met treden, aller-tijden-top, stoef-feed, strijdkreet-deelknop; score-upsert na elke daily. Verborgen zolang de CONFIG leeg is (zie SUPABASE-SETUP.md) — het lokale bord blijft altijd werken */
 const BESTANDEN = [
   '.',
   'css/style.css',
@@ -13,6 +13,7 @@ const BESTANDEN = [
   'js/scene3d.js',
   'js/data.js',
   'js/outro.js',
+  'js/online.js',
   'js/game.js',
   'assets/fonts/fonts.css',
   'assets/fonts/PirataOne-400-normal.woff2',

@@ -1379,6 +1379,55 @@ body.lite .decreet-stempel { animation: none; opacity: 1; transform: translate(-
 .lb-leeg, .lb-records, .lb-voet { color: var(--perkament-dof); font-size: .85rem; }
 .lb-voet { text-align: center; max-width: 560px; }
 
+/* ---------- HET SYNDICAAT: het sociale bord ---------- */
+.syn-vak {
+  width: min(860px, 94vw); margin-bottom: 14px;
+  padding: 14px 18px 16px; border-radius: 16px;
+  background: linear-gradient(170deg, rgba(60, 22, 10, .55), rgba(20, 10, 8, .8));
+  border: 1px solid rgba(255, 150, 70, .4);
+  box-shadow: 0 0 26px rgba(226, 84, 44, .18), inset 0 -18px 34px rgba(226, 84, 44, .08);
+}
+.syn-uitleg { color: var(--perkament-dof); font-size: .88rem; max-width: 620px; }
+.syn-formulier { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+.syn-formulier input {
+  padding: 9px 12px; border-radius: 9px; min-width: 170px;
+  background: rgba(18, 10, 8, .92); border: 1px solid rgba(255, 160, 90, .5);
+  color: var(--perkament); font-family: 'Alegreya', serif; font-size: .95rem;
+}
+.syn-code-rij { display: inline-flex; gap: 6px; align-items: center; }
+.syn-code-rij input { text-transform: uppercase; letter-spacing: .06em; }
+.syn-codechip {
+  padding: 1px 9px; border-radius: 8px; letter-spacing: .08em;
+  background: rgba(255, 150, 60, .16); border: 1px solid rgba(255, 170, 90, .5); color: #ffd7a0;
+}
+.syn-laadt { color: var(--perkament-dof); font-style: italic; }
+/* het dagpodium: drie treden (zilver-goud-brons), goud in het midden en hoogst */
+.syn-podium { display: flex; gap: 8px; align-items: flex-end; justify-content: center; margin: 10px 0 6px; }
+.syn-trede {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px;
+  width: min(31%, 190px); padding: 10px 8px 12px; border-radius: 12px 12px 4px 4px;
+  color: var(--perkament); text-align: center;
+  animation: synTredeRijst .55s cubic-bezier(.2, 1.2, .4, 1) both;
+}
+.syn-trede.p1 { min-height: 130px; background: linear-gradient(180deg, rgba(245, 197, 66, .3), rgba(90, 60, 12, .5)); border: 1px solid rgba(245, 197, 66, .75); box-shadow: 0 0 22px rgba(245, 197, 66, .3); animation-delay: .18s; }
+.syn-trede.p2 { min-height: 104px; background: linear-gradient(180deg, rgba(200, 205, 215, .22), rgba(70, 72, 82, .45)); border: 1px solid rgba(200, 205, 215, .55); animation-delay: .06s; }
+.syn-trede.p3 { min-height: 88px; background: linear-gradient(180deg, rgba(205, 130, 74, .24), rgba(80, 46, 24, .5)); border: 1px solid rgba(205, 130, 74, .55); animation-delay: .3s; }
+@keyframes synTredeRijst { 0% { transform: translateY(26px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+body.lite .syn-trede { animation: none; }
+.syn-kroon { font-size: 1.5rem; line-height: 1; }
+.syn-naam { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.syn-score { font-family: 'Pirata One', serif; font-size: 1.5rem; color: #ffd873; line-height: 1; }
+.syn-trede small { color: var(--perkament-dof); font-size: .68rem; }
+.syn-trede.syn-leeg { opacity: .45; border-style: dashed; }
+.syn-vraag { font-size: 1.6rem; color: var(--perkament-dof); }
+.syn-podium-leeg { text-align: center; color: var(--perkament-dof); font-size: .85rem; }
+.syn-onder { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 10px; }
+.syn-kolom { flex: 1 1 260px; min-width: 240px; }
+.syn-kolom h4 { color: #ffd7a0; font-size: .92rem; margin-bottom: 6px; letter-spacing: .04em; }
+.syn-stoef { color: var(--perkament); font-size: .86rem; margin: 4px 0; padding-left: 8px; border-left: 2px solid rgba(255, 150, 70, .45); }
+.syn-knoppen { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+.syn-verlaat { opacity: .6; }
+
 .vieze-vinger {
   position: fixed; z-index: 702; pointer-events: none; font-size: clamp(2rem, 5vw, 3rem);
   transform: translate(-50%, -120%) rotate(8deg); opacity: 0;
