@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v60'; /* v60: grafzerk-art LIVE — assets/ui/grafzerk.webp (gebeitelde arcering-top-zerk, transparant, 118 KB) verschijnt nu áchter de gegraveerde HTML-tekst bij het grafschrift-moment; dambord verwijderd + WebP-conversie via de pijplijn, gekleurde gloed gespaard. Tekst-marges fijngesteld op het inscriptievlak (HTML-kruis weg want de steen draagt er al een), desktop + mobiel geverifieerd */
+const CACHE = 'slayit-v61'; /* v61: outro-pimprondes + proloog-playtestfixes op v60 — proloog platgeslagen (JSX voorgecompileerd, geen runtime-Babel: boot ~6x sneller op gsm), nav-Verder weg (login-klik is de weg), mobiele camera-fix, DAAL AF daalt meteen af met de proloog-held (slayit_daalaf + checkDaalAf), B.A.A.S.-easter-egg in de jeugddroom, outro-mobielperf (tekst-cache, partikel-triage, dekkende contexts); v60 was de grafzerk-art */
 const BESTANDEN = [
   '.',
   'css/style.css',
