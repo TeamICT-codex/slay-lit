@@ -436,24 +436,40 @@ const Outro = (() => {
   }
 
   /* tekst in het 3×5-font (alleen hoofdletters; onbekende tekens = spatie) */
+  /* tekst-cache: elke (regel, kleur, schaal) wordt één keer als mini-canvas
+     gebakken en daarna geblit. Zonder cache hertekent de HUD duizenden
+     1px-fillRects per frame (5x7-font = tot 35 rects x 2 passes per teken) —
+     op mobiel dé grootste constante CPU-post van de outro. */
+  const tekstCache = new Map();
   function tekst(cx, str, x, y, kleur, schaal) {
     schaal = schaal || 1;
     /* gedachtestreepjes zitten niet in het 5x7-font — normaliseer, anders
        vallen ze stil weg (verdiepingsnamen, seed-strings) */
     str = String(str).replace(/[—–]/g, '-').toUpperCase();
-    /* eerst de slagschaduw, dan de kleur: leesbaar op elke drukke achtergrond */
-    for (const schaduw of [1, 0]) {
-      cx.fillStyle = schaduw ? 'rgba(8,6,4,0.9)' : kleur;
-      let px = x + schaduw * schaal;
-      const py = y + schaduw * schaal;
-      for (const ch of str) {
-        const gl = FONT[ch] || FONT[' '];
-        for (let r = 0; r < 7; r++) for (let b = 0; b < 5; b++) {
-          if (gl[r] & (16 >> b)) cx.fillRect(px + b * schaal, py + r * schaal, schaal, schaal);
+    const sleutel = str + '' + kleur + '' + schaal;
+    let c = tekstCache.get(sleutel);
+    if (!c) {
+      if (tekstCache.size > 192) tekstCache.clear();   /* grof maar afdoende: nooit onbegrensd */
+      c = document.createElement('canvas');
+      c.width = Math.max(1, str.length * 6 * schaal + schaal);
+      c.height = 8 * schaal;   /* 7 glyphrijen + 1 rij slagschaduw */
+      const tc = c.getContext('2d');
+      /* eerst de slagschaduw, dan de kleur: leesbaar op elke drukke achtergrond */
+      for (const schaduw of [1, 0]) {
+        tc.fillStyle = schaduw ? 'rgba(8,6,4,0.9)' : kleur;
+        let px = schaduw * schaal;
+        const py = schaduw * schaal;
+        for (const ch of str) {
+          const gl = FONT[ch] || FONT[' '];
+          for (let r = 0; r < 7; r++) for (let b = 0; b < 5; b++) {
+            if (gl[r] & (16 >> b)) tc.fillRect(px + b * schaal, py + r * schaal, schaal, schaal);
+          }
+          px += 6 * schaal;
         }
-        px += 6 * schaal;
       }
+      tekstCache.set(sleutel, c);
     }
+    cx.drawImage(c, Math.round(x), Math.round(y));
     return tekstBreedte(str, schaal);
   }
   const tekstBreedte = (str, schaal) => String(str).length * 6 * (schaal || 1) - (schaal || 1);
@@ -1360,10 +1376,25 @@ const Outro = (() => {
   }
 
   /* ---------- partikels & popups ---------- */
-  const MAX_PARTIKELS = () => (window.mobiel || document.body.classList.contains('lite')) ? 110 : 220;
+  /* lite/mobiel wordt één keer per run geijkt — geen DOM-lookup per spawn */
+  let liteModus = false, maxPartikels = 220, spoorStap = 1, spoorLeven = 0.3;
+  function ijkPrestaties() {
+    liteModus = !!(window.mobiel || document.body.classList.contains('lite'));
+    maxPartikels = liteModus ? 110 : 220;
+    spoorStap = liteModus ? 3 : 1;        /* projectiel-trails op een kloktik: 20Hz op mobiel */
+    spoorLeven = liteModus ? 0.45 : 0.3;  /* iets langer leven compenseert de lagere spawnrate */
+  }
   const GRUIS_KLEUR = [null, '#5b574a', '#cfc0a0', '#cfe0e4', '#7a5230', '#8a6a42', '#77848a', '#6d4a2a', '#c9a13a', '#e8dfc4', '#77848a', '#79c045', '#8a6a42'];
+  /* goedkope sfeer-partikels mogen de dure (gruis/vuurbal/rook/schok) nooit verdringen */
+  const GOEDKOOP = { spoor: 1, as: 1, vonk: 1 };
   function duwPartikel(p) {
-    if (partikels.length >= MAX_PARTIKELS()) partikels.shift();
+    if (partikels.length >= maxPartikels) {
+      let i = -1;
+      for (let k = 0; k < partikels.length; k++) if (GOEDKOOP[partikels[k].soort]) { i = k; break; }
+      if (i !== -1) partikels.splice(i, 1);          /* vol: offer eerst een spoor/sintel/vonk op */
+      else if (GOEDKOOP[p.soort]) return;            /* alleen duur puin over? nieuwe trail overslaan */
+      else partikels.shift();
+    }
     partikels.push(p);
   }
   function spawnGruis(px, py, t) {
@@ -1404,7 +1435,7 @@ const Outro = (() => {
   const regenboog = (f) => REGENBOOG[((f * 10) | 0) % REGENBOOG.length];
   /* een kort, in-plaats-vervagend kleurspoor achter een projectiel */
   function spawnSpoor(px, py, kleur, groot) {
-    duwPartikel({ soort: 'spoor', x: px, y: py, t: 0.3, maxT: 0.3, kleur: kleur || '#ffd23f', g: groot || 2 });
+    duwPartikel({ soort: 'spoor', x: px, y: py, t: spoorLeven, maxT: spoorLeven, kleur: kleur || '#ffd23f', g: groot || 2 });
   }
   function popup(px, py, txt, kleur) {
     popups.push({ x: px, y: py, txt, kleur: kleur || '#9fe06a', t: 0.9 });
@@ -1502,20 +1533,22 @@ const Outro = (() => {
     return { links, rechts, vuur, worpKnop, omhoog };
   }
 
-  /* touch: linkerhelft = loop-strook, rechtsonder drie knoppen */
-  function knopZones() {
-    return {
-      spring: { x: BREED - 24, y: HOOG - 52, r: 13 },
-      vuur:   { x: BREED - 52, y: HOOG - 26, r: 13 },
-      worp:   { x: BREED - 22, y: HOOG - 24, r: 11 }
-    };
-  }
+  /* touch: linkerhelft = loop-strook, rechtsonder drie knoppen
+     (één const: renderHud + pointerdown vroegen elk frame een vers object) */
+  const KNOP_ZONES = {
+    spring: { x: BREED - 24, y: HOOG - 52, r: 13 },
+    vuur:   { x: BREED - 52, y: HOOG - 26, r: 13 },
+    worp:   { x: BREED - 22, y: HOOG - 24, r: 11 }
+  };
+  function knopZones() { return KNOP_ZONES; }
+  let schermRect = null;   /* gecachete bounding-rect: geen layout-query per pointermove */
   function canvasPunt(e) {
-    const r = schermCanvas.getBoundingClientRect();
+    const r = schermRect || (schermRect = schermCanvas.getBoundingClientRect());
     return { x: (e.clientX - r.left) / r.width * BREED, y: (e.clientY - r.top) / r.height * HOOG };
   }
   function opPointerNeer(e) {
     if (staat === 'uit') return;
+    schermRect = null;   /* per tik één verse rect; de moves erna hergebruiken hem */
     e.preventDefault();
     if (schermCanvas.setPointerCapture) { try { schermCanvas.setPointerCapture(e.pointerId); } catch (err) {} }
     if (staat === 'intro') { introT = introT >= 10.2 ? 11.6 : 10.4; return; }
@@ -1550,7 +1583,9 @@ const Outro = (() => {
   }
 
   /* ---------- de wereld bijwerken ---------- */
+  let spoorTik = 0;   /* 60Hz-stappenteller: trails spawnen op een kloktik i.p.v. elke stap */
   function updateSpel(dt) {
+    spoorTik++;
     const inp = invoer();
     const h = held;
     if (vuurBuf > 0) vuurBuf -= dt;
@@ -1698,8 +1733,8 @@ const Outro = (() => {
       if (worp) {
         worp.y += Math.sin(worp.spin * 0.5) * 6 * dt;
         worp.baasKlok = (worp.baasKlok || 0) - dt;
-        /* vurige spinnende trail achter de boemerang-bijl */
-        spawnSpoor(worp.x, worp.y, worp.spin % 2 < 1 ? '#ff9c3f' : '#ffd23f', 3);
+        /* vurige spinnende trail achter de boemerang-bijl (op kloktik: mobiel 20Hz) */
+        if (spoorTik % spoorStap === 0) spawnSpoor(worp.x, worp.y, worp.spin % 2 < 1 ? '#ff9c3f' : '#ffd23f', 3);
         sloopGebied(worp.x, worp.y, 6, 1);
         for (const d of drones) if (!d.dood && Math.abs(d.x + 4 - worp.x) < 10 && Math.abs(d.y + 4 - worp.y) < 10) raakVijand(d, 2);
         raakInteracties(worp.x, worp.y, 10);
@@ -1719,9 +1754,9 @@ const Outro = (() => {
         if (gifbal.hitKlok <= 0 && raakBaasPunt(gifbal.x, gifbal.y)) gifbal.hitKlok = 0.3;
       }
       raakInteracties(gifbal.x, gifbal.y, 8);
-      /* giftige neon-trail: groen met paarse spatjes */
-      spawnSpoor(gifbal.x, gifbal.y, Math.random() < 0.3 ? '#c86fe0' : '#79c045', 3);
-      if (Math.random() < dt * 24) spawnVonk(gifbal.x, gifbal.y, '#79c045', 1);
+      /* giftige neon-trail: groen met paarse spatjes (op kloktik, lagere vonkrate op lite) */
+      if (spoorTik % spoorStap === 0) spawnSpoor(gifbal.x, gifbal.y, Math.random() < 0.3 ? '#c86fe0' : '#79c045', 3);
+      if (Math.random() < dt * (liteModus ? 10 : 24)) spawnVonk(gifbal.x, gifbal.y, '#79c045', 1);
       /* de waaier: op het hoogste punt splitst de gifboog in drie */
       if (gifbal && gifbal.splits && gifbal.vy > 0) {
         gifbal.splits = false;
@@ -1854,7 +1889,7 @@ const Outro = (() => {
     /* — de mailtjes: enveloppen die alles doorboren — */
     for (const m of post) {
       m.t -= dt; m.x += m.vx * dt; m.y += (m.vy || 0) * dt;
-      spawnSpoor(m.x, m.y, regenboog(m.x * 0.06), 2);   /* regenboog-post: CC: iedereen */
+      if (spoorTik % spoorStap === 0) spawnSpoor(m.x, m.y, regenboog(m.x * 0.06), 2);   /* regenboog-post: CC: iedereen */
       sloopGebied(m.x, m.y, 4, 1);
       for (const d of drones) {
         if (!d.dood && Math.abs(d.x + 5 - m.x) < 9 && Math.abs(d.y + 4 - m.y) < 9) { raakVijand(d, 1); m.t = 0; break; }
@@ -1873,10 +1908,11 @@ const Outro = (() => {
         hal.spawnKlok = 4;
         drones.push(maakVijand({ soort: 'drone', x: (5 + Math.random() * 20) * TEGEL, y: 3 * TEGEL }));
       }
-      /* het dak: rook uit de gehavende kasten, vlammen uit het gebouw onder je */
+      /* het dak: rook uit de gehavende kasten, vlammen uit het gebouw onder je
+         (op lite/mobiel halve spawnrate — de scène blijft branden, de gpu niet) */
       if (hal.kapot) {
-        if (Math.random() < dt * 5) duwPartikel({ soort: 'rook', x: lvl.baas.x + 8 + Math.random() * (lvl.baas.b - 16), y: lvl.baas.y - 2, vx: (Math.random() - 0.5) * 8, vy: -14 - Math.random() * 10, t: 1.2 + Math.random(), maxT: 2.2, r: 2 + Math.random() * 3 });
-        if (Math.random() < dt * 10) {
+        if (Math.random() < dt * (liteModus ? 2.5 : 5)) duwPartikel({ soort: 'rook', x: lvl.baas.x + 8 + Math.random() * (lvl.baas.b - 16), y: lvl.baas.y - 2, vx: (Math.random() - 0.5) * 8, vy: -14 - Math.random() * 10, t: 1.2 + Math.random(), maxT: 2.2, r: 2 + Math.random() * 3 });
+        if (Math.random() < dt * (liteModus ? 5 : 10)) {
           const links2 = Math.random() < 0.5;
           const fx = links2 ? (2 + Math.random() * 4) * TEGEL : (lvl.kols - 6 + Math.random() * 4) * TEGEL;
           duwPartikel({ soort: 'vonk', x: fx, y: (lvl.rijen - 5) * TEGEL, vx: (Math.random() - 0.5) * 20, vy: -40 - Math.random() * 50, t: 0.5 + Math.random() * 0.4, kleur: Math.random() < 0.5 ? '#ff7a2f' : '#ffd23f', g: 2 });
@@ -1939,9 +1975,10 @@ const Outro = (() => {
     /* — de SLOOPKETTING dooft langzaam als je even niets sloopt — */
     if (kettingT > 0) { kettingT -= dt; if (kettingT <= 0) { sloopKetting = 0; kettingPiek = 0; } }
 
-    /* — sfeer: sintels dwarrelen op, zwaarder op een brandende etage — */
+    /* — sfeer: sintels dwarrelen op, zwaarder op een brandende etage —
+       (op lite/mobiel op halve kracht: puur sfeer mag nooit frames kosten) */
     const brandt = hal && hal.kapot;
-    if (Math.random() < dt * (brandt ? 9 : 3.5)) {
+    if (Math.random() < dt * (brandt ? (liteModus ? 4.5 : 9) : (liteModus ? 1.6 : 3.5))) {
       spawnAs(camX + Math.random() * BREED, camY + HOOG - 2 - Math.random() * 6);
     }
 
@@ -2280,7 +2317,13 @@ const Outro = (() => {
         const puls = 6 + buffKl.length + Math.sin(tijd * 6) * 1.5;
         ctx.globalAlpha = 0.2 + 0.12 * (0.5 + 0.5 * Math.sin(tijd * 6));
         ctx.fillStyle = kl;
-        ctx.beginPath(); ctx.arc(h.x + h.b / 2 + ox, h.y + h.h / 2 + oy, puls, 0, 7); ctx.fill();
+        if (liteModus) {
+          /* lite: blokkige gloed via fillRect — geen pad-rasterisatie per frame */
+          const pr = Math.round(puls);
+          ctx.fillRect(Math.round(h.x + h.b / 2 + ox) - pr, Math.round(h.y + h.h / 2 + oy) - pr + 2, pr * 2, pr * 2 - 4);
+        } else {
+          ctx.beginPath(); ctx.arc(h.x + h.b / 2 + ox, h.y + h.h / 2 + oy, puls, 0, 7); ctx.fill();
+        }
         ctx.globalAlpha = 1;
       }
     }
@@ -2323,12 +2366,14 @@ const Outro = (() => {
     }
 
     /* partikels: eerst rook (achter), dan gruis/vonken, dan vuurballen (voor) */
+    ctx.fillStyle = '#5a5446';
     for (const p of partikels) {
       if (p.soort !== 'rook') continue;
       const a = klem(p.t / p.maxT, 0, 1);
-      ctx.fillStyle = 'rgba(90,84,70,' + (0.5 * a).toFixed(2) + ')';
+      ctx.globalAlpha = 0.5 * a;   /* geen rgba-string + toFixed per partikel per frame */
       ctx.beginPath(); ctx.arc(Math.round(p.x + ox), Math.round(p.y + oy), p.r * (1.6 - a * 0.6), 0, 7); ctx.fill();
     }
+    ctx.globalAlpha = 1;
     for (const p of partikels) {
       if (p.soort === 'rook' || p.soort === 'vuurbal' || p.soort === 'schok' || p.soort === 'as') continue;
       if (p.soort === 'papier') { ctx.fillStyle = '#efe9d6'; ctx.fillRect(Math.round(p.x + ox), Math.round(p.y + oy), 3, 2); continue; }
@@ -2358,7 +2403,7 @@ const Outro = (() => {
         const r = 3 + p.r * fase;
         ctx.lineWidth = fase < 0.5 ? 2 : 1;
         if (p.kleur) { ctx.globalAlpha = (1 - fase) * 0.85; ctx.strokeStyle = p.kleur; }
-        else ctx.strokeStyle = 'rgba(255,244,214,' + ((1 - fase) * 0.8).toFixed(2) + ')';
+        else { ctx.globalAlpha = (1 - fase) * 0.8; ctx.strokeStyle = '#fff4d6'; }   /* geen rgba-string per frame */
         ctx.beginPath(); ctx.arc(Math.round(p.x + ox), Math.round(p.y + oy), r, 0, 7); ctx.stroke();
         ctx.globalAlpha = 1;
       } else if (p.soort === 'as') {
@@ -2760,8 +2805,9 @@ const Outro = (() => {
 
   /* het interne 320×180-beeld integer-opgeschaald naar het zichtbare canvas */
   function presenteer() {
+    /* geen clearRect: het interne beeld is elk frame volledig dekkend en de
+       drawImage bedekt het hele canvas — de clear was pure overdraw */
     schermCtx.imageSmoothingEnabled = false;
-    schermCtx.clearRect(0, 0, schermCanvas.width, schermCanvas.height);
     schermCtx.drawImage(canvas, 0, 0, schermCanvas.width, schermCanvas.height);
   }
 
@@ -2771,18 +2817,23 @@ const Outro = (() => {
     const bw = (ouder && ouder.clientWidth) || window.innerWidth;
     const bh = (ouder && ouder.clientHeight) || window.innerHeight;
     const s = Math.max(1, Math.floor(Math.min(bw / BREED, bh / HOOG)));
-    schermCanvas.width = BREED * s; schermCanvas.height = HOOG * s;
-    schermCanvas.style.width = (BREED * s) + 'px';
-    schermCanvas.style.height = (HOOG * s) + 'px';
+    /* zelfde schaal? dan niet hertoewijzen: op mobiel vuurt de adresbalk-resize
+       geregeld zonder echte wijziging, en elke width-set wist én heralloceert */
+    if (schermCanvas.width !== BREED * s) {
+      schermCanvas.width = BREED * s; schermCanvas.height = HOOG * s;
+      schermCanvas.style.width = (BREED * s) + 'px';
+      schermCanvas.style.height = (HOOG * s) + 'px';
+    }
+    schermRect = null;   /* layout kan verschoven zijn: gecachete rect vervalt */
   }
 
   /* ---------- de hoofdtik (vaste 60Hz-stappen met accumulator) ---------- */
-  let accu = 0;
+  let accu = 0, draaiBlok = null;
   function outroTik(dt) {
     if (staat === 'uit' || document.hidden) return;
     /* het mobiele draai-blok toont? dan pauzeren — anders tikt de eenmalige
        intro (en zelfs de gameplay) onzichtbaar weg terwijl de speler draait */
-    const db = document.getElementById('draai-blok');
+    const db = draaiBlok || (draaiBlok = document.getElementById('draai-blok'));   /* geen DOM-lookup per tik */
     if (db && db.classList.contains('toon')) return;
     tijd += dt;
     if (staat === 'intro') { introT += dt; if (introT >= 11.6) startSpel(); render(); return; }
@@ -2859,13 +2910,16 @@ const Outro = (() => {
 
     canvas = document.createElement('canvas');
     canvas.width = BREED; canvas.height = HOOG;
-    ctx = canvas.getContext('2d');
-    schermCtx = schermCanvas.getContext('2d');
+    /* dekkende contexts: zonder alfakanaal hoeft de compositor het grote
+       canvas niet te blenden — merkbaar goedkoper op mobiele gpu's */
+    ctx = canvas.getContext('2d', { alpha: false });
+    schermCtx = schermCanvas.getContext('2d', { alpha: false });
     mozaiek = document.createElement('canvas');
     mozaiek.width = BREED; mozaiek.height = HOOG;
     zoomFoto = null; zoomPunt = null;
 
     proloog = leesProloog();
+    ijkPrestaties();   /* lite/mobiel-vlaggen één keer vastklikken voor deze run */
     /* start-masker: een lopende run wint; anders de proloog-heldenkeuze
        (woede/gif/vlucht of de game-ids), anders de Slachter */
     const HELD_MAP = { woede: 'slachter', gif: 'gifmagier', vlucht: 'thoverk', slachter: 'slachter', gifmagier: 'gifmagier', thoverk: 'thoverk' };
