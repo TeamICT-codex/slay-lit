@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v52'; /* v52: DE PROCLAMATIE — de dagwet wordt niet meer als toast gemeld maar door de EINDBAAS uitgevaardigd in een fullscreen-moment bij de daily-start: vignet met gesmolten onderlicht, zegel-SLAM (+ schudScherm), de wet in Pirata-kapitalen, staatsieportret + citaat van de afzender (Erfprins→amalgaam/goudkoorts, Slijmkoning→glas/besmetting, DICKtator→duister/stormloop), geschenk-chips, DAAL AF-knop met pulse, syndicaat-regel. Herlezen via de 📜-chip in de topbalk; lite/reduced-motion = alles statisch; compact op korte schermen; reflow i.p.v. rAF (achtergrond-tab-bug) */
+const CACHE = 'slayit-v53'; /* v53: playtest-fixes eindescherm — (1) de scherf-duidingregel liegt niet meer: het drama-register ("dit was geen einde, maar een scherf") gaat alleen open als je déze run echt een scherf vond (gedragen minus loadout); anders een nuchtere voortgangsregel; de regel is nu TIKBAAR (→ Codex) met een uitlegzin eronder ("scherven zijn aanwijzingen — verzamel er 3..."). (2) Sociale nudge in het daily-paneel: lid → "📣 Daag je syndicaat uit" (deel-sheet/klembord met score + dagwet + code) + async je plek op het dagbord; geen lid → "Daag je vrienden uit" + "🏴 Sticht een syndicaat" (→ leaderboard) */
 const BESTANDEN = [
   '.',
   'css/style.css',

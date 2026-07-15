@@ -585,6 +585,17 @@ body.lite #dagwet-proc .dwp-zegel { animation: none; opacity: 1; transform: none
 .mys-rijp { margin: 8px 0 0; font-size: .9rem; color: #ffce8a; font-style: italic; }
 .einde-mysterie { text-align: center; margin: 6px auto 2px; max-width: 32em; color: #c9b3ff; font-style: italic; font-size: .95rem; }
 .einde-mysterie b { color: #ffce8a; font-style: normal; }
+/* tikbaar (→ Codex) + de uitlegzin eronder — playtest: "wat is een scherf?" */
+.einde-mysterie-tik { cursor: pointer; border-radius: 10px; padding: 4px 10px; transition: background .2s ease; }
+.einde-mysterie-tik:hover { background: rgba(150, 120, 220, .12); }
+.einde-mysterie small {
+  display: block; margin-top: 3px; font-style: normal; font-size: .76rem;
+  color: var(--perkament-dof); opacity: .85;
+}
+/* de sociale nudge in het daily-paneel op het eindescherm */
+.einde-syn { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; margin-top: 10px; }
+.einde-syn-knop { border-color: rgba(255, 150, 70, .5); color: #ffcf9e; }
+.einde-syn-rang { color: var(--perkament-dof); font-size: .84rem; }
 .codex-slot { position: relative; }
 .codex-slot.verbruikt { filter: grayscale(.55) brightness(.7); }
 .codex-lading {

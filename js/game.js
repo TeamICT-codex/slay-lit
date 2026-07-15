@@ -3555,18 +3555,28 @@ function mysterieCodexBlok() {
   if (!blokken.length) return '';
   return `<h3 class="codex-kop">🜂 Onopgeloste Mysteries</h3><div class="mys-lijst">${blokken.join('')}</div>`;
 }
-/* de duiding-regel op het nederlaagscherm (Act 2+, bij een open mysterie) */
+/* de duiding-regel op het nederlaagscherm (Act 2+, bij een open mysterie).
+   PLAYTEST-LES: de oude tekst ("dit was geen einde, maar een scherf") toonde
+   gewoon je oude stash-stand en suggereerde zo een beloning die deze run
+   nooit viel. De tekst volgt nu de WERKELIJKHEID: het drama-register gaat
+   alleen open als je déze run echt een scherf vond. Tikbaar → Codex. */
 function mysterieDuiding() {
   if (typeof huidigeAct === 'function' && huidigeAct() < 2) return '';
   const best = meestGevorderdeMysterie();
   if (!best) return '';
   const totaal = ((window.MYSTERIES[best.mid].vereist) || []).length;
+  /* wat vond je DEZE run? = gedragen minus de bewust meegebrachte loadout */
+  const loadout = (S && Array.isArray(S.loadoutScherven)) ? S.loadoutScherven : [];
+  const vers = gedragen().filter(sid => !loadout.includes(sid)).length;
   const regel = best.rijp
-    ? 'De scherven passen samen — maar het antwoord wacht in het donker dat je niet dúrft te maken.'
-    : best.aantal >= 2
-      ? 'Twee scherven nu. Het beeld wordt scherper — en vreemder.'
-      : 'Je zag iets in het donker. Dit was geen einde, maar een scherf.';
-  return `<p class="einde-mysterie">🜂 ${regel} <b>(${best.aantal}/${totaal})</b></p>`;
+    ? 'De scherven passen samen — het antwoord wacht bij de Drempel, als je het dúrft te maken.'
+    : vers > 0
+      ? (vers === 1
+        ? 'Dit was geen einde: je draagt een scherf uit het donker mee — je vondst overleeft je val.'
+        : `Dit was geen einde: je draagt ${vers} scherven uit het donker mee — je vondsten overleven je val.`)
+      : 'Een onopgelost mysterie wacht in de diepte.';
+  return `<p class="einde-mysterie einde-mysterie-tik" onclick="toonCodex()">🜂 ${regel} <b>(${best.aantal}/${totaal})</b>
+    <small>Scherven zijn aanwijzingen — verzamel er ${totaal} om het mysterie bij de Drempel te ontsluieren. Tik voor je Codex.</small></p>`;
 }
 
 function toonCodex() {
@@ -6712,6 +6722,12 @@ function toonEinde(gewonnen, verslagenBaas) {
         ${dScore.wetBonus ? `<span>${dScore.wet.icoon} dagwet ${dScore.wet.naam} +${Math.round(dScore.wet.scoreBonus * 100)}%</span><b>${dScore.wetBonus}</b>` : ''}
       </div>
       <p class="daily-reeks">🔥 Speelreeks: ${Daily.reeks} dag${Daily.reeks === 1 ? '' : 'en'}${Daily.besteReeks > Daily.reeks ? ` · beste: ${Daily.besteReeks}` : ''}</p>
+      <div class="einde-syn">
+        ${(window.Online && Online.isLid())
+          ? `<button class="knop-stil einde-syn-knop" onclick="deelDagScore()">📣 Daag je syndicaat uit</button><span class="einde-syn-rang" id="einde-syn-rang"></span>`
+          : `<button class="knop-stil einde-syn-knop" onclick="deelDagScore()">📣 Daag je vrienden uit</button>
+             <button class="knop-stil" onclick="toonLeaderboard()" data-tip="Sticht een syndicaat: één code, en jullie vechten op hetzelfde dagbord.">🏴 Sticht een syndicaat</button>`}
+      </div>
     </div>` : ''}
     <p class="einde-loopbaan">${loopbaanRegel()}${uitslag.nieuwRecord ? ' <span class="einde-record">🏆 nieuw diepterecord!</span>' : ''}</p>
     <p class="einde-seed">Seed: ${S.seed} · ${held.naam}</p>
@@ -6723,6 +6739,8 @@ function toonEinde(gewonnen, verslagenBaas) {
       <button class="knop-stil" onclick="naarTitel()">Naar het begin</button>
     </div>
     ${besteHeld ? `<p class="einde-doel">Diepste val met ${held.naam}: rij ${besteHeld}${!gewonnen ? ' — versla de baas op rij 13' : ''}</p>` : ''}`;
+  /* daily + syndicaat: vul asynchroon je plek op het dagbord in */
+  if (dScore && window.Online && Online.isLid()) vulEindeSynRang();
   /* de held in zijn laatste pose: gevallen of triomferend */
   if (window.laadKarakterAfbeelding) {
     const zet = img => {
@@ -6851,6 +6869,37 @@ function startDaily() {
   renderKaartScherm();
   /* geen wegdrijvende toasts maar DE PROCLAMATIE: de baas vaardigt de wet uit */
   toonDagwetProclamatie();
+}
+
+/* de sociale nudge op het daily-eindescherm: deel je score als uitdaging
+   (deel-sheet op mobiel, klembord op laptop) — mét dagwet en syndicaat-code */
+function deelDagScore() {
+  const wet = (S && S.dagwet && DAGWETTEN[S.dagwet]) || null;
+  const score = Daily.laatsteScore || 0;
+  const l = (window.Online && Online.isLid()) ? Online.lid() : null;
+  const tekst = `⚔️ SLAY LIT — dagelijkse afdaling: ${score} punten${wet ? ` onder ${wet.naam}` : ''}. `
+    + (l ? `Versla me in syndicaat "${l.code}": ` : 'Versla me: ')
+    + 'https://teamict-codex.github.io/slay-lit/';
+  Klank.sfx('klik');
+  if (navigator.share) {
+    navigator.share({ title: 'SLAY LIT', text: tekst }).catch(() => {});
+  } else {
+    try { navigator.clipboard.writeText(tekst); melding('📋 Uitdaging gekopieerd — plak en provoceer!'); }
+    catch (e) { melding(tekst); }
+  }
+}
+/* jouw plek op het syndicaat-dagbord, asynchroon ingevuld op het eindescherm
+   (de score-upload is fire-and-forget → even ademen vóór het ophalen) */
+async function vulEindeSynRang() {
+  try {
+    await new Promise(r => setTimeout(r, 1500));
+    const top = await Online.dagTop(vandaagSleutel());
+    const el = document.getElementById('einde-syn-rang');
+    if (!el || !Array.isArray(top)) return;
+    const ik = Online.lid().naam;
+    const idx = top.findIndex(r => r && r.naam === ik);
+    if (idx >= 0) el.textContent = `Vandaag ${['🥇', '🥈', '🥉'][idx] || '#' + (idx + 1)} van ${top.length} in ${Online.lid().code}`;
+  } catch (e) {}
 }
 
 function kopieerUitdaagcode() {
