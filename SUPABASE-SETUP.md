@@ -54,6 +54,52 @@ create policy "eigen dagscore verversen" on public.scores
   );
 ```
 
+## 1b. De sociale laag: leden + porren (SQL deel 2)
+
+> Al deel 1 gedraaid? Dan alleen dit blok nog — het is los uitvoerbaar.
+
+```sql
+-- wie zit er in welk syndicaat (ook wie nog nooit een daily deed)
+create table public.leden (
+  groep        text not null,
+  naam         text not null,
+  sinds        timestamptz not null default now(),
+  laatst_gezien timestamptz not null default now(),
+  primary key (groep, naam)
+);
+alter table public.leden enable row level security;
+create policy "leden lezen" on public.leden for select using (true);
+create policy "lid worden" on public.leden for insert with check (
+  char_length(naam) between 1 and 20 and
+  char_length(groep) between 3 and 24 and groep ~ '^[A-Z0-9-]+$'
+);
+create policy "laatst gezien verversen" on public.leden for update using (true) with check (true);
+
+-- het porren: por een syndicaatsgenoot om zijn dagelijkse afdaling te doen.
+-- Eén por per koppel per dag (unique) = ingebouwde anti-spam.
+create table public.porren (
+  id      uuid primary key default gen_random_uuid(),
+  gemaakt timestamptz not null default now(),
+  groep   text not null,
+  van     text not null,
+  naar    text not null,
+  dag     text not null,
+  bericht text
+);
+create unique index porren_uniek on public.porren (groep, van, naar, dag);
+create index porren_inbox on public.porren (groep, naar, dag);
+alter table public.porren enable row level security;
+create policy "porren lezen" on public.porren for select using (true);
+create policy "por sturen" on public.porren for insert with check (
+  char_length(van) between 1 and 20 and
+  char_length(naar) between 1 and 20 and
+  van <> naar and
+  char_length(groep) between 3 and 24 and groep ~ '^[A-Z0-9-]+$' and
+  dag ~ '^\d{4}-\d{2}-\d{2}$' and
+  (bericht is null or char_length(bericht) <= 120)
+);
+```
+
 ## 2. Vul de sleutels in
 
 Dashboard → **Settings → API**. Kopieer:

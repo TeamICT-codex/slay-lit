@@ -147,7 +147,7 @@ const INST = Object.assign(
   /* op mobiel standaard 3D UIT (onspeelbaar daar), maar lite NIET geforceerd:
      lite dooft de animaties, en juist die geven het spel leven. Lite alleen
      bij echt zwakke hardware. Op laptop ongewijzigd want mobiel=false. */
-  { lite: standaardLite, d3: !standaardLite && !mobiel, spraak: true, daglicht: mobiel },
+  { lite: standaardLite, d3: !standaardLite && !mobiel, spraak: true, daglicht: mobiel, autoPor: true },
   veiligLees('slayit_inst')
 );
 /* mobiel-migratie: forceer 3D uit (onspeelbaar op telefoon) en zet lite weer uit op
@@ -441,12 +441,50 @@ function registreerDaily(gewonnen) {
   Daily.gesch = Daily.gesch.slice(0, 30);   /* het leaderboard toont een maand geschiedenis */
   bewaarDaily();
   /* HET SYNDICAAT: de score meteen het bord op (fire-and-forget — offline of
-     zonder lidmaatschap gebeurt er stilletjes niets) */
+     zonder lidmaatschap gebeurt er stilletjes niets) + optioneel de
+     achterblijvers auto-porren ("ik daalde af, jouw beurt") */
   if (window.Online && Online.isLid()) {
     Online.stuurScore({ dag, score: totaal, held: S.held, diepte: S.verdieping || 0, gewonnen: !!gewonnen, seed: S.seed })
       .then(ok => { if (ok) melding('🔥 Je score staat op het syndicaatsbord.'); });
+    if (INST.autoPor) autoPorNaDaily(dag, totaal);
   }
   return { totaal, reeks: Daily.reeks, besteReeks: Daily.besteReeks, nieuweTop };
+}
+/* na je eigen daily: elke genoot die vandaag nog niet afdaalde krijgt een por.
+   Bewust ná je eigen afdaling — je stoeft mét je score. Anti-spam: 1×/dag/koppel. */
+async function autoPorNaDaily(dag, score) {
+  try {
+    const [leden, top] = await Promise.all([Online.leden(), Online.dagTop(dag)]);
+    if (!Array.isArray(leden)) return;   /* sociale tabellen bestaan nog niet */
+    const gespeeld = {}; (top || []).forEach(r => { gespeeld[r.naam] = true; });
+    const ik = Online.lid().naam;
+    const doelen = leden.filter(l => l.naam !== ik && !gespeeld[l.naam]);
+    if (!doelen.length) return;
+    doelen.forEach(l => Online.stuurPor(l.naam, dag, `Ik daalde net af (${score} pt). Jouw beurt — of geef je op?`));
+    setTimeout(() => melding(`📣 Auto-por: ${doelen.length} genoot${doelen.length === 1 ? '' : 'en'} uitgedaagd.`), 1600);
+  } catch (e) {}
+}
+/* por-inbox: bij het opstarten checken of iemand jou vandaag heeft gepord */
+async function checkPorInbox() {
+  if (!window.Online || !Online.isLid()) return;
+  Online.meldAan();
+  try {
+    const dag = vandaagSleutel();
+    const porren = await Online.mijnPorren(dag);
+    if (!Array.isArray(porren) || !porren.length) return;
+    let gezien = {};
+    try { gezien = JSON.parse(localStorage.getItem('slayit_porren_gezien') || '{}'); } catch (e) {}
+    const nieuw = porren.filter(p => p && p.id && !gezien[p.id]);
+    if (!nieuw.length) return;
+    const alGespeeld = Daily.laatsteVoltooid === dag;
+    const vanNamen = [...new Set(nieuw.map(p => escSyn(p.van)))];
+    if (!alGespeeld) {
+      const wie = vanNamen.length > 1 ? `${vanNamen.length} syndicaatsgenoten porren` : `${vanNamen[0]} port`;
+      setTimeout(() => melding(`📣 ${wie} je: doe je dagelijkse afdaling! 🗓️`), 1800);
+    }
+    nieuw.forEach(p => { gezien[p.id] = 1; });
+    try { localStorage.setItem('slayit_porren_gezien', JSON.stringify(gezien)); } catch (e) {}
+  } catch (e) {}
 }
 
 /* ============================================================
@@ -531,8 +569,12 @@ function synSectieHtml() {
     <h3 class="codex-kop">🔥 Het Syndicaat <small>⚔️ ${escSyn(l.naam)} · code <b class="syn-codechip" data-tip="Deel deze code — wie hem invoert, vecht op jullie bord">${escSyn(l.code)}</b></small></h3>
     <div id="syn-inhoud"><p class="syn-laadt">De duiven zijn onderweg…</p></div>
     <div class="syn-knoppen">
-      <button class="knop-stil" onclick="kopieerStrijdkreet()">📣 Kopieer de strijdkreet</button>
-      <button class="knop-stil syn-verlaat" onclick="synVerlaat()">Verlaat het syndicaat</button>
+      <button class="knop-groot" onclick="deelSyndicaat()">📣 Nodig vrienden uit</button>
+      <button class="knop-stil" onclick="kopieerStrijdkreet()">📋 Kopieer de code</button>
+      <label class="syn-autopor" data-tip="Na je eigen dagelijkse afdaling porren we automatisch iedereen die nog niet speelde.">
+        <input type="checkbox" ${INST.autoPor ? 'checked' : ''} onchange="INST.autoPor = this.checked; bewaarInst(); melding(this.checked ? '📣 Auto-por aan.' : 'Auto-por uit.');"> auto-por na mijn afdaling
+      </label>
+      <button class="knop-stil syn-verlaat" onclick="synVerlaat()">Verlaat</button>
     </div>
   </div>`;
 }
@@ -551,13 +593,26 @@ function synVerlaat() {
   melding('Je verliet het syndicaat. De code blijft werken voor wie blijft.');
   toonLeaderboard();
 }
-function kopieerStrijdkreet() {
-  const l = Online.lid(); if (!l) return;
+function syndicaatUitnodiging() {
+  const l = Online.lid(); if (!l) return '';
   const top = (Daily.gesch || []).slice().sort((a, b) => b.score - a.score)[0];
   const scoreDeel = top ? ` Mijn beste dag: ${top.score} punten.` : '';
-  const tekst = `⚔️ SLAY LIT — syndicaat ${l.code}.${scoreDeel} Sluit je aan via 🏆 Leaderboard en versla me: https://teamict-codex.github.io/slay-lit/`;
-  try { navigator.clipboard.writeText(tekst); melding('📣 Strijdkreet gekopieerd — plak en provoceer!'); }
+  return `⚔️ SLAY LIT — sluit je aan bij mijn syndicaat "${l.code}".${scoreDeel} Open 🏆 Leaderboard, voer de code in en versla me: https://teamict-codex.github.io/slay-lit/`;
+}
+function kopieerStrijdkreet() {
+  const tekst = syndicaatUitnodiging(); if (!tekst) return;
+  try { navigator.clipboard.writeText(tekst); melding('📋 Code + uitnodiging gekopieerd — plak en provoceer!'); }
   catch (e) { melding('Kopiëren lukte niet: ' + tekst); }
+}
+/* vrienden toevoegen = de code delen. Op mobiel opent dit de deel-sheet
+   (WhatsApp/SMS/…); op laptop valt het terug op kopiëren. */
+function deelSyndicaat() {
+  const tekst = syndicaatUitnodiging(); if (!tekst) return;
+  if (navigator.share) {
+    navigator.share({ title: 'SLAY LIT — Het Syndicaat', text: tekst }).catch(() => {});
+  } else {
+    kopieerStrijdkreet();
+  }
 }
 
 /* een wapenfeit → een stoef-regel (het sociale hart: laat ze elkaar jennen) */
@@ -578,13 +633,23 @@ function synStoefRegel(r) {
   ]);
 }
 
+/* de ledenlijst-status leeft even in het geheugen zodat de por-knoppen weten
+   wie er vandaag nog moet (en wie je al gepord hebt) */
+let _synLeden = { dag: null, gespeeld: {}, gepord: {} };
+
 async function vulSyndicaat() {
   const el = document.getElementById('syn-inhoud');
   if (!el) return;
+  Online.meldAan();   /* jezelf als lid registreren + 'laatst gezien' verversen */
   try {
     const dag = vandaagSleutel();
-    const [vandaag, ooit, recent] = await Promise.all([Online.dagTop(dag), Online.allerTijden(), Online.feed()]);
+    const [vandaag, ooit, recent, leden] = await Promise.all([Online.dagTop(dag), Online.allerTijden(), Online.feed(), Online.leden().catch(() => null)]);
     if (!document.getElementById('syn-inhoud')) return;   /* overlay intussen dicht */
+    /* wie speelde vandaag al? (kruis de dag-scores tegen de ledenlijst) */
+    const gespeeldVandaag = {};
+    (vandaag || []).forEach(r => { gespeeldVandaag[r.naam] = r; });
+    _synLeden = { dag, gespeeld: gespeeldVandaag, gepord: _synLeden.dag === dag ? _synLeden.gepord : {} };
+    const ledenBlok = ledenlijstHtml(leden, gespeeldVandaag, dag);
     const podium = (vandaag || []).slice(0, 3);
     const rest = (vandaag || []).slice(3);
     const treden = [1, 0, 2].map(i => {
@@ -604,6 +669,7 @@ async function vulSyndicaat() {
       <div class="syn-podium">${treden}</div>
       ${podium.length === 0 ? '<p class="syn-podium-leeg">Het podium van vandaag staat leeg — de eerste afdaling pakt goud. 🥇</p>' : ''}
       ${restRijen}
+      ${ledenBlok}
       <div class="syn-onder">
         <div class="syn-kolom"><h4>🏛️ Aller tijden</h4>${ooitRijen}</div>
         <div class="syn-kolom"><h4>📣 Het gestoef</h4>${stoef}</div>
@@ -611,6 +677,79 @@ async function vulSyndicaat() {
   } catch (e) {
     if (el) el.innerHTML = '<p class="lb-leeg">⚠️ Het syndicaat is onbereikbaar (offline?). Je lokale bord hieronder werkt gewoon.</p>';
   }
+}
+
+/* de ledenlijst: wie zit erin, wie speelde vandaag al (✅) en wie lummelt nog
+   (⏳ — met een por-knop). leden==null → de sociale tabellen bestaan nog niet
+   (SQL deel 1b), dan tonen we een korte hint i.p.v. de lijst. */
+function ledenlijstHtml(leden, gespeeld, dag) {
+  if (!Array.isArray(leden)) {
+    return `<div class="syn-leden syn-leden-uit"><h4>👥 Ledenlijst</h4>
+      <p class="lb-leeg">Zet de sociale laag aan: draai <b>deel 1b</b> van de SQL (leden + porren) uit SUPABASE-SETUP.md.</p></div>`;
+  }
+  const ik = Online.lid().naam;
+  /* achterblijvers bovenaan (die kun je porren), dan wie al speelde */
+  const gesorteerd = leden.slice().sort((a, b) => (!!gespeeld[a.naam]) - (!!gespeeld[b.naam]));
+  const achterblijvers = leden.filter(l => l.naam !== ik && !gespeeld[l.naam]).map(l => l.naam);
+  const rijen = gesorteerd.map(l => {
+    const klaar = !!gespeeld[l.naam];
+    const isIk = l.naam === ik;
+    const alGepord = _synLeden.gepord[l.naam];
+    const knop = (!klaar && !isIk)
+      ? `<button class="syn-por-knop ${alGepord ? 'gepord' : ''}" ${alGepord ? 'disabled' : ''} onclick="porLid('${escSyn(l.naam).replace(/'/g, '')}')">${alGepord ? '✓ gepord' : '📣 Por'}</button>`
+      : '';
+    return `<div class="syn-lid ${klaar ? 'klaar' : 'wacht'}">
+      <span class="syn-lid-status">${klaar ? '✅' : '⏳'}</span>
+      <b>${escSyn(l.naam)}${isIk ? ' <small>(jij)</small>' : ''}</b>
+      <span class="syn-lid-info">${klaar ? `${gespeeld[l.naam].score} pt · ${gespeeld[l.naam].gewonnen ? '👑' : 'rij ' + (gespeeld[l.naam].diepte | 0)}` : 'nog niet afgedaald'}</span>
+      ${knop}
+    </div>`;
+  }).join('') || '<p class="lb-leeg">Nog niemand aangemeld. Deel de code!</p>';
+  const porAllesKnop = achterblijvers.length
+    ? `<button class="knop-stil syn-por-alle" onclick="porAchterblijvers()">📣 Por alle ${achterblijvers.length} achterblijver${achterblijvers.length === 1 ? '' : 's'}</button>`
+    : '';
+  return `<div class="syn-leden"><h4>👥 Ledenlijst <small>${leden.length} lid${leden.length === 1 ? '' : 'den'} · ✅ speelde vandaag</small></h4>
+    ${rijen}
+    ${porAllesKnop}</div>`;
+}
+
+/* por één lid — schrijft een por naar de inbox (anti-spam: 1×/dag/koppel) */
+function porLid(naam) {
+  const dag = vandaagSleutel();
+  const bericht = kiesUit([
+    'De diepte roept. En ik sta al hoger dan jij.',
+    'Vandaag nog niet afgedaald? De DICKtator lacht.',
+    'Je plek op het podium koelt af. Doe je afdaling!',
+    'Ik heb goud gepakt. Durf jij het te evenaren?'
+  ]);
+  _synLeden.gepord[naam] = true;
+  const knop = event && event.target;
+  if (knop) { knop.disabled = true; knop.textContent = '✓ gepord'; knop.classList.add('gepord'); }
+  Online.stuurPor(naam, dag, bericht).then(ok => {
+    melding(ok ? `📣 ${naam} is gepord — nu maar hopen dat 'ie durft.` : `Kon ${naam} niet porren (offline?).`);
+  });
+  Klank.sfx('klik');
+}
+/* por iedereen die vandaag nog niet afdaalde, in één klap */
+function porAchterblijvers() {
+  const dag = vandaagSleutel();
+  const ik = Online.lid().naam;
+  const namen = Object.keys(_synLeden.gespeeld);
+  /* de achterblijvers = leden zonder score vandaag; haal ze uit de laatst-getoonde lijst */
+  const knoppen = [...document.querySelectorAll('.syn-lid.wacht')];
+  let n = 0;
+  knoppen.forEach(rij => {
+    const naamEl = rij.querySelector('b');
+    if (!naamEl) return;
+    const naam = naamEl.childNodes[0].textContent.trim();
+    if (naam === ik || _synLeden.gespeeld[naam]) return;
+    _synLeden.gepord[naam] = true;
+    Online.stuurPor(naam, dag, 'Het hele syndicaat wacht. Doe je dagelijkse afdaling!');
+    n++;
+  });
+  melding(n ? `📣 ${n} achterblijver${n === 1 ? '' : 's'} gepord. Geen excuses meer.` : 'Iedereen speelde al — knap syndicaat.');
+  Klank.sfx('schitter');
+  vulSyndicaat();
 }
 function kopieerLeaderboardScore() {
   const top = (Daily.gesch || []).slice().sort((a, b) => b.score - a.score)[0];
@@ -7499,4 +7638,5 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   } catch (e) {}
   if (window.mobiel) setTimeout(toonSchermNudge, 1200);
+  checkPorInbox();   /* HET SYNDICAAT: heeft iemand je vandaag gepord? */
 });

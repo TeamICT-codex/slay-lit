@@ -12,10 +12,11 @@
    fire-and-forget-veilig — een kapotte verbinding raakt het spel nooit.
    ============================================================ */
 const Online = (() => {
-  /* >>> VUL IN — Supabase-dashboard → Settings → API <<< */
+  /* >>> Supabase-dashboard → Settings → API <<< (publishable key = veilig in
+     client-code; RLS beschermt de tabellen — zie SUPABASE-SETUP.md) */
   const CONFIG = {
-    url: '',       /* bv. 'https://abcdefgh.supabase.co' (Project URL) */
-    anonKey: ''    /* de 'anon public' key (veilig in client-code; RLS beschermt) */
+    url: 'https://datozlvdyripzbfgmyfv.supabase.co',
+    anonKey: 'sb_publishable_65KIIX0hZ2ZQ3OIFspgvEg_5ZfJF_xc'
   };
 
   const SLEUTEL = 'slayit_syndicaat';
@@ -92,10 +93,45 @@ const Online = (() => {
   /* de stoef-feed: recentste wapenfeiten */
   const feed = () => req(`scores?${q()}&order=gemaakt.desc&limit=8`);
 
+  /* ---------- de sociale laag: leden + porren ---------- */
+  /* aanmelden als lid + 'laatst gezien' verversen (upsert op groep,naam).
+     Faalt de leden-tabel (SQL deel 1b nog niet gedraaid)? Stil negeren —
+     het bord blijft werken. */
+  async function meldAan() {
+    if (!isLid()) return false;
+    try {
+      await req('leden?on_conflict=groep,naam', {
+        method: 'POST', prefer: 'resolution=merge-duplicates',
+        body: JSON.stringify({ groep: lid.code, naam: lid.naam, laatst_gezien: new Date().toISOString() })
+      });
+      return true;
+    } catch (e) { return false; }
+  }
+  const leden = () => req(`leden?${q()}&order=naam.asc&limit=60`);
+
+  /* por een genoot om zijn dagelijkse afdaling te doen. Eén por per koppel per
+     dag (unieke index → duplicaat wordt genegeerd) = ingebouwde anti-spam. */
+  async function stuurPor(naar, dag, bericht) {
+    if (!isLid()) return false;
+    naar = normNaam(naar);
+    if (!naar || naar === lid.naam) return false;
+    try {
+      await req('porren?on_conflict=groep,van,naar,dag', {
+        method: 'POST', prefer: 'resolution=ignore-duplicates',
+        body: JSON.stringify({ groep: lid.code, van: lid.naam, naar, dag: String(dag || ''), bericht: String(bericht || '').slice(0, 120) })
+      });
+      return true;
+    } catch (e) { return false; }
+  }
+  /* mijn inbox voor vandaag: wie heeft míj gepord? */
+  const mijnPorren = dag => req(`porren?${q()}&naar=eq.${encodeURIComponent(lid.naam)}&dag=eq.${encodeURIComponent(dag)}&order=gemaakt.desc&limit=20`);
+
   /* DEV-haakje: config vanuit de console zetten om te testen zonder hardcoden
      (bv. Online._dev('https://xyz.supabase.co', 'sleutel')) */
   function _dev(url, key) { CONFIG.url = url || CONFIG.url; CONFIG.anonKey = key || CONFIG.anonKey; }
 
-  return { actief, isLid, lid: () => lid, normCode, normNaam, verzinCode, wordLid, verlaat, stuurScore, dagTop, allerTijden, feed, _dev };
+  return { actief, isLid, lid: () => lid, normCode, normNaam, verzinCode, wordLid, verlaat,
+           stuurScore, dagTop, allerTijden, feed,
+           meldAan, leden, stuurPor, mijnPorren, _dev };
 })();
 window.Online = Online;

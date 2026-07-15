@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v49'; /* v49: HET SYNDICAAT — online sociaal leaderboard via Supabase (js/online.js, kale PostgREST-fetch, geen dependency): sticht/join een syndicaat met een code, dagpodium met treden, aller-tijden-top, stoef-feed, strijdkreet-deelknop; score-upsert na elke daily. Verborgen zolang de CONFIG leeg is (zie SUPABASE-SETUP.md) — het lokale bord blijft altijd werken */
+const CACHE = 'slayit-v50'; /* v50: SYNDICAAT SOCIAAL + live-config — Supabase-sleutels ingevuld (publishable key, veilig); vrienden toevoegen via code + deel-sheet (navigator.share/WhatsApp); LEDENLIJST met ✅ speelde-vandaag / ⏳ lummelt-nog + per-lid 📣 por-knop (anti-spam 1×/dag) + "por alle achterblijvers"; AUTO-POR na je eigen daily (instelbaar); por-inbox-melding bij opstart. leden+porren-tabellen = SQL deel 1b in SUPABASE-SETUP.md */
 const BESTANDEN = [
   '.',
   'css/style.css',

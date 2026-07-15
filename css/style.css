@@ -1425,8 +1425,36 @@ body.lite .syn-trede { animation: none; }
 .syn-kolom { flex: 1 1 260px; min-width: 240px; }
 .syn-kolom h4 { color: #ffd7a0; font-size: .92rem; margin-bottom: 6px; letter-spacing: .04em; }
 .syn-stoef { color: var(--perkament); font-size: .86rem; margin: 4px 0; padding-left: 8px; border-left: 2px solid rgba(255, 150, 70, .45); }
-.syn-knoppen { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+.syn-knoppen { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
 .syn-verlaat { opacity: .6; }
+.syn-autopor { display: inline-flex; align-items: center; gap: 6px; color: var(--perkament-dof); font-size: .82rem; cursor: pointer; }
+.syn-autopor input { accent-color: var(--goud); }
+
+/* ---------- de ledenlijst: wie speelde al, wie lummelt nog ---------- */
+.syn-leden { margin-top: 12px; }
+.syn-leden h4 { color: #ffd7a0; font-size: .92rem; margin-bottom: 6px; letter-spacing: .04em; }
+.syn-leden-uit { opacity: .8; }
+.syn-lid {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 12px; border-radius: 9px; margin-bottom: 5px;
+  background: rgba(30, 22, 26, .6); border: 1px solid rgba(160, 130, 140, .22);
+  color: var(--perkament); font-size: .9rem;
+}
+.syn-lid.wacht { border-color: rgba(255, 150, 70, .4); background: rgba(50, 26, 14, .5); }
+.syn-lid.klaar { opacity: .82; }
+.syn-lid-status { font-size: 1rem; }
+.syn-lid b { max-width: 34%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.syn-lid b small { color: var(--perkament-dof); font-weight: normal; }
+.syn-lid-info { margin-left: auto; color: var(--perkament-dof); font-size: .8rem; text-align: right; }
+.syn-por-knop {
+  margin-left: 8px; padding: 4px 12px; border-radius: 8px;
+  background: linear-gradient(180deg, #7a2f18, #4a1c0e); border: 1px solid rgba(255, 150, 70, .6);
+  color: #ffd7a0; font-size: .8rem; cursor: pointer; white-space: nowrap;
+  transition: transform .12s ease, box-shadow .2s ease;
+}
+.syn-por-knop:hover { transform: translateY(-1px); box-shadow: 0 3px 12px rgba(226, 84, 44, .4); }
+.syn-por-knop.gepord { background: rgba(60, 50, 40, .5); border-color: rgba(150, 140, 120, .4); color: var(--perkament-dof); cursor: default; }
+.syn-por-alle { margin-top: 6px; border-color: rgba(255, 150, 70, .5); color: #ffcf9e; }
 
 .vieze-vinger {
   position: fixed; z-index: 702; pointer-events: none; font-size: clamp(2rem, 5vw, 3rem);
