@@ -148,6 +148,12 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 /* mysterie-scherven-teller: gedragen groot, stash klein erachter; klik = Codex */
 #tb-scherven { color: #b9a7e0; cursor: pointer; }
 #tb-scherven .tbs-stash { color: var(--perkament-dof); font-size: .72em; margin-left: 2px; opacity: .85; }
+#tb-dagwet { cursor: help; }   /* de Dagwet-chip (alleen tijdens een daily) */
+.lb-vandaag {
+  text-align: center; color: var(--perkament-dof); font-size: .92rem;
+  margin: -4px 0 10px; cursor: help;
+}
+.lb-vandaag b { color: #ffd7a0; letter-spacing: .05em; }
 #tb-relikwieen { display: flex; gap: 4px; font-size: 1.25rem; }
 /* ---------- relikwie-schaarste ---------- */
 .rel-start    { --relk: 232, 93, 117; }

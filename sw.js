@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v50'; /* v50: SYNDICAAT SOCIAAL + live-config — Supabase-sleutels ingevuld (publishable key, veilig); vrienden toevoegen via code + deel-sheet (navigator.share/WhatsApp); LEDENLIJST met ✅ speelde-vandaag / ⏳ lummelt-nog + per-lid 📣 por-knop (anti-spam 1×/dag) + "por alle achterblijvers"; AUTO-POR na je eigen daily (instelbaar); por-inbox-melding bij opstart. leden+porren-tabellen = SQL deel 1b in SUPABASE-SETUP.md */
+const CACHE = 'slayit-v51'; /* v51: DE DAGWETTEN — elke dagelijkse afdaling valt onder één dag-seeded wet (iedereen dezelfde): HET AMALGAAM (alle helden-kaarten gemengd: 3 vreemde startkaarten + gemengde beloningen/winkel, dubbel gewogen in de rotatie), GLAZEN ZIELEN (schade ×1.5 beide kanten, +10% score), HET DONKER KRUIPT (lichtverlies ×2, +25% score), DE STORMLOOP (4 energie, vijanden +25% HP), DE GOUDKOORTS (0 startgoud, dubbele buit, winkel −30%, +10%), DE BESMETTING (laster-vloek in startdek, 3e dag-relikwie, +20%). Zichtbaar: 📜-chip in de topbalk, dagwet-regel in het leaderboard + daily-knop-tooltip, bonus uitgesplitst op het eindescherm. Dev: devDagwet(id) */
 const BESTANDEN = [
   '.',
   'css/style.css',

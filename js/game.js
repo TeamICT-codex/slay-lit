@@ -407,6 +407,52 @@ function heldVanDag() {
   const ids = Object.keys(SPELERS);
   return ids[zaadVanTekst(vandaagSleutel()) % ids.length];
 }
+
+/* ---------- DE DAGWETTEN: elke dagelijkse afdaling valt onder één wet ----------
+   Deterministisch uit de datum (aparte salt, los van de held-keuze) → iedereen
+   in het syndicaat speelt vandaag onder DEZELFDE wet. De risico-wetten betalen
+   een transparante scorebonus uit (uitgesplitst op het eindescherm). */
+const DAGWETTEN = {
+  amalgaam: {
+    naam: 'HET AMALGAAM', icoon: '🎭',
+    kort: 'De gilden mengen hun kunsten: drie vreemde kaarten in je startdek, en elke kaartbeloning en winkel put uit ALLE helden.'
+  },
+  glas: {
+    naam: 'GLAZEN ZIELEN', icoon: '💥',
+    kort: 'Alles breekt sneller: elke klap doet anderhalf keer zoveel pijn — ook die op jou.',
+    scoreBonus: 0.10
+  },
+  duister: {
+    naam: 'HET DONKER KRUIPT', icoon: '🕯️',
+    kort: 'De diepte vreet licht: elk fakkelverlies telt dubbel. Wie het haalt, scoort een kwart extra.',
+    scoreBonus: 0.25
+  },
+  stormloop: {
+    naam: 'DE STORMLOOP', icoon: '⚡',
+    kort: 'Vier energie per beurt — maar de diepte stuurt taaiere vijanden (+25% HP).'
+  },
+  goudkoorts: {
+    naam: 'DE GOUDKOORTS', icoon: '🪙',
+    kort: 'Je start berooid (0 goud), maar gevechten betalen dubbel en de koopman geeft 30% korting.',
+    scoreBonus: 0.10
+  },
+  besmetting: {
+    naam: 'DE BESMETTING', icoon: '☣️',
+    kort: 'Een Laster-vloek nestelt zich in je startdek — maar de dag schenkt een dérde relikwie en een vijfde extra score.',
+    scoreBonus: 0.20
+  }
+};
+/* de rotatie weegt HET AMALGAAM dubbel: de blend-dag is het pronkstuk */
+const DAGWET_ROTATIE = ['amalgaam', 'glas', 'duister', 'amalgaam', 'stormloop', 'goudkoorts', 'besmetting'];
+function wetVanDag() {
+  if (wetVanDag._force && DAGWETTEN[wetVanDag._force]) return wetVanDag._force;   /* dev-haak */
+  return DAGWET_ROTATIE[zaadVanTekst('WET' + vandaagSleutel()) % DAGWET_ROTATIE.length];
+}
+/* geldt wet <id> in de LOPENDE run? (alleen dailies dragen een wet; oude saves
+   hebben geen S.dagwet → overal netjes false, zie [[lookup-bugklasse]]) */
+const dagwetActief = id => !!(S && S.daily && S.dagwet === id);
+/* dev: devDagwet('amalgaam') vóór de daily-start forceert een wet (null wist) */
+function devDagwet(id) { wetVanDag._force = id || null; return id ? DAGWETTEN[id] : 'gewist'; }
 /* vandaag al voltooid OF al begonnen (een afgebroken poging blokkeert een verse
    herstart met dezelfde seed → geen score-farmen; hervatten kan via Doorgaan). */
 function dailyAlGespeeld() {
@@ -419,7 +465,11 @@ function dagscore(gewonnen) {
   const winst = gewonnen ? 150 : 0;
   const relikwieen = (S.relikwieen || []).length * 8;
   const goud = Math.floor((S.goud || 0) / 5);
-  return { diepte, winst, relikwieen, goud, totaal: diepte + winst + relikwieen + goud };
+  const sub = diepte + winst + relikwieen + goud;
+  /* de risico-dagwetten betalen een bonus over het subtotaal uit */
+  const wet = (S.daily && S.dagwet && DAGWETTEN[S.dagwet]) || null;
+  const wetBonus = (wet && wet.scoreBonus) ? Math.round(sub * wet.scoreBonus) : 0;
+  return { diepte, winst, relikwieen, goud, wetBonus, wet, totaal: sub + wetBonus };
 }
 function registreerDaily(gewonnen) {
   const dag = vandaagSleutel();   /* anker op de echte kalenderdag (niet de opgeslagen startdag) */
@@ -516,8 +566,10 @@ function toonLeaderboard() {
     ov.className = 'overlay';
     document.body.appendChild(ov);
   }
+  const wetVandaag = DAGWETTEN[wetVanDag()];
   ov.innerHTML = `
     <h2 class="scherm-titel">🏆 Het Leaderboard</h2>
+    <p class="lb-vandaag" data-tip="${wetVandaag.kort}">${wetVandaag.icoon} Vandaag geldt <b>${wetVandaag.naam}</b> · held van de dag: ${SPELERS[heldVanDag()].naam}</p>
     ${synSectieHtml()}
     <div class="lb-kolommen">
       <div class="lb-kolom">
@@ -1038,6 +1090,8 @@ function fakkelKost(type, rij) {
 
 function zetFakkel(delta) {
   const voor = lichtNiveau();
+  /* HET DONKER KRUIPT (dagwet): elk lichtverlies telt dubbel */
+  if (delta < 0 && dagwetActief('duister')) delta *= 2;
   /* Vonkenkluis: elke lichtwinst klettert er dubbel uit */
   if (delta > 0 && heeftRelikwie('vonkenkluis')) delta += 1;
   S.fakkel = Math.max(0, Math.min(100, S.fakkel + delta));
@@ -1519,6 +1573,8 @@ function vijandAanval(v, basis, gedwongenDoel) {
 
 /* aanvalsschade toepassen: blok absorbeert, doornen kaatsen terug */
 function doeSchade(doel, dmg, bron) {
+  /* GLAZEN ZIELEN (dagwet): elke klap ×1.5 — vóór blok, beide richtingen */
+  if (dmg > 0 && dagwetActief('glas')) dmg = Math.ceil(dmg * 1.5);
   let rest = dmg;
   if ((doel.blok || 0) > 0) {
     const op = Math.min(doel.blok, rest);
@@ -2101,6 +2157,16 @@ function renderTopbalk() {
       tbS.dataset.tip = `Mysterie-scherven: ${ged} bij je (banken bij de Drempel of een overwinning; gevonden scherven overleven ook een dood) · ${veilig} veilig in je stash. Klik voor de Codex.`;
     } else tbS.style.display = 'none';
   }
+  /* de Dagwet-chip: alleen tijdens een dagelijkse afdaling zichtbaar */
+  const tbW = $('#tb-dagwet');
+  if (tbW) {
+    const wet = (S.daily && S.dagwet && DAGWETTEN[S.dagwet]) || null;
+    if (wet) {
+      tbW.style.display = '';
+      tbW.innerHTML = `📜${wet.icoon}`;
+      tbW.dataset.tip = `DAGWET — ${wet.naam}: ${wet.kort}${wet.scoreBonus ? ` (scorebonus +${Math.round(wet.scoreBonus * 100)}%)` : ''}`;
+    } else tbW.style.display = 'none';
+  }
   /* alles wat je bezit is ontdekt — dekt elke verwervingsroute */
   S.relikwieen.forEach(r => ontdek('relikwieen', r));
   S.dranken.forEach(d => ontdek('dranken', d));
@@ -2439,6 +2505,7 @@ function maakVijand(id, rij) {
   if (!def.elite && !def.baas && !def.episch) hp += Math.floor(rij * 0.8);   /* episch krijgt geen rij-bonus bovenop ×act */
   if (!def.baas && huidigeAct() > 1) hp = Math.ceil(hp * (1 + 0.30 * (huidigeAct() - 1)));   /* latere acts: taaier */
   if (asc() >= 2 && !def.baas) hp = Math.ceil(hp * 1.12);   /* ascension 2: taaiere vijanden */
+  if (!def.baas && dagwetActief('stormloop')) hp = Math.ceil(hp * 1.25);   /* DE STORMLOOP: de tegenprijs van 4 energie */
   const v = { id, naam: def.naam, art: def.art, hp, maxHp: hp, blok: 0, status: {}, dood: false, beurtTeller: 0, intent: null };   /* (aegis-veld weg — geen enkele vijand-def heeft het nog; het oude schild is vervangen door de Copycat-machinerie) */
   if (def.copycat) {
     /* THE COPYCAT-state. Overal elders lui geguard ((v.gestolen||[]), v.gevoed||0, …)
@@ -2569,7 +2636,8 @@ function startGevecht(samenstelling, soort, rij) {
     speler: { isSpeler: true, blok: 0, status: {} },
     trek: schud([...S.dek]),
     hand: [], afleg: [], uitgeput: [],
-    energie: 3, maxEnergie: 3,
+    /* DE STORMLOOP (dagwet): vier energie per beurt */
+    energie: dagwetActief('stormloop') ? 4 : 3, maxEnergie: dagwetActief('stormloop') ? 4 : 3,
     beurt: 0, bezig: false, voorbij: false,
     gekozenKaart: null, gekozenDrank: null,
     /* THE COPYCAT: zijn observatie-buffer + breekstatus leven op het gevecht */
@@ -5014,6 +5082,7 @@ async function gevechtGewonnen() {
   if (g.gedoofd) goud = Math.floor(goud * 1.5);
   if (heeftRelikwie('gelukspoot')) goud = Math.floor(goud * 1.25);
   if (heeftRelikwie('leren_buidel')) goud += 10;
+  if (dagwetActief('goudkoorts')) goud *= 2;   /* DE GOUDKOORTS: gevechten betalen dubbel */
   if (heeftRelikwie('kaarsenstomp')) zetFakkel(3);
 
   S.beloning = {
@@ -5040,11 +5109,14 @@ function nederlaag() {
   }, 900);
 }
 
-/* kaartenpool van de huidige held: eigen kaarten + neutrale */
+/* kaartenpool van de huidige held: eigen kaarten + neutrale.
+   HET AMALGAAM (dagwet): de held-grens valt weg — alle gilden mengen. */
 function heldPool() {
   return Object.keys(KAARTEN).filter(id => {
     const k = KAARTEN[id];
-    return !['basis', 'vloek', 'gesmeed'].includes(k.zeld) && (!k.held || k.held === S.held) && (!k.act || k.act <= huidigeAct());
+    return !['basis', 'vloek', 'gesmeed'].includes(k.zeld)
+      && (!k.held || k.held === S.held || dagwetActief('amalgaam'))
+      && (!k.act || k.act <= huidigeAct());
   });
 }
 
@@ -5731,6 +5803,15 @@ function toonWinkel() {
     olie: { prijs: rnd(35, 45), gekocht: false },
     ei: willekeurig() < 0.07
   };
+  /* DE GOUDKOORTS (dagwet): de koopman ruikt je honger — 30% korting op alles */
+  if (dagwetActief('goudkoorts')) {
+    const kort = p => Math.max(5, Math.floor(p * 0.7));
+    S.winkel.kaarten.forEach(i => { i.prijs = kort(i.prijs); });
+    S.winkel.relikwieen.forEach(i => { i.prijs = kort(i.prijs); });
+    S.winkel.dranken.forEach(i => { i.prijs = kort(i.prijs); });
+    S.winkel.olie.prijs = kort(S.winkel.olie.prijs);
+    S.winkel.verwijderPrijs = kort(S.winkel.verwijderPrijs);
+  }
   renderWinkel();
 }
 
@@ -6548,6 +6629,7 @@ function toonEinde(gewonnen, verslagenBaas) {
         ${gewonnen ? `<span>overwinning</span><b>${dScore.winst}</b>` : ''}
         <span>relikwieën ${S.relikwieen.length} × 8</span><b>${dScore.relikwieen}</b>
         <span>goud ${S.goud} ÷ 5</span><b>${dScore.goud}</b>
+        ${dScore.wetBonus ? `<span>${dScore.wet.icoon} dagwet ${dScore.wet.naam} +${Math.round(dScore.wet.scoreBonus * 100)}%</span><b>${dScore.wetBonus}</b>` : ''}
       </div>
       <p class="daily-reeks">🔥 Speelreeks: ${Daily.reeks} dag${Daily.reeks === 1 ? '' : 'en'}${Daily.besteReeks > Daily.reeks ? ` · beste: ${Daily.besteReeks}` : ''}</p>
     </div>` : ''}
@@ -6590,7 +6672,11 @@ function naarTitel() {
     const klaar = Daily.laatsteVoltooid === vandaagSleutel();
     db.textContent = klaar ? `🗓️ Dagelijks voltooid · score ${Daily.laatsteScore}` : '🗓️ Dagelijkse afdaling';
     db.classList.toggle('daily-klaar', klaar);
-    if (Daily.reeks > 0) db.setAttribute('data-tip', `🔥 Speelreeks: ${Daily.reeks} dag${Daily.reeks === 1 ? '' : 'en'}${Daily.besteReeks > Daily.reeks ? ` · beste: ${Daily.besteReeks}` : ''}`);
+    /* de lokroep: laat vooraf zien wélke wet en held vandaag gelden */
+    const wet = DAGWETTEN[wetVanDag()];
+    const tipDelen = [`${wet.icoon} Vandaag: ${wet.naam} · held: ${SPELERS[heldVanDag()].naam}`];
+    if (Daily.reeks > 0) tipDelen.push(`🔥 Speelreeks: ${Daily.reeks} dag${Daily.reeks === 1 ? '' : 'en'}${Daily.besteReeks > Daily.reeks ? ` · beste: ${Daily.besteReeks}` : ''}`);
+    db.setAttribute('data-tip', tipDelen.join(' — '));
   }
 }
 
@@ -6609,6 +6695,35 @@ function startNieuw() {
     }
   } catch (e) {}
   toonHeldKeuze();
+}
+
+/* de start-effecten van een dagwet — draait direct na nieuwSpel (Toeval staat
+   dan al op de dag-seed → de dekswap is voor iedereen identiek) */
+function pasDagwetStartToe(wetId) {
+  if (wetId === 'amalgaam') {
+    /* drie startkaarten wijken voor drie vreemde: gewoon/ongewoon van ANDERE
+       helden, act-1-waardig — een voorproefje van de gemengde pools */
+    const vreemd = Object.keys(KAARTEN).filter(id => {
+      const k = KAARTEN[id];
+      return ['gewoon', 'ongewoon'].includes(k.zeld) && k.held && k.held !== S.held && (!k.act || k.act <= 1);
+    });
+    const gekozen = [];
+    let poging = 0;
+    while (gekozen.length < 3 && poging++ < 60 && vreemd.length) {
+      const id = vreemd[Math.floor(Toeval.volgende() * vreemd.length)];
+      if (!gekozen.includes(id)) gekozen.push(id);
+    }
+    gekozen.forEach(id => {
+      const idx = S.dek.findIndex(c => kdef(c).type !== 'vloek');
+      if (idx >= 0) S.dek.splice(idx, 1);
+      S.dek.push(nieuweKaart(id));
+    });
+    if (gekozen.length) setTimeout(() => melding(`🎭 Vreemde kunsten in je dek: ${gekozen.map(id => KAARTEN[id].naam).join(' · ')}`), 2900);
+  } else if (wetId === 'goudkoorts') {
+    S.goud = 0;   /* berooid het duister in — de dubbele buit moet het goedmaken */
+  } else if (wetId === 'besmetting') {
+    S.dek.push(nieuweKaart('laster'));   /* de vloek zit er vanaf kamer één in */
+  }
 }
 
 /* ---------- de Dagelijkse afdaling: vaste dag-seed, held van de dag, Schrijn UIT,
@@ -6641,12 +6756,20 @@ function startDaily() {
   const held = heldVanDag();
   nieuwSpel(held, dagSeed(), 0, true);      /* vaste seed, ascensie 0, daily=true → eerlijk veld */
   S.dailyDag = vandaagSleutel();
-  /* MEER RANDOM (playtest): twee dag-seeded relikwieën spicen het veld op —
-     de seed staat al op de dag, dus iedereen krijgt vandaag DEZELFDE twee */
+  /* DE DAGWET: vandaag geldt één wet — vóór de dag-relikwieën toegepast zodat
+     de Toeval-volgorde (dekswap → relikwieën) voor iedereen identiek is */
+  const wetId = wetVanDag();
+  S.dagwet = wetId;
+  const wet = DAGWETTEN[wetId];
+  pasDagwetStartToe(wetId);
+  /* MEER RANDOM (playtest): dag-seeded relikwieën spicen het veld op — de seed
+     staat al op de dag, dus iedereen krijgt vandaag DEZELFDE (Besmetting: 3) */
   const dagRelikwieen = [];
-  for (let i = 0; i < 2; i++) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); dagRelikwieen.push(RELIKWIEEN[r].naam); } }
+  const relAantal = wetId === 'besmetting' ? 3 : 2;
+  for (let i = 0; i < relAantal; i++) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); dagRelikwieen.push(RELIKWIEEN[r].naam); } }
   melding(`🗓️ Dagelijkse afdaling — held van de dag: ${SPELERS[held].naam}. Geen Schrijn; je score telt mee.`);
   if (dagRelikwieen.length) setTimeout(() => melding(`🎁 De dag schenkt: ${dagRelikwieen.join(' · ')}`), 900);
+  setTimeout(() => melding(`${wet.icoon} DAGWET — ${wet.naam}: ${wet.kort}`), 1900);
   renderKaartScherm();
 }
 
