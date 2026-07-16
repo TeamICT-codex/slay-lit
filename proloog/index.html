@@ -38614,8 +38614,10 @@ function KantoorOverzicht(_ref4) {
   var duik = function duik() {
     if (dive) return;
     if (A) {
-      A.unlock();
-      A.powerOn();
+      try {
+        A.unlock();
+        A.powerOn();
+      } catch (e) {}
     }
     setDive(true);
     setTimeout(function () {
@@ -38735,9 +38737,31 @@ function Badge(_ref5) {
     };
   }();
   var snap = function snap() {
-    if (videoRef.current && videoRef.current.videoWidth) onPhoto(cropTo(videoRef.current));
-    stop();
-    setCam(false);
+    var v = videoRef.current;
+    if (v && v.videoWidth) {
+      onPhoto(cropTo(v));
+      stop();
+      setCam(false);
+      return;
+    }
+    if (!v) {
+      stop();
+      setCam(false);
+      return;
+    }
+    /* mobiel: de camera warmt nog op — wacht op metadata (max 1,5s) */
+    var klaar = false;
+    var alsnog = function alsnog() {
+      if (klaar) return;
+      klaar = true;
+      if (v.videoWidth) onPhoto(cropTo(v));else setFout('Camera gaf geen beeld — gebruik Upload.');
+      stop();
+      setCam(false);
+    };
+    v.addEventListener('loadedmetadata', alsnog, {
+      once: true
+    });
+    setTimeout(alsnog, 1500);
   };
   var annuleer = function annuleer() {
     stop();
@@ -40882,6 +40906,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.c
       '@keyframes brugpuls{50%{box-shadow:0 0 40px rgba(255,179,71,.65)}}' +
       '#brug-skip{position:fixed;right:18px;top:14px;z-index:9999;color:#8a8168;background:rgba(10,8,5,.6);' +
       'border:1px solid #454136;padding:5px 10px;cursor:pointer;font:13px "Courier New",monospace;opacity:.8}' +
+      /* de nav-Verder is overal een dubbeling (elke scène heeft zijn eigen
+         doorgang: terminal-klik, Klok in, beat-CTA's, gesprek-Verder,
+         breekpunt-CTA) en ondermijnt o.a. de login-klik van scène 0 → altijd weg */
+      '.proloog-nav .nav-knop.sterk{display:none !important}' +
       /* zodra de val gekozen is verdwijnt de onderste nav (behalve de geluidsknop):
          "Verder" na de keuze verwart \u2014 de enige weg is nu DAAL AF. Via een class
          op <html> + stylesheet: overleeft elke React-re-render. */
