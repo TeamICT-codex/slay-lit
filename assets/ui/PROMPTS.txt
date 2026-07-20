@@ -1,0 +1,50 @@
+UI-PROPS (losstaande beeldelementen in de interface)
+====================================================
+Props die NIET bij een personage/kaart/relikwie horen maar los in de UI
+verschijnen. Zelfde pijplijn als de rest: dambord/achtergrond weg →
+converteer_webp.py → cache-bump. Originelen in assets-bron/.
+
+
+========================= grafzerk.png =========================
+!! CRUCIAAL — DE GRAVEERVLAK MOET LEEG BLIJVEN. Op deze zerk komt LIVE
+   HTML-tekst te staan (de naam van de gevallen speler, de rij en zijn
+   laatste woorden — voor elke speler anders). Genereer dus een LEGE,
+   graveerbare steen: GEEN letters, GEEN woorden, GEEN cijfers, GEEN
+   ingekraste namen. Het centrale inscriptievlak is een VLAKKE, rustige,
+   licht-verzonken steenplaat die leeg blijft; alle detail (barsten, mos,
+   verwering) zit alleen op de RAND en de boog erboven.
+!! Transparante achtergrond — de zerk wordt over het donkere spel gelegd.
+
+Stylized painterly digital illustration for a dark fantasy card game,
+hand-painted fantasy concept art with expressive visible brushwork, rich
+colors and soft painted shading. NOT photorealistic, not a photograph, no
+photo textures, no 3D render.
+
+An upright weathered gravestone slab with a rounded arched top, carved from
+ancient dungeon stone. Cracked and chipped along the edges, with patches of
+pale grey-green moss and dried ash settled in the crevices and at the base.
+A small worn carved notch or simple cross sits at the very top of the arch.
+The stone is lit by warm ember-orange torchlight grazing along one edge,
+while a faint cold spectral teal glow bleeds out from behind the stone — a
+grave in a torchlit crypt. The large CENTRAL inscription panel is a flat,
+slightly recessed, smooth and EVEN stone surface, deliberately left BLANK
+and uncluttered (no carving, no letters) so an epitaph can be placed over it
+later; keep all cracks, texture and weathering on the border, arch and base,
+not on the central panel.
+
+Warm torchlight rim lighting with a cold spectral undertone, palette of
+charcoal-grey stone, deep purple shadow, ember orange and a faint ghostly
+teal, matching a torchlit dungeon grave.
+
+Isolated on a fully transparent background. NO text, NO letters, NO words,
+NO numbers, NO inscription of any kind — the central panel must be empty
+stone. No ground line, no UI, no rectangular frame border. The gravestone
+stands upright and centered, filling about 90% of a vertical 1024x1280
+canvas. Painted illustration style only. Transparent background (alpha),
+the stone shape cleanly cut out.
+
+
+-- ALTERNATIEF (simpeler, als de boog-plaat te druk uitvalt) --
+Zelfde stijl-lock en kleuren, maar een eenvoudiger rechtopstaande grafsteen
+met een gladde ronde top en een brede lege middenplaat; minder mos, meer
+strakke gebeitelde rand. Zelfde lege-graveervlak- en transparantie-eisen.

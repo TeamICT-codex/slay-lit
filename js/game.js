@@ -7147,8 +7147,27 @@ function toonGrafsteen(graf) {
       <button class="knop-groot gs-wreek" onclick="document.getElementById('grafsteen').remove()">⚔️ Wreek ${escSyn(graf.naam)}</button>
     </div>`;
   document.body.appendChild(el);
+  /* echte gebeitelde steen-textuur zodra assets/ui/grafzerk.webp bestaat;
+     tot dan blijft de CSS-zerk staan (stille terugval) */
+  laadPropAfbeelding('ui/grafzerk', img => {
+    const zerk = el.querySelector('.gs-zerk');
+    if (img && zerk) { zerk.style.backgroundImage = `url("${img.src}")`; zerk.classList.add('gs-heeft-art'); }
+  });
   if (!INST.lite) { Klank.sfx('debuff'); setTimeout(() => Klank.sfx('debuff'), 260); schudScherm && schudScherm(); }
   else Klank.sfx('debuff');
+}
+/* generieke prop-art-loader (UI-losstaand): probeer webp, dan png, cache het
+   resultaat (ook een mislukking → geen herhaald hameren), val stil terug op CSS */
+const _propArt = {};
+function laadPropAfbeelding(pad, cb) {
+  if (pad in _propArt) { cb(_propArt[pad]); return; }
+  const probeer = (ext, anders) => {
+    const img = new Image();
+    img.onload = () => { _propArt[pad] = img; cb(img); };
+    img.onerror = anders;
+    img.src = 'assets/' + pad + '.' + ext;
+  };
+  probeer('webp', () => probeer('png', () => { _propArt[pad] = null; cb(null); }));
 }
 
 /* de sociale nudge op het daily-eindescherm: deel je score als uitdaging
