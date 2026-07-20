@@ -109,6 +109,29 @@ const Online = (() => {
     } catch (e) { return false; }
   }
 
+  /* HET GRAFSCHRIFT: je laatste woorden op je score-rij van vandaag (kolom
+     'boodschap', SQL deel 1d). Best-effort PATCH — de score-upload loopt
+     hier nooit gevaar door. return=representation onthult of er écht een
+     rij geraakt is: vlak na de dood kan de score-insert nog onderweg zijn
+     (fire-and-forget) → dan één stille herkansing. */
+  async function stuurGrafschrift(dag, tekst) {
+    const ik = identiteit();
+    tekst = String(tekst || '').replace(/[<>]/g, '').trim().slice(0, 140);
+    if (!ik || !tekst) return false;
+    const patch = async () => {
+      const r = await req(`scores?groep=eq.${encodeURIComponent(ik.code)}&naam=eq.${encodeURIComponent(ik.naam)}&dag=eq.${encodeURIComponent(dag)}`, {
+        method: 'PATCH', prefer: 'return=representation',
+        body: JSON.stringify({ boodschap: tekst })
+      });
+      return Array.isArray(r) && r.length > 0;
+    };
+    try {
+      if (await patch()) return true;
+      await new Promise(res => setTimeout(res, 1600));   /* score-rij nog onderweg? */
+      return await patch();
+    } catch (e) { return false; }
+  }
+
   const q = () => 'groep=eq.' + encodeURIComponent(lid.code);
   /* het dagpodium: de scores van het syndicaat voor één dag */
   const dagTop = dag => req(`scores?${q()}&dag=eq.${encodeURIComponent(dag)}&order=score.desc&limit=10`);
@@ -177,7 +200,7 @@ const Online = (() => {
 
   return { actief, isLid, lid: () => lid, normCode, normNaam, verzinCode, wordLid, verlaat,
            identiteit, isZwerver, wordZwerver,
-           stuurScore, dagTop, allerTijden, feed,
+           stuurScore, stuurGrafschrift, dagTop, allerTijden, feed,
            wereldDag, wereldOoit,
            meldAan, leden, stuurPor, mijnPorren, _dev };
 })();

@@ -113,6 +113,18 @@ Twee dingen om te weten:
   `PROBE-` worden client-side van het wereldbord gefilterd. Fysiek wissen kan
   altijd via Table Editor → `scores` → filter op die groepen → delete.
 
+## 1d. Het grafschrift (SQL deel 1d — één regel)
+
+Gevallen spelers laten een boodschap na op hun score-rij; possegenoten
+vinden op die verdieping een grafsteen. Daarvoor één extra kolom:
+
+```sql
+alter table public.scores add column if not exists boodschap text;
+```
+
+Zonder deze kolom werkt alles gewoon door — alleen het versturen van een
+grafschrift meldt dan netjes dat het niet lukte.
+
 ## 2. Vul de sleutels in
 
 Dashboard → **Settings → API**. Kopieer:

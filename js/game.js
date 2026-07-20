@@ -662,6 +662,10 @@ function checkResetLink() {
   if (!wil) return;
   /* de parameter pas schonen ná de keuze: een sw-update-reload vlak na de boot
      mag de vraag niet opeten (de dialoog komt dan gewoon terug) */
+  vraagVoortgangReset();
+}
+/* gedeeld door de reset-link én de knop in ⚙️ Instellingen */
+function vraagVoortgangReset() {
   bevestig(
     `Dit wist op dit toestel <b>alle voortgang</b>: de lopende run, je dagelijkse scores en reeksen, en de hele Codex (runs, ontdekkingen, scherven, het Schrijn, gesmede kaarten).<br><br>Instellingen, de proloog en je syndicaat-lidmaatschap blijven staan. <b>Dit kan niet ongedaan worden gemaakt.</b>`,
     () => {
@@ -728,6 +732,7 @@ function toonLeaderboard() {
   ov.innerHTML = `
     <h2 class="scherm-titel">🏆 Het Leaderboard</h2>
     <p class="lb-vandaag" data-tip="${wetVandaag.kort}">${wetVandaag.icoon} Vandaag geldt <b>${wetVandaag.naam}</b> · held van de dag: ${SPELERS[heldVanDag()].naam}</p>
+    ${!dailyAlGespeeld() ? `<button class="knop-groot lb-daily-cta" onclick="document.getElementById('overlay-leaderboard').classList.remove('open'); startDaily();">⚔️ Daal vandaag nog af — ${wetVandaag.icoon} ${wetVandaag.naam} wacht</button>` : ''}
     ${synSectieHtml()}
     ${wereldSectieHtml()}
     <div class="lb-kolommen">
@@ -749,6 +754,7 @@ function toonLeaderboard() {
   ov.classList.add('open');
   if (window.Online && Online.isLid()) vulSyndicaat();
   if (window.Online && Online.actief()) vulWereldbord();   /* iedereen mag kijken */
+  checkPorInbox();   /* verse porren ook zien als de app al openstond (gezien-set dedupet) */
   Klank.sfx('klik');
 }
 
@@ -904,9 +910,11 @@ function deelSyndicaat() {
   }
 }
 
-/* een wapenfeit → een stoef-regel (het sociale hart: laat ze elkaar jennen) */
+/* een wapenfeit → een stoef-regel (het sociale hart: laat ze elkaar jennen).
+   Een achtergelaten grafschrift (kolom 'boodschap') spreekt mee in de feed. */
 function synStoefRegel(r) {
   const n = escSyn(r.naam);
+  const graf = (!r.gewonnen && r.boodschap) ? ` ⚰️ „${escSyn(String(r.boodschap).slice(0, 90))}"` : '';
   if (r.gewonnen) return kiesUit([
     `👑 ${n} onthoofdde de DICKtator — ${r.score} punten. Buig.`,
     `👑 ${n} liep de outro binnen met ${r.score} punten. Applaus is verplicht.`,
@@ -915,11 +923,11 @@ function synStoefRegel(r) {
   if ((r.diepte || 0) >= 10) return kiesUit([
     `⚔️ ${n} vocht tot rij ${r.diepte} — ${r.score} punten. Respect.`,
     `⚔️ ${n} kwam tot rij ${r.diepte} (${r.score} pt). Zó dichtbij.`
-  ]);
+  ]) + graf;
   return kiesUit([
     `💀 ${n} viel op rij ${r.diepte || 0} (${r.score} pt). De diepte lacht.`,
     `💀 ${n} — rij ${r.diepte || 0}, ${r.score} punten. Morgen beter?`
-  ]);
+  ]) + graf;
 }
 
 /* de ledenlijst-status leeft even in het geheugen zodat de por-knoppen weten
@@ -2567,6 +2575,9 @@ let _kaartZoom = 1;   /* schaalfactor van de afdaalkaart op smalle schermen (zoo
 function renderKaartScherm() {
   toonScherm('kaart');
   saveSpel();
+  /* HET GRAFSCHRIFT: passeer je op de kaart de val-verdieping van een
+     possegenoot, dan rijst zijn steen op (na de map-render, één per genoot) */
+  setTimeout(checkGrafsteen, 700);
   const vlak = $('#kaart-vlak');
   const hoogte = (RIJEN + 1) * 92 + 120;
   vlak.style.height = hoogte + 'px';
@@ -6887,6 +6898,15 @@ function toonEinde(gewonnen, verslagenBaas) {
           : `<button class="knop-stil einde-syn-knop" onclick="deelDagScore()">📣 Daag je vrienden uit</button>
              <button class="knop-stil" onclick="toonLeaderboard()" data-tip="Sticht een syndicaat: één code, en jullie vechten op hetzelfde dagbord.">🏴 Sticht een syndicaat</button>`}
       </div>
+      ${(!gewonnen && window.Online && Online.identiteit()) ? `
+      <div class="graf-blok" id="graf-blok">
+        <div class="graf-kop">⚰️ Laat een grafschrift na <small>je posse vindt het vandaag op rij ${S.verdieping} — op de plek waar jij viel</small></div>
+        <div class="graf-rij">
+          <input id="graf-tekst" maxlength="120" placeholder="Je laatste woorden — daag ze uit…" autocomplete="off">
+          <button class="knop-stil" onclick="grafSuggestie()" data-tip="rol een verse provocatie">🎲</button>
+          <button class="knop-stil" id="graf-verstuur" onclick="stuurGrafschriftUI()">⚰️ Verstuur</button>
+        </div>
+      </div>` : ''}
     </div>` : ''}
     <p class="einde-loopbaan">${loopbaanRegel()}${uitslag.nieuwRecord ? ' <span class="einde-record">🏆 nieuw diepterecord!</span>' : ''}</p>
     <p class="einde-seed">Seed: ${S.seed} · ${held.naam}</p>
@@ -7025,9 +7045,88 @@ function startDaily() {
   const relAantal = wetId === 'besmetting' ? 3 : 2;
   for (let i = 0; i < relAantal; i++) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); dagRelikwieen.push(RELIKWIEEN[r].naam); } }
   S.dagwetGeschenken = dagRelikwieen;   /* in S → de proclamatie kan ze ook ná een herlaad tonen */
+  laadDagGraven();   /* de graven van je posse: wie viel vandaag al, en waar? */
   renderKaartScherm();
   /* geen wegdrijvende toasts maar DE PROCLAMATIE: de baas vaardigt de wet uit */
   toonDagwetProclamatie();
+}
+
+/* ---------- HET GRAFSCHRIFT: je laatste woorden op de plek van je val ----------
+   Bij een gevallen daily laat je een boodschap na; possegenoten die vandaag
+   dezelfde afdaling doen vinden op JOUW verdieping een grafsteen met je
+   uitdaging. Vrij veld + 🎲-themasuggesties. */
+const GRAF_SUGGESTIES = [
+  'Dieper dan rij {rij} kom jij nooit. Bewijs me ongelijk.',
+  'Ik struikelde op rij {rij}. Jij gaat hier vallen.',
+  'Mijn geest kijkt mee vanaf rij {rij}. Stel me niet teleur.',
+  'Wat mij velde, wacht nog op jou. Veel plezier.',
+  'Rij {rij} is van mij. Kom er maar eens voorbij.',
+  'Laat mijn as liggen. Pak wél mijn wraak.',
+  'De diepte nam mij. Jou neemt ze sneller.',
+  'Wie dit leest: mijn score eerst verslaan, dan pas praten.'
+];
+function grafSuggestie() {
+  const veld = document.getElementById('graf-tekst');
+  if (!veld) return;
+  veld.value = kiesUit(GRAF_SUGGESTIES).replace(/\{rij\}/g, S && S.verdieping ? S.verdieping : '?');
+  Klank.sfx('klik');
+}
+function stuurGrafschriftUI() {
+  const veld = document.getElementById('graf-tekst');
+  const knop = document.getElementById('graf-verstuur');
+  const tekst = (veld && veld.value || '').trim();
+  if (!tekst) { melding('Schrijf eerst je laatste woorden (of rol de 🎲).'); return; }
+  if (knop) { knop.disabled = true; knop.textContent = '⏳'; }
+  Klank.sfx('klik');
+  Online.stuurGrafschrift(vandaagSleutel(), tekst).then(ok => {
+    if (ok) {
+      stuurGrafschriftUI._verstuurd = tekst;   /* deelDagScore neemt het mee */
+      const blok = document.getElementById('graf-blok');
+      if (blok) blok.innerHTML = `<p class="graf-klaar">⚰️ Je grafschrift rust op rij ${S && S.verdieping || '?'} — je posse zal het vinden.</p>`;
+      melding('⚰️ Grafschrift achtergelaten. Laat ze maar komen.');
+    } else {
+      if (knop) { knop.disabled = false; knop.textContent = '⚰️ Verstuur'; }
+      melding('Het grafschrift kon niet worden achtergelaten (offline, of de boodschap-kolom ontbreekt nog — zie SUPABASE-SETUP.md 1d).');
+    }
+  });
+}
+/* de graven van je posse voor déze dag ophalen (bij de daily-start) */
+function laadDagGraven() {
+  if (!(window.Online && Online.isLid())) return;
+  Online.dagTop(vandaagSleutel()).then(r => {
+    if (!S || !S.daily) return;
+    const ik = Online.lid().naam;
+    S.dagGraven = (r || []).filter(x => x && !x.gewonnen && x.naam !== ik && (x.diepte | 0) > 0)
+      .map(x => ({ naam: String(x.naam || ''), diepte: x.diepte | 0, boodschap: String(x.boodschap || '').slice(0, 140) }));
+    saveSpel();
+  }).catch(() => {});
+}
+/* op de kaart: bereik (of passeer) je de verdieping waar een possegenoot viel
+   vandaag? Dan rijst zijn grafsteen op — één keer per genoot. */
+function checkGrafsteen() {
+  if (!S || !S.daily || !Array.isArray(S.dagGraven) || !S.dagGraven.length) return;
+  S.gravenGezien = Array.isArray(S.gravenGezien) ? S.gravenGezien : [];
+  const graf = S.dagGraven.find(g => g.diepte <= (S.verdieping || 0) && !S.gravenGezien.includes(g.naam));
+  if (!graf) return;
+  S.gravenGezien.push(graf.naam);
+  saveSpel();
+  toonGrafsteen(graf);
+}
+function toonGrafsteen(graf) {
+  const oud = document.getElementById('grafsteen'); if (oud) oud.remove();
+  const el = document.createElement('div');
+  el.id = 'grafsteen';
+  el.className = 'overlay open';
+  el.innerHTML = `
+    <div class="gs-kaart">
+      <div class="gs-steen">🪦</div>
+      <h2 class="scherm-titel">Hier viel ${escSyn(graf.naam)}</h2>
+      <p class="gs-sub">vandaag · rij ${graf.diepte} · dezelfde afdaling als de jouwe</p>
+      <blockquote class="gs-boodschap">${graf.boodschap ? `„${escSyn(graf.boodschap)}"` : '<i>Geen laatste woorden. Alleen stilte, en een lege fakkel.</i>'}</blockquote>
+      <button class="knop-groot" onclick="document.getElementById('grafsteen').remove()">⚔️ Wreek ${escSyn(graf.naam)}</button>
+    </div>`;
+  document.body.appendChild(el);
+  Klank.sfx('debuff');
 }
 
 /* de sociale nudge op het daily-eindescherm: deel je score als uitdaging
@@ -7036,7 +7135,8 @@ function deelDagScore() {
   const wet = (S && S.dagwet && DAGWETTEN[S.dagwet]) || null;
   const score = Daily.laatsteScore || 0;
   const l = (window.Online && Online.isLid()) ? Online.lid() : null;
-  const tekst = `⚔️ SLAY LIT — dagelijkse afdaling: ${score} punten${wet ? ` onder ${wet.naam}` : ''}. `
+  const graf = stuurGrafschriftUI._verstuurd ? ` Mijn laatste woorden: „${stuurGrafschriftUI._verstuurd}"` : '';
+  const tekst = `⚔️ SLAY LIT — dagelijkse afdaling: ${score} punten${wet ? ` onder ${wet.naam}` : ''}.${graf} `
     + (l ? `Versla me — één tik en je staat op ons bord: ${syndicaatLink()}`
          : 'Versla me: https://teamict-codex.github.io/slay-lit/');
   Klank.sfx('klik');

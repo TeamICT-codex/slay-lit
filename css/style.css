@@ -596,6 +596,39 @@ body.lite #dagwet-proc .dwp-zegel { animation: none; opacity: 1; transform: none
 .einde-syn { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; margin-top: 10px; }
 .einde-syn-knop { border-color: rgba(255, 150, 70, .5); color: #ffcf9e; }
 .einde-syn-rang { color: var(--perkament-dof); font-size: .84rem; }
+
+/* ---------- HET GRAFSCHRIFT: laatste woorden op het eindescherm ---------- */
+.graf-blok {
+  margin-top: 12px; padding: 10px 14px; border-radius: 12px;
+  background: rgba(20, 14, 22, .55); border: 1px solid rgba(160, 130, 170, .3);
+}
+.graf-kop { color: #c9b3ff; font-size: .9rem; }
+.graf-kop small { display: block; color: var(--perkament-dof); font-size: .76rem; margin-top: 2px; }
+.graf-rij { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
+.graf-rij input {
+  flex: 1 1 240px; padding: 9px 13px; border-radius: 10px; font-size: .92rem;
+  background: rgba(0, 0, 0, .45); border: 1px solid rgba(160, 130, 170, .4); color: var(--perkament);
+}
+.graf-klaar { color: #c9b3ff; font-size: .9rem; text-align: center; padding: 4px 0; }
+
+/* de grafsteen die possegenoten in hún run vinden */
+.gs-kaart {
+  width: min(440px, 92vw); margin: auto; padding: 24px 26px 20px; text-align: center;
+  background: linear-gradient(175deg, #1c1720, #120e14 55%, #171019);
+  border: 1px solid rgba(160, 130, 170, .4); border-radius: 16px;
+  box-shadow: 0 0 55px rgba(120, 90, 160, .3), 0 20px 50px rgba(0, 0, 0, .7);
+}
+.gs-steen { font-size: 3rem; animation: gsRijst .7s cubic-bezier(.2, 1.4, .4, 1); }
+@keyframes gsRijst { from { opacity: 0; transform: translateY(26px) scale(.8); } to { opacity: 1; transform: none; } }
+body.lite .gs-steen { animation: none; }
+.gs-sub { color: var(--perkament-dof); font-size: .84rem; margin: 2px 0 8px; }
+.gs-boodschap { font-style: italic; color: #d9c8f5; font-size: 1.02rem; line-height: 1.45; margin: 10px auto 14px; max-width: 26em; }
+
+/* reset-knop in ⚙️ Instellingen + de daily-CTA in het leaderboard */
+.inst-reset { display: block; margin: 14px auto 0; opacity: .55; border-color: rgba(226, 93, 93, .5); color: #f0a8a8; }
+.inst-reset:hover { opacity: 1; }
+.lb-daily-cta { display: block; margin: 0 auto 16px; animation: dwpPuls 2.4s ease-in-out 1s infinite; }
+body.lite .lb-daily-cta { animation: none; }
 .codex-slot { position: relative; }
 .codex-slot.verbruikt { filter: grayscale(.55) brightness(.7); }
 .codex-lading {

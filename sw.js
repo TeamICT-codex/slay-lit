@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v56'; /* v56: DE RESET-LINK — ?reset=1 in de URL wist (na een expliciete bevestig-dialoog) alle voortgang op dat toestel: lopende run, daily-scores/reeksen, de hele Codex en de por-gezien-set. Instellingen, proloog-status en syndicaat-lidmaatschap blijven staan. De URL wordt pas ná de keuze geschoond zodat een sw-update-reload vlak na de boot de vraag niet opeet. Bedoeld om meerdere toestellen makkelijk te resetten: open de link één keer per toestel */
+const CACHE = 'slayit-v57'; /* v57: SOCIAAL-RONDE 2 — (1) 🧹 reset-knop in ⚙️ Instellingen (zelfde dialoog als ?reset=1); (2) grote "⚔️ Daal vandaag nog af"-CTA bovenin het leaderboard zolang de daily niet gespeeld is (de uitgenodigde kan meteen beginnen); (3) por-inbox wordt óók gecheckt bij het openen van het leaderboard; (4) HET GRAFSCHRIFT: bij een gevallen daily laat je een boodschap na (vrij veld + 🎲-themasuggesties, PATCH op je score-rij met race-retry, SQL 1d = 1 kolom) — possegenoten vinden op de verdieping waar jij viel een grafsteen met je uitdaging ("Hier viel X — Wreek X"), en het grafschrift spreekt mee in het gestoef + de deel-tekst */
 const BESTANDEN = [
   '.',
   'css/style.css',
