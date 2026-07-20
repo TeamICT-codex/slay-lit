@@ -281,13 +281,13 @@ de firstRun-vlag uit het onboarding-ontwerp) → daarna toont het titelscherm
 - Waar de jeugddroom precies terugkomt (startwapen-gravure én/of DICKtator-Act 3).
 
 ## Voor later (playtest-ideeën van Thomas, 16/07)
-- **B.A.A.S.-easter-egg in de jeugddroom**: wie bij "wat wilde je worden
-  toen je 8 was" iets als `BAAS`, `B.A.A.S.` of `B.A.A.S` invult, verdient
-  een knipoog — denk aan: B.A.A.S. die in het functioneringsgesprek of het
-  outro-configscherm droogjes reageert ("DOSSIER: U WILDE MIJ WORDEN. DAT
-  IS GENOTEERD."), of een aangepaste dossier-regel in de outro-intro.
-  Detectie: normaliseer de invoer (punten/spaties/hoofdletters weg) en
-  match op 'baas'. De jeugddroom reist al mee via `slayit_proloog`.
+- **B.A.A.S.-easter-egg in de jeugddroom** — ✅ GEBOUWD (outro-intro): wie
+  als jeugddroom iets baas-achtigs invult (`BAAS`, `B.A.A.S.`, `de baas`…)
+  krijgt in de outro-intro de knipoog *"DOSSIER: U WILDE MIJ WORDEN. NU
+  SLOOPT U MIJ."* (geel, na de dossier-regel). Detectie in renderIntro:
+  jeugddroom lowercasen, niet-letters strippen, `includes('baas')`.
+  Mogelijke uitbreiding voor later: dezelfde knipoog ook in het
+  config-scherm (je herconfigureert letterlijk het ding dat je wilde zijn).
 - **Pasfoto als kaart-art in het Slachtblok**: de webcam/upload-pasfoto
   staat als dataURL in `slaylit_proloog_v2.choices.pasfoto` (240×240 jpeg).
   Als je in het Slachtblok je eigen kaart smeedt, zou die foto het artwork

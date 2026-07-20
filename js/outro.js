@@ -2586,6 +2586,10 @@ const Outro = (() => {
 
   /* de dot-matrix-intro: B.A.A.S. haalt je uit de wacht + de titelkaart */
   function renderIntro() {
+    /* EASTER-EGG: wie als jeugddroom 'baas' / 'B.A.A.S.' invulde, krijgt een
+       knipoog van het systeem dat hij ooit wilde worden — en nu sloopt. */
+    const droom = (typeof S !== 'undefined' && S && S.jeugddroom) || proloog.jeugddroom || '';
+    const baasDroom = String(droom).toLowerCase().replace(/[^a-z]/g, '').includes('baas');
     const regels = [
       { t: 0.6, txt: 'B.A.A.S.: "BEDANKT VOOR UW GEDULD."', kleur: '#79c045' },
       { t: 2.0, txt: '"IK HAAL U UIT DE WACHT."', kleur: '#79c045' },
@@ -2595,18 +2599,28 @@ const Outro = (() => {
         : proloog.uitweg === 'geduwd'
         ? [{ t: 4.4, txt: '"DOSSIER HEROPEND: U WERD GEDUWD. DAT WISTEN WE."', kleur: '#79c045' }]
         : []),
+      ...(baasDroom
+        ? [{ t: 4.9, txt: '"DOSSIER: U WILDE MIJ WORDEN. NU SLOOPT U MIJ."', kleur: '#ffd23f' }]
+        : []),
       { t: 5.2, txt: 'SLA ALLES VAN HET SYSTEEM KORT EN KLEIN.', kleur: '#efe9d6' },
       { t: 6.6, txt: "BEVRIJD JE COLLEGA'S. KLIM NAAR BOVEN.", kleur: '#efe9d6' },
       { t: 8.0, txt: 'EN ZET DE MACHINE GOED. VOORGOED.', kleur: '#ffb347' }
     ];
-    let y = 52;
-    for (const r of regels) {
-      if (introT > r.t) {
-        const n = Math.min(r.txt.length, Math.floor((introT - r.t) * 28));
-        tekst(ctx, r.txt.slice(0, n), BREED / 2 - tekstBreedte(r.txt) / 2, y, r.kleur);
-        if (n < r.txt.length && ((introT * 20) | 0) % 3 === 0) sfx('blok', 0.12);
+    /* de briefing dooft weg zodra de titelkaart komt — geen overlap, en de
+       dissolve leest als een bewuste overgang (werkt voor 7 én 8 regels) */
+    const briefAlpha = klem(1 - (introT - 9) / 1, 0, 1);
+    if (briefAlpha > 0) {
+      ctx.globalAlpha = briefAlpha;
+      let y = 52;
+      for (const r of regels) {
+        if (introT > r.t) {
+          const n = Math.min(r.txt.length, Math.floor((introT - r.t) * 28));
+          tekst(ctx, r.txt.slice(0, n), BREED / 2 - tekstBreedte(r.txt) / 2, y, r.kleur);
+          if (n < r.txt.length && ((introT * 20) | 0) % 3 === 0) sfx('blok', 0.12);
+        }
+        y += 12;
       }
-      y += 12;
+      ctx.globalAlpha = 1;
     }
     if (introT > 9.4) {
       const titel = 'DE OPZEGTERMIJN';
