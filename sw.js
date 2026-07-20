@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v59'; /* v59: grafzerk art-slot — de gebeitelde CSS-zerk krijgt een optionele echte steen-textuur (assets/ui/grafzerk.webp) achter de live HTML-tekst zodra Thomas hem dropt; generieke laadPropAfbeelding (webp→png) met stille terugval op de CSS-zerk (geen regressie zolang de art er niet is). Prompt staat klaar in assets/ui/PROMPTS.txt (lege graveerbare zerk, transparant, geen ingebakken tekst). v58: HET GRAFSCHRIFT visueel — opdoemende gebeitelde grafzerk (gegraveerde Pirata-naam + ingekraste spreuk, spookgloed, opstijgende as, mini-zerk-bevestiging) */
+const CACHE = 'slayit-v60'; /* v60: grafzerk-art LIVE — assets/ui/grafzerk.webp (gebeitelde arcering-top-zerk, transparant, 118 KB) verschijnt nu áchter de gegraveerde HTML-tekst bij het grafschrift-moment; dambord verwijderd + WebP-conversie via de pijplijn, gekleurde gloed gespaard. Tekst-marges fijngesteld op het inscriptievlak (HTML-kruis weg want de steen draagt er al een), desktop + mobiel geverifieerd */
 const BESTANDEN = [
   '.',
   'css/style.css',

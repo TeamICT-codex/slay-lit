@@ -681,10 +681,18 @@ body.lite .gs-zerk, body.lite .gs-spookgloed, body.lite .gs-mist { animation: no
 .gs-zerk.gs-heeft-art {
   background: transparent center / contain no-repeat;
   border: none; box-shadow: none; border-radius: 0;
-  width: min(340px, 84vw); aspect-ratio: 4 / 5;
+  width: min(360px, 86vw); aspect-ratio: 1122 / 1402;   /* exact de art-verhouding */
   display: flex; flex-direction: column; justify-content: center;
-  padding: 20% 20% 24%;
+  padding: 25% 20% 23%;   /* tekst valt in het centrale gegraveerde paneel, onder de boogschouder */
 }
+/* de gebeitelde steen dráágt al een kruis → het HTML-kruis weg, en de tekst
+   iets kleiner zodat naam + spreuk netjes binnen het paneel blijven */
+.gs-heeft-art .gs-kruis { display: none; }
+.gs-heeft-art .gs-hier { font-size: .66rem; letter-spacing: .38em; }
+.gs-heeft-art .gs-naam { font-size: clamp(1.3rem, 4.6vw, 1.8rem); }
+.gs-heeft-art .gs-plek { font-size: .7rem; margin-top: 3px; }
+.gs-heeft-art .gs-scheiding { margin: 6px 0 5px; }
+.gs-heeft-art .gs-boodschap { font-size: .9rem; line-height: 1.4; }
 /* de gegraveerde tekst: donker ingekrast, lichte bovenrand = reliëf */
 .gs-graveer { color: #aab0bc; }
 .gs-kruis { font-size: 1.5rem; color: #7f8794; margin-bottom: 6px; text-shadow: 0 1px 0 rgba(255, 255, 255, .12), 0 -1px 2px rgba(0, 0, 0, .7); }
