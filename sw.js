@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v53'; /* v53: playtest-fixes eindescherm — (1) de scherf-duidingregel liegt niet meer: het drama-register ("dit was geen einde, maar een scherf") gaat alleen open als je déze run echt een scherf vond (gedragen minus loadout); anders een nuchtere voortgangsregel; de regel is nu TIKBAAR (→ Codex) met een uitlegzin eronder ("scherven zijn aanwijzingen — verzamel er 3..."). (2) Sociale nudge in het daily-paneel: lid → "📣 Daag je syndicaat uit" (deel-sheet/klembord met score + dagwet + code) + async je plek op het dagbord; geen lid → "Daag je vrienden uit" + "🏴 Sticht een syndicaat" (→ leaderboard) */
+const CACHE = 'slayit-v54'; /* v54: DE UITNODIGINGSLINK — één link doet alles (playtest: "als leek is dit een raadsel"): ?syndicaat=CODE&van=NAAM in de URL toont bij het opstarten een warm uitnodigings-overlay (vlam, "Gaëtan roept je bij FAKKEL-9463", één naamveld, één knop) → wie het spel al heeft is met één tik lid; wie het nog niet heeft krijgt via dezelfde link meteen het spel (PWA). Alle deel-teksten (📣 Nodig vrienden uit, strijdkreet, score-uitdaging op het eindescherm) dragen nu die deep-link i.p.v. "typ de code over". Randgevallen: zelfde code = melding, ander syndicaat = overstap-waarschuwing, URL wordt na afhandeling geschoond. + leken-hint in de join-kaart */
 const BESTANDEN = [
   '.',
   'css/style.css',

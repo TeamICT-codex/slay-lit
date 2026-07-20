@@ -592,6 +592,66 @@ async function autoPorNaDaily(dag, score) {
     setTimeout(() => melding(`📣 Auto-por: ${doelen.length} genoot${doelen.length === 1 ? '' : 'en'} uitgedaagd.`), 1600);
   } catch (e) {}
 }
+/* ---------- DE UITNODIGINGSLINK: ?syndicaat=CODE&van=NAAM ----------
+   Eén link doet alles (playtest: "als leek is dit een raadsel"): wie het spel
+   al heeft wordt met één tik + strijdnaam lid; wie het nog niet heeft krijgt
+   via dezelfde link meteen het spel (PWA) én de uitnodiging. Niemand typt
+   ooit nog een code over. */
+function checkSyndicaatUitnodiging() {
+  if (!window.Online || !Online.actief()) return;
+  let code = null, van = null;
+  try {
+    const p = new URLSearchParams(location.search);
+    code = Online.normCode(p.get('syndicaat') || '');
+    van = (p.get('van') || '').slice(0, 20);
+  } catch (e) {}
+  if (!code) return;
+  /* de parameter is afgehandeld: schoon de URL zodat een reload niet opnieuw vraagt */
+  const wisParam = () => { try { history.replaceState({}, '', location.pathname); } catch (e) {} };
+  if (Online.isLid() && Online.lid().code === code) {
+    melding(`⚔️ Je vecht al onder ${code}.`);
+    wisParam();
+    return;
+  }
+  toonUitnodiging(code, van, wisParam);
+}
+function toonUitnodiging(code, van, klaar) {
+  const oud = document.getElementById('syn-uitnodiging'); if (oud) oud.remove();
+  const alLid = Online.isLid() ? Online.lid() : null;
+  const vanRegel = van ? `<b>${escSyn(van)}</b> roept je bij het syndicaat` : 'Je bent geroepen bij het syndicaat';
+  const el = document.createElement('div');
+  el.id = 'syn-uitnodiging';
+  el.className = 'overlay open';   /* .overlay start display:none — 'open' toont hem */
+  el.innerHTML = `
+    <div class="uitn-kaart">
+      <div class="uitn-vlam">🔥</div>
+      <h2 class="scherm-titel">Een uitnodiging</h2>
+      <p class="uitn-regel">${vanRegel} <span class="syn-codechip">${escSyn(code)}</span>.<br>
+      Elke dagelijkse afdaling telt mee op jullie gezamenlijke bord — wie durft, stoeft.</p>
+      ${alLid ? `<p class="uitn-waarschuwing">⚠️ Je verlaat daarmee je huidige syndicaat <b>${escSyn(alLid.code)}</b>.</p>` : ''}
+      <div class="uitn-formulier">
+        <input id="uitn-naam" maxlength="20" placeholder="Je strijdnaam…" value="${alLid ? escSyn(alLid.naam) : ''}">
+        <button class="knop-groot" onclick="doeUitnodigingJoin('${escSyn(code).replace(/'/g, '')}')">⚔️ Sluit je aan</button>
+      </div>
+      <button class="knop-stil uitn-later" onclick="document.getElementById('syn-uitnodiging').remove()">Nee, later</button>
+    </div>`;
+  document.body.appendChild(el);
+  el._klaar = klaar || null;
+  setTimeout(() => { const i = document.getElementById('uitn-naam'); if (i && !i.value) i.focus(); }, 250);
+  Klank.sfx('schitter');
+}
+function doeUitnodigingJoin(code) {
+  const el = document.getElementById('syn-uitnodiging');
+  const naam = Online.normNaam((document.getElementById('uitn-naam') || {}).value || '');
+  if (!naam) { melding('Kies eerst een strijdnaam.'); return; }
+  if (!Online.wordLid(naam, code)) { melding('Dat lukte niet — probeer een andere naam.'); return; }
+  Online.meldAan();
+  if (el) { if (el._klaar) el._klaar(); el.remove(); }
+  Klank.sfx('schitter');
+  melding(`🔥 Welkom bij ${code}, ${naam} — je volgende dagelijkse afdaling telt mee!`);
+  setTimeout(toonLeaderboard, 700);
+}
+
 /* por-inbox: bij het opstarten checken of iemand jou vandaag heeft gepord */
 async function checkPorInbox() {
   if (!window.Online || !Online.isLid()) return;
@@ -692,6 +752,7 @@ function synSectieHtml() {
         </span>
         <button class="knop-groot" onclick="doeSynJoin()">⚔️ Sluit je aan</button>
       </div>
+      <p class="syn-leek-hint">💡 Makkelijker: kreeg je een <b>uitnodigingslink</b> van een vriend? Tik die gewoon aan — naam kiezen en klaar, geen code nodig.</p>
     </div>`;
   }
   const l = Online.lid();
@@ -723,11 +784,17 @@ function synVerlaat() {
   melding('Je verliet het syndicaat. De code blijft werken voor wie blijft.');
   toonLeaderboard();
 }
+/* de deep-link die alles doet: spel openen/installeren ÉN meteen de
+   uitnodiging tonen (?syndicaat=CODE&van=NAAM → checkSyndicaatUitnodiging) */
+function syndicaatLink() {
+  const l = Online.lid(); if (!l) return 'https://teamict-codex.github.io/slay-lit/';
+  return `https://teamict-codex.github.io/slay-lit/?syndicaat=${encodeURIComponent(l.code)}&van=${encodeURIComponent(l.naam)}`;
+}
 function syndicaatUitnodiging() {
   const l = Online.lid(); if (!l) return '';
   const top = (Daily.gesch || []).slice().sort((a, b) => b.score - a.score)[0];
   const scoreDeel = top ? ` Mijn beste dag: ${top.score} punten.` : '';
-  return `⚔️ SLAY LIT — sluit je aan bij mijn syndicaat "${l.code}".${scoreDeel} Open 🏆 Leaderboard, voer de code in en versla me: https://teamict-codex.github.io/slay-lit/`;
+  return `⚔️ SLAY LIT — sluit je aan bij mijn syndicaat "${l.code}".${scoreDeel} Eén tik en je staat op ons bord (nog geen SLAY LIT? De link opent meteen het spel): ${syndicaatLink()}`;
 }
 function kopieerStrijdkreet() {
   const tekst = syndicaatUitnodiging(); if (!tekst) return;
@@ -6878,8 +6945,8 @@ function deelDagScore() {
   const score = Daily.laatsteScore || 0;
   const l = (window.Online && Online.isLid()) ? Online.lid() : null;
   const tekst = `⚔️ SLAY LIT — dagelijkse afdaling: ${score} punten${wet ? ` onder ${wet.naam}` : ''}. `
-    + (l ? `Versla me in syndicaat "${l.code}": ` : 'Versla me: ')
-    + 'https://teamict-codex.github.io/slay-lit/';
+    + (l ? `Versla me — één tik en je staat op ons bord: ${syndicaatLink()}`
+         : 'Versla me: https://teamict-codex.github.io/slay-lit/');
   Klank.sfx('klik');
   if (navigator.share) {
     navigator.share({ title: 'SLAY LIT', text: tekst }).catch(() => {});
@@ -7890,5 +7957,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   } catch (e) {}
   if (window.mobiel) setTimeout(toonSchermNudge, 1200);
-  checkPorInbox();   /* HET SYNDICAAT: heeft iemand je vandaag gepord? */
+  checkPorInbox();               /* HET SYNDICAAT: heeft iemand je vandaag gepord? */
+  checkSyndicaatUitnodiging();   /* ?syndicaat=CODE in de URL → uitnodigings-overlay */
 });
