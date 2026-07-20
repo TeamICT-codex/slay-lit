@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v57'; /* v57: SOCIAAL-RONDE 2 — (1) 🧹 reset-knop in ⚙️ Instellingen (zelfde dialoog als ?reset=1); (2) grote "⚔️ Daal vandaag nog af"-CTA bovenin het leaderboard zolang de daily niet gespeeld is (de uitgenodigde kan meteen beginnen); (3) por-inbox wordt óók gecheckt bij het openen van het leaderboard; (4) HET GRAFSCHRIFT: bij een gevallen daily laat je een boodschap na (vrij veld + 🎲-themasuggesties, PATCH op je score-rij met race-retry, SQL 1d = 1 kolom) — possegenoten vinden op de verdieping waar jij viel een grafsteen met je uitdaging ("Hier viel X — Wreek X"), en het grafschrift spreekt mee in het gestoef + de deel-tekst */
+const CACHE = 'slayit-v58'; /* v58: HET GRAFSCHRIFT visueel epischer — de grafsteen is niet langer een kale 🪦-emoji maar een opdoemende gebeitelde grafZERK: arcering-top-slab met gegraveerde naam (Pirata) + spreuk (ingekrast, blur-to-sharp), spectrale koudegloed erachter, opstijgende as uit de gedoofde fakkel, kruipende grafmist, grafheuvel + dubbele debuff-sfx & schermschud. Ook de bevestiging op het eindescherm toont nu een mini-zerk met je eigen spreuk i.p.v. één regel tekst. Lite/reduced-motion = statisch. (SQL-kolom boodschap live geverifieerd) */
 const BESTANDEN = [
   '.',
   'css/style.css',

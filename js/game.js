@@ -7082,8 +7082,17 @@ function stuurGrafschriftUI() {
     if (ok) {
       stuurGrafschriftUI._verstuurd = tekst;   /* deelDagScore neemt het mee */
       const blok = document.getElementById('graf-blok');
-      if (blok) blok.innerHTML = `<p class="graf-klaar">⚰️ Je grafschrift rust op rij ${S && S.verdieping || '?'} — je posse zal het vinden.</p>`;
-      melding('⚰️ Grafschrift achtergelaten. Laat ze maar komen.');
+      if (blok) blok.innerHTML = `
+        <div class="graf-klaar">
+          <div class="graf-mini-zerk">
+            <span class="graf-mini-kruis">✝</span>
+            <b>${escSyn(Online.identiteit() ? Online.identiteit().naam : 'Jij')}</b>
+            <small>rij ${S && S.verdieping || '?'}</small>
+            <em>„${escSyn(tekst)}"</em>
+          </div>
+          <p class="graf-klaar-tekst">⚰️ Je zerk staat op rij ${S && S.verdieping || '?'}. Je posse zal het vinden — en vrezen.</p>
+        </div>`;
+      melding('⚰️ Grafschrift gebeiteld. Laat ze maar komen.');
     } else {
       if (knop) { knop.disabled = false; knop.textContent = '⚰️ Verstuur'; }
       melding('Het grafschrift kon niet worden achtergelaten (offline, of de boodschap-kolom ontbreekt nog — zie SUPABASE-SETUP.md 1d).');
@@ -7116,17 +7125,30 @@ function toonGrafsteen(graf) {
   const oud = document.getElementById('grafsteen'); if (oud) oud.remove();
   const el = document.createElement('div');
   el.id = 'grafsteen';
-  el.className = 'overlay open';
+  el.className = 'overlay open gs-overlay';
+  const asVlokken = INST.lite ? '' : Array.from({ length: 9 }, (_, i) =>
+    `<span class="gs-as" style="left:${8 + i * 10}%;animation-delay:${(i * 0.5).toFixed(1)}s;animation-duration:${(4 + (i % 3)).toFixed(1)}s"></span>`).join('');
   el.innerHTML = `
-    <div class="gs-kaart">
-      <div class="gs-steen">🪦</div>
-      <h2 class="scherm-titel">Hier viel ${escSyn(graf.naam)}</h2>
-      <p class="gs-sub">vandaag · rij ${graf.diepte} · dezelfde afdaling als de jouwe</p>
-      <blockquote class="gs-boodschap">${graf.boodschap ? `„${escSyn(graf.boodschap)}"` : '<i>Geen laatste woorden. Alleen stilte, en een lege fakkel.</i>'}</blockquote>
-      <button class="knop-groot" onclick="document.getElementById('grafsteen').remove()">⚔️ Wreek ${escSyn(graf.naam)}</button>
+    <div class="gs-tafereel">
+      <div class="gs-spookgloed"></div>
+      <div class="gs-mist"></div>
+      <div class="gs-as-laag">${asVlokken}</div>
+      <div class="gs-zerk">
+        <div class="gs-kruis">✝</div>
+        <div class="gs-graveer">
+          <p class="gs-hier">HIER VIEL</p>
+          <h2 class="gs-naam">${escSyn(graf.naam)}</h2>
+          <p class="gs-plek">rij ${graf.diepte} · vandaag · jouw afdaling</p>
+          <div class="gs-scheiding">⚜</div>
+          <blockquote class="gs-boodschap">${graf.boodschap ? `„${escSyn(graf.boodschap)}"` : '<i>Geen laatste woorden.<br>Enkel stilte, en een gedoofde fakkel.</i>'}</blockquote>
+        </div>
+      </div>
+      <div class="gs-heuvel"></div>
+      <button class="knop-groot gs-wreek" onclick="document.getElementById('grafsteen').remove()">⚔️ Wreek ${escSyn(graf.naam)}</button>
     </div>`;
   document.body.appendChild(el);
-  Klank.sfx('debuff');
+  if (!INST.lite) { Klank.sfx('debuff'); setTimeout(() => Klank.sfx('debuff'), 260); schudScherm && schudScherm(); }
+  else Klank.sfx('debuff');
 }
 
 /* de sociale nudge op het daily-eindescherm: deel je score als uitdaging
