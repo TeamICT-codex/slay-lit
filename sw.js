@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v54'; /* v54: DE UITNODIGINGSLINK — één link doet alles (playtest: "als leek is dit een raadsel"): ?syndicaat=CODE&van=NAAM in de URL toont bij het opstarten een warm uitnodigings-overlay (vlam, "Gaëtan roept je bij FAKKEL-9463", één naamveld, één knop) → wie het spel al heeft is met één tik lid; wie het nog niet heeft krijgt via dezelfde link meteen het spel (PWA). Alle deel-teksten (📣 Nodig vrienden uit, strijdkreet, score-uitdaging op het eindescherm) dragen nu die deep-link i.p.v. "typ de code over". Randgevallen: zelfde code = melding, ander syndicaat = overstap-waarschuwing, URL wordt na afhandeling geschoond. + leken-hint in de join-kaart */
+const CACHE = 'slayit-v55'; /* v55: HET WERELDBORD — 🌍 "De hele diepte" in het leaderboard: globaal DAG-klassement (iedereen speelt dezelfde wet+seed = eerlijke strijd) + ALLER TIJDEN (beste dag per speler, client-side gededupt) over alle posses heen, met posse-chips, eigen-rij-highlight en 🥾-zwervers. Spelers ZONDER syndicaat tellen nu ook mee: één strijdnaam kiezen = ZWERVER (verborgen persoonlijke ZW-code als posse-van-één — geen SQL-wijziging nodig); speelde je vandaag al, dan gaat die score retroactief mee. stuurScore rijdt op identiteit (lid of zwerver); TEST/ETEST/PROBE-groepen worden van het wereldbord gefilterd. Geen nieuwe SQL — zelfde scores-tabel */
 const BESTANDEN = [
   '.',
   'css/style.css',

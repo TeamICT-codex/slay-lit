@@ -568,13 +568,13 @@ function registreerDaily(gewonnen) {
   Daily.gesch.unshift({ dag, score: totaal, gewonnen: !!gewonnen, diepte: S.verdieping || 0, held: S.held || 'slachter' });
   Daily.gesch = Daily.gesch.slice(0, 30);   /* het leaderboard toont een maand geschiedenis */
   bewaarDaily();
-  /* HET SYNDICAAT: de score meteen het bord op (fire-and-forget — offline of
-     zonder lidmaatschap gebeurt er stilletjes niets) + optioneel de
-     achterblijvers auto-porren ("ik daalde af, jouw beurt") */
-  if (window.Online && Online.isLid()) {
+  /* ONLINE: de score meteen de borden op (fire-and-forget — offline of zonder
+     identiteit gebeurt er stilletjes niets). Syndicaat-leden voeden posse- én
+     wereldbord; zwervers alleen het wereldbord. Auto-por blijft posse-werk. */
+  if (window.Online && Online.identiteit()) {
     Online.stuurScore({ dag, score: totaal, held: S.held, diepte: S.verdieping || 0, gewonnen: !!gewonnen, seed: S.seed })
-      .then(ok => { if (ok) melding('🔥 Je score staat op het syndicaatsbord.'); });
-    if (INST.autoPor) autoPorNaDaily(dag, totaal);
+      .then(ok => { if (ok) melding(Online.isLid() ? '🔥 Je score staat op het syndicaats- én wereldbord.' : '🌍 Je score staat op het wereldbord.'); });
+    if (Online.isLid() && INST.autoPor) autoPorNaDaily(dag, totaal);
   }
   return { totaal, reeks: Daily.reeks, besteReeks: Daily.besteReeks, nieuweTop };
 }
@@ -709,6 +709,7 @@ function toonLeaderboard() {
     <h2 class="scherm-titel">🏆 Het Leaderboard</h2>
     <p class="lb-vandaag" data-tip="${wetVandaag.kort}">${wetVandaag.icoon} Vandaag geldt <b>${wetVandaag.naam}</b> · held van de dag: ${SPELERS[heldVanDag()].naam}</p>
     ${synSectieHtml()}
+    ${wereldSectieHtml()}
     <div class="lb-kolommen">
       <div class="lb-kolom">
         <h3 class="codex-kop">🗓️ Dit toestel <small>beste ${Math.min(10, dailies.length)} · reeks ${Daily.reeks || 0} · beste reeks ${Daily.besteReeks || 0}</small></h3>
@@ -727,7 +728,78 @@ function toonLeaderboard() {
     </div>`;
   ov.classList.add('open');
   if (window.Online && Online.isLid()) vulSyndicaat();
+  if (window.Online && Online.actief()) vulWereldbord();   /* iedereen mag kijken */
   Klank.sfx('klik');
+}
+
+/* ---------- HET WERELDBORD: alle posses en zwervers samen ----------
+   Dag-klassement (iedereen speelt dezelfde wet + seed = eerlijke wedstrijd)
+   + aller tijden (beste dag per speler, client-side gededupt). Spelers
+   zonder posse kunnen als ZWERVER meedoen: alleen een strijdnaam kiezen. */
+function wereldSectieHtml() {
+  if (!(window.Online && Online.actief())) return '';
+  const ik = Online.identiteit();
+  const intro = ik
+    ? `Je vecht als <b>${escSyn(ik.naam)}</b>${Online.isLid() ? ` van <span class="syn-codechip">${escSyn(ik.code)}</span>` : ' <small>(zwerver — zonder posse)</small>'}.`
+    : 'Je scores blijven nu op dit toestel. Kies een strijdnaam en je telt wereldwijd mee — een posse is niet verplicht.';
+  const zwerverForm = ik ? '' : `
+    <div class="wb-zwerver">
+      <input id="wb-naam" maxlength="20" placeholder="Je strijdnaam…" autocomplete="off">
+      <button class="knop-stil" onclick="doeZwerverJoin()">🥾 Sta op het wereldbord</button>
+    </div>`;
+  return `<div class="wb-vak">
+    <h3 class="codex-kop">🌍 De hele diepte <small>alle posses en zwervers samen</small></h3>
+    <p class="wb-intro">${intro}</p>
+    ${zwerverForm}
+    <div id="wb-inhoud"><p class="syn-laadt">De diepte telt de gevallenen…</p></div>
+  </div>`;
+}
+function wereldRij(r, i, metDag) {
+  const ik = Online.identiteit();
+  const eigen = ik && r.naam === ik.naam && r.groep === ik.code;
+  const posse = /^ZW-/.test(r.groep || '')
+    ? '<small class="wb-zw" data-tip="een zwerver — vecht zonder posse">🥾</small>'
+    : `<small class="wb-posse">${escSyn(r.groep || '')}</small>`;
+  return `<div class="lb-rij wb-rij ${eigen ? 'wb-eigen' : ''} ${i === 0 ? 'lb-top' : ''}">
+    <span class="lb-rang">${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'}</span>
+    <b>${r.score | 0}</b>
+    <span>${r.gewonnen ? '👑' : '💀'} ${escSyn(r.naam)} ${posse}</span>
+    <small>${metDag ? escSyn(r.dag || '') : escSyn(HELDNAAM(r.held || 'slachter'))}</small>
+  </div>`;
+}
+async function vulWereldbord() {
+  const el = document.getElementById('wb-inhoud');
+  if (!el) return;
+  try {
+    const dag = vandaagSleutel();
+    const [vandaag, ooit] = await Promise.all([Online.wereldDag(dag), Online.wereldOoit()]);
+    if (!document.getElementById('wb-inhoud')) return;   /* overlay intussen dicht */
+    const dagRijen = (vandaag || []).slice(0, 10).map((r, i) => wereldRij(r, i, false)).join('')
+      || '<p class="lb-leeg">Vandaag daalde nog niemand af — pak de wereldkroon. 👑</p>';
+    const ooitRijen = (ooit || []).slice(0, 10).map((r, i) => wereldRij(r, i, true)).join('')
+      || '<p class="lb-leeg">Nog geen scores. De diepte wacht op de eerste.</p>';
+    el.innerHTML = `<div class="lb-kolommen">
+      <div class="lb-kolom"><h4>🗓️ Vandaag <small>zelfde wet, zelfde seed — eerlijke strijd</small></h4>${dagRijen}</div>
+      <div class="lb-kolom"><h4>🏛️ Aller tijden <small>beste dag per speler</small></h4>${ooitRijen}</div>
+    </div>`;
+  } catch (e) {
+    if (el) el.innerHTML = '<p class="lb-leeg">⚠️ De diepte is onbereikbaar (offline?). Je lokale bord hieronder werkt gewoon.</p>';
+  }
+}
+/* zwerver worden: naam kiezen volstaat. Speelde je vandaag al? Dan gaat die
+   score meteen retroactief het wereldbord op. */
+function doeZwerverJoin() {
+  const z = Online.wordZwerver((document.getElementById('wb-naam') || {}).value || '');
+  if (!z) { melding('Kies eerst een strijdnaam.'); return; }
+  Klank.sfx('schitter');
+  melding(`🥾 ${z.naam} — vanaf nu tel je wereldwijd mee.`);
+  const dag = vandaagSleutel();
+  if (Daily.laatsteVoltooid === dag && (Daily.laatsteScore || 0) > 0) {
+    const g = (Daily.gesch || []).find(x => x.dag === dag) || {};
+    Online.stuurScore({ dag, score: Daily.laatsteScore, held: g.held || 'slachter', diepte: g.diepte || 0, gewonnen: !!g.gewonnen, seed: dagSeed() })
+      .then(ok => { if (ok) setTimeout(() => melding('🔥 Je score van vandaag staat er meteen op.'), 900); vulWereldbord(); });
+  }
+  toonLeaderboard();
 }
 
 /* ============================================================

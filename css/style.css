@@ -1543,6 +1543,29 @@ body.lite .syn-trede { animation: none; }
 .syn-leek-hint { color: var(--perkament-dof); font-size: .8rem; margin-top: 8px; }
 .syn-leek-hint b { color: #ffd7a0; }
 
+/* ---------- HET WERELDBORD (🌍 De hele diepte) ---------- */
+.wb-vak {
+  width: min(880px, 94vw); margin: 0 auto 18px; padding: 14px 20px 16px;
+  background: rgba(16, 24, 34, .55); border: 1px solid rgba(120, 170, 220, .28);
+  border-radius: 14px;
+}
+.wb-vak .codex-kop { color: #a8cdf0; }
+.wb-intro { color: var(--perkament-dof); font-size: .88rem; margin: 2px 0 8px; }
+.wb-intro b { color: #cfe6ff; }
+.wb-zwerver { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.wb-zwerver input {
+  padding: 9px 13px; border-radius: 10px; font-size: .95rem;
+  background: rgba(0, 0, 0, .45); border: 1px solid rgba(120, 170, 220, .4); color: var(--perkament);
+}
+.wb-rij.wb-eigen { border-color: rgba(120, 190, 255, .65); background: rgba(30, 55, 80, .45); }
+.wb-posse {
+  padding: 1px 8px; border-radius: 999px; font-size: .68rem; letter-spacing: .04em;
+  background: rgba(60, 90, 120, .45); border: 1px solid rgba(120, 170, 220, .35); color: #a8cdf0;
+}
+.wb-zw { opacity: .8; cursor: help; }
+.wb-vak h4 { color: #a8cdf0; font-size: .9rem; margin-bottom: 6px; }
+.wb-vak h4 small { color: var(--perkament-dof); font-weight: normal; margin-left: 6px; }
+
 /* ---------- de uitnodigings-overlay (?syndicaat=CODE in de URL) ---------- */
 .uitn-kaart {
   width: min(480px, 92vw); margin: auto; padding: 26px 28px 22px; text-align: center;

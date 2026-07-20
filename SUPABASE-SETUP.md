@@ -100,6 +100,19 @@ create policy "por sturen" on public.porren for insert with check (
 );
 ```
 
+## 1c. Het wereldbord (geen SQL nodig)
+
+Het 🌍-wereldbord (alle posses + zwervers samen, dag- en aller-tijden-
+klassement) leest **dezelfde `scores`-tabel** — er is géén extra SQL nodig.
+Twee dingen om te weten:
+
+- **Zwervers** (spelers zonder syndicaat) krijgen client-side een verborgen
+  persoonlijke code (`ZW-XXXXXX`) als groep: een posse-van-één. Zo blijft
+  `(groep, naam, dag)` uniek per speler zonder schema-wijziging.
+- **Dev-/testrijen** met groepen die beginnen met `TEST-`, `ETEST-` of
+  `PROBE-` worden client-side van het wereldbord gefilterd. Fysiek wissen kan
+  altijd via Table Editor → `scores` → filter op die groepen → delete.
+
 ## 2. Vul de sleutels in
 
 Dashboard → **Settings → API**. Kopieer:

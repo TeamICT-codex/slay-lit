@@ -24,8 +24,30 @@ const Online = (() => {
   try { lid = JSON.parse(localStorage.getItem(SLEUTEL) || 'null'); } catch (e) {}
   if (lid && (!lid.naam || !lid.code)) lid = null;
 
+  /* DE ZWERVER: een speler zónder posse die tóch op het wereldbord wil.
+     Technisch een posse-van-één met een verborgen persoonlijke code
+     (ZW-XXXXXX) — zo blijft (groep, naam, dag) uniek per speler en is er
+     GEEN schema- of RLS-wijziging nodig. Sluit hij later bij een echt
+     syndicaat aan, dan wint die identiteit (identiteit() hieronder). */
+  const ZW_SLEUTEL = 'slayit_zwerver';
+  let zwerver = null;
+  try { zwerver = JSON.parse(localStorage.getItem(ZW_SLEUTEL) || 'null'); } catch (e) {}
+  if (zwerver && (!zwerver.naam || !zwerver.code)) zwerver = null;
+
   const actief = () => !!(CONFIG.url && CONFIG.anonKey);
   const isLid = () => actief() && !!lid;
+  /* wie ben je voor het WERELDBORD? je syndicaat-lidmaatschap, anders je
+     zwerver-identiteit, anders niemand (= scores blijven lokaal) */
+  const identiteit = () => actief() ? (lid || zwerver) : null;
+  const isZwerver = () => actief() && !lid && !!zwerver;
+  function wordZwerver(naam) {
+    naam = normNaam(naam);
+    if (!naam) return null;
+    const code = (zwerver && zwerver.code) || ('ZW-' + Math.random().toString(36).slice(2, 8).toUpperCase().replace(/[^A-Z0-9]/g, 'X'));
+    zwerver = { naam, code };
+    try { localStorage.setItem(ZW_SLEUTEL, JSON.stringify(zwerver)); } catch (e) {}
+    return zwerver;
+  }
 
   /* codes en namen strak normaliseren: ze reizen door URL's én innerHTML */
   const normCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 24);
@@ -67,15 +89,17 @@ const Online = (() => {
   }
 
   /* score insturen — upsert op (groep, naam, dag): opnieuw insturen op dezelfde
-     dag overschrijft gewoon (de daily is toch één poging per dag) */
+     dag overschrijft gewoon (de daily is toch één poging per dag). Werkt voor
+     syndicaat-leden ÉN zwervers (identiteit) — het wereldbord leest alles. */
   async function stuurScore(d) {
-    if (!isLid()) return false;
+    const ik = identiteit();
+    if (!ik) return false;
     try {
       await req('scores?on_conflict=groep,naam,dag', {
         method: 'POST',
         prefer: 'resolution=merge-duplicates',
         body: JSON.stringify({
-          groep: lid.code, naam: lid.naam,
+          groep: ik.code, naam: ik.naam,
           dag: String(d.dag || ''), score: Math.max(0, d.score | 0),
           held: String(d.held || 'slachter'), diepte: Math.max(0, d.diepte | 0),
           gewonnen: !!d.gewonnen, seed: String(d.seed || '').slice(0, 24)
@@ -92,6 +116,27 @@ const Online = (() => {
   const allerTijden = () => req(`scores?${q()}&order=score.desc&limit=10`);
   /* de stoef-feed: recentste wapenfeiten */
   const feed = () => req(`scores?${q()}&order=gemaakt.desc&limit=8`);
+
+  /* ---------- HET WERELDBORD: over alle posses heen ---------- */
+  /* dev-/testgroepen horen niet op het echte bord (eerdere test-inserts
+     staan onherroepelijk in de tabel — RLS kent bewust geen delete) */
+  const isTestGroep = g => /^(TEST|ETEST|PROBE)-/.test(String(g || ''));
+  const zonderTest = r => (Array.isArray(r) ? r.filter(x => x && !isTestGroep(x.groep)) : r);
+  /* het wereld-dagklassement: iedereen die vandaag afdaalde, alle groepen.
+     (groep,naam,dag) is uniek → geen dubbele spelers op één dag. */
+  const wereldDag = dag => req(`scores?dag=eq.${encodeURIComponent(dag)}&order=score.desc&limit=40`).then(zonderTest);
+  /* aller tijden wereldwijd: haal ruim op en houd per speler (groep+naam)
+     alleen zijn beste dag over — PostgREST kan geen DISTINCT ON, dus de
+     dedup gebeurt hier (client), ruim binnen de vriendenschaal */
+  const wereldOoit = () => req('scores?order=score.desc&limit=200').then(rijen => {
+    const beste = [];
+    const gezien = {};
+    (zonderTest(rijen) || []).forEach(r => {
+      const sleutel = r.groep + '' + r.naam;
+      if (!gezien[sleutel]) { gezien[sleutel] = true; beste.push(r); }
+    });
+    return beste;
+  });
 
   /* ---------- de sociale laag: leden + porren ---------- */
   /* aanmelden als lid + 'laatst gezien' verversen (upsert op groep,naam).
@@ -131,7 +176,9 @@ const Online = (() => {
   function _dev(url, key) { CONFIG.url = url || CONFIG.url; CONFIG.anonKey = key || CONFIG.anonKey; }
 
   return { actief, isLid, lid: () => lid, normCode, normNaam, verzinCode, wordLid, verlaat,
+           identiteit, isZwerver, wordZwerver,
            stuurScore, dagTop, allerTijden, feed,
+           wereldDag, wereldOoit,
            meldAan, leden, stuurPor, mijnPorren, _dev };
 })();
 window.Online = Online;
