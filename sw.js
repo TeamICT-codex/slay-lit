@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v55'; /* v55: HET WERELDBORD — 🌍 "De hele diepte" in het leaderboard: globaal DAG-klassement (iedereen speelt dezelfde wet+seed = eerlijke strijd) + ALLER TIJDEN (beste dag per speler, client-side gededupt) over alle posses heen, met posse-chips, eigen-rij-highlight en 🥾-zwervers. Spelers ZONDER syndicaat tellen nu ook mee: één strijdnaam kiezen = ZWERVER (verborgen persoonlijke ZW-code als posse-van-één — geen SQL-wijziging nodig); speelde je vandaag al, dan gaat die score retroactief mee. stuurScore rijdt op identiteit (lid of zwerver); TEST/ETEST/PROBE-groepen worden van het wereldbord gefilterd. Geen nieuwe SQL — zelfde scores-tabel */
+const CACHE = 'slayit-v56'; /* v56: DE RESET-LINK — ?reset=1 in de URL wist (na een expliciete bevestig-dialoog) alle voortgang op dat toestel: lopende run, daily-scores/reeksen, de hele Codex en de por-gezien-set. Instellingen, proloog-status en syndicaat-lidmaatschap blijven staan. De URL wordt pas ná de keuze geschoond zodat een sw-update-reload vlak na de boot de vraag niet opeet. Bedoeld om meerdere toestellen makkelijk te resetten: open de link één keer per toestel */
 const BESTANDEN = [
   '.',
   'css/style.css',

@@ -652,6 +652,26 @@ function doeUitnodigingJoin(code) {
   setTimeout(toonLeaderboard, 700);
 }
 
+/* ---------- DE RESET-LINK: ?reset=1 ----------
+   De makkelijkste route om meerdere toestellen te resetten: open de link
+   één keer per toestel. Wist (na bevestiging) alle voortgang op DIT toestel;
+   instellingen, proloog-status en syndicaat-lidmaatschap blijven staan. */
+function checkResetLink() {
+  let wil = false;
+  try { wil = new URLSearchParams(location.search).get('reset') === '1'; } catch (e) {}
+  if (!wil) return;
+  /* de parameter pas schonen ná de keuze: een sw-update-reload vlak na de boot
+     mag de vraag niet opeten (de dialoog komt dan gewoon terug) */
+  bevestig(
+    `Dit wist op dit toestel <b>alle voortgang</b>: de lopende run, je dagelijkse scores en reeksen, en de hele Codex (runs, ontdekkingen, scherven, het Schrijn, gesmede kaarten).<br><br>Instellingen, de proloog en je syndicaat-lidmaatschap blijven staan. <b>Dit kan niet ongedaan worden gemaakt.</b>`,
+    () => {
+      [SAVE_SLEUTEL, DAILY_SLEUTEL, CODEX_SLEUTEL, 'slayit_porren_gezien'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+      location.replace(location.pathname);   /* vers booten, zonder parameter */
+    },
+    '🧹 Wis mijn voortgang'
+  );
+}
+
 /* por-inbox: bij het opstarten checken of iemand jou vandaag heeft gepord */
 async function checkPorInbox() {
   if (!window.Online || !Online.isLid()) return;
@@ -8029,6 +8049,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   } catch (e) {}
   if (window.mobiel) setTimeout(toonSchermNudge, 1200);
+  checkResetLink();              /* ?reset=1 in de URL → voortgang wissen (met bevestiging) */
   checkPorInbox();               /* HET SYNDICAAT: heeft iemand je vandaag gepord? */
   checkSyndicaatUitnodiging();   /* ?syndicaat=CODE in de URL → uitnodigings-overlay */
 });
