@@ -279,3 +279,17 @@ de firstRun-vlag uit het onboarding-ontwerp) → daarna toont het titelscherm
 - Of de "sprong vs geduwd"-vlag een mechanisch gevolg krijgt of puur flavor is.
 - Office-art-omvang (B.A.A.S.-terminal, 6 office-kaarten, de Slijmklerk-overgang).
 - Waar de jeugddroom precies terugkomt (startwapen-gravure én/of DICKtator-Act 3).
+
+## Voor later (playtest-ideeën van Thomas, 16/07)
+- **B.A.A.S.-easter-egg in de jeugddroom** — ✅ GEBOUWD (outro-intro): wie
+  als jeugddroom iets baas-achtigs invult (`BAAS`, `B.A.A.S.`, `de baas`…)
+  krijgt in de outro-intro de knipoog *"DOSSIER: U WILDE MIJ WORDEN. NU
+  SLOOPT U MIJ."* (geel, na de dossier-regel). Detectie in renderIntro:
+  jeugddroom lowercasen, niet-letters strippen, `includes('baas')`.
+  Mogelijke uitbreiding voor later: dezelfde knipoog ook in het
+  config-scherm (je herconfigureert letterlijk het ding dat je wilde zijn).
+- **Pasfoto als kaart-art in het Slachtblok**: de webcam/upload-pasfoto
+  staat als dataURL in `slaylit_proloog_v2.choices.pasfoto` (240×240 jpeg).
+  Als je in het Slachtblok je eigen kaart smeedt, zou die foto het artwork
+  (of het portret-inzetje) van je gesmede kaart kunnen zijn. Let op:
+  hoofdgame-terrein — contract eventueel verrijken zoals `verrijkMetHeld`.

@@ -7003,6 +7003,41 @@ function pasDagwetStartToe(wetId) {
   }
 }
 
+/* ---------- kom-net-uit-de-proloog: DAAL AF → meteen de afdaling in ----------
+   De brug (proloog/index.html) zet 'slayit_daalaf' bij de DAAL AF-knop; wij
+   verzilveren die hier precies ÉÉN keer: vlag eerst weghalen (ook als we
+   alsnog de keuze tonen), daarna pas beslissen. Contract-lezen defensief,
+   zelfde patroon als jeugddroomTekst(). */
+const PROLOOG_HELD_MAP = { woede: 'slachter', gif: 'gifmagier', vlucht: 'thoverk' };
+function checkDaalAf() {
+  let vlag = false;
+  try {
+    vlag = !!localStorage.getItem('slayit_daalaf');
+    if (vlag) localStorage.removeItem('slayit_daalaf');   /* eenmalig: meteen verbruikt */
+  } catch (e) {}
+  if (!vlag) return false;
+  let keuze = null;
+  try {
+    const p = JSON.parse(localStorage.getItem('slayit_proloog') || 'null');
+    keuze = p && p.held ? String(p.held) : null;
+  } catch (e) {}
+  /* proloog-woord → game-id; een al-geldig game-id mag ook rechtstreeks */
+  const held = PROLOOG_HELD_MAP[keuze] || (SPELERS[keuze] ? keuze : null);
+  if (!held) { toonHeldKeuze(); return true; }   /* geen (geldige) held → gewone keuze */
+  /* een lopende save nooit stil clobberen — zelfde bevestiging als startDaily */
+  const bestaande = (() => { try { return JSON.parse(localStorage.getItem(SAVE_SLEUTEL) || 'null'); } catch (e) { return null; } })();
+  if (bestaande) {
+    bevestig(
+      `Je hebt nog een <b>lopende afdaling</b> (verdieping ${(bestaande.verdieping || 0) + 1}).<br><br>Meteen afdalen als <b>${SPELERS[held].naam}</b> <b>wist die run voorgoed</b> — ook de scherven die je bij je draagt.`,
+      () => kiesHeldEcht(held),
+      '⚔️ Toch afdalen'
+    );
+    return true;   /* annuleren laat de titel (met 🗺️ Doorgaan) gewoon staan */
+  }
+  kiesHeldEcht(held);   /* hergebruikt daily-rollback, wisSave, ascensie-klem, nieuwSpel, renderKaartScherm */
+  return true;
+}
+
 /* ---------- de Dagelijkse afdaling: vaste dag-seed, held van de dag, Schrijn UIT,
    score telt mee. Eén scorende poging per dag. ---------- */
 function startDaily() {
@@ -8171,6 +8206,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   naarTitel();
+  checkDaalAf();   /* kom net uit de proloog? Dan meteen de afdaling in */
   /* herlaadde de speler middenin de outro? De win is geregistreerd maar het
      einde-scherm is nooit getoond — geef de felicitatie alsnog (compact). */
   try {
