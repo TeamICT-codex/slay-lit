@@ -6898,14 +6898,18 @@ function toonEinde(gewonnen, verslagenBaas) {
           : `<button class="knop-stil einde-syn-knop" onclick="deelDagScore()">📣 Daag je vrienden uit</button>
              <button class="knop-stil" onclick="toonLeaderboard()" data-tip="Sticht een syndicaat: één code, en jullie vechten op hetzelfde dagbord.">🏴 Sticht een syndicaat</button>`}
       </div>
-      ${(!gewonnen && window.Online && Online.identiteit()) ? `
+      ${(!gewonnen && window.Online && Online.actief()) ? `
       <div class="graf-blok" id="graf-blok">
-        <div class="graf-kop">⚰️ Laat een grafschrift na <small>je posse vindt het vandaag op rij ${S.verdieping} — op de plek waar jij viel</small></div>
+        <div class="graf-kop">⚰️ Laat een grafschrift na <small>op rij ${S.verdieping}, de plek waar jij viel — wie vandaag dezelfde afdaling doet, vindt jouw zerk</small></div>
+        ${Online.identiteit() ? `
         <div class="graf-rij">
           <input id="graf-tekst" maxlength="120" placeholder="Je laatste woorden — daag ze uit…" autocomplete="off">
           <button class="knop-stil" onclick="grafSuggestie()" data-tip="rol een verse provocatie">🎲</button>
           <button class="knop-stil" id="graf-verstuur" onclick="stuurGrafschriftUI()">⚰️ Verstuur</button>
-        </div>
+        </div>`
+        : `
+        <p class="graf-gate">Je hebt eerst een <b>strijdnaam</b> nodig — sluit je aan bij een posse of sta als zwerver op het wereldbord. Dan kan je een zerk achterlaten.</p>
+        <button class="knop-stil graf-gate-knop" onclick="toonLeaderboard()">🏴 Kies je strijdnaam</button>`}
       </div>` : ''}
     </div>` : ''}
     <p class="einde-loopbaan">${loopbaanRegel()}${uitslag.nieuwRecord ? ' <span class="einde-record">🏆 nieuw diepterecord!</span>' : ''}</p>
