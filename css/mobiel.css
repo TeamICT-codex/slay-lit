@@ -25,6 +25,14 @@
 body[data-modus="mobiel"] .asc-knop { width: 48px; height: 48px; font-size: 1.6rem; }
 body[data-modus="mobiel"] .ascensie-stepper { gap: 20px; }
 
+/* het ✏️ (strijdnaam wijzigen) was 22x17px — te klein om te mikken met een
+   duim; op touch een volwaardige raakzone volgens de 44px-richtlijn */
+body[data-modus="mobiel"] .syn-hernoem {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 44px; min-height: 44px; font-size: 1.05rem; opacity: .8;
+  vertical-align: middle;
+}
+
 /* de dagwet-proclamatie op touch: vrijwel schermvullend, ademruimte voor de
    duim (grote DAAL AF-knop), chips iets kleiner zodat ze niet stapelen */
 body[data-modus="mobiel"] .dwp-kaart { width: 94vw; padding: 20px 16px 18px; }

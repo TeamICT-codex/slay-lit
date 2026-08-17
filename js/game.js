@@ -943,6 +943,7 @@ function doeSynJoin() {
   toonLeaderboard();
 }
 function synVerlaat() {
+  if (!(window.Online && Online.isLid())) return;   /* geen lid → niets te verlaten (las anders lid.code van null) */
   /* wie alleen een andere naam wil, moet NIET verlaten — dat maakte een tweede
      speler met een lege geschiedenis en liet de oude naam als spook in de
      ledenlijst achter. Wijs expliciet de ✏️-route aan vóór het weggaan. */
