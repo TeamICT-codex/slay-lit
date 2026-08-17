@@ -598,8 +598,7 @@ const ACHTERGRONDEN = {
     overwinning: 'Act 2 achtergronden/Overwinningsachtergrond2episch.webp',
     nederlaag: 'Act 2 achtergronden/Achtergrond nederlaag ACT2.webp'
   },
-  /* Act 3 — Het Slachtblok. Art staat klaar; de act zelf is nog niet gebouwd
-     (ACTS_MAX=2), dus dit blok is slapend tot de Act 3-bouw. `finale` is de
+  /* Act 3 — Het Slachtblok. Live sinds ACTS_MAX=3; `finale` is de
      aparte plaat voor het DICKtator-eindgevecht. */
   act3: {
     kaart: 'Act 3 achtergronden/Achtergrond ACT 3 laadscherm.webp',

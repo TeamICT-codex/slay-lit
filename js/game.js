@@ -631,11 +631,13 @@ function toonUitnodiging(code, van, klaar) {
       ${alLid ? `<p class="uitn-waarschuwing">⚠️ Je verlaat daarmee je huidige syndicaat <b>${escSyn(alLid.code)}</b>.</p>` : ''}
       <div class="uitn-formulier">
         <input id="uitn-naam" maxlength="20" placeholder="Je strijdnaam…" value="${alLid ? escSyn(alLid.naam) : ''}">
-        <button class="knop-groot" onclick="doeUitnodigingJoin('${escSyn(code).replace(/'/g, '')}')">⚔️ Sluit je aan</button>
+        <button class="knop-groot" id="uitn-join">⚔️ Sluit je aan</button>
       </div>
       <button class="knop-stil uitn-later" onclick="document.getElementById('syn-uitnodiging').remove()">Nee, later</button>
     </div>`;
   document.body.appendChild(el);
+  /* de code via een closure i.p.v. een inline onclick-string (bugklasse: backslash-verminking) */
+  el.querySelector('#uitn-join').onclick = () => doeUitnodigingJoin(code);
   el._klaar = klaar || null;
   setTimeout(() => { const i = document.getElementById('uitn-naam'); if (i && !i.value) i.focus(); }, 250);
   Klank.sfx('schitter');
@@ -6726,9 +6728,8 @@ function devDicktator() {
   startGevecht(['de_dicktator'], 'baas', 12);
 }
 
-/* DEV-SHORTCUT: spring meteen naar Act 3 (het Slachtblok) om het nieuwe roster te
-   testen. NB: zolang ACTS_MAX=2 kom je hier alleen via deze sprong; de baas-node
-   valt terug op de Slijmkoning tot de DICKtator gebouwd is (fase 2). Weg vóór release. */
+/* DEV-SHORTCUT: spring meteen naar Act 3 (het Slachtblok) om het roster te testen
+   zonder Act 1-2 door te spelen. Act 3 is live (ACTS_MAX=3). Weg vóór release. */
 function devSprongAct3() {
   if (!S) nieuwSpel('slachter');
   if (inGevecht()) stopGevechtLus();
@@ -6861,8 +6862,8 @@ function volgendeAct(verslagenBaas) {
       : (S.daily ? null : (S.runMetgezel || (S.runMetgezel = kiesRunMetgezel())));
     /* een VOORGOED geofferde metgezel (Codex.gevallen) mag NIET via de stale S.runMetgezel-cache
        herrijzen bij een latere act-overgang — dat breekt de 'geen terugkeer'-belofte van de opoffering.
-       Nu dormant (ACTS_MAX=2 → na de Erfprins volgt toonEinde, niet volgendeAct), maar een landmijn
-       zodra Act 3 live gaat; daarom de cache mee resetten zodat de rotatie een ander kiest. */
+       Sinds Act 3 live is (ACTS_MAX=3) is dit pad actief bij de overgang naar act 3;
+       de cache wordt mee gereset zodat de rotatie een ander kiest. */
     if (mgid && !teruggekeerd && Array.isArray(Codex.gevallen) && Codex.gevallen.includes(mgid)) {
       mgid = null; S.runMetgezel = null;
     }

@@ -2403,6 +2403,10 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
 .zeldglans-ongewoon { --flits: rgba(111, 179, 236, .7); }
 .zeldglans-zeldzaam { --flits: rgba(245, 197, 66, .95); }
 .zeldglans-episch { --flits: rgba(190, 120, 245, .95); }
+/* de kaart-zeldzaamheden buiten de relikwie-ladder (lookup-bugklasse: elke enum-waarde een rij) */
+.zeldglans-basis { --flits: rgba(232, 213, 174, .45); }
+.zeldglans-vloek { --flits: rgba(150, 110, 210, .8); }
+.zeldglans-gesmeed { --flits: rgba(245, 168, 61, .9); }
 @keyframes onthulFlits {
   0% { opacity: 0; transform: scale(.55); }
   30% { opacity: 1; }
@@ -2412,6 +2416,8 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
 /* zeldzaamheid in de naamkleur (overal) */
 .zeld-ongewoon .kaart-naam { color: #8fd4ff; }
 .zeld-zeldzaam .kaart-naam { color: var(--goud); text-shadow: 0 0 10px rgba(245, 197, 66, .45); }
+.zeld-episch .kaart-naam { color: #c98bf5; text-shadow: 0 0 10px rgba(190, 120, 245, .45); }
+.zeld-gesmeed .kaart-naam { color: #ffb45c; text-shadow: 0 0 10px rgba(245, 168, 61, .45); }
 
 /* ---- meervoudige kaartkeuze (de altaren): tik-selecteer + vaste actiebalk ---- */
 #kies-kaarten.meer-modus { margin-bottom: 104px; }

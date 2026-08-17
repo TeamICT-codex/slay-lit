@@ -202,7 +202,7 @@ const Online = (() => {
     const beste = [];
     const gezien = {};
     (zonderTest(rijen) || []).forEach(r => {
-      const sleutel = r.groep + '' + r.naam;
+      const sleutel = r.groep + '|' + r.naam; /* zichtbare scheider: '|' kan nooit in een code (normCode); hier stond een ONZICHTBARE controlebyte (0x01) die als lege string oogde */
       if (!gezien[sleutel]) { gezien[sleutel] = true; beste.push(r); }
     });
     return beste;
