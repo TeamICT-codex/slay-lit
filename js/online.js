@@ -101,6 +101,40 @@ const Online = (() => {
     try { localStorage.removeItem(SLEUTEL); } catch (e) {}
   }
 
+  /* NAAM WIJZIGEN = VERHUIZEN. De naam is bewust de identiteit (zo tik je op
+     een tweede toestel gewoon dezelfde naam in en speel je verder), maar
+     'verlaten + opnieuw joinen' — de enige route die er wás — liet een SPOOK
+     achter: je oude naam bleef als eeuwige achterblijver in de ledenlijst
+     staan, kreeg porren die niemand leest, en je scores hingen aan de oude
+     naam. hernoem() sleept scores, porren én het lidmaatschap mee.
+     Retour: true | 'bezet' (die naam is al iemand anders) | false (fout). */
+  async function hernoem(nieuw) {
+    const ik = identiteit();
+    if (!ik) return false;
+    nieuw = normNaam(nieuw);
+    const oud = ik.naam;
+    if (!nieuw || nieuw === oud) return false;
+    const g = encodeURIComponent(ik.code);
+    const nN = encodeURIComponent(nieuw), oN = encodeURIComponent(oud);
+    try {
+      /* is de nieuwe naam al bezet in deze groep? dan is dat een ander mens —
+         doorgaan zou zijn scores met de jouwe laten botsen (unieke sleutel) */
+      const botsScores = await req(`scores?groep=eq.${g}&naam=eq.${nN}&limit=1`);
+      if (Array.isArray(botsScores) && botsScores.length) return 'bezet';
+      const botsLeden = await req(`leden?groep=eq.${g}&naam=eq.${nN}&limit=1`).catch(() => null);
+      if (Array.isArray(botsLeden) && botsLeden.length) return 'bezet';
+      /* de geschiedenis verhuist mee; porren/leden zijn best-effort (hun
+         unieke indexen kunnen botsen op een dag dat er al gepord is) */
+      await req(`scores?groep=eq.${g}&naam=eq.${oN}`, { method: 'PATCH', body: JSON.stringify({ naam: nieuw }) });
+      await req(`leden?groep=eq.${g}&naam=eq.${oN}`, { method: 'PATCH', body: JSON.stringify({ naam: nieuw }) }).catch(() => {});
+      await req(`porren?groep=eq.${g}&van=eq.${oN}`, { method: 'PATCH', body: JSON.stringify({ van: nieuw }) }).catch(() => {});
+      await req(`porren?groep=eq.${g}&naar=eq.${oN}`, { method: 'PATCH', body: JSON.stringify({ naar: nieuw }) }).catch(() => {});
+      if (lid) { lid = { naam: nieuw, code: lid.code }; try { localStorage.setItem(SLEUTEL, JSON.stringify(lid)); } catch (e) {} }
+      else { zwerver = { naam: nieuw, code: zwerver.code }; try { localStorage.setItem(ZW_SLEUTEL, JSON.stringify(zwerver)); } catch (e) {} }
+      return true;
+    } catch (e) { return false; }
+  }
+
   /* score insturen — upsert op (groep, naam, dag): opnieuw insturen op dezelfde
      dag overschrijft gewoon (de daily is toch één poging per dag). Werkt voor
      syndicaat-leden ÉN zwervers (identiteit) — het wereldbord leest alles. */
@@ -220,7 +254,7 @@ const Online = (() => {
   function _dev(url, key) { CONFIG.url = url || CONFIG.url; CONFIG.anonKey = key || CONFIG.anonKey; }
 
   return { actief, isLid, lid: () => lid, normCode, normNaam, verzinCode, wordLid, verlaat,
-           identiteit, isZwerver, wordZwerver,
+           identiteit, isZwerver, wordZwerver, hernoem,
            stuurScore, stuurGrafschrift, dagTop, allerTijden, feed,
            wereldDag, wereldOoit,
            meldAan, leden, stuurPor, mijnPorren, _dev };

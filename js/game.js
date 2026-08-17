@@ -868,7 +868,9 @@ function synSectieHtml() {
   }
   const l = Online.lid();
   return `<div class="syn-vak">
-    <h3 class="codex-kop">🔥 Het Syndicaat <small>⚔️ ${escSyn(l.naam)} · code <b class="syn-codechip" data-tip="Deel deze code — wie hem invoert, vecht op jullie bord">${escSyn(l.code)}</b></small></h3>
+    <h3 class="codex-kop">🔥 Het Syndicaat <small>⚔️ ${escSyn(l.naam)}
+      <button class="syn-hernoem" onclick="vraagHernoem()" data-tip="Wijzig je strijdnaam — je scores en geschiedenis verhuizen mee">✏️</button>
+      · code <b class="syn-codechip" data-tip="Deel deze code — wie hem invoert, vecht op jullie bord">${escSyn(l.code)}</b></small></h3>
     <div id="syn-inhoud"><p class="syn-laadt">De duiven zijn onderweg…</p></div>
     <div class="syn-knoppen">
       <button class="knop-groot" onclick="deelSyndicaat()">📣 Nodig vrienden uit</button>
@@ -881,6 +883,56 @@ function synSectieHtml() {
   </div>`;
 }
 
+/* je strijdnaam wijzigen ZONDER een spook achter te laten: alle scores,
+   porren en je lidmaatschap verhuizen mee naar de nieuwe naam. (Vroeger kon
+   je alleen verlaten + opnieuw joinen — dat maakte je tot een tweede speler
+   met een lege geschiedenis, en je oude naam bleef als eeuwige achterblijver
+   in de ledenlijst hangen.) */
+function vraagHernoem() {
+  if (!(window.Online && Online.identiteit())) return;
+  const huidig = Online.identiteit().naam;
+  const ov = document.createElement('div');
+  ov.className = 'overlay open';
+  ov.id = 'hernoem-overlay';
+  ov.innerHTML = `<div class="uitn-kaart">
+      <div class="uitn-vlam">✏️</div>
+      <h2 class="scherm-titel">Nieuwe strijdnaam</h2>
+      <p class="uitn-regel">Je vecht nu als <b>${escSyn(huidig)}</b>.<br>
+      Je scores, je grafschriften en je plek op het bord <b>verhuizen mee</b> — je blijft dezelfde strijder.</p>
+      <div class="uitn-formulier">
+        <input id="hernoem-naam" maxlength="20" placeholder="Je nieuwe strijdnaam…" value="${escSyn(huidig)}">
+        <button class="knop-groot" id="hernoem-ok" onclick="doeHernoem()">✏️ Wijzig mijn naam</button>
+      </div>
+      <button class="knop-stil uitn-later" onclick="document.getElementById('hernoem-overlay').remove()">Toch niet</button>
+    </div>`;
+  document.body.appendChild(ov);
+  setTimeout(() => { const i = document.getElementById('hernoem-naam'); if (i) { i.focus(); i.select(); } }, 200);
+  Klank.sfx('klik');
+}
+function doeHernoem() {
+  const veld = document.getElementById('hernoem-naam');
+  const knop = document.getElementById('hernoem-ok');
+  const nieuw = (veld && veld.value || '').trim();
+  if (!nieuw) { melding('Kies eerst een naam.'); return; }
+  if (nieuw === Online.identiteit().naam) { document.getElementById('hernoem-overlay').remove(); return; }
+  if (knop) { knop.disabled = true; knop.textContent = '⏳ verhuizen…'; }
+  Online.hernoem(nieuw).then(r => {
+    const ov = document.getElementById('hernoem-overlay');
+    if (r === true) {
+      if (ov) ov.remove();
+      melding(`✏️ Je heet nu ${Online.identiteit().naam} — je geschiedenis verhuisde mee.`);
+      Klank.sfx('schitter');
+      toonLeaderboard();
+    } else if (r === 'bezet') {
+      if (knop) { knop.disabled = false; knop.textContent = '✏️ Wijzig mijn naam'; }
+      melding('Die naam is al van een genoot in dit syndicaat — kies een andere.');
+    } else {
+      if (knop) { knop.disabled = false; knop.textContent = '✏️ Wijzig mijn naam'; }
+      melding('Naam wijzigen lukte niet (offline?). Je oude naam blijft gewoon geldig.');
+    }
+  });
+}
+
 function doeSynJoin() {
   const naam = (document.getElementById('syn-naam') || {}).value;
   const code = (document.getElementById('syn-code') || {}).value;
@@ -891,9 +943,18 @@ function doeSynJoin() {
   toonLeaderboard();
 }
 function synVerlaat() {
-  Online.verlaat();
-  melding('Je verliet het syndicaat. De code blijft werken voor wie blijft.');
-  toonLeaderboard();
+  /* wie alleen een andere naam wil, moet NIET verlaten — dat maakte een tweede
+     speler met een lege geschiedenis en liet de oude naam als spook in de
+     ledenlijst achter. Wijs expliciet de ✏️-route aan vóór het weggaan. */
+  bevestig(
+    `Je verlaat <b>${escSyn(Online.lid().code)}</b> als <b>${escSyn(Online.lid().naam)}</b>.<br><br>Je scores blijven op het bord staan onder je huidige naam.<br><br><i>Wou je enkel een andere strijdnaam? Sluit dit en gebruik het ✏️ naast je naam — dan verhuist je geschiedenis mee.</i>`,
+    () => {
+      Online.verlaat();
+      melding('Je verliet het syndicaat. De code blijft werken voor wie blijft.');
+      toonLeaderboard();
+    },
+    '🚪 Toch verlaten'
+  );
 }
 /* de deep-link die alles doet: spel openen/installeren ÉN meteen de
    uitnodiging tonen (?syndicaat=CODE&van=NAAM → checkSyndicaatUitnodiging) */

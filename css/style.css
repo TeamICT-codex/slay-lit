@@ -1672,6 +1672,11 @@ body.lite .syn-trede { animation: none; }
 .syn-kolom { flex: 1 1 260px; min-width: 240px; }
 .syn-kolom h4 { color: #ffd7a0; font-size: .92rem; margin-bottom: 6px; letter-spacing: .04em; }
 .syn-stoef { color: var(--perkament); font-size: .86rem; margin: 4px 0; padding-left: 8px; border-left: 2px solid rgba(255, 150, 70, .45); }
+.syn-hernoem {
+  background: none; border: none; cursor: pointer; padding: 0 2px;
+  font-size: .85em; opacity: .55; transition: opacity .15s ease;
+}
+.syn-hernoem:hover { opacity: 1; }
 .syn-leek-hint { color: var(--perkament-dof); font-size: .8rem; margin-top: 8px; }
 .syn-leek-hint b { color: #ffd7a0; }
 

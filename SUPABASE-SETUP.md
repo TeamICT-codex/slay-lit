@@ -125,6 +125,26 @@ alter table public.scores add column if not exists boodschap text;
 Zonder deze kolom werkt alles gewoon door — alleen het versturen van een
 grafschrift meldt dan netjes dat het niet lukte.
 
+## 1f. Spook-leden opruimen (eenmalig, indien nodig)
+
+Wie vóór cache v63 zijn strijdnaam wijzigde deed dat via *verlaten + opnieuw
+joinen* — en werd daarmee een tweede speler. De oude naam blijft dan als
+"spook" in de ledenlijst staan: geen scores, eeuwig ⏳, krijgt porren die
+niemand leest. Sinds v63 kan het niet meer ontstaan (het ✏️ naast je naam
+verhuist alles mee), maar bestaande spoken wis je zo:
+
+```sql
+-- toon eerst de verdachten: leden zonder enkele score
+select l.groep, l.naam, l.sinds
+from public.leden l
+where not exists (
+  select 1 from public.scores s where s.groep = l.groep and s.naam = l.naam
+);
+
+-- en wis er dan gericht één (vervang naam + groep)
+delete from public.leden where groep = 'FAKKEL-9463' and naam = 'Steven Tijpels';
+```
+
 ## 1e. Bekende grens: iedereen mag schrijven (vriendenniveau)
 
 De publieke sleutel + de open `update`-policy betekenen dat iemand met wat
