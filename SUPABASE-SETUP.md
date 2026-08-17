@@ -125,6 +125,16 @@ alter table public.scores add column if not exists boodschap text;
 Zonder deze kolom werkt alles gewoon door — alleen het versturen van een
 grafschrift meldt dan netjes dat het niet lukte.
 
+## 1e. Bekende grens: iedereen mag schrijven (vriendenniveau)
+
+De publieke sleutel + de open `update`-policy betekenen dat iemand met wat
+technische kennis via de rauwe API een score of grafschrift van een ander kan
+overschrijven. Dat is een **bewuste keuze**: echte bescherming vraagt
+gebruikersaccounts (Supabase Auth), en dat is voor een vriendengroep zwaarder
+dan het probleem. Het schema is er wel klaar voor — bij misbruik zet je Auth
+aan en vervang je de policies door `auth.uid()`-gebaseerde regels, zonder
+datamigratie.
+
 ## 2. Vul de sleutels in
 
 Dashboard → **Settings → API**. Kopieer:

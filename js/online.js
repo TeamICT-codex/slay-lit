@@ -57,18 +57,31 @@ const Online = (() => {
   const CODE_WOORDEN = ['KELDER', 'FAKKEL', 'SINTEL', 'DIEPTE', 'SCHACHT', 'VONK', 'ASREGEN', 'DREMPEL'];
   const verzinCode = () => CODE_WOORDEN[Math.floor(Math.random() * CODE_WOORDEN.length)] + '-' + Math.floor(1000 + Math.random() * 9000);
 
+  /* TIMEOUT: zonder deze afbreker bleef een hangende verbinding (trage gsm,
+     captive portal, Supabase-hik) de UI eeuwig op "De duiven zijn onderweg…"
+     zetten — de promise loste simpelweg nooit op. Nu faalt hij netjes na
+     TIMEOUT_MS en toont de aanroeper zijn offline-terugval. */
+  const TIMEOUT_MS = 8000;
   async function req(pad, opts) {
     opts = opts || {};
-    const r = await fetch(CONFIG.url + '/rest/v1/' + pad, {
-      method: opts.method || 'GET',
-      headers: {
-        apikey: CONFIG.anonKey,
-        Authorization: 'Bearer ' + CONFIG.anonKey,
-        'Content-Type': 'application/json',
-        Prefer: opts.prefer || ''
-      },
-      body: opts.body || undefined
-    });
+    const afbreker = typeof AbortController === 'function' ? new AbortController() : null;
+    const klok = setTimeout(() => { if (afbreker) afbreker.abort(); }, TIMEOUT_MS);
+    let r;
+    try {
+      r = await fetch(CONFIG.url + '/rest/v1/' + pad, {
+        method: opts.method || 'GET',
+        headers: {
+          apikey: CONFIG.anonKey,
+          Authorization: 'Bearer ' + CONFIG.anonKey,
+          'Content-Type': 'application/json',
+          Prefer: opts.prefer || ''
+        },
+        body: opts.body || undefined,
+        signal: afbreker ? afbreker.signal : undefined
+      });
+    } finally {
+      clearTimeout(klok);
+    }
     if (!r.ok) throw new Error('syndicaat-fout ' + r.status);
     /* een geslaagde insert/upsert komt als 201/204 met LEGE body terug —
        r.json() zou daarop crashen en de upload vals-negatief rapporteren */
@@ -165,15 +178,23 @@ const Online = (() => {
   /* aanmelden als lid + 'laatst gezien' verversen (upsert op groep,naam).
      Faalt de leden-tabel (SQL deel 1b nog niet gedraaid)? Stil negeren —
      het bord blijft werken. */
-  async function meldAan() {
+  /* THROTTLE: 'laatst gezien' hoeft niet bij élke aanroep de deur uit. Het
+     leaderboard openen triggerde meldAan 2× (vulSyndicaat + checkPorInbox) —
+     nu hooguit één schrijf per MELD_PAUZE. */
+  const MELD_PAUZE = 5 * 60 * 1000;
+  let laatsteMelding = 0;
+  async function meldAan(forceer) {
     if (!isLid()) return false;
+    const nu = Date.now();
+    if (!forceer && nu - laatsteMelding < MELD_PAUZE) return true;
+    laatsteMelding = nu;
     try {
       await req('leden?on_conflict=groep,naam', {
         method: 'POST', prefer: 'resolution=merge-duplicates',
         body: JSON.stringify({ groep: lid.code, naam: lid.naam, laatst_gezien: new Date().toISOString() })
       });
       return true;
-    } catch (e) { return false; }
+    } catch (e) { laatsteMelding = 0; return false; }   /* mislukt? volgende keer opnieuw proberen */
   }
   const leden = () => req(`leden?${q()}&order=naam.asc&limit=60`);
 

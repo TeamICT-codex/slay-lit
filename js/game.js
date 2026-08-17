@@ -684,8 +684,12 @@ async function checkPorInbox() {
     const dag = vandaagSleutel();
     const porren = await Online.mijnPorren(dag);
     if (!Array.isArray(porren) || !porren.length) return;
-    let gezien = {};
-    try { gezien = JSON.parse(localStorage.getItem('slayit_porren_gezien') || '{}'); } catch (e) {}
+    /* de gezien-set is DAG-GESCOPET: de oude vorm ({id:1, …}) groeide
+       onbeperkt (±72 KB na een jaar porren) omdat er nooit iets uit ging.
+       We bewaren nu alleen de id's van vandaag — de query is toch per dag. */
+    let bak = {};
+    try { bak = JSON.parse(localStorage.getItem('slayit_porren_gezien') || '{}'); } catch (e) {}
+    const gezien = (bak && bak.dag === dag && bak.ids && typeof bak.ids === 'object') ? bak.ids : {};
     const nieuw = porren.filter(p => p && p.id && !gezien[p.id]);
     if (!nieuw.length) return;
     const alGespeeld = Daily.laatsteVoltooid === dag;
@@ -695,7 +699,7 @@ async function checkPorInbox() {
       setTimeout(() => melding(`📣 ${wie} je: doe je dagelijkse afdaling! 🗓️`), 1800);
     }
     nieuw.forEach(p => { gezien[p.id] = 1; });
-    try { localStorage.setItem('slayit_porren_gezien', JSON.stringify(gezien)); } catch (e) {}
+    try { localStorage.setItem('slayit_porren_gezien', JSON.stringify({ dag, ids: gezien })); } catch (e) {}
   } catch (e) {}
 }
 
@@ -752,6 +756,15 @@ function toonLeaderboard() {
       <button class="knop-groot" onclick="document.getElementById('overlay-leaderboard').classList.remove('open')">Sluiten</button>
     </div>`;
   ov.classList.add('open');
+  /* één delegated handler voor alle por-knoppen (de namen zitten in
+     data-por, niet in een inline JS-string — zie porKlik) */
+  if (!ov._porHaak) {
+    ov._porHaak = true;
+    ov.addEventListener('click', e => {
+      const k = e.target.closest && e.target.closest('.syn-por-knop[data-por]');
+      if (k && !k.disabled) porKlik(k);
+    });
+  }
   if (window.Online && Online.isLid()) vulSyndicaat();
   if (window.Online && Online.actief()) vulWereldbord();   /* iedereen mag kijken */
   checkPorInbox();   /* verse porren ook zien als de app al openstond (gezien-set dedupet) */
@@ -992,10 +1005,14 @@ function ledenlijstHtml(leden, gespeeld, dag) {
     const klaar = !!gespeeld[l.naam];
     const isIk = l.naam === ik;
     const alGepord = _synLeden.gepord[l.naam];
+    /* de naam reist via een data-attribuut, NIET via een inline JS-string:
+       een naam met een backslash porde anders de verkeerde persoon
+       ("Pad\Naam" → "PadNaam") en een naam die op \ eindigt brak de knop
+       volledig (SyntaxError → klik deed niets). Zie porKlik hieronder. */
     const knop = (!klaar && !isIk)
-      ? `<button class="syn-por-knop ${alGepord ? 'gepord' : ''}" ${alGepord ? 'disabled' : ''} onclick="porLid('${escSyn(l.naam).replace(/'/g, '')}')">${alGepord ? '✓ gepord' : '📣 Por'}</button>`
+      ? `<button class="syn-por-knop ${alGepord ? 'gepord' : ''}" ${alGepord ? 'disabled' : ''} data-por="${escSyn(l.naam)}">${alGepord ? '✓ gepord' : '📣 Por'}</button>`
       : '';
-    return `<div class="syn-lid ${klaar ? 'klaar' : 'wacht'}">
+    return `<div class="syn-lid ${klaar ? 'klaar' : 'wacht'}" data-lid="${escSyn(l.naam)}">
       <span class="syn-lid-status">${klaar ? '✅' : '⏳'}</span>
       <b>${escSyn(l.naam)}${isIk ? ' <small>(jij)</small>' : ''}</b>
       <span class="syn-lid-info">${klaar ? `${gespeeld[l.naam].score} pt · ${gespeeld[l.naam].gewonnen ? '👑' : 'rij ' + (gespeeld[l.naam].diepte | 0)}` : 'nog niet afgedaald'}</span>
@@ -1010,6 +1027,14 @@ function ledenlijstHtml(leden, gespeeld, dag) {
     ${porAllesKnop}</div>`;
 }
 
+/* klik-afhandeling voor de por-knoppen: de naam komt uit het data-attribuut
+   (de DOM levert hem exact terug, ongeacht quotes/backslashes) */
+function porKlik(knop) {
+  const naam = knop && knop.dataset ? knop.dataset.por : '';
+  if (!naam) return;
+  knop.disabled = true; knop.textContent = '✓ gepord'; knop.classList.add('gepord');
+  porLid(naam);
+}
 /* por één lid — schrijft een por naar de inbox (anti-spam: 1×/dag/koppel) */
 function porLid(naam) {
   const dag = vandaagSleutel();
@@ -1020,8 +1045,6 @@ function porLid(naam) {
     'Ik heb goud gepakt. Durf jij het te evenaren?'
   ]);
   _synLeden.gepord[naam] = true;
-  const knop = event && event.target;
-  if (knop) { knop.disabled = true; knop.textContent = '✓ gepord'; knop.classList.add('gepord'); }
   Online.stuurPor(naam, dag, bericht).then(ok => {
     melding(ok ? `📣 ${naam} is gepord — nu maar hopen dat 'ie durft.` : `Kon ${naam} niet porren (offline?).`);
   });
@@ -1031,15 +1054,13 @@ function porLid(naam) {
 function porAchterblijvers() {
   const dag = vandaagSleutel();
   const ik = Online.lid().naam;
-  const namen = Object.keys(_synLeden.gespeeld);
-  /* de achterblijvers = leden zonder score vandaag; haal ze uit de laatst-getoonde lijst */
+  /* de achterblijvers = leden zonder score vandaag; de naam komt uit het
+     data-attribuut (tekst uitlezen brak op namen met spaties/tekens) */
   const knoppen = [...document.querySelectorAll('.syn-lid.wacht')];
   let n = 0;
   knoppen.forEach(rij => {
-    const naamEl = rij.querySelector('b');
-    if (!naamEl) return;
-    const naam = naamEl.childNodes[0].textContent.trim();
-    if (naam === ik || _synLeden.gespeeld[naam]) return;
+    const naam = rij.dataset ? rij.dataset.lid : '';
+    if (!naam || naam === ik || _synLeden.gespeeld[naam]) return;
     _synLeden.gepord[naam] = true;
     Online.stuurPor(naam, dag, 'Het hele syndicaat wacht. Doe je dagelijkse afdaling!');
     n++;
@@ -6901,15 +6922,17 @@ function toonEinde(gewonnen, verslagenBaas) {
       ${(!gewonnen && window.Online && Online.actief()) ? `
       <div class="graf-blok" id="graf-blok">
         <div class="graf-kop">⚰️ Laat een grafschrift na <small>op rij ${S.verdieping}, de plek waar jij viel — wie vandaag dezelfde afdaling doet, vindt jouw zerk</small></div>
-        ${Online.identiteit() ? `
+        ${Online.isLid() ? `
         <div class="graf-rij">
           <input id="graf-tekst" maxlength="120" placeholder="Je laatste woorden — daag ze uit…" autocomplete="off">
           <button class="knop-stil" onclick="grafSuggestie()" data-tip="rol een verse provocatie">🎲</button>
           <button class="knop-stil" id="graf-verstuur" onclick="stuurGrafschriftUI()">⚰️ Verstuur</button>
         </div>`
         : `
-        <p class="graf-gate">Je hebt eerst een <b>strijdnaam</b> nodig — sluit je aan bij een posse of sta als zwerver op het wereldbord. Dan kan je een zerk achterlaten.</p>
-        <button class="knop-stil graf-gate-knop" onclick="toonLeaderboard()">🏴 Kies je strijdnaam</button>`}
+        <p class="graf-gate">${Online.isZwerver()
+            ? 'Een zerk heeft <b>bezoekers</b> nodig: als zwerver daal je alleen af, dus niemand komt langs je graf. Sluit je aan bij een posse en je laatste woorden krijgen publiek.'
+            : 'Je hebt eerst een <b>strijdnaam en een posse</b> nodig — dan vinden je genoten je zerk op de plek waar jij viel.'}</p>
+        <button class="knop-stil graf-gate-knop" onclick="toonLeaderboard()">🏴 ${Online.isZwerver() ? 'Sluit je aan bij een posse' : 'Kies je strijdnaam'}</button>`}
       </div>` : ''}
     </div>` : ''}
     <p class="einde-loopbaan">${loopbaanRegel()}${uitslag.nieuwRecord ? ' <span class="einde-record">🏆 nieuw diepterecord!</span>' : ''}</p>
