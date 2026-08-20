@@ -10,7 +10,7 @@ assets/*/originelen/
 # bron-PNG's van vóór de WebP-conversie (lokaal archief)
 assets-bron/
 
-# bewust geparkeerde werkmappen — NOOIT committen (afspraak):
-# de proloog-originelen en het design-system blijven lokaal
-assets/proloog/
+# bewust geparkeerde werkmap — NOOIT committen (afspraak):
+# het design-system blijft lokaal (de proloog-art is sinds de vanilla-herbouw
+# gewone gedeployde WebP in assets/proloog/; de PNG-bronnen zitten in assets-bron/)
 design-system/

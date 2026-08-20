@@ -481,12 +481,12 @@ SW-reload uitgesteld tijdens gevecht/outro · proloog gecachet onder
 verrijkt het contract met de heldkeuze (choices.held uit slaylit_proloog_v2)
 en stopt zijn poll zodra DAAL AF staat.
 
-NOG OPEN — kan alleen op het design-account (de proloog-bundel is gesealed):
-- `held` rechtstreeks in het slayit_proloog-contract schrijven (de brug
-  vangt het nu op, maar bij de herbouw hoort het in de app zelf).
-- De STORE-write (slaylit_proloog_v2) in een try/catch (crasht nu op een
-  volle/geblokkeerde storage) + idx/maxReached klemmen bij het laden
-  (out-of-range crasht de mount).
+OPGELOST (aug 2026, vanilla-herbouw van de proloog): beide vroegere
+design-account-punten zitten nu in de app zelf — `held` wordt rechtstreeks
+in het slayit_proloog-contract geschreven (de brug bestaat niet meer), en
+alle storage-toegang zit in try/catch met idx/maxReached-klemming bij het
+laden. De proloog is een dunne vanilla-pagina (proloog/index.html + data.js
++ audio.js + proloog.js) met WebP-art in assets/proloog/.
 
 NOG OPEN — ontwerpbeslissingen (Thomas):
 - bouwServerhal + BAAS_REGELS (niet-kapot) + de 'hal'-bakLevel-tak zijn nu

@@ -73,7 +73,9 @@
 
 - ✅ Verouderde spelersteksten ("13 verdiepingen / versla De Slijmkoning") bijgewerkt
   in help + manifest — deze checklist-ronde.
-- ✅ `assets/proloog/` + `design-system/` in `.gitignore` (nooit committen, afgedwongen).
+- ✅ `design-system/` in `.gitignore` (nooit committen, afgedwongen). De proloog-art
+  staat sinds de vanilla-herbouw als WebP in `assets/proloog/` (gecommit); de
+  PNG-bronnen liggen in `assets-bron/proloog/` (gitignored, zoals alle bron-art).
 - ✅ Totaal-audit: 19 fixes (combat/input/save/render/perf/PWA/audio) + ~200 regels dode
   code weg (`6b9b8be`).
 - ✅ SW: fout-antwoorden vallen terug op cache; offline navigatie met query-string werkt.
