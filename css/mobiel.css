@@ -125,6 +125,21 @@ body[data-modus="mobiel"] .tb-knop { font-size: 1.1rem; }
 /* schermen sluiten aan op de compacte balk; het gevecht gaat tot de rand */
 body[data-modus="mobiel"] .scherm { top: calc(40px + env(safe-area-inset-top)); }
 body[data-modus="mobiel"] #scherm-gevecht { top: env(safe-area-inset-top); }
+
+/* GRONDANKER GEVECHTSPLAAT (het 'zweven'-mysterie, aug 2026): de platen zijn
+   16:9 met de geschilderde vloer in de onderste ~32-40%. Op laptop valt cover
+   bijna 1-op-1 en staat de voetlijn (~35% van de schermhoogte) ín die vloerband.
+   Op een telefoon liggend (ar ~2.16) snijdt cover + 'center' de plaat juist
+   ONDERAAN af terwijl de voetlijn er proportioneel hóger ligt (~40-47%) — de
+   figuren stonden dus letterlijk op de geschilderde achterwand. Onder-anker +
+   inset 0 houdt de vloer in beeld; de -28px parallax-marge is desktop-3D-only
+   (3D staat op mobiel ALTIJD uit, zie d3Gewenst in game.js) en kostte hier
+   alleen maar 28px vloer. Geverifieerd: hiermee valt de voetlijn binnen de
+   vloerband op alle platen, inclusief de twee Act 3-afgrond-platforms. */
+body[data-modus="mobiel"] #gevecht-achtergrond {
+  inset: 0;
+  background-position: center bottom;
+}
 body[data-modus="mobiel"] #scherm-gevecht #beurt-label { margin-top: calc(42px + env(safe-area-inset-top)); }
 /* baasgevecht: het Beurt-label botste met de bazenbalk → weg op mobiel.
    De bazenbalk compacter zodat hij in de krappe (liggende) hoogte past. */
@@ -489,13 +504,17 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
     flex-direction: row; align-items: center; justify-content: center;
     gap: 18px; padding: 8px 14px calc(8px + env(safe-area-inset-bottom));
   }
+  /* het art-paneel GRONDT op de (onder-geankerde) plaatvloer i.p.v. te zweven
+     in het verticale midden; de tekstkolom houdt haar eigen centrering. */
   body[data-modus="mobiel"] #scherm-event .event-art,
   body[data-modus="mobiel"] #scherm-event .event-art.is-landschap {
-    margin-top: 0; flex: 0 0 auto; align-self: center;
+    margin-top: 0; flex: 0 0 auto; align-self: flex-end;
+    margin-bottom: max(12px, 3vh);
     height: min(74vh, 300px); width: auto; aspect-ratio: 3 / 2; max-width: 48vw;
   }
   body[data-modus="mobiel"] #scherm-event .event-art.is-portret {
-    margin-top: 0; flex: 0 0 auto;
+    margin-top: 0; flex: 0 0 auto; align-self: flex-end;
+    margin-bottom: max(12px, 3vh);
     height: min(84vh, 340px); width: auto; aspect-ratio: 2 / 3; max-width: 34vw;
   }
   body[data-modus="mobiel"] #scherm-event .event-tekstkolom {

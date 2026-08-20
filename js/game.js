@@ -3046,6 +3046,11 @@ function startGevecht(samenstelling, soort, rij) {
   if (g.achtergrond) {
     bgEl.style.backgroundImage =
       `linear-gradient(rgba(13,10,18,.32), rgba(13,10,18,.5)), url("${g.achtergrond}")`;
+    /* GRONDANKER: leeg laten → CSS beslist per spoor (laptop center, mobiel
+       center bottom). Uitzondering: de FINALE-plaat (887×1774, vogelvlucht
+       de diepte in) heeft GEEN grondlijn — onder-ankeren zou er een
+       willekeurige band uitsnijden, dus die blijft overal 'center'. */
+    bgEl.style.backgroundPosition = /FINALE/i.test(g.achtergrond) ? 'center' : '';
     bgEl.style.transform = '';
     bgEl.classList.add('zichtbaar');
   } else {
@@ -5486,7 +5491,7 @@ function trekKaartBeloning() {
 /* ---------- beloningscherm ---------- */
 function renderBeloning() {
   toonScherm('beloning');
-  schermAchtergrond('beloning', actBg('beloning'), 0.5);
+  schermAchtergrond('beloning', actBg('beloning'), 0.5, 'center bottom');
   const b = S.beloning;
   let html = `<h2 class="scherm-titel">Overwinning!</h2>
     <p class="scherm-sub">De buit neem je automatisch mee — alleen de kaartkeuze is aan jou.</p>
@@ -6072,7 +6077,7 @@ function rustSmeed() {
 let schatBuit = null;
 function toonSchat() {
   toonScherm('schat');
-  schermAchtergrond('schat', actBg('schat'), 0.45);
+  schermAchtergrond('schat', actBg('schat'), 0.45, 'center bottom');
   schatBuit = willekeurigRelikwie();   /* vooraf bepaald — seeded volgorde blijft gelijk */
   $('#scherm-schat').innerHTML = `
     <h2 class="scherm-titel">Een schatkist!</h2>
@@ -6163,7 +6168,7 @@ function toonWinkel() {
 function renderWinkel() {
   toonScherm('winkel');
   const w = S.winkel;
-  schermAchtergrond('winkel', w.ei ? actBg('winkelEasterEgg') : actBg('winkel'), 0.62);
+  schermAchtergrond('winkel', w.ei ? actBg('winkelEasterEgg') : actBg('winkel'), 0.62, 'center bottom');
   let html = `<h2 class="scherm-titel"><span data-icoon="winkel">💰</span> De Winkel</h2>
     <p class="scherm-sub">"Alles te koop, niets te geef," grijnst de koopman.</p>`;
 
@@ -6273,8 +6278,11 @@ function toonEvent() {
   S.huidigEvent = ev.id;
   _eventArtId = kiesEventArt(ev.id);   /* welk art-beeld deze ontmoeting toont (1 vaste keuze voor renderEvent + eventKlaar) */
   toonScherm('event');
+  /* 'center bottom' (net als rust/winkel/schat/beloning): de geschilderde vloer
+     zit in de onderste ~30-38% van elke plaat — onder-ankeren houdt hem in beeld
+     op elke aspectratio (cover snijdt liggend anders de vloer weg). */
   schermAchtergrond('event',
-    ev.id === 'altaar' ? actBg('eventRelikwie') : actBg('event'), 0.5);
+    ev.id === 'altaar' ? actBg('eventRelikwie') : actBg('event'), 0.5, 'center bottom');
   renderEvent(ev);
 }
 

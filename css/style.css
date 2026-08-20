@@ -2811,7 +2811,11 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(180deg, rgba(34, 26, 46, .6), rgba(18, 13, 28, .8));
 }
-.event-art img { width: 100%; height: 100%; object-fit: cover; }
+/* object-position bottom: in de brede laptop-band (680×235 vs 16:9-art) snijdt
+   cover ~19% boven én onder weg — mét de voeten van figuren in de art. Onder-
+   ankeren offert lucht/plafond op en houdt de geschilderde grond heel; op de
+   mobiele kaders (3:2 en 2:3) snijdt cover alleen zijkanten, dus geen effect. */
+.event-art img { width: 100%; height: 100%; object-fit: cover; object-position: center bottom; }
 /* oriëntatie-bewust: portret-art (bv. de koopman, 2:3) krijgt een STAAND kader zodat kop + figuur
    heel blijven i.p.v. tot een horizontale middenstrook gecropt te worden in de landschap-band.
    De .is-portret-klasse wordt bij het laden gezet o.b.v. de beeldverhouding (laadEventArt). */
