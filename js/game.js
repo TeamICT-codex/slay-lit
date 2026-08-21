@@ -1315,8 +1315,11 @@ function heeftRelikwie(id) { return !!(S && S.relikwieen && S.relikwieen.include
 function relikwieSchadeBonus() { return heeftRelikwie('stalen_vuist') ? 1 : 0; }
 function drankSlots() { return heeftRelikwie('veldfles') ? 4 : 3; }   /* basis 3 (playtest); veldfles +1 → 4 */
 
-function geefRelikwie(id, vanSchrijn) {
-  if (!S.relikwieen.includes(id)) S.relikwieen.push(id);
+/* stil=true onderdrukt de reveal-ceremonie: voor bronnen met een EIGEN ceremonie
+   (de schatkist) en bulk-toekenningen bij runstart (Schrijn, daily-startrelikwieën). */
+function geefRelikwie(id, vanSchrijn, stil) {
+  const isNieuw = !S.relikwieen.includes(id);
+  if (isNieuw) S.relikwieen.push(id);
   if (id === 'spaarvarken') S.goud += 100;
   if (id === 'bloedrobijn') { S.maxHp += 8; S.hp += 8; }
   if (id === 'het_grootboek') { S.maxHp += 12; S.hp += 12; }   /* Act 2: Het Grootboek */
@@ -1328,6 +1331,9 @@ function geefRelikwie(id, vanSchrijn) {
   /* echt gevonden (niet uit het Schrijn meegenomen) = lading herladen */
   if (!vanSchrijn) laadSchrijnOp(id);
   renderTopbalk();
+  /* de ceremonie — alleen bij een ECHT nieuwe vondst (een duplicaat-toekenning
+     mag niet opnieuw het scherm vullen) en niet bij runstart-bulk/schatkist */
+  if (isNieuw && !vanSchrijn && !stil) toonRelikwieReveal(id);
 }
 /* gewogen op schaarste; geef een eigen weging mee voor rijkere bronnen (elites) */
 const SCHAARSTE_LABEL = { start: 'Heldenrelikwie', gewoon: 'Gewoon', ongewoon: 'Ongewoon', zeldzaam: 'Zeldzaam', episch: 'Episch' };
@@ -1795,6 +1801,55 @@ function toonScherfReveal(sid, opts) {
   ov.querySelector('.scherf-reveal-sluit').onclick = sluit;
   ov.addEventListener('click', e => { if (e.target === ov) sluit(); });
   ov._timer = setTimeout(sluit, 7000);
+  return ov;
+}
+
+/* RELIKWIE-REVEAL: ELK verworven relikwie komt groot en met gewicht in beeld, ongeacht
+   de bron (event, gevechtsbeloning, winkel, elite-drop). Vroeger deed alleen de schatkist
+   dat; events meldden hun vondst in één tekstregel tussen de rest — waardoor de beste
+   vondst van je run visueel wegviel. Hangt centraal in geefRelikwie(), dus een NIEUW
+   event dat een relikwie uitdeelt krijgt de ceremonie automatisch mee.
+   Kleur/gloed volgen de zeldzaamheid (--relk uit .rel-*); zeldzaam/episch krijgen
+   extra stralen, een zwaardere slam en een langere leespauze. */
+function toonRelikwieReveal(id, opts) {
+  opts = opts || {};
+  const d = RELIKWIEEN[id];
+  if (!d) return null;                      /* onbekend id: nooit een lege ceremonie tonen */
+  const zeld = d.zeld || 'gewoon';
+  const groots = zeld === 'zeldzaam' || zeld === 'episch';
+  document.querySelectorAll('.relikwie-reveal-overlay').forEach(n => n.remove());
+  const ov = document.createElement('div');
+  ov.className = 'relikwie-reveal-overlay rel-' + zeld + (groots ? ' rr-groots' : '');
+  ov.innerHTML = `
+    <div class="rr-flits"></div>
+    <div class="rr-binnen">
+      <div class="rr-kop">${opts.kop || '⚜️ EEN RELIKWIE IS VAN JOU'}</div>
+      <div class="rr-artwrap">
+        <div class="rr-straal"></div>
+        <div class="rr-ring"></div>
+        <div class="rr-art" data-rart="${id}">${d.icoon}</div>
+      </div>
+      <span class="schaarste-chip rel-${zeld}">${SCHAARSTE_LABEL[zeld] || 'Relikwie'}</span>
+      <h3 class="rr-naam">${d.naam}</h3>
+      <p class="rr-effect">${d.tekst}</p>
+      ${d.lore ? `<p class="rr-lore">„${d.lore}"</p>` : ''}
+      <button class="knop-stil rr-sluit">Verder ↓</button>
+    </div>`;
+  document.body.appendChild(ov);
+  verfraaiItemArt(ov);                      /* emoji → echte relikwie-art waar die bestaat */
+  Klank.sfx('schitter');
+  setTimeout(() => Klank.sfx('goud'), 180);
+  if (groots) setTimeout(() => Klank.sfx('schitter'), 420);
+  schudScherm();
+  const sluit = () => {
+    if (!ov.isConnected) return;
+    clearTimeout(ov._timer);
+    ov.classList.add('weg');
+    setTimeout(() => ov.remove(), 360);
+  };
+  ov.querySelector('.rr-sluit').onclick = sluit;
+  ov.addEventListener('click', e => { if (e.target === ov) sluit(); });
+  ov._timer = setTimeout(sluit, groots ? 8000 : 6800);
   return ov;
 }
 
@@ -5406,7 +5461,7 @@ async function gevechtGewonnen() {
          of een klik) — anders hangt die overlay over de startende outro én
          wordt het reveal-moment zelf platgewalst */
       const wachtOpReveal = () => {
-        if (document.querySelector('.scherf-reveal-overlay, .vloek-reveal-overlay')) { setTimeout(wachtOpReveal, 250); return; }
+        if (document.querySelector('.scherf-reveal-overlay, .vloek-reveal-overlay, .relikwie-reveal-overlay')) { setTimeout(wachtOpReveal, 250); return; }
         Outro.start(() => toonEinde(true, verslagenBaas));
       };
       wachtOpReveal();
@@ -5524,7 +5579,7 @@ function verderNaBeloning() {
   renderKaartScherm();
 }
 function pakGoud() { Klank.sfx('goud'); S.goud += S.beloning.goud; S.beloning.goud = 0; renderBeloning(); }
-function pakRelikwie() { geefRelikwie(S.beloning.relikwie); melding('Relikwie opgepakt!'); S.beloning.relikwie = null; renderBeloning(); }
+function pakRelikwie() { geefRelikwie(S.beloning.relikwie); S.beloning.relikwie = null; renderBeloning(); }   /* geen melding meer: de reveal-ceremonie toont het relikwie zelf */
 function pakDrank() {
   if (S.dranken.length >= drankSlots()) { melding('Geen drankjesvak vrij!'); return; }
   S.dranken.push(S.beloning.drank); S.beloning.drank = null; renderBeloning();
@@ -6105,7 +6160,7 @@ function onthulSchat() {
     const r = schatBuit;
     let buit;
     if (r) {
-      geefRelikwie(r);
+      geefRelikwie(r, false, true);   /* stil: de schatkist heeft zijn eigen onthulling hieronder */
       const d = RELIKWIEEN[r];
       buit = `
         <div class="schat-buit rel-${d.zeld}" onclick="toonRelikwieBoek('${r}')" data-tip="Klik voor het volledige verhaal">
@@ -7141,7 +7196,7 @@ function startDaily() {
      staat al op de dag, dus iedereen krijgt vandaag DEZELFDE (Besmetting: 3) */
   const dagRelikwieen = [];
   const relAantal = wetId === 'besmetting' ? 3 : 2;
-  for (let i = 0; i < relAantal; i++) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); dagRelikwieen.push(RELIKWIEEN[r].naam); } }
+  for (let i = 0; i < relAantal; i++) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r, false, true); dagRelikwieen.push(RELIKWIEEN[r].naam); } }   /* stil: bulk bij runstart, de dagwet somt ze zelf op */
   S.dagwetGeschenken = dagRelikwieen;   /* in S → de proclamatie kan ze ook ná een herlaad tonen */
   laadDagGraven();   /* de graven van je posse: wie viel vandaag al, en waar? */
   renderKaartScherm();
