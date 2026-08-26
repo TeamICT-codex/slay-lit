@@ -1277,6 +1277,10 @@ function kkost(c) {
   if ((def.licht || def.vuur) && heeftRelikwie('levend_vuur')) kost = Math.max(0, kost - 1);
   /* Aangetast (door de Erfprins gecorrumpeerd): loodzwaar — +1 Energie */
   if (c.aangetast) kost += 1;
+  /* De Vergadering (vloek): zolang ze in je hand zit, kost je éérste kaart per
+     beurt +1 — vóór de poster-regel, zodat de gratis eerste kaart gratis blijft */
+  if (S.gevecht && !S.gevecht.kaartGespeeldDezeBeurt
+      && S.gevecht.hand && S.gevecht.hand.some(k => k.id === 'de_vergadering')) kost += 1;
   /* De Overschreven Poster: het eerste woord is altijd gratis */
   if (heeftRelikwie('propagandaposter') && S.gevecht && !S.gevecht.posterGebruikt) kost = 0;
   return kost;
@@ -1698,7 +1702,7 @@ function geefLichtVloek() {
 /* GENERIEKE VLOEK (incl. Pijn + de licht-vloeken) — voor vloek-bronnen door het hele
    spel verweven (Act 1+). Alle vloeken zijn weg te slopen bij de Oude Smid. */
 function geefVloek() {
-  return geefDekVloek(kiesUit(['pijn', 'schaduwsmet', 'mottenvlam', 'doofpot']));
+  return geefDekVloek(kiesUit(['pijn', 'de_vergadering', 'de_handtekening', 'de_cc', 'schaduwsmet', 'mottenvlam', 'doofpot']));
 }
 
 /* een vloek uit de hand UITPUTTEN (Brandstapel/Schuldverschuiving) — en de
@@ -3567,6 +3571,46 @@ function trekKaarten(n) {
       if (nar) { geefBlok(nar, 6); fxNummer(actorEl(nar), '🃏 lacht (+6🛡️)', 'fx-blok'); }
       /* De Martelaarskroon: wie de laster draagt zonder te knielen, draagt een kroon */
       if (heeftRelikwie('martelaarskroon')) { geefBlok(sp(), 4); fxNummer($('#speler-zone'), '👑 +4 Blok', 'fx-blok'); }
+      vloekBijTrek(c, g);
+    }
+  }
+}
+
+/* ---------- vloeken met TREK-effecten (fase 1 bureaucratie-vloeken) ----------
+   Vuurt vanuit trekKaarten voor elke getrokken vloek. De kaartinstanties in de
+   gevechtsstapels delen hun referentie met S.dek, dus een teller op de kaart
+   (De Handtekening) overleeft gevechten én de save. */
+function vloekBijTrek(c, g) {
+  if (c.id === 'pijn') {
+    /* Pijn bijt bij elke trek: 1 schade, voorbij Blok (verliesHp raakt HP direct) */
+    verliesHp(sp(), 1);
+    fxNummer($('#speler-zone'), '💀 Pijn −1', 'fx-debuff');
+  } else if (c.id === 'de_cc') {
+    /* De CC vermenigvuldigt zich: kopie in de AFLEG (gevecht-lokaal — de stapels
+       worden bij startGevecht uit S.dek herbouwd, dus kopieën verdwijnen na afloop) */
+    const aantal = [g.trek, g.hand, g.afleg].reduce((n, st) => n + st.filter(k => k.id === 'de_cc').length, 0);
+    if (aantal < 3) {
+      g.afleg.push(nieuweKaart('de_cc'));
+      fxNummer($('#speler-zone'), '📧 De CC verspreidt zich…', 'fx-debuff');
+    }
+  } else if (c.id === 'de_handtekening') {
+    c.getekend = (c.getekend || 0) + 1;
+    if (c.getekend >= 3) {
+      /* de derde trek ONDERTEKENT: permanent litteken, dan verdwijnt ze — uit het
+         run-dek (zelfde referentie) én uit alle gevechtsstapels */
+      S.maxHp = Math.max(1, S.maxHp - 1);
+      if (S.hp > S.maxHp) S.hp = S.maxHp;
+      S.dek = S.dek.filter(k => k !== c);
+      g.trek = g.trek.filter(k => k !== c);
+      g.hand = g.hand.filter(k => k !== c);
+      g.afleg = g.afleg.filter(k => k !== c);
+      Klank.sfx('zwareklap');
+      schudScherm();
+      fxNummer($('#speler-zone'), '✒️ ONDERTEKEND — −1 Max HP', 'fx-debuff');
+      melding('✒️ De Handtekening is gezet. Iets van je is nu voorgoed van hen.');
+      renderTopbalk();
+    } else {
+      fxNummer($('#speler-zone'), `✒️ ${c.getekend}/3…`, 'fx-debuff');
     }
   }
 }
@@ -4457,6 +4501,7 @@ async function speelKaart(c, doel) {
   const g = S.gevecht;
   const def = kdef(c);
   g.energie -= kkost(c);
+  g.kaartGespeeldDezeBeurt = true;   /* De Vergadering belast alleen je éérste kaart */
   /* De Overschreven Poster: de gratis eerste kaart is nu verbruikt */
   if (heeftRelikwie('propagandaposter') && !g.posterGebruikt) g.posterGebruikt = true;
   vliegKaart(GDOM.hand.get(c.uid), doel ? actorEl(doel) : $('#speler-zone'));
@@ -5285,6 +5330,7 @@ function beginSpelerBeurt() {
   const s = g.speler;
   s.blok = (heeftRelikwie('was_zegel') && g.beurt === 1) ? s.blok : 0;   /* Was-zegel: behoud de overgebleven Blok van je openingsbeurt één beurt langer */
   g.aanvalDezeBeurt = 0;   /* Act 2: Originele Handtekening telt of dit je eerste aanval is */
+  g.kaartGespeeldDezeBeurt = false;   /* De Vergadering: verse beurt, verse toeslag */
   g._epidemieGespreid = false;   /* Epidemie mag deze beurt weer 1× verspreiden */
   g._hakblokGebruikt = false;    /* Het Hakblok slijpt elke beurt een verse eerste snede */
   s.status.doorslag = 0;   /* Doorslag vervalt per beurt — geen carry-over (de kaart zegt "deze beurt") */

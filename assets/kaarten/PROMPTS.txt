@@ -650,6 +650,48 @@ shadow, weeping a faint sickly light.
 
 Painted illustration only, rich color, clean readable silhouette.
 
+==================== de_vergadering.png ====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of charcoal and ash with sickly grey-green
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: an endless ghostly meeting table stretching into darkness
+in a gothic vault, rows of empty high-backed chairs waiting, one
+guttering candle, agenda parchments curling like dead leaves,
+a sense of time itself being devoured.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+=================== de_handtekening.png ====================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of charcoal and ash with sickly grey-green
+accents and one drop of deep blood-red. NOT photorealistic, no
+photo, no 3D render. Landscape composition, subject centered, no
+text, no frame, no UI.
+
+Scene: a spectral quill pen writing by itself above an ancient
+contract, ink glistening black-red like blood, ghostly chains of
+cursive script coiling off the page toward the viewer, a wax seal
+beginning to glow.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+======================== de_cc.png =========================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of charcoal and ash with sickly grey-green
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: a swarm of identical ghostly sealed envelopes multiplying
+and fluttering out of the dark like moths, each wax seal a small
+staring eye, the nearest envelope splitting into two mid-air.
+
+Painted illustration only, rich color, clean readable silhouette.
+
 ############ LICHT-VLOEKEN (de licht-economie — onspeelbaar) ############
 
 ====================== schaduwsmet.png =====================

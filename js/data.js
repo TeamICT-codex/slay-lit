@@ -613,7 +613,29 @@ const KAARTEN = {
   /* --- vloeken --- */
   pijn: {
     naam: 'Pijn', type: 'vloek', zeld: 'vloek', kost: null, icoon: '💀',
-    tekst: () => `Onbespeelbaar. Neemt ruimte in je hand in.`,
+    tekst: () => `Onbespeelbaar. Telkens wanneer je haar trekt: 1 schade, negeert Blok.`,
+    flavor: 'Elke shuffle herinnert je eraan.',
+    speel: () => {}
+  },
+  /* --- de bureaucratie-vloeken (fase 1, aug 2026): vloeken met een DILEMMA
+     i.p.v. dode handvulling. Effecten vuren via vloekBijTrek (game.js,
+     trek-haak) en kkost (De Vergadering); speel() blijft leeg — onbespeelbaar. */
+  de_vergadering: {
+    naam: 'De Vergadering', type: 'vloek', zeld: 'vloek', kost: null, icoon: '📅',
+    tekst: () => `Onbespeelbaar. Zolang ze in je hand zit, kost je éérste kaart elke beurt +1 ⚡.`,
+    flavor: 'Had een e-mail kunnen zijn.',
+    speel: () => {}
+  },
+  de_handtekening: {
+    naam: 'De Handtekening', type: 'vloek', zeld: 'vloek', kost: null, icoon: '✒️',
+    tekst: c => `Onbespeelbaar. De derde keer dat je haar trekt, ondertekent ze: −1 Max HP, permanent — en dan verdwijnt ze. (Getekend: ${(c && c.getekend) || 0}/3)`,
+    flavor: 'U hoeft alleen nog maar te tekenen. U tekent al.',
+    speel: () => {}
+  },
+  de_cc: {
+    naam: 'De CC', type: 'vloek', zeld: 'vloek', kost: null, icoon: '📧',
+    tekst: () => `Onbespeelbaar. Wanneer je haar trekt, legt ze een kopie van zichzelf in je aflegstapel (max 3 in dit gevecht).`,
+    flavor: 'Aan: jou. CC: iedereen die je kent.',
     speel: () => {}
   },
   /* Act 3 — de vloek van het regime: vijanden fluisteren hem gevecht-lokaal in je
