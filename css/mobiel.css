@@ -114,7 +114,10 @@ body[data-modus="mobiel"] #topbalk .tb-logo { display: none; }
 body[data-modus="mobiel"] #tb-verdieping { display: none; }       /* diepte niet nodig tijdens battle */
 /* de relikwie-rij mag bij veel relikwieën NIET de dek/instellingen-knoppen van het
    scherm duwen: ze krimpt + scrollt horizontaal, de knoppen blijven flex-shrink:0. */
-body[data-modus="mobiel"] #tb-relikwieen { font-size: 1.05rem; gap: 3px; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+/* align-self:stretch + center: overflow-x:auto clipt stilzwijgend ook verticaal —
+   een content-strakke rij kapte relikwie-art/badges die enkele px uitstaken BOVENAAN
+   af (playtest aug 2026). Op volle balkhoogte met centrering kan dat structureel niet. */
+body[data-modus="mobiel"] #tb-relikwieen { font-size: 1.05rem; gap: 3px; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; align-self: stretch; align-items: center; }
 body[data-modus="mobiel"] #tb-relikwieen::-webkit-scrollbar { display: none; }
 body[data-modus="mobiel"] #tb-relikwieen .relikwie { flex-shrink: 0; }
 body[data-modus="mobiel"] #tb-dranken,
@@ -137,7 +140,11 @@ body[data-modus="mobiel"] #scherm-gevecht { top: env(safe-area-inset-top); }
    alleen maar 28px vloer. Geverifieerd: hiermee valt de voetlijn binnen de
    vloerband op alle platen, inclusief de twee Act 3-afgrond-platforms. */
 body[data-modus="mobiel"] #gevecht-achtergrond {
-  inset: 0;
+  /* bottom = safe-area: de figuren/onderbalk liften via de .scherm-padding mee met
+     de gebarenbalk, dus de plaat (met de geschilderde vloer) moet exact evenveel mee
+     omhoog — anders staat het grondanker op een echt toestel een gebarenbalk te laag
+     (rest-zweven uit de playtest). In emulatie is env()=0 → identiek gedrag. */
+  inset: 0 0 env(safe-area-inset-bottom, 0px) 0;
   background-position: center bottom;
 }
 body[data-modus="mobiel"] #scherm-gevecht #beurt-label { margin-top: calc(42px + env(safe-area-inset-top)); }
@@ -244,9 +251,12 @@ body[data-modus="mobiel"] #scherm-gevecht .vijand.vijand-klein { scale: .82; tra
    Vijand-namen blijven dus zichtbaar (≠ de held, die helemaal weg is). Laptop ongemoeid. */
 body[data-modus="mobiel"] #scherm-gevecht .vijand .hp-tekst { display: none; }
 body[data-modus="mobiel"] #scherm-gevecht .vijand-naam {
-  position: relative; z-index: 3; margin: 0 0 -19px; pointer-events: none;
-  font-size: .62rem; line-height: 1.15; padding: 0 4px; letter-spacing: .01em;
-  text-shadow: 0 1px 2px #000, 0 0 5px rgba(0, 0, 0, .95);
+  position: relative; z-index: 3; margin: 0 0 -21px; pointer-events: none;
+  /* leesbaarheidspas (playtest aug 2026): .62rem mat 9,9px — onder elk leesbaar
+     minimum; naar .75rem (~12px) met hardere schaduw (de naam ligt op de hp-balk,
+     die tegelijk 13→16px werd). */
+  font-size: .75rem; line-height: 1.15; padding: 0 4px; letter-spacing: .01em;
+  text-shadow: 0 1px 3px #000, 0 0 7px rgba(0, 0, 0, .95);
   max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
@@ -442,7 +452,7 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   /* de hp-balk bepaalt de kolombreedte → smaller in liggend gevecht zodat 3
      vijanden + speler op een smal scherm naast elkaar passen (in portret
      wrappen ze, dus daar niet nodig) */
-  body[data-modus="mobiel"] .hp-balk { width: 84px; }
+  body[data-modus="mobiel"] .hp-balk { width: 84px; height: 16px; }
   body[data-modus="mobiel"] .speler-hp { width: 104px; }
   /* figuren schalen mee met de SCHERMHOOGTE (clamp min/vh/max) i.p.v. vaste px per
      breakpoint — zo passen ze vloeiend op élk telefoonformaat (≈320–600px hoog
@@ -458,18 +468,29 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      dan voorheen (87→~108px op een 414px-scherm, +24%). De kortere onderbalk laat de rij
      bovendien ZAKKEN zodat naam/hp/status deels achter de kaartrij vallen (tik-op-figuur
      toont de statussen toch — bewuste keuze: grotere tegenstanders in beeld). */
-  body[data-modus="mobiel"] .speler-figuur { width: clamp(96px, 29vh, 156px); height: clamp(96px, 29vh, 156px); }
-  body[data-modus="mobiel"] .vijand-art { width: clamp(74px, 26vh, 144px); height: clamp(74px, 26vh, 144px); }
-  body[data-modus="mobiel"] .is-elite .vijand-art { width: clamp(94px, 29vh, 158px); height: clamp(94px, 29vh, 158px); }
-  body[data-modus="mobiel"] .is-episch .vijand-art { width: clamp(100px, 32vh, 174px); height: clamp(100px, 32vh, 174px); }
+  /* DICHTHEIDSKNIK (playtest aug 2026, 'fullscreen voelt voller'): de pure vh-helling
+     stak alle extra schermhoogte in grotere figuren terwijl de vaste lagen (hand,
+     onderbalk, topbalk) niet meegroeien → fullscreen (+60px hoogte) oogde drukker dan
+     met browserbalk. De helling is nu GEHALVEERD via a·vh + b, met b zo gekozen dat
+     360px-schermen EXACT de oude maat houden (geen cliff, geen regressie op klein):
+     oud 26vh ≡ nieuw 13vh+46.8px op h=360. De extra hoogte gaat voortaan half naar
+     de figuur en half naar lucht. Maxima ongewijzigd. */
+  body[data-modus="mobiel"] .speler-figuur { width: clamp(96px, calc(14.5vh + 52.2px), 156px); height: clamp(96px, calc(14.5vh + 52.2px), 156px); }
+  body[data-modus="mobiel"] .vijand-art { width: clamp(74px, calc(13vh + 46.8px), 144px); height: clamp(74px, calc(13vh + 46.8px), 144px); }
+  body[data-modus="mobiel"] .is-elite .vijand-art { width: clamp(94px, calc(14.5vh + 52.2px), 158px); height: clamp(94px, calc(14.5vh + 52.2px), 158px); }
+  body[data-modus="mobiel"] .is-episch .vijand-art { width: clamp(100px, calc(16vh + 57.6px), 174px); height: clamp(100px, calc(16vh + 57.6px), 174px); }
   /* baas groter: hij is HET monster — vh-factor omhoog zodat hij op echte telefoons
      (≈360–500px hoog) imposant oogt; min/max houden 'm leesbaar én onder de topbalk */
-  body[data-modus="mobiel"] .is-baas .vijand-art { width: clamp(120px, 42vh, 210px); height: clamp(120px, 42vh, 210px); }
+  body[data-modus="mobiel"] .is-baas .vijand-art { width: clamp(120px, calc(21vh + 75.6px), 210px); height: clamp(120px, calc(21vh + 75.6px), 210px); }
   body[data-modus="mobiel"] #vijanden-rij { gap: 10px; flex-wrap: nowrap; max-width: none; }
   /* (baas: eigen HP-balk wegwerken staat nu onvoorwaardelijk in sectie A, zodat
      het óók in portret-baasgevechten geldt — niet enkel liggend.) */
 
-  body[data-modus="mobiel"] #onderbalk { height: 122px; }
+  body[data-modus="mobiel"] #onderbalk { height: 122px;
+  /* de kaartenrij als eigen visuele laag: het verloop start iets eerder en wordt
+     dieper donker → hand en slagveld zijn gescheiden lagen (playtest: 'druk') */
+  background: linear-gradient(180deg, transparent, rgba(10, 6, 16, .55) 24%, rgba(10, 6, 16, .93) 56%);
+}
   /* de hele kaartrij rust ~1/5 ONDER de schermrand: je tikt een kaart toch aan
      (preview licht 'm volledig op), dus dit wint verticale ruimte voor het
      slagveld zonder leesbaarheid te kosten. De tik-lift is opgekrikt zodat de
@@ -528,6 +549,12 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] #scherm-event .event-tekstkolom::after {
     content: ''; flex: 0 0 auto; margin: auto;
   }
+}
+
+/* ruimere schermen (>=400px hoog, liggend): de intent-rij een maat groter — daar is
+   ruim lucht boven de figuren, en de intentie is de belangrijkste combat-informatie */
+@media (orientation: landscape) and (min-height: 400px) and (max-height: 600px) {
+  body[data-modus="mobiel"] .intent-rij { font-size: 1.12em; }
 }
 
 /* ---------- D. liggend gevecht op een KORTE telefoon (≤440px hoog) ----------

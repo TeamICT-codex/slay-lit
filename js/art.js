@@ -538,6 +538,28 @@ function maakArtLader(basis) {
 window.laadKaartAfbeelding = maakArtLader('assets/kaarten/');
 window.laadEventAfbeelding = maakArtLader('assets/events/');
 window.laadRelikwieAfbeelding = maakArtLader('assets/relikwieen/');
+
+/* VOETMARGE (playtest 'zwevende figuren', aug 2026): de karakter-art draagt per
+   figuur 1-11% TRANSPARANTE marge onder de geschilderde voeten — en het varieert
+   per figuur, dus zelfs met een perfecte voetlijn zweeft elk figuur een ander
+   beetje. Deze tabel (gemeten met een alpha-scan op de basis-poses; % van de
+   beeldhoogte) wordt in bouwGevechtDom als --voetc op de art-box gezet en in CSS
+   als losse translate op de img toegepast. Figuren onder de 1% staan er niet in
+   (ruis). NIEUWE FIGUREN: scan opnieuw of accepteer max ~1% zweving. */
+window.VOETMARGE = {
+  bandiet: 2.7, blauwe_slijm: 1.0, de_aanklager: 2.2, de_archivaris: 2.9,
+  de_deadline: 1.8, de_dicktator: 3.0, de_drempelwachter: 2.0, de_erfprins: 3.6,
+  de_fluisteraar: 1.7, de_gouden_garde: 1.8, de_hofnar: 1.4, de_inktvlek: 5.7,
+  de_mal: 2.6, de_omroeper: 2.7, de_ophitser: 1.8, de_rechter: 1.4,
+  de_redacteur: 1.4, de_uitgewiste: 3.6, de_vaandeldrager: 2.1, de_verzwolgene: 2.2,
+  de_zondebok: 11.4, doorslag: 2.2, doorslag_kopie: 2.8, dossierwurm: 3.0,
+  drops: 4.1, drops_geest: 3.5, drops_wit: 3.0, echo: 5.4, gifmagier: 2.3,
+  groene_slijm: 4.1, grotrat: 5.0, het_klapvee: 3.9, het_origineel: 2.9,
+  het_spreekgestoelte: 1.3, inktklerk: 1.9, kultist: 2.6, mal_gietsel: 4.2,
+  mosgeest: 6.3, naaper: 4.0, paddenstoelman: 3.0, pekziel: 3.6,
+  slijmkoning: 2.1, speler: 2.0, spiegelwachter: 1.4, steengolem: 2.1,
+  stempelaar: 3.5, thoverk: 1.8, vlamwachter: 5.4,
+};
 window.laadDrankAfbeelding = maakArtLader('assets/dranken/');
 window.laadIcoonAfbeelding = maakArtLader('assets/iconen/');   /* UI-iconen (rust-opties enz.) */
 window.laadMetgezelAfbeelding = maakArtLader('assets/metgezellen/');   /* bondgenoten-art */

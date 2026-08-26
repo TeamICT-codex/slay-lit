@@ -3027,6 +3027,12 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
   pointer-events: none;
 }
 
+/* VOETCORRECTIE (zie VOETMARGE in art.js): de losse translate:-property zodat hij
+   COMPONEERT met transform-animaties (entree/adem) i.p.v. ze te clobberen — zelfde
+   les als de klein/groot-scale. Percentage = % van de eigen img-hoogte omlaag,
+   precies de gemeten transparante voetmarge. Geldt op beide sporen. */
+.vijand-art img, .speler-figuur img, .metgezel-art img { translate: 0 var(--voetc, 0%); }
+
 /* ---------- 3D-strijdtoneel ---------- */
 /* eigen gevechtsplaat: fullscreen op natuurlijke schaal, met parallax via transform */
 #gevecht-achtergrond {

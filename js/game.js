@@ -3432,6 +3432,9 @@ function bouwGevechtDom(g) {
       <div class="vijand-naam">${v.naam}</div>
       <div class="hp-balk"><div class="hp-vulling"></div><span class="hp-tekst"></span><span class="blok-schild" data-tip="Blok: vangt aanvalsschade op, verdwijnt aan het begin van de eigen beurt"><svg viewBox="0 0 24 28" aria-hidden="true"><path fill="url(#blokgrad)" stroke="#0c1c2e" stroke-width="1.6" d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg><b></b></span></div>
       <div class="blok-status"></div>`;
+    /* voetcorrectie: de gemeten transparante marge onder de voeten wegdrukken (zie VOETMARGE in art.js) */
+    const vm = window.VOETMARGE && VOETMARGE[v.id];
+    if (vm) wrap.querySelector('.vijand-art').style.setProperty('--voetc', vm + '%');
     rij.appendChild(wrap);
     GDOM.vijanden.push({
       wrap,
@@ -3459,7 +3462,7 @@ function bouwGevechtDom(g) {
     `<span class="bel" style="left:${mr(15, 75)}%; bottom:${mr(5, 30)}%; width:${mr(5, 13)}px; height:${mr(5, 13)}px; --dur:${(2 + Math.random() * 2).toFixed(1)}s; --delay:${(Math.random() * 2.4).toFixed(1)}s; --drift:${mr(-30, 30)}px"></span>`
   ).join('');
   zone.innerHTML = `
-    <div id="speler-figuur" class="speler-figuur">${spelerArt}</div>
+    <div id="speler-figuur" class="speler-figuur"${(window.VOETMARGE && VOETMARGE[heldDef.art]) ? ` style="--voetc:${VOETMARGE[heldDef.art]}%"` : ''}>${spelerArt}</div>
     <div class="sprite-ruimte"><div id="held-fx">
       <div class="hfx hfx-schild"></div>
       <div class="hfx hfx-cast"><span class="cast-ring"></span><span class="cast-ring" style="--delay:.8s"></span><span class="cast-ring" style="--delay:1.6s"></span></div>
@@ -3502,7 +3505,7 @@ function bouwGevechtDom(g) {
       mz.innerHTML = `
         ${synBadge}
         <div class="metgezel-intent"></div>
-        <div class="metgezel-art" data-tip="${md.naam} — ${md.tekst}${synTip ? ' · ' + synTip : ''}">${md.icoon}</div>
+        <div class="metgezel-art" data-tip="${md.naam} — ${md.tekst}${synTip ? ' · ' + synTip : ''}"${(window.VOETMARGE && VOETMARGE[mgid]) ? ` style="--voetc:${VOETMARGE[mgid]}%"` : ''}>${md.icoon}</div>
         <div class="metgezel-naam">${md.naam}</div>
         <div class="hp-balk metgezel-hp"><div class="hp-vulling"></div><span class="hp-tekst"></span><span class="blok-schild" data-tip="Blok: vangt aanvalsschade op"><svg viewBox="0 0 24 28" aria-hidden="true"><path fill="url(#blokgrad)" stroke="#0c1c2e" stroke-width="1.6" d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg><b></b></span></div>
         <div class="blok-status"></div>
