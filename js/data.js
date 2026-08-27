@@ -1596,9 +1596,9 @@ window.SPELERS = SPELERS;   /* HELDNAAM guardde op window.SPELERS → toonde and
      vereist   : welke scherf-id's nodig zijn (tunebaar; bepaalt de lengte)
      scherven  : per scherf {bron, codexTekst} (de cryptische regel in de Codex)
      eindreveal: de tekst van het ontwaak-moment
-   De rite (de onverwachte sleutel) zit in de engine per mysterie (Drops = je
-   fakkel DOVEN bij de Erfprins). De voortgang (scherven/rijp/voltooid) leeft op
-   de Codex (persistent over runs). Zie ONTWERP.md. */
+   Unlock = het Drempel-ritueel (game.js drempelVoltrek): drie scherven van één
+   maaksel in de nissen tussen Act 1 en 2 — er zijn géén rites meer. De voortgang
+   (alleen 'voltooid' telt) leeft op de Codex (persistent over runs). Zie ONTWERP.md. */
 const MYSTERIES = {
   drops: {
     metgezel: 'drops', baasId: 'de_erfprins',

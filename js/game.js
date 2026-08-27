@@ -1318,7 +1318,7 @@ function nieuwSpel(heldId, seedTekst, ascensie, daily) {
     dek: [],
     relikwieen: [held.relikwie],
     dranken: [],
-    kaart: genereerKaart(),
+    kaart: null,               /* ná de S-toewijzing gegenereerd — anders leest huidigeAct() de act van de VORIGE run (review 27 aug) */
     pos: null,
     act: 1,
     verdieping: 0,
@@ -1329,6 +1329,7 @@ function nieuwSpel(heldId, seedTekst, ascensie, daily) {
     contractGebruikt: false,   /* Het Verlopen Contract: eenmalig-per-run dood-weigering */
     scherven: []           /* GEDRAGEN scherven deze run (inzet — kwijt bij dood; geplaatst bij de Drempel) */
   };
+  S.kaart = genereerKaart();   /* nu pas: huidigeAct() leest S.act = 1 van DEZE run */
   held.dek.forEach(id => S.dek.push(nieuweKaart(id)));
 
   /* HET SLACHTBLOK: de gesmede kaart reist alleen mee als je haar KIEST op het
@@ -2298,7 +2299,11 @@ function ontgrendeldeMetgezellen() {
   if (isOntgrendeld('drops') && !isOntgrendeld('drops_wit')) lijst.push('drops');
   if (isOntgrendeld('vlamwachter')) lijst.push('vlamwachter');
   if (isOntgrendeld('mosgeest')) lijst.push('mosgeest');
-  return lijst;
+  /* een VOORGOED geofferde metgezel draait niet mee: in het rouwvenster (geofferd, de Witte
+     nog niet terug) beloofde het heldkeuze-scherm anders een metgezel die volgendeAct()
+     terecht weigert — en die run kwam er dan helemaal niemand (review 27 aug) */
+  const gevallen = Array.isArray(Codex.gevallen) ? Codex.gevallen : [];
+  return lijst.filter(id => !gevallen.includes(id));
 }
 /* welke vrijgespeelde metgezel daalt déze run mee? Rotatie per run (Codex.runs) zodat élke
    ontgrendelde metgezel aan bod komt over je afdalingen heen. Null als er nog niets vrij is. */
@@ -2702,7 +2707,10 @@ function renderTopbalk() {
       const laatsteAct = huidigeAct() >= ACTS_MAX;
       tbM.style.display = '';
       tbM.classList.toggle('mg-gevlucht', !!m.vluchtig);
-      tbM.innerHTML = m.vluchtig ? `${mdef.icoon}💨` : `${mdef.icoon} ${m.hp}<small class="tbm-max">/${m.maxHp}</small>`;
+      const mobielCompact = document.body.dataset.modus === 'mobiel';   /* smalle topbalk: alleen icoon+HP */
+      tbM.innerHTML = m.vluchtig ? `${mdef.icoon}💨`
+        : mobielCompact ? `${mdef.icoon}${m.hp}`
+        : `${mdef.icoon} ${m.hp}<small class="tbm-max">/${m.maxHp}</small>`;
       tbM.dataset.tip = m.vluchtig
         ? `${mdef.naam} is gevlucht — ${laatsteAct ? 'deze afdaling keert hij niet meer terug' : 'bij de volgende act sluit hij weer aan'}. Klik voor zijn verhaal.`
         : `${mdef.naam}: ${m.hp}/${m.maxHp} HP — vecht met je mee en rust mee aan het kampvuur. Klik voor zijn verhaal.`;
@@ -3481,11 +3489,15 @@ function toonBaasIntro(g) {
     setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(ork[idx]); }, 6400);
   }
   /* scherven-nudge op ÉCHTE voortgang: draagt de speler ≥2 passende scherven, dan verraadt
-     de Erfprins nerveus dat ze sámen ergens op passen (reverse psychology — de Drempel). */
+     de Erfprins nerveus dat ze sámen ergens op passen (reverse psychology — de Drempel).
+     De baas-scherf die startGevecht net STIL toekende telt niet mee: die kent de speler
+     pas bij de kill-reveal (review 27 aug). */
   if (b.id === 'de_erfprins' && typeof meestGevorderdeMysterie === 'function') {
     const best = meestGevorderdeMysterie();
-    if (best && best.aantal >= 2) {
-      const fluister = best.rijp
+    let aantal = best ? best.aantal : 0, rijp = !!(best && best.rijp);
+    if (best && g.baasScherf && (scherfDef(g.baasScherf) || {}).mid === best.mid) { aantal--; rijp = false; }
+    if (best && aantal >= 2) {
+      const fluister = rijp
         ? '„Drie die pássen?! Wie heeft je dat verteld?! Die poort had DICHT gemoeten."'
         : '„Je sleept daar iets mee dat op iets anders past. Gooi. Het. Weg."';
       setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(fluister); }, 9200);
@@ -5988,7 +6000,9 @@ function toonMeerKeuze(kaarten, titel, opts) {
 
   function renderSlots() {
     if (!slotsEl) return;
-    const sel = kaarten.filter(c => gekozen.has(c.uid));
+    /* tikvolgorde (Set-insertievolgorde), niet dekvolgorde: zo landt de kaart in de nis
+       waar de vlieg-animatie heen wees en verspringen eerdere keuzes niet (review 27 aug) */
+    const sel = [...gekozen].map(uid => kaarten.find(k => k.uid === uid)).filter(Boolean);
     slotsEl.innerHTML = Array.from({ length: aantal }, (_, i) => {
       const c = sel[i];
       return c
@@ -6948,14 +6962,14 @@ function devSprongAct2() {
   while (S.dranken.length < drankSlots()) S.dranken.push('heeldrank');
   delete S.beloning; delete S.winkel; delete S.huidigEvent;
   S.kaart = genereerKaart();   /* act-bewust → de Act 2-ladder */
-  /* DEV: leg de drie Drops-scherven in je GEDRAGEN tas (mysterie niet voltooid) zodat je de
-     Erfprins-scherven-fluister én het Drempel-trio van de volgende run kunt testen. */
+  /* DEV: leg de drie Drops-scherven in je GEDRAGEN tas zodat je de Erfprins-fluister én het
+     Drempel-trio kunt testen — maar NOOIT een verdiende unlock terugdraaien of een gratis
+     trio geven aan wie Drops al wekte (dit hangt aan een gewone logo-klik; review 27 aug). */
   S.metgezel = null;
-  mys('drops').voltooid = false;
-  (window.MYSTERIES && MYSTERIES.drops.vereist || []).forEach(sid => draagScherf(sid));
-  bewaarCodex();
+  const drempelTest = !isOntgrendeld('drops');
+  if (drempelTest) (window.MYSTERIES && MYSTERIES.drops.vereist || []).forEach(sid => draagScherf(sid));
   saveSpel();
-  melding('⚡ DEV: Act 2 — 150 HP + 3 heeldranken + de 3 Drops-scherven in je tas. (Alt+klik = meteen de Erfprins · Shift+klik = Drops-testcyclus)');
+  melding(`⚡ DEV: Act 2 — 150 HP + 3 heeldranken${drempelTest ? ' + de 3 Drops-scherven in je tas' : ''}. (Alt+klik = meteen de Erfprins · Shift+klik = Drops-testcyclus)`);
   renderKaartScherm();
 }
 /* DEV: de Drempel direct testen — devDrempel() in de console geeft je desgewenst
@@ -7145,22 +7159,27 @@ function renderDrempel() {
     if (sid) { const d = scherfDef(sid); return `<button class="drempel-nis vol ${famKlasse(sid)}" onclick="drempelHaalWeg(${i})"><span class="dn-icoon" data-shart="${sid}">${bronIcoon(d && d.bron)}</span><i>${(d && d.codexTekst) || '…'}</i></button>`; }
     return `<div class="drempel-nis leeg">◇</div>`;
   }).join('');
-  /* eerste kennismaking (nog nooit óók maar één scherf gezien): leg het systeem één keer
-     helder uit — daarna neemt de gewone korte tekst het over */
-  const nooitIets = !pool.length && !scherfStash().length
+  /* de teksten kijken naar wat je DRAAGT (tas + nissen), niet naar de restpool — anders
+     verscheen de beginnersuitleg precies wanneer je trio in de nissen lag en verdween de
+     kleurhint op het beslismoment (review 27 aug) */
+  const geplaatstIets = drempelGeplaatst.some(Boolean);
+  const draagtIets = gedragen().length > 0 || geplaatstIets;
+  const nooitIets = !draagtIets && !scherfStash().length
     && !Object.keys(window.MYSTERIES || {}).some(mid => isOntgrendeld(mid));
   const poolHtml = pool.length
     ? pool.map(sid => { const d = scherfDef(sid); return `<button class="drempel-scherf ${famKlasse(sid)}" onclick="drempelPlaats('${sid}')"><span class="ds-icoon" data-shart="${sid}">${bronIcoon(d && d.bron)}</span><i>${(d && d.codexTekst) || '…'}</i></button>`; }).join('')
-    : (nooitIets
-      ? `<p class="drempel-leeg">Je draagt nog geen scherven — maar ze bestáán. Voorbij deze poort liggen ze verscholen: bij wat groots en episch is <small>🜂</small>, bij figuren die je de weg wijzen <small>🪞</small>, en bij de prins die alles kopieert <small>👑</small>. Wat je vindt, overleeft zelfs je dood. Drie scherven van één maaksel, en het zwart antwoordt.</p>`
-      : `<p class="drempel-leeg">Je draagt nog geen scherven. Ze liggen verspreid in de diepte — verzamel er drie, en wáág de drempel.</p>`);
+    : (geplaatstIets
+      ? `<p class="drempel-leeg">Al je scherven liggen in de nissen.</p>`
+      : nooitIets
+        ? `<p class="drempel-leeg">Je draagt nog geen scherven — maar ze bestáán. Voorbij deze poort liggen ze verscholen: bij wat groots en episch is <small>🜂</small>, bij figuren die je de weg wijzen <small>🪞</small>, en bij de prins die alles kopieert <small>👑</small>. Wat je vindt, overleeft zelfs je dood. Drie scherven van één maaksel, en het zwart antwoordt.</p>`
+        : `<p class="drempel-leeg">Je draagt nog geen scherven. Ze liggen verspreid in de diepte — verzamel er drie, en wáág de drempel.</p>`);
   const vol = drempelGeplaatst.filter(Boolean).length === 3;
   $('#scherm-einde').innerHTML = `
     <div class="drempel-scene">
       <h2 class="scherm-titel goud-tekst">🜂 De Drempel</h2>
       <p class="scherm-sub drempel-lore">Voor je gaapt de poort naar de diepte. Drie lege nissen, koud en geduldig. „Voed de drempel met drie scherven," fluistert iets ouds, „en het zwart antwoordt. Maar niet alles dat ontwaakt, is je gunstig gezind — dat besef je pas als het je aankijkt."</p>
       <div class="drempel-nissen">${nissen}</div>
-      <p class="drempel-poollabel">${pool.length ? 'Je scherven — plaats er drie. <span class="drempel-kleurhint">Scherven van één maaksel gloeien in dezelfde kleur.</span>' : ''}</p>
+      <p class="drempel-poollabel">${(pool.length || geplaatstIets) ? 'Je scherven — plaats er drie. <span class="drempel-kleurhint">Scherven van één maaksel gloeien in dezelfde kleur.</span>' : ''}</p>
       <div class="drempel-pool">${poolHtml}</div>
       <div class="einde-knoppen">
         <button class="knop-groot" ${vol ? '' : 'disabled'} onclick="drempelRoepOp()">🜂 Roep op</button>

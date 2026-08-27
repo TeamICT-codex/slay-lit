@@ -201,7 +201,7 @@ kamer, drie zielen — zelfde botten, andere intro + tint:
   Misschien… hier wel?" De sintel in je borstzak *flikkert* op bij het eerste
   wezen — een glimp dat wat je draagt *leeft* op een manier die het systeem nooit
   was (een voorbode van **Drops**; het trouwe wezen zélf komt pas in Act 2 via het
-  Mysterie — je vindt het waar je licht sterft — en wat het je dán zal vrágen, weet
+  Mysterie — scherf voor scherf, tot je zijn trio bij De Drempel plaatst — en wat het je dán zal vrágen, weet
   het kind nog niet). Tint: start met extra fakkel/licht. Het hartverscheurendste pad — het
   kind weet niet dat dit de hel is.
 
@@ -226,10 +226,12 @@ hóéft dit niet uit te leggen; het is de onderstroom. Hij zaait, Act 2 oogst.
    Pas in de Catacomben ontdek je dat ze niet alleen is: in het diepste donker komt
    er een trouw wezen op af — **Drops**, een hond. En je krijgt hem niet cadeau — je
    moet ontdekken hóé je hem wekt (het **Metgezel-Mysterie**: "you were meant to
-   fail" → de dark twist: je fakkel bewust DOVEN, het grootste taboe van het spel).
-   De clou: trouw heeft het systeem-licht niet nódig — je vindt haar net wáár je
-   licht sterft. Het kind hield de fakkel vast; nu leer je dat je hem even moet
-   durven loslaten.
+   fail" → scherven verzamelen over runs en verliezen heen, tot je zijn drietal bij
+   **De Drempel** durft te plaatsen — zonder te weten wát er antwoordt).
+   De clou: trouw is niet te koop en niet te kopiëren — je verdient haar door te
+   blijven afdalen, juist door je nederlagen heen.
+   *(NB 27 aug 2026: de oorspronkelijke fakkel-doof-rite is geschrapt; de unlock
+   loopt volledig via het Drempel-trio.)*
 3. **De opoffering sluit de cirkel.** Liefhebben wat trouw bij je blijft, betekent
    ooit kiezen om het — vóór jou — te laten gaan. Drops' **Laatste Sprong**: een
    bewuste, permanente opoffering om net de baas te kunnen vellen. De wrede rijm met

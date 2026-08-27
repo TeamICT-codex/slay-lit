@@ -2539,6 +2539,17 @@ body[data-modus="laptop"] .kies-meervoud .meer-kaart.gekozen .kaart.groot {
   display: flex; align-items: center; justify-content: center; font-size: .78rem; opacity: 0; transition: opacity .15s;
 }
 .kies-slot.vol:hover::after { opacity: 1; }
+/* korte laptops (768p met browserchrome): de nissen krimpen zodat de tafel een volle
+   kaartrij overhoudt — 164px vaste hoogte liet op 1366x625 geen hele kaart meer zien */
+@media (max-height: 820px) {
+  .kies-slot { width: 84px; height: 114px; }
+  .kies-slot.vol .kaart { zoom: .37; }
+  .kies-slots { margin: 2px 0 5px; gap: 13px; }
+}
+@media (max-height: 660px) {
+  .kies-slot { width: 62px; height: 84px; font-size: 1.2rem; }
+  .kies-slot.vol .kaart { zoom: .27; }
+}
 /* de vliegende kaart (kloon, puur presentationeel) */
 .kies-vlieger {
   position: fixed; z-index: 950; margin: 0; pointer-events: none; will-change: transform;

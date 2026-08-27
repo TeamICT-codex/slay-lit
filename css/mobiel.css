@@ -122,6 +122,11 @@ body[data-modus="mobiel"] #tb-relikwieen::-webkit-scrollbar { display: none; }
 body[data-modus="mobiel"] #tb-relikwieen .relikwie { flex-shrink: 0; }
 body[data-modus="mobiel"] #tb-dranken,
 body[data-modus="mobiel"] #topbalk .tb-knop { flex-shrink: 0; }
+/* de tekst-chips (hp/fakkel/goud/scherven/metgezel) mogen op 375px portret niet naar
+   twee regels wrappen over de plaat heen — nowrap + niet krimpen (review 27 aug) */
+body[data-modus="mobiel"] #tb-hp, body[data-modus="mobiel"] #tb-fakkel,
+body[data-modus="mobiel"] #tb-goud, body[data-modus="mobiel"] #tb-scherven,
+body[data-modus="mobiel"] #tb-metgezel { white-space: nowrap; flex-shrink: 0; }
 body[data-modus="mobiel"] .drank { font-size: 1.15rem; }
 body[data-modus="mobiel"] .tb-knop { font-size: 1.1rem; }
 
