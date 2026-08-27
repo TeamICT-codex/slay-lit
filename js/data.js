@@ -2173,7 +2173,7 @@ const EVENTS = [
     tekst: 'Een muil van koud zwart steen gaapt in de rotswand, geduldig en oeroud. „Geef," fluistert ze van diep onderin, „en ik geef terug — maar wát ik teruggeef, dat kies ík."',
     opties: [
       {
-        label: 'Versmelt twee kaarten', detail: 'Offer 2 kaarten → 1 willekeurige, één zeldzaamheid hoger. Een vloek erbij voedt extra (+1 tier).',
+        label: 'Versmelt twee kaarten', detail: 'Offer 2 kaarten → 1 willekeurige, één zeldzaamheid hoger. „Ook het bittere neem ik aan," gromt de muil.',
         kan: () => S.dek.length >= 2,
         reden: () => 'Je dek is te dun om te versmelten.',
         doe: () => { offeraltaarVersmelt(); return null; }
