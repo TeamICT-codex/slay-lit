@@ -1003,6 +1003,11 @@ body.lite .lb-daily-cta { animation: none; }
    laptop (100% zoom) de "Kies je held"-titel + de bovenkant van de portretten weg. overflow-y:auto
    maakt het dan scrollbaar (de basis-`.scherm` staat op overflow:hidden). */
 #scherm-held { justify-content: safe center; overflow-y: auto; }
+/* zelfde kwaal op het einde-scherm: de daily/syndicaat-blokken (score-breakdown,
+   grafschrift, zerk/duel) maken het hoger dan een laptop-viewport en de knoppen
+   onderaan werden onbereikbaar — mobiel.css had de scroll al, de basis nog niet.
+   #scherm-schat krijgt hetzelfde vangnet (mobiel had ook die al; winkel r2975). */
+#scherm-einde, #scherm-schat { overflow-y: auto; padding-bottom: max(24px, env(safe-area-inset-bottom)); }
 .held-rij {
   display: flex; gap: 28px; flex-wrap: wrap; justify-content: center;
   margin: 10px 0 18px;
