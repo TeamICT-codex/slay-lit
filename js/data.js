@@ -2248,8 +2248,8 @@ const EVENTS = [
     tekst: 'Een zwerm vuurvliegjes danst door de gang — duizenden warme lichtjes die wervelen alsof ze je ergens heen willen leiden.',
     opties: [
       {
-        label: 'Vang ze in je fakkel', detail: '+30 licht.',
-        kan: () => S.fakkel < 100,
+        label: 'Vang ze in je fakkel', detail: '+30 licht.',   /* gate hieronder op fakkelMax (debug-sweep) */
+        kan: () => S.fakkel < (typeof fakkelMax === 'function' ? fakkelMax() : 100),
         reden: () => 'Je fakkel is al vol.',
         doe: () => { zetFakkel(30); return 'Je fakkel zoemt en laait goudgroen op. +30 licht!'; }
       },
@@ -2334,7 +2334,16 @@ const EVENTS = [
     opties: [
       {
         label: 'Laat je stempelen', detail: 'Genees 14 HP en smeed een kaart.',
-        doe: () => { geneesHpBuitenGevecht(14); if (S.dek.some(c => !c.up && KAARTEN[c.id].up)) { kiesKaartUitDek('upgrade', 'De klerk stempelt je dossier — kies een kaart om te smeden'); return null; } return 'De klerk drukt zijn zegel op je voorhoofd. Je voelt je geheeld (+14 HP).'; }
+        doe: () => {
+          geneesHpBuitenGevecht(14);
+          if (S.dek.some(c => !c.up && KAARTEN[c.id].up)) {
+            /* eigen afsluiters: zonder callback viel dit terug op de smid-teksten („Da's beter staal") — verkeerde spreker, en de +14 HP bleef onvermeld (debug-sweep) */
+            kiesKaartUitDek('upgrade', 'De klerk stempelt je dossier — kies een kaart om te smeden',
+              c => eventKlaar(c ? 'De klerk drukt zijn zegel op je voorhoofd (+14 HP) en stempelt de kaart tot ze glanst.' : 'De klerk drukt zijn zegel op je voorhoofd (+14 HP). Je kaart laat je ongestempeld.'));
+            return null;
+          }
+          return 'De klerk drukt zijn zegel op je voorhoofd. Je voelt je geheeld (+14 HP).';
+        }
       },
       {
         label: 'Vraag om je dossier', detail: 'Misschien een relikwie — of een berisping.',
@@ -2354,7 +2363,7 @@ const EVENTS = [
       },
       {
         label: 'Brand het in je fakkel', detail: 'Je fakkel laait op (+30 licht).',
-        kan: () => S.fakkel < 100,
+        kan: () => S.fakkel < (typeof fakkelMax === 'function' ? fakkelMax() : 100),
         reden: () => 'Je fakkel is al vol.',
         doe: () => { zetFakkel(30); return 'Je houdt het warme vel bij je fakkel. Het enige onfactureerbare licht voedt het andere. (+30 licht)'; }
       },
@@ -2452,7 +2461,7 @@ const EVENTS = [
       },
       {
         label: 'Vraag de route', detail: '+30 licht — de kortste weg door de patrouilles.',
-        kan: () => S.fakkel < 100,
+        kan: () => S.fakkel < (typeof fakkelMax === 'function' ? fakkelMax() : 100),
         reden: () => 'Je fakkel is al vol — je hebt zijn route niet nodig.',
         doe: () => { zetFakkel(30); return 'Hij tekent drie lijnen op je hand. „Daar staat niemand. Daar kijkt niemand. Daar wíl niemand staan." Je verspilt geen druppel olie. (+30 licht)'; }
       },

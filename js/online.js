@@ -219,7 +219,7 @@ const Online = (() => {
     } catch (e) { return null; }
   }
   /* het dagpodium: de scores van het syndicaat voor één dag */
-  const dagTop = dag => req(`scores?${q()}&dag=eq.${encodeURIComponent(dag)}&order=score.desc&limit=10`);
+  const dagTop = dag => req(`scores?${q()}&dag=eq.${encodeURIComponent(dag)}&order=score.desc&limit=60`);   /* 60: wie buiten een top-10 viel werd als 'niet afgedaald' gepord (debug-sweep) */
   /* aller tijden: de hoogste scores ooit binnen het syndicaat */
   const allerTijden = () => req(`scores?${q()}&order=score.desc&limit=10`);
   /* de stoef-feed: recentste wapenfeiten */
@@ -255,18 +255,21 @@ const Online = (() => {
      nu hooguit één schrijf per MELD_PAUZE. */
   const MELD_PAUZE = 5 * 60 * 1000;
   let laatsteMelding = 0;
+  let laatsteMeldSleutel = '';   /* groep|naam: een syndicaatswissel binnen de pauze bleef anders onaangemeld (debug-sweep) */
   async function meldAan(forceer) {
     if (!isLid()) return false;
     const nu = Date.now();
-    if (!forceer && nu - laatsteMelding < MELD_PAUZE) return true;
+    const sleutel = lid.code + '|' + lid.naam;
+    if (!forceer && sleutel === laatsteMeldSleutel && nu - laatsteMelding < MELD_PAUZE) return true;
     laatsteMelding = nu;
+    laatsteMeldSleutel = sleutel;
     try {
       await req('leden?on_conflict=groep,naam', {
         method: 'POST', prefer: 'resolution=merge-duplicates',
         body: JSON.stringify({ groep: lid.code, naam: lid.naam, laatst_gezien: new Date().toISOString() })
       });
       return true;
-    } catch (e) { laatsteMelding = 0; return false; }   /* mislukt? volgende keer opnieuw proberen */
+    } catch (e) { laatsteMelding = 0; laatsteMeldSleutel = ''; return false; }   /* mislukt? volgende keer opnieuw proberen */
   }
   const leden = () => req(`leden?${q()}&order=naam.asc&limit=60`);
 

@@ -19,7 +19,7 @@ const Klank = (() => {
       catch (e) { try { localStorage.removeItem('slayit_audio'); } catch (e2) {} return {}; }
     })()
   );
-  function bewaar() { localStorage.setItem('slayit_audio', JSON.stringify(vol)); }
+  function bewaar() { try { localStorage.setItem('slayit_audio', JSON.stringify(vol)); } catch (e) {} }
 
   /* ---------- opstart (vereist een gebruikersgebaar) ---------- */
   function init() {

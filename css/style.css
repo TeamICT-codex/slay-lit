@@ -146,6 +146,9 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 @keyframes fakkelpuls { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
 #tb-verdieping { color: var(--perkament-dof); }
 /* mysterie-scherven-teller: gedragen groot, stash klein erachter; klik = Codex */
+/* de chip-middenzone: neemt de ruimte tussen logo en knoppen, en scrolt zijn
+   overloop weg i.p.v. de dek/instellingen-knoppen van het scherm te duwen */
+#tb-midden { display: flex; align-items: center; gap: 16px; flex: 1 1 auto; min-width: 0; }
 #tb-scherven { color: #b9a7e0; cursor: pointer; }
 /* je metgezel tussen de kamers door: icoon + HP; gevlucht = gedimd met 💨 */
 #tb-metgezel { color: #9fd8a8; cursor: pointer; }
@@ -1605,9 +1608,14 @@ body.lite .lb-daily-cta { animation: none; }
 body.lite .decreet-stempel { animation: none; opacity: 1; transform: translate(-50%, -50%) rotate(-14deg) scale(1); }
 
 /* ---------- smeedkamer 2.0: werkbank + live preview ---------- */
-.sb-werkbank { display: flex; gap: clamp(12px, 3vw, 30px); align-items: center; justify-content: center; flex-wrap: wrap; max-width: min(94vw, 900px); }
+.sb-werkbank { display: flex; gap: clamp(12px, 3vw, 30px); align-items: center; justify-content: center; flex-wrap: wrap; max-width: min(96vw, 1120px); }   /* 900px dwong preview+modules ALTIJD onder elkaar → SMEED onder de vouw (debug-sweep) */
 .sb-preview { display: flex; flex-direction: column; align-items: center; gap: 4px; transition: filter .4s ease; }
 .sb-preview .kaart-focus-houder { transform: scale(.82); transform-origin: center top; margin-bottom: -30px; }
+/* korte laptops: preview compacter + de actiebalk plakt onderaan de scrollende overlay */
+@media (max-height: 800px) {
+  .sb-preview .kaart-focus-houder { transform: scale(.66); margin-bottom: -120px; }
+}
+.slachtblok-overlay .sb-balk { position: sticky; bottom: 0; z-index: 6; padding: 8px 0 10px; background: linear-gradient(0deg, rgba(8, 4, 4, .96) 62%, transparent); }
 .sb-preview.gloeit { filter: drop-shadow(0 0 22px rgba(255, 140, 50, .55)); }
 .sb-preview-label { color: #d9a06b; font-style: italic; font-size: .78rem; }
 .sb-negatief { color: #ff5540 !important; }
@@ -4066,7 +4074,7 @@ img { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -we
    om gezien te worden: ruimer, ember-rand + een korte aandacht-glow bij verschijnen */
 #scherm-nudge {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 3000;
+  bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 780;
   display: flex; flex-direction: column; gap: 11px;
   width: min(560px, 94vw); padding: 14px 16px;
   background: linear-gradient(180deg, rgba(48, 35, 64, .98), rgba(26, 19, 36, .99));
@@ -4237,3 +4245,7 @@ body.lite .plagiaat-zakt .vijand-art { animation: none; filter: grayscale(.85) b
   .gesmeed-visual .gv-vuur::after, .gesmeed-visual .gv-zegel, .sb-proloog-blok { animation: none !important; }
 }
 body.lite .gesmeed-visual .gv-vuur::after, body.lite .gesmeed-visual .gv-zegel, body.lite .sb-proloog-blok { animation: none !important; }
+
+
+/* de nudge duikt onder elke overlay en verbergt zich zodra er één open staat */
+body:has(.overlay.open) #scherm-nudge, body:has(#overlay-slachtblok.open) #scherm-nudge { display: none; }

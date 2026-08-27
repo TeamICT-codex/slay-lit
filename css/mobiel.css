@@ -127,6 +127,16 @@ body[data-modus="mobiel"] #topbalk .tb-knop { flex-shrink: 0; }
 body[data-modus="mobiel"] #tb-hp, body[data-modus="mobiel"] #tb-fakkel,
 body[data-modus="mobiel"] #tb-goud, body[data-modus="mobiel"] #tb-scherven,
 body[data-modus="mobiel"] #tb-metgezel { white-space: nowrap; flex-shrink: 0; }
+/* de middenzone scrolt op de smalle balk: op 375px portret duwden de chips de
+   dek/instellingen-knoppen anders van het scherm (debug-sweep 27 aug) */
+body[data-modus="mobiel"] #tb-midden {
+  gap: 8px; overflow-x: auto; scrollbar-width: none;
+  align-self: stretch; align-items: center;
+}
+body[data-modus="mobiel"] #tb-midden::-webkit-scrollbar { display: none; }
+/* binnen de scrollzone mag de relikwieënrij niet meer naar 0 krimpen: ze houdt
+   haar eigen interne scroll maar claimt minstens een zichtbare strook */
+body[data-modus="mobiel"] #tb-midden #tb-relikwieen { flex: 0 1 auto; min-width: 44px; max-width: 46vw; }
 body[data-modus="mobiel"] .drank { font-size: 1.15rem; }
 body[data-modus="mobiel"] .tb-knop { font-size: 1.1rem; }
 
@@ -569,4 +579,20 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
    (bottom-offset), dus die bewegen niet mee. */
 @media (orientation: landscape) and (max-height: 440px) {
   body[data-modus="mobiel"] #onderbalk { height: 98px; }
+}
+
+
+/* ---- reveal-ceremonies liggend op mobiel: passend i.p.v. de vaste 300x425-kaart
+   (kop/tekst/Verder-knop vielen buiten beeld; zelfde patroon als #kies-kaarten
+   hierboven — debug-sweep 27 aug) ---- */
+body[data-modus="mobiel"] .kaart-reveal-overlay, body[data-modus="mobiel"] .vloek-reveal-overlay,
+body[data-modus="mobiel"] .scherf-reveal-overlay, body[data-modus="mobiel"] .relikwie-reveal-overlay { overflow-y: auto; }
+body[data-modus="mobiel"] .kaart-reveal-overlay .kaart.groot.kaart-focus,
+body[data-modus="mobiel"] .vloek-reveal-overlay .kaart.groot.kaart-focus {
+  --fschaal: 1;
+  width: min(300px, 82vw, 52vh); height: auto; min-height: 0; margin: 0;
+}
+body[data-modus="mobiel"] .kaart-reveal-overlay .kaart.groot.kaart-focus .kaart-icoon img,
+body[data-modus="mobiel"] .vloek-reveal-overlay .kaart.groot.kaart-focus .kaart-icoon img {
+  width: min(254px, 70vw, 44vh); height: auto; aspect-ratio: 254 / 142;
 }

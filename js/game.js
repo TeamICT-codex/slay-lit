@@ -161,7 +161,7 @@ if (mobiel && !INST.mobielHersteld2) {
   if (!standaardLite) INST.lite = false;
   try { localStorage.setItem('slayit_inst', JSON.stringify(INST)); } catch (e) {}
 }
-function bewaarInst() { localStorage.setItem('slayit_inst', JSON.stringify(INST)); }
+function bewaarInst() { try { localStorage.setItem('slayit_inst', JSON.stringify(INST)); } catch (e) { /* opslag optioneel (quota/privé-modus) — mag het eindscherm nooit breken */ } }
 
 /* ---------- de Codex: alles wat je ooit ontdekte, over alle runs heen ---------- */
 const CODEX_SLEUTEL = 'slayit_codex';
@@ -180,7 +180,18 @@ if (!Array.isArray(Codex.relikwieen)) Codex.relikwieen = [];
 if (!Array.isArray(Codex.dranken)) Codex.dranken = [];
 /* migratie: wie al ontdekkingen had, krijgt ze meteen opgeladen in het Schrijn */
 if (!Array.isArray(Codex.opgeladen)) {
-  Codex.opgeladen = Codex.relikwieen.filter(r => window.RELIKWIEEN && RELIKWIEEN[r] && RELIKWIEEN[r].zeld !== 'start');
+  Codex.opgeladen = Codex.relikwieen.filter(r => typeof RELIKWIEEN !== 'undefined' && RELIKWIEEN[r] && RELIKWIEEN[r].zeld !== 'start');
+}
+/* HERSTEL (debug-sweep 27 aug): de oude migratie testte op window.RELIKWIEEN — dat
+   bestaat niet (const staat niet op window) — en zette ieders Schrijn op leeg. Eén
+   herstelpass laadt de ontdekkingen opnieuw op; wie zijn ladingen legitiem opbruikte
+   krijgt ze eenmalig terug — de prijs van het herstel. */
+if (!Codex.schrijnHersteld) {
+  Codex.schrijnHersteld = true;
+  const her = Codex.relikwieen.filter(r => typeof RELIKWIEEN !== 'undefined' && RELIKWIEEN[r]
+    && RELIKWIEEN[r].zeld !== 'start' && !Codex.opgeladen.includes(r));
+  if (her.length) Codex.opgeladen = Codex.opgeladen.concat(her);
+  bewaarCodex();
 }
 /* saniteer de opgeslagen loopbaan-gesch: held/seed komen in het Codex-boek in
    innerHTML, dus een getamperde slayit_codex mag daar niets kunnen injecteren
@@ -230,7 +241,7 @@ Daily.gesch = (Array.isArray(Daily.gesch) ? Daily.gesch : []).map(g => ({
   score: +(g && g.score) || 0, gewonnen: !!(g && g.gewonnen), diepte: +(g && g.diepte) || 0,
   held: String((g && g.held) || 'slachter').replace(/[^a-z_]/g, '')
 }));
-function bewaarDaily() { localStorage.setItem(DAILY_SLEUTEL, JSON.stringify(Daily)); }
+function bewaarDaily() { try { localStorage.setItem(DAILY_SLEUTEL, JSON.stringify(Daily)); } catch (e) { /* opslag optioneel (quota/privé-modus) — mag het eindscherm nooit breken */ } }
 function ontdek(soort, id) {
   if (!id || !Codex[soort] || Codex[soort].includes(id)) return;
   Codex[soort].push(id);
@@ -397,7 +408,7 @@ function vorigeDag(sleutel) {
   const dt = new Date(y, m - 1, d); dt.setDate(dt.getDate() - 1);
   return datumSleutel(dt);
 }
-function dagSeed() { return 'DAILY-' + vandaagSleutel().replace(/-/g, ''); }
+function dagSeed(dag) { return 'DAILY-' + (dag || vandaagSleutel()).replace(/-/g, ''); }
 /* held van de dag: deterministisch uit de datum → voor iedereen dezelfde */
 function heldVanDag() {
   const ids = Object.keys(SPELERS);
@@ -616,7 +627,9 @@ function dagscore(gewonnen) {
   return { diepte, winst, relikwieen, goud, wetBonus, wet, totaal: sub + wetBonus };
 }
 function registreerDaily(gewonnen) {
-  const dag = vandaagSleutel();   /* anker op de echte kalenderdag (niet de opgeslagen startdag) */
+  /* anker op de dag waarop de daily GESTART is: over middernacht heen scoorde hij
+     anders op 'morgen' en verbrandde die dag ongespeeld (debug-sweep 27 aug) */
+  const dag = (S && S.dailyDag) || vandaagSleutel();
   /* al gescoord vandaag? dan niet opnieuw (beschermt tegen hervat-en-herscoren) */
   if (Daily.laatsteVoltooid === dag) {
     return { totaal: Daily.laatsteScore, reeks: Daily.reeks, besteReeks: Daily.besteReeks, nieuweTop: false };
@@ -638,7 +651,15 @@ function registreerDaily(gewonnen) {
      identiteit gebeurt er stilletjes niets). Syndicaat-leden voeden posse- én
      wereldbord; zwervers alleen het wereldbord. Auto-por blijft posse-werk. */
   if (window.Online && Online.identiteit()) {
-    Online.stuurScore({ dag, score: totaal, held: S.held, diepte: S.verdieping || 0, gewonnen: !!gewonnen, seed: S.seed })
+    const payload = { dag, score: totaal, held: S.held, diepte: S.verdieping || 0, gewonnen: !!gewonnen, seed: S.seed };
+    Online.stuurScore(payload)
+      .then(ok2 => {
+        if (ok2) return true;
+        /* geen verbinding? één eerlijke herkansing + duidelijkheid i.p.v. stilte (debug-sweep) */
+        melding('📡 Score kon niet naar het syndicaat — nog één poging…');
+        return new Promise(r => setTimeout(() => r(Online.stuurScore(payload)), 2600))
+          .then(ok3 => { if (!ok3) melding('📡 Niet gelukt — je score telt lokaal, maar het dagbord mist haar.'); return ok3; });
+      })
       .then(ok => { if (ok) melding(Online.isLid() ? '🔥 Je score staat op het syndicaats- én wereldbord.' : '🌍 Je score staat op het wereldbord.'); });
     if (Online.isLid() && INST.autoPor) autoPorNaDaily(dag, totaal);
     /* DE NALATENSCHAP: val je in de daily, dan reist je beste kaart naar de
@@ -909,7 +930,7 @@ function doeZwerverJoin() {
   const dag = vandaagSleutel();
   if (Daily.laatsteVoltooid === dag && (Daily.laatsteScore || 0) > 0) {
     const g = (Daily.gesch || []).find(x => x.dag === dag) || {};
-    Online.stuurScore({ dag, score: Daily.laatsteScore, held: g.held || 'slachter', diepte: g.diepte || 0, gewonnen: !!g.gewonnen, seed: dagSeed() })
+    Online.stuurScore({ dag, score: Daily.laatsteScore, held: g.held || 'slachter', diepte: g.diepte || 0, gewonnen: !!g.gewonnen, seed: dagSeed(dag) })
       .then(ok => { if (ok) setTimeout(() => melding('🔥 Je score van vandaag staat er meteen op.'), 900); vulWereldbord(); });
   }
   toonLeaderboard();
@@ -1439,6 +1460,7 @@ function pv(c, veld) {
   if (veld !== 'dmg' || !inGevecht()) return `${basis}`;
   let d = basis + (sp().status.kracht || 0) + relikwieSchadeBonus();
   if ((sp().status.zwak || 0) > 0) d = Math.floor(d * 0.75);
+  d = glasDmg(d);   /* GLAZEN ZIELEN kleurt ook het kaartgetal mee */
   if (d > basis) return `<b class="plus">${d}</b>`;
   if (d < basis) return `<b class="min">${d}</b>`;
   return `${d}`;
@@ -1558,15 +1580,15 @@ function fakkelKost(type, rij) {
   return kost;
 }
 
+/* het werkelijke fakkelplafond: De Schaduwboekhouding (dek-vloek) klemt op 60 */
+function fakkelMax() { return (S && S.dek && S.dek.some(c => c.id === 'de_schaduwboekhouding')) ? 60 : 100; }
 function zetFakkel(delta) {
   const voor = lichtNiveau();
   /* HET DONKER KRUIPT (dagwet): elk lichtverlies telt dubbel */
   if (delta < 0 && dagwetActief('duister')) delta *= 2;
   /* Vonkenkluis: elke lichtwinst klettert er dubbel uit */
   if (delta > 0 && heeftRelikwie('vonkenkluis')) delta += 1;
-  S.fakkel = Math.max(0, Math.min(100, S.fakkel + delta));
-  /* De Schaduwboekhouding (dek-vloek): je fakkel komt niet boven de 60 */
-  if (S.fakkel > 60 && S.dek && S.dek.some(c => c.id === 'de_schaduwboekhouding')) S.fakkel = 60;
+  S.fakkel = Math.max(0, Math.min(fakkelMax(), S.fakkel + delta));
   /* de Eeuwige Lont weigert te doven */
   if (delta < 0 && S.fakkel < 10 && heeftRelikwie('eeuwige_lont')) S.fakkel = 10;
   /* De Laatste Lucifer: één keer per run vlamt het donker weer op */
@@ -1779,6 +1801,7 @@ function geefStatus(actor, naam, n) {
 }
 
 function geefGif(actor, n) {
+  if (!actor || actor.dood) return;   /* een lijk vergiftig je niet — zijn kaats/counter raakte jou anders alsnog (debug-sweep) */
   if (!actor.isSpeler) {
     const gd = VIJANDEN[actor.id] || {};
     const lantaarn = heeftRelikwie('zielslantaarn');   /* De Zielslantaarn breekt alle gif-afweer */
@@ -2106,10 +2129,13 @@ function vijandAanval(v, basis, gedwongenDoel) {
   doeSchade(doel, Math.max(0, dmg), v);
 }
 
+/* GLAZEN ZIELEN: één waarheid voor de ×1.5, gedeeld door klap, telegraaf en kaarttekst */
+function glasDmg(n) { return (n > 0 && typeof dagwetActief === 'function' && dagwetActief('glas')) ? Math.ceil(n * 1.5) : n; }
+
 /* aanvalsschade toepassen: blok absorbeert, doornen kaatsen terug */
 function doeSchade(doel, dmg, bron) {
   /* GLAZEN ZIELEN (dagwet): elke klap ×1.5 — vóór blok, beide richtingen */
-  if (dmg > 0 && dagwetActief('glas')) dmg = Math.ceil(dmg * 1.5);
+  dmg = glasDmg(dmg);
   let rest = dmg;
   /* Het Dossier (vloek): een vijandaanval op de speler mag maar de HELFT van het
      Blok gebruiken; de rest van het Blok blijft staan maar vangt deze klap niet */
@@ -2428,6 +2454,7 @@ function metgezelIntentTekst(m) {
   if (it.type === 'aanval') {
     let dmg = it.dmg + (m.status.kracht || 0);
     if ((m.status.zwak || 0) > 0) dmg = Math.floor(dmg * 0.75);
+    dmg = glasDmg(dmg);   /* GLAZEN ZIELEN geldt ook voor de metgezel-klap */
     return `<span class="intent intent-aanval" data-tip="${def.naam} valt een vijand aan voor ${dmg}">⚔️ ${dmg}</span>`;
   }
   if (it.type === 'blok') return `<span class="intent intent-blok" data-tip="${def.naam} geeft je ${it.blok} Blok">🛡️ ${it.blok}</span>`;
@@ -2561,6 +2588,7 @@ function pootSpoorPayoff() {
    Bewust GEEN scherven-mysterie (alleen de voltooid-vlag), zodat het anders aanvoelt. */
 function magWitTerugkeren() {
   return inGevecht() && S.gevecht
+    && !S.daily                                               /* eerlijk veld: geen cross-run-wonder in de dagelijkse afdaling (debug-sweep) */
     && !heeftMetgezel()                                       /* 'terugkeer uit het zwart' alléén als er GEEN levende Drops staat — anders zou drops_wit een nog-aanwezige companion mid-gevecht overschrijven */
     && Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops')
     && !isOntgrendeld('drops_wit')
@@ -2568,7 +2596,7 @@ function magWitTerugkeren() {
     && S.gevecht.vijanden.some(v => v.id === 'de_erfprins' && !v.dood);
 }
 function revealDropsWit(g, poort) {
-  if (!g || g.voorbij || isOntgrendeld('drops_wit')) return;
+  if (!g || g.voorbij || isOntgrendeld('drops_wit') || (S && S.daily)) return;   /* tweede net: nooit op een daily */
   ontgrendelMetgezel('drops_wit');     /* eenmalig + permanent (Codex), geen scherven */
   Klank.sfx('schitter');
   const sc = document.getElementById('scherm-gevecht');
@@ -2674,7 +2702,7 @@ function laadSpel() {
     S = JSON.parse(data);
     S.gevecht = null;
     if (!S.held) S.held = 'slachter';            /* oudere saves */
-    if (S.fakkel === undefined) S.fakkel = 100;
+    if (S.fakkel === undefined) S.fakkel = fakkelMax();
     /* saniteer de seed óók bij laden: een getamperde save kan hier HTML smokkelen
        (de seed wordt op het eindescherm via innerHTML getoond). */
     S.seed = (typeof S.seed === 'string' ? S.seed : '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '') || '—';
@@ -2708,6 +2736,11 @@ function laadSpel() {
     S.scherven = (Array.isArray(S.scherven) ? S.scherven : []).filter(sid => scherfDef(sid) && !scherfStash().includes(sid));
     if (S.pos === undefined) S.pos = null;
     if (S.pos !== null && !S.kaart[S.pos]) S.pos = null;   /* pos wijst naar onbestaande node → terug naar de ingang */
+    /* HERBETREDING (debug-sweep 27 aug): staat pos op een node zonder uitgangen (de
+       baasnode — er wordt dáár gesaved door slachtblok/baas-scherf/decreet), dan liet een
+       reload de kaart zonder één klikbare knoop achter → run onherstelbaar. De vlag laat
+       beschikbareNodes de kamer opnieuw aanbieden, zonder dubbele verdieping/fakkelkost. */
+    if (S.pos !== null && S.kaart[S.pos] && !(S.kaart[S.pos].verb || []).length) S._herbetreed = S.pos;
     if (typeof S.hp !== 'number') S.hp = huidigeHeld().hp;
     if (typeof S.maxHp !== 'number') S.maxHp = S.hp;
     if (typeof S.goud !== 'number') S.goud = 0;
@@ -2926,6 +2959,7 @@ const NODE_ICONEN = { gevecht: '⚔️', elite: '😈', rust: '🔥', winkel: '�
 const NODE_NAMEN = { gevecht: 'Gevecht', elite: 'Elite', rust: 'Rustplaats', winkel: 'Winkel', event: 'Onbekend', schat: 'Schat', baas: 'De Slijmkoning', episch: 'Epische Vijand' };
 
 function beschikbareNodes() {
+  if (S._herbetreed && S.kaart[S._herbetreed]) return [S._herbetreed];   /* zie de herbetreding-vlag in laadSpel */
   if (S.pos === null) return Object.values(S.kaart).filter(n => n.r === 0).map(n => n.id);
   return S.kaart[S.pos] ? S.kaart[S.pos].verb : [];
 }
@@ -3049,11 +3083,15 @@ function kiesNode(id) {
 function kiesNodeEcht(id) {
   const n = S.kaart[id];
   if (!n) return;
+  const herbetreding = S._herbetreed === id;   /* na een reload op deze kamer: niet dubbel aanrekenen */
+  delete S._herbetreed;
   S.pos = id;
-  S.verdieping++;
-  const kost = fakkelKost(n.type, n.r);
-  if (kost > 0) zetFakkel(-kost);
-  if (n.type === 'rust' && heeftRelikwie('vuurvliegenpot')) zetFakkel(15);
+  if (!herbetreding) {
+    S.verdieping++;
+    const kost = fakkelKost(n.type, n.r);
+    if (kost > 0) zetFakkel(-kost);
+    if (n.type === 'rust' && heeftRelikwie('vuurvliegenpot')) zetFakkel(15);
+  }
   /* vangnet: gooit het openen van een kamer onverwacht, dan is S.pos al verzet
      maar wisselt het scherm niet → de map toont nog de oude (nu geblokkeerde)
      nodes en de speler 'hangt' eindeloos. We renderen dan de map opnieuw zodat
@@ -3090,9 +3128,9 @@ function kiesNodeEcht(id) {
         /* HET SLACHTBLOK: één vast smeed-moment vóór de Act 3-finale — de
            laatste keuze voor de troonzaal (niet in daily's; éénmalig per run) */
         if (huidigeAct() >= 3 && !S.slachtblokGedaan && !S.daily) {
-          S.slachtblokGedaan = true;
-          saveSpel();
-          toonSlachtblok('altaar', () => startGevecht([huidigeBaas().id], 'baas', n.r));
+          /* de vlag valt pas ná het ritueel: een reload tijdens het smeden geeft het
+             Slachtblok opnieuw i.p.v. het stil over te slaan (debug-sweep 27 aug) */
+          toonSlachtblok('altaar', () => { S.slachtblokGedaan = true; saveSpel(); startGevecht([huidigeBaas().id], 'baas', n.r); });
           break;
         }
         startGevecht([huidigeBaas().id], 'baas', n.r);
@@ -3937,6 +3975,7 @@ function intentTekst(v) {
     let dmg = actDmg(it.dmg) + (v.status.kracht || 0);   /* zelfde act-schaling als de echte klap */
     if ((v.status.zwak || 0) > 0) dmg = Math.floor(dmg * 0.75);
     if (((richtMet ? mDoel : sp()).status.kwetsbaar || 0) > 0) dmg = Math.floor(dmg * 1.5);
+    dmg = glasDmg(dmg);   /* GLAZEN ZIELEN telegrafeert mee — de balk loog een derde te laag (debug-sweep) */
     const merk = richtMet ? ` → ${METGEZELLEN[mDoel.id].icoon}` : '';
     const tipWie = richtMet ? METGEZELLEN[mDoel.id].naam : 'jou';
     return `<span class="intent intent-aanval${richtMet ? ' intent-viseert-mg' : ''}" data-tip="${it.naam}: valt ${tipWie} aan voor ${dmg}${it.hits ? '×' + it.hits : ''} schade">⚔️ ${dmg}${it.hits ? '×' + it.hits : ''}${merk}</span>`;
@@ -4201,14 +4240,15 @@ function scherfCodexBlok() {
    gewoon je oude stash-stand en suggereerde zo een beloning die deze run
    nooit viel. De tekst volgt nu de WERKELIJKHEID: het drama-register gaat
    alleen open als je déze run echt een scherf vond. Tikbaar → Codex. */
-function mysterieDuiding() {
+function mysterieDuiding(versAantal) {
   if (typeof huidigeAct === 'function' && huidigeAct() < 2) return '';
   const best = meestGevorderdeMysterie();
   if (!best) return '';
   const totaal = ((window.MYSTERIES[best.mid].vereist) || []).length;
-  /* wat vond je DEZE run? = gedragen minus de bewust meegebrachte loadout */
+  /* wat vond je DEZE run? — het registratieblok wist S.scherven vóór deze render,
+     dus toonEinde geeft de stand van vóór het wissen mee (debug-sweep 27 aug) */
   const loadout = (S && Array.isArray(S.loadoutScherven)) ? S.loadoutScherven : [];
-  const vers = gedragen().filter(sid => !loadout.includes(sid)).length;
+  const vers = (versAantal !== undefined) ? versAantal : gedragen().filter(sid => !loadout.includes(sid)).length;
   const regel = best.rijp
     ? 'De scherven passen samen — het antwoord wacht bij de Drempel, als je het dúrft te maken.'
     : vers > 0
@@ -4489,7 +4529,8 @@ function bekijkDrank(e, id) {
 
 /* het metgezelboek: portret, effect en het verhaal erachter */
 function toonMetgezelBoek(id) {
-  const d = METGEZELLEN[id];
+  const wit = (id === 'drops' && isOntgrendeld('drops_wit'));   /* de Witte nam het slot over: toon zíjn naam/effect/synergie (debug-sweep) */
+  const d = METGEZELLEN[wit ? 'drops_wit' : id];
   if (!d) return;
   const rgb = '255, 156, 63';   /* ember */
   $('#relikwie-boek').innerHTML = `
@@ -4498,7 +4539,7 @@ function toonMetgezelBoek(id) {
       <span class="schaarste-chip" style="--relk:${rgb}">${SCHAARSTE_LABEL[d.zeld] || 'Metgezel'}</span>
       <h3>${d.naam}</h3>
       <p class="boek-effect">${d.tekst}</p>
-      ${synergieBoekHtml(id)}
+      ${synergieBoekHtml(wit ? 'drops_wit' : id)}
       ${d.lore ? `<p class="boek-lore">„${d.lore}"</p>` : ''}
       ${(id === 'drops' && isOntgrendeld('drops_wit'))
         ? '<p class="boek-gevallen">🤍 Offerde zich op — en kwam terug. Voorgoed heen, en toch teruggekeerd: de diepte gaf terug wat ze nam. Trouw is niet te indexeren, en de dood houdt haar niet.</p>'
@@ -5290,7 +5331,7 @@ function dicktatorKies(v, beurt) {
       }, 3400);
     }
   }
-  const t = (v.beurtTeller = (v.beurtTeller || 0) + 1);
+  const t = (v.beurtTeller || 0) + 1;   /* READ-ONLY: eindBeurt hoogt de teller al op — de oude dubbeltelling hield t altijd oneven en doofde HET DECREET in fase 3 (debug-sweep 27 aug) */
   /* HET DECREET: elke 3e beurt (fase 3: elke 2e) — getelegrafeerd. Bij een
      uitgemergeld dek (≤ 6 speelbare kaarten) valt hij terug op de Executie:
      hij kan je niet verder afschrijven, dus hij hakt zelf. */
@@ -5576,7 +5617,7 @@ async function eindBeurt() {
         if (window.Vista) Vista.pose(v, 'cast', cd);
         pose2D(v, 'cast', cd);
       }
-      if (it.doe) { const r = it.doe(v); if (r && r.then) await r; }   /* async intent (de Erfprins-plagiaat) wordt geawait, anders loopt 'ie door in de beurt */
+      if (it.doe && !v.dood) { const r = it.doe(v); if (r && r.then) await r; }   /* async intent (de Erfprins-plagiaat) wordt geawait; een lijk (Doornen mid-aanval) voert zijn rider niet meer uit (debug-sweep) */
       if (gestopt()) return;
     }
     if (el) el.classList.remove('actief');
@@ -5585,7 +5626,7 @@ async function eindBeurt() {
     if ((v.status.kwetsbaar || 0) > 0) v.status.kwetsbaar--;
     if ((v.status.zwak || 0) > 0) v.status.zwak--;
     if (v.dood && alleVijanden().length === 0) { gevechtGewonnen(); return; }
-    v.intent = VIJANDEN[v.id].kies(v, v.beurtTeller);
+    if (!v.dood) v.intent = VIJANDEN[v.id].kies(v, v.beurtTeller);   /* een lijk telegrafeert niet (debug-sweep) */
     renderGevecht();
     await slaap(380);
     if (gestopt()) return;
@@ -5662,8 +5703,6 @@ function beginSpelerBeurt() {
   if (heeftRelikwie('hartsteen')) geneesHp(1);
 
   /* (checkDropsOntwaak verwijderd — Drops unlock je nu via het Drempel-ritueel) */
-  metgezelBeurt();   /* de bondgenoot handelt aan het begin van je beurt (kan de laatste vijand vellen → onderstaande check vangt dat) */
-
   /* THE COPYCAT: mercy-lek (geen breker) óf breker-terugwin, stall-straf, fase-check */
   copycatBeurtStart(g);
 
@@ -5680,6 +5719,10 @@ function beginSpelerBeurt() {
   trekKaarten(5 + (heeftRelikwie('oorlogstrommel') ? 1 : 0));
   /* Mottenkroon: de motten brengen nieuws zolang het licht brandt */
   if (heeftRelikwie('mottenkroon') && lichtNu === 'helder') trekKaarten(1);
+  /* de bondgenoot handelt NÁ de trek: De Roddel kijkt naar je hand, en die was hier
+     vóór v84 op beurt 2+ altijd leeg — de vloek deed dus niets (debug-sweep 27 aug).
+     Kan de laatste vijand vellen → de gewonnen-check verderop vangt dat. */
+  metgezelBeurt();
   /* LICHT-VLOEKEN in de hand (onspeelbaar) — sturen je fakkel-gedrag */
   const smetN = g.hand.filter(c => c.id === 'schaduwsmet').length;
   if (smetN > 0 && ['duister', 'gedoofd'].includes(lichtNu)) {
@@ -5739,8 +5782,9 @@ async function gevechtGewonnen() {
      schaduw zich in je dek nestelen. Verweven licht-vloek-bron (elke act); stuurt je
      weg van blind-vechten. Weg te slopen bij de Oude Smid. */
   if (lichtNiveau() === 'gedoofd' && willekeurig() < 0.3) {
-    S.dek.push(nieuweKaart('schaduwsmet'));
-    toonVloekReveal('schaduwsmet', 'Je versloeg ze in volslagen duister — en het donker tekende je. De Schaduwsmet groeit met elke donkere beurt; enkel helder licht zuivert haar. Sloop haar bij de Oude Smid.');
+    /* via de centrale poort: het Zondebokvel mag ook déze vloek éénmalig weigeren (debug-sweep) */
+    const smetNaam = geefDekVloek('schaduwsmet');
+    if (smetNaam) naReveals(() => toonVloekReveal('schaduwsmet', 'Je versloeg ze in volslagen duister — en het donker tekende je. De Schaduwsmet groeit met elke donkere beurt; enkel helder licht zuivert haar. Sloop haar bij de Oude Smid.'));
   }
 
   if (g.soort === 'baas') {
@@ -5780,7 +5824,7 @@ async function gevechtGewonnen() {
          toonEinde ruimt de sleutel op bij het normale pad. */
       try {
         localStorage.setItem('slayit_einde_pending', JSON.stringify({
-          held: S.held, baas: (verslagenBaas && verslagenBaas.naam) || null,
+          held: S.held, baas: verslagenBaas || null,   /* is al een string (debug-sweep) */
           seed: S.seed, daily: !!S.daily,
           record: !!(S._uitslagVooraf && S._uitslagVooraf.nieuwRecord)
         }));
@@ -5914,7 +5958,11 @@ function verderNaBeloning() {
   const b = S.beloning || {};
   const mee = [];
   if (b.goud > 0) { geefGoud(b.goud); mee.push(`🪙 ${b.goud} goud`); b.goud = 0; Klank.sfx('goud'); }
-  if (b.nalatenschap && KAARTEN[b.nalatenschap.kaart]) { pakNalatenschap(); mee.push('de nalatenschap van ' + b.nalatenschap.van); b.nalatenschap = null; }
+  if (b.nalatenschap && KAARTEN[b.nalatenschap.kaart]) {
+    const van = escSyn(String(b.nalatenschap.van || ''));   /* vóór pakNalatenschap lezen — die nult het veld (zelfde referentie); servernaam gesaneerd (debug-sweep) */
+    pakNalatenschap();
+    mee.push('de nalatenschap van ' + van);
+  }
   if (b.relikwie && !b.vervloekt) { geefRelikwie(b.relikwie); mee.push(RELIKWIEEN[b.relikwie].naam); b.relikwie = null; }
   else if (b.relikwie && b.vervloekt) mee.push(`${RELIKWIEEN[b.relikwie].naam} LATEN LIGGEN (vervloekte buit vergt een bewuste keuze)`);
   if (b.drank) {
@@ -6464,7 +6512,7 @@ function toonRust() {
   schermAchtergrond('rust', actBg('rust'), 0.42, 'center bottom');
   const heel = Math.floor(S.maxHp * 0.3) + (heeftRelikwie('levenskruik') ? 10 : 0);
   const kanSmeden = S.dek.some(c => !c.up && kdef(c).up);
-  const kanPoken = S.fakkel < 100;
+  const kanPoken = S.fakkel < fakkelMax();   /* vol = het ECHTE plafond (Schaduwboekhouding: 60) — anders was oppoken geblokkeerd terwijl je op 60 vastzit (debug-sweep) */
   /* dwarrelende vonken met eigen koers en tempo (presentationeel) */
   const vonken = Array.from({ length: 14 }, () =>
     `<span class="kv-vonk" style="--vx:${(Math.random() * 70 - 35).toFixed(0)}px; --vzw:${(Math.random() * 50 - 25).toFixed(0)}px; --vd:${(1.6 + Math.random() * 2.2).toFixed(2)}s; animation-delay:${(Math.random() * 3).toFixed(2)}s"></span>`
@@ -6527,6 +6575,7 @@ function toonRust() {
 function rustPook() {
   if (rustKlaar) return;
   rustKlaar = true;
+  document.querySelectorAll('#scherm-rust .rust-knop').forEach(b => b.disabled = true);
   zetFakkel(50);   /* vertrekwaarde — een halve balk, zodat oppoken een echte keuze is naast heal/smeden */
   melding('Je fakkel laait fel op (+50 licht).');
   Klank.sfx('buff');
@@ -6538,6 +6587,7 @@ function rustPook() {
 function rustGenees(n) {
   if (rustKlaar) return;
   rustKlaar = true;
+  document.querySelectorAll('#scherm-rust .rust-knop').forEach(b => b.disabled = true);   /* het 1,2s-vertrekvenster dicht */
   geneesHpBuitenGevecht(n);
   /* je metgezel komt mee op adem aan het vuur */
   if (heeftMetgezel() && S.metgezel.hp < S.metgezel.maxHp) {
@@ -6552,8 +6602,9 @@ function rustGenees(n) {
   setTimeout(() => { if (document.body.dataset.scherm === 'rust') renderKaartScherm(); }, 1200);   /* guard: niet de map over een intussen gestart gevecht/scherm renderen (vertraagde timer-race) */
 }
 function rustSmeed() {
+  if (rustKlaar) return;   /* één rustactie per kampvuur — dit gat gaf heal + gratis smeedbeurt (debug-sweep) */
   kiesKaartUitDek('upgrade', 'Kies een kaart om te smeden', c => {
-    if (c) renderKaartScherm(); else toonRust();
+    if (c) { rustKlaar = true; renderKaartScherm(); } else toonRust();
   });
 }
 
@@ -6875,7 +6926,9 @@ const SMEED_MODULES = {
 };
 const SMEED_ICONEN = ['🗡️', '🪓', '🔥', '☠️', '🌑', '⚡', '🐺', '🌹', '🦴', '👁️', '🕯️', '🖤'];
 function offerWaarde(c) {
-  const zp = { gewoon: 1, ongewoon: 2, zeldzaam: 4, episch: 4 }[kdef(c).zeld] || 1;
+  /* uitputtende tabel (lookup-bugklasse): 'gesmeed' viel op de 1-punt-fallback — een
+     erfstuk woog als een Slag (debug-sweep). Nieuwe zeldzaamheden hier meteen wegen. */
+  const zp = { gewoon: 1, ongewoon: 2, zeldzaam: 4, episch: 4, gesmeed: 4, basis: 1, start: 1, vloek: 1 }[kdef(c).zeld] || 1;
   return zp + (c.up ? 1 : 0);
 }
 function gesmeedTekst(spec) {
@@ -6945,6 +6998,16 @@ function registreerGesmeed(id, spec) {
 function laadGesmedeKaarten() {
   Object.entries((S && S.gesmeed) || {}).forEach(([id, spec]) => registreerGesmeed(id, spec));
   Object.entries(Codex.slachtblok || {}).forEach(([held, spec]) => registreerGesmeed('gesmeed_codex_' + held, spec));
+}
+
+/* wacht tot élke reveal-ceremonie gesloten is en voer dan fn uit — twee reveals
+   over elkaar heen maakten de onderste onleesbaar (debug-sweep 27 aug) */
+function naReveals(fn, eersteWacht) {
+  const kijk = () => {
+    if (document.querySelector('.scherf-reveal-overlay, .vloek-reveal-overlay, .kaart-reveal-overlay, .relikwie-reveal-overlay')) { setTimeout(kijk, 300); return; }
+    fn();
+  };
+  setTimeout(kijk, eersteWacht || 350);
 }
 
 /* de smeedkamer-overlay. modus: 'altaar' (kaart meteen in het dek) of
@@ -7055,7 +7118,7 @@ function renderSlachtblok() {
           return `<button class="${s.kost === k ? 'aan' : ''}" onclick="_smeed.kost=${k}; renderSlachtblok()" data-tip="${tip}">${lbl}</button>`;
         }).join('')}</label>
         <label class="sb-iconen">${SMEED_ICONEN.map(i => `<button class="${s.icoon === i ? 'aan' : ''}" onclick="_smeed.icoon='${i}'; renderSlachtblok()">${i}</button>`).join('')}</label>
-        <input id="sb-naam" maxlength="20" placeholder="Geef je kaart een naam…" value="${s.naam || ''}" autocomplete="off">
+        <input id="sb-naam" maxlength="20" placeholder="Geef je kaart een naam…" autocomplete="off">
       </div>
       <div class="sb-balk">
         <button class="knop-stil" onclick="_smeed.stap = 1; _smeed.punten = {}; renderSlachtblok()">◂ Andere offers</button>
@@ -7065,8 +7128,10 @@ function renderSlachtblok() {
         ? '🕯️ Ze overleeft je val: ze wacht in het Schrijn — élke held mag haar bij een volgende afdaling dragen (vervangt een startkaart, 3 ladingen).'
         : '⚔️ Ze schuift meteen in je dek — en vecht zo dadelijk mee tegen de DICKtator.'}</p>`;
     const inp = ov.querySelector('#sb-naam');
-    /* naam live op de preview-kaart meeschrijven zonder re-render (focusbehoud) */
+    inp.value = s.naam || '';   /* via de property, nooit het attribuut: een "-teken brak de waarde stil (debug-sweep) */
+    /* naam live op de preview-kaart meeschrijven zonder re-render (focusbehoud); markup-tekens meteen weren */
     inp.oninput = () => {
+      if (/[<>&"]/.test(inp.value)) inp.value = inp.value.replace(/[<>&"]/g, '');
       s.naam = inp.value;
       const naamEl = ov.querySelector('.sb-preview .kaart-naam, .sb-preview .k-naam, .sb-preview b');
       if (naamEl) naamEl.textContent = (s.naam || '').trim() || 'Naamloos';
@@ -7093,6 +7158,17 @@ function smeedKaart() {
   const s = _smeed;
   if (!s || smeedBesteed() === 0 || smeedBesteed() > smeedBudget()) return;   /* nooit gratis of boven budget smeden */
   const naam = (s.naam || '').trim().replace(/[<>&"]/g, '') || 'De Naamloze';   /* naam belandt in innerHTML → strip markup-tekens */
+  /* de overschrijf-vraag KOMT EERST — vóór er ook maar iets vernietigd wordt.
+     Annuleren ná de vernietiging liet twee dode offers en een vastgelopen
+     stap I ('Offer 2/2' zonder deselecteerbare kaarten) achter (debug-sweep). */
+  if (s.modus === 'dood') {
+    const oud = Codex.slachtblok && Codex.slachtblok[S.held];
+    if (oud && (oud.charges || 0) > 0 && !s.overschrijfOk) {
+      bevestig(`Het blok draagt al jouw „${oud.naam}" (nog ${oud.charges} lading${oud.charges === 1 ? '' : 'en'}). Een nieuw werk verdringt het oude — voorgoed. Doorzetten?`,
+        () => { if (_smeed) { _smeed.overschrijfOk = true; smeedKaart(); } }, '🔥 Smeed toch');
+      return;
+    }
+  }
   const spec = {
     naam, icoon: s.icoon, kost: s.kost,
     maker: S.held,                                   /* wie haar smeedde — de kaart blijft voor iedereen draagbaar */
@@ -7110,13 +7186,6 @@ function smeedKaart() {
   S.dek = S.dek.filter(c => !s.offers.includes(c));
   schudScherm(); Klank.sfx('zwareklap'); setTimeout(() => Klank.sfx('schitter'), 400);
   if (s.modus === 'dood') {
-    /* een bestaand erfstuk van deze held met ladingen wordt anders STIL gewist (review) */
-    const oud = Codex.slachtblok && Codex.slachtblok[S.held];
-    if (oud && (oud.charges || 0) > 0 && !s.overschrijfOk) {
-      bevestig(`Het blok draagt al jouw „${oud.naam}" (nog ${oud.charges} lading${oud.charges === 1 ? '' : 'en'}). Een nieuw werk verdringt het oude — voorgoed. Doorzetten?`,
-        () => { if (_smeed) { _smeed.overschrijfOk = true; smeedKaart(); } }, '🔥 Smeed toch');
-      return;
-    }
     /* de kaart wacht in de Codex op je volgende run (één slot per held, 3 ladingen) */
     spec.charges = 3;
     Codex.slachtblok = Codex.slachtblok || {};
@@ -7142,7 +7211,9 @@ function sluitSlachtblok(gesmeed) {
   delete KAARTEN.gesmeed_preview;   /* de tijdelijke voorvertonings-def ruimt zichzelf op */
   if (ov) { ov.classList.remove('open'); setTimeout(() => ov.remove(), 450); }
   if (!gesmeed) Klank.sfx('klik');
-  if (na) setTimeout(na, gesmeed ? 900 : 250);
+  /* het vervolg (bv. de DICKtator-intro) wacht tot de kaart-reveal gesloten is —
+     anders speelde de hele baasintro achter de reveal-overlay (debug-sweep) */
+  if (na) { if (gesmeed) naReveals(na, 900); else setTimeout(na, 250); }
 }
 /* DEV: het Slachtblok direct testen — devSlachtblok() in de console */
 function devSlachtblok() {
@@ -7156,7 +7227,7 @@ function devSprongAct2() {
   if (inGevecht()) stopGevechtLus();
   S.gevecht = null;
   S.act = 2;
-  S.fakkel = 100;
+  S.fakkel = fakkelMax();
   S.pos = null;
   /* DEV-testbuffer: ruime HP + volle heeldrank-slots zodat je Act 2-vijanden grondig kunt
      bekijken/uittesten zonder meteen te sneuvelen (DEV-SHORTCUT — weg vóór release). */
@@ -7193,7 +7264,7 @@ function devDrempel(testScherven) {
 function devErfprins() {
   if (!S) nieuwSpel('slachter');
   if (inGevecht()) stopGevechtLus();
-  S.gevecht = null; S.act = 2; S.fakkel = 100;
+  S.gevecht = null; S.act = 2; S.fakkel = fakkelMax();
   S.maxHp = Math.max(S.maxHp || 0, 150); S.hp = S.maxHp;
   S.dranken = []; while (S.dranken.length < drankSlots()) S.dranken.push('heeldrank');
   if (S.dek.length < 16) {
@@ -7283,7 +7354,7 @@ function devDicktator() {
   if (inGevecht()) stopGevechtLus();
   S.gevecht = null;
   S.act = 3;
-  S.fakkel = 100;
+  S.fakkel = fakkelMax();
   S.pos = null;
   S.maxHp = Math.max(S.maxHp || 0, 150);
   S.hp = S.maxHp;
@@ -7310,7 +7381,7 @@ function devSprongAct3() {
   if (inGevecht()) stopGevechtLus();
   S.gevecht = null;
   S.act = 3;
-  S.fakkel = 100;
+  S.fakkel = fakkelMax();
   S.pos = null;
   S.maxHp = Math.max(S.maxHp || 0, 150);
   S.hp = S.maxHp;
@@ -7448,7 +7519,7 @@ function drempelVoltrek(ids) {
 
 function volgendeAct(verslagenBaas) {
   S.act = huidigeAct() + 1;
-  S.fakkel = 100;                 /* episch: het laatste licht van de baas → je fakkel laait op */
+  S.fakkel = fakkelMax();         /* episch: het laatste licht van de baas → je fakkel laait op (Schaduwboekhouding klemt op 60) */
   /* Drops komt mee zodra je 'm hebt VRIJGESPEELD (zie het Metgezel-Mysterie) én er
      geen actieve metgezel is. Een in de vorige act gevluchte Drops (heeftMetgezel()
      is dan false want vluchtig) sluit hier weer aan — zo lost de 'later terugvinden'-
@@ -7464,8 +7535,8 @@ function volgendeAct(verslagenBaas) {
       : (S.daily ? null : (S.runMetgezel || (S.runMetgezel = kiesRunMetgezel())));
     /* een VOORGOED geofferde metgezel (Codex.gevallen) mag NIET via de stale S.runMetgezel-cache
        herrijzen bij een latere act-overgang — dat breekt de 'geen terugkeer'-belofte van de opoffering.
-       Sinds Act 3 live is (ACTS_MAX=3) is dit pad actief bij de overgang naar act 3;
-       de cache wordt mee gereset zodat de rotatie een ander kiest. */
+       BEWUST komt er deze run ook geen vervanger: na De Laatste Sprong daal je alleen
+       verder af — de rouw is voelbaar. De rotatie draait de vólgende run gewoon weer. */
     if (mgid && !teruggekeerd && Array.isArray(Codex.gevallen) && Codex.gevallen.includes(mgid)) {
       mgid = null; S.runMetgezel = null;
     }
@@ -7514,6 +7585,7 @@ function toonEinde(gewonnen, verslagenBaas) {
   /* loopbaan bijwerken — exact één keer per run (guard op S). Speelde de outro
      eerst, dan is er al geregistreerd en reist de uitslag mee via S._uitslagVooraf. */
   let uitslag = S._uitslagVooraf || { nieuwRecord: false, beste: 0 };
+  const versGevonden = gedragen().filter(sid => !(S.loadoutScherven || []).includes(sid)).length;   /* vóór het wissen hieronder, voor mysterieDuiding */
   if (!S.runGeregistreerd) {
     uitslag = registreerRun(gewonnen);
     if (S.daily) { const du = registreerDaily(gewonnen); S.dailyNieuweTop = du.nieuweTop; wisSave(); }
@@ -7562,7 +7634,7 @@ function toonEinde(gewonnen, verslagenBaas) {
     </div>
     <h2 class="scherm-titel einde-titel ${gewonnen ? 'goud-tekst' : 'rood-tekst'}">${gewonnen ? ((verslagenBaas || (typeof huidigeBaas === 'function' && huidigeBaas() && huidigeBaas().naam) || 'De baas') + ' IS VERSLAGEN!').toUpperCase() : 'JE BENT GEVALLEN...'}</h2>
     <p class="scherm-sub einde-regel">„${regel}"</p>
-    ${!gewonnen ? mysterieDuiding() : ''}
+    ${!gewonnen ? mysterieDuiding(versGevonden) : ''}
     <div class="einde-stats einde-onthul">
       ${statRegels.map(([w, l], i) => `<div style="animation-delay:${(0.7 + i * 0.25).toFixed(2)}s"><b>${w}</b><small>${l}</small></div>`).join('')}
     </div>
@@ -7728,6 +7800,13 @@ function startDaily() {
     return;
   }
   Klank.sfx('klik');
+  try {
+    const oudeRun = JSON.parse(localStorage.getItem(SAVE_SLEUTEL) || 'null');
+    if (oudeRun && Array.isArray(oudeRun.scherven)) {
+      const lo2 = Array.isArray(oudeRun.loadoutScherven) ? oudeRun.loadoutScherven : [];
+      oudeRun.scherven.filter(sid => !lo2.includes(sid)).forEach(sid => bankScherf(sid));   /* gevonden scherven overleven het wissen (debug-sweep) */
+    }
+  } catch (e) {}
   wisSave();
   Daily.laatsteStart = vandaagSleutel(); bewaarDaily();   /* poging verbruikt bij START → geen farmen */
   schrijnKeuzes = [];                       /* geen Schrijn-meeneem in de daily */
@@ -8138,6 +8217,18 @@ function kiesHeld(id, bevestigd) {
   /* Schrijn-nudge: opgeladen relikwieën liggen klaar maar er is er geen gekozen.
      De held-keuze komt vóór het Schrijn (eronder op het scherm), dus makkelijk
      vergeten — herinner de speler er één keer aan vóór de afdaling begint. */
+  /* een lopende dagelijkse afdaling wordt door een nieuw avontuur gewist — en je
+     poging van vandaag is dan gespeeld (de claim blijft staan; debug-sweep 27 aug) */
+  if (!bevestigd && !kiesHeld._dailyOk) {
+    try {
+      const oud = JSON.parse(localStorage.getItem(SAVE_SLEUTEL) || 'null');
+      if (oud && oud.daily && Daily.laatsteVoltooid !== oud.dailyDag) {
+        bevestig('🗓️ <b>Je dagelijkse afdaling loopt nog</b><br><br>Een nieuw avontuur wist haar — en je daily-poging van vandaag is dan voorbij (geen score op het bord).<br><br>Toch een nieuw avontuur beginnen?',
+          () => { kiesHeld._dailyOk = true; kiesHeld(id); }, 'Wis mijn daily ➤');
+        return;
+      }
+    } catch (e) {}
+  }
   if (!bevestigd && schrijnKeuzes.length === 0) {
     const besch = Codex.opgeladen.filter(r => RELIKWIEEN[r]).length;
     if (besch > 0) {
@@ -8162,11 +8253,18 @@ function kiesHeld(id, bevestigd) {
 }
 
 function kiesHeldEcht(id) {
-  /* deze nieuwe run clobbert de save; was dat een onafgemaakte daily, rol dan de
-     daily-claim terug zodat de speler 'm later vers kan herstarten (geen brick). */
+  /* deze nieuwe run clobbert de save. Twee reddingen (debug-sweep 27 aug):
+     1) GEVONDEN scherven uit de oude run banken (zoals bij een dood — alleen de
+        bewuste loadout is de inzet), anders verdampen ze stil;
+     2) de daily-claim blijft STAAN — de oude rollback maakte gratis seed-scouting
+        mogelijk (starten, kaart/dagwet bekijken, herladen, opnieuw). De bevestiging
+        hiervoor zit in kiesHeld. */
   try {
     const oud = JSON.parse(localStorage.getItem(SAVE_SLEUTEL) || 'null');
-    if (oud && oud.daily && Daily.laatsteVoltooid !== oud.dailyDag) { Daily.laatsteStart = null; bewaarDaily(); }
+    if (oud && Array.isArray(oud.scherven)) {
+      const lo = Array.isArray(oud.loadoutScherven) ? oud.loadoutScherven : [];
+      oud.scherven.filter(sid => !lo.includes(sid)).forEach(sid => bankScherf(sid));
+    }
   } catch (e) {}
   wisSave();
   const invoer = $('#seed-invoer');
@@ -8294,9 +8392,14 @@ function toonSchermNudge() {
   document.body.appendChild(wrap);
   /* een actie sluit de nudge maar onthoudt 'weg' NIET (komt terug zolang je niet
      fullscreen/geïnstalleerd bent); alleen de ✕ zet 'm voorgoed weg. */
-  const sluit = onthoud => { wrap.remove(); if (onthoud) { try { localStorage.setItem('slayit_nudge_v2', 'weg'); } catch (e) {} } };
+  const sluit = onthoud => { wrap.remove(); document.removeEventListener('fullscreenchange', fsWeg); if (onthoud) { try { localStorage.setItem('slayit_nudge_v2', 'weg'); } catch (e) {} } };
   wrap.querySelectorAll('.nudge-ja').forEach(b => b.onclick = () => { const a = acties[+b.dataset.i]; if (a) a.doe(); sluit(false); });
   wrap.querySelector('.nudge-x').onclick = () => sluit(true);
+  /* eenmaal fullscreen (hoe dan ook bereikt) is de nudge overbodig; en na 14s ruimt
+     hij zichzelf op — hij bleef anders eeuwig over de speel-UI hangen (debug-sweep) */
+  const fsWeg = () => { if (document.fullscreenElement) sluit(false); };
+  document.addEventListener('fullscreenchange', fsWeg);
+  setTimeout(() => { if (wrap.isConnected) sluit(false); }, 14000);
 }
 
 /* permanent bereikbaar vanuit ⚙️ Instellingen: installeer als app — of de
@@ -8879,7 +8982,8 @@ window.addEventListener('DOMContentLoaded', () => {
       let herladen = false;
       const magHerladen = () => {
         const scherm = document.body.dataset.scherm;
-        return !(scherm === 'gevecht' || scherm === 'outro' || (window.Outro && Outro.actief));
+        return !(scherm === 'gevecht' || scherm === 'outro' || (window.Outro && Outro.actief)
+          || document.getElementById('overlay-slachtblok'));   /* niet middenin het smeed-ritueel (debug-sweep) */
       };
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (herladen) return;
