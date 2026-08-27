@@ -4131,7 +4131,17 @@ img { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -we
    staan nu in mobiel.css, gekoppeld aan body[data-modus="mobiel"]. */
 
 
-/* ---------- DE INVENTARIS: de Erfprins-intro (eerste ontmoeting) ---------- */
+/* ---------- DE INVENTARIS: de Erfprins-intro (eerste ontmoeting) ----------
+   Neutraliseert (net als de morf, zie ~r3626) de #baas-intro-erfenis: introVervaag
+   zou de beats na 3,6s op een onzichtbare overlay laten spelen en pointer-events:none
+   maakte 'tik om over te slaan' dood (review 27 aug). Eigen dicht paars doek. */
+#baas-intro.baas-intro-inventaris {
+  animation: none; opacity: 1; pointer-events: auto; cursor: pointer;
+  transition: opacity .5s ease;
+  background: radial-gradient(ellipse at 50% 40%, rgba(26, 15, 38, .94), rgba(6, 4, 10, .985));
+}
+#baas-intro.baas-intro-inventaris .baas-intro-binnen { animation: none; }
+#baas-intro.baas-intro-inventaris.weg { opacity: 0; }
 .baas-intro-inventaris .inv-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .inv-podium { position: relative; width: min(460px, 86vw); height: clamp(150px, 30vh, 230px); display: flex; align-items: center; justify-content: center; }
 .inv-rug {
@@ -4164,7 +4174,7 @@ img { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -we
 body.lite .inv-rug, body.lite .inv-tekst.in, body.lite .inv-rug.trilt { animation: none !important; transition: none; }
 
 /* ---------- DE PLAGIAATFASE: de fake-dood van de Erfprins ---------- */
-.plagiaat-zakt .vijand-art { animation: plagiaatZak .95s ease forwards; }
+.vijand.plagiaat-zakt .vijand-art { animation: plagiaatZak .95s ease forwards; }   /* .vijand.raak-specificiteit evenaren — bronvolgorde laat de fake-dood winnen (review) */
 @keyframes plagiaatZak {
   to { transform: translateY(14px) rotate(4deg) scale(.9); filter: grayscale(.85) brightness(.4) drop-shadow(0 8px 5px rgba(0, 0, 0, .6)); }
 }
@@ -4187,6 +4197,13 @@ body.lite .plagiaat-zakt .vijand-art { animation: none; filter: grayscale(.85) b
   color: #ffd7c2; letter-spacing: .06em; text-shadow: 0 0 28px rgba(226, 84, 44, .9), 0 3px 12px rgba(0, 0, 0, .8);
 }
 .sb-proloog-tekst { color: var(--perkament); font-family: 'Alegreya', serif; line-height: 1.62; margin: 0; }
+/* korte liggende telefoons: de proloog krimpt zodat de knoppenbalk in beeld blijft (review: 21-75px onder de vouw) */
+@media (max-height: 430px) {
+  .sb-proloog { gap: 7px; }
+  .sb-proloog-blok { width: clamp(56px, 15vh, 92px); font-size: 2.4rem; }
+  .sb-proloog-titel { font-size: 1.45rem; }
+  .sb-proloog-tekst { font-size: .88rem; line-height: 1.42; }
+}
 .sb-stap { font-size: .55em; color: #e2915c; letter-spacing: .16em; margin-left: 10px; vertical-align: middle; }
 .sb-bestemming { color: #d9a06b; font-style: italic; font-size: .86rem; max-width: min(92vw, 640px); text-align: center; margin: 4px 0 0; }
 .sb-module.sb-ader { border-color: rgba(245, 197, 66, .6); box-shadow: inset 0 0 12px rgba(245, 197, 66, .1); cursor: help; }
@@ -4210,11 +4227,12 @@ body.lite .plagiaat-zakt .vijand-art { animation: none; filter: grayscale(.85) b
 }
 @keyframes gvDraai { to { transform: rotate(360deg); } }
 .gesmeed-visual .gv-zegel {
-  position: relative; z-index: 2; font-size: 1.45em; line-height: 1;
+  position: relative; z-index: 2; font-size: 1.45em; line-height: 1.15;
+  display: inline-flex; align-items: center; justify-content: center;   /* inline-span negeert transform → de puls speelde nergens (review) */
   filter: drop-shadow(0 0 10px rgba(255, 140, 50, .9)) drop-shadow(0 2px 4px rgba(0, 0, 0, .8));
   animation: gvPuls 2.4s ease-in-out infinite;
 }
-@keyframes gvPuls { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@keyframes gvPuls { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
 @media (prefers-reduced-motion: reduce) {
   .gesmeed-visual .gv-vuur::after, .gesmeed-visual .gv-zegel, .sb-proloog-blok { animation: none !important; }
 }

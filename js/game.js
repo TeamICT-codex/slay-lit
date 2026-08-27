@@ -2216,14 +2216,21 @@ function verliesHp(doel, n, bron) {
       doel.hp = Math.min(doel.maxHp || 180, buit.length * 12);
       doel.blok = 0;
       doel.status = {};                                  /* hij herrijst schoon — jouw gif stierf met de vorige versie */
+      /* de intent is een momentopname van vóór de splice: zonder hersync pocht hij over
+         kaarten die hij net verscheurde en landt de getelegrafeerde klap nooit (review) */
+      if (VIJANDEN[doel.id] && typeof VIJANDEN[doel.id].kies === 'function') {
+        doel.intent = VIJANDEN[doel.id].kies(doel, doel.beurtTeller || 0);
+      }
       const g2 = S.gevecht;
       /* de beat: hij zákt (fake-dood, stilte)… en staat dan op met jouw leven in zijn handen */
       pose2D(doel, 'hit', 1.1);
       const elD = actorEl(doel);
       if (elD) { elD.classList.add('plagiaat-zakt'); }
       setTimeout(() => {
+        /* de zak-klasse ALTIJD opruimen — ook als hij intussen alsnog stierf (multi-hit),
+           anders blijft het lijk grijs-gezakt staan (review 27 aug) */
+        if (elD && elD.isConnected) elD.classList.remove('plagiaat-zakt');
         if (S.gevecht !== g2 || g2.voorbij) return;
-        if (elD) elD.classList.remove('plagiaat-zakt');
         baasFaseMoment('DE PLAGIAATFASE', '„Sterven? Ik? Ik heb JOUW leven nog op voorraad."');
         baasSpreekt(UITSPRAKEN._erfprins.plagiaat);
         if (window.Vista) Vista.pose(doel, 'cast', 2.2);
@@ -3507,8 +3514,8 @@ function toonErfprinsInventaris(g, b, el) {
     });
     Klank.sfx('zwareklap');
     setTimeout(() => { if (el.isConnected) { Klank.sfx('dood'); schudScherm(); } }, 480);
-    timers.push(setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(baasUitspraken(b.id).intro); }, 1600));
-    timers.push(setTimeout(() => { if (S.gevecht === g && !g.voorbij && UITSPRAKEN._erfprins.orakel) baasSpreekt(UITSPRAKEN._erfprins.orakel[0]); }, 5200));
+    timers.push(setTimeout(() => { if (S && S.gevecht === g && !g.voorbij) baasSpreekt(baasUitspraken(b.id).intro); }, 1600));
+    timers.push(setTimeout(() => { if (S && S.gevecht === g && !g.voorbij && UITSPRAKEN._erfprins.orakel) baasSpreekt(UITSPRAKEN._erfprins.orakel[0]); }, 5200));
     timers.push(setTimeout(() => { el.classList.add('weg'); setTimeout(() => el.remove(), 500); }, 4600));
   };
   beats.forEach((bt, i) => timers.push(setTimeout(() => { if (!el._klaar) toonBeat(i); }, 140 + i * STAP)));
@@ -6902,14 +6909,19 @@ function registreerGesmeed(id, spec) {
     naam: spec.naam, zeld: 'gesmeed', gesmeed: true,
     kost: spec.kost, icoon: spec.icoon,
     type: spec.modules.some(m => SMEED_MODULES[m.m].doel) ? 'aanval' : 'vaardigheid',
+    /* zonder doel-vlag routeert klikKaart NOOIT naar doelkeuze → schade/gif/zwak/
+       kwetsbaar waren stille no-ops (review 27 aug; zat er al sinds de eerste versie).
+       De verborgen vuur-bonus telt bewust NIET mee (zou hem in de UI verklappen). */
+    doel: spec.modules.some(m => SMEED_MODULES[m.m].doel) ? 'vijand' : undefined,
     tekst: () => gesmeedTekst(spec),
     flavor: `Gesmeed op het Slachtblok, uit ${spec.offers.join(' en ')}.`,
     speel: (c, doel) => {
-      const voer = (mid, n) => {
-        if (mid === 'schade') aanvalOp(doel, n);
-        else if (mid === 'gif') { if (doel && !doel.dood) geefGif(doel, n); }
-        else if (mid === 'zwak') { if (doel && !doel.dood) geefStatus(doel, 'zwak', n); }
-        else if (mid === 'kwetsbaar') { if (doel && !doel.dood) geefStatus(doel, 'kwetsbaar', n); }
+      const voer = (mid, n, d) => {
+        const t = (d === undefined) ? doel : d;
+        if (mid === 'schade') aanvalOp(t, n);
+        else if (mid === 'gif') { if (t && !t.dood) geefGif(t, n); }
+        else if (mid === 'zwak') { if (t && !t.dood) geefStatus(t, 'zwak', n); }
+        else if (mid === 'kwetsbaar') { if (t && !t.dood) geefStatus(t, 'kwetsbaar', n); }
         else if (mid === 'blok') geefBlok(sp(), n);
         else if (mid === 'doornen') geefStatus(sp(), 'doornen', n);
         else if (mid === 'trek') trekKaarten(n);
@@ -6920,8 +6932,13 @@ function registreerGesmeed(id, spec) {
         else if (mid === 'groei') { geneesHp(n); geefBlok(sp(), n); }
       };
       spec.modules.forEach(m => voer(m.m, m.p * SMEED_MODULES[m.m].perPunt));
-      /* ✦ de vuur-bonus: wat het vuur er ongevraagd in sloeg */
-      if (spec.bonus && SMEED_MODULES[spec.bonus.m]) voer(spec.bonus.m, spec.bonus.p * SMEED_MODULES[spec.bonus.m].perPunt);
+      /* ✦ de vuur-bonus: wat het vuur er ongevraagd in sloeg. Een doel-bonus op een
+         doelloze kaart (bv. blok-kaart + schade-bonus) landt op de eerste levende vijand. */
+      if (spec.bonus && SMEED_MODULES[spec.bonus.m]) {
+        const bDoel = (SMEED_MODULES[spec.bonus.m].doel && !doel)
+          ? ((S.gevecht && S.gevecht.vijanden.find(v => !v.dood)) || null) : doel;
+        voer(spec.bonus.m, spec.bonus.p * SMEED_MODULES[spec.bonus.m].perPunt, bDoel);
+      }
     }
   };
 }
@@ -7093,6 +7110,13 @@ function smeedKaart() {
   S.dek = S.dek.filter(c => !s.offers.includes(c));
   schudScherm(); Klank.sfx('zwareklap'); setTimeout(() => Klank.sfx('schitter'), 400);
   if (s.modus === 'dood') {
+    /* een bestaand erfstuk van deze held met ladingen wordt anders STIL gewist (review) */
+    const oud = Codex.slachtblok && Codex.slachtblok[S.held];
+    if (oud && (oud.charges || 0) > 0 && !s.overschrijfOk) {
+      bevestig(`Het blok draagt al jouw „${oud.naam}" (nog ${oud.charges} lading${oud.charges === 1 ? '' : 'en'}). Een nieuw werk verdringt het oude — voorgoed. Doorzetten?`,
+        () => { if (_smeed) { _smeed.overschrijfOk = true; smeedKaart(); } }, '🔥 Smeed toch');
+      return;
+    }
     /* de kaart wacht in de Codex op je volgende run (één slot per held, 3 ladingen) */
     spec.charges = 3;
     Codex.slachtblok = Codex.slachtblok || {};

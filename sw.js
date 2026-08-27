@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v82'; // v82: Erfprins-inventaris + Plagiaatfase, Slachtblok 2.0 (proloog/erfstuk/held-aderen/vuur-bonus/smeed-visual)
+const CACHE = 'slayit-v83'; // v83: 8 reviewfixes op v82 (intro-doek, gesmeed-doel, plagiaat-intent/zak, erfstuk-bevestiging, proloog-krimp, zegel-puls)
 const BESTANDEN = [
   '.',
   'css/style.css',
