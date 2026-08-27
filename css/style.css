@@ -3040,6 +3040,29 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
   letter-spacing: .04em;
 }
 
+/* ---------- syndicaat: de eeuwige vlam + het dueldecreet + de nalatenschap ---------- */
+.syn-vlam {
+  text-align: center; font-size: .92rem; color: var(--perkament);
+  background: linear-gradient(90deg, transparent, rgba(255, 140, 50, .14), transparent);
+  border-radius: 8px; padding: 8px 12px; margin-bottom: 10px;
+}
+.syn-vlam.vlam-flakkert { animation: vlamFlakker 1.6s ease-in-out infinite; }
+@keyframes vlamFlakker { 50% { opacity: .55; } }
+.syn-vlam.vlam-uit { color: var(--perkament-dof); background: linear-gradient(90deg, transparent, rgba(120, 120, 140, .12), transparent); }
+.syn-duel {
+  background: rgba(28, 20, 40, .55); border: 1px solid var(--rand);
+  border-radius: 10px; padding: 10px 14px; margin: 12px 0;
+}
+.syn-duel h4 { margin: 0 0 8px; font-size: .95rem; }
+.duel-rij { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 3px 0; font-size: .92rem; }
+.duel-kant { flex: 1; text-align: center; color: var(--perkament-dof); }
+.duel-kant b { color: var(--perkament); margin-left: 6px; }
+.duel-kant.duel-leidt { color: var(--goud); }
+.duel-kant.duel-leidt b { color: var(--goud); }
+.duel-vs { opacity: .7; }
+.duel-vrij, .duel-stand { text-align: center; font-size: .78rem; color: var(--perkament-dof); margin: 6px 0 0; }
+.beloning-nalatenschap { border-color: rgba(190, 120, 245, .55); box-shadow: 0 0 14px rgba(150, 100, 220, .25); }
+
 /* ---------- 3D-strijdtoneel ---------- */
 /* eigen gevechtsplaat: fullscreen op natuurlijke schaal, met parallax via transform */
 #gevecht-achtergrond {

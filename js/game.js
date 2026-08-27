@@ -407,6 +407,51 @@ function heldVanDag() {
   const ids = Object.keys(SPELERS);
   return ids[zaadVanTekst(vandaagSleutel()) % ids.length];
 }
+/* DE NALATENSCHAP: welke kaart laat een gevallene na? Zijn beste — hoogste
+   zeldzaamheid, geen basis/vloek/gesmeed (gesmeed is te persoonlijk). */
+function nalatenschapKaart() {
+  const orde = { episch: 4, zeldzaam: 3, ongewoon: 2, gewoon: 1 };
+  let beste = null;
+  (S.dek || []).forEach(c => {
+    const z = kdef(c) && kdef(c).zeld;
+    if (orde[z] && (!beste || orde[z] > orde[beste.z])) beste = { id: c.id, z };
+  });
+  return beste && beste.id;
+}
+/* de laatste n dagen als sleutels (vandaag eerst) — voor de groepsgeschiedenis */
+function laatsteDagen(n) {
+  const uit = []; const d = new Date();
+  for (let i = 0; i < n; i++) { uit.push(datumSleutel(d)); d.setDate(d.getDate() - 1); }
+  return uit;
+}
+/* HET DUELDECREET: dag-seeded duo's binnen de posse. Deterministisch uit
+   (dag, groepscode, gesorteerde ledenlijst) — iedereen ziet dezelfde paren.
+   Oneven aantal → de laatste is die dag 'vrijgesteld van het decreet'. */
+function duelParen(namen, dag, code) {
+  const lijst = namen.slice().sort((a, b) => a.localeCompare(b));
+  let z = (zaadVanTekst('DUEL-' + dag + '-' + code) || 1) >>> 0;
+  const rnd = () => ((z = (z * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (let i = lijst.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [lijst[i], lijst[j]] = [lijst[j], lijst[i]];
+  }
+  const paren = [];
+  for (let i = 0; i + 1 < lijst.length; i += 2) paren.push([lijst[i], lijst[i + 1]]);
+  return { paren, vrijgesteld: lijst.length % 2 ? lijst[lijst.length - 1] : null };
+}
+/* DE EEUWIGE VLAM: hoeveel dagen op rij daalde minstens één genoot af?
+   Telt terug vanaf vandaag; is vandaag nog leeg, dan flakkert ze (reeks
+   t/m gisteren) tot iemand haar redt. */
+function vlamReeks(gesch) {
+  const dagenMet = new Set((gesch || []).map(r => r.dag));
+  const d = new Date();
+  const vandaagGedekt = dagenMet.has(datumSleutel(d));
+  if (!vandaagGedekt) d.setDate(d.getDate() - 1);
+  let reeks = 0;
+  while (reeks < 60 && dagenMet.has(datumSleutel(d))) { reeks++; d.setDate(d.getDate() - 1); }
+  return { reeks, vandaagGedekt };
+}
+
 /* de VREEMDE held van de dag (≠ je eigen): voedt DE VIJANDIGE OVERNAME (wiens
    startdek krijg je) en DE DETACHERING (uit wiens gilde komen je beloningen).
    Eigen salt, deterministisch — in de daily speelt iedereen dezelfde held,
@@ -600,6 +645,12 @@ function registreerDaily(gewonnen) {
     Online.stuurScore({ dag, score: totaal, held: S.held, diepte: S.verdieping || 0, gewonnen: !!gewonnen, seed: S.seed })
       .then(ok => { if (ok) melding(Online.isLid() ? '🔥 Je score staat op het syndicaats- én wereldbord.' : '🌍 Je score staat op het wereldbord.'); });
     if (Online.isLid() && INST.autoPor) autoPorNaDaily(dag, totaal);
+    /* DE NALATENSCHAP: val je in de daily, dan reist je beste kaart naar de
+       volgende genoot die afdaalt (best-effort; kolom = SQL 1g) */
+    if (!gewonnen && Online.isLid()) {
+      const na = nalatenschapKaart();
+      if (na) Online.stuurNalatenschap(dag, na);
+    }
   }
   return { totaal, reeks: Daily.reeks, besteReeks: Daily.besteReeks, nieuweTop };
 }
@@ -1042,7 +1093,7 @@ async function vulSyndicaat() {
   Online.meldAan();   /* jezelf als lid registreren + 'laatst gezien' verversen */
   try {
     const dag = vandaagSleutel();
-    const [vandaag, ooit, recent, leden] = await Promise.all([Online.dagTop(dag), Online.allerTijden(), Online.feed(), Online.leden().catch(() => null)]);
+    const [vandaag, ooit, recent, leden, gesch] = await Promise.all([Online.dagTop(dag), Online.allerTijden(), Online.feed(), Online.leden().catch(() => null), Online.groepGeschiedenis(laatsteDagen(30)).catch(() => null)]);
     if (!document.getElementById('syn-inhoud')) return;   /* overlay intussen dicht */
     /* wie speelde vandaag al? (kruis de dag-scores tegen de ledenlijst) */
     const gespeeldVandaag = {};
@@ -1064,10 +1115,56 @@ async function vulSyndicaat() {
     const restRijen = rest.map((r, i) => `<div class="lb-rij"><span class="lb-rang">${i + 4}.</span><b>${r.score | 0}</b><span>${escSyn(r.naam)}</span><small>${r.gewonnen ? '👑' : 'rij ' + (r.diepte | 0)}</small></div>`).join('');
     const ooitRijen = (ooit || []).slice(0, 5).map((r, i) => `<div class="lb-rij ${i === 0 ? 'lb-top' : ''}"><span class="lb-rang">${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'}</span><b>${r.score | 0}</b><span>${escSyn(r.naam)}</span><small>${escSyn(r.dag)}</small></div>`).join('') || '<p class="lb-leeg">Nog geen scores — wees de eerste.</p>';
     const stoef = (recent || []).slice(0, 5).map(r => `<p class="syn-stoef">${synStoefRegel(r)}</p>`).join('') || '<p class="lb-leeg">Nog geen wapenfeiten. Iemand moet de eerste zijn…</p>';
+    /* DE EEUWIGE VLAM: de posse-reeks als bandje boven het podium */
+    let vlamHtml = '';
+    if (Array.isArray(gesch)) {
+      const v = vlamReeks(gesch);
+      vlamHtml = v.reeks === 0
+        ? `<div class="syn-vlam vlam-uit">🕯️ <b>De Eeuwige Vlam</b> is gedoofd — de eerste afdaling van vandaag herontsteekt haar.</div>`
+        : v.vandaagGedekt
+          ? `<div class="syn-vlam">🔥 <b>De Eeuwige Vlam</b> brandt <b>${v.reeks >= 60 ? '60+' : v.reeks}</b> ${v.reeks === 1 ? 'dag' : 'dagen'} — vandaag al gered.</div>`
+          : `<div class="syn-vlam vlam-flakkert">🔥 <b>De Eeuwige Vlam</b> brandt ${v.reeks} ${v.reeks === 1 ? 'dag' : 'dagen'} — maar <b>flakkert</b>: nog niemand daalde vandaag af!</div>`;
+    }
+    /* HET DUELDECREET: dag-seeded duo's + weekstand uit de geschiedenis */
+    let duelHtml = '';
+    if (Array.isArray(leden) && leden.length >= 2) {
+      const namen = leden.map(l => l.naam);
+      const code = Online.lid().code;
+      const { paren, vrijgesteld } = duelParen(namen, dag, code);
+      const duelRijen = paren.map(([a, b]) => {
+        const sa = gespeeldVandaag[a] ? gespeeldVandaag[a].score | 0 : null;
+        const sb = gespeeldVandaag[b] ? gespeeldVandaag[b].score | 0 : null;
+        const leidt = (sa !== null || sb !== null) ? ((sa || 0) >= (sb || 0) ? a : b) : null;
+        const kant = (n, s) => `<span class="duel-kant ${leidt === n ? 'duel-leidt' : ''}">${escSyn(n)} <b>${s === null ? '—' : s}</b></span>`;
+        return `<div class="duel-rij">${kant(a, sa)}<span class="duel-vs">⚔️</span>${kant(b, sb)}</div>`;
+      }).join('');
+      /* weekstand: wins tellen over de laatste 7 dagen (alleen dagen waarop
+         beide duellisten een score hadden; paren gereconstrueerd met de
+         ledenlijst van nú — goed genoeg op vriendenschaal) */
+      const wins = {};
+      if (Array.isArray(gesch)) {
+        laatsteDagen(7).slice(1).forEach(d7 => {
+          const scoresDag = {};
+          gesch.filter(r => r.dag === d7).forEach(r => { scoresDag[r.naam] = r.score | 0; });
+          duelParen(namen, d7, code).paren.forEach(([a, b]) => {
+            if (scoresDag[a] === undefined || scoresDag[b] === undefined) return;
+            const w = scoresDag[a] >= scoresDag[b] ? a : b;
+            wins[w] = (wins[w] || 0) + 1;
+          });
+        });
+      }
+      const stand = Object.entries(wins).sort((a, b) => b[1] - a[1]).slice(0, 3)
+        .map(([n, w]) => `${escSyn(n)} ${w}`).join(' · ');
+      duelHtml = `<div class="syn-duel"><h4>⚔️ Het Dueldecreet van vandaag</h4>${duelRijen}
+        ${vrijgesteld ? `<p class="duel-vrij">${escSyn(vrijgesteld)} is vandaag vrijgesteld van het decreet.</p>` : ''}
+        ${stand ? `<p class="duel-stand">Weekstand: ${stand}</p>` : ''}</div>`;
+    }
     el.innerHTML = `
+      ${vlamHtml}
       <div class="syn-podium">${treden}</div>
       ${podium.length === 0 ? '<p class="syn-podium-leeg">Het podium van vandaag staat leeg — de eerste afdaling pakt goud. 🥇</p>' : ''}
       ${restRijen}
+      ${duelHtml}
       ${ledenBlok}
       <div class="syn-onder">
         <div class="syn-kolom"><h4>🏛️ Aller tijden</h4>${ooitRijen}</div>
@@ -5600,7 +5697,13 @@ async function gevechtGewonnen() {
   if (heeftRelikwie('kaarsenstomp')) zetFakkel(3);
 
   const buitRelikwie = (g.soort === 'elite' || g.soort === 'episch') ? willekeurigRelikwie({ ongewoon: 50, zeldzaam: 38, episch: 12 }) : null;
+  /* DE NALATENSCHAP: één keer per daily, bij de eerstvolgende overwinning —
+     gegarandeerd vindbaar (geen ?-node-loterij). Guard op KAARTEN[..]:
+     serverdata, een onbekend kaart-id mag nooit een leeg blok tonen. */
+  const nalatenschap = (S.daily && S.nalatenschap && !S.nalatenschapGevonden && KAARTEN[S.nalatenschap.kaart])
+    ? S.nalatenschap : null;
   S.beloning = {
+    nalatenschap,
     goud,
     kaarten: trekKaartBeloning(),
     relikwie: buitRelikwie,
@@ -5665,6 +5768,10 @@ function renderBeloning() {
   let html = `<h2 class="scherm-titel">Overwinning!</h2>
     <p class="scherm-sub">De buit neem je automatisch mee — alleen de kaartkeuze is aan jou.</p>
     <div class="beloning-lijst">`;
+  if (b.nalatenschap && KAARTEN[b.nalatenschap.kaart]) {
+    const nk = KAARTEN[b.nalatenschap.kaart];
+    html += `<button class="beloning-item beloning-nalatenschap" onclick="pakNalatenschap()">🪦 De nalatenschap van ${escSyn(b.nalatenschap.van)} — <b>${nk.naam}</b><small>Gevallen vandaag in de diepte. Zijn beste kaart reist met jou verder.</small></button>`;
+  }
   if (b.goud > 0) html += `<button class="beloning-item" onclick="pakGoud()">🪙 ${b.goud} goud</button>`;
   if (b.relikwie) {
     const rd = RELIKWIEEN[b.relikwie];
@@ -5683,6 +5790,7 @@ function verderNaBeloning() {
   const b = S.beloning || {};
   const mee = [];
   if (b.goud > 0) { geefGoud(b.goud); mee.push(`🪙 ${b.goud} goud`); b.goud = 0; Klank.sfx('goud'); }
+  if (b.nalatenschap && KAARTEN[b.nalatenschap.kaart]) { pakNalatenschap(); mee.push('de nalatenschap van ' + b.nalatenschap.van); b.nalatenschap = null; }
   if (b.relikwie && !b.vervloekt) { geefRelikwie(b.relikwie); mee.push(RELIKWIEEN[b.relikwie].naam); b.relikwie = null; }
   else if (b.relikwie && b.vervloekt) mee.push(`${RELIKWIEEN[b.relikwie].naam} LATEN LIGGEN (vervloekte buit vergt een bewuste keuze)`);
   if (b.drank) {
@@ -5692,6 +5800,19 @@ function verderNaBeloning() {
   }
   if (mee.length) melding('Meegenomen: ' + mee.join(' · '));
   renderKaartScherm();
+}
+function pakNalatenschap() {
+  const n = S.beloning && S.beloning.nalatenschap;
+  if (!n || !KAARTEN[n.kaart]) return;
+  S.dek.push(nieuweKaart(n.kaart));
+  S.nalatenschapGevonden = true;
+  S.beloning.nalatenschap = null;
+  toonKaartReveal(n.kaart, {
+    kop: `🪦 DE NALATENSCHAP VAN ${escSyn(String(n.van || '').toUpperCase())}`,
+    flavor: 'Gevallen vandaag in de diepte. Wat van hem was, vecht nu met jou mee.',
+    klank: 'schitter'
+  });
+  renderBeloning();
 }
 function pakGoud() { Klank.sfx('goud'); geefGoud(S.beloning.goud); S.beloning.goud = 0; renderBeloning(); }
 function pakRelikwie() {
@@ -7345,8 +7466,18 @@ function startDaily() {
   const dagRelikwieen = [];
   const relAantal = wetId === 'besmetting' ? 3 : 2;
   for (let i = 0; i < relAantal; i++) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r, false, true); dagRelikwieen.push(RELIKWIEEN[r].naam); } }   /* stil: bulk bij runstart, de dagwet somt ze zelf op */
-  S.dagwetGeschenken = dagRelikwieen;   /* in S → de proclamatie kan ze ook ná een herlaad tonen */
+  /* CONCAT, niet overschrijven: pasDagwetStartToe kan al een chip gezet hebben
+     (De Detachering noemt daar de vreemde held) — die mag niet verloren gaan */
+  S.dagwetGeschenken = (Array.isArray(S.dagwetGeschenken) ? S.dagwetGeschenken : []).concat(dagRelikwieen);
   laadDagGraven();   /* de graven van je posse: wie viel vandaag al, en waar? */
+  /* DE NALATENSCHAP: viel een genoot vandaag al, dan wacht zijn beste kaart
+     onderweg op je (geïnjecteerd in je eerste gevechtsbeloning) */
+  S.nalatenschap = null; S.nalatenschapGevonden = false;
+  if (window.Online && Online.isLid()) {
+    Online.haalNalatenschap(vandaagSleutel()).then(r => {
+      if (r && S && S.daily && KAARTEN[r.kaart]) S.nalatenschap = { van: r.naam, kaart: r.kaart };
+    }).catch(() => {});
+  }
   renderKaartScherm();
   /* geen wegdrijvende toasts maar DE PROCLAMATIE: de baas vaardigt de wet uit */
   toonDagwetProclamatie();

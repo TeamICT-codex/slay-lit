@@ -125,6 +125,19 @@ alter table public.scores add column if not exists boodschap text;
 Zonder deze kolom werkt alles gewoon door — alleen het versturen van een
 grafschrift meldt dan netjes dat het niet lukte.
 
+## 1g. De Nalatenschap (SQL deel 1g — één regel)
+
+Val je in de Dagelijkse afdaling, dan laat je je beste kaart na; de
+eerstvolgende posse-genoot die afdaalt vindt haar in zijn eerste
+gevechtsbeloning. Daarvoor is één extra kolom nodig:
+
+```sql
+alter table scores add column if not exists nalatenschap text;
+```
+
+Zonder deze kolom werkt alles gewoon door — het nalaten faalt dan stil
+(best-effort, net als het grafschrift).
+
 ## 1f. Spook-leden opruimen (eenmalig, indien nodig)
 
 Wie vóór cache v63 zijn strijdnaam wijzigde deed dat via *verlaten + opnieuw

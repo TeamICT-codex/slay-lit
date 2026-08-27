@@ -180,6 +180,44 @@ const Online = (() => {
   }
 
   const q = () => 'groep=eq.' + encodeURIComponent(lid.code);
+
+  /* de groepsgeschiedenis over meerdere dagen in ÉÉN query — voedt HET
+     DUELDECREET (duelstand) en DE EEUWIGE VLAM (posse-reeks). De caller
+     (game.js) bouwt de dagenlijst; datums zijn YYYY-MM-DD, veilig in in.() */
+  const groepGeschiedenis = dagen =>
+    req(`scores?${q()}&dag=in.(${dagen.map(encodeURIComponent).join(',')})&select=dag,naam,score,gewonnen&limit=400`);
+
+  /* DE NALATENSCHAP (SQL 1g, kolom 'nalatenschap'): de beste kaart van een
+     gevallene reist naar de volgende genoot die afdaalt. Zelfde best-effort
+     PATCH-patroon als het grafschrift: de score-upload loopt nooit gevaar,
+     en zolang de kolom niet bestaat (SQL 1g niet gedraaid) faalt dit stil. */
+  async function stuurNalatenschap(dag, kaartId) {
+    const ik = identiteit();
+    kaartId = String(kaartId || '').slice(0, 40);
+    if (!ik || !kaartId) return false;
+    const patch = async () => {
+      const r = await req(`scores?groep=eq.${encodeURIComponent(ik.code)}&naam=eq.${encodeURIComponent(ik.naam)}&dag=eq.${encodeURIComponent(dag)}`, {
+        method: 'PATCH', prefer: 'return=representation',
+        body: JSON.stringify({ nalatenschap: kaartId })
+      });
+      return Array.isArray(r) && r.length > 0;
+    };
+    try {
+      if (await patch()) return true;
+      await new Promise(res => setTimeout(res, 1600));   /* score-rij nog onderweg? */
+      return await patch();
+    } catch (e) { return false; }
+  }
+
+  /* de nalatenschap van vandaag ophalen: de hoogst gescoorde GEVALLEN genoot
+     (niet jijzelf) die een kaart naliet. Kolom onbekend/offline → stil null. */
+  async function haalNalatenschap(dag) {
+    if (!lid) return null;
+    try {
+      const r = await req(`scores?${q()}&dag=eq.${encodeURIComponent(dag)}&naam=neq.${encodeURIComponent(lid.naam)}&nalatenschap=not.is.null&gewonnen=is.false&select=naam,nalatenschap&order=score.desc&limit=1`);
+      return (Array.isArray(r) && r[0]) ? { naam: r[0].naam, kaart: r[0].nalatenschap } : null;
+    } catch (e) { return null; }
+  }
   /* het dagpodium: de scores van het syndicaat voor één dag */
   const dagTop = dag => req(`scores?${q()}&dag=eq.${encodeURIComponent(dag)}&order=score.desc&limit=10`);
   /* aller tijden: de hoogste scores ooit binnen het syndicaat */
@@ -256,6 +294,7 @@ const Online = (() => {
   return { actief, isLid, lid: () => lid, normCode, normNaam, verzinCode, wordLid, verlaat,
            identiteit, isZwerver, wordZwerver, hernoem,
            stuurScore, stuurGrafschrift, dagTop, allerTijden, feed,
+           groepGeschiedenis, stuurNalatenschap, haalNalatenschap,
            wereldDag, wereldOoit,
            meldAan, leden, stuurPor, mijnPorren, _dev };
 })();
