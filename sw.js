@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v80'; // v80: gok-events spreken cryptisch (geen kansen/uitkomsten meer verklapt)
+const CACHE = 'slayit-v81'; // v81: Act 3-regime-cast op groot-formaat + kaarttekst-spaties (Doe8schade-fix)
 const BESTANDEN = [
   '.',
   'css/style.css',

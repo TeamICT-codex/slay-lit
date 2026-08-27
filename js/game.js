@@ -3564,7 +3564,10 @@ function stopGevechtLus() {
 /* grootte-variatie: kleine basics krimpen, een paar imposante wezens groeien (puur
    visueel via transform-scale, origin bottom → geen reflow/grondlijn-breuk). Tunebaar. */
 const VIJAND_KLEIN = new Set(['groene_slijm', 'blauwe_slijm', 'grotrat', 'naaper', 'mal_gietsel', 'doorslag_kopie', 'echo', 'pekziel']);
-const VIJAND_GROOT = new Set(['steengolem', 'dossierwurm', 'de_deadline', 'de_inktvlek', 'grombaard']);
+const VIJAND_GROOT = new Set(['steengolem', 'dossierwurm', 'de_deadline', 'de_inktvlek', 'grombaard',
+  /* Act 3: de imposante regime-cast oogde te klein op de basismaat (playtest 27 aug, laptop) —
+     de dunne-massa-figuren (banier/hellebaard rekken het canvas) horen juist te tronen */
+  'de_vaandeldrager', 'de_gouden_garde', 'de_aanklager', 'het_klapvee', 'de_omroeper']);
 /* ENTREE-VARIANT per vijand (2D): een eigen binnenkomst op maat van het wezen. Niet vermeld
    = de standaard glij-in-van-rechts. 'geest' = materialiseert traag, ijl, vanuit de zijkant;
    'opborrel' = rijst op uit de grond (vloeistof/slijm). Vrij uit te breiden — zie css .entree-*. */
