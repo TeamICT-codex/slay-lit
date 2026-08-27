@@ -2150,13 +2150,13 @@ const EVENTS = [
         doe: () => { vonkAltaarKies(false); return null; }
       },
       {
-        label: 'Voed eerst de vlam (−25 licht)', detail: 'Offer 25 fakkellicht; de vlam wordt milder gestemd — vaker Heldering, zelden een dud.',
+        label: 'Voed eerst de vlam (−25 licht)', detail: '„Wie mij eerst te eten geeft," sist de vlam, „die bijt ik zelden."',
         kan: () => S.fakkel >= 25 && S.dek.some(c => !c.vonk && KAARTEN[c.id] && KAARTEN[c.id].kost !== null),
         reden: () => S.fakkel < 25 ? 'Je fakkel heeft te weinig licht (min. 25).' : 'Geen kaart vat nog vlam.',
         doe: () => { vonkAltaarKies(true); return null; }
       },
       {
-        label: 'Voer een vloek aan de vlam', hint: 'Het duister van een vloek is gretige brandstof — de vlam verslindt haar en slaat het om in licht.',
+        label: 'Voer een vloek aan de vlam', hint: '„Bitter?" De vlam likt haar randen. „Bitter brandt het felst."',
         kan: () => S.dek.some(c => KAARTEN[c.id] && KAARTEN[c.id].type === 'vloek'),
         reden: () => 'Je draagt geen vloek om te offeren.',
         doe: () => { vonkAltaarVloek(); return null; }
@@ -2252,7 +2252,7 @@ const EVENTS = [
         doe: () => { zetFakkel(30); return 'Je fakkel zoemt en laait goudgroen op. +30 licht!'; }
       },
       {
-        label: 'Volg de zwerm', detail: '50% kans op een relikwie, anders 25 goud.',
+        label: 'Volg de zwerm', detail: 'Ze dansen ergens héén — wie volgt, vindt wat de zwerm bewaakt.',
         doe: () => {
           if (willekeurig() < 0.5) {
             const r = willekeurigRelikwie();
@@ -2270,7 +2270,7 @@ const EVENTS = [
     tekst: 'Tegen de muur ligt een avonturier die het niet heeft gered. Zijn buidel puilt uit. Zijn ogen lijken je te volgen.',
     opties: [
       {
-        label: 'Doorzoek het lijk', detail: 'Krijg 60 goud, maar ook een vloek.',
+        label: 'Doorzoek het lijk', detail: '60 goud glimt tussen de ribben. Maar wat de dode vasthield, laat niet los — er reist een vloek mee.',
         doe: () => { geefGoud(60); const v = geefVloek(); return v ? `Je vindt 60 goud... maar een kille rilling trekt door je botten. Je dek bevat nu "${v}".` : 'Je vindt 60 goud... en het Zondebokvel vangt de kille rilling op.'; }
       },
       { label: 'Laat hem rusten', detail: 'Niets gebeurt.', doe: () => 'Je vouwt zijn handen over zijn borst en loopt verder.' }
@@ -2311,13 +2311,13 @@ const EVENTS = [
     tekst: 'Een rammelend monster van tandwielen en inktrollen staat te draaien in een nis. Stop er iets in, en het perst er een doorslag van uit.',
     opties: [
       {
-        label: 'Dupliceer een kaart', detail: 'Voeg een kopie van een willekeurige kaart uit je dek toe.',
+        label: 'Dupliceer een kaart', detail: 'De machine kiest zelf wat ze de moeite van het herhalen waard vindt.',
         kan: () => S.dek.length < 30,
         reden: () => 'Je dek is al overvol.',
         doe: () => { const c = kiesUit(S.dek); if (c) { const nk = nieuweKaart(c.id); S.dek.push(nk); toonKaartReveal(nk.id, { kop: '📠 EEN DOORSLAG ROLT ERUIT', klank: 'klik' }); return `De machine ratelt en spuwt een doorslag van "${KAARTEN[c.id].naam}" uit. Je dek groeit.`; } return 'De machine ratelt, maar er komt niets uit.'; }
       },
       {
-        label: 'Dupliceer je goud', detail: 'Riskant: meestal +40%, soms −25%.',
+        label: 'Dupliceer je goud', detail: 'De machine kopieert álles. Ook fouten.',
         kan: () => S.goud >= 20,
         reden: () => 'Te weinig goud om te riskeren.',
         doe: () => { if (willekeurig() < 0.7) { const w = Math.floor(S.goud * 0.4); geefGoud(w); return `De machine kopieert je beurs: +${w} goud!`; } const v = Math.floor(S.goud * 0.25); S.goud -= v; return `De machine eet je munten op i.p.v. ze te kopiëren: −${v} goud.`; }
@@ -2419,7 +2419,7 @@ const EVENTS = [
     tekst: 'In een bazalten kelder ratelt een verborgen handpers. Verse pamfletten hangen aan waslijnen te drogen. Boven het valluik: hard rood licht. Hier beneden: één zachte kaars, en inktvlekken op alles.',
     opties: [
       {
-        label: 'Druk mee', detail: 'Smeed 1 willekeurige kaart (gratis upgrade). 35% kans: gesnapt.',
+        label: 'Druk mee', detail: 'De pers smeedt wat ze drukt. Maar persen maken lawaai — en het regime luistert.',
         kan: () => S.dek.some(c => !c.up && KAARTEN[c.id].up),
         reden: () => 'Al je kaarten zijn al gesmeed — je hand is hier niets waard.',
         doe: () => {
@@ -2431,7 +2431,7 @@ const EVENTS = [
         }
       },
       {
-        label: 'Verklik de drukker', detail: '+80 goud. Gegarandeerd een vloek — verraad kost je naam.',
+        label: 'Verklik de drukker', detail: '+80 goud. En een vloek — verraad kost je naam.',
         doe: () => { geefGoud(80); const v = geefDekVloek('laster'); if (v) toonVloekReveal('laster'); return v ? 'De premie is vorstelijk: 80 goud. De pers valt stil. Jouw naam fluistert voortaan mee in elke kelder.' : 'De premie is vorstelijk: 80 goud. Het Zondebokvel draagt de schande — maar jij weet het nog wel.'; }
       },
       { label: 'Duik terug de schaduw in', detail: 'Niets gebeurt.', doe: () => 'Je trekt je terug. Beneden ratelt de pers door — koppig, zacht, onbetaalbaar.' }
