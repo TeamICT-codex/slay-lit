@@ -407,6 +407,14 @@ function heldVanDag() {
   const ids = Object.keys(SPELERS);
   return ids[zaadVanTekst(vandaagSleutel()) % ids.length];
 }
+/* de VREEMDE held van de dag (≠ je eigen): voedt DE VIJANDIGE OVERNAME (wiens
+   startdek krijg je) en DE DETACHERING (uit wiens gilde komen je beloningen).
+   Eigen salt, deterministisch — in de daily speelt iedereen dezelfde held,
+   dus ook dezelfde vreemde held: eerlijk bord. */
+function vreemdeHeldVanDag() {
+  const ids = Object.keys(SPELERS).filter(h => !S || h !== S.held);
+  return ids[zaadVanTekst('VREEMD-' + vandaagSleutel()) % ids.length];
+}
 
 /* ---------- DE DAGWETTEN: elke dagelijkse afdaling valt onder één wet ----------
    Deterministisch uit de datum (aparte salt, los van de held-keuze) → iedereen
@@ -454,10 +462,27 @@ const DAGWETTEN = {
     scoreBonus: 0.20,
     baas: 'slijmkoning', baasArt: 'slijmkoning',
     quote: 'Eén druppel van mij reist mee in je dek. Voel je het al kriebelen?'
+  },
+  /* --- de kaartvloei-wetten (meesterplan fase 3): kaarten van helden vloeien
+     door elkaar — gerichter en asymmetrischer dan HET AMALGAAM (dat alles
+     gelijk blendt). Beide leunen op vreemdeHeldVanDag() — dag-seeded, dus
+     iedereen speelt dezelfde swap (eerlijk bord). --- */
+  overname: {
+    naam: 'DE VIJANDIGE OVERNAME', icoon: '🔀',
+    kort: 'Je gilde is geannexeerd: je begint met het VOLLEDIGE startdek van een andere held. Je passief en HP blijven de jouwe.',
+    scoreBonus: 0.15,
+    baas: 'de_erfprins', baasArt: 'de_erfprins_intro',
+    quote: 'Uw gilde is per heden geannexeerd. Het personeel mag blijven; de gereedschapskist is van de nieuwe eigenaar.'
+  },
+  detachering: {
+    naam: 'DE DETACHERING', icoon: '🧳',
+    kort: 'Je start met je eigen dek, maar élke kaartbeloning en winkelkaart komt uit het gilde van een andere held. Je build wordt onderweg een hybride.',
+    baas: 'de_dicktator', baasArt: 'de_dicktator_intro',
+    quote: 'U bent gedetacheerd. Uw vaardigheden zijn niet vergeten — ze zijn hergealloceerd.'
   }
 };
 /* de rotatie weegt HET AMALGAAM dubbel: de blend-dag is het pronkstuk */
-const DAGWET_ROTATIE = ['amalgaam', 'glas', 'duister', 'amalgaam', 'stormloop', 'goudkoorts', 'besmetting'];
+const DAGWET_ROTATIE = ['amalgaam', 'glas', 'overname', 'duister', 'stormloop', 'detachering', 'amalgaam', 'goudkoorts', 'besmetting'];
 function wetVanDag() {
   if (wetVanDag._force && DAGWETTEN[wetVanDag._force]) return wetVanDag._force;   /* dev-haak */
   return DAGWET_ROTATIE[zaadVanTekst('WET' + vandaagSleutel()) % DAGWET_ROTATIE.length];
@@ -5608,7 +5633,8 @@ function heldPool() {
   return Object.keys(KAARTEN).filter(id => {
     const k = KAARTEN[id];
     return !['basis', 'vloek', 'gesmeed'].includes(k.zeld)
-      && (!k.held || k.held === S.held || dagwetActief('amalgaam'))
+      && (!k.held || dagwetActief('amalgaam')
+        || k.held === (dagwetActief('detachering') ? vreemdeHeldVanDag() : S.held))
       && (!k.act || k.act <= huidigeAct());
   });
 }
@@ -7264,6 +7290,17 @@ function pasDagwetStartToe(wetId) {
     S.goud = 0;   /* berooid het duister in — de dubbele buit moet het goedmaken */
   } else if (wetId === 'besmetting') {
     S.dek.push(nieuweKaart('laster'));   /* de vloek zit er vanaf kamer één in */
+  } else if (wetId === 'overname') {
+    /* de annexatie: alle niet-vloek-kaarten wijken voor het volledige startdek
+       van de vreemde held; vloeken (en wat er ooit nog vóór dit punt inkwam)
+       verhuizen mee. Passief-relikwie en HP blijven van je eigen held. */
+    const ander = vreemdeHeldVanDag();
+    const vloeken = S.dek.filter(c => kdef(c).type === 'vloek');
+    S.dek = SPELERS[ander].dek.map(id => nieuweKaart(id)).concat(vloeken);
+    S.dagwetVreemd = [`het volledige startdek van ${SPELERS[ander].naam}`];
+  } else if (wetId === 'detachering') {
+    /* het effect zelf zit in heldPool(); hier alleen de proclamatie-chip */
+    S.dagwetGeschenken = [`kaartaanbod uit het gilde van ${SPELERS[vreemdeHeldVanDag()].naam}`];
   }
 }
 
