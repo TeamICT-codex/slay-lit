@@ -248,3 +248,45 @@ DROPS — EXTRA POSES (verwerkt 7 juli 2026, uit de reserve-drop van 22 juni):
 LATERE METGEZELLEN (zelfde aanpak): voeg een nieuw blok toe, zet de definitie in
 METGEZELLEN (js/data.js) met dezelfde 'art'-naam, en drop assets/metgezellen/<art>.png
 (+ optioneel <art>_attack/_hit/_death.png in dezelfde stijl en kijkrichting).
+
+
+############################################################
+##  VICTORY-POSES — de code vraagt bij elke gewonnen      ##
+##  strijd <id>_victory; alleen drops_wit had er al een.  ##
+############################################################
+
+================ drops_victory.png ================
+Use the attached reference image (drops.png): the EXACT same companion creature,
+same design, colors, materials and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single full-body creature,
+centered, facing RIGHT, isolated on a fully transparent background, no ground,
+no shadow, no text. Fills ~90% of a square 1024x1024 canvas. Change ONLY the pose.
+
+Pose (VICTORY — de kleine held viert mee): leaping joyfully with all four paws off the ground, tail high and wagging, mouth open
+in a happy triumphant bark toward the RIGHT, ears flapping — pure scrappy dog-joy after
+a won fight.
+Accent: vier poten los van de grond — het gevecht is gewonnen en hij wéét het.
+
+================ vlamwachter_victory.png ================
+Use the attached reference image (vlamwachter.png): the EXACT same companion creature,
+same design, colors, materials and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single full-body creature,
+centered, facing RIGHT, isolated on a fully transparent background, no ground,
+no shadow, no text. Fills ~90% of a square 1024x1024 canvas. Change ONLY the pose.
+
+Pose (VICTORY — de stille schild groet de overwinning): standing tall and planting its shield firmly on the ground with one hand, the other
+fist raised in a slow solemn salute, the flame along its crest burning briefly
+brighter and steadier — quiet, dutiful triumph, no wild celebration.
+Accent: geen gejuich — één plechtige groet, de vlam op zijn kam brandt even feller.
+
+================ mosgeest_victory.png ================
+Use the attached reference image (mosgeest.png): the EXACT same companion creature,
+same design, colors, materials and painterly style. Stylized hand-painted fantasy
+game art, NOT photorealistic, no photo, no 3D render. Single full-body creature,
+centered, facing RIGHT, isolated on a fully transparent background, no ground,
+no shadow, no text. Fills ~90% of a square 1024x1024 canvas. Change ONLY the pose.
+
+Pose (VICTORY — wat bloeit, bloeit even uitbundig): swirling upward in a happy little spiral, arms spread, a burst of tiny glowing spores
+and fresh leaves swirling around it like soft green confetti, small flowers blooming
+open across its mossy body.
+Accent: sporen en blaadjes als groene confetti — even bloeit alles tegelijk.

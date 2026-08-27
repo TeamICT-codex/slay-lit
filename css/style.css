@@ -3062,6 +3062,9 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
 .duel-vs { opacity: .7; }
 .duel-vrij, .duel-stand { text-align: center; font-size: .78rem; color: var(--perkament-dof); margin: 6px 0 0; }
 .beloning-nalatenschap { border-color: rgba(190, 120, 245, .55); box-shadow: 0 0 14px rgba(150, 100, 220, .25); }
+/* vervloekte elite-buit: de clausule is VOORAF zichtbaar op het beloning-item */
+.beloning-vervloekt { outline: 1px dashed var(--rood); outline-offset: 3px; }
+.vervloekt-strik { display: block; margin-top: 5px; font-size: .72rem; color: var(--rood); letter-spacing: .03em; }
 
 /* ---------- 3D-strijdtoneel ---------- */
 /* eigen gevechtsplaat: fullscreen op natuurlijke schaal, met parallax via transform */

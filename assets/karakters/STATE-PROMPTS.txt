@@ -2117,3 +2117,155 @@ no text. Fills ~90% of a square 1024x1024 canvas.
 Pose: raising the massive brass approval-stamp high and bringing it down onto an
 unseen document to the LEFT, a wax-red SEAL bursting outward from the impact
 (branding the target) — cold, triumphant bureaucracy.
+
+
+#############################################################
+##  HIT-POSES RONDE 3 — de 10 laatste vijanden zonder _hit  ##
+##  (ref-image meegeven; alleen de pose verandert)          ##
+#############################################################
+
+================ doorslag_kopie_hit.png ================
+Use the attached reference image (doorslag_kopie.png): the EXACT same creature, same design,
+colors, materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas. Change ONLY the pose.
+It is the fading carbon-copy ghost made of torn translucent ledger-paper layers, smudged carbon-blue ink outlines.
+
+Pose (HIT — recoil): the blow tears straight through the paper body: a diagonal RIP across the torso, loose carbon-paper shreds and
+ink-smudged scraps fluttering away to the RIGHT, one arm fading to almost nothing as the layers separate,
+the whole figure crumpling backward like struck paper.
+Accent: papier scheurt, snippers dwarrelen — de kopie valt bijna uit elkaar.
+
+================ mal_gietsel_hit.png ================
+Use the attached reference image (mal_gietsel.png): the EXACT same creature, same design,
+colors, materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas. Change ONLY the pose.
+It is the blank featureless porcelain cast figure with raised casting seams and wet grey slip dripping from its joints.
+
+Pose (HIT — recoil): cracking under the blow: a web of sharp fractures bursts across the blank face and chest, a shoulder-piece of
+porcelain SHEARS off mid-air, wet grey slip gushing from the fresh crack, the figure tipping backward stiffly
+like a statue about to topple.
+Accent: porselein barst — een scherf breekt af en het natte gietsel gulpt eruit.
+
+================ de_omroeper_hit.png ================
+Use the attached reference image (de_omroeper.png): the EXACT same creature, same design,
+colors, materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas. Change ONLY the pose.
+It is the regime herald whose arm ends in a huge bronze megaphone-horn, gold trim on its uniform.
+Keep the harsh molten ember-red UNDER-light glowing up from below (the Act 3
+slaughter-block footlight) exactly as in the reference.
+
+Pose (HIT — recoil): doubled over from the impact: the bronze horn-arm DENTED and bent askew, a broken jagged red sound-wave
+sputtering crookedly out of the horn, its other hand clutching its chest, gold buttons popping off the
+uniform as it staggers.
+Accent: de roeptoeter is gedeukt — de propaganda sputtert.
+
+================ het_klapvee_hit.png ================
+Use the attached reference image (het_klapvee.png): the EXACT same creature, same design,
+colors, materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas. Change ONLY the pose.
+It is the shambling mound of dozens of clapping hands and grinning sycophant faces.
+Keep the harsh molten ember-red UNDER-light glowing up from below (the Act 3
+slaughter-block footlight) exactly as in the reference.
+
+Pose (HIT — recoil): the mound BURSTS apart at the point of impact: hands scattering and flailing instead of clapping, several
+grinning faces going slack and hollow-eyed, the whole pile sloshing backward off balance while a few loose
+hands tumble through the air.
+Accent: het applaus valt stil — een paar grijnzen vallen weg.
+
+================ de_zondebok_hit.png ================
+Use the attached reference image (de_zondebok.png): the EXACT same creature, same design,
+colors, materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas. Change ONLY the pose.
+It is the black goat-beast marked with a white painted target, dragging chains and carrying heavy burden-sacks on its back.
+Keep the harsh molten ember-red UNDER-light glowing up from below (the Act 3
+slaughter-block footlight) exactly as in the reference.
+
+Pose (HIT — recoil): it takes the blow WITHOUT dodging: knees buckling under the weight, head bowed low and eyes closed in grim
+acceptance, one burden-sack ripped open spilling stones, the white target-mark on its flank cracked and
+smeared by the hit, chains snapping taut.
+Accent: hij vangt de klap gelaten op — hij kijkt niet eens op; één zak schuld scheurt open.
+
+================ de_aanklager_hit.png ================
+Use the attached reference image (de_aanklager.png): the EXACT same creature, same design,
+colors, materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas. Change ONLY the pose.
+It is the gaunt accuser-wraith in judicial robes whose oversized bony index finger points in permanent accusation.
+Keep the harsh molten ember-red UNDER-light glowing up from below (the Act 3
+slaughter-block footlight) exactly as in the reference.
+
+Pose (HIT — recoil): recoiling mid-accusation: the giant bony pointing finger SNAPPED sideways at the joint, its accusation-scroll
+torn in half with wax-red ribbons whipping through the air, robes flaring back as it stumbles, mouth frozen
+in an interrupted shriek.
+Accent: de wijzende vinger knakt — de aanklacht scheurt.
+
+================ de_fluisteraar_hit.png ================
+Use the attached reference image (de_fluisteraar.png): the EXACT same creature, same design,
+colors, materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a SOLID PURE-BLACK background (keep the smoke edges
+intact), no text. Fills ~90% of a square 1024x1024 canvas. Change ONLY the pose.
+It is the faceless robed whisperer with an empty hood, its body trailing into smoke, violet whisper-smoke curling from the hood.
+Keep the harsh molten ember-red UNDER-light glowing up from below (the Act 3
+slaughter-block footlight) exactly as in the reference.
+
+Pose (HIT — recoil): the empty hood SNAPS backward from the blow: the ribbon of violet whisper-smoke torn apart mid-word into
+ragged dissolving scraps, the smoke body whipping sideways in shredded banners, the faint violet glow deep
+in the hood flickering like a guttering candle.
+Accent: de fluistering wordt uit hem geslagen — de rookwoorden verwaaien half afgemaakt.
+
+================ de_vaandeldrager_hit.png ================
+Use the attached reference image (de_vaandeldrager.png): the EXACT same creature, same design,
+colors, materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas. Change ONLY the pose.
+It is the armored standard-bearer with a slit-visor helm carrying the huge crimson banner bearing the golden tyrant's face.
+Keep the harsh molten ember-red UNDER-light glowing up from below (the Act 3
+slaughter-block footlight) exactly as in the reference.
+
+Pose (HIT — recoil): driven down to ONE KNEE by the blow, armor plates dented — but both fists still clamped around the banner
+pole, holding it stubbornly upright while the crimson cloth whips and folds so the golden tyrant-face on it
+creases into a grotesque grimace.
+Accent: hij zakt door de knie maar laat het vaandel NIET zakken — de tiran op het doek grijnst grotesk geplooid.
+
+================ de_ophitser_hit.png ================
+Use the attached reference image (de_ophitser.png): the EXACT same creature, same design,
+colors, materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas. Change ONLY the pose.
+It is the wiry torch-thrower with glowing ember veins across its skin and a bandolier of unlit torches.
+Keep the harsh molten ember-red UNDER-light glowing up from below (the Act 3
+slaughter-block footlight) exactly as in the reference.
+
+Pose (HIT — recoil): interrupted mid-throw: the lit torch tumbling from its sprung-open hand, ember veins flaring then guttering
+dark across its skin, its other hand clawing at the bandolier as it twists backward from the impact, sparks
+scattering.
+Accent: de fakkel valt uit z'n hand — de aderen doven even.
+
+================ de_gouden_garde_hit.png ================
+Use the attached reference image (de_gouden_garde.png): the EXACT same creature, same design,
+colors, materials and painterly style. Stylized hand-painted fantasy game art, NOT
+photorealistic, no photo, no 3D render. Single full-body creature, centered,
+facing LEFT, isolated on a fully transparent background, no ground, no shadow,
+no text. Fills ~90% of a square 1024x1024 canvas. Change ONLY the pose.
+It is the towering blind gilded parade-armor knight, polished gold plate covered in medals, carrying a ceremonial halberd.
+Keep the harsh molten ember-red UNDER-light glowing up from below (the Act 3
+slaughter-block footlight) exactly as in the reference.
+
+Pose (HIT — recoil): one massive DENT and a spiderweb crack smashed into the mirror-polished gold chestplate, medals springing
+loose and spinning through the air, the knight reeling but RAMMING the halberd butt into the ground to stay
+standing, molten red under-light flaring inside the fresh crack.
+Accent: één deuk in de perfecte parade-glans — en het rode onderlicht vlamt erin.

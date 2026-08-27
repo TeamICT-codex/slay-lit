@@ -308,3 +308,32 @@ achtergronden/Achtergronddrempel.png   (DE DREMPEL — het scherven-ritueel)
   Wachter that sleeps behind it). Center-frame kept calm and darkish
   so UI sits cleanly on top; the grandeur is in the towering arch and
   the abyssal depth beyond. Foreboding, sacred, on-the-edge-of-descent.
+
+
+========== Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 3.png ==========
+(VERVANGT de huidige EPISCH 3 — die is per ongeluk exact dezelfde plaat als
+EPISCH 1. Uniek onderwerp + eigen kleuraccent: het GOUD van het regime, waar
+plaat 1 de rode kathedraal is en plaat 2 het paarse kettingplatform.)
+
+Stylized painterly digital illustration for a dark fantasy card game,
+hand-painted fantasy concept art with expressive visible brushwork, rich colors
+and soft painted shading. NOT photorealistic, not a photograph, no photo
+textures, no 3D render.
+
+Subject: the FOUNDRY OF THE GOLDEN COLOSSUS — a fallen, half-molten COLOSSAL
+GOLD STATUE of the tyrant lies toppled across a black basalt casting-hall, its
+enormous cracked golden face resting on the ground at the far side, one gigantic
+gilded hand reaching toward the viewer. Rivers of MOLTEN GOLD run in channels
+through the basalt floor around the wreck, casting harsh yellow-orange light UP
+onto everything (the Act 3 slaughter-block footlight, here golden instead of
+red). Broken casting-chains and tipped crucibles line the edges; storm-violet
+lightning flickers in the smoke high above. Low, ground-level camera looking
+across the hall toward the fallen face.
+
+Palette of black basalt and black iron, molten ember-red light glowing up from
+cracks BELOW, storm-violet lightning accents in the darkness, and arrogant
+polished GOLD for everything the regime touches — in this scene the gold
+dominates. Landscape 16:9 composition (~1672x941). The BOTTOM THIRD of the image
+is an open, mostly empty dark stone floor where the combatants will stand — keep
+it clear of large objects. No text, no frame, no UI.
+Painted illustration style only.

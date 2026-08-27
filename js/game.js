@@ -5775,7 +5775,9 @@ function renderBeloning() {
   if (b.goud > 0) html += `<button class="beloning-item" onclick="pakGoud()">🪙 ${b.goud} goud</button>`;
   if (b.relikwie) {
     const rd = RELIKWIEEN[b.relikwie];
-    html += `<button class="beloning-item" onclick="pakRelikwie()"><span class="art-mini rel-${rd.zeld}" data-rart="${b.relikwie}">${rd.icoon}</span> ${rd.naam} <span class="schaarste-chip rel-${rd.zeld}">${SCHAARSTE_LABEL[rd.zeld] || 'Relikwie'}</span><small>${rd.tekst}</small></button>`;
+    /* vervloekte buit: de clausule staat er VOORAF bij — pakken is een
+       geïnformeerde keuze, geen hinderlaag (playtest 21 aug) */
+    html += `<button class="beloning-item ${b.vervloekt ? 'beloning-vervloekt' : ''}" onclick="pakRelikwie()"><span class="art-mini rel-${rd.zeld}" data-rart="${b.relikwie}">${rd.icoon}</span> ${rd.naam} <span class="schaarste-chip rel-${rd.zeld}">${SCHAARSTE_LABEL[rd.zeld] || 'Relikwie'}</span><small>${rd.tekst}</small>${b.vervloekt ? '<span class="vervloekt-strik">⚠️ vervloekte buit — wie dit opeist, tekent ook voor de vloek. Laten liggen mag.</span>' : ''}</button>`;
   }
   if (b.drank) html += `<button class="beloning-item" onclick="pakDrank()"><span class="art-mini" data-dart="${b.drank}">${DRANKEN[b.drank].icoon}</span> ${DRANKEN[b.drank].naam}<small>${DRANKEN[b.drank].tekst}</small></button>`;
   if (b.kaarten) html += `<button class="beloning-item beloning-kaartkeuze" onclick="toonKaartBeloning()">🃏 Kies een kaart <small>${b.kaarten.length} opties — je fakkel bepaalt hoeveel je er ziet</small></button>`;
@@ -5820,7 +5822,15 @@ function pakRelikwie() {
   if (S.beloning.vervloekt) {
     const vid = kiesUit(['pijn', 'de_vergadering', 'de_handtekening', 'de_cc', 'de_naheffing', 'het_dossier']);
     const naam = geefDekVloek(vid);
-    if (naam) setTimeout(() => toonVloekReveal(vid), 900);   /* ná de relikwie-ceremonie aan */
+    if (naam) {
+      /* pas NADAT de relikwie-ceremonie dicht is (klik of auto) — twee reveals
+         over elkaar heen maakten onleesbaar wat er gebeurde (playtest 21 aug) */
+      const wachtTotDicht = () => {
+        if (document.querySelector('.relikwie-reveal-overlay')) { setTimeout(wachtTotDicht, 250); return; }
+        toonVloekReveal(vid, 'De kleine lettertjes van de vervloekte buit — dit reisde mee met het relikwie.');
+      };
+      setTimeout(wachtTotDicht, 500);
+    }
     S.beloning.vervloekt = false;
   }
   S.beloning.relikwie = null;
