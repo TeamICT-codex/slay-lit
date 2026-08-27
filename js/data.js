@@ -1739,6 +1739,8 @@ const UITSPRAKEN = {
     ],
     /* grief-haak: ná Drops' offer claimt de Erfprins de overwinning — tot Drops de Witte terugkeert */
     dossier: '„Ik heb je hond geïndexeerd. Dossier gesloten."',
+    /* DE PLAGIAATFASE: zijn weigering om te sterven zolang jouw werk in zijn handen is */
+    plagiaat: '„Wegwerpwerk? WEGWERPWERK?! Jouw leven is mijn NOODRANTSOEN."',
   }
 };
 
@@ -1835,7 +1837,7 @@ const BESTIARIUM = {
   de_archivaris: { act: 2, soort: 'Elite', lore: 'Een gehulde archivaris-inquisiteur met een geketend grootboek en een mantel van dossiers. Hij vergeet niets, vergeeft niets, en zet elke beurt een nieuwe rode zegel bij — zijn macht stapelt en stapelt.', notitie: 'Hoe langer hij leeft, hoe harder hij slaat. Sla snel toe.' },
   de_drempelwachter: { act: 2, soort: 'Wachter', lore: 'Niet alles wat je met scherven wekt, is je gunstig gezind. Voed je de drempel met een vals trio, dan krijgt hij een gezicht: as, oude vlam, en de rotsvaste overtuiging dat jíj de leugen bent die moet worden tegengehouden.', notitie: 'De prijs van een fout ritueel: drie scherven verbrand — en dan dít nog. Om de derde beurt komt het Drempelvuur; tel mee en blok op de maat.' },
   het_origineel: { act: 2, soort: 'Episch', lore: 'Het ene ware origineel waarvan heel het Archief zijn bleke kopieën aftrekt — en het houdt vol dat JIJ de namaak bent. Het straalt warm goud-karmozijn in een wereld van koud grijs, en kaatst je eigen klap terug als een vergeelde echo.', notitie: 'Het weerkaatst je sterkste klap. Verdeel je schade i.p.v. alles in één slag.' },
-  de_erfprins: { act: 2, soort: 'Baas', lore: 'De onverdiende erfgenaam van het Archief: een verwend jong dat zelf nooit iets maakte en nu je halve dek rooft om je ermee af te maken. Zonder iets om na te apen is hij niets — mét jouw werk is hij dodelijk.', notitie: 'Hij steelt je beste kaarten. Een trouwe metgezel breekt zijn machine; trouw valt niet te kopiëren.' },
+  de_erfprins: { act: 2, soort: 'Baas', lore: 'De onverdiende erfgenaam van het Archief: een verwend jong dat zelf nooit iets maakte en nu je halve dek rooft om je ermee af te maken. Zonder iets om na te apen is hij niets — mét jouw werk is hij dodelijk.', notitie: 'Hij steelt je beste kaarten. Een trouwe metgezel breekt zijn machine; trouw valt niet te kopiëren. En laat hem níéts overhouden: zolang jouw werk in zijn handen is, weigert hij te vallen.' },
   /* Act 3 — het Slachtblok */
   de_omroeper: { act: 3, soort: 'Meeloper', lore: 'Zijn rechterarm vergroeide tot een bronzen roeptoeter en zijn eigen stem is hij al jaren kwijt. Wat eruit galmt is de wil van de heerser — hard genoeg om de rest driester te maken.', notitie: 'Zijn Afkondiging buft het hele hof. Snoer hem vroeg de mond.' },
   het_klapvee: { act: 3, soort: 'Meeloper', lore: 'Tientallen handen en identieke glimlachjes, opgestapeld tot één wezen zonder hoofd. Het klapt omdat de rest klapt. Alleen is het zielig; in massa is het dodelijk.', notitie: 'Klapt harder per levende bondgenoot. Dun eerst de kudde uit.' },

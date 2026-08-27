@@ -1471,3 +1471,19 @@ copies of it fade into the dark behind, the original unmistakably
 the brightest.
 
 Painted illustration only, rich color, clean readable silhouette.
+
+
+========================= gesmeed_kaart.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted
+fantasy concept art with expressive visible brushwork, rich colors and soft painted
+shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+Subject: a scorched black BUTCHER'S BLOCK anvil in a dark forge, molten metal
+splashing UP from its surface and freezing mid-air into the glowing silhouette of a
+NAMELESS weapon still taking shape (deliberately unfinished — half sword, half raw
+fire), ember sparks swirling. Harsh molten ember-red light glowing UP from below
+(the Act 3 slaughter-block footlight), touches of arrogant polished gold on chain
+links at the block's base. Landscape composition, the block low in frame, the
+forming weapon central. No text, no frame, no UI.
+Painted illustration style only.
+(Wordt de ONDERLAAG in het kaart-icoon-vak van élke gesmede kaart — het gekozen
+zegel-emoji wordt er door de code overheen gestanst. Drop in assets/kaarten/.)

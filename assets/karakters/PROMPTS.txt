@@ -772,3 +772,20 @@ cache-bump + wire (vervang de emoji/CSS-look). Beide TRANSPARANT via PURE-MAGENT
     texture floating in space. Flat, even lighting, painterly. PURE-MAGENTA #FF00FF background
     everywhere the texture is absent (so it cuts to transparent); the texture itself is the only
     content. Rectangular card-proportion footprint (~3:4) centred on a 1024x1024 canvas.
+
+
+================== slachtblok_altaar.png ==================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted
+fantasy concept art with expressive visible brushwork, rich colors and soft painted
+shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+Subject: a single free-standing SLAUGHTER-BLOCK altar — a massive scorched black
+basalt butcher's block on a low stone base, deep axe-scars across its top, heavy
+iron chains draped over its corners, a bed of smoldering embers glowing inside a
+crack that splits the block, thin smoke rising. No creature, no person. Harsh
+molten ember-red light glowing UP from the crack (the Act 3 slaughter-block
+footlight), one arrogant polished-gold seal nailed to its side.
+Isolated on a fully transparent background. No ground shadow, no text, no frame,
+no UI. The object fills about 85% of a square 1024x1024 canvas, base near the
+bottom edge.
+Painted illustration style only.
+(Het proloog-beeld van het Slachtblok-smeedscherm; drop in assets/karakters/.)

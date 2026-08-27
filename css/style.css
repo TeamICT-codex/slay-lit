@@ -1537,7 +1537,7 @@ body.lite .lb-daily-cta { animation: none; }
 }
 .roof-kaart.weg { opacity: 0; pointer-events: none; }
 /* ---------- HET SLACHTBLOK: de smeedkamer (hergebruikt het roof-overlay-doek) ---------- */
-.slachtblok-overlay { background: radial-gradient(ellipse at center bottom, rgba(70, 18, 8, .88), rgba(8, 4, 4, .97)); }
+.slachtblok-overlay { background: radial-gradient(ellipse at center bottom, rgba(70, 18, 8, .94), rgba(8, 4, 4, .988)); }
 .slachtblok-overlay .roof-kop { color: #ffd7c2; text-shadow: 0 2px 14px rgba(226, 84, 44, .85); }
 .slachtblok-overlay .roof-kaart { cursor: pointer; }
 .slachtblok-overlay .roof-kaart.gekozen { border-color: rgba(255, 120, 50, .95); box-shadow: 0 0 22px rgba(255, 100, 30, .9); }
@@ -4129,3 +4129,93 @@ img { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -we
 /* ---------- gevecht-layout telefoon (staand + liggend) → mobiel.css ----------
    De twee oriëntatie-specifieke gevechtsblokken (B. staand / C. liggend)
    staan nu in mobiel.css, gekoppeld aan body[data-modus="mobiel"]. */
+
+
+/* ---------- DE INVENTARIS: de Erfprins-intro (eerste ontmoeting) ---------- */
+.baas-intro-inventaris .inv-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.inv-podium { position: relative; width: min(460px, 86vw); height: clamp(150px, 30vh, 230px); display: flex; align-items: center; justify-content: center; }
+.inv-rug {
+  position: absolute; width: clamp(68px, 13vh, 100px); aspect-ratio: 3 / 4.2; border-radius: 9px;
+  background: linear-gradient(160deg, #2c1e42, #170f24); border: 1px solid rgba(190, 140, 255, .5);
+  background-size: cover; background-position: center;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .65);
+  opacity: 0; transform: translateY(-46px); transition: opacity .5s ease, transform .6s cubic-bezier(.2, .9, .3, 1.12);
+}
+.inv-rug.met-art { border: none; }
+.inv-rug.zichtbaar { opacity: 1; }
+.inv-rug.zichtbaar[data-i="0"] { transform: translateX(0) rotate(-2deg); }
+.inv-rug.zichtbaar[data-i="1"] { transform: translateX(-92px) rotate(-11deg) translateY(8px); }
+.inv-rug.zichtbaar[data-i="2"] { transform: translateX(92px) rotate(10deg) translateY(8px); }
+.inv-rug.zichtbaar[data-i="3"] { transform: translateX(-172px) rotate(-19deg) translateY(24px); }
+.inv-rug.zichtbaar[data-i="4"] { transform: translateX(172px) rotate(18deg) translateY(24px); }
+.inv-rug.trilt { animation: invTril .55s ease-in-out infinite; }
+@keyframes invTril { 0%, 100% { margin-top: 0; } 50% { margin-top: -6px; } }
+.inv-rug.klapt { transform: translate(0, 0) rotate(0deg) scale(.5) !important; opacity: 0 !important; transition: transform .4s cubic-bezier(.55, -.15, .35, 1), opacity .4s ease; }
+.inv-kaarthouder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.inv-kaarthouder .bik-kaart.inv-klap { animation: invKlap .5s cubic-bezier(.2, 1.3, .4, 1) .22s backwards; }
+@keyframes invKlap { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.inv-tekst {
+  min-height: 3.4em; max-width: min(88vw, 560px); text-align: center;
+  font-family: 'Alegreya', serif; font-size: clamp(1rem, 2.6vw, 1.2rem); line-height: 1.5;
+  color: var(--perkament);
+}
+.inv-tekst.in { animation: invTekstIn .5s ease backwards; }
+@keyframes invTekstIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+body.lite .inv-rug, body.lite .inv-tekst.in, body.lite .inv-rug.trilt { animation: none !important; transition: none; }
+
+/* ---------- DE PLAGIAATFASE: de fake-dood van de Erfprins ---------- */
+.plagiaat-zakt .vijand-art { animation: plagiaatZak .95s ease forwards; }
+@keyframes plagiaatZak {
+  to { transform: translateY(14px) rotate(4deg) scale(.9); filter: grayscale(.85) brightness(.4) drop-shadow(0 8px 5px rgba(0, 0, 0, .6)); }
+}
+body.lite .plagiaat-zakt .vijand-art { animation: none; filter: grayscale(.85) brightness(.4); }
+
+/* ---------- HET SLACHTBLOK 2.0: proloog, stappen, aderen, bestemming ---------- */
+.sb-proloog { max-width: min(92vw, 680px); display: flex; flex-direction: column; align-items: center; gap: 13px; text-align: center; }
+.sb-proloog-blok {
+  width: clamp(110px, 22vh, 175px); aspect-ratio: 1; font-size: 4rem;
+  display: flex; align-items: center; justify-content: center;
+  animation: sbGloed 2.8s ease-in-out infinite;
+}
+.sb-proloog-blok img { width: 100%; height: 100%; object-fit: contain; }
+@keyframes sbGloed {
+  0%, 100% { filter: drop-shadow(0 -10px 24px rgba(255, 80, 20, .35)); }
+  50% { filter: drop-shadow(0 -16px 40px rgba(255, 110, 30, .65)); }
+}
+.sb-proloog-titel {
+  font-family: 'Pirata One', serif; font-size: clamp(1.9rem, 5vw, 2.7rem); margin: 0;
+  color: #ffd7c2; letter-spacing: .06em; text-shadow: 0 0 28px rgba(226, 84, 44, .9), 0 3px 12px rgba(0, 0, 0, .8);
+}
+.sb-proloog-tekst { color: var(--perkament); font-family: 'Alegreya', serif; line-height: 1.62; margin: 0; }
+.sb-stap { font-size: .55em; color: #e2915c; letter-spacing: .16em; margin-left: 10px; vertical-align: middle; }
+.sb-bestemming { color: #d9a06b; font-style: italic; font-size: .86rem; max-width: min(92vw, 640px); text-align: center; margin: 4px 0 0; }
+.sb-module.sb-ader { border-color: rgba(245, 197, 66, .6); box-shadow: inset 0 0 12px rgba(245, 197, 66, .1); cursor: help; }
+.sb-ader-ster { color: var(--goud); font-style: normal; }
+.gesmeed-bonus { color: var(--goud); white-space: nowrap; }
+
+/* ---------- de gesmede kaart: smeed-visual i.p.v. kale emoji ---------- */
+.kaart-icoon.gesmeed-visual { position: relative; overflow: hidden; border-radius: 8px; }
+.gesmeed-visual .gv-vuur {
+  position: absolute; inset: 0; border-radius: 8px;
+  background:
+    radial-gradient(ellipse at 50% 92%, rgba(255, 120, 30, .8), rgba(150, 40, 10, .45) 42%, transparent 72%),
+    linear-gradient(160deg, #2a1410, #170912 60%, #140a12);
+  background-color: #1b0d12;
+  background-size: cover; background-position: center;
+}
+.gesmeed-visual .gv-vuur::after {
+  content: ''; position: absolute; inset: 10%; border-radius: 50%;
+  border: 1px dashed rgba(255, 170, 80, .45);
+  animation: gvDraai 16s linear infinite;
+}
+@keyframes gvDraai { to { transform: rotate(360deg); } }
+.gesmeed-visual .gv-zegel {
+  position: relative; z-index: 2; font-size: 1.45em; line-height: 1;
+  filter: drop-shadow(0 0 10px rgba(255, 140, 50, .9)) drop-shadow(0 2px 4px rgba(0, 0, 0, .8));
+  animation: gvPuls 2.4s ease-in-out infinite;
+}
+@keyframes gvPuls { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@media (prefers-reduced-motion: reduce) {
+  .gesmeed-visual .gv-vuur::after, .gesmeed-visual .gv-zegel, .sb-proloog-blok { animation: none !important; }
+}
+body.lite .gesmeed-visual .gv-vuur::after, body.lite .gesmeed-visual .gv-zegel, body.lite .sb-proloog-blok { animation: none !important; }
