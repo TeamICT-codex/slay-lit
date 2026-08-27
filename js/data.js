@@ -1605,33 +1605,32 @@ const MYSTERIES = {
     vereist: ['drops_baas', 'drops_figuur', 'drops_episch'],
     scherven: {
       drops_baas:   { bron: 'baas',   codexTekst: '„Wat trouw blijft zonder loon, kun je niet kopen — en niet namaken."' },
-      drops_figuur: { bron: 'figuur', codexTekst: '„Het kwam pas toen ik mijn licht dúrfde te doven."' },
-      drops_episch: { bron: 'episch', codexTekst: '„Doof alles. In het zwart wacht wat altijd al meeliep."' },
+      drops_figuur: { bron: 'figuur', codexTekst: '„Het liep al die tijd mee, net buiten je lichtkring — wachtend tot je het riep."' },
+      drops_episch: { bron: 'episch', codexTekst: '„Drie stukken van één trouw. De poort onderin weet welke samenhoren."' },
     },
-    eindreveal: { titel: 'UIT HET GEDOOFDE LICHT', kreet: 'Waar je fakkel stierf, kroop iets warms uit het zwart — en het week niet meer van je zij.' },
+    eindreveal: { titel: 'UIT HET GEDOOFDE LICHT', kreet: 'Je voedde de drempel — en uit het zwart voorbij de poort kroop iets warms naar je toe, en het week niet meer van je zij.' },
   },
-  /* HET TWEEDE mysterie — pas actief zodra Drops vrij is (sequentieel, zie actiefMysterie).
-     Rite: de Erfprins verslaan met je fakkel nog HELDER (de tegenpool van Drops' doven). */
+  /* HET TWEEDE mysterie — unlock loopt (zoals alle drie) via het Drempel-trio. */
   vlamwachter: {
-    metgezel: 'vlamwachter', baasId: 'de_erfprins', rite: 'fakkel_helder',
+    metgezel: 'vlamwachter', baasId: 'de_erfprins',
     vereist: ['vlamwachter_baas', 'vlamwachter_figuur', 'vlamwachter_episch'],
     scherven: {
       vlamwachter_baas:   { bron: 'baas',   codexTekst: '„Iemand stond altijd tussen jou en de klap. Je keek nooit om."' },
       vlamwachter_figuur: { bron: 'figuur', codexTekst: '„Hij sprak niet, hij doofde niet — hij blééf gewoon staan."' },
-      vlamwachter_episch: { bron: 'episch', codexTekst: '„Hou je vlam hoog tot het einde, en wat wáákt zal ontwaken."' },
+      vlamwachter_episch: { bron: 'episch', codexTekst: '„Het schild slaapt licht. Drie scherven in de koude nissen, en het staat óp."' },
     },
-    eindreveal: { titel: 'DE STILLE SCHILD', kreet: 'Je liet je licht nooit zakken — en uit dat onwankelbare vuur stapte een zwijgende schildwacht, voorgoed aan je zij.' },
+    eindreveal: { titel: 'DE STILLE SCHILD', kreet: 'Drie scherven van één schild vonden elkaar in de nissen — en uit het gevoede vuur stapte een zwijgende schildwacht, voorgoed aan je zij.' },
   },
-  /* HET DERDE mysterie. Rite: de Erfprins verslaan met hoge HP (gedijen i.p.v. bloeden). */
+  /* HET DERDE mysterie. */
   mosgeest: {
-    metgezel: 'mosgeest', baasId: 'de_erfprins', rite: 'baas_hoge_hp',
+    metgezel: 'mosgeest', baasId: 'de_erfprins',
     vereist: ['mosgeest_baas', 'mosgeest_figuur', 'mosgeest_episch'],
     scherven: {
       mosgeest_baas:   { bron: 'baas',   codexTekst: '„Waar je heel bleef, sloot de aarde zich zacht om je heen."' },
       mosgeest_figuur: { bron: 'figuur', codexTekst: '„Het kleine groene licht volgt wie bloeit, niet wie bloedt."' },
-      mosgeest_episch: { bron: 'episch', codexTekst: '„Versla de diepte zónder te breken, en het leven komt naar je toe."' },
+      mosgeest_episch: { bron: 'episch', codexTekst: '„Drie zaden van één groen. Plant ze samen in de koude steen, en het bloeit."' },
     },
-    eindreveal: { titel: 'WAT BLOEIT IN HET DONKER', kreet: 'Je bleef heel waar anderen braken — en uit de spleten kroop een zacht groen wezen dat je wonden sloot.' },
+    eindreveal: { titel: 'WAT BLOEIT IN HET DONKER', kreet: 'De drie zaden vonden elkaar in de koude steen — en uit de spleten kroop een zacht groen wezen dat je wonden sloot.' },
   },
 };
 window.MYSTERIES = MYSTERIES;   /* expliciet op window: de helpers in game.js guarden op window.MYSTERIES */
@@ -1731,15 +1730,13 @@ const UITSPRAKEN = {
     doodGebroken: '„Trouw... dát stond niet in mijn catalogus... dát kon ik niet kopiëren..."',
     /* ORAKEL: over opeenvolgende ontmoetingen verklapt hij cryptisch het geheim
        (geïndexeerd op Codex.erfprinsOntmoetingen). Twee assen: het kopieer-thema
-       (1, 4) én de fakkel-doof-rite die Drops wekt (2, 3). */
+       (1, 4) én de scherven/Drempel-weg die een metgezel wekt (2, 3). */
     orakel: [
       '„Ik hóéf niks zelf te maken — ik kijk gewoon af."',
       '„Eén ding namaken lukt me niet: wat trouw blíjft zonder loon."',
-      '„Wacht — waarom klem je dat lichtje zo vast? Bang voor wat in het zwart meeloopt?"',
-      '„Hoe beter jij speelt, hoe sterker ík word... maar het zwart dat jij niet dúrft te maken, daar leeft wat ik nooit kan kopiëren."',
+      '„Wat rááp je toch allemaal op daar beneden? Scherven? Die passen heus nergens op. Weggooien."',
+      '„Hoe beter jij speelt, hoe sterker ík word... maar wat die poort wakker maakt als je haar vóédt — dát kan ik nooit kopiëren."',
     ],
-    /* sist hij op het moment dat jij in zijn zaal je fakkel laat DOVEN (de rite) */
-    gedoofd: '„Wat... WÁT DOE JE? Het wordt wakker! BEWAKING! BE—"',
     /* grief-haak: ná Drops' offer claimt de Erfprins de overwinning — tot Drops de Witte terugkeert */
     dossier: '„Ik heb je hond geïndexeerd. Dossier gesloten."',
   }

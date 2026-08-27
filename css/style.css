@@ -147,6 +147,10 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 #tb-verdieping { color: var(--perkament-dof); }
 /* mysterie-scherven-teller: gedragen groot, stash klein erachter; klik = Codex */
 #tb-scherven { color: #b9a7e0; cursor: pointer; }
+/* je metgezel tussen de kamers door: icoon + HP; gevlucht = gedimd met 💨 */
+#tb-metgezel { color: #9fd8a8; cursor: pointer; }
+#tb-metgezel .tbm-max { color: var(--perkament-dof); font-size: .72em; opacity: .85; }
+#tb-metgezel.mg-gevlucht { opacity: .55; filter: grayscale(.5); }
 #tb-scherven .tbs-stash { color: var(--perkament-dof); font-size: .72em; margin-left: 2px; opacity: .85; }
 #tb-dagwet { cursor: pointer; }   /* de Dagwet-chip (alleen tijdens een daily; tik = proclamatie) */
 .lb-vandaag {
@@ -2317,6 +2321,11 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
 .help-inhoud h3 { color: var(--ember-fel); margin: 16px 0 4px; font-size: 1.3rem; }
 .help-inhoud b { color: var(--perkament); }
 
+/* ---------- heldkeuze: de band met de metgezel die deze run meedaalt ---------- */
+.held-mg-regel { color: var(--perkament-dof); font-style: italic; margin: -10px 0 2px; }
+.held-syn { margin: 6px auto 0; font-size: .84rem; color: #8fd4ff; cursor: help; letter-spacing: .02em; }
+.held-syn.syn-opt { color: var(--goud); text-shadow: 0 0 10px rgba(245, 197, 66, .35); }
+
 /* ---------- booster-onthulling & inspectie-zoom ---------- */
 #kies-hint {
   font-family: 'Alegreya', serif;
@@ -2476,6 +2485,76 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
 #overlay-kies.kies-meervoud .kies-actiebalk {
   position: static; flex: 0 0 auto; width: 100%; margin-top: auto;
 }
+
+/* ---------- HET OFFER-RITUEEL (laptop-rework van de meervoudige keuze) ----------
+   playtest 27 aug: "voelt als een webpagina" — dus: vignet waar de scène doorheen
+   gloeit i.p.v. dicht zwart, een gecentreerde offertafel met deal-animatie en een
+   minieme scheefstand per kaart, fysieke offer-nissen waar je keuze naartoe vliegt,
+   en een bevestig-knop die pas als ritueel gaat gloeien wanneer het offer compleet
+   is. Alles gescoped op body[data-modus="laptop"] → mobiel volledig ongemoeid. */
+body[data-modus="laptop"] #overlay-kies.kies-meervoud {
+  background: radial-gradient(ellipse at 50% 32%, rgba(30, 17, 44, .58), rgba(6, 3, 10, .93) 78%);
+}
+body[data-modus="laptop"] #overlay-kies.kies-meervoud #kies-titel {
+  text-shadow: 0 0 24px rgba(255, 156, 63, .45), 0 2px 10px rgba(0, 0, 0, .85);
+  letter-spacing: .05em;
+}
+body[data-modus="laptop"] #overlay-kies.kies-meervoud #kies-kaarten.meer-modus {
+  max-width: min(1180px, 94vw);
+  margin-left: auto; margin-right: auto;
+  padding-top: 10px;
+}
+/* de tafel: elke kaart net iets scheef (losse rotate-prop → composeert met hover/anim) */
+body[data-modus="laptop"] .meer-modus .meer-kaart:nth-child(3n) { rotate: -1.1deg; }
+body[data-modus="laptop"] .meer-modus .meer-kaart:nth-child(3n+1) { rotate: .9deg; }
+body[data-modus="laptop"] .meer-modus .meer-kaart:nth-child(5n+2) { rotate: -.6deg; }
+body[data-modus="laptop"] .meer-modus .meer-kaart:nth-child(7n+3) { rotate: 1.3deg; }
+body[data-modus="laptop"] .meer-modus .meer-kaart {
+  animation: meerDeal .55s calc(min(var(--di, 0), 18) * 40ms) cubic-bezier(.22, .85, .32, 1.08) backwards;
+}
+@keyframes meerDeal { from { opacity: 0; transform: translateY(54px) scale(.9); } to { opacity: 1; transform: none; } }
+body[data-modus="laptop"] .kies-meervoud .meer-kaart:not(.gekozen):hover { transform: translateY(-10px) scale(1.03); rotate: 0deg; }
+/* gekozen = de kaart ligt op het altaar: op tafel blijft een gedimde afdruk achter */
+body[data-modus="laptop"] .kies-meervoud .meer-kaart.gekozen { transform: none; opacity: .35; }
+body[data-modus="laptop"] .kies-meervoud .meer-kaart.gekozen .kaart.groot {
+  box-shadow: 0 0 0 2px rgba(255, 196, 90, .35);
+  filter: grayscale(.55) brightness(.62);
+}
+/* de offer-nissen boven de tafel */
+.kies-slots { display: flex; justify-content: center; align-items: center; gap: 18px; margin: 4px 0 8px; flex: 0 0 auto; }
+#overlay-kies:not(.kies-meervoud) .kies-slots { display: none; }
+.kies-slot { width: 112px; height: 152px; border-radius: 10px; display: flex; align-items: center; justify-content: center; position: relative; }
+.kies-slot.leeg {
+  border: 2px dashed rgba(199, 155, 255, .38); color: rgba(199, 155, 255, .5); font-size: 1.7rem;
+  background: radial-gradient(circle at 50% 44%, rgba(60, 38, 90, .3), rgba(10, 6, 16, .42));
+  animation: slotAdem 2.8s ease-in-out infinite;
+}
+@keyframes slotAdem { 0%, 100% { box-shadow: 0 0 0 rgba(190, 120, 245, 0); } 50% { box-shadow: 0 0 18px rgba(190, 120, 245, .3); } }
+.kies-slot.vol { cursor: pointer; }
+.kies-slot.vol .kaart { zoom: .5; cursor: pointer; animation: slotLand .3s cubic-bezier(.2, 1.3, .4, 1); }
+@keyframes slotLand { from { transform: scale(1.16); } to { transform: scale(1); } }
+.kies-slot.vol::after {
+  content: '✕'; position: absolute; top: -8px; right: -8px; z-index: 3; width: 24px; height: 24px; border-radius: 50%;
+  background: #2a1a2e; border: 1px solid rgba(255, 255, 255, .3); color: var(--perkament);
+  display: flex; align-items: center; justify-content: center; font-size: .78rem; opacity: 0; transition: opacity .15s;
+}
+.kies-slot.vol:hover::after { opacity: 1; }
+/* de vliegende kaart (kloon, puur presentationeel) */
+.kies-vlieger {
+  position: fixed; z-index: 950; margin: 0; pointer-events: none; will-change: transform;
+  transition: transform .4s cubic-bezier(.3, .8, .35, 1), opacity .4s ease;
+}
+/* het ritueel ontsteekt: de knop gloeit pas als het offer compleet is */
+body[data-modus="laptop"] .kies-actiebalk .kies-bevestig:not(:disabled) { animation: offerGloed 1.7s ease-in-out infinite; }
+@keyframes offerGloed { 0%, 100% { box-shadow: 0 0 10px rgba(255, 140, 60, .3); } 50% { box-shadow: 0 0 28px rgba(255, 140, 60, .68); } }
+/* rust voor wie daarom vraagt */
+@media (prefers-reduced-motion: reduce) {
+  .meer-modus .meer-kaart { animation: none !important; }
+  .kies-slot.leeg, .kies-actiebalk .kies-bevestig:not(:disabled) { animation: none !important; }
+  .kies-vlieger { transition: none; }
+}
+body.lite .meer-modus .meer-kaart { animation: none !important; }
+body.lite .kies-slot.leeg, body.lite .kies-actiebalk .kies-bevestig:not(:disabled) { animation: none !important; }
 
 /* inspectie-zoom: de kaart in vol ornaat */
 #kies-kaarten.focus-modus { align-items: center; }
@@ -2795,6 +2874,17 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
 .drempel-nis.vol:hover { border-color: #cbb0ff; }
 .dn-icoon, .ds-icoon { font-size: 1.5rem; line-height: 1; }
 .drempel-nis i, .drempel-scherf i { font-size: .82rem; line-height: 1.3; font-style: italic; }
+/* scherven van één maaksel delen hun gloedkleur — de eerlijke gids tegen een fout trio */
+.fam-drops { --famk: 190, 120, 245; }
+.fam-vlamwachter { --famk: 245, 168, 61; }
+.fam-mosgeest { --famk: 120, 220, 140; }
+.drempel-scherf.fam-drops, .drempel-scherf.fam-vlamwachter, .drempel-scherf.fam-mosgeest,
+.drempel-nis.vol.fam-drops, .drempel-nis.vol.fam-vlamwachter, .drempel-nis.vol.fam-mosgeest {
+  border-color: rgba(var(--famk), .6);
+  box-shadow: 0 0 14px rgba(var(--famk), .22), inset 0 0 10px rgba(var(--famk), .08);
+}
+.drempel-kleurhint { display: block; font-size: .82rem; color: var(--perkament-dof); font-style: italic; }
+.scherf-cx-slot.verbruikt { opacity: .78; }
 .drempel-poollabel { color: var(--perkament-dof); margin: 2px 0 0; font-size: .9rem; }
 .drempel-pool { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; max-width: 740px; }
 .drempel-scherf {
