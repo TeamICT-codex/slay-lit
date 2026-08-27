@@ -638,6 +638,30 @@ const KAARTEN = {
     flavor: 'Aan: jou. CC: iedereen die je kent.',
     speel: () => {}
   },
+  de_naheffing: {
+    naam: 'De Naheffing', type: 'vloek', zeld: 'vloek', kost: null, icoon: '🧾',
+    tekst: () => `Onbespeelbaar. Zolang ze in je dek zit, houdt ze 20% in op elk goud dat je ontvangt.`,
+    flavor: 'Met terugwerkende kracht.',
+    speel: () => {}
+  },
+  de_schaduwboekhouding: {
+    naam: 'De Schaduwboekhouding', type: 'vloek', zeld: 'vloek', kost: null, icoon: '📒',
+    tekst: () => `Onbespeelbaar. Zolang ze in je dek zit, komt je fakkel niet boven de 60.`,
+    flavor: 'Sommige posten staan niet in het licht.',
+    speel: () => {}
+  },
+  de_roddel: {
+    naam: 'De Roddel', type: 'vloek', zeld: 'vloek', kost: null, icoon: '🐍',
+    tekst: () => `Onbespeelbaar. Zolang ze in je hand zit, doet je metgezel niets — hij twijfelt aan je.`,
+    flavor: 'Hij heeft iets gehoord. Over jou.',
+    speel: () => {}
+  },
+  het_dossier: {
+    naam: 'Het Dossier', type: 'vloek', zeld: 'vloek', kost: null, icoon: '🗂️',
+    tekst: () => `Onbespeelbaar. Wanneer je haar trekt: de eerstvolgende vijandaanval negeert de helft van je Blok.`,
+    flavor: 'Ze kennen je verdediging beter dan jij.',
+    speel: () => {}
+  },
   /* Act 3 — de vloek van het regime: vijanden fluisteren hem gevecht-lokaal in je
      stapels (verdwijnt na het gevecht), events geven hem permanent. De Act 3-kaarten
      (Brandstapel/Schuldverschuiving/Volkswoede) maken er brandstof van. */
@@ -957,6 +981,7 @@ const SPELERS = {
 /* ---------- STATUSINFO (voor tooltips/iconen) ---------- */
 const STATUSINFO = {
   kracht:      { naam: 'Kracht',      icoon: '💪', goed: true,  uitleg: 'Aanvallen doen zoveel extra schade.' },
+  dossier:     { naam: 'Het Dossier', icoon: '🗂️', goed: false, uitleg: 'Zoveel volgende vijandaanvallen negeren de helft van je Blok.' },
   kwetsbaar:   { naam: 'Kwetsbaar',   icoon: '🎯', goed: false, uitleg: 'Ontvangt 50% meer aanvalsschade.' },
   zwak:        { naam: 'Zwak',        icoon: '🥀', goed: false, uitleg: 'Aanvallen doen 25% minder schade.' },
   gif:         { naam: 'Gif',         icoon: '☠️', goed: false, uitleg: 'Verliest aan het begin van de beurt zoveel HP (negeert Blok). Neemt elke beurt met 1 af.' },
@@ -2027,7 +2052,7 @@ const EVENTS = [
              geeft dan null → niet dereferentiëren. Compenseer met goud, zoals de
              schat- en mottenzwerm-events ook doen. */
           if (!r) {
-            S.goud += 60;
+            geefGoud(60);
             return 'Het altaar gloeit op... maar je draagt al elke schat die het kent. Het stort 60 goud uit in ruil voor je bloed.';
           }
           geefRelikwie(r);
@@ -2093,6 +2118,25 @@ const EVENTS = [
           return null;
         }
       },
+      {
+        label: 'Teken de clausule', detail: 'De smid smeedt er TWEE — maar onderaan het contract staat iets in heel kleine letters.',
+        kan: () => S.dek.filter(c => !c.up && KAARTEN[c.id].up).length >= 2,
+        reden: () => 'Te weinig ongesmede kaarten (2 nodig).',
+        doe: () => {
+          kiesKaartUitDek('upgrade', 'Kies je eerste kaart', c1 => {
+            if (!c1) { eventKlaar('Je bedenkt je. De smid gromt iets over tijdverspilling.'); return; }
+            kiesKaartUitDek('upgrade', 'Kies je tweede kaart', c2 => {
+              const vid = kiesUit(['de_vergadering', 'de_handtekening', 'de_naheffing', 'het_dossier']);
+              const naam = geefDekVloek(vid);
+              if (naam) toonVloekReveal(vid);
+              eventKlaar(c2
+                ? (naam ? 'Twee kaarten glanzen als nieuw. Onder aan het contract: een handtekening die je je niet herinnert te hebben gezet.' : 'Twee kaarten glanzen als nieuw — en het Zondebokvel slikt de clausule in.')
+                : (naam ? 'Eén kaart geglansd, en toch telt het contract twéé handtekeningen. De clausule geldt.' : 'Eén kaart geglansd. Het Zondebokvel slikt de kleine lettertjes in.'));
+            });
+          });
+          return null;
+        }
+      },
       { label: 'Loop door', detail: 'Niets gebeurt.', doe: () => 'De smid haalt zijn schouders op en hamert verder.' }
     ]
   },
@@ -2150,8 +2194,8 @@ const EVENTS = [
       {
         label: 'Open de kist', hint: 'Wie laat er nu zomaar een kist achter...?',
         doe: () => {
-          if (willekeurig() < 0.5) { S.goud += 45; return 'De kist zit vol goud! Je vindt 45 goud.'; }
-          verliesHpBuitenGevecht(10); S.goud += 25;
+          if (willekeurig() < 0.5) { geefGoud(45); return 'De kist zit vol goud! Je vindt 45 goud.'; }
+          verliesHpBuitenGevecht(10); geefGoud(25);
           return 'Een gifpijl schiet uit het slot! Je verliest 10 HP, maar vindt nog 25 goud.';
         }
       },
@@ -2178,7 +2222,7 @@ const EVENTS = [
           const r = willekeurig();
           if (r < 0.55) { S.maxHp += 5; S.hp += 5; return 'Je rijst herboren uit het rood. +5 Max HP!'; }
           if (r < 0.85) { geneesHpBuitenGevecht(12); return 'Het bloed sluit je wonden — je geneest 12 HP.'; }
-          S.goud += 20;
+          geefGoud(20);
           return 'Op de bodem glinstert iets: 20 goud van een vorige durfal. Hij had minder geluk.';
         }
       },
@@ -2217,7 +2261,7 @@ const EVENTS = [
             const r = willekeurigRelikwie();
             if (r) { geefRelikwie(r); return `De zwerm leidt je naar een verborgen nis: ${RELIKWIEEN[r].naam}!`; }
           }
-          S.goud += 25;
+          geefGoud(25);
           return 'De zwerm verdwijnt in een spleet. Op de grond glinstert 25 goud.';
         }
       },
@@ -2230,7 +2274,7 @@ const EVENTS = [
     opties: [
       {
         label: 'Doorzoek het lijk', detail: 'Krijg 60 goud, maar ook een vloek.',
-        doe: () => { S.goud += 60; const v = geefVloek(); return v ? `Je vindt 60 goud... maar een kille rilling trekt door je botten. Je dek bevat nu "${v}".` : 'Je vindt 60 goud... en het Zondebokvel vangt de kille rilling op.'; }
+        doe: () => { geefGoud(60); const v = geefVloek(); return v ? `Je vindt 60 goud... maar een kille rilling trekt door je botten. Je dek bevat nu "${v}".` : 'Je vindt 60 goud... en het Zondebokvel vangt de kille rilling op.'; }
       },
       { label: 'Laat hem rusten', detail: 'Niets gebeurt.', doe: () => 'Je vouwt zijn handen over zijn borst en loopt verder.' }
     ]
@@ -2249,7 +2293,7 @@ const EVENTS = [
         doe: () => {
           /* playtest: meer goud, maar het verlies moet voelbaar zijn — MAX HP,
              niet zomaar HP (zelfde patroon als de ascensie-aderlating) */
-          S.goud += 45;
+          geefGoud(45);
           S.maxHp = Math.max(1, S.maxHp - 6);
           if (S.hp > S.maxHp) S.hp = S.maxHp;
           return 'Je zet je krabbel. 45 goud glijdt over de tafel — en de clausule onderaan neemt een stuk van je mee. Voorgoed. (−6 Max HP)';
@@ -2279,7 +2323,7 @@ const EVENTS = [
         label: 'Dupliceer je goud', detail: 'Riskant: meestal +40%, soms −25%.',
         kan: () => S.goud >= 20,
         reden: () => 'Te weinig goud om te riskeren.',
-        doe: () => { if (willekeurig() < 0.7) { const w = Math.floor(S.goud * 0.4); S.goud += w; return `De machine kopieert je beurs: +${w} goud!`; } const v = Math.floor(S.goud * 0.25); S.goud -= v; return `De machine eet je munten op i.p.v. ze te kopiëren: −${v} goud.`; }
+        doe: () => { if (willekeurig() < 0.7) { const w = Math.floor(S.goud * 0.4); geefGoud(w); return `De machine kopieert je beurs: +${w} goud!`; } const v = Math.floor(S.goud * 0.25); S.goud -= v; return `De machine eet je munten op i.p.v. ze te kopiëren: −${v} goud.`; }
       },
       { label: 'Laat het rammelen', detail: 'Niets gebeurt.', doe: () => 'Je laat de machine zichzelf herhalen, eindeloos.' }
     ]
@@ -2295,7 +2339,7 @@ const EVENTS = [
       },
       {
         label: 'Vraag om je dossier', detail: 'Misschien een relikwie — of een berisping.',
-        doe: () => { if (willekeurig() < 0.55) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `De klerk schuift je dossier door het loket. Erin: ${RELIKWIEEN[r].naam}!`; } S.goud += 50; return 'Je dossier is leeg op 50 goud aan onkostenvergoeding na.'; } verliesHpBuitenGevecht(5); const v = geefLichtVloek(); return v ? `De klerk stempelt AFGEKEURD op je verzoek. −5 HP en een clausule "${v}" erbij.` : 'De klerk stempelt AFGEKEURD op je verzoek. −5 HP — maar het Zondebokvel slikt de clausule in.'; }
+        doe: () => { if (willekeurig() < 0.55) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `De klerk schuift je dossier door het loket. Erin: ${RELIKWIEEN[r].naam}!`; } geefGoud(50); return 'Je dossier is leeg op 50 goud aan onkostenvergoeding na.'; } verliesHpBuitenGevecht(5); const v = geefLichtVloek(); return v ? `De klerk stempelt AFGEKEURD op je verzoek. −5 HP en een clausule "${v}" erbij.` : 'De klerk stempelt AFGEKEURD op je verzoek. −5 HP — maar het Zondebokvel slikt de clausule in.'; }
       },
       { label: 'Loop weg', detail: 'Niets gebeurt.', doe: () => 'Je laat de gezichtloze klerk wachten. Hij zal je naam onthouden.' }
     ]
@@ -2332,7 +2376,7 @@ const EVENTS = [
         doe: () => {
           verliesHpBuitenGevecht(8);
           if (willekeurig() < 0.6) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `De kettingen snijden je open, maar hij drukt je iets in de handen: ${RELIKWIEEN[r].naam}. Dan is hij weg, het donker in.`; } }
-          S.goud += 40;
+          geefGoud(40);
           return 'De kettingen snijden je open. Hij heeft niets om te geven behalve wat hij ooit verstopte: 40 goud — en een blik die je nooit vergeet.';
         }
       },
@@ -2344,7 +2388,7 @@ const EVENTS = [
           const kandidaten = S.dek.filter(c => KAARTEN[c.id].type !== 'vloek');
           const c = kiesUit(kandidaten.length ? kandidaten : S.dek);
           S.dek = S.dek.filter(x => x !== c);
-          S.goud += 60;
+          geefGoud(60);
           return `Je tilt de bijl. Hij valt zwaarder dan verwacht: „${KAARTEN[c.id].naam}" — afgeschreven, voorgoed. Onder het blok ligt het handgeld: 60 goud.`;
         }
       },
@@ -2358,17 +2402,17 @@ const EVENTS = [
     opties: [
       {
         label: 'Stem urne A', detail: '+30 goud „aanwezigheidspremie". En je naam op een lijst.',
-        doe: () => { S.goud += 30; if (willekeurig() < 0.5) { const v = geefDekVloek('laster'); if (v) { toonVloekReveal('laster'); return 'De teller knikt goedkeurend en betaalt je premie: 30 goud. Achter je krast een pen — jouw naam, een lijst, een leugen.'; } } return 'De teller knikt goedkeurend en betaalt je premie: 30 goud. De uitslag stond al vast.'; }
+        doe: () => { geefGoud(30); if (willekeurig() < 0.5) { const v = geefDekVloek('laster'); if (v) { toonVloekReveal('laster'); return 'De teller knikt goedkeurend en betaalt je premie: 30 goud. Achter je krast een pen — jouw naam, een lijst, een leugen.'; } } return 'De teller knikt goedkeurend en betaalt je premie: 30 goud. De uitslag stond al vast.'; }
       },
       {
         label: 'Stem urne B', detail: '+30 goud „aanwezigheidspremie". En je naam op een lijst.',
-        doe: () => { S.goud += 30; if (willekeurig() < 0.5) { const v = geefDekVloek('laster'); if (v) { toonVloekReveal('laster'); return 'De teller knikt exact even goedkeurend en betaalt exact dezelfde premie: 30 goud. B, A — de uitslag kent het verschil niet.'; } } return 'De teller knikt exact even goedkeurend: 30 goud. De urnen worden straks toch samengegoten.'; }
+        doe: () => { geefGoud(30); if (willekeurig() < 0.5) { const v = geefDekVloek('laster'); if (v) { toonVloekReveal('laster'); return 'De teller knikt exact even goedkeurend en betaalt exact dezelfde premie: 30 goud. B, A — de uitslag kent het verschil niet.'; } } return 'De teller knikt exact even goedkeurend: 30 goud. De urnen worden straks toch samengegoten.'; }
       },
       {
         label: 'De derde gleuf', detail: 'Stop je LICHT erin (−20). Wat eruit komt, is niet geteld.',
         kan: () => S.fakkel >= 60,
         reden: () => 'De gleuf is te donker — je fakkel moet feller branden (60+).',
-        doe: () => { zetFakkel(-20); const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `Je giet je licht in de gleuf. Iets onder het podium slikt, en schuift iets terug: ${RELIKWIEEN[r].naam}. Niet geteld. Niet gezien.`; } S.goud += 80; return 'Je giet je licht in de gleuf. Van onder het podium schuift een buidel terug: 80 goud. Niet geteld. Niet gezien.'; }
+        doe: () => { zetFakkel(-20); const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `Je giet je licht in de gleuf. Iets onder het podium slikt, en schuift iets terug: ${RELIKWIEEN[r].naam}. Niet geteld. Niet gezien.`; } geefGoud(80); return 'Je giet je licht in de gleuf. Van onder het podium schuift een buidel terug: 80 goud. Niet geteld. Niet gezien.'; }
       }
     ]
   },
@@ -2391,7 +2435,7 @@ const EVENTS = [
       },
       {
         label: 'Verklik de drukker', detail: '+80 goud. Gegarandeerd een vloek — verraad kost je naam.',
-        doe: () => { S.goud += 80; const v = geefDekVloek('laster'); if (v) toonVloekReveal('laster'); return v ? 'De premie is vorstelijk: 80 goud. De pers valt stil. Jouw naam fluistert voortaan mee in elke kelder.' : 'De premie is vorstelijk: 80 goud. Het Zondebokvel draagt de schande — maar jij weet het nog wel.'; }
+        doe: () => { geefGoud(80); const v = geefDekVloek('laster'); if (v) toonVloekReveal('laster'); return v ? 'De premie is vorstelijk: 80 goud. De pers valt stil. Jouw naam fluistert voortaan mee in elke kelder.' : 'De premie is vorstelijk: 80 goud. Het Zondebokvel draagt de schande — maar jij weet het nog wel.'; }
       },
       { label: 'Duik terug de schaduw in', detail: 'Niets gebeurt.', doe: () => 'Je trekt je terug. Beneden ratelt de pers door — koppig, zacht, onbetaalbaar.' }
     ]
@@ -2415,7 +2459,7 @@ const EVENTS = [
       },
       {
         label: 'Meld hem aan', detail: '+100 goud + een vloek. De duurste keuze van de act.',
-        doe: () => { S.goud += 100; const v = geefDekVloek('laster'); if (v) toonVloekReveal('laster'); return v ? 'Honderd goudstukken, keurig geteld. Ze nemen hem zonder geweld mee — hij kijkt je niet eens aan. Dat is het ergste.' : 'Honderd goudstukken, keurig geteld. Het Zondebokvel draagt je naam weg — maar zijn blik neem je mee.'; }
+        doe: () => { geefGoud(100); const v = geefDekVloek('laster'); if (v) toonVloekReveal('laster'); return v ? 'Honderd goudstukken, keurig geteld. Ze nemen hem zonder geweld mee — hij kijkt je niet eens aan. Dat is het ergste.' : 'Honderd goudstukken, keurig geteld. Het Zondebokvel draagt je naam weg — maar zijn blik neem je mee.'; }
       }
     ]
   }

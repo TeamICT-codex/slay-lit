@@ -692,6 +692,62 @@ staring eye, the nearest envelope splitting into two mid-air.
 
 Painted illustration only, rich color, clean readable silhouette.
 
+==================== de_naheffing.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of charcoal and ash with sickly grey-green
+accents and tarnished gold. NOT photorealistic, no photo, no 3D
+render. Landscape composition, subject centered, no text, no
+frame, no UI.
+
+Scene: a skeletal bureaucratic hand stamping a glowing ledger
+while golden coins are pulled up out of an open coin purse by
+ghostly threads, dissolving into green mist above the page.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+================ de_schaduwboekhouding.png =================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of charcoal and ash with sickly grey-green
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: a heavy black account book lying open in the dark, its
+pages devouring the light of a nearby torch — the flame bending
+sideways into the book like smoke being inhaled, shadows pooling
+where light should fall.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+====================== de_roddel.png =======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of charcoal and ash with sickly grey-green
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: a serpent made of whispering mouths coiling between two
+shadowy figures, driving them apart, its scales formed of tiny
+murmuring lips, a faint venomous green glow in the dark between
+them.
+
+Painted illustration only, rich color, clean readable silhouette.
+
+===================== het_dossier.png ======================
+Painterly dark fantasy card art for a deckbuilder game,
+hand-painted concept art with expressive brushwork and dramatic
+lighting, palette of charcoal and ash with sickly grey-green
+accents. NOT photorealistic, no photo, no 3D render. Landscape
+composition, subject centered, no text, no frame, no UI.
+
+Scene: an open dossier folder with ghostly diagrams of a knight's
+shield drawn in chalk-like lines, every weak point circled and
+annotated by an unseen hand, pages fanned out under a cold
+interrogation light.
+
+Painted illustration only, rich color, clean readable silhouette.
+
 ############ LICHT-VLOEKEN (de licht-economie — onspeelbaar) ############
 
 ====================== schaduwsmet.png =====================

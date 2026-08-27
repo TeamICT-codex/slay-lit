@@ -3033,6 +3033,13 @@ body.lite .onthul-kaart.signatuur-reveal .onthul-binnen { animation: none; }
    precies de gemeten transparante voetmarge. Geldt op beide sporen. */
 .vijand-art img, .speler-figuur img, .metgezel-art img { translate: 0 var(--voetc, 0%); }
 
+/* het winkel-koopje met kleine lettertjes (vloek-clausule) */
+.winkel-item.met-clausule { outline: 1px dashed var(--rood); outline-offset: 3px; }
+.clausule-strik {
+  font-size: .68rem; color: var(--rood); text-align: center; margin-top: 4px;
+  letter-spacing: .04em;
+}
+
 /* ---------- 3D-strijdtoneel ---------- */
 /* eigen gevechtsplaat: fullscreen op natuurlijke schaal, met parallax via transform */
 #gevecht-achtergrond {

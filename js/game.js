@@ -1324,11 +1324,11 @@ function drankSlots() { return heeftRelikwie('veldfles') ? 4 : 3; }   /* basis 3
 function geefRelikwie(id, vanSchrijn, stil) {
   const isNieuw = !S.relikwieen.includes(id);
   if (isNieuw) S.relikwieen.push(id);
-  if (id === 'spaarvarken') S.goud += 100;
+  if (id === 'spaarvarken') geefGoud(100);
   if (id === 'bloedrobijn') { S.maxHp += 8; S.hp += 8; }
   if (id === 'het_grootboek') { S.maxHp += 12; S.hp += 12; }   /* Act 2: Het Grootboek */
   if (id === 'de_gouden_handdruk') {   /* Act 3: de afkoopsom — genereus en verminkend */
-    S.goud += 120;
+    geefGoud(120);
     S.maxHp = Math.max(1, S.maxHp - 8);
     if (S.hp > S.maxHp) S.hp = S.maxHp;
   }
@@ -1435,6 +1435,8 @@ function zetFakkel(delta) {
   /* Vonkenkluis: elke lichtwinst klettert er dubbel uit */
   if (delta > 0 && heeftRelikwie('vonkenkluis')) delta += 1;
   S.fakkel = Math.max(0, Math.min(100, S.fakkel + delta));
+  /* De Schaduwboekhouding (dek-vloek): je fakkel komt niet boven de 60 */
+  if (S.fakkel > 60 && S.dek && S.dek.some(c => c.id === 'de_schaduwboekhouding')) S.fakkel = 60;
   /* de Eeuwige Lont weigert te doven */
   if (delta < 0 && S.fakkel < 10 && heeftRelikwie('eeuwige_lont')) S.fakkel = 10;
   /* De Laatste Lucifer: één keer per run vlamt het donker weer op */
@@ -1686,6 +1688,20 @@ function zwarteZielHint(actor) {
 /* DE CENTRALE VLOEK-POORT: elke PERMANENTE vloek (dek-toevoeging) loopt hierlangs.
    Het Zondebokvel (Act 3) weigert de eerste per run. Geeft de kaartnaam terug,
    of null als het vel de vloek droeg. */
+/* DE CENTRALE GOUD-POORT: elke goud-ONTVANGST loopt hierlangs (uitgaven niet).
+   De Naheffing (dek-vloek) houdt hier 20% in. Init-waarden (nieuwSpel) blijven
+   directe toewijzingen — je 'ontvangt' je startkapitaal niet. */
+function geefGoud(n) {
+  n = Math.max(0, Math.round(n));
+  if (n > 0 && S && S.dek && S.dek.some(c => c.id === 'de_naheffing')) {
+    const inhouding = Math.ceil(n * 0.2);
+    n -= inhouding;
+    melding(`🧾 De Naheffing houdt ${inhouding} goud in.`);
+  }
+  S.goud += n;
+  return n;
+}
+
 function geefDekVloek(id) {
   if (heeftRelikwie('zondebokvel') && !S.zondebokGebruikt) {
     S.zondebokGebruikt = true;
@@ -1702,7 +1718,7 @@ function geefLichtVloek() {
 /* GENERIEKE VLOEK (incl. Pijn + de licht-vloeken) — voor vloek-bronnen door het hele
    spel verweven (Act 1+). Alle vloeken zijn weg te slopen bij de Oude Smid. */
 function geefVloek() {
-  return geefDekVloek(kiesUit(['pijn', 'de_vergadering', 'de_handtekening', 'de_cc', 'schaduwsmet', 'mottenvlam', 'doofpot']));
+  return geefDekVloek(kiesUit(['pijn', 'de_vergadering', 'de_handtekening', 'de_cc', 'de_naheffing', 'de_schaduwboekhouding', 'de_roddel', 'het_dossier', 'schaduwsmet', 'mottenvlam', 'doofpot']));
 }
 
 /* een vloek uit de hand UITPUTTEN (Brandstapel/Schuldverschuiving) — en de
@@ -1965,10 +1981,19 @@ function doeSchade(doel, dmg, bron) {
   /* GLAZEN ZIELEN (dagwet): elke klap ×1.5 — vóór blok, beide richtingen */
   if (dmg > 0 && dagwetActief('glas')) dmg = Math.ceil(dmg * 1.5);
   let rest = dmg;
-  if ((doel.blok || 0) > 0) {
-    const op = Math.min(doel.blok, rest);
+  /* Het Dossier (vloek): een vijandaanval op de speler mag maar de HELFT van het
+     Blok gebruiken; de rest van het Blok blijft staan maar vangt deze klap niet */
+  const dossierKlap = doel.isSpeler && bron && !bron.isSpeler && !bron.isMetgezel
+    && (doel.status.dossier || 0) > 0;
+  const beschikbaar = dossierKlap ? Math.floor((doel.blok || 0) / 2) : (doel.blok || 0);
+  if (beschikbaar > 0) {
+    const op = Math.min(beschikbaar, rest);
     doel.blok -= op; rest -= op;
     if (op > 0) fxNummer(actorEl(doel), '🛡️-' + op, 'fx-blok');
+  }
+  if (dossierKlap) {
+    doel.status.dossier--;
+    fxNummer(actorEl(doel), '🗂️ blok gelekt', 'fx-debuff');
   }
   if (rest > 0) verliesHp(doel, rest, bron);
   else if (dmg > 0) Klank.sfx('blok');
@@ -2196,6 +2221,11 @@ function metgezelBeurt() {
   if ((m.status.gif || 0) > 0) { verliesHp(m, m.status.gif); m.status.gif--; if (m.dood) return; }
   if ((m.status.kwetsbaar || 0) > 0) m.status.kwetsbaar--;
   if ((m.status.zwak || 0) > 0) m.status.zwak--;
+  /* De Roddel (vloek): zolang ze in je hand zit doet de metgezel niets — hij twijfelt */
+  if (S.gevecht && S.gevecht.hand.some(k => k.id === 'de_roddel')) {
+    fxNummer(actorEl(m), '🐍 twijfelt aan je…', 'fx-debuff');
+    return;
+  }
   const def = METGEZELLEN[m.id];
   if (def && def.beurt) def.beurt(m);
 }
@@ -3509,7 +3539,7 @@ function bouwGevechtDom(g) {
       mz.innerHTML = `
         ${synBadge}
         <div class="metgezel-intent"></div>
-        <div class="metgezel-art" data-tip="${md.naam} — ${md.tekst}${synTip ? ' · ' + synTip : ''}"${(window.VOETMARGE && VOETMARGE[mgid]) ? ` style="--voetc:${VOETMARGE[mgid]}%"` : ''}>${md.icoon}</div>
+        <div class="metgezel-art" data-tip="${md.naam} — ${md.tekst}${synTip ? ' · ' + synTip : ''}"${(window.VOETMARGE && VOETMARGE[g.metgezel.id]) ? ` style="--voetc:${VOETMARGE[g.metgezel.id]}%"` : ''}>${md.icoon}</div>
         <div class="metgezel-naam">${md.naam}</div>
         <div class="hp-balk metgezel-hp"><div class="hp-vulling"></div><span class="hp-tekst"></span><span class="blok-schild" data-tip="Blok: vangt aanvalsschade op"><svg viewBox="0 0 24 28" aria-hidden="true"><path fill="url(#blokgrad)" stroke="#0c1c2e" stroke-width="1.6" d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg><b></b></span></div>
         <div class="blok-status"></div>
@@ -3593,6 +3623,11 @@ function vloekBijTrek(c, g) {
       g.afleg.push(nieuweKaart('de_cc'));
       fxNummer($('#speler-zone'), '📧 De CC verspreidt zich…', 'fx-debuff');
     }
+  } else if (c.id === 'het_dossier') {
+    /* je verdediging ligt op straat: de eerstvolgende vijandaanval mag maar de
+       helft van je Blok gebruiken (stapelt per trek; zie doeSchade) */
+    sp().status.dossier = (sp().status.dossier || 0) + 1;
+    fxNummer($('#speler-zone'), '🗂️ je verdediging ligt op straat', 'fx-debuff');
   } else if (c.id === 'de_handtekening') {
     c.getekend = (c.getekend || 0) + 1;
     if (c.getekend >= 3) {
@@ -5523,7 +5558,7 @@ async function gevechtGewonnen() {
 
   /* De Oorkonde van Verzet (Act 3): elke gevallen schrik van het regime zet een handtekening bij */
   if ((g.soort === 'elite' || g.soort === 'episch') && heeftRelikwie('oorkonde_van_verzet')) {
-    S.maxHp += 1; S.hp = Math.min(S.maxHp, S.hp + 1); S.goud += 10;
+    S.maxHp += 1; S.hp = Math.min(S.maxHp, S.hp + 1); geefGoud(10);
     melding('📜 De Oorkonde van Verzet: +1 Max HP en +10 goud.');
   }
   let goud = (g.soort === 'elite' || g.soort === 'episch') ? rnd(34, 48) : rnd(16, 26);   /* iets guller na gevechten (playtest); episch beloont als elite */
@@ -5539,10 +5574,14 @@ async function gevechtGewonnen() {
   if (dagwetActief('goudkoorts')) goud *= 2;   /* DE GOUDKOORTS: gevechten betalen dubbel */
   if (heeftRelikwie('kaarsenstomp')) zetFakkel(3);
 
+  const buitRelikwie = (g.soort === 'elite' || g.soort === 'episch') ? willekeurigRelikwie({ ongewoon: 50, zeldzaam: 38, episch: 12 }) : null;
   S.beloning = {
     goud,
     kaarten: trekKaartBeloning(),
-    relikwie: (g.soort === 'elite' || g.soort === 'episch') ? willekeurigRelikwie({ ongewoon: 50, zeldzaam: 38, episch: 12 }) : null,
+    relikwie: buitRelikwie,
+    /* VERVLOEKTE BUIT (40% van de elite-relikwieën): nemen = relikwie + vloek —
+       een bewuste keuze, dus de Verder-knop raapt hem NIET automatisch mee */
+    vervloekt: !!buitRelikwie && willekeurig() < 0.4,
     drank: (willekeurig() < 0.3 && S.dranken.length < drankSlots()) ? kiesUit(Object.keys(DRANKEN)) : null
   };
   S.gevecht = null;
@@ -5617,8 +5656,9 @@ function renderBeloning() {
 function verderNaBeloning() {
   const b = S.beloning || {};
   const mee = [];
-  if (b.goud > 0) { S.goud += b.goud; mee.push(`🪙 ${b.goud} goud`); b.goud = 0; Klank.sfx('goud'); }
-  if (b.relikwie) { geefRelikwie(b.relikwie); mee.push(RELIKWIEEN[b.relikwie].naam); b.relikwie = null; }
+  if (b.goud > 0) { geefGoud(b.goud); mee.push(`🪙 ${b.goud} goud`); b.goud = 0; Klank.sfx('goud'); }
+  if (b.relikwie && !b.vervloekt) { geefRelikwie(b.relikwie); mee.push(RELIKWIEEN[b.relikwie].naam); b.relikwie = null; }
+  else if (b.relikwie && b.vervloekt) mee.push(`${RELIKWIEEN[b.relikwie].naam} LATEN LIGGEN (vervloekte buit vergt een bewuste keuze)`);
   if (b.drank) {
     if (S.dranken.length < drankSlots()) { S.dranken.push(b.drank); mee.push(DRANKEN[b.drank].naam); }
     else mee.push(`${DRANKEN[b.drank].naam} achtergelaten (geen vak vrij)`);
@@ -5627,8 +5667,18 @@ function verderNaBeloning() {
   if (mee.length) melding('Meegenomen: ' + mee.join(' · '));
   renderKaartScherm();
 }
-function pakGoud() { Klank.sfx('goud'); S.goud += S.beloning.goud; S.beloning.goud = 0; renderBeloning(); }
-function pakRelikwie() { geefRelikwie(S.beloning.relikwie); S.beloning.relikwie = null; renderBeloning(); }   /* geen melding meer: de reveal-ceremonie toont het relikwie zelf */
+function pakGoud() { Klank.sfx('goud'); geefGoud(S.beloning.goud); S.beloning.goud = 0; renderBeloning(); }
+function pakRelikwie() {
+  geefRelikwie(S.beloning.relikwie);   /* geen melding: de reveal-ceremonie toont het relikwie zelf */
+  if (S.beloning.vervloekt) {
+    const vid = kiesUit(['pijn', 'de_vergadering', 'de_handtekening', 'de_cc', 'de_naheffing', 'het_dossier']);
+    const naam = geefDekVloek(vid);
+    if (naam) setTimeout(() => toonVloekReveal(vid), 900);   /* ná de relikwie-ceremonie aan */
+    S.beloning.vervloekt = false;
+  }
+  S.beloning.relikwie = null;
+  renderBeloning();
+}
 function pakDrank() {
   if (S.dranken.length >= drankSlots()) { melding('Geen drankjesvak vrij!'); return; }
   S.dranken.push(S.beloning.drank); S.beloning.drank = null; renderBeloning();
@@ -6221,7 +6271,7 @@ function onthulSchat() {
           ${d.lore ? `<p class="boek-lore">„${d.lore}"</p>` : ''}
         </div>`;
     } else {
-      S.goud += 50;
+      geefGoud(50);
       buit = `
         <div class="schat-buit rel-zeldzaam">
           <div class="schat-stralen"></div>
@@ -6246,6 +6296,12 @@ function toonWinkel() {
     kaart: nieuweKaart(id),
     prijs: (prijs[KAARTEN[id].zeld] || prijs.ongewoon)()
   }));
+  /* HET KOOPJE (30%): een zeldzame/epische kaart voor een prikkie — maar bij
+     aankoop reist er een clausule (vloek) mee. De ⚠️ in de UI verklapt het. */
+  if (willekeurig() < 0.3) {
+    const top = schud(heldPool().filter(id => KAARTEN[id].zeld === 'zeldzaam' || KAARTEN[id].zeld === 'episch'))[0];
+    if (top) kaarten.push({ kaart: nieuweKaart(top), prijs: rnd(25, 40), clausule: true });
+  }
   const relPool = Object.keys(RELIKWIEEN).filter(r => !RELIKWIEEN[r].start && !heeftRelikwie(r));
   const relPrijs = { gewoon: () => rnd(75, 95), ongewoon: () => rnd(110, 140), zeldzaam: () => rnd(155, 185), episch: () => rnd(215, 255) };
   const relikwieen = schud([...relPool]).slice(0, 2)
@@ -6279,8 +6335,8 @@ function renderWinkel() {
   html += `<div class="winkel-kaarten">` + w.kaarten.map((item, i) => {
     if (!item) return '';
     const kan = S.goud >= item.prijs;
-    return `<div class="winkel-item ${kan ? '' : 'te-duur-item'}" onclick="koopKaart(${i})">
-      ${kaartHtml(item.kaart, false)}<div class="prijs">🪙 ${item.prijs}</div></div>`;
+    return `<div class="winkel-item ${kan ? '' : 'te-duur-item'} ${item.clausule ? 'met-clausule' : ''}" onclick="koopKaart(${i})">
+      ${kaartHtml(item.kaart, false)}${item.clausule ? '<div class="clausule-strik" data-tip="Kleine lettertjes: bij aankoop reist er een vloek mee">⚠️ kleine lettertjes</div>' : ''}<div class="prijs">🪙 ${item.prijs}</div></div>`;
   }).join('') + `</div>`;
 
   html += `<div class="winkel-rij">`;
@@ -6320,6 +6376,12 @@ function koopKaart(i) {
   S.goud -= item.prijs; Klank.sfx('goud');
   S.dek.push(item.kaart);
   melding(`${kdef(item.kaart).naam} gekocht!`);
+  if (item.clausule) {
+    /* de kleine lettertjes: het koopje neemt zijn clausule mee */
+    const vid = kiesUit(['de_vergadering', 'de_naheffing', 'het_dossier', 'de_cc']);
+    const naam = geefDekVloek(vid);
+    if (naam) toonVloekReveal(vid, 'De koopman tikt op het contract: „Artikel 7, lid 3. U tekende bij aankoop."');
+  }
   S.winkel.kaarten[i] = null;
   renderWinkel();
 }
