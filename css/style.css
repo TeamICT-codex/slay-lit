@@ -4249,3 +4249,21 @@ body.lite .gesmeed-visual .gv-vuur::after, body.lite .gesmeed-visual .gv-zegel, 
 
 /* de nudge duikt onder elke overlay en verbergt zich zodra er één open staat */
 body:has(.overlay.open) #scherm-nudge, body:has(#overlay-slachtblok.open) #scherm-nudge { display: none; }
+
+
+/* ---------- DEV-SHORTCUT: het DEV-menu op de logo-klik (weg vóór release) ---------- */
+#dev-menu { z-index: 1300; }
+#dev-menu .dev-kaart {
+  width: min(560px, 94vw); max-height: 88dvh; overflow-y: auto;
+  padding: 18px 22px 16px; border-radius: 14px; text-align: center;
+  background: linear-gradient(175deg, #1c1626, #120d1a);
+  border: 1px solid rgba(255, 200, 120, .35);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, .75);
+}
+#dev-menu h3 { font-family: 'Pirata One', serif; color: var(--ember-fel); margin: 0 0 6px; letter-spacing: .05em; }
+#dev-menu .dev-kop { display: block; margin: 10px 0 4px; color: var(--perkament-dof); letter-spacing: .08em; text-transform: uppercase; font-size: .68rem; }
+#dev-menu .dev-rij { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
+#dev-menu .dev-k { border: 1px solid rgba(255, 200, 120, .3); border-radius: 9px; padding: 7px 11px; background: rgba(40, 28, 52, .7); font-size: .88rem; }
+#dev-menu .dev-k:hover { background: rgba(70, 48, 88, .85); }
+#dev-menu .dev-dicht { margin-top: 14px; }
+#dev-menu .dev-voet { display: block; margin-top: 8px; color: var(--perkament-dof); font-size: .66rem; }

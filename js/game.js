@@ -7343,7 +7343,91 @@ function devLogo(e) {
   if (e && e.altKey) { devErfprins(); return; }       /* Alt+klik = meteen SOLO tegen de Erfprins (schone Roof-test) */
   if (e && e.shiftKey) { devDropsTest(); return; }     /* Shift+klik = Drops-testcyclus (spawnt/schrijft) */
   if (e && e.ctrlKey) { devSprongAct3(); return; }     /* Ctrl+klik = Act 3-sprong (Slachtblok-test) */
-  devSprongAct2();                                     /* gewone klik = veilige Act 2-sprong */
+  devMenu();                                           /* gewone klik = het DEV-menu (alles op een rij; een kale klik sprong vroeger meteen naar Act 2 — te gevaarlijk, zie debug-sweep) */
+}
+
+/* DEV-SHORTCUT: metgezel aan/uit voor tests (synergie, Roddel-vloek, topbalk-chip,
+   victory-poses). In een lopend gevecht stapt hij pas het VOLGENDE gevecht in
+   (g.metgezel wordt bij startGevecht gebouwd — de v70-les). Weg vóór release. */
+function devMetgezel(id) {
+  if (!S) nieuwSpel('slachter');
+  if (!id) { S.metgezel = null; renderTopbalk(); melding('⚡ DEV: metgezel weggestuurd.'); return; }
+  if (!METGEZELLEN[id]) { melding('⚡ DEV: onbekende metgezel: ' + id); return; }
+  geefMetgezel(id);
+  melding(`⚡ DEV: ${METGEZELLEN[id].naam} stapt in${inGevecht() ? ' — vanaf het volgende gevecht' : ''}.`);
+}
+
+/* DEV-SHORTCUT: meteen tegen de Slijmkoning (Act 1-baas) — met buffer zoals de
+   andere baas-sprongen. Weg vóór release. */
+function devSlijmkoning() {
+  if (!S) nieuwSpel('slachter');
+  if (inGevecht()) stopGevechtLus();
+  S.gevecht = null; S.act = 1; S.fakkel = fakkelMax();
+  S.maxHp = Math.max(S.maxHp || 0, 150); S.hp = S.maxHp;
+  S.dranken = []; while (S.dranken.length < drankSlots()) S.dranken.push('heeldrank');
+  if (S.dek.length < 14) { const pool = heldPool(); let v = 0; while (S.dek.length < 16 && v++ < 40) S.dek.push(nieuweKaart(kiesUit(pool))); }
+  saveSpel();
+  startGevecht(['slijmkoning'], 'baas', 13);
+  melding('⚡ DEV: meteen tegen de Slijmkoning — 150 HP + heeldranken + opgevuld dek.');
+}
+
+/* DEV-SHORTCUT: de Erfprins als EERSTE ontmoeting — reset de teller zodat de
+   Inventaris-intro (en orakel[0]) opnieuw speelt. Weg vóór release. */
+function devErfprinsIntro() {
+  Codex.erfprinsOntmoetingen = 0;
+  bewaarCodex();
+  devErfprins();
+}
+
+/* DEV-SHORTCUT — HET DEV-MENU (logo-klik): alle testsprongen op een rij, zodat de
+   modifier-combinaties niet uit de hand lopen. Knoppen via listeners (nooit data in
+   onclick-strings — bekende bugklasse). Zoek 'DEV-SHORTCUT' om alles te wissen. */
+function devMenu() {
+  const oud = document.getElementById('dev-menu');
+  if (oud) { oud.remove(); return; }   /* tweede klik = toggle dicht */
+  const groepen = [
+    ['Spring', [
+      ['🗺️ Act 2', () => devSprongAct2()],
+      ['🌋 Act 3', () => devSprongAct3()],
+    ]],
+    ['Bazen', [
+      ['🫠 Slijmkoning', () => devSlijmkoning()],
+      ['🤴 Erfprins', () => devErfprins()],
+      ['🃏 Erfprins · 1e ontmoeting (intro)', () => devErfprinsIntro()],
+      ['👑 DICKtator', () => devDicktator()],
+    ]],
+    ['Metgezel (in gevecht: vanaf het volgende)', [
+      ['🐕 Drops', () => devMetgezel('drops')],
+      ['🛡️ Vlamwacht', () => devMetgezel('vlamwachter')],
+      ['🍃 Mosgeest', () => devMetgezel('mosgeest')],
+      ['🤍 De Witte', () => devMetgezel('drops_wit')],
+      ['✕ weg', () => devMetgezel(null)],
+    ]],
+    ['Ritueel & boog', [
+      ['🜂 Drempel + Drops-trio', () => devDrempel(['drops_baas', 'drops_figuur', 'drops_episch'])],
+      ['🪓 Slachtblok', () => devSlachtblok()],
+      ['🐾 Drops-cyclus', () => devDropsTest()],
+      ['🎬 Outro', () => { if (typeof devOutro === 'function') devOutro(); }],
+    ]],
+  ];
+  const ov = document.createElement('div');
+  ov.id = 'dev-menu';
+  ov.className = 'overlay open';
+  ov.innerHTML = `<div class="dev-kaart"><h3>⚡ DEV-menu</h3>
+    ${groepen.map(([kop]) => `<small class="dev-kop">${kop}</small><div class="dev-rij"></div>`).join('')}
+    <button class="knop-stil dev-dicht" type="button">Sluit</button>
+    <small class="dev-voet">modifiers op het logo blijven werken: Alt=Erfprins · Ctrl=Act 3 · Ctrl+Alt=DICKtator · Shift=Drops-cyclus</small>
+  </div>`;
+  document.body.appendChild(ov);
+  const rijen = ov.querySelectorAll('.dev-rij');
+  groepen.forEach(([, knoppen], i) => knoppen.forEach(([label, doe]) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'knop-stil dev-k'; b.textContent = label;
+    b.addEventListener('click', () => { ov.remove(); doe(); });
+    rijen[i].appendChild(b);
+  }));
+  ov.querySelector('.dev-dicht').onclick = () => ov.remove();
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
 }
 
 /* DEV-SHORTCUT: meteen tegen de DICKtator — met een geloofwaardig dek (het Decreet
