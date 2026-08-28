@@ -2143,7 +2143,11 @@ function vijandAanval(v, basis, gedwongenDoel) {
   let dmg = basis + (v.status.kracht || 0);
   if ((v.status.zwak || 0) > 0) dmg = Math.floor(dmg * 0.75);
   if ((doel.status.kwetsbaar || 0) > 0) dmg = Math.floor(dmg * 1.5);
-  if (doel.isMetgezel) melding(`🛡️ ${METGEZELLEN[doel.id].naam} vangt de klap voor je op!`);
+  if (doel.isMetgezel) {
+    melding(`🛡️ ${METGEZELLEN[doel.id].naam} vangt de klap voor je op!`);
+    const iel = actorEl(doel);
+    if (iel) { iel.classList.remove('mg-vangt'); void iel.offsetWidth; iel.classList.add('mg-vangt'); setTimeout(() => iel.classList.remove('mg-vangt'), 700); }
+  }
   doeSchade(doel, Math.max(0, dmg), v);
 }
 
@@ -2358,8 +2362,8 @@ function metgezelMaxHp(id) { const def = METGEZELLEN[id]; return def ? Math.max(
 /* korte UI-regel over de band met de huidige held */
 function synergieLabel(mgid, held) {
   const t = synergieTier(mgid, held);
-  if (t === 'optimaal') return '✨ optimale band (+30%)';
-  if (t === 'goed') return '◆ goede band (+15%)';
+  if (t === 'optimaal') return '✨ optimale band';   /* percentages alleen in het metgezelboek (cryptisch-lijn) */
+  if (t === 'goed') return '◆ goede band';
   return '';
 }
 /* synergie-blok voor het metgezelboek (Codex): de paren + het optimaal-perk */
@@ -2445,8 +2449,70 @@ function metgezelBeurt() {
     return;
   }
   const def = METGEZELLEN[m.id];
-  if (def && def.beurt) def.beurt(m);
+  if (def && def.beurt) {
+    /* de actie-beat: aura flitst op terwijl hij handelt, en wat hij JOU geeft
+       (blok/heal) reist zichtbaar als sliert van hem naar jou (playtest 27 aug) */
+    const el = actorEl(m);
+    if (el) { el.classList.remove('mg-actie'); void el.offsetWidth; el.classList.add('mg-actie'); setTimeout(() => el.classList.remove('mg-actie'), 950); }
+    const blokVoor = sp().blok || 0, hpVoor = S.hp;
+    def.beurt(m);
+    if (((sp().blok || 0) > blokVoor) || (S.hp > hpVoor)) mgSliert(m);
+  }
 }
+/* een lichtbolletje in zijn familiekleur reist van de metgezel naar de held */
+function mgSliert(m) {
+  const van = actorEl(m), naar = $('#speler-zone');
+  if (!van || !naar) return;
+  const a = van.getBoundingClientRect(), b = naar.getBoundingClientRect();
+  if (!a.width || !b.width) return;
+  const bol = document.createElement('div');
+  bol.className = 'mg-sliert';
+  const mgk = getComputedStyle(van).getPropertyValue('--mgk');
+  if (mgk) bol.style.setProperty('--mgk', mgk);
+  bol.style.left = (a.left + a.width / 2) + 'px';
+  bol.style.top = (a.top + a.height * 0.4) + 'px';
+  document.body.appendChild(bol);
+  requestAnimationFrame(() => {
+    bol.style.transform = `translate(${(b.left + b.width / 2) - (a.left + a.width / 2)}px, ${(b.top + b.height * 0.4) - (a.top + a.height * 0.4)}px)`;
+    bol.style.opacity = '0';
+  });
+  setTimeout(() => bol.remove(), 800);
+}
+/* ✦ DE SIGNATUURZET — de metgezel als levende kaart: klik hem aan (1⚡, 1× per
+   gevecht) voor zijn unieke zet. Cryptisch tot de eerste keer (Codex.sigOntdekt);
+   De Roddel-vloek blokkeert hem, net als zijn gewone beurt. */
+function mgSignatuur() {
+  const g = S.gevecht, m = gMet();
+  if (!g || g.bezig || g.voorbij || !m || m.dood) return;
+  const def = METGEZELLEN[m.id];
+  if (!def || !def.signatuur) return;
+  if (m.signatuurGebruikt) { melding('✦ Zijn signatuurzet is dit gevecht al gespeeld.'); return; }
+  if (g.hand && g.hand.some(k => k.id === 'de_roddel')) { fxNummer(actorEl(m), '🐍 twijfelt aan je…', 'fx-debuff'); Klank.sfx('fout'); return; }
+  if ((g.energie || 0) < 1) { melding('Zijn zet vraagt 1 ⚡.'); Klank.sfx('fout'); return; }
+  g.energie -= 1;
+  m.signatuurGebruikt = true;
+  Codex.sigOntdekt = Codex.sigOntdekt || {};
+  if (!Codex.sigOntdekt[m.id]) { Codex.sigOntdekt[m.id] = true; bewaarCodex(); }
+  /* de cut-in + de beat */
+  mgFaseMoment(`${def.icoon} ${def.signatuur.naam}`);
+  const el = actorEl(m);
+  if (el) { el.classList.remove('mg-actie'); void el.offsetWidth; el.classList.add('mg-actie'); setTimeout(() => el.classList.remove('mg-actie'), 950); }
+  pose2D(m, 'attack', 1.6);
+  Klank.sfx('schitter');
+  def.signatuur.doe(m);
+  if (alleVijanden().length === 0) { gevechtGewonnen(); return; }   /* de zet kan de laatste vellen */
+  renderGevecht();
+}
+/* de bondgenoot-cut-in: klein broertje van baasFaseMoment, in familiekleur */
+function mgFaseMoment(titel) {
+  const el = document.createElement('div');
+  el.className = 'mg-flits';
+  el.innerHTML = `<h2>${titel}</h2>`;
+  $('#scherm-gevecht').appendChild(el);
+  Klank.sfx('zwareklap');
+  setTimeout(() => el.remove(), 1900);
+}
+
 /* HP op → de metgezel vlucht het donker in (geen echte dood; later terug te vinden) */
 function metgezelVlucht(m) {
   if (S.metgezel) S.metgezel.vluchtig = true;
@@ -2460,6 +2526,7 @@ function metgezelVlucht(m) {
 /* wie krijgt de klap: meestal de speler, soms de metgezel (hij vangt 'm op) */
 function kiesAanvalDoel(v) {
   const m = gMet();
+  if (m && !m.dood && m.muur) { m.muur = false; return m; }   /* ✦ DE MUUR: hij ving deze klap gegarandeerd */
   if (m && !m.dood && METGEZELLEN[m.id].doelbaar
       && willekeurig() < (METGEZELLEN[m.id].dreiging || 0.22)) return m;
   return sp();
@@ -3851,16 +3918,21 @@ function bouwGevechtDom(g) {
       const md = METGEZELLEN[g.metgezel.id];
       const synT = synergieTier(g.metgezel.id);
       const synPerk = (window.SYNERGIE && SYNERGIE[g.metgezel.id] && SYNERGIE[g.metgezel.id].perk) || '';
+      /* CRYPTISCH (playtest 27 aug): de hover verklapt niets — een karakterregel i.p.v.
+         mechaniek/percentages. Wat hij doet leer je door hem te zien doen; de volle
+         uitleg staat in het metgezelboek (naslagwerk ná de ontmoeting). */
       const synBadge = synT === 'optimaal'
-        ? `<span class="metgezel-syn syn-optimaal" data-tip="✨ Optimale band met ${HELDNAAM(S.held)} — +30% effect & HP${synPerk ? ', en ' + synPerk : ''}.">✨</span>`
-        : synT === 'goed' ? `<span class="metgezel-syn syn-goed" data-tip="◆ Goede band met ${HELDNAAM(S.held)} — +15% effect & HP.">◆</span>` : '';
-      const synTip = synergieLabel(g.metgezel.id);
+        ? `<span class="metgezel-syn syn-optimaal" data-tip="✨ Deze twee horen bij elkaar.">✨</span>`
+        : synT === 'goed' ? `<span class="metgezel-syn syn-goed" data-tip="◆ Ze begrijpen elkaar.">◆</span>` : '';
+      void synPerk;
       mz.hidden = false;
       mz.classList.remove('rouw-zone');
+      mz.className = mz.className.replace(/\bmg-fam-\S+/g, '').trim();
+      mz.classList.add('mg-fam-' + g.metgezel.id);   /* familie-aura in zijn scherfkleur */
       mz.innerHTML = `
         ${synBadge}
         <div class="metgezel-intent"></div>
-        <div class="metgezel-art" data-tip="${md.naam} — ${md.tekst}${synTip ? ' · ' + synTip : ''}"${(window.VOETMARGE && VOETMARGE[g.metgezel.id]) ? ` style="--voetc:${VOETMARGE[g.metgezel.id]}%"` : ''}>${md.icoon}</div>
+        <div class="metgezel-art" data-tip="${md.naam} — ${md.fluister || '…'}"${(window.VOETMARGE && VOETMARGE[g.metgezel.id]) ? ` style="--voetc:${VOETMARGE[g.metgezel.id]}%"` : ''}>${md.icoon}</div>
         <div class="metgezel-naam">${md.naam}</div>
         <div class="hp-balk metgezel-hp"><div class="hp-vulling"></div><span class="hp-tekst"></span><span class="blok-schild" data-tip="Blok: vangt aanvalsschade op"><svg viewBox="0 0 24 28" aria-hidden="true"><path fill="url(#blokgrad)" stroke="#0c1c2e" stroke-width="1.6" d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg><b></b></span></div>
         <div class="blok-status"></div>
@@ -3879,6 +3951,17 @@ function bouwGevechtDom(g) {
           const a = mz.querySelector('.metgezel-art');
           if (img && a) a.innerHTML = `<img src="${img.src}" alt="${md.naam}">`;
         });
+      }
+      /* ✦ signatuurzet: de metgezel zélf is klikbaar (als een levende kaart) */
+      mz.querySelector('.metgezel-art').addEventListener('click', mgSignatuur);
+      /* entree-beat: naamflits, één keer per gevecht */
+      if (!g.mgEntreeGespeeld) {
+        g.mgEntreeGespeeld = true;
+        const fl = document.createElement('div');
+        fl.className = 'mg-entree';
+        fl.textContent = `${md.icoon} ${md.naam} loopt mee`;
+        mz.appendChild(fl);
+        setTimeout(() => fl.remove(), 2400);
       }
     } else if (dropsInRouw()) {
       /* De afwezigheid ÍS de tekst: een gedimd as-silhouet waar Drops stond — niet
@@ -4116,6 +4199,18 @@ function renderGevecht() {
     zetBlokSchild(dm.blok, m.blok);
     dm.badges.innerHTML = statusBadges(m);
     dm.intent.innerHTML = m.dood ? '' : metgezelIntentTekst(m);
+    /* ✦ de gereed-rand van de signatuurzet + klik-hint in de hover */
+    const mdef2 = METGEZELLEN[m.id];
+    const sigKan = !m.dood && mdef2.signatuur && !m.signatuurGebruikt && !g.bezig && !g.voorbij
+      && (g.energie || 0) >= 1 && !(g.hand || []).some(k => k.id === 'de_roddel');
+    dm.wrap.classList.toggle('sig-gereed', !!sigKan);
+    const artEl2 = dm.wrap.querySelector('.metgezel-art');
+    if (artEl2) {
+      const basis = `${mdef2.naam} — ${mdef2.fluister || '…'}`;
+      artEl2.dataset.tip = sigKan
+        ? basis + ((Codex.sigOntdekt || {})[m.id] ? ` · ✦ ${mdef2.signatuur.naam} gereed — klik (1⚡)` : ' · ✦ er broeit iets — klik hem aan (1⚡)')
+        : basis;
+    }
     if (dm.offer) {
       const def = METGEZELLEN[m.id];
       const kan = !m.dood && def.opoffering && def.opoffering.beschikbaar(g);
@@ -4557,6 +4652,7 @@ function toonMetgezelBoek(id) {
       <span class="schaarste-chip" style="--relk:${rgb}">${SCHAARSTE_LABEL[d.zeld] || 'Metgezel'}</span>
       <h3>${d.naam}</h3>
       <p class="boek-effect">${d.tekst}</p>
+      ${d.signatuur ? `<p class="boek-signatuur">✦ <b>${d.signatuur.naam}</b> — ${(Codex.sigOntdekt || {})[wit ? 'drops_wit' : id] ? d.signatuur.boek : 'nog niet ontdekt. Klik hem aan in het gevecht wanneer hij ✦ gereed is.'}</p>` : ''}
       ${synergieBoekHtml(wit ? 'drops_wit' : id)}
       ${d.lore ? `<p class="boek-lore">„${d.lore}"</p>` : ''}
       ${(id === 'drops' && isOntgrendeld('drops_wit'))
@@ -8237,7 +8333,7 @@ function toonHeldKeuze() {
       const art = (window.karakterSvg && karakterSvg(h.art)) || h.icoon;
       const synT = runMg ? synergieTier(runMg, id) : 'basis';
       const synHtml = runMg && synT !== 'basis'
-        ? `<div class="held-syn ${synT === 'optimaal' ? 'syn-opt' : ''}" data-tip="${runMgDef.naam}: ${synT === 'optimaal' ? 'optimale band — +30% effect & HP' + (SYNERGIE[runMg].perk ? ', en ' + SYNERGIE[runMg].perk : '') : 'goede band — +15% effect & HP'}">${runMgDef.icoon} ${synT === 'optimaal' ? '✨ optimale band' : '◆ goede band'}</div>`
+        ? `<div class="held-syn ${synT === 'optimaal' ? 'syn-opt' : ''}" data-tip="${runMgDef.naam} ${synT === 'optimaal' ? 'vecht het felst aan de zijde van ' + h.naam + '.' : 'en ' + h.naam + ' begrijpen elkaar.'}">${runMgDef.icoon} ${synT === 'optimaal' ? '✨ optimale band' : '◆ goede band'}</div>`
         : '';
       return `<div class="held-kaart-wrap">
         <div class="held-kaart" data-held="${id}" style="--held-gloed:${h.kleur || '255,156,63'}">

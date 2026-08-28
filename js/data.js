@@ -1482,6 +1482,19 @@ const VIJANDEN = {
 const METGEZELLEN = {
   drops: {
     naam: 'Drops', art: 'drops', icoon: '🐕', zeld: 'episch', maxHp: 26, rol: 'breker',
+    fluister: 'Hij lette al op je vóór jij hem zag.',
+    /* ✦ DE SIGNATUURZET: 1× per gevecht, 1⚡, geactiveerd door op hem te KLIKKEN.
+       Wat hij doet blijft cryptisch tot de eerste keer (Codex.sigOntdekt). */
+    signatuur: {
+      naam: 'DE JACHT',
+      boek: 'Drie beten in één adem — en zijn prooi blijft Kwetsbaar achter.',
+      doe(m) {
+        const d = (typeof copycatBaas === 'function' && copycatBaas(S.gevecht)) || kiesUit(alleVijanden());
+        if (!d) return;
+        for (let i = 0; i < 3; i++) { if (!d.dood) metgezelAanval(m, d, synergieN('drops', 4)); }
+        if (!d.dood) geefStatus(d, 'kwetsbaar', 1);
+      }
+    },
     tekst: 'Begin van je beurt: bijt de baas voor 6. Vangt soms een klap op; vlucht als het te zwaar wordt. Zijn offer (De Laatste Sprong) breekt de kopieermachine en geeft je geroofde kaarten terug.',
     lore: 'Geen fakkel kon het wekken — het donker wel. Uit het diepste zwart kroop iets kleins, warms en koppigs, met trouwe ogen. Het had jouw licht nooit nodig. Het bleef.',
     doelbaar: true, dreiging: 0.22,
@@ -1539,6 +1552,16 @@ const METGEZELLEN = {
      'drops' (transformeert de ✝-gedenkplek naar 🤍), niet als apart roster-slot. */
   drops_wit: {
     naam: 'Drops de Witte', art: 'drops_wit', icoon: '🤍', zeld: 'episch', maxHp: 34, rol: 'breker',
+    fluister: 'Het donker gaf hem terug. Vraag niet hoe.',
+    signatuur: {
+      naam: 'HET LICHT KEERT',
+      boek: 'Je fakkel laait op uit het niets, en zijn beet gaat dwars door elk schild heen.',
+      doe(m) {
+        zetFakkel(20);
+        const d = (typeof copycatBaas === 'function' && copycatBaas(S.gevecht)) || kiesUit(alleVijanden());
+        if (d && !d.dood) { verliesHp(d, synergieN('drops_wit', 8), m); fxNummer(actorEl(d), '🤍 door het schild', 'fx-schade'); }
+      }
+    },
     tekst: 'Geascendeerd. Begin van je beurt: bijt de baas — negeert vijand-blok — en geeft je 3 Blok. Hoe donkerder je fakkel, hoe feller hij brandt (gedoofd = dubbele klap). Zolang hij leeft zie je elke intent, ook blind, en steelt de Copycat trager. Hij sterft niet meer.',
     lore: 'Je liet hem niet doven. Daarom kwam hij terug — niet zwart, maar wit. Trouw kun je niet indexeren, en de dood houdt haar niet.',
     doelbaar: true, dreiging: 0.18,
@@ -1558,6 +1581,16 @@ const METGEZELLEN = {
   },
   vlamwachter: {
     naam: 'De Vlamwacht', art: 'vlamwachter', icoon: '🛡️', zeld: 'zeldzaam', maxHp: 34,
+    fluister: 'Hij spreekt niet. Hij staat er gewoon — telkens weer.',
+    signatuur: {
+      naam: 'DE MUUR',
+      boek: 'Een schildwal voor jullie beiden — en de eerstvolgende klap vangt híj, gegarandeerd.',
+      doe(m) {
+        geefBlok(sp(), synergieN('vlamwachter', 12));
+        geefBlok(m, synergieN('vlamwachter', 12));
+        m.muur = true;   /* kiesAanvalDoel: de eerstvolgende vijandklap richt zich op hem */
+      }
+    },
     tekst: 'Begin van je beurt: geeft je 5 Blok én ramt een vijand met zijn schild voor 5. Een stille schilddrager die de klappen graag zelf opvangt — maar terugslaat als het moet.',
     lore: 'Hij sprak nooit. Hij stond gewoon tussen jou en wat kwam — telkens opnieuw.',
     doelbaar: true, dreiging: 0.32,
@@ -1566,6 +1599,19 @@ const METGEZELLEN = {
   },
   mosgeest: {
     naam: 'De Mosgeest', art: 'mosgeest', icoon: '🍃', zeld: 'zeldzaam', maxHp: 22,
+    fluister: 'Waar zij loopt, sluit de aarde je wonden.',
+    signatuur: {
+      naam: 'DE BLOEI',
+      boek: 'Alles bloeit tegelijk: een diepe heling, en je Zwak en Kwetsbaar vallen als dorre bladeren af.',
+      doe() {
+        geneesHp(synergieN('mosgeest', 10));
+        const s = sp();
+        if ((s.status.zwak || 0) > 0 || (s.status.kwetsbaar || 0) > 0) {
+          s.status.zwak = 0; s.status.kwetsbaar = 0;
+          fxNummer($('#speler-zone'), '🌿 gezuiverd', 'fx-buff');
+        }
+      }
+    },
     tekst: 'Begin van je beurt: geneest je 4 HP én prikt een vijand met stekende sporen voor 4. Breekbaar maar trouw.',
     lore: 'Waar zij loopt, sluit de aarde je wonden. Vraag niet wat ze er ooit voor terugneemt.',
     doelbaar: true, dreiging: 0.16,
