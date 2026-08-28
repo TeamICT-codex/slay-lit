@@ -208,3 +208,14 @@ sleutels in de code zet.
 - Gratis Supabase-tier is ruim voldoende (dit zijn kilobytes per dag).
 - Later (native app / RevenueCat-route): dit schema kan 1-op-1 mee naar
   echte auth; `naam` wordt dan een user-id-alias.
+
+
+## WIPE-1 — schone lei (27 aug 2026)
+
+Eenmalig, hoort bij de client-wipe in game.js (WIPE_VERSIE 1). Draai in de
+Supabase SQL-editor; wist ALLE scores, ledenrijen en porren — groepen herrijzen
+vanzelf zodra een lid het bord opent (meldAan-upsert):
+
+```sql
+truncate table scores, leden, porren;
+```

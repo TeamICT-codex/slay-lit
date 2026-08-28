@@ -56,6 +56,24 @@ function schud(arr) {
 }
 
 const RIJEN = 15, KOLS = 7;   /* afdaling iets langer (13→15): meer gevechten/encounters per act */
+/* ====== SCHONE LEI (eenmalig per WIPE_VERSIE) ======
+   Wist bij ELKE speler de volledige spelvoortgang — run, Codex (relikwieën/
+   scherven/mysteries/slachtblok/loopbaan), daily-reeksen en de proloog — zodat
+   iedereen de playtest fris herstart (Thomas, 27 aug 2026). Instellingen, audio,
+   de fullscreen-nudge-keuze en de syndicaat-identiteit (strijdnaam + groepscode)
+   blijven staan: de groep her-registreert zichzelf bij het eerste bordbezoek.
+   Hoort bij de server-wipe in SUPABASE-SETUP.md (stap WIPE-1). Volgende schone
+   lei? Verhoog alleen WIPE_VERSIE. */
+const WIPE_VERSIE = 1;
+try {
+  if ((parseInt(localStorage.getItem('slayit_wipe') || '0', 10) || 0) < WIPE_VERSIE) {
+    ['slayit_save_v1', 'slayit_codex', 'slayit_daily', 'slayit_einde_pending',
+     'slayit_porren_gezien', 'slayit_proloog', 'slayit_proloog_over']
+      .forEach(k => localStorage.removeItem(k));
+    localStorage.setItem('slayit_wipe', String(WIPE_VERSIE));
+  }
+} catch (e) { /* opslag optioneel (privé-modus) */ }
+
 const SAVE_SLEUTEL = 'slayit_save_v1';
 
 /* ---------- acts (meerdere verdiepingen-ladders na elkaar) ---------- */
