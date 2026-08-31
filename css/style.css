@@ -1331,6 +1331,7 @@ body.lite .lb-daily-cta { animation: none; }
    eigen zorgvuldig getunede clamps (mobiel.css wint op specificiteit). */
 body[data-modus="laptop"] .metgezel-art { width: 110px; height: 110px; font-size: 4.2rem; }
 body[data-modus="laptop"] #metgezel-zone { margin-left: -30px; z-index: 2; }
+body[data-modus="laptop"] .d3-actief #metgezel-zone { margin-left: 0; }   /* in 3D plaatst gevechtTik de zone — de 2D-overlap-margin zou dubbel tellen (review) */
 body[data-modus="laptop"] .metgezel-hp { width: 100px; }
 /* familie-aura: dezelfde kleuren als hun scherven */
 .mg-fam-drops { --mgk: 190, 120, 245; }
@@ -1341,14 +1342,15 @@ body[data-modus="laptop"] .metgezel-hp { width: 100px; }
   content: ''; position: absolute; left: 50%; bottom: -2px; transform: translateX(-50%);
   width: 115%; height: 22px; border-radius: 50%;
   background: radial-gradient(ellipse at center, rgba(var(--mgk, 255, 156, 63), .38), transparent 68%);
+  opacity: .75;   /* rustwaarde ónder 1 zodat de flits/puls echt kan uitschieten (review: opacity>1 wordt geklemd) */
   transition: opacity .3s; pointer-events: none;
 }
 /* de actie-beat: aura flitst terwijl hij handelt */
 #metgezel-zone.mg-actie .metgezel-art { filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .7)) drop-shadow(0 0 26px rgba(var(--mgk, 255, 156, 63), .85)); }
-#metgezel-zone.mg-actie .metgezel-art::before { animation: mgAuraFlits .9s ease; }
-@keyframes mgAuraFlits { 0% { opacity: 1; } 35% { opacity: 2; transform: translateX(-50%) scaleX(1.25); } 100% { opacity: 1; transform: translateX(-50%); } }
+#metgezel-zone.mg-actie.mg-actie .metgezel-art::before { animation: mgAuraFlits .9s ease; }   /* dubbele klasse: wint van de sig-gereed-puls (review) */
+@keyframes mgAuraFlits { 0% { opacity: .75; } 35% { opacity: 1; transform: translateX(-50%) scaleX(1.3); } 100% { opacity: .75; transform: translateX(-50%); } }
 /* de interceptie: hij schuift zichtbaar vóór je */
-#metgezel-zone.mg-vangt .metgezel-art { animation: mgVangt .6s cubic-bezier(.2, 1.2, .4, 1); }
+#metgezel-zone.mg-vangt.mg-vangt .metgezel-art { animation: mgVangt .6s cubic-bezier(.2, 1.2, .4, 1); }   /* dubbele klasse: wint van de latere .raak-regel (review) */
 @keyframes mgVangt { 0% { translate: 0 0; } 40% { translate: 26px 0; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .7)) drop-shadow(0 0 22px rgba(var(--mgk, 255, 156, 63), .9)); } 100% { translate: 0 0; } }
 /* ✦ de gereed-rand van de signatuurzet */
 #metgezel-zone.sig-gereed .metgezel-art { cursor: pointer; }
@@ -1360,7 +1362,7 @@ body[data-modus="laptop"] .metgezel-hp { width: 100px; }
 }
 @keyframes sigSter { 0%, 100% { transform: translateX(-50%) scale(1); opacity: .8; } 50% { transform: translateX(-50%) scale(1.35); opacity: 1; } }
 #metgezel-zone.sig-gereed .metgezel-art::before { animation: sigAura 1.5s ease-in-out infinite; }
-@keyframes sigAura { 0%, 100% { opacity: .8; } 50% { opacity: 1.6; } }
+@keyframes sigAura { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
 /* de entree-naamflits */
 .mg-entree {
   position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
@@ -1394,7 +1396,8 @@ body[data-modus="laptop"] .metgezel-hp { width: 100px; }
 .boek-signatuur { color: #ffd9a0; }
 body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
 @media (prefers-reduced-motion: reduce) {
-  #metgezel-zone.sig-gereed .metgezel-art::after, #metgezel-zone.sig-gereed .metgezel-art::before { animation: none; }
+  #metgezel-zone.sig-gereed .metgezel-art::after, #metgezel-zone.sig-gereed .metgezel-art::before,
+  #metgezel-zone.mg-actie.mg-actie .metgezel-art::before, #metgezel-zone.mg-vangt.mg-vangt .metgezel-art { animation: none; }
 }
 .metgezel-art svg, .metgezel-art img { width: 100%; height: 100%; object-fit: contain; }
 /* synergie-badge op de metgezel in het gevecht (✨ optimaal / ◆ goed) — ankert op de zone

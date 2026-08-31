@@ -2198,7 +2198,11 @@ function verliesHp(doel, n, bron) {
   if (window.Vista && !doel.isMetgezel) Vista.raak(doel, n >= 8);   /* de metgezel is DOM-only, niet in de 3D-scène */
   pose2D(doel, 'hit', 0.45);
   const el = actorEl(doel);
-  if (el) { el.classList.remove('raak'); void el.offsetWidth; el.classList.add('raak'); }
+  if (el && !el.classList.contains('mg-vangt')) {   /* bij een interceptie is de schuif de beat (review) */
+    el.classList.remove('raak'); void el.offsetWidth; el.classList.add('raak');
+    if (el._raakT) clearTimeout(el._raakT);
+    el._raakT = setTimeout(() => el.classList.remove('raak'), 420);   /* opruimen: 'raak' bleef anders eeuwig staan en doofde de adem-animatie (review) */
+  }
   if (doel.isMetgezel) {
     /* Drops de Witte is al door de dood gegaan: hij sterft/vlucht niet meer (kaarttekst-
        belofte + blind-immuniteit). Klem hem op minimaal 1 HP zodat de vlucht-tak nooit vuurt. */
@@ -2486,6 +2490,9 @@ function mgSignatuur() {
   if (!g || g.bezig || g.voorbij || !m || m.dood) return;
   const def = METGEZELLEN[m.id];
   if (!def || !def.signatuur) return;
+  /* MOBIEL: de eerste tik toont alleen de tooltip (lezen), pas de tweede activeert —
+     zelfde patroon als kaarten (klikKaart); reset bij de beurtwissel (review 9031c72) */
+  if (window.mobiel && g.mgSigVoorbeeld !== m.id) { g.mgSigVoorbeeld = m.id; Klank.sfx('klik'); return; }
   if (m.signatuurGebruikt) { melding('✦ Zijn signatuurzet is dit gevecht al gespeeld.'); return; }
   if (g.hand && g.hand.some(k => k.id === 'de_roddel')) { fxNummer(actorEl(m), '🐍 twijfelt aan je…', 'fx-debuff'); Klank.sfx('fout'); return; }
   if ((g.energie || 0) < 1) { melding('Zijn zet vraagt 1 ⚡.'); Klank.sfx('fout'); return; }
@@ -2501,6 +2508,7 @@ function mgSignatuur() {
   Klank.sfx('schitter');
   def.signatuur.doe(m);
   if (alleVijanden().length === 0) { gevechtGewonnen(); return; }   /* de zet kan de laatste vellen */
+  checkBaasFase();   /* de zet kan een fasedrempel breken — zelfde invariant als naActie (review) */
   renderGevecht();
 }
 /* de bondgenoot-cut-in: klein broertje van baasFaseMoment, in familiekleur */
@@ -3796,8 +3804,15 @@ function gevechtTik(dt) {
      links NÁÁST de held op de grondlijn i.p.v. 'm boven op de held te laten vallen (offsets tunebaar). */
   if (ps && GDOM.metgezel && g.metgezel && !g.metgezel.dood) {
     const mw = GDOM.metgezel.wrap;
-    mw.style.left = Math.max(78, ps.x - 168) + 'px';   /* genoeg tussenruimte (held ~178px breed) → geen overlap */
-    mw.style.top = (ps.voetY - 112) + 'px';             /* voeten op de grondlijn (art begint ~24px in de zone, art = 88px) */
+    /* GEMETEN i.p.v. hardgecodeerd (review 9031c72): de oude -112 was op de 88px-art
+       gekalibreerd — de 110px-art zakte 22-32px onder de grondlijn. Eén keer cachen. */
+    const dmc = GDOM.metgezel;
+    if (!dmc.artVoet) {
+      const a = mw.querySelector('.metgezel-art');
+      if (a) dmc.artVoet = a.offsetTop + a.offsetHeight;
+    }
+    mw.style.left = Math.max(108, ps.x - 150) + 'px';   /* -150: de 'halve stap vóór' komt in 3D uit de JS (de 2D-margin is daar geneutraliseerd); klem op de bredere art */
+    mw.style.top = (ps.voetY - (dmc.artVoet || 144)) + 'px';
   }
 }
 
@@ -5314,7 +5329,15 @@ async function copycatSpeelTerug(v, g, plan) {
     if (S.gevecht !== g || g.voorbij || v.dood) { wrap.remove(); return; }
     /* 2 — het effect landt (aanvallen met de Erfprins-bonus) */
     if (k.soort === 'aanval') {
-      doeSchade(sp(), k.eindDmg, v);
+      /* óók deze klap loopt langs de doelkeuze: DE MUUR (en de gewone dreiging-vang)
+         gold anders niet voor teruggespeelde kaarten (review 9031c72) */
+      const doelC = kiesAanvalDoel(v);
+      if (doelC.isMetgezel) {
+        melding(`🛡️ ${METGEZELLEN[doelC.id].naam} vangt de klap voor je op!`);
+        const ielC = actorEl(doelC);
+        if (ielC) { ielC.classList.remove('mg-vangt'); void ielC.offsetWidth; ielC.classList.add('mg-vangt'); setTimeout(() => ielC.classList.remove('mg-vangt'), 700); }
+      }
+      doeSchade(doelC, k.eindDmg, v);
       fxNummer(actorEl(v), `🔥 jouw ${k.naam}! −${k.eindDmg}`, 'fx-schade');
     } else if (k.soort === 'blok') {
       geefBlok(v, k.n); fxNummer(actorEl(v), `🛡️ jouw ${k.naam}!`, 'fx-blok');
@@ -5817,6 +5840,9 @@ function beginSpelerBeurt() {
   if (heeftRelikwie('hartsteen')) geneesHp(1);
 
   /* (checkDropsOntwaak verwijderd — Drops unlock je nu via het Drempel-ritueel) */
+  const mgM = gMet();
+  if (mgM) mgM.muur = false;      /* DE MUUR geldt één vijandbeurt — niet-verzilverd = vervallen (review) */
+  g.mgSigVoorbeeld = null;        /* mobiele leestap van de signatuurzet reset per beurt */
   /* THE COPYCAT: mercy-lek (geen breker) óf breker-terugwin, stall-straf, fase-check */
   copycatBeurtStart(g);
 
