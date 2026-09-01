@@ -4286,7 +4286,8 @@ body.lite .plagiaat-zakt .vijand-art { animation: none; filter: grayscale(.85) b
 /* ---------- HET SLACHTBLOK 2.0: proloog, stappen, aderen, bestemming ---------- */
 .sb-proloog { max-width: min(92vw, 680px); display: flex; flex-direction: column; align-items: center; gap: 13px; text-align: center; }
 .sb-proloog-blok {
-  width: clamp(110px, 22vh, 175px); aspect-ratio: 1; font-size: 4rem;
+  /* 3:2 sinds de echte altaar-art (v93): breder blok, zelfde verticale voetafdruk */
+  width: clamp(150px, 30vh, 250px); aspect-ratio: 3 / 2; font-size: 4rem;
   display: flex; align-items: center; justify-content: center;
   animation: sbGloed 2.8s ease-in-out infinite;
 }
@@ -4303,7 +4304,7 @@ body.lite .plagiaat-zakt .vijand-art { animation: none; filter: grayscale(.85) b
 /* korte liggende telefoons: de proloog krimpt zodat de knoppenbalk in beeld blijft (review: 21-75px onder de vouw) */
 @media (max-height: 430px) {
   .sb-proloog { gap: 7px; }
-  .sb-proloog-blok { width: clamp(56px, 15vh, 92px); font-size: 2.4rem; }
+  .sb-proloog-blok { width: clamp(96px, 24vh, 140px); font-size: 2.4rem; }   /* 3:2: hoogte blijft ~15vh, art tweemaal zo aanwezig */
   .sb-proloog-titel { font-size: 1.45rem; }
   .sb-proloog-tekst { font-size: .88rem; line-height: 1.42; }
 }
