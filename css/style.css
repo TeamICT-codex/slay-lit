@@ -66,7 +66,7 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   overflow: hidden;
 }
 .scherm.actief { display: flex; }
-#scherm-titel { top: 0; }
+#scherm-titel { top: 0; padding-top: env(safe-area-inset-top); }   /* de titel schoof anders onder de OS-statusbalk (meetronde v89) */
 
 /* ---------- de outro "De Opzegtermijn" (js/outro.js) ----------
    Eén integer-opgeschaald pixel-canvas, gecentreerd met letterbox; de
@@ -166,6 +166,7 @@ button:disabled { cursor: not-allowed; opacity: .4; }
    choreografie: vignet → zegel-SLAM → naam → citaat → effect/chips → knop */
 #dagwet-proc {
   position: fixed; inset: 0; z-index: 940;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);   /* camera-notch/gebarenbalk (meetronde v89) */
   display: flex; align-items: center; justify-content: center;
   opacity: 0; transition: opacity .35s ease;
 }
@@ -178,7 +179,7 @@ button:disabled { cursor: not-allowed; opacity: .4; }
     radial-gradient(ellipse at center, rgba(8, 5, 8, .88) 40%, rgba(3, 2, 3, .97));
 }
 .dwp-kaart {
-  position: relative; width: min(600px, 92vw); max-height: 92dvh; overflow-y: auto;
+  position: relative; width: min(600px, 92vw); max-height: min(92dvh, calc(100dvh - 12px - env(safe-area-inset-top) - env(safe-area-inset-bottom))); overflow-y: auto;
   padding: 26px 30px 24px; text-align: center;
   background: linear-gradient(175deg, #241a1c, #17100f 55%, #1d1214);
   border: 1px solid rgba(226, 140, 90, .38); border-radius: 16px;
@@ -186,7 +187,7 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 }
 .dwp-kaart > * { opacity: 0; animation: dwpOp .5s ease forwards; }
 .dwp-boven {
-  display: block; color: var(--perkament-dof); letter-spacing: .35em; font-size: .68rem;
+  display: block; color: var(--perkament-dof); letter-spacing: .35em; font-size: .72rem;
   animation-delay: .05s;
 }
 .dwp-zegel {
@@ -946,7 +947,7 @@ body.lite .lb-daily-cta { animation: none; }
   background: radial-gradient(ellipse at 50% 70%, rgba(120, 50, 20, .25), transparent 60%);
 }
 .titel-groot {
-  font-family: 'Pirata One', serif;
+  font-family: 'Pirata One', 'Pirata Fallback', serif;   /* fallback met size-adjust: de kale serif was ~57% breder en klapte op 28vw uit beeld (v89) */
   font-size: clamp(4rem, 13vw, 8.5rem);
   line-height: .9;
   color: var(--ember-fel);
@@ -1178,7 +1179,8 @@ body.lite .lb-daily-cta { animation: none; }
 }
 .seed-vak input {
   margin-left: 8px;
-  padding: 6px 12px;
+  padding: 10px 12px;
+  min-height: 42px;   /* raakzone-richtlijn (was 34px — meetronde v89) */
   font-family: 'Alegreya', serif;
   font-size: .95rem;
   color: var(--perkament);
@@ -1191,7 +1193,7 @@ body.lite .lb-daily-cta { animation: none; }
 .seed-vak input:focus { outline: none; border-color: var(--ember); }
 #seed-label {
   position: fixed;
-  bottom: 12px; left: 16px;
+  bottom: calc(12px + env(safe-area-inset-bottom)); left: calc(16px + env(safe-area-inset-left));
   font-family: 'Alegreya', serif;
   font-size: .85rem;
   color: var(--perkament-dof);
@@ -1579,7 +1581,7 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
   /* 'safe center': centreert normaal, maar wordt flex-start zodra de inhoud
      hoger is dan het scherm — anders knipt de kop onbereikbaar af (playtest) */
   justify-content: safe center;
-  background: radial-gradient(ellipse at center, rgba(44, 10, 54, .84), rgba(6, 4, 10, .96));
+  background: radial-gradient(ellipse at center, rgba(70, 24, 86, .5), transparent 62%), linear-gradient(rgba(8, 4, 12, .93), rgba(8, 4, 12, .96));   /* dicht doek + paarse gloed erbovenop (meetronde v89: tekst-op-tekst) */
   opacity: 0; transition: opacity .42s ease; padding: 4vh 3vw;
   overflow-y: auto;
 }
@@ -1604,7 +1606,7 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
 .roof-overlay.open .roof-kaart { transform: translateY(0) scale(1); opacity: 1; }
 .roof-kaart .rk-art { width: 100%; aspect-ratio: 3 / 2; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: clamp(1.3rem, 3.3vw, 1.9rem); line-height: 1; background: #0d0a14; }
 .roof-kaart .rk-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.roof-kaart .rk-naam { font-size: clamp(.5rem, 1.5vw, .66rem); color: var(--perkament); text-align: center; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.roof-kaart .rk-naam { font-size: clamp(.7rem, 1.6vw, .8rem); color: var(--perkament); text-align: center; line-height: 1.12; max-width: 100%; overflow-wrap: anywhere; }
 .roof-kaart.gekozen { border-color: rgba(255, 90, 70, .95); box-shadow: 0 0 22px rgba(255, 80, 40, .9); transform: translateY(-10px) scale(1.12); z-index: 2; }
 .roof-kaart.verbrandt { animation: roofVerbrand .58s ease forwards; }
 @keyframes roofVerbrand {
@@ -1618,7 +1620,7 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
 .slachtblok-overlay .roof-kop { color: #ffd7c2; text-shadow: 0 2px 14px rgba(226, 84, 44, .85); }
 .slachtblok-overlay .roof-kaart { cursor: pointer; }
 .slachtblok-overlay .roof-kaart.gekozen { border-color: rgba(255, 120, 50, .95); box-shadow: 0 0 22px rgba(255, 100, 30, .9); }
-.sb-waarde { color: var(--goud); font-size: .6rem; }
+.sb-waarde { color: var(--goud); font-size: .72rem; }   /* het smeedbudget-getal was 9.6px (meetronde v89) */
 .sb-balk { display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap; }
 .sb-modules { display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)); gap: 8px; max-width: min(92vw, 640px); }
 .sb-module {
@@ -1689,7 +1691,7 @@ body.lite .decreet-stempel { animation: none; opacity: 1; transform: translate(-
 @media (max-height: 800px) {
   .sb-preview .kaart-focus-houder { transform: scale(.66); margin-bottom: -120px; }
 }
-.slachtblok-overlay .sb-balk { position: sticky; bottom: 0; z-index: 6; padding: 8px 0 10px; background: linear-gradient(0deg, rgba(8, 4, 4, .96) 62%, transparent); }
+.slachtblok-overlay .sb-balk { position: sticky; bottom: 0; z-index: 6; padding: 12px 0 10px; background: linear-gradient(0deg, rgba(8, 4, 4, .97) 78%, rgba(8, 4, 4, .72) 94%, transparent); }   /* dichter doek: modulelabels scrolden leesbaar dwars door de balk (meetronde v89) */
 .sb-preview.gloeit { filter: drop-shadow(0 0 22px rgba(255, 140, 50, .55)); }
 .sb-preview-label { color: #d9a06b; font-style: italic; font-size: .78rem; }
 .sb-negatief { color: #ff5540 !important; }
@@ -1698,11 +1700,11 @@ body.lite .decreet-stempel { animation: none; opacity: 1; transform: translate(-
 .sb-meeneem { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
 .sb-meeneem-icoon { font-size: 1.5rem; line-height: 1.1; }
 .sb-meeneem-naam { font-size: .78rem; max-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sb-meeneem small { color: var(--perkament-dof); font-size: .68rem; }
+.sb-meeneem small { color: var(--perkament-dof); font-size: .72rem; }
 .sb-meeneem.gekozen { border-color: var(--goud); box-shadow: 0 0 14px rgba(245, 197, 66, .5); }
 
 /* ---------- het leaderboard ---------- */
-.lb-kolommen { display: flex; gap: clamp(14px, 4vw, 44px); justify-content: center; flex-wrap: wrap; width: min(860px, 94vw); }
+.lb-kolommen { display: flex; gap: clamp(14px, 4vw, 44px); justify-content: center; flex-wrap: wrap; width: min(860px, 94vw); max-width: 100%; }
 .lb-kolom { flex: 1 1 300px; min-width: 280px; }
 .lb-rij {
   display: flex; align-items: center; gap: 10px;
@@ -1787,7 +1789,7 @@ body.lite .syn-trede { animation: none; }
 }
 .wb-rij.wb-eigen { border-color: rgba(120, 190, 255, .65); background: rgba(30, 55, 80, .45); }
 .wb-posse {
-  padding: 1px 8px; border-radius: 999px; font-size: .68rem; letter-spacing: .04em;
+  padding: 1px 8px; border-radius: 999px; font-size: .72rem; letter-spacing: .04em;
   background: rgba(60, 90, 120, .45); border: 1px solid rgba(120, 170, 220, .35); color: #a8cdf0;
 }
 .wb-zw { opacity: .8; cursor: help; }
@@ -2265,7 +2267,7 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
 .kaart-tekst b.plus { color: var(--gifgroen); }
 .kaart-tekst b.min { color: var(--bloed); }
 .kaart-type {
-  font-size: .68rem;
+  font-size: .72rem;
   text-transform: uppercase;
   letter-spacing: .14em;
   color: rgba(232, 213, 174, .4);
@@ -2703,7 +2705,7 @@ body.lite .kies-slot.leeg, body.lite .kies-actiebalk .kies-bevestig:not(:disable
 .vloek-reveal-overlay {
   position: fixed; inset: 0; z-index: 720;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 50% 42%, rgba(40, 18, 60, .55), rgba(5, 3, 9, .95));
+  background: radial-gradient(circle at 50% 42%, rgba(90, 50, 140, .4), transparent 62%), linear-gradient(rgba(5, 3, 9, .93), rgba(5, 3, 9, .93));   /* dicht doek: het beloningscherm bleef er leesbaar doorheen schijnen (meetronde v89) */
   animation: vloekRevealIn .3s ease;
 }
 .vloek-reveal-overlay.weg { animation: vloekRevealUit .36s ease forwards; }
@@ -2732,7 +2734,7 @@ body.lite .kies-slot.leeg, body.lite .kies-actiebalk .kies-bevestig:not(:disable
 .kaart-reveal-overlay {
   position: fixed; inset: 0; z-index: 720;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 50% 42%, rgba(70, 50, 16, .55), rgba(7, 5, 3, .95));
+  background: radial-gradient(circle at 50% 42%, rgba(150, 105, 34, .38), transparent 62%), linear-gradient(rgba(7, 5, 3, .93), rgba(7, 5, 3, .93));
   animation: vloekRevealIn .3s ease;
 }
 .kaart-reveal-overlay.weg { animation: vloekRevealUit .36s ease forwards; }
@@ -2766,7 +2768,7 @@ body.lite .kies-slot.leeg, body.lite .kies-actiebalk .kies-bevestig:not(:disable
 .scherf-reveal-overlay {
   position: fixed; inset: 0; z-index: 720;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 50% 42%, rgba(36, 22, 62, .6), rgba(5, 3, 9, .95));
+  background: radial-gradient(circle at 50% 42%, rgba(84, 52, 144, .42), transparent 62%), linear-gradient(rgba(5, 3, 9, .93), rgba(5, 3, 9, .93));
   animation: vloekRevealIn .3s ease;
 }
 .scherf-reveal-overlay.weg { animation: vloekRevealUit .36s ease forwards; }
@@ -2799,7 +2801,7 @@ body.lite .kies-slot.leeg, body.lite .kies-actiebalk .kies-bevestig:not(:disable
 .relikwie-reveal-overlay {
   position: fixed; inset: 0; z-index: 720;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 50% 44%, rgba(var(--relk), .30), rgba(6, 4, 10, .95));
+  background: radial-gradient(circle at 50% 44%, rgba(var(--relk), .4), transparent 60%), linear-gradient(rgba(6, 4, 10, .93), rgba(6, 4, 10, .93));
   animation: vloekRevealIn .3s ease;
 }
 .relikwie-reveal-overlay.weg { animation: vloekRevealUit .36s ease forwards; }
@@ -3508,18 +3510,25 @@ body.lite .kv-geest { animation: none; opacity: .45; }
 /* de koninklijke uitroep */
 .baas-spraak {
   position: fixed;
-  top: 18%;
+  top: max(12%, calc(50px + env(safe-area-inset-top)));
   left: 50%;
   transform: translateX(-50%);
   z-index: 56;
+  width: max-content; max-width: min(88vw, 860px);
+  text-align: center;
   pointer-events: none;
   animation: spraakKoning 3.2s ease forwards;
 }
 .baas-spraak span {
   font-family: 'Pirata One', serif;
-  font-size: clamp(1.5rem, 3.6vw, 2.4rem);
+  font-size: clamp(1.15rem, 3.2vw, 2.2rem);
   letter-spacing: 3px;
   color: #b6e85d;
+  /* eigen spraakplaat: de uitroep lag als kale tekst over hp-balken/intents heen —
+     op een telefoon liggend onleesbare tekst-op-tekst (meetronde v89) */
+  display: inline-block; padding: 7px 16px; border-radius: 12px;
+  background: rgba(8, 10, 4, .84); border: 1px solid rgba(182, 232, 93, .3);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, .55);
   text-shadow: 0 0 22px rgba(120, 200, 60, .55), 0 4px 12px #000, 0 0 6px #000;
 }
 @keyframes spraakKoning {
@@ -3602,7 +3611,7 @@ body.lite .kv-geest { animation: none; opacity: .45; }
   position: fixed; inset: 0;
   z-index: 60;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(ellipse at center, rgba(10, 6, 14, .55), rgba(10, 6, 14, .92));
+  background: radial-gradient(ellipse at center, rgba(34, 20, 48, .5), transparent 62%), linear-gradient(rgba(10, 6, 14, .9), rgba(10, 6, 14, .94));   /* dicht doek (meetronde v89) */
   animation: introVervaag 3.6s ease forwards;
   pointer-events: none;
 }
@@ -3628,7 +3637,7 @@ body.lite .kv-geest { animation: none; opacity: .45; }
   text-transform: uppercase;
 }
 /* de EPISCH-variant: violette signatuur + de openingszin van het wezen */
-#baas-intro.episch-intro { animation-duration: 3.2s; background: radial-gradient(ellipse at center, rgba(24, 10, 34, .6), rgba(12, 6, 20, .94)); }
+#baas-intro.episch-intro { animation-duration: 3.2s; background: radial-gradient(ellipse at center, rgba(56, 24, 80, .5), transparent 62%), linear-gradient(rgba(12, 6, 20, .92), rgba(12, 6, 20, .94)); }
 .episch-intro .baas-intro-binnen small { color: #b28cf0; letter-spacing: 5px; }
 .episch-intro .baas-intro-binnen h1 { color: #cfa9ff; text-shadow: 0 0 34px rgba(168, 111, 224, .75), 0 6px 18px #000; }
 .episch-intro .baas-intro-binnen span { color: #e0c9ff; }
@@ -3657,7 +3666,7 @@ body.lite .kv-geest { animation: none; opacity: .45; }
   border: 3px double var(--goud);
   box-shadow: 0 0 46px rgba(245, 197, 66, .5), 0 -14px 40px rgba(226, 84, 44, .35) inset, 0 18px 50px rgba(0, 0, 0, .75);
 }
-.baas-intro-dicktator { background: radial-gradient(ellipse at center bottom, rgba(90, 24, 10, .55), rgba(12, 6, 6, .94)); }
+.baas-intro-dicktator { background: radial-gradient(ellipse at center bottom, rgba(120, 32, 12, .5), transparent 62%), linear-gradient(rgba(12, 6, 6, .92), rgba(12, 6, 6, .94)); }
 @keyframes bikDeal {
   0% { opacity: 0; transform: translateY(46px) rotateY(82deg) scale(.82); }
   100% { opacity: 1; transform: translateY(0) rotateY(0) scale(1); }
@@ -3673,6 +3682,17 @@ body.lite .kv-geest { animation: none; opacity: .45; }
 .bik-naam { font-family: 'Pirata One', serif; font-size: 1.85rem; color: var(--ember-fel); margin-top: 10px; text-shadow: 0 0 18px rgba(255, 156, 63, .5); }
 .bik-titel { font-family: 'Alegreya', serif; font-style: italic; color: #b6e85d; font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; }
 .bik-flavor { font-family: 'Alegreya', serif; font-style: italic; color: var(--perkament-dof); font-size: .82rem; margin-top: 8px; line-height: 1.35; }
+/* korte (telefoon-)schermen: de introkaart klemt op de hoogte, zodat tag + art +
+   naam + flavor samen ALTIJD binnen beeld blijven (meetronde v89: DICKtator-kaart
+   was 556px hoog in een 360px-scherm) */
+@media (max-height: 620px) {
+  .bik-kaart { width: min(230px, 60vw, calc((100dvh - 175px) * .68)); padding: 9px 9px 12px; }
+  .bik-tag { margin-bottom: 5px; }
+  .bik-naam { font-size: 1.35rem; margin-top: 6px; }
+  .bik-titel { font-size: .72rem; }
+  .bik-flavor { font-size: .74rem; margin-top: 5px; }
+  #baas-intro .baas-intro-binnen small { font-size: .85rem; }
+}
 @keyframes introVervaag { 0% { opacity: 0; } 12% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 
 /* Drops de Witte: de zaal kleurt eenmalig WIT bij zijn terugkeer — de enige keer dat
@@ -4076,13 +4096,14 @@ body[data-scherm="einde"] #licht-vignet { opacity: 0 !important; }
 .inst-rij {
   display: flex; align-items: center; justify-content: space-between; gap: 18px;
   font-size: 1.05rem;
+  min-height: 44px;   /* raakzone: het hele label vangt de tik (was 23px hoog — meetronde v89) */
 }
 .inst-rij input[type=range] {
   width: 150px;
   accent-color: var(--ember);
 }
 .inst-rij input[type=checkbox] {
-  width: 20px; height: 20px;
+  width: 24px; height: 24px;
   accent-color: var(--ember);
 }
 .inst-hint { font-size: .8rem; color: var(--perkament-dof); font-style: italic; max-width: 340px; text-align: center; }
@@ -4148,20 +4169,20 @@ img { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -we
    om gezien te worden: ruimer, ember-rand + een korte aandacht-glow bij verschijnen */
 #scherm-nudge {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 780;
-  display: flex; flex-direction: column; gap: 11px;
-  width: min(560px, 94vw); padding: 14px 16px;
+  bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 780;
+  display: flex; flex-direction: column; gap: 8px;
+  width: min(480px, 94vw); padding: 10px 12px;
   background: linear-gradient(180deg, rgba(48, 35, 64, .98), rgba(26, 19, 36, .99));
   border: 1.5px solid rgba(255, 156, 63, .55); border-radius: 16px;
   box-shadow: 0 12px 34px rgba(0, 0, 0, .65), 0 0 0 1px rgba(255, 156, 63, .12);
-  color: var(--perkament); font-size: 1.06rem; line-height: 1.35;
+  color: var(--perkament); font-size: .95rem; line-height: 1.3;
   animation: nudgeOp .35s ease both, nudgePuls 1.9s ease-in-out .45s 3;
 }
 .inst-install-knop { margin: 10px auto 2px; display: block; }
 #scherm-nudge b { color: var(--ember-fel); }
 .nudge-acties { display: flex; align-items: center; gap: 8px; }
 #scherm-nudge .nudge-ja {
-  flex: 1; padding: 12px 14px; border-radius: 11px; border: none;
+  flex: 1; padding: 10px 12px; border-radius: 11px; border: none;
   background: var(--ember); color: #1a1020; font-weight: 700;
   font-family: 'Pirata One', serif; font-size: 1.18rem; cursor: pointer;
   box-shadow: 0 3px 12px rgba(255, 156, 63, .4);
@@ -4171,7 +4192,7 @@ img { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -we
   border: 1px solid rgba(255, 156, 63, .45); box-shadow: none;
 }
 #scherm-nudge .nudge-x {
-  flex: none; width: 44px; height: 44px; border-radius: 10px;
+  flex: none; width: 42px; height: 42px; border-radius: 10px;
   background: rgba(255, 255, 255, .08); color: var(--perkament-dof);
   border: 1px solid var(--rand); font-size: 1.1rem; cursor: pointer;
 }
@@ -4286,7 +4307,7 @@ body.lite .plagiaat-zakt .vijand-art { animation: none; filter: grayscale(.85) b
   .sb-proloog-titel { font-size: 1.45rem; }
   .sb-proloog-tekst { font-size: .88rem; line-height: 1.42; }
 }
-.sb-stap { font-size: .55em; color: #e2915c; letter-spacing: .16em; margin-left: 10px; vertical-align: middle; }
+.sb-stap { font-size: .66em; color: #e2915c; letter-spacing: .16em; margin-left: 10px; vertical-align: middle; }
 .sb-bestemming { color: #d9a06b; font-style: italic; font-size: .86rem; max-width: min(92vw, 640px); text-align: center; margin: 4px 0 0; }
 .sb-module.sb-ader { border-color: rgba(245, 197, 66, .6); box-shadow: inset 0 0 12px rgba(245, 197, 66, .1); cursor: help; }
 .sb-ader-ster { color: var(--goud); font-style: normal; }
@@ -4321,8 +4342,13 @@ body.lite .plagiaat-zakt .vijand-art { animation: none; filter: grayscale(.85) b
 body.lite .gesmeed-visual .gv-vuur::after, body.lite .gesmeed-visual .gv-zegel, body.lite .sb-proloog-blok { animation: none !important; }
 
 
-/* de nudge duikt onder elke overlay en verbergt zich zodra er één open staat */
-body:has(.overlay.open) #scherm-nudge, body:has(#overlay-slachtblok.open) #scherm-nudge { display: none; }
+/* de nudge duikt onder elke overlay/ceremonie en verbergt zich zodra er één staat
+   (v89: de reveals en cinematics dragen géén .overlay — de nudge lag er dwars overheen) */
+body:has(.overlay.open) #scherm-nudge, body:has(#overlay-slachtblok.open) #scherm-nudge,
+body:has(.kaart-reveal-overlay) #scherm-nudge, body:has(.vloek-reveal-overlay) #scherm-nudge,
+body:has(.scherf-reveal-overlay) #scherm-nudge, body:has(.relikwie-reveal-overlay) #scherm-nudge,
+body:has(#baas-intro) #scherm-nudge, body:has(.roof-overlay.open) #scherm-nudge,
+body:has(#dagwet-proc) #scherm-nudge { display: none; }
 
 
 /* ---------- DEV-SHORTCUT: het DEV-menu op de logo-klik (weg vóór release) ---------- */

@@ -1789,7 +1789,13 @@ function pose2D(actor, state, duur) {
   const basis = actor.isSpeler ? huidigeHeld().art
     : (actor.isMetgezel ? METGEZELLEN[actor.id].art : actor.id);
   const lader = actor.isMetgezel && window.laadMetgezelAfbeelding ? laadMetgezelAfbeelding : laadKarakterAfbeelding;
+  const t0 = Date.now();
   lader(basis + '_' + state, img => {
+    /* GUARD (v89): komt de pose-art pas ná de beweging binnen (trage verbinding,
+       ondanks preloadPoses2D), sla de wissel dan over — een aanvalspose die
+       seconden te laat over het beeld klapt oogt kapot. Vastgehouden standen
+       (block/death) mogen wél laat binnenkomen. */
+    if (Date.now() - t0 > 400 && state !== 'block' && state !== 'death') return;
     const im = el.querySelector('img');
     if (!img || !im) return;             /* geen pose-art voor dit figuur */
     im.src = img.src;
@@ -1806,6 +1812,23 @@ function pose2D(actor, state, duur) {
       });
     }, (duur || 0.8) * 1000));
   });
+}
+
+/* v89 (mobiele race): pose-art werd pas bij de éérste pose-wissel geladen — op een
+   trage verbinding speelde de lunge-beweging eerst en klapte de aanvalspose er los
+   overheen ("de vijand bewoog eerst en toonde de animatie pas later"). Alle poses
+   van de aanwezige vechters voorladen bij de gevechtsstart maakt de wissel in
+   pose2D een synchrone cache-hit; poses die niet bestaan vallen in de bestaande
+   mislukt-TTL-cache (art.js) en kosten één stille 404 per stuk. */
+function preloadPoses2D(g) {
+  if (!window.laadKarakterAfbeelding) return;
+  const stil = () => {};
+  ['attack', 'cast', 'hit', 'block', 'death', 'victory'].forEach(s => laadKarakterAfbeelding(huidigeHeld().art + '_' + s, stil));
+  g.vijanden.forEach(v => ['attack', 'cast', 'hit', 'block', 'death', 'gif'].forEach(s => laadKarakterAfbeelding(v.id + '_' + s, stil)));
+  if (g.metgezel && window.laadMetgezelAfbeelding) {
+    const mArt = METGEZELLEN[g.metgezel.id].art;
+    ['attack', 'cast', 'hit', 'block', 'death', 'victory'].forEach(s => laadMetgezelAfbeelding(mArt + '_' + s, stil));
+  }
 }
 
 /* ---------- statussen, schade, blok ---------- */
@@ -3443,6 +3466,7 @@ function startGevecht(samenstelling, soort, rij) {
   g.heldArt = huidigeHeld().art;
 
   bouwGevechtDom(g);
+  preloadPoses2D(g);   /* poses warm vóór de eerste klap (mobiele race-fix v89) */
 
   let eersteTrek = 5;
   if (heeftRelikwie('klavertje')) eersteTrek += 2;

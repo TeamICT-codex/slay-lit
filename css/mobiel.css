@@ -105,7 +105,7 @@ body[data-modus="mobiel"] .scherm-titel { font-size: 1.9rem; }
    de header is bijzaak. Logo weg, kleinere iconen, fade i.p.v. massieve balk.
    Het gevecht krijgt de VOLLE hoogte (topbalk drijft erover). --- */
 body[data-modus="mobiel"] #topbalk {
-  height: calc(40px + env(safe-area-inset-top));
+  height: calc(var(--tbh, 40px) + env(safe-area-inset-top));
   padding: env(safe-area-inset-top) calc(8px + env(safe-area-inset-right)) 0 calc(8px + env(safe-area-inset-left));
   gap: 8px; font-size: .92rem; border-bottom: none;
   background: linear-gradient(180deg, rgba(13, 10, 18, .8), rgba(13, 10, 18, .32) 72%, transparent);
@@ -126,22 +126,62 @@ body[data-modus="mobiel"] #topbalk .tb-knop { flex-shrink: 0; }
    twee regels wrappen over de plaat heen — nowrap + niet krimpen (review 27 aug) */
 body[data-modus="mobiel"] #tb-hp, body[data-modus="mobiel"] #tb-fakkel,
 body[data-modus="mobiel"] #tb-goud, body[data-modus="mobiel"] #tb-scherven,
-body[data-modus="mobiel"] #tb-metgezel { white-space: nowrap; flex-shrink: 0; }
+body[data-modus="mobiel"] #tb-metgezel, body[data-modus="mobiel"] #tb-dagwet { white-space: nowrap; flex-shrink: 0; }
 /* de middenzone scrolt op de smalle balk: op 375px portret duwden de chips de
    dek/instellingen-knoppen anders van het scherm (debug-sweep 27 aug) */
 body[data-modus="mobiel"] #tb-midden {
-  gap: 8px; overflow-x: auto; scrollbar-width: none;
+  gap: 8px;
   align-self: stretch; align-items: center;
+  /* v89: geen scrollzone meer — die verstopte de dranken ONZICHTBAAR achter de rand
+     (meetronde: 0/3 dranken zichtbaar op 360px portret). Portret krijgt twee rijen
+     (DE TWEERIJER hieronder); liggend past alles, en bij overloop krimpt alleen de
+     relikwieënstrook, die intern scrolt. */
 }
-body[data-modus="mobiel"] #tb-midden::-webkit-scrollbar { display: none; }
 /* binnen de scrollzone mag de relikwieënrij niet meer naar 0 krimpen: ze houdt
    haar eigen interne scroll maar claimt minstens een zichtbare strook */
-body[data-modus="mobiel"] #tb-midden #tb-relikwieen { flex: 0 1 auto; min-width: 44px; max-width: 46vw; }
+body[data-modus="mobiel"] #tb-midden #tb-relikwieen { flex: 0 1 auto; min-width: 84px; max-width: none; }   /* v89: het 44px-venster toonde exact 1 relikwie — de kernklacht van de playtest */
 body[data-modus="mobiel"] .drank { font-size: 1.15rem; }
 body[data-modus="mobiel"] .tb-knop { font-size: 1.1rem; }
+/* v89 TAP-PAS: alle permanente topbalk-bedieningen naar een volwaardige raakzone
+   (dek/instellingen was 24x24, de drank 24x30, de schervenchip 20x21 — meetronde) */
+body[data-modus="mobiel"] .tb-knop {
+  min-width: 38px; min-height: 36px; padding: 2px 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+body[data-modus="mobiel"] .drank {
+  min-width: 34px; min-height: 36px; padding: 2px 4px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+body[data-modus="mobiel"] #tb-scherven, body[data-modus="mobiel"] #tb-metgezel { padding: 7px 4px; }
+
+/* ---- DE TWEERIJER (v89): portret-topbalk in twee rijen ----
+   Eén 40px-rij kon hp/fakkel/goud/scherven/metgezel/relikwieën/dranken/knoppen
+   nooit allemaal tonen op 360-412px breed: de relikwieën zaten in een 44px-koker
+   (1 zichtbaar — de afgekapte relikwie uit de playtest-screenshots) en de dranken
+   stonden 0% zichtbaar achter een onzichtbare scrollrand. Nu: rij 1 = de vitale
+   chips, rij 2 = relikwieën (scrolt intern, met fade-hint) + dranken + dek/⚙️.
+   Vast twee rijen — schermen verspringen niet als er relikwieën bijkomen. */
+@media (orientation: portrait) and (max-width: 900px) {
+  body[data-modus="mobiel"] { --tbh: 76px; }
+  body[data-modus="mobiel"] #topbalk { flex-wrap: wrap; align-content: center; row-gap: 0; column-gap: 7px; }
+  body[data-modus="mobiel"] #tb-midden { display: contents; }   /* chips worden directe balk-kinderen → herschikbaar met order */
+  body[data-modus="mobiel"] #topbalk::before { content: ''; order: 2; flex-basis: 100%; height: 0; }   /* de regelbreuk tussen rij 1 en 2 */
+  body[data-modus="mobiel"] #tb-midden #tb-relikwieen {
+    order: 3; flex: 1 1 0; min-width: 0; max-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 16px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 16px), transparent);   /* zachte fade rechts = scroll-hint */
+  }
+  body[data-modus="mobiel"] #tb-dranken { order: 4; margin-left: 0; }
+  body[data-modus="mobiel"] #topbalk .tb-knop { order: 5; }
+}
+/* toasts onder de (nu variabele) topbalk — ze overlapten 'm met een notch */
+body[data-modus="mobiel"] #meldingen { top: calc(var(--tbh, 40px) + env(safe-area-inset-top) + 8px); }
 
 /* schermen sluiten aan op de compacte balk; het gevecht gaat tot de rand */
-body[data-modus="mobiel"] .scherm { top: calc(40px + env(safe-area-inset-top)); }
+/* topbalkhoogte: de var(--tbh, 40px)-fallback IS de basiswaarde (liggend één rij);
+   alleen DE TWEERIJER (portret, hierboven) zet 'm op 76px. Geen basisregel hier —
+   die stond ná de media-query en won de cascade (v89-verificatie). */
+body[data-modus="mobiel"] .scherm { top: calc(var(--tbh, 40px) + env(safe-area-inset-top)); }
 body[data-modus="mobiel"] #scherm-gevecht { top: env(safe-area-inset-top); }
 
 /* GRONDANKER GEVECHTSPLAAT (het 'zweven'-mysterie, aug 2026): de platen zijn
@@ -224,8 +264,8 @@ body[data-modus="mobiel"] .roof-overlay {
   padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
 }
 body[data-modus="mobiel"] .roof-kop { font-size: clamp(1.05rem, 3.4vw, 1.5rem); gap: 3px; }
-body[data-modus="mobiel"] .roof-kop small { font-size: clamp(.68rem, 1.9vw, .85rem); }
-body[data-modus="mobiel"] .roof-kaart { width: clamp(50px, 9vw, 72px); padding: 5px 4px; }
+body[data-modus="mobiel"] .roof-kop small { font-size: clamp(.72rem, 1.9vw, .85rem); }
+body[data-modus="mobiel"] .roof-kaart { width: clamp(64px, 12vw, 84px); padding: 5px 4px; }   /* v89: 62px-tegels kapten elke kaartnaam af */
 body[data-modus="mobiel"] .roof-waaier { gap: 6px; }
 /* instellingen-paneel niet breder dan een smalle telefoon (min-width:340px lekte rechts eruit) */
 body[data-modus="mobiel"] .inst-paneel { min-width: 0; width: min(340px, 92vw); padding: 18px 16px; }
@@ -247,6 +287,9 @@ body[data-modus="mobiel"] #scherm-gevecht.baas-actief .speler-naam { display: no
    ~hoger lijken dan de vijanden: zonder dat naamlabel zakt de held-kolom door de bottom-alignment
    net mee → de voeten van held en vijand komen op één grondlijn. Vijand-namen BLIJVEN (identificatie). */
 body[data-modus="mobiel"] #scherm-gevecht .speler-naam { display: none; }
+/* idem de metgezel: zijn naamrij tilde z'n voeten ~14px boven de grondlijn van held
+   en vijanden (meetronde v89); naam + uitleg zitten in de tik-tooltip (DE BAND) */
+body[data-modus="mobiel"] #scherm-gevecht .metgezel-naam { display: none; }
 /* fijn-uitlijning: zonder naam zakt de held-figuur tegen z'n hp-balk → iets te laag t.o.v. een
    normale vijand (die z'n naam-rij houdt). Een margin-bottom op de held-kolom tilt 'm via flex-end
    mee omhoog. LET OP: vijanden staan door de klein/groot-scale (origin bottom-center) zélf al op
@@ -281,11 +324,14 @@ body[data-modus="mobiel"] #kaart-scroll { overflow-x: hidden; justify-content: c
 body[data-modus="mobiel"] #kaart-vlak { margin: 0 auto; }
 /* de knopen iets groter vóór de zoom, zodat ze ná het schalen tikbaar blijven
    (centrum-positie ongewijzigd — margin is de helft van de maat) */
-body[data-modus="mobiel"] .knoop { width: 62px; height: 62px; margin: -31px 0 0 -31px; }
-body[data-modus="mobiel"] .knoop-baas { width: 84px; height: 84px; margin: -42px 0 0 -42px; }
+body[data-modus="mobiel"] .knoop { width: 80px; height: 80px; margin: -40px 0 0 -40px; }   /* v89: na de kaart-zoom (~.51 op 360px) bleef 62px op 31px raakvlak steken */
+body[data-modus="mobiel"] .knoop-baas { width: 96px; height: 96px; margin: -48px 0 0 -48px; }
 
 /* overlays + scrollbare schermen (.scherm is standaard overflow:hidden) */
-body[data-modus="mobiel"] .overlay { padding: 20px 10px; }
+body[data-modus="mobiel"] .overlay {
+  padding: calc(16px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
+}
+body[data-modus="mobiel"] #overlay-codex { padding: calc(10px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left)); }
 body[data-modus="mobiel"] #scherm-held,
 body[data-modus="mobiel"] #scherm-event,
 body[data-modus="mobiel"] #scherm-rust,
@@ -295,7 +341,11 @@ body[data-modus="mobiel"] #scherm-winkel,
 body[data-modus="mobiel"] #scherm-einde {
   overflow-y: auto; justify-content: flex-start;
 }
-body[data-modus="mobiel"] #scherm-held { padding-bottom: 24px; }
+body[data-modus="mobiel"] #scherm-held { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+/* v89: zolang de nudge onderaan staat reserveren de schermen er ruimte voor — hij
+   bedekte letterlijk knoppen (Terug, seed-veld, Bestiarium, de baas-knoop) */
+body[data-modus="mobiel"]:has(#scherm-nudge) .scherm { padding-bottom: calc(118px + env(safe-area-inset-bottom)); }
+body[data-modus="mobiel"]:has(#scherm-nudge) #scherm-held { padding-bottom: calc(124px + env(safe-area-inset-bottom)); }
 
 body[data-modus="mobiel"] .held-kaart { width: min(400px, 92vw); margin-top: 64px; padding: 20px 16px 16px; }
 body[data-modus="mobiel"] .held-kaart > b { font-size: 1.7rem; }
@@ -351,6 +401,21 @@ body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-rug::after { fo
 /* de inspect/zoom-kaart op mobiel: passend op het scherm i.p.v. de vaste 300x425 */
 body[data-modus="mobiel"] #kies-kaarten .kaart.groot.kaart-focus { width: min(300px, 86vw); height: auto; min-height: 0; }
 body[data-modus="mobiel"] #kies-kaarten .kaart.groot.kaart-focus .kaart-icoon img { width: min(254px, 74vw); height: auto; aspect-ratio: 254 / 142; }
+/* v89: --fschaal 1 — de laptop-margin-reserve rekent met de vaste 300x425-kaart en
+   duwde de ◀▶-bladerpijlen (x=-56!) en op lage hoogte de Kies/Terug-knoppen uit beeld */
+body[data-modus="mobiel"] #kies-kaarten .kaart.groot.kaart-focus { --fschaal: 1; margin: 0; }
+/* de Slachtblok-preview idem: de geschaalde houder stak 26px buiten beide randen */
+body[data-modus="mobiel"] .sb-preview .kaart-focus-houder { transform: none; margin-bottom: 0; }
+body[data-modus="mobiel"] .sb-preview .kaart.groot.kaart-focus { --fschaal: 1; margin: 0; width: min(280px, 78vw); height: auto; min-height: 0; }
+body[data-modus="mobiel"] .sb-preview .kaart.groot.kaart-focus .kaart-icoon img { width: min(236px, 66vw); height: auto; aspect-ratio: 254 / 142; }
+/* v89 TAP-PAS: zoomknop op de offerkaarten (38px → 44px) */
+body[data-modus="mobiel"] .meer-zoom-knop { width: 44px; height: 44px; font-size: 1.15rem; }
+/* ---- HET SLACHTBLOK op mobiel (v89): de werkbank paste niet ----
+   3 kolommen van min 150px = 466px in een 360px-scherm (de Gif-kolom stond volledig
+   buiten beeld); steppers 26px, zegel/kost-knoppen 32px → raakzones opgekrikt */
+body[data-modus="mobiel"] .sb-modules { grid-template-columns: repeat(auto-fit, minmax(146px, 1fr)); width: 100%; max-width: min(96vw, 640px); }
+body[data-modus="mobiel"] .sb-stepper button { width: 38px; height: 38px; font-size: 1.15rem; }
+body[data-modus="mobiel"] .sb-kost button, body[data-modus="mobiel"] .sb-iconen button { min-width: 38px; height: 38px; }
 
 /* ---- handkaart-naam: NOOIT midden-woord breken op de smalle mobiele kaart ----
    overflow-wrap:normal + hyphens houdt woorden heel en breekt hoogstens op een nette
@@ -371,17 +436,17 @@ body[data-modus="mobiel"] #hand .kaart .kaart-naam {
 body[data-modus="mobiel"] #overlay-kies.kies-meervoud.open {
   flex-direction: column; align-items: stretch; overflow: hidden;
   /* safe-area bovenaan: zonder deze valt de titel in portret achter de notch/camera-cutout */
-  padding: calc(10px + env(safe-area-inset-top)) 10px 0;
+  padding: calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) 0 calc(10px + env(safe-area-inset-left));
 }
 body[data-modus="mobiel"] #overlay-kies.kies-meervoud #kies-titel,
 body[data-modus="mobiel"] #overlay-kies.kies-meervoud #kies-hint { flex: 0 0 auto; margin: 2px 0; text-align: center; }
 body[data-modus="mobiel"] #overlay-kies.kies-meervoud #kies-kaarten.meer-modus {
   flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
-  align-content: flex-start; width: 100%; max-width: 100%; margin: 6px 0 0; padding-bottom: 8px;
+  align-content: flex-start; width: 100%; max-width: 100%; margin: 6px 0 0; padding-bottom: 20px;   /* v89: de 🔍-knoppen van de onderste rij vielen exact achter de actiebalkrand */
 }
 body[data-modus="mobiel"] #overlay-kies.kies-meervoud .kies-actiebalk {
   position: static; flex: 0 0 auto; width: 100%; margin-top: auto;
-  padding: 10px clamp(12px, 4vw, 28px) calc(8px + env(safe-area-inset-bottom));
+  padding: 10px max(clamp(12px, 4vw, 28px), env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(clamp(12px, 4vw, 28px), env(safe-area-inset-left));
 }
 
 /* volledig-scherm-schakelaar enkel op touch tonen (desktop heeft F11).
@@ -400,13 +465,18 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      onderaan blijven (geen afkapping); de figuren vullen de ruimte erboven */
   body[data-modus="mobiel"] #strijdveld { padding: 0 8px 6px; align-items: flex-end; justify-content: space-evenly; gap: 8px; min-height: 0; }
   body[data-modus="mobiel"] #speler-zone { min-width: 0; }
-  body[data-modus="mobiel"] .speler-figuur { width: 140px; height: 140px; }
-  body[data-modus="mobiel"] #vijanden-rij { gap: 12px 16px; flex-wrap: wrap; justify-content: center; max-width: min(60vw, 340px); }
+  /* v89: compacter — held 140 + vijandkolommen van 122px liepen samen 78px buiten
+     een 360px-scherm ('Toch staand spelen'-pad); smallere hp-balken versmallen de
+     kolommen, de figuren zelf een maat kleiner */
+  body[data-modus="mobiel"] #scherm-gevecht .hp-balk { width: 84px; height: 16px; }
+  body[data-modus="mobiel"] #scherm-gevecht .speler-hp { width: 104px; }
+  body[data-modus="mobiel"] .speler-figuur { width: 122px; height: 122px; }
+  body[data-modus="mobiel"] #vijanden-rij { gap: 8px 10px; flex-wrap: wrap; justify-content: center; max-width: min(52vw, 300px); }
   body[data-modus="mobiel"] .vijand { min-width: 0; padding: 4px; }
-  body[data-modus="mobiel"] .vijand-art { width: 122px; height: 122px; }
-  body[data-modus="mobiel"] .is-elite .vijand-art { width: 140px; height: 140px; }
-  body[data-modus="mobiel"] .is-episch .vijand-art { width: 158px; height: 158px; }
-  body[data-modus="mobiel"] .is-baas .vijand-art { width: 178px; height: 178px; }
+  body[data-modus="mobiel"] .vijand-art { width: 104px; height: 104px; }
+  body[data-modus="mobiel"] .is-elite .vijand-art { width: 118px; height: 118px; }
+  body[data-modus="mobiel"] .is-episch .vijand-art { width: 132px; height: 132px; }
+  body[data-modus="mobiel"] .is-baas .vijand-art { width: 148px; height: 148px; }
 
   body[data-modus="mobiel"] #onderbalk { height: 292px; }
   /* idem als liggend: ~1/5 onder de rand, tik-lift opgekrikt; geen env() bijtellen
@@ -483,20 +553,18 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      dan voorheen (87→~108px op een 414px-scherm, +24%). De kortere onderbalk laat de rij
      bovendien ZAKKEN zodat naam/hp/status deels achter de kaartrij vallen (tik-op-figuur
      toont de statussen toch — bewuste keuze: grotere tegenstanders in beeld). */
-  /* DICHTHEIDSKNIK (playtest aug 2026, 'fullscreen voelt voller'): de pure vh-helling
-     stak alle extra schermhoogte in grotere figuren terwijl de vaste lagen (hand,
-     onderbalk, topbalk) niet meegroeien → fullscreen (+60px hoogte) oogde drukker dan
-     met browserbalk. De helling is nu GEHALVEERD via a·vh + b, met b zo gekozen dat
-     360px-schermen EXACT de oude maat houden (geen cliff, geen regressie op klein):
-     oud 26vh ≡ nieuw 13vh+46.8px op h=360. De extra hoogte gaat voortaan half naar
-     de figuur en half naar lucht. Maxima ongewijzigd. */
-  body[data-modus="mobiel"] .speler-figuur { width: clamp(96px, calc(14.5vh + 52.2px), 156px); height: clamp(96px, calc(14.5vh + 52.2px), 156px); }
-  body[data-modus="mobiel"] .vijand-art { width: clamp(74px, calc(13vh + 46.8px), 144px); height: clamp(74px, calc(13vh + 46.8px), 144px); }
-  body[data-modus="mobiel"] .is-elite .vijand-art { width: clamp(94px, calc(14.5vh + 52.2px), 158px); height: clamp(94px, calc(14.5vh + 52.2px), 158px); }
-  body[data-modus="mobiel"] .is-episch .vijand-art { width: clamp(100px, calc(16vh + 57.6px), 174px); height: clamp(100px, calc(16vh + 57.6px), 174px); }
+  /* KNIK TERUGGEDRAAID (v89): de 'gehalveerde helling' (13vh+46.8px, aug 2026)
+     kromp de figuren -6,3% op echte toestellen (h≈412) t.o.v. vóór de overhaul —
+     gemeten in de v89-regressieronde en precies de playtest-klacht "het stond
+     beter voor". De pure vh-helling is terug; de 'fullscreen voelt voller'-zorg
+     weegt niet op tegen kleinere figuren. */
+  body[data-modus="mobiel"] .speler-figuur { width: clamp(96px, 29vh, 156px); height: clamp(96px, 29vh, 156px); }
+  body[data-modus="mobiel"] .vijand-art { width: clamp(74px, 26vh, 144px); height: clamp(74px, 26vh, 144px); }
+  body[data-modus="mobiel"] .is-elite .vijand-art { width: clamp(94px, 29vh, 158px); height: clamp(94px, 29vh, 158px); }
+  body[data-modus="mobiel"] .is-episch .vijand-art { width: clamp(100px, 32vh, 174px); height: clamp(100px, 32vh, 174px); }
   /* baas groter: hij is HET monster — vh-factor omhoog zodat hij op echte telefoons
      (≈360–500px hoog) imposant oogt; min/max houden 'm leesbaar én onder de topbalk */
-  body[data-modus="mobiel"] .is-baas .vijand-art { width: clamp(120px, calc(21vh + 75.6px), 210px); height: clamp(120px, calc(21vh + 75.6px), 210px); }
+  body[data-modus="mobiel"] .is-baas .vijand-art { width: clamp(120px, 42vh, 210px); height: clamp(120px, 42vh, 210px); }
   body[data-modus="mobiel"] #vijanden-rij { gap: 10px; flex-wrap: nowrap; max-width: none; }
   /* (baas: eigen HP-balk wegwerken staat nu onvoorwaardelijk in sectie A, zodat
      het óók in portret-baasgevechten geldt — niet enkel liggend.) */
@@ -581,12 +649,38 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] #onderbalk { height: 98px; }
 }
 
+/* ---------- E. liggend op een ZEER korte hoogte (≤380px): HUD uit de knel ----------
+   Op 360px hoog viel de eindbeurt-knop (bottom:92) exact over de statuschips van de
+   rechtse vijand en de energie-orb (bottom:88) over je eigen blok-schild (meetronde
+   v89). De knop zakt onder de chiprij; de orb gaat naast de trekstapel staan. */
+@media (orientation: landscape) and (max-height: 380px) {
+  body[data-modus="mobiel"] #knop-eindbeurt { bottom: 58px; min-height: 40px; padding: 8px 14px; }
+  body[data-modus="mobiel"] #energie-orb { left: calc(62px + env(safe-area-inset-left)); bottom: 6px; transform: scale(.76); }
+}
+
 
 /* ---- reveal-ceremonies liggend op mobiel: passend i.p.v. de vaste 300x425-kaart
    (kop/tekst/Verder-knop vielen buiten beeld; zelfde patroon als #kies-kaarten
    hierboven — debug-sweep 27 aug) ---- */
 body[data-modus="mobiel"] .kaart-reveal-overlay, body[data-modus="mobiel"] .vloek-reveal-overlay,
-body[data-modus="mobiel"] .scherf-reveal-overlay, body[data-modus="mobiel"] .relikwie-reveal-overlay { overflow-y: auto; }
+body[data-modus="mobiel"] .scherf-reveal-overlay, body[data-modus="mobiel"] .relikwie-reveal-overlay {
+  overflow-y: auto;
+  padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+}
+/* overloop netjes: margin:auto centreert bij ruimte en laat de kop bij krapte gewoon
+   meescrollen — align-items:center duwde 'm half BOVEN beeld (vloek-reveal, v89) */
+body[data-modus="mobiel"] .kaart-reveal-binnen, body[data-modus="mobiel"] .vloek-reveal-binnen,
+body[data-modus="mobiel"] .scherf-reveal-binnen, body[data-modus="mobiel"] .rr-binnen { margin: auto; }
+/* kaartceremonies op de korte liggende hoogte: alles (titel + kaarten + knop) past
+   binnen 360px — de Sluiten/overslaan-knop viel tot 58px onder de vouw (meetronde) */
+@media (orientation: landscape) and (max-height: 600px) {
+  body[data-modus="mobiel"] #kies-kaarten .kaart.groot.kaart-focus { width: min(300px, 82vw, 46vh); }
+  body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) { gap: 14px 12px; margin: 8px 0; }
+  body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart.groot { width: 126px; height: 176px; padding: 7px 8px; }
+  body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart.groot .kaart-icoon img { width: 106px; height: 59px; }
+  body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-naam { font-size: .88rem; }
+  body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-tekst { font-size: .76rem; }
+}
 body[data-modus="mobiel"] .kaart-reveal-overlay .kaart.groot.kaart-focus,
 body[data-modus="mobiel"] .vloek-reveal-overlay .kaart.groot.kaart-focus {
   --fschaal: 1;

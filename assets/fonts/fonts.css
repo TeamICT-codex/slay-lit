@@ -30,3 +30,16 @@
   src: url('PirataOne-400-normal.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+
+/* v89: fallback-metriek voor de titel — de generieke serif rendert ~55-60% breder
+   dan Pirata One; zolang het woff2 laadt (of als het faalt) klapte "SLAY LIT" op
+   28vw letterlijk uit beeld ("LAY LI", meetronde v89). size-adjust normaliseert de
+   fallback naar de Pirata-breedte; resolven de local()-namen niet, dan valt de
+   stack gewoon terug op de generieke serif (= het oude gedrag, nooit slechter). */
+@font-face {
+  font-family: 'Pirata Fallback';
+  font-style: normal;
+  font-weight: 400;
+  size-adjust: 62%;
+  src: local('Times New Roman'), local('Noto Serif'), local('Georgia'), local('Roboto');
+}
