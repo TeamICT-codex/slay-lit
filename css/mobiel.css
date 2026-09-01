@@ -100,6 +100,23 @@ body[data-modus="mobiel"] #scherm-titel .titel-knoppen .knop-stil {
   display: flex; align-items: center; justify-content: center;
 }
 body[data-modus="mobiel"] .scherm-titel { font-size: 1.9rem; }
+/* v90: het titelscherm mag NOOIT knippen — de basis-.scherm is overflow:hidden en
+   gecentreerd, dus zodra titel+knoppenkolom (+ de nudge-reserve van v89) hoger
+   werden dan het scherm verdween de TITEL boven de rand (echte-toestel-melding
+   1 sep). Zelfde spacer-patroon als de event-tekstkolom: gecentreerd zolang het
+   past, scrollbaar zodra het niet past. */
+body[data-modus="mobiel"] #scherm-titel { overflow-y: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; padding-top: calc(10px + env(safe-area-inset-top)); }
+body[data-modus="mobiel"] #scherm-titel > * { flex-shrink: 0; }
+body[data-modus="mobiel"] #scherm-titel::before,
+body[data-modus="mobiel"] #scherm-titel::after { content: ''; flex: 0 0 auto; margin: auto; }
+/* portret: de knoppenkolom compacter zodat titel t/m stats op één schermhoogte
+   passen (360x800 mét nudge-reserve = de krapste echte maat) */
+@media (orientation: portrait) {
+  body[data-modus="mobiel"] .titel-sub { margin: 10px 0 18px; }
+  body[data-modus="mobiel"] .titel-knoppen { gap: 10px; }
+  body[data-modus="mobiel"] .titel-knoppen .knop-groot { padding: 18px 24px; font-size: 1.55rem; }
+  body[data-modus="mobiel"] #scherm-titel .titel-knoppen .knop-stil { min-height: 48px; padding: 10px 16px; font-size: 1.22rem; }
+}
 
 /* --- topbalk: compact, transparant, overlappend. In battle telt het scherm;
    de header is bijzaak. Logo weg, kleinere iconen, fade i.p.v. massieve balk.
@@ -344,7 +361,7 @@ body[data-modus="mobiel"] #scherm-einde {
 body[data-modus="mobiel"] #scherm-held { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
 /* v89: zolang de nudge onderaan staat reserveren de schermen er ruimte voor — hij
    bedekte letterlijk knoppen (Terug, seed-veld, Bestiarium, de baas-knoop) */
-body[data-modus="mobiel"]:has(#scherm-nudge) .scherm { padding-bottom: calc(118px + env(safe-area-inset-bottom)); }
+body[data-modus="mobiel"]:has(#scherm-nudge) .scherm:not(#scherm-gevecht) { padding-bottom: calc(118px + env(safe-area-inset-bottom)); }
 body[data-modus="mobiel"]:has(#scherm-nudge) #scherm-held { padding-bottom: calc(124px + env(safe-area-inset-bottom)); }
 
 body[data-modus="mobiel"] .held-kaart { width: min(400px, 92vw); margin-top: 64px; padding: 20px 16px 16px; }
