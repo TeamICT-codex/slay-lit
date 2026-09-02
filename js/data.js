@@ -2319,7 +2319,7 @@ const EVENTS = [
     opties: [
       {
         label: 'Doorzoek het lijk', detail: '60 goud glimt tussen de ribben. Maar wat de dode vasthield, laat niet los — er reist een vloek mee.',
-        doe: () => { geefGoud(60); const v = geefVloek(); return v ? `Je vindt 60 goud... maar een kille rilling trekt door je botten. Je dek bevat nu "${v}".` : 'Je vindt 60 goud... en het Zondebokvel vangt de kille rilling op.'; }
+        doe: () => { geefGoud(60); const v = geefVloek('Wat de dode vasthield, laat niet los — het reisde mee met het goud.'); return v ? `Je vindt 60 goud... maar een kille rilling trekt door je botten. Je dek bevat nu "${v}".` : 'Je vindt 60 goud... en het Zondebokvel vangt de kille rilling op.'; }
       },
       { label: 'Laat hem rusten', detail: 'Niets gebeurt.', doe: () => 'Je vouwt zijn handen over zijn borst en loopt verder.' }
     ]
@@ -2393,7 +2393,7 @@ const EVENTS = [
       },
       {
         label: 'Vraag om je dossier', detail: 'Misschien een relikwie — of een berisping.',
-        doe: () => { if (willekeurig() < 0.55) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `De klerk schuift je dossier door het loket. Erin: ${RELIKWIEEN[r].naam}!`; } geefGoud(50); return 'Je dossier is leeg op 50 goud aan onkostenvergoeding na.'; } verliesHpBuitenGevecht(5); const v = geefLichtVloek(); return v ? `De klerk stempelt AFGEKEURD op je verzoek. −5 HP en een clausule "${v}" erbij.` : 'De klerk stempelt AFGEKEURD op je verzoek. −5 HP — maar het Zondebokvel slikt de clausule in.'; }
+        doe: () => { if (willekeurig() < 0.55) { const r = willekeurigRelikwie(); if (r) { geefRelikwie(r); return `De klerk schuift je dossier door het loket. Erin: ${RELIKWIEEN[r].naam}!`; } geefGoud(50); return 'Je dossier is leeg op 50 goud aan onkostenvergoeding na.'; } verliesHpBuitenGevecht(5); const v = geefLichtVloek('AFGEKEURD. Het stempel zit erop — de clausule reist voortaan met je mee.'); return v ? `De klerk stempelt AFGEKEURD op je verzoek. −5 HP en een clausule "${v}" erbij.` : 'De klerk stempelt AFGEKEURD op je verzoek. −5 HP — maar het Zondebokvel slikt de clausule in.'; }
       },
       { label: 'Loop weg', detail: 'Niets gebeurt.', doe: () => 'Je laat de gezichtloze klerk wachten. Hij zal je naam onthouden.' }
     ]

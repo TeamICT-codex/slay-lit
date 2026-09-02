@@ -1905,14 +1905,25 @@ function geefDekVloek(id) {
   S.dek.push(nieuweKaart(id));
   return KAARTEN[id].naam;
 }
-function geefLichtVloek() {
-  return geefDekVloek(kiesUit(['schaduwsmet', 'mottenvlam', 'doofpot']));
+/* v94: ÉLKE vloek komt binnen met de reveal-ceremonie. Deze twee generieke gevers
+   deden dat niet — de vloek verscheen stil in het dek (playtest 2 sep: "ik had plots
+   een vloek erbij en zag amper waar die vandaan kwam", het lijk-event in Act 1).
+   De call-sites geven hun eigen flavor-regel mee; het Zondebokvel (naam null) toont
+   uiteraard niets. */
+function geefLichtVloek(flavor) {
+  const id = kiesUit(['schaduwsmet', 'mottenvlam', 'doofpot']);
+  const naam = geefDekVloek(id);
+  if (naam) toonVloekReveal(id, flavor);
+  return naam;
 }
 
 /* GENERIEKE VLOEK (incl. Pijn + de licht-vloeken) — voor vloek-bronnen door het hele
    spel verweven (Act 1+). Alle vloeken zijn weg te slopen bij de Oude Smid. */
-function geefVloek() {
-  return geefDekVloek(kiesUit(['pijn', 'de_vergadering', 'de_handtekening', 'de_cc', 'de_naheffing', 'de_schaduwboekhouding', 'de_roddel', 'het_dossier', 'schaduwsmet', 'mottenvlam', 'doofpot']));
+function geefVloek(flavor) {
+  const id = kiesUit(['pijn', 'de_vergadering', 'de_handtekening', 'de_cc', 'de_naheffing', 'de_schaduwboekhouding', 'de_roddel', 'het_dossier', 'schaduwsmet', 'mottenvlam', 'doofpot']);
+  const naam = geefDekVloek(id);
+  if (naam) toonVloekReveal(id, flavor);
+  return naam;
 }
 
 /* een vloek uit de hand UITPUTTEN (Brandstapel/Schuldverschuiving) — en de

@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v93'; // v93: het Slachtblok-duo — altaar-art in de proloog (3:2-blok) + gesmeed_kaart-onderlaag onder elk zegel
+const CACHE = 'slayit-v94'; // v94: elke vloek komt binnen (reveal op de twee stille events) + focus-kaart-art blijft in het kader
 const BESTANDEN = [
   '.',
   'css/style.css',

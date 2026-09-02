@@ -417,14 +417,18 @@ body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-kost { width: 3
 body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-rug::after { font-size: 3rem; }
 /* de inspect/zoom-kaart op mobiel: passend op het scherm i.p.v. de vaste 300x425 */
 body[data-modus="mobiel"] #kies-kaarten .kaart.groot.kaart-focus { width: min(300px, 86vw); height: auto; min-height: 0; }
-body[data-modus="mobiel"] #kies-kaarten .kaart.groot.kaart-focus .kaart-icoon img { width: min(254px, 74vw); height: auto; aspect-ratio: 254 / 142; }
+/* v94: de art volgt de KAART (100% van het kader, max 254px) i.p.v. een eigen
+   viewport-maat — liggend was de kaart op 46vh geklemd maar de afbeelding niet en
+   stak 45px aan weerszijden uit het kader, onder de bladerpijlen (echt toestel, 2 sep) */
+body[data-modus="mobiel"] .kaart.groot.kaart-focus .kaart-icoon { width: 100%; }
+body[data-modus="mobiel"] #kies-kaarten .kaart.groot.kaart-focus .kaart-icoon img { width: 100%; max-width: 254px; height: auto; aspect-ratio: 254 / 142; margin: 0 auto; }
 /* v89: --fschaal 1 — de laptop-margin-reserve rekent met de vaste 300x425-kaart en
    duwde de ◀▶-bladerpijlen (x=-56!) en op lage hoogte de Kies/Terug-knoppen uit beeld */
 body[data-modus="mobiel"] #kies-kaarten .kaart.groot.kaart-focus { --fschaal: 1; margin: 0; }
 /* de Slachtblok-preview idem: de geschaalde houder stak 26px buiten beide randen */
 body[data-modus="mobiel"] .sb-preview .kaart-focus-houder { transform: none; margin-bottom: 0; }
 body[data-modus="mobiel"] .sb-preview .kaart.groot.kaart-focus { --fschaal: 1; margin: 0; width: min(280px, 78vw); height: auto; min-height: 0; }
-body[data-modus="mobiel"] .sb-preview .kaart.groot.kaart-focus .kaart-icoon img { width: min(236px, 66vw); height: auto; aspect-ratio: 254 / 142; }
+body[data-modus="mobiel"] .sb-preview .kaart.groot.kaart-focus .kaart-icoon img { width: 100%; max-width: 236px; height: auto; aspect-ratio: 254 / 142; margin: 0 auto; }
 /* v89 TAP-PAS: zoomknop op de offerkaarten (38px → 44px) */
 body[data-modus="mobiel"] .meer-zoom-knop { width: 44px; height: 44px; font-size: 1.15rem; }
 /* ---- HET SLACHTBLOK op mobiel (v89): de werkbank paste niet ----
@@ -692,6 +696,39 @@ body[data-modus="mobiel"] .scherf-reveal-binnen, body[data-modus="mobiel"] .rr-b
    binnen 360px — de Sluiten/overslaan-knop viel tot 58px onder de vouw (meetronde) */
 @media (orientation: landscape) and (max-height: 600px) {
   body[data-modus="mobiel"] #kies-kaarten .kaart.groot.kaart-focus { width: min(300px, 82vw, 46vh); }
+  /* v94 DE TWEEKOLOMMER: in focus-modus staan Kies/Terug + teller NAAST de kaart i.p.v.
+     eronder — als kolom vielen ze op 360px hoogte onder de vouw (echt toestel, 2 sep).
+     Hint weg (de pijlen spreken voor zich), titel compacter, kaartfonts een maat kleiner. */
+  body[data-modus="mobiel"] #kies-kaarten.focus-modus .kaart-focus-houder {
+    display: grid; grid-template-columns: auto minmax(150px, 230px);
+    grid-template-areas: "rij knoppen" "rij teller";
+    align-items: center; column-gap: 22px; row-gap: 6px;
+  }
+  body[data-modus="mobiel"] #kies-kaarten.focus-modus .focus-rij { grid-area: rij; }
+  body[data-modus="mobiel"] #kies-kaarten.focus-modus .focus-knoppen { grid-area: knoppen; flex-direction: column; align-items: stretch; gap: 10px; }
+  body[data-modus="mobiel"] #kies-kaarten.focus-modus .focus-knoppen .knop-groot { font-size: 1.15rem; padding: 12px 18px; min-width: 0; }
+  body[data-modus="mobiel"] #kies-kaarten.focus-modus .focus-teller { grid-area: teller; text-align: center; }
+  body[data-modus="mobiel"] #overlay-kies:has(#kies-kaarten.focus-modus) #kies-hint { display: none; }
+  body[data-modus="mobiel"] #overlay-kies:has(#kies-kaarten.focus-modus) #kies-titel { font-size: 1.4rem; margin: 4px 0 2px; }
+  body[data-modus="mobiel"] #overlay-kies:has(#kies-kaarten.focus-modus) { padding-top: calc(8px + env(safe-area-inset-top)); padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+  body[data-modus="mobiel"] #kies-kaarten.focus-modus { margin: 6px 0; }
+  body[data-modus="mobiel"] .kaart.groot.kaart-focus .kaart-naam { font-size: 1.25rem; margin-top: 2px; }
+  body[data-modus="mobiel"] .kaart.groot.kaart-focus .kaart-icoon { margin: 6px 0 4px; }
+  body[data-modus="mobiel"] .kaart.groot.kaart-focus .kaart-tekst { font-size: .9rem; line-height: 1.28; }
+  /* de reveal-ceremonies (kaart/vloek) delen de kaartmaat: zelfde klem, compactere kop */
+  body[data-modus="mobiel"] .kaart-reveal-overlay .kaart.groot.kaart-focus,
+  body[data-modus="mobiel"] .vloek-reveal-overlay .kaart.groot.kaart-focus { width: min(300px, 82vw, 46vh); }
+  /* tweekolommer voor de kaart-/vloek-reveal: als kolom viel 'Verder' 30px onder de vouw */
+  body[data-modus="mobiel"] .kaart-reveal-binnen, body[data-modus="mobiel"] .vloek-reveal-binnen {
+    display: grid; grid-template-columns: auto minmax(200px, 360px);
+    grid-template-areas: "kaart kop" "kaart flavor" "kaart knop";
+    align-items: center; column-gap: 24px; row-gap: 10px;
+    text-align: left; padding: 10px; max-width: 96vw;
+  }
+  body[data-modus="mobiel"] .kaart-reveal-kop, body[data-modus="mobiel"] .vloek-reveal-kop { grid-area: kop; font-size: 1.15rem; text-align: left; }
+  body[data-modus="mobiel"] .kaart-reveal-kaartwrap, body[data-modus="mobiel"] .vloek-reveal-kaartwrap { grid-area: kaart; }
+  body[data-modus="mobiel"] .kaart-reveal-flavor, body[data-modus="mobiel"] .vloek-reveal-flavor { grid-area: flavor; font-size: .92rem; max-width: none; }
+  body[data-modus="mobiel"] .kaart-reveal-sluit, body[data-modus="mobiel"] .vloek-reveal-sluit { grid-area: knop; justify-self: start; margin-top: 0; }
   body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) { gap: 14px 12px; margin: 8px 0; }
   body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart.groot { width: 126px; height: 176px; padding: 7px 8px; }
   body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart.groot .kaart-icoon img { width: 106px; height: 59px; }
@@ -705,5 +742,5 @@ body[data-modus="mobiel"] .vloek-reveal-overlay .kaart.groot.kaart-focus {
 }
 body[data-modus="mobiel"] .kaart-reveal-overlay .kaart.groot.kaart-focus .kaart-icoon img,
 body[data-modus="mobiel"] .vloek-reveal-overlay .kaart.groot.kaart-focus .kaart-icoon img {
-  width: min(254px, 70vw, 44vh); height: auto; aspect-ratio: 254 / 142;
+  width: 100%; max-width: 254px; height: auto; aspect-ratio: 254 / 142; margin: 0 auto;   /* volgt de kaartklem (v94) */
 }
