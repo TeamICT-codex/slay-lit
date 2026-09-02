@@ -1790,15 +1790,23 @@ function pose2D(actor, state, duur) {
     : (actor.isMetgezel ? METGEZELLEN[actor.id].art : actor.id);
   const lader = actor.isMetgezel && window.laadMetgezelAfbeelding ? laadMetgezelAfbeelding : laadKarakterAfbeelding;
   const t0 = Date.now();
+  const raam = (duur || 0.8) * 1000;
   lader(basis + '_' + state, img => {
-    /* GUARD (v89): komt de pose-art pas ná de beweging binnen (trage verbinding,
-       ondanks preloadPoses2D), sla de wissel dan over — een aanvalspose die
-       seconden te laat over het beeld klapt oogt kapot. Vastgehouden standen
-       (block/death) mogen wél laat binnenkomen. */
-    if (Date.now() - t0 > 400 && state !== 'block' && state !== 'death') return;
     const im = el.querySelector('img');
     if (!img || !im) return;             /* geen pose-art voor dit figuur */
+    /* GUARD (v89 → v95): een pose die pas binnenkomt als haar eigen venster al
+       grotendeels voorbij is, slaan we over — een aanvalspose die seconden te laat
+       over het beeld klapt oogt kapot. De drempel schaalt mee met de poseduur: de
+       vlakke 400 ms van v89 drukte óók 2,5s-ceremonies (victory/decreet/plagiaat)
+       en de eerste klap tijdens de preload weg (debug v95: "steengolem valt aan,
+       maar de pose komt niet"). Vastgehouden standen (block/death) mogen altijd. */
+    const verstreken = Date.now() - t0;
+    const vast = state === 'block' || state === 'death';
+    if (!vast && verstreken > Math.max(400, raam * 0.6)) return;
     im.src = img.src;
+    /* pose-eigen voetmarge (VOETMARGE['<id>_<state>']) zodat de voetlijn niet verspringt */
+    const vm = window.VOETMARGE || {};
+    if (vm[basis + '_' + state] != null) el.style.setProperty('--voetc', vm[basis + '_' + state] + '%');
     clearTimeout(pose2DTimers.get(actor));
     /* de blok-pose is een VASTGEHOUDEN verdedigende houding: geen auto-revert.
        Ze blijft staan tot een volgende pose (aanval/cast/treffer) haar vervangt —
@@ -1809,8 +1817,9 @@ function pose2D(actor, state, duur) {
       lader(basis, terug => {
         const i2 = el.querySelector('img');
         if (i2 && terug) i2.src = terug.src;
+        if (vm[basis] != null) el.style.setProperty('--voetc', vm[basis] + '%'); else el.style.removeProperty('--voetc');
       });
-    }, (duur || 0.8) * 1000));
+    }, Math.max(150, raam - verstreken)));   /* de REST van het venster, geen vol nieuw venster (v95) */
   });
 }
 
@@ -1820,15 +1829,41 @@ function pose2D(actor, state, duur) {
    van de aanwezige vechters voorladen bij de gevechtsstart maakt de wissel in
    pose2D een synchrone cache-hit; poses die niet bestaan vallen in de bestaande
    mislukt-TTL-cache (art.js) en kosten één stille 404 per stuk. */
+/* v95: de preload laadt ALLEEN poses die volgens het ART-MANIFEST bestaan (incl. de
+   signatuurposes: decreet/plagiaat/beulswerk/…), gespreid (één verzoek per 120 ms)
+   en idempotent per figuur (g._poseWarm) — dus ook bruikbaar voor bijgeroepen
+   vijanden en de metgezel-terugkeer. Zonder manifest: de vaste lijst van v89. */
+const POSE_VOLGORDE = ['attack', 'hit', 'cast', 'block', 'death', 'victory', 'gif'];
+const POSE_STATES = new Set([...POSE_VOLGORDE, 'decreet', 'plagiaat', 'plagiaat_variant', 'beulswerk', 'moederslang', 'flame', 'offer', 'terugkeer']);
+function figuurPoses(map, basis) {
+  const m = window.ART_MANIFEST && window.ART_MANIFEST[map];
+  if (!Array.isArray(m)) return POSE_VOLGORDE.filter(s => s !== 'gif' || map === 'karakters');
+  const pre = basis + '_';
+  return m.filter(n => n.startsWith(pre)).map(n => n.slice(pre.length)).filter(s => POSE_STATES.has(s))
+    .sort((a, b) => (POSE_VOLGORDE.indexOf(a) + 1 || 99) - (POSE_VOLGORDE.indexOf(b) + 1 || 99));   /* attack/hit eerst: de eerste klap */
+}
 function preloadPoses2D(g) {
-  if (!window.laadKarakterAfbeelding) return;
-  const stil = () => {};
-  ['attack', 'cast', 'hit', 'block', 'death', 'victory'].forEach(s => laadKarakterAfbeelding(huidigeHeld().art + '_' + s, stil));
-  g.vijanden.forEach(v => ['attack', 'cast', 'hit', 'block', 'death', 'gif'].forEach(s => laadKarakterAfbeelding(v.id + '_' + s, stil)));
-  if (g.metgezel && window.laadMetgezelAfbeelding) {
-    const mArt = METGEZELLEN[g.metgezel.id].art;
-    ['attack', 'cast', 'hit', 'block', 'death', 'victory'].forEach(s => laadMetgezelAfbeelding(mArt + '_' + s, stil));
+  if (!window.laadKarakterAfbeelding || !g) return;
+  g._poseWarm = g._poseWarm || {};
+  const wachtrij = [];
+  const plan = (lader, map, basis) => {
+    const sleutel = map + ':' + basis;
+    if (!basis || g._poseWarm[sleutel]) return;
+    g._poseWarm[sleutel] = true;
+    figuurPoses(map, basis).forEach(s => wachtrij.push(() => lader(basis + '_' + s, () => {})));
+  };
+  if (!d3Actief()) {   /* in 3D tekent Vista de figuren zelf; alleen de metgezel blijft 2D */
+    plan(laadKarakterAfbeelding, 'karakters', huidigeHeld().art);
+    g.vijanden.forEach(v => plan(laadKarakterAfbeelding, 'karakters', v.id));
   }
+  if (g.metgezel && window.laadMetgezelAfbeelding) plan(laadMetgezelAfbeelding, 'metgezellen', METGEZELLEN[g.metgezel.id].art);
+  let i = 0;
+  const stap = () => {
+    if (i >= wachtrij.length || S.gevecht !== g) return;   /* gevecht voorbij → stoppen */
+    wachtrij[i++]();
+    setTimeout(stap, 120);
+  };
+  stap();
 }
 
 /* ---------- statussen, schade, blok ---------- */
@@ -2742,6 +2777,7 @@ function revealDropsWit(g, poort) {
   g.metgezel.intent = def.intent ? def.intent(g.metgezel) : null;
   bouwGevechtDom(g);
   renderGevecht();
+  preloadPoses2D(g);   /* Drops de Witte's poses warmen (v95) */
   /* signatuur-pose: hij SPRINGT het beeld in (spiegelt drops_death) — drops_wit_terugkeer-art staat live */
   if (window.Vista) Vista.pose(g.metgezel, 'terugkeer', 2.6);
   pose2D(g.metgezel, 'terugkeer', 2.6);
@@ -3477,7 +3513,10 @@ function startGevecht(samenstelling, soort, rij) {
   g.heldArt = huidigeHeld().art;
 
   bouwGevechtDom(g);
-  preloadPoses2D(g);   /* poses warm vóór de eerste klap (mobiele race-fix v89) */
+  /* poses warm vóór de eerste klap (v89) — maar pas ná ~1,2 s (v95): de plaat en de
+     handkaart-art krijgen eerst de lijn; de eerste vijandelijke klap komt toch pas
+     na jouw beurt. Gespreid en alleen bestaande poses (zie preloadPoses2D). */
+  setTimeout(() => { if (S.gevecht === g) preloadPoses2D(g); }, 1200);
 
   let eersteTrek = 5;
   if (heeftRelikwie('klavertje')) eersteTrek += 2;
@@ -5657,6 +5696,7 @@ function voegVijandToe(id) {
   if (g.gedoofd) v.status.kracht = (v.status.kracht || 0) + 1;
   g.vijanden.push(v);
   bouwGevechtDom(g);
+  preloadPoses2D(g);   /* de nieuwkomer meteen warmen (idempotent voor de rest — v95) */
   if (d3Actief() && window.Vista) {
     Vista.gevechtStart(g, g.soort, !!g.achtergrond);
   } else {

@@ -2,12 +2,13 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v94'; // v94: elke vloek komt binnen (reveal op de twee stille events) + focus-kaart-art blijft in het kader
+const CACHE = 'slayit-v95'; // v95: debugronde — art-manifest (geen 404-bursts, aanvalsposes komen door), baasbalk/tweerijer/nudge-fixes, vloeknamen terug
 const BESTANDEN = [
   '.',
   'css/style.css',
   'css/mobiel.css',
   'js/lib/three.min.js',
+  'assets/art-manifest.js',
   'js/art.js',
   'js/audio.js',
   'js/scene3d.js',

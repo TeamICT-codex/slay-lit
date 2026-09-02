@@ -154,7 +154,7 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 #tb-metgezel { color: #9fd8a8; cursor: pointer; }
 #tb-metgezel .tbm-max { color: var(--perkament-dof); font-size: .72em; opacity: .85; }
 #tb-metgezel.mg-gevlucht { opacity: .55; filter: grayscale(.5); }
-#tb-scherven .tbs-stash { color: var(--perkament-dof); font-size: .72em; margin-left: 2px; opacity: .85; }
+#tb-scherven .tbs-stash { color: var(--perkament-dof); font-size: .8em; margin-left: 2px; opacity: .85; }   /* v95: .72em mat 10,6px */
 #tb-dagwet { cursor: pointer; }   /* de Dagwet-chip (alleen tijdens een daily; tik = proclamatie) */
 .lb-vandaag {
   text-align: center; color: var(--perkament-dof); font-size: .92rem;
@@ -1594,7 +1594,7 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
   display: flex; flex-direction: column; gap: 6px;
 }
 .roof-kop small { font-family: 'Alegreya', serif; font-style: italic; font-size: clamp(.8rem, 2.3vw, 1.06rem); color: #ccaae4; text-shadow: none; opacity: .92; }
-.roof-waaier { display: flex; flex-wrap: wrap; gap: clamp(6px, 1.5vw, 14px); justify-content: center; align-items: center; max-width: min(94vw, 940px); }
+.roof-waaier { display: flex; flex-wrap: wrap; gap: clamp(6px, 1.5vw, 14px); justify-content: center; align-items: stretch; max-width: min(94vw, 940px); }   /* stretch: sinds de namen wrappen verschilden de tegelhoogtes (v95) */
 .roof-kaart {
   display: flex; flex-direction: column; align-items: center; gap: 3px;
   width: clamp(56px, 13vw, 92px); padding: 8px 5px; border-radius: 10px;
@@ -1606,7 +1606,7 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
 .roof-overlay.open .roof-kaart { transform: translateY(0) scale(1); opacity: 1; }
 .roof-kaart .rk-art { width: 100%; aspect-ratio: 3 / 2; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: clamp(1.3rem, 3.3vw, 1.9rem); line-height: 1; background: #0d0a14; }
 .roof-kaart .rk-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.roof-kaart .rk-naam { font-size: clamp(.7rem, 1.6vw, .8rem); color: var(--perkament); text-align: center; line-height: 1.12; max-width: 100%; overflow-wrap: anywhere; }
+.roof-kaart .rk-naam { font-size: clamp(.7rem, 1.6vw, .8rem); color: var(--perkament); text-align: center; line-height: 1.12; max-width: 100%; overflow-wrap: anywhere; word-break: normal; min-height: 2.3em; }   /* v95: twee regels gereserveerd → rustige rij */
 .roof-kaart.gekozen { border-color: rgba(255, 90, 70, .95); box-shadow: 0 0 22px rgba(255, 80, 40, .9); transform: translateY(-10px) scale(1.12); z-index: 2; }
 .roof-kaart.verbrandt { animation: roofVerbrand .58s ease forwards; }
 @keyframes roofVerbrand {
@@ -1686,6 +1686,7 @@ body.lite .decreet-stempel { animation: none; opacity: 1; transform: translate(-
 /* ---------- smeedkamer 2.0: werkbank + live preview ---------- */
 .sb-werkbank { display: flex; gap: clamp(12px, 3vw, 30px); align-items: center; justify-content: center; flex-wrap: wrap; max-width: min(96vw, 1120px); }   /* 900px dwong preview+modules ALTIJD onder elkaar → SMEED onder de vouw (debug-sweep) */
 .sb-preview { display: flex; flex-direction: column; align-items: center; gap: 4px; transition: filter .4s ease; }
+.sb-preview .kaart.groot.kaart-focus { --fschaal: 1; margin: 0; }   /* v95: de preview leende de inspectiezoom (1.55) → 165px extra layoutbreedte → de modulegrid wrapte onder de vouw op 1440x900 */
 .sb-preview .kaart-focus-houder { transform: scale(.82); transform-origin: center top; margin-bottom: -30px; }
 /* korte laptops: preview compacter + de actiebalk plakt onderaan de scrollende overlay */
 @media (max-height: 800px) {
@@ -2236,7 +2237,7 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
   border: 2px solid #5a3413;
   box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
 }
-.kaart-naam { font-size: 1rem; color: var(--perkament); margin-top: 2px; text-align: center; line-height: 1.05;
+.kaart-naam { font-size: 1rem; color: var(--perkament); margin-top: 2px; text-align: center; line-height: 1.05; flex-shrink: 0;   /* v95: de naam is de identiteit — bij lange (vloek)teksten krimpt de tekst, niet de naam */
   /* lange samengestelde namen (bv. "Paddenstoelenstoofpotje") mogen afbreken en blijven binnen de kaart
      i.p.v. over de randen te bleeden; max 2 regels, anders ellipsis */
   overflow-wrap: anywhere; word-break: break-word; padding: 0 3px; max-width: 100%; box-sizing: border-box;
@@ -2262,7 +2263,7 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
   text-align: center;
   line-height: 1.25;
   color: var(--perkament-dof);
-  flex: 1;
+  flex: 1 1 auto; min-height: 0; overflow: hidden;   /* v95: de tekst vangt de krimp op (was: de naam werd uit de kaart geduwd) */
 }
 .kaart-tekst b.plus { color: var(--gifgroen); }
 .kaart-tekst b.min { color: var(--bloed); }
@@ -3531,6 +3532,10 @@ body.lite .kv-geest { animation: none; opacity: .45; }
   box-shadow: 0 8px 26px rgba(0, 0, 0, .55);
   text-shadow: 0 0 22px rgba(120, 200, 60, .55), 0 4px 12px #000, 0 0 6px #000;
 }
+/* v95: op laptop hangt de plaat ONDER de bazenbalk — die is daar breed en eindigt op
+   134-168px (Erfprins met arsenaalpil); de v89-plaat op 12% dekte HP-balk + fase-pips af.
+   Op mobiel is de bazenbalk een compact hart rechtsboven, daar blijft de plaat waar hij staat. */
+body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: calc(178px + env(safe-area-inset-top)); }
 @keyframes spraakKoning {
   0% { opacity: 0; transform: translateX(-50%) scale(.9); }
   12% { opacity: 1; transform: translateX(-50%) scale(1.04); }
@@ -4096,14 +4101,13 @@ body[data-scherm="einde"] #licht-vignet { opacity: 0 !important; }
 .inst-rij {
   display: flex; align-items: center; justify-content: space-between; gap: 18px;
   font-size: 1.05rem;
-  min-height: 44px;   /* raakzone: het hele label vangt de tik (was 23px hoog — meetronde v89) */
 }
 .inst-rij input[type=range] {
   width: 150px;
   accent-color: var(--ember);
 }
 .inst-rij input[type=checkbox] {
-  width: 24px; height: 24px;
+  width: 20px; height: 20px;   /* touch-maat (24px) staat in mobiel.css (v95) */
   accent-color: var(--ember);
 }
 .inst-hint { font-size: .8rem; color: var(--perkament-dof); font-style: italic; max-width: 340px; text-align: center; }

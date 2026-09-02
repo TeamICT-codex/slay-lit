@@ -1149,6 +1149,19 @@ ritual dagger flung up in a hasty defensive cross, robes swirling TIGHT around t
 buckling. Compact, closed silhouette; nothing trailing to the edges.
 Accent: de half afgeworpen kap + het defensieve dolk-kruis + strak wervelende paarse gewaden.
 
+=================== kultist_cast.png ===================
+Use the attached reference image (kultist.png): the EXACT same hooded CULTIST — same deep-purple
+ritual robes, same ritual dagger, same painterly hand-painted dark-fantasy style (NOT photorealistic,
+no photo, no 3D render), same warm torchlight rim-lighting, same slight side angle clearly FACING
+LEFT, same full-body head-to-feet framing (feet visible, clear margin below), isolated on a fully
+transparent background. Change ONLY the pose. This is a SEPARATE single image, not a sprite sheet.
+Pose (CAST — the RITUAL): both arms raised high in invocation, the ritual dagger held point-down
+above the head, a ring of sickly violet-green runes igniting in the air around the cultist, the
+hood thrown back to reveal the beaked mask tilted skyward, robes billowing outward from a
+pulse of dark energy at the feet. Feet planted wide. Compact silhouette; nothing trailing to the edges.
+Accent: de omhooggestoken dolk + de brandende runenring + de schuin omhoog gekantelde snavelmasker.
+(Gebruikt voor de intent 'Ritueel' (beurt 0, buff) — pose2D(v, 'cast'). Drop in assets/karakters/.)
+
 =================== paddenstoelman_hit.png ===================
 Use the attached reference image (paddenstoelman.png): the EXACT same MUSHROOM-MAN — same great
 spotted cap, same spongy pale body, same painterly hand-painted dark-fantasy style (NOT

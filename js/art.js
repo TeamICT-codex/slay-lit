@@ -500,9 +500,22 @@ const KARAKTER_FOTOS = { basis: 'assets/karakters/', cache: {}, mislukt: {} };
    ÉN bestiarium) tot een harde herlaad. Nu met een korte TTL: hooguit 1 herpoging
    per ~20s per id → nieuwe art verschijnt binnen de sessie vanzelf, zonder 404-hameren. */
 const _ART_MISLUKT_TTL = 20000;
+/* v95 ART-MANIFEST: assets/art-manifest.js (gegenereerd door .claude/converteer_webp.py
+   bij elke art-drop) somt per map op welke bestanden bestaan. Een id dat er niet in
+   staat krijgt meteen null — géén 404-probe meer. Dat was de wortel van de mobiele
+   pose-race: de preload vuurde ~35 verzoeken per gevechtsstart (meest 404's) en
+   verstopte de lijn, waarna de echte aanvalspose te laat kwam. Geen manifest voor
+   een map (of geen manifest-bestand) = oud gedrag (probe + TTL). */
+function artBestaat(map, id) {
+  const m = window.ART_MANIFEST && window.ART_MANIFEST[map];
+  if (!Array.isArray(m)) return true;
+  if (!m._set) Object.defineProperty(m, '_set', { value: new Set(m), enumerable: false });
+  return m._set.has(id);
+}
 function laadKarakterAfbeelding(id, cb) {
   const c = KARAKTER_FOTOS.cache;
   if (id in c) { cb(c[id]); return; }                                   /* positieve hit: altijd hergebruiken */
+  if (!artBestaat('karakters', id)) { cb(null); return; }               /* v95: manifest zegt nee → geen netwerk */
   const m = KARAKTER_FOTOS.mislukt[id];
   if (m && Date.now() - m < _ART_MISLUKT_TTL) { cb(null); return; }      /* verse mislukking: niet hameren */
   const probeer = (ext, anders) => {
@@ -522,8 +535,10 @@ window.laadKarakterAfbeelding = laadKarakterAfbeelding;
    ============================================================ */
 function maakArtLader(basis) {
   const cache = {}, mislukt = {};   /* mislukt = TTL-cache (zie _ART_MISLUKT_TTL) → net-gedropte art verschijnt vanzelf */
+  const mapNaam = basis.split('/').filter(Boolean).pop();   /* 'assets/kaarten/' → 'kaarten' (manifest-sleutel, v95) */
   return function (id, cb) {
     if (id in cache) { cb(cache[id]); return; }
+    if (!artBestaat(mapNaam, id)) { cb(null); return; }   /* v95: manifest zegt nee → geen netwerk */
     const m = mislukt[id];
     if (m && Date.now() - m < _ART_MISLUKT_TTL) { cb(null); return; }
     const probeer = (ext, anders) => {
@@ -559,6 +574,10 @@ window.VOETMARGE = {
   mosgeest: 6.3, naaper: 4.0, paddenstoelman: 3.0, pekziel: 3.6,
   slijmkoning: 2.1, speler: 2.0, spiegelwachter: 1.4, steengolem: 2.1,
   stempelaar: 3.5, thoverk: 1.8, vlamwachter: 5.4,
+  /* pose-eigen marges (v95): pose2D zet --voetc mee bij de wissel, anders schuift de
+     voetlijn tijdens een treffer (gemeten op de v91-hit-drops; schaduw_hit = 0) */
+  bandiet_hit: 4.5, blauwe_slijm_hit: 2.9, echo_hit: 7.9, groene_slijm_hit: 6.3,
+  grotrat_hit: 2.0, kultist_hit: 4.5, paddenstoelman_hit: 5.7, pekziel_hit: 3.6, steengolem_hit: 2.9,
 };
 window.laadDrankAfbeelding = maakArtLader('assets/dranken/');
 window.laadIcoonAfbeelding = maakArtLader('assets/iconen/');   /* UI-iconen (rust-opties enz.) */
