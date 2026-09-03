@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v95'; // v95: debugronde — art-manifest (geen 404-bursts, aanvalsposes komen door), baasbalk/tweerijer/nudge-fixes, vloeknamen terug
+const CACHE = 'slayit-v96'; // v96: kultist_cast — het ritueel heeft een pose (+ manifest bijgewerkt)
 const BESTANDEN = [
   '.',
   'css/style.css',
