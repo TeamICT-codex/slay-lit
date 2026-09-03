@@ -21,6 +21,18 @@
    specificiteit op — overschrijven is hier net de bedoeling).
    ============================================================ */
 
+/* --sat = de veilige bovenrand. Normaal gewoon env(safe-area-inset-top). MAAR: in een
+   geïnstalleerde app (display-mode standalone) tekent Android in LIGGENDE stand de
+   statusbalk óver de pagina terwijl env() daar 0 meldt — Chrome vertaalt alleen de
+   camera-uitsparing (links/rechts) naar een inset, niet de statusbalk. Gevolg op het
+   echte toestel: klok en icoontjes dwars over hp/fakkel/goud en ⚙️ (screenshots 2 sep).
+   Liggend + standalone reserveren we daarom minstens 26px. In de browser (URL-balk
+   erboven) en in echt fullscreen (statusbalk verborgen) verandert er niets. */
+body[data-modus="mobiel"] { --sat: env(safe-area-inset-top); }
+@media (display-mode: standalone) and (orientation: landscape), (display-mode: minimal-ui) and (orientation: landscape) {
+  body[data-modus="mobiel"] { --sat: max(env(safe-area-inset-top), 26px); }
+}
+
 /* op touch een grotere raakzone voor de ascensie-stepper (44/48px-richtlijn) */
 body[data-modus="mobiel"] .asc-knop { width: 48px; height: 48px; font-size: 1.6rem; }
 body[data-modus="mobiel"] .ascensie-stepper { gap: 20px; }
@@ -105,7 +117,7 @@ body[data-modus="mobiel"] .scherm-titel { font-size: 1.9rem; }
    werden dan het scherm verdween de TITEL boven de rand (echte-toestel-melding
    1 sep). Zelfde spacer-patroon als de event-tekstkolom: gecentreerd zolang het
    past, scrollbaar zodra het niet past. */
-body[data-modus="mobiel"] #scherm-titel { overflow-y: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; padding-top: calc(10px + env(safe-area-inset-top)); }
+body[data-modus="mobiel"] #scherm-titel { overflow-y: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; padding-top: calc(10px + var(--sat)); }
 body[data-modus="mobiel"] #scherm-titel > * { flex-shrink: 0; }
 body[data-modus="mobiel"] #scherm-titel::before,
 body[data-modus="mobiel"] #scherm-titel::after { content: ''; flex: 0 0 auto; margin: auto; }
@@ -123,8 +135,8 @@ body[data-modus="mobiel"] #scherm-titel .sintel { bottom: 0; }   /* v95: op -10p
    de header is bijzaak. Logo weg, kleinere iconen, fade i.p.v. massieve balk.
    Het gevecht krijgt de VOLLE hoogte (topbalk drijft erover). --- */
 body[data-modus="mobiel"] #topbalk {
-  height: calc(var(--tbh, 40px) + env(safe-area-inset-top));
-  padding: env(safe-area-inset-top) calc(8px + env(safe-area-inset-right)) 0 calc(8px + env(safe-area-inset-left));
+  height: calc(var(--tbh, 40px) + var(--sat));
+  padding: var(--sat) calc(8px + env(safe-area-inset-right)) 0 calc(8px + env(safe-area-inset-left));
   gap: 8px; font-size: .92rem; border-bottom: none;
   background: linear-gradient(180deg, rgba(13, 10, 18, .8), rgba(13, 10, 18, .32) 72%, transparent);
 }
@@ -206,14 +218,14 @@ body[data-modus="mobiel"] #tb-scherven, body[data-modus="mobiel"] #tb-metgezel {
   body[data-modus="mobiel"] #tb-scherven, body[data-modus="mobiel"] #tb-metgezel { padding: 7px 2px; }
 }
 /* toasts onder de (nu variabele) topbalk — ze overlapten 'm met een notch */
-body[data-modus="mobiel"] #meldingen { top: calc(var(--tbh, 40px) + env(safe-area-inset-top) + 8px); }
+body[data-modus="mobiel"] #meldingen { top: calc(var(--tbh, 40px) + var(--sat) + 8px); }
 
 /* schermen sluiten aan op de compacte balk; het gevecht gaat tot de rand */
 /* topbalkhoogte: de var(--tbh, 40px)-fallback IS de basiswaarde (liggend één rij);
    alleen DE TWEERIJER (portret, hierboven) zet 'm op 76px. Geen basisregel hier —
    die stond ná de media-query en won de cascade (v89-verificatie). */
-body[data-modus="mobiel"] .scherm { top: calc(var(--tbh, 40px) + env(safe-area-inset-top)); }
-body[data-modus="mobiel"] #scherm-gevecht { top: env(safe-area-inset-top); }
+body[data-modus="mobiel"] .scherm { top: calc(var(--tbh, 40px) + var(--sat)); }
+body[data-modus="mobiel"] #scherm-gevecht { top: var(--sat); }
 
 /* GRONDANKER GEVECHTSPLAAT (het 'zweven'-mysterie, aug 2026): de platen zijn
    16:9 met de geschilderde vloer in de onderste ~32-40%. Op laptop valt cover
@@ -243,7 +255,7 @@ body[data-modus="mobiel"] #scherm-gevecht.baas-actief #beurt-label { display: no
 body[data-modus="mobiel"] #baas-balk {
   /* v95: herbasering op --tbh — de portret-tweerijer (76px) liet de badge 30px ín rij 2
      van de topbalk lopen (baasnaam onleesbaar onder 🃏/⚙️); liggend blijft 46px */
-  top: calc(var(--tbh, 40px) + 6px + env(safe-area-inset-top));
+  top: calc(var(--tbh, 40px) + 6px + var(--sat));
   right: calc(8px + env(safe-area-inset-right));
   left: auto; transform: none; width: auto; max-width: 46vw; text-align: right;
 }
@@ -294,7 +306,7 @@ body[data-modus="mobiel"] #baas-balk .bb-aegis {
    de titel altijd in beeld en scrollt de rest netjes (playtest: kapte raar af) */
 body[data-modus="mobiel"] .roof-overlay {
   gap: 8px;
-  padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  padding: max(10px, var(--sat)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
 }
 body[data-modus="mobiel"] .roof-kop { font-size: clamp(1.05rem, 3.4vw, 1.5rem); gap: 3px; }
 body[data-modus="mobiel"] .roof-kop small { font-size: clamp(.72rem, 1.9vw, .85rem); }
@@ -324,6 +336,11 @@ body[data-modus="mobiel"] #scherm-gevecht.baas-actief .speler-naam { display: no
    ~hoger lijken dan de vijanden: zonder dat naamlabel zakt de held-kolom door de bottom-alignment
    net mee → de voeten van held en vijand komen op één grondlijn. Vijand-namen BLIJVEN (identificatie). */
 body[data-modus="mobiel"] #scherm-gevecht .speler-naam { display: none; }
+/* v97 ZWEVENDE BAAS (Slijmkoning-screenshot): met 4+ statussen wrapte .blok-status naar
+   een tweede/derde rij (65px i.p.v. 24) en omdat de kolommen op flex-end staan schoof de
+   figuur 41px OMHOOG t.o.v. held en slijmpjes. De chiprij houdt nu een vaste hoogte; extra
+   rijen lopen eronder door (over de hand — tik-op-figuur toont ze toch). */
+body[data-modus="mobiel"] #scherm-gevecht .blok-status { height: 24px; min-height: 24px; align-content: flex-start; overflow: visible; }
 /* idem de metgezel: zijn naamrij tilde z'n voeten ~14px boven de grondlijn van held
    en vijanden (meetronde v89); naam + uitleg zitten in de tik-tooltip (DE BAND) */
 body[data-modus="mobiel"] #scherm-gevecht .metgezel-naam { display: none; }
@@ -366,9 +383,9 @@ body[data-modus="mobiel"] .knoop-baas { width: 96px; height: 96px; margin: -48px
 
 /* overlays + scrollbare schermen (.scherm is standaard overflow:hidden) */
 body[data-modus="mobiel"] .overlay {
-  padding: calc(16px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
+  padding: calc(16px + var(--sat)) calc(10px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
 }
-body[data-modus="mobiel"] #overlay-codex { padding: calc(10px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left)); }
+body[data-modus="mobiel"] #overlay-codex { padding: calc(10px + var(--sat)) calc(14px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left)); }
 body[data-modus="mobiel"] #scherm-held,
 body[data-modus="mobiel"] #scherm-event,
 body[data-modus="mobiel"] #scherm-rust,
@@ -430,7 +447,7 @@ body[data-modus="mobiel"] #hand .kaart.voorbeeld .kaart-tekst {
    én de smidse-ceremonie (die in dezelfde #kies-kaarten leven, mét .focus-modus)
    naar 150px klemmen i.p.v. hun grote .kaart-focus-maat. */
 body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) { gap: 20px 18px; max-width: 100%; }
-body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart.groot { width: 150px; height: 210px; padding: 8px 9px; }
+body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart.groot { width: 150px; height: auto; min-height: 210px; padding: 8px 9px; }   /* v97: auto-hoogte — lange teksten (Omarm het Duister, Duisterklauw) werden afgekapt */
 body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart.groot .kaart-icoon img { width: 126px; height: 70px; }
 body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-naam { font-size: 1rem; }
 body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-icoon { font-size: 2.1rem; }
@@ -481,14 +498,20 @@ body[data-modus="mobiel"] #hand .kaart .kaart-naam {
 body[data-modus="mobiel"] #overlay-kies.kies-meervoud.open {
   flex-direction: column; align-items: stretch; overflow: hidden;
   /* safe-area bovenaan: zonder deze valt de titel in portret achter de notch/camera-cutout */
-  padding: calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) 0 calc(10px + env(safe-area-inset-left));
+  padding: calc(10px + var(--sat)) calc(10px + env(safe-area-inset-right)) 0 calc(10px + env(safe-area-inset-left));
 }
 body[data-modus="mobiel"] #overlay-kies.kies-meervoud #kies-titel,
 body[data-modus="mobiel"] #overlay-kies.kies-meervoud #kies-hint { flex: 0 0 auto; margin: 2px 0; text-align: center; }
 body[data-modus="mobiel"] #overlay-kies.kies-meervoud #kies-kaarten.meer-modus {
   flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
-  align-content: flex-start; width: 100%; max-width: 100%; margin: 6px 0 0; padding-bottom: 20px;   /* v89: de 🔍-knoppen van de onderste rij vielen exact achter de actiebalkrand */
+  align-content: flex-start; width: 100%; max-width: 100%; margin: 6px 0 0; padding: 18px 6px 20px;   /* v89: de 🔍-knoppen van de onderste rij vielen exact achter de actiebalkrand; v97: 18px boven — kostbadge/naam werden aan de scrollrand afgekapt (De CC-screenshot) */
 }
+body[data-modus="mobiel"] #overlay-kies.kies-meervoud #kies-kaarten.meer-modus.focus-modus { padding-top: 26px; }   /* v97: ruimte voor de ◀▶-pijlen en de kostbadge van de zoomkaart */
+/* v97: geen hover-/gekozen-lift op touch — :hover blijft na een tik 'plakken' en tilde de
+   kaart (of de onthul-kaart, geschaald 1.06) deels boven de clipgrens; de keuze toont zich
+   via gloed + vinkje, de onthulde kaart via de glans */
+body[data-modus="mobiel"] .meer-kaart:not(.gekozen):hover, body[data-modus="mobiel"] .meer-kaart.gekozen { transform: none; }
+body[data-modus="mobiel"] .onthul-kaart.open:hover .onthul-binnen { transform: rotateY(0deg); }
 body[data-modus="mobiel"] #overlay-kies.kies-meervoud .kies-actiebalk {
   position: static; flex: 0 0 auto; width: 100%; margin-top: auto;
   padding: 10px max(clamp(12px, 4vw, 28px), env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(clamp(12px, 4vw, 28px), env(safe-area-inset-left));
@@ -710,7 +733,7 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
 body[data-modus="mobiel"] .kaart-reveal-overlay, body[data-modus="mobiel"] .vloek-reveal-overlay,
 body[data-modus="mobiel"] .scherf-reveal-overlay, body[data-modus="mobiel"] .relikwie-reveal-overlay {
   overflow-y: auto;
-  padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  padding: max(10px, var(--sat)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
 }
 /* overloop netjes: margin:auto centreert bij ruimte en laat de kop bij krapte gewoon
    meescrollen — align-items:center duwde 'm half BOVEN beeld (vloek-reveal, v89) */
@@ -734,7 +757,7 @@ body[data-modus="mobiel"] .scherf-reveal-binnen, body[data-modus="mobiel"] .rr-b
   body[data-modus="mobiel"] #kies-kaarten.focus-modus .focus-teller { grid-area: teller; text-align: center; }
   body[data-modus="mobiel"] #overlay-kies:has(#kies-kaarten.focus-modus) #kies-hint { display: none; }
   body[data-modus="mobiel"] #overlay-kies:has(#kies-kaarten.focus-modus) #kies-titel { font-size: 1.4rem; margin: 4px 0 2px; }
-  body[data-modus="mobiel"] #overlay-kies:has(#kies-kaarten.focus-modus) { padding-top: calc(8px + env(safe-area-inset-top)); padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+  body[data-modus="mobiel"] #overlay-kies:has(#kies-kaarten.focus-modus) { padding-top: calc(8px + var(--sat)); padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
   body[data-modus="mobiel"] #kies-kaarten.focus-modus { margin: 6px 0; }
   body[data-modus="mobiel"] .kaart.groot.kaart-focus .kaart-naam { font-size: 1.25rem; margin-top: 2px; }
   body[data-modus="mobiel"] .kaart.groot.kaart-focus .kaart-icoon { margin: 6px 0 4px; }
@@ -753,8 +776,8 @@ body[data-modus="mobiel"] .scherf-reveal-binnen, body[data-modus="mobiel"] .rr-b
   body[data-modus="mobiel"] .kaart-reveal-kaartwrap, body[data-modus="mobiel"] .vloek-reveal-kaartwrap { grid-area: kaart; }
   body[data-modus="mobiel"] .kaart-reveal-flavor, body[data-modus="mobiel"] .vloek-reveal-flavor { grid-area: flavor; font-size: .92rem; max-width: none; }
   body[data-modus="mobiel"] .kaart-reveal-sluit, body[data-modus="mobiel"] .vloek-reveal-sluit { grid-area: knop; justify-self: start; margin-top: 0; }
-  body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) { gap: 14px 12px; margin: 8px 0; }
-  body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart.groot { width: 126px; height: 176px; padding: 7px 8px; }
+  body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) { gap: 16px 22px; margin: 8px 0; }   /* v97: 22px tussenruimte — de 🔥/kost-badges van buurkaarten raakten elkaar */
+  body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart.groot { width: 126px; height: auto; min-height: 176px; padding: 7px 8px; }   /* v97: auto-hoogte, tekst nooit afgekapt */
   body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart.groot .kaart-icoon img { width: 106px; height: 59px; }
   body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-naam { font-size: .88rem; }
   body[data-modus="mobiel"] #kies-kaarten:not(.focus-modus) .kaart-tekst { font-size: .76rem; }

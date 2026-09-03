@@ -2237,7 +2237,7 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
   border: 2px solid #5a3413;
   box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
 }
-.kaart-naam { font-size: 1rem; color: var(--perkament); margin-top: 2px; text-align: center; line-height: 1.05; flex-shrink: 0;   /* v95: de naam is de identiteit — bij lange (vloek)teksten krimpt de tekst, niet de naam */
+.kaart-naam { font-size: 1rem; color: var(--perkament); margin-top: 2px; text-align: center; line-height: 1.12; padding-top: 1px; flex-shrink: 0;   /* v97: 1.05 knipte Pirata-stokletters af in de clamp-box */   /* v95: de naam is de identiteit — bij lange (vloek)teksten krimpt de tekst, niet de naam */
   /* lange samengestelde namen (bv. "Paddenstoelenstoofpotje") mogen afbreken en blijven binnen de kaart
      i.p.v. over de randen te bleeden; max 2 regels, anders ellipsis */
   overflow-wrap: anywhere; word-break: break-word; padding: 0 3px; max-width: 100%; box-sizing: border-box;
