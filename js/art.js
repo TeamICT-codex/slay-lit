@@ -579,6 +579,7 @@ window.VOETMARGE = {
   bandiet_hit: 4.5, blauwe_slijm_hit: 2.9, echo_hit: 7.9, groene_slijm_hit: 6.3,
   grotrat_hit: 2.0, kultist_hit: 4.5, paddenstoelman_hit: 5.7, pekziel_hit: 3.6, steengolem_hit: 2.9,
   de_gouden_garde_hit: 4.2, de_ophitser_hit: 3.2, de_vaandeldrager_hit: 5.2,   /* v101-hits (alfa-scan 4 sep) */
+  mosgeest_victory: 2.6,   /* v103: de juichende Mosgeest hangt 3,7% lager in zijn kader dan zijn basis */
   vlamwachter_victory: 1.8,   /* v101: de vuistheffende Vlamwachter staat 3,6% lager in zijn kader dan zijn basis. drops_victory BEWUST niet: zijn 14% marge is de sprong zelf (zoals drops_attack/hit/death) */
   /* v101: volledige alfa-scan van ALLE poses (196 stuks) — elke pose die 1,5% of meer van zijn basis
      afwijkt krijgt een eigen marge: geen zwevende lijken of aanvallers meer, en ook geen poses die

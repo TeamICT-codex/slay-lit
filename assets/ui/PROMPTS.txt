@@ -75,6 +75,10 @@ volgorde van winst.
   prikbord_kop.webp          band 64-150 px    titel op     de bovenrand van het prikbord (kopband)
                                                blur
 
+LET OP (sept 2026): rang_1/2/3 en vlam_brandt/flakkert/gedoofd zijn data-icoon-iconen en
+leven in assets/iconen/ (daar laadt verfraaiItemArt ze); de rest van de set blijft in
+assets/ui/. Drop nieuwe versies van die zes dus in assets/iconen/.
+
 Genereer een familie liefst in één sessie/chat (stijl blijft dan consistent);
 de acht emblemen, de drie rangtekens en de drie treden moeten telkens als één
 set ogen — maar élk blok is één losse afbeelding. Voor alles met vuur/gloed

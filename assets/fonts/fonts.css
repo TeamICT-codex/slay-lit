@@ -43,3 +43,14 @@
   size-adjust: 62%;
   src: local('Times New Roman'), local('Noto Serif'), local('Georgia'), local('Roboto');
 }
+
+/* v103: de schrijfmachineletter van HET PRIKBORD (stempels 'PAMFLET VAN HET VERZET' enz.)
+   en het stempelwoord van de lege staten. Het woff2 stond al in assets/fonts (de proloog
+   laadt het via proloog.css) en in de sw.js-precache — nu ook voor het spel zelf. */
+@font-face {
+  font-family: 'Special Elite';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('SpecialElite-400-normal.woff2') format('woff2');
+}

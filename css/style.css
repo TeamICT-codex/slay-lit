@@ -1847,6 +1847,453 @@ body.lite .uitn-vlam { animation: none; }
 .syn-por-knop.gepord { background: rgba(60, 50, 40, .5); border-color: rgba(150, 140, 120, .4); color: var(--perkament-dof); cursor: default; }
 .syn-por-alle { margin-top: 6px; border-color: rgba(255, 150, 70, .5); color: #ffcf9e; }
 
+/* ===== HET PRIKBORD (v103) =====
+   Het leaderboard als prikbord in de gang van het Slachtblok: vaste kop (titel, dagwet,
+   JOUW standkaart, tabs), drie papieren waarvan alleen de inhoud scrolt (codex-patroon),
+   één rijcomponent .pb-rij voor élke lijst. LAPTOP-spoor: alles onder #overlay-leaderboard.pb
+   (en .pb-doop voor de doop-overlay). Tikdoelen/sticky/safe-area horen in mobiel.css.
+   Typografie = zes tokens en niets daarbuiten: t1 1.5 (titel/possenaam), t2 1.1 (tabs,
+   sectiekoppen, knoppen), t3 .95 (rijen, lopende tekst), t4 .8 (meta — de HARDE VLOER),
+   score 1.05 (Pirata, tabular) en het stempelwoord 1.3. Bestaande podium-/duel-regels die
+   daarbuiten vielen (.68/.78/.92rem) worden hier binnen .pb op de tokens gezet. */
+#overlay-leaderboard.pb, .pb-doop {
+  --pb-t1: 1.5rem; --pb-t2: 1.1rem; --pb-t3: .95rem; --pb-t4: .8rem;
+  --pb-score: 1.05rem; --pb-stempelwoord: 1.3rem;
+  --pb-rij: 44px;
+  --pb-kaart: rgba(30, 22, 40, .65);
+  --posse: var(--ember); --posse-rgb: 255, 156, 63;   /* standaard ember; [data-kleur] overschrijft */
+}
+/* posse-kleur uit de doopakte → rand, chips, embleem-gloed, eigen-rij-balk (pamflet én doop-voorbeeld) */
+.pb-pamflet[data-kleur="ember"], .pb-doop[data-kleur="ember"] { --posse: #ff9c3f; --posse-rgb: 255, 156, 63; }
+.pb-pamflet[data-kleur="goud"], .pb-doop[data-kleur="goud"] { --posse: #f5c542; --posse-rgb: 245, 197, 66; }
+.pb-pamflet[data-kleur="bloed"], .pb-doop[data-kleur="bloed"] { --posse: #c8342b; --posse-rgb: 200, 52, 43; }
+.pb-pamflet[data-kleur="gif"], .pb-doop[data-kleur="gif"] { --posse: #7ed37a; --posse-rgb: 126, 211, 122; }
+.pb-pamflet[data-kleur="ijs"], .pb-doop[data-kleur="ijs"] { --posse: #8fd4ff; --posse-rgb: 143, 212, 255; }
+.pb-pamflet[data-kleur="schaduw"], .pb-doop[data-kleur="schaduw"] { --posse: #b08cff; --posse-rgb: 176, 140, 255; }
+
+/* --- de overlay: codex-patroon (kop en voet vast, alleen .pb-inhoud scrolt). Géén display
+   hier: .overlay/.overlay.open regelen tonen/verbergen, anders stond het bord ook dicht open. --- */
+#overlay-leaderboard.pb {
+  overflow: hidden; padding: 14px 20px 16px;
+  isolation: isolate;   /* eigen stapelcontext voor de wand (::before op z-index -1) */
+  font-size: var(--pb-t3); color: var(--perkament);
+}
+/* [hidden] is de enige schakelaar voor panelen, menu en nudge — geen kale display:* eroverheen */
+#overlay-leaderboard.pb [hidden], #pb-doop [hidden] { display: none !important; }
+/* de wand: de Act 2-plaat (kelder van het Slachtblok) zacht achter de papieren */
+#overlay-leaderboard.pb::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: url('../assets/achtergronden/Act 2 achtergronden/Achtergrondvraagtekenrelikwieartefact ACT2.webp') center / cover no-repeat;
+  opacity: .22;
+}
+body.lite #overlay-leaderboard.pb::before { display: none; }
+.pb-kop, .pb-voet, .pb-inhoud { width: min(960px, 94vw); }
+.pb-kop, .pb-voet { flex-shrink: 0; }
+/* de bovenrand van het prikbord (assets/ui/prikbord_kop.webp) als kopband achter titel, standkaart en
+   tabs: gedimd zodat de tekst leesbaar blijft, en onderaan via een mask uitlopend in de overlay */
+.pb-kop { position: relative; isolation: isolate; }
+.pb-kop::before {
+  content: ''; position: absolute; inset: -14px -20px -6px; z-index: -1; pointer-events: none;
+  background: url('../assets/ui/prikbord_kop.webp') center 38% / cover no-repeat;
+  opacity: .42;
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+}
+body.lite .pb-kop::before { display: none; }
+.pb-inhoud {
+  flex: 1 1 auto; min-height: 0;
+  overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable;
+  padding: 8px 4px 10px;
+  /* zachte fade aan boven- en onderrand i.p.v. een harde afkap (zoals #codex-inhoud) */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 16px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 16px), transparent 100%);
+}
+/* alle knoppen/velden op het bord op de tokens; de knop-groot compacter dan de titelscherm-CTA */
+:where(#overlay-leaderboard.pb, .pb-doop) :where(button, input) { font-size: var(--pb-t3); }   /* specificiteit 0: .pb-tab/.pb-sluit/.pb-meer/.knop-* winnen */
+#overlay-leaderboard.pb .knop-groot, .pb-doop .knop-groot { margin-top: 0; font-size: var(--pb-t2); padding: 9px 22px; white-space: nowrap; }
+#overlay-leaderboard.pb .knop-stil, .pb-doop .knop-stil { font-size: var(--pb-t2); white-space: nowrap; }
+#overlay-leaderboard.pb small { font-size: var(--pb-t4); }   /* nooit de browser-'smaller' (nieuwe maat) */
+#overlay-leaderboard.pb input:not([type="checkbox"]), .pb-doop input {
+  padding: 8px 12px; border-radius: 9px; min-width: 0;
+  background: rgba(18, 10, 8, .92); border: 1px solid rgba(255, 160, 90, .5);
+  color: var(--perkament); font-family: 'Alegreya', serif;
+}
+#overlay-leaderboard.pb input:focus, .pb-doop input:focus { outline: none; border-color: var(--ember-fel); box-shadow: 0 0 0 2px rgba(255, 156, 63, .25); }
+#overlay-leaderboard.pb button:focus-visible, .pb-doop button:focus-visible, .pb-code:focus-visible, .pb-acc > summary:focus-visible { outline: 2px solid var(--goud); outline-offset: 2px; }
+
+/* --- de kop: titelrij (1fr auto 40px) --- */
+.pb-titelrij { display: grid; grid-template-columns: minmax(0, 1fr) auto 40px; align-items: center; gap: 12px; min-height: 40px; }
+.pb-titel {
+  font-family: 'Pirata One', serif; font-size: var(--pb-t1); letter-spacing: .05em; line-height: 1.1; margin: 0;
+  color: var(--ember-fel); text-shadow: 0 0 18px rgba(255, 156, 63, .35), 0 2px 0 #000;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pb-dagwet {
+  font-family: 'Alegreya', serif; font-size: var(--pb-t3); letter-spacing: .02em; color: #ffd7a0;
+  padding: 5px 13px; border-radius: 999px; min-width: 0; max-width: 100%;
+  background: rgba(255, 150, 60, .12); border: 1px solid rgba(255, 170, 90, .45);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: help;
+}
+.pb-dagwet small { color: var(--perkament-dof); }
+.pb-dagwet::before {
+  content: ''; display: inline-block; width: 22px; height: 22px; margin-right: 6px; vertical-align: -6px;
+  background: url('../assets/ui/decreet_zegel.webp') center / contain no-repeat;
+}
+.pb-sluit {
+  width: 40px; height: 40px; border-radius: 50%; font-size: var(--pb-t2); line-height: 1;
+  color: var(--perkament-dof); background: rgba(0, 0, 0, .3); border: 1px solid var(--rand);
+  transition: color .15s, border-color .15s;
+}
+.pb-sluit:hover { color: var(--perkament); border-color: var(--ember); }
+
+/* --- de standkaart: JOUW rij + één knop, 56px, altijd boven de vouw --- */
+.pb-stand {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px;
+  min-height: 56px; margin-top: 8px; padding: 5px 12px 5px 5px;
+  background: var(--pb-kaart); border: 1px solid var(--rand); border-radius: 10px;
+}
+.pb-stand .pb-rij { border-radius: 7px; }
+.pb-stand-tekst { font-size: var(--pb-t3); color: var(--perkament); line-height: 1.35; padding: 0 10px; min-width: 0; }
+.pb-stand-tekst b, .pb-intro b, .pb-vlam b, .pb-nudge b, .pb-duel-jij b, .pb-stoef b, .pb-leeg b { color: #ffd7a0; }
+.pb-stand .lb-daily-cta { display: inline-block; margin: 0; }   /* de titelscherm-variant zette block + margin */
+.pb-naamvorm { display: flex; align-items: center; gap: 8px; }
+.pb-naamvorm input { width: 200px; }
+
+/* --- de tabs: één rij, actieve tab in ember met streep --- */
+.pb-tabs { display: flex; gap: 4px; margin-top: 8px; border-bottom: 1px solid var(--rand); }
+.pb-tab {
+  flex: 1 1 0; min-width: 0; min-height: 40px; margin-bottom: -1px; padding: 4px 10px 2px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: 'Pirata One', serif; font-size: var(--pb-t2); letter-spacing: .04em;
+  color: var(--perkament-dof); background: none; border: 0; border-bottom: 3px solid transparent;
+  transition: color .15s, border-color .15s;
+}
+.pb-tab:hover { color: var(--perkament); }
+.pb-tab.actief { color: var(--ember-fel); border-bottom-color: var(--ember); }
+.pb-tab-tekst { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pb-tab-embleem { flex: 0 0 auto; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+.pb-tab-embleem img, .pb-chip-embleem img, .pb-embleem img, .pb-keuze img, .pb-rang img, .pb-vlam-icoon img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* --- de papieren: rand, schaduwlijn onderaan, twee spijkerkoppen in de bovenhoeken --- */
+.pb-papier {
+  position: relative; margin: 0; padding: 10px 14px 10px;
+  border: 1px solid var(--rand); border-radius: 10px;
+  background: rgba(22, 16, 30, .72);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, .5), 0 12px 26px rgba(0, 0, 0, .35);
+}
+.pb-papier::before, .pb-papier::after {
+  content: ''; position: absolute; top: 5px; width: 8px; height: 8px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 35% 35%, #e0cfa8, #6b5a3e 55%, #241c14);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .85);
+}
+.pb-papier::before { left: 5px; }
+.pb-papier::after { right: 5px; }
+.pb-pamflet {
+  background: linear-gradient(170deg, rgba(60, 22, 10, .55), rgba(20, 10, 8, .85));
+  border-color: rgba(var(--posse-rgb), .45);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, .5), 0 0 26px rgba(var(--posse-rgb), .14), inset 0 -18px 34px rgba(226, 84, 44, .06);
+}
+.pb-register { background: rgba(16, 24, 34, .66); border-color: rgba(120, 170, 220, .28); }
+.pb-register .pb-sectiekop, .pb-register .pb-acc > summary { color: #a8cdf0; }
+.pb-register .pb-intro b { color: #cfe6ff; }
+.pb-staat { background: rgba(28, 22, 34, .66); }
+/* het stempellabel: schrijfmachine, klein, gespatieerd */
+.pb-stempel {
+  display: block; margin: 0 0 6px; padding: 0 8px;
+  font-family: 'Special Elite', 'Courier New', monospace; font-size: var(--pb-t4);
+  text-transform: uppercase; letter-spacing: .14em; color: var(--perkament-dof);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pb-sectiekop {
+  display: flex; align-items: baseline; gap: 8px; margin: 10px 0 4px;
+  font-family: 'Pirata One', serif; font-size: var(--pb-t2); font-weight: normal; letter-spacing: .04em; color: var(--ember-fel);
+}
+.pb-sectiekop small { font-family: 'Alegreya', serif; letter-spacing: 0; color: var(--perkament-dof); }
+.pb-sectiekop small[data-tip] { cursor: help; }
+.pb-intro { font-size: var(--pb-t3); color: var(--perkament-dof); margin: 0 0 4px; }
+.pb-moraal, .pb-records { font-size: var(--pb-t4); color: var(--perkament-dof); text-align: center; margin: 12px 0 0; }
+.pb-moraal { font-style: italic; }
+.pb-dof { font-style: italic; font-size: var(--pb-t3); color: var(--perkament-dof); margin: 0; padding: 8px 10px; }
+
+/* --- de rij: 34px rang | naam (krimpt, ellipsis) | ctx | 64px score, 44px, gestreept --- */
+.pb-lijst { margin: 0; }
+.pb-rij {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr) auto minmax(64px, auto); align-items: center; gap: 0 10px;
+  min-height: var(--pb-rij); padding: 0 10px; border-radius: 8px;
+  font-size: var(--pb-t3); color: var(--perkament);
+}
+.pb-lijst .pb-rij:nth-child(odd) { background: rgba(255, 255, 255, .03); }   /* 3% helderheidsverschil, geen losse kaartjes */
+.pb-rang { text-align: center; color: var(--perkament-dof); font-variant-numeric: tabular-nums; line-height: 1; }
+.pb-rang [data-icoon] { font-size: var(--pb-t2); display: inline-block; width: 26px; height: 26px; line-height: 26px; }
+/* de naam als flexrij: de NAAM krimpt (ellipsis), chip en 'jij'-pil blijven staan */
+.pb-naam { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+.pb-naam > b { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.pb-kroon { flex: 0 0 auto; }
+.pb-seed { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--perkament-dof); letter-spacing: .04em; }
+.pb-ctx { white-space: nowrap; font-size: var(--pb-t4); color: var(--perkament-dof); text-align: right; }
+.pb-score {
+  font-family: 'Pirata One', serif; font-size: var(--pb-score); color: #ffd873; letter-spacing: .02em;
+  text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.pb-rij .syn-por-knop { grid-column: 4; justify-self: end; margin: 0; padding: 5px 9px; font-size: var(--pb-t4); }
+.pb-rij.eigen { border-left: 3px solid #f5c542; padding-left: 7px; background: linear-gradient(90deg, rgba(245, 197, 66, .16), transparent 60%); }
+.pb-lijst .pb-rij.eigen:nth-child(odd) { background: linear-gradient(90deg, rgba(245, 197, 66, .18), rgba(255, 255, 255, .03) 60%); }
+.pb-pamflet .pb-rij.eigen { border-left-color: var(--posse); background: linear-gradient(90deg, rgba(var(--posse-rgb), .16), transparent 60%); }
+.pb-pamflet .pb-lijst .pb-rij.eigen:nth-child(odd) { background: linear-gradient(90deg, rgba(var(--posse-rgb), .18), rgba(255, 255, 255, .03) 60%); }
+.pb-jij {
+  flex: 0 0 auto; display: inline-block; padding: 0 7px; border-radius: 999px; line-height: 1.35;
+  font-size: var(--pb-t4); letter-spacing: .06em; color: #f5c542; border: 1px solid rgba(245, 197, 66, .7); background: rgba(245, 197, 66, .08);
+}
+.pb-rij.wacht { box-shadow: inset 0 0 0 1px rgba(255, 150, 70, .32); background: rgba(50, 26, 14, .32); }   /* warme rand, zonder de 44px te breken */
+.pb-lijst .pb-rij.wacht:nth-child(odd) { background: rgba(50, 26, 14, .42); }
+/* jouw eigen wacht-rij: de gouden wash wint van de warme wacht-tint (zelfde specificiteit als hierboven, later in de cascade) */
+.pb-rij.eigen.wacht { background: linear-gradient(90deg, rgba(245, 197, 66, .16), rgba(50, 26, 14, .32) 60%); }
+.pb-lijst .pb-rij.eigen.wacht:nth-child(odd) { background: linear-gradient(90deg, rgba(245, 197, 66, .18), rgba(50, 26, 14, .42) 60%); }
+.pb-pamflet .pb-rij.eigen.wacht { background: linear-gradient(90deg, rgba(var(--posse-rgb), .16), rgba(50, 26, 14, .32) 60%); }
+.pb-pamflet .pb-lijst .pb-rij.eigen.wacht:nth-child(odd) { background: linear-gradient(90deg, rgba(var(--posse-rgb), .18), rgba(50, 26, 14, .42) 60%); }
+.pb-rij.top1 { box-shadow: inset 0 0 0 1px rgba(245, 197, 66, .4), 0 0 14px rgba(245, 197, 66, .16); }   /* alleen in de Vandaag-lijst (JS) */
+.pb-lijst .pb-rij.top1:nth-child(odd), .pb-rij.top1 { background: linear-gradient(90deg, rgba(245, 197, 66, .12), rgba(245, 197, 66, .03)); }
+.pb-scheider { text-align: center; color: var(--perkament-dof); letter-spacing: .3em; line-height: 1; margin: 6px 0 2px; padding-top: 4px; border-top: 1px dashed var(--rand); }
+/* skelet op eindhoogte: drie rijen + één cursieve regel; shimmer 1.4s (lite: statisch) */
+.pb-rij.pb-skelet, .pb-lijst .pb-rij.pb-skelet:nth-child(odd) {   /* (0,4,0): anders won de zebra-regel hierboven op de oneven skeletrijen */
+  background: linear-gradient(90deg, rgba(255, 255, 255, .035) 25%, rgba(255, 255, 255, .09) 50%, rgba(255, 255, 255, .035) 75%);
+  background-size: 200% 100%; animation: pbShimmer 1.4s linear infinite;
+}
+@keyframes pbShimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.pb-laadt .syn-laadt { text-align: center; font-size: var(--pb-t3); margin: 8px 0 2px; }
+/* chips: pil met possenaam (max 12em, ellipsis); eigen = posse-rand; zwerver gedimd */
+.pb-chip {
+  flex: 0 3 auto; min-width: 5em; display: inline-block;   /* krimpt vóór de naam */ vertical-align: middle; max-width: 12em; padding: 0 8px; border-radius: 999px;
+  font-size: var(--pb-t4); font-weight: normal; line-height: 1.5; letter-spacing: .02em;
+  background: rgba(60, 50, 70, .5); border: 1px solid var(--rand); color: var(--perkament-dof);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pb-chip-eigen { border-color: var(--posse); color: var(--perkament); }
+.pb-chip-zw { opacity: .7; border-style: dashed; }
+.pb-chip-embleem { display: inline-block; width: 16px; height: 16px; line-height: 16px; text-align: center; vertical-align: -3px; margin-right: 3px; font-size: var(--pb-t4); }
+
+/* --- de possekop: embleem (48px, posse-gloed) | naam + motto + meta | ⋯ --- */
+.pb-possekop { position: relative; display: grid; grid-template-columns: 56px minmax(0, 1fr) 40px; align-items: center; gap: 0 6px; padding: 0 0 4px; }
+.pb-embleem {
+  width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: var(--pb-t1); line-height: 1;
+  background: radial-gradient(circle at 50% 40%, rgba(var(--posse-rgb), .3), rgba(0, 0, 0, .4) 72%);
+  border: 1px solid rgba(var(--posse-rgb), .6);
+  box-shadow: 0 0 18px rgba(var(--posse-rgb), .35), inset 0 0 12px rgba(0, 0, 0, .55);
+}
+.pb-embleem img { width: 80%; height: 80%; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .7)); }
+.pb-posse-tekst { min-width: 0; }
+.pb-possenaam {
+  margin: 0; font-family: 'Pirata One', serif; font-size: var(--pb-t1); letter-spacing: .04em; line-height: 1.15;
+  color: var(--ember-fel); text-shadow: 0 0 14px rgba(var(--posse-rgb), .4), 0 1px 0 #000;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pb-motto { margin: 1px 0 0; font-style: italic; font-size: var(--pb-t3); color: var(--perkament-dof); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pb-posse-meta { margin: 3px 0 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: var(--pb-t4); color: var(--perkament-dof); }
+.pb-code {
+  display: inline-block; padding: 0 8px; border-radius: 7px; line-height: 1.55; cursor: pointer;
+  font-size: var(--pb-t4); letter-spacing: .06em; color: #ffd7a0;
+  background: rgba(255, 150, 60, .14); border: 1px solid rgba(255, 170, 90, .45);
+  transition: background .15s, border-color .15s;
+}
+.pb-code:hover { background: rgba(255, 150, 60, .24); border-color: rgba(255, 190, 120, .7); }
+/* de scheiding 'gedoopt door X · 🔒 CODE' komt uit CSS (geen tekstpunt in de JS): een ::before op de chip, buiten
+   de pil gezet in haar linkermarge, die bij een regelbreuk mee verhuist i.p.v. te bakkelen aan het eind van regel 1.
+   (:first-child telt alleen elementen: staat er vóór de chip een kale tekstnode, dan is er gewoon geen punt) */
+.pb-posse-meta > .pb-code:not(:first-child) { position: relative; margin-left: 1em; }
+.pb-posse-meta > .pb-code:not(:first-child)::before {
+  content: '·'; position: absolute; left: -.85em; top: 0; bottom: 0; display: flex; align-items: center;
+  color: var(--perkament-dof); letter-spacing: 0; pointer-events: none;
+}
+.pb-meer {
+  width: 40px; height: 40px; border-radius: 50%; align-self: start; justify-self: end;
+  font-size: var(--pb-t1); line-height: 1; color: var(--perkament-dof);
+  border: 1px solid transparent; transition: color .15s, border-color .15s, background .15s;
+}
+.pb-meer:hover, .pb-meer[aria-expanded="true"] { color: var(--perkament); border-color: var(--rand); background: rgba(0, 0, 0, .3); }
+/* het ⋯-menu: popover rechtsboven onder de knop (de possekop is de referentie) */
+.pb-menu {
+  position: absolute; top: 44px; right: 0; z-index: 5; min-width: 240px;
+  display: flex; flex-direction: column; padding: 6px;
+  background: linear-gradient(175deg, #241a1c, #17100f 60%, #1d1214); border: 1px solid rgba(226, 140, 90, .38); border-radius: 10px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .7), 0 0 0 1px rgba(0, 0, 0, .5);
+  animation: pbMenuIn .14s ease-out;
+}
+@keyframes pbMenuIn { from { opacity: 0; transform: translateY(-4px); } }
+.pb-menu > button, .pb-menu > label {
+  display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border-radius: 7px;
+  font-family: 'Alegreya', serif; font-size: var(--pb-t3); letter-spacing: 0; text-align: left; color: var(--perkament); cursor: pointer;
+  white-space: nowrap; transition: background .12s;
+}
+.pb-menu > button:hover, .pb-menu > label:hover { background: rgba(255, 255, 255, .06); }
+.pb-menu-toggle input { width: 16px; height: 16px; margin: 0; accent-color: var(--goud); flex: 0 0 auto; }
+.pb-menu-gevaar { color: #d98a86; margin-top: 4px; border-top: 1px solid var(--rand); border-radius: 0 0 7px 7px; }
+.pb-menu > .pb-menu-gevaar:hover { background: rgba(200, 52, 43, .14); }
+
+/* --- nudge (doop haar) en de Eeuwige Vlam --- */
+.pb-nudge {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0; margin: 0 0 6px; padding: 4px 12px;
+  font-size: var(--pb-t3); color: var(--perkament); border: 1px dashed rgba(255, 156, 63, .55); border-radius: 8px; background: rgba(255, 150, 60, .07);
+}
+.pb-nudge b { letter-spacing: .06em; margin-left: .3em; }   /* de punt erna blijft aan de code plakken */
+.pb-nudge .knop-stil { margin-left: auto; padding: 2px 8px; }
+.pb-vlam {
+  display: flex; align-items: center; gap: 8px; margin: 0 0 2px; padding: 4px 12px; border-radius: 8px;
+  font-size: var(--pb-t3); color: var(--perkament); white-space: nowrap; overflow: hidden;
+  background: linear-gradient(90deg, transparent, rgba(255, 140, 50, .14), transparent);
+}
+.pb-vlam > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* 28px: de emoji-terugval (🔥 op t2 ≈ 26px breed) werd in een 22px-vak rechts afgeknipt; de plaat (img) vult het vak */
+.pb-vlam-icoon { flex: 0 0 28px; width: 28px; height: 28px; overflow: visible; display: inline-flex; align-items: center; justify-content: center; font-size: var(--pb-t2); line-height: 1; }
+.pb-vlam.vlam-flakkert { animation: vlamFlakker 1.6s ease-in-out infinite; }   /* bestaande keyframes */
+.pb-vlam.vlam-uit { color: var(--perkament-dof); background: linear-gradient(90deg, transparent, rgba(120, 120, 140, .12), transparent); }
+/* het podium behoudt zijn markup en CSS; alleen de lettervloer (.68rem) en de marges binnen .pb */
+.pb .syn-podium { margin: 4px 0 2px; }
+.pb .syn-trede { font-size: var(--pb-t3); padding: 6px 8px 8px; gap: 1px; }
+.pb .syn-trede small { font-size: var(--pb-t4); }
+.pb .syn-kroon { font-size: var(--pb-t2); }
+/* iets lagere treden (130/104/88 → 118/106/96): de trap blijft, het pamflet past in één scherm */
+.pb .syn-trede.p1 { min-height: 118px; }
+.pb .syn-trede.p2 { min-height: 106px; }
+.pb .syn-trede.p3 { min-height: 96px; }
+.pb .syn-trede.p1, .pb .syn-trede.p2, .pb .syn-trede.p3 {
+  background-repeat: no-repeat; background-position: center bottom; background-size: 100% auto;
+}
+.pb .syn-trede.p1 { background-image: linear-gradient(180deg, rgba(20, 12, 24, .10), rgba(20, 12, 24, .48) 70%), url('../assets/ui/trede_1.webp'); }
+.pb .syn-trede.p2 { background-image: linear-gradient(180deg, rgba(20, 12, 24, .10), rgba(20, 12, 24, .48) 70%), url('../assets/ui/trede_2.webp'); }
+.pb .syn-trede.p3 { background-image: linear-gradient(180deg, rgba(20, 12, 24, .10), rgba(20, 12, 24, .48) 70%), url('../assets/ui/trede_3.webp'); }
+.pb .syn-trede.syn-leeg { background-image: none; }
+
+/* --- het dueldecreet: jouw paar, de rest opgevouwen --- */
+/* één regel als hij dicht is: 'Jouw duel …' met rechts de opgevouwen rest; open → volle breedte */
+.pb-duel { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 18px; margin: 6px 0 0; padding: 6px 12px; border-radius: 10px; background: rgba(28, 20, 40, .55); border: 1px solid var(--rand); }
+.pb-duel-jij { flex: 0 1 auto; font-size: var(--pb-t3); color: var(--perkament); text-align: center; line-height: 1.4; }
+.pb-duel details.pb-acc { flex: 0 1 auto; }
+.pb-duel details.pb-acc[open] { flex: 1 1 100%; }
+.pb-duel-jij > span { color: var(--perkament-dof); font-style: italic; }
+.pb .duel-rij { font-size: var(--pb-t3); min-width: 0; gap: 8px; }
+.pb .duel-vrij, .pb .duel-stand { font-size: var(--pb-t4); }
+/* een echte krimp-as voor de duel-rijen: blok A, het decreet en de accordeon mogen krimpen (min-width 0, anders duwt
+   de nowrap-inhoud van een geopende accordeon het decreet buiten het pamflet); in een .duel-kant krimpt de NAAM
+   (span.duel-naam, met ellipsis) en blijft het getal (b) staan — zonder de span geldt de oude inline-opmaak */
+.pb-blokA, .pb-duel, .pb-duel details.pb-acc { min-width: 0; }
+.pb-duel details.pb-acc[open] { max-width: 100%; }
+.pb .duel-kant:has(> .duel-naam) { display: inline-flex; align-items: baseline; justify-content: center; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap; }
+.pb .duel-kant:has(> .duel-naam) > b { flex: 0 0 auto; margin-left: 0; }
+.pb .duel-naam { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* accordeons: summary in sectiekop-stijl met ▸/▾ */
+details.pb-acc > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 8px; min-height: 40px; padding: 8px 4px 0;
+  font-family: 'Pirata One', serif; font-size: var(--pb-t2); letter-spacing: .04em; color: var(--ember-fel);
+}
+details.pb-acc > summary::-webkit-details-marker { display: none; }
+details.pb-acc > summary::before { content: '▸'; color: var(--perkament-dof); flex: 0 0 auto; width: .8em; font-size: var(--pb-t3); }
+details.pb-acc[open] > summary::before { content: '▾'; }
+details.pb-acc > summary small { font-family: 'Alegreya', serif; letter-spacing: 0; color: var(--perkament-dof); }
+details.pb-acc > summary:hover { color: var(--perkament); }
+.pb-duel details.pb-acc > summary { justify-content: center; align-items: center; min-height: 28px; padding: 0; font-family: 'Alegreya', serif; font-size: var(--pb-t4); letter-spacing: 0; color: var(--perkament-dof); }
+.pb-duel details.pb-acc > summary::before { font-size: var(--pb-t4); width: auto; }
+.pb-duel details.pb-acc[open] > summary { margin-bottom: 2px; }
+
+/* --- blok B: dagbord, wachtenden, por-alle, het tweeluik (eregalerij | gestoef) --- */
+.pb-blokB { margin-top: 0; }
+.pb .syn-por-alle { margin: 4px 0 0; padding: 4px 10px; }
+.pb-tweeluik { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 22px; align-items: start; margin-top: 2px; }
+.pb-stoef { margin: 4px 0; padding-left: 8px; font-size: var(--pb-t3); line-height: 1.35; color: var(--perkament); border-left: 2px solid rgba(255, 150, 70, .45); }
+.pb-stoef.pb-nalatenschap { border-left-color: rgba(190, 120, 245, .6); }
+.pb-nalatenschap-los { margin: 8px 0 2px; }
+.pb-stoef.pb-doopregel { border-left-color: rgba(245, 197, 66, .6); }
+.pb-stoef.pb-dof { padding: 4px 0 4px 8px; }
+
+/* --- aanmelding (geen/zwerver): twee tegels --- */
+.pb-tegels { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 4px; }
+.pb-tegel { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px 18px; border-radius: 10px; background: var(--pb-kaart); border: 1px solid var(--rand); }
+.pb-tegel h4 { margin: 0; font-family: 'Pirata One', serif; font-size: var(--pb-t2); font-weight: normal; letter-spacing: .04em; color: var(--ember-fel); }
+.pb-tegel p { margin: 0; font-size: var(--pb-t3); color: var(--perkament-dof); line-height: 1.4; }
+.pb-tegel .knop-groot { align-self: flex-start; margin-top: 6px; }
+.pb-codevorm { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+.pb-codevorm input { flex: 1 1 150px; text-transform: uppercase; letter-spacing: .06em; }
+.pb-tegel .pb-hint { font-size: var(--pb-t4); }
+
+/* --- register / staat: twee kolommen; het mobiele segment blijft hier weg --- */
+.pb-segment { display: none; }
+.pb-kolommen { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 22px; align-items: start; }
+.pb-kolom { min-width: 0; }
+.pb-kolom .pb-sectiekop:first-child { margin-top: 6px; }
+/* de Diepte-rij op laptop: naam + chip + jij + datum moesten in een 445px-kolom en de chip verloor ('De Nachtplo…').
+   De rij is 10px zuiniger (gap/padding 8), de naamcel houdt minstens 12em, de ctx (held/datum) krimpt als eerste
+   (kolom 3 minmax(0,auto) + ellipsis) en de chip mag tot 14em; de naam zelf geeft als laatste toe. */
+.pb-register .pb-rij { grid-template-columns: 34px minmax(12em, 1fr) minmax(0, auto) minmax(64px, auto); gap: 0 8px; padding-left: 8px; padding-right: 8px; }
+.pb-register .pb-rij.eigen { padding-left: 5px; }   /* 3px balk + 5 = 8, gelijk met de andere rijen */
+.pb-register .pb-rij .pb-ctx { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pb-register .pb-chip { max-width: 14em; }
+
+/* --- de lege staat: gestippeld kader + rood stempelwoord --- */
+.pb-leeg { margin: 8px 0; padding: 14px; text-align: center; border: 1px dashed var(--rand); border-radius: 10px; color: var(--perkament-dof); }
+.pb-leeg p { margin: 6px 0 0; font-size: var(--pb-t3); line-height: 1.4; }
+.pb-leeg .knop-groot { margin-top: 12px; }
+.pb-leeg .knop-stil { margin-top: 10px; }
+.pb-stempelwoord {
+  display: inline-block; transform: rotate(-4deg);
+  font-family: 'Special Elite', 'Courier New', monospace; font-size: var(--pb-stempelwoord); letter-spacing: .2em; line-height: 1.2;
+  color: rgba(200, 52, 43, .75); text-shadow: 0 0 1px rgba(200, 52, 43, .4);
+}
+
+/* --- de voet --- */
+.pb-voet { display: flex; align-items: center; justify-content: center; gap: 12px; padding-top: 10px; }
+.pb-voet .knop-groot { padding: 9px 28px; }
+
+/* --- de doop-overlay (.uitn-kaart-patroon, eigen klassen) --- */
+.pb-doop {
+  width: min(520px, 92vw); max-width: 520px; padding: 18px 24px 16px; text-align: center; font-size: var(--pb-t3); color: var(--perkament);
+  border-color: rgba(var(--posse-rgb), .45);
+  box-shadow: 0 0 60px rgba(var(--posse-rgb), .18), 0 22px 55px rgba(0, 0, 0, .7);
+}
+.pb-doop .scherm-titel { font-size: var(--pb-t1); margin: 0 0 2px; }   /* t1: de doop hangt aan dezelfde zes maten als het bord */
+.pb-doop-lead { margin: 0 0 10px; font-style: italic; line-height: 1.45; color: var(--perkament-dof); }
+.pb-doop-voorbeeld {
+  margin: 0 0 10px; padding: 6px 12px; text-align: left; border-radius: 10px;
+  background: linear-gradient(170deg, rgba(60, 22, 10, .5), rgba(20, 10, 8, .8)); border: 1px solid rgba(var(--posse-rgb), .45);
+  box-shadow: 0 0 18px rgba(var(--posse-rgb), .12);
+}
+.pb-doop-voorbeeld .pb-possekop { grid-template-columns: 56px minmax(0, 1fr); padding: 0; }
+.pb-doop input { width: 100%; padding: 10px 14px; border-radius: 10px; text-align: center; }
+#pb-doop-naam { margin-bottom: 8px; }
+.pb-doop-motto { display: flex; align-items: center; gap: 8px; }
+.pb-doop-motto input { flex: 1 1 auto; min-width: 0; }
+.pb-doop-motto button { flex: 0 0 auto; width: 44px; height: 44px; border-radius: 10px; font-size: var(--pb-t2); line-height: 1; background: rgba(0, 0, 0, .3); border: 1px solid var(--rand); transition: border-color .15s, transform .12s; }
+.pb-doop-motto button:hover { border-color: var(--ember); transform: rotate(-12deg); }
+.pb-doop h4 { margin: 10px 0 6px; text-align: left; font-family: 'Pirata One', serif; font-size: var(--pb-t2); font-weight: normal; letter-spacing: .04em; color: var(--ember-fel); }
+.pb-kiezer { display: flex; flex-wrap: wrap; gap: 8px; }
+.pb-keuze {
+  width: 44px; height: 44px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
+  font-size: var(--pb-t1); line-height: 1; background: rgba(0, 0, 0, .3); border: 1px solid var(--rand);
+  transition: transform .12s, box-shadow .15s, border-color .15s, background .15s;
+}
+.pb-keuze:hover { transform: translateY(-1px); border-color: rgba(255, 170, 90, .6); }
+.pb-keuze[aria-pressed="true"] { border-color: var(--ember); background: rgba(255, 150, 60, .14); box-shadow: 0 0 0 1px var(--ember), 0 0 14px rgba(255, 156, 63, .55); }
+.pb-keuze > span { display: inline-flex; width: 30px; height: 30px; align-items: center; justify-content: center; }
+.pb-lak, .pb-lak[aria-pressed="true"] { border-radius: 50%; background: var(--lak); border-color: rgba(0, 0, 0, .45); box-shadow: inset 0 -4px 8px rgba(0, 0, 0, .35), inset 0 2px 3px rgba(255, 255, 255, .25); }
+.pb-lak[aria-pressed="true"] { box-shadow: 0 0 0 2px #17100f, 0 0 0 4px var(--lak), 0 0 16px var(--lak), inset 0 -4px 8px rgba(0, 0, 0, .35); }
+.pb-doop-voet { margin: 12px 0 0; font-size: var(--pb-t4); color: var(--perkament-dof); line-height: 1.4; }
+.pb-doop-knoppen { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 6px; }
+
+/* --- entree: papieren komen 8px omhoog met 60ms stagger; tabwissel = dezelfde korte fade --- */
+@keyframes pbEntree { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.pb-stand { animation: pbEntree .35s ease-out both; }
+.pb-paneel { animation: pbEntree .3s ease-out both; }
+.pb-blokB, .pb-kolommen, .pb-tegels { animation: pbEntree .35s ease-out .06s both; }
+body.lite .pb-stand, body.lite .pb-paneel, body.lite .pb-blokB, body.lite .pb-kolommen, body.lite .pb-tegels,
+body.lite .pb-menu, body.lite .pb-skelet, body.lite .pb-vlam, body.lite .pb-stand .lb-daily-cta { animation: none; }
+body.lite .pb-skelet, body.lite .pb-lijst .pb-rij.pb-skelet:nth-child(odd) { background: rgba(255, 255, 255, .05); }
+@media (prefers-reduced-motion: reduce) {
+  .pb-stand, .pb-paneel, .pb-blokB, .pb-kolommen, .pb-tegels, .pb-menu, .pb-skelet, .pb-vlam, .pb-stand .lb-daily-cta { animation: none !important; }
+  /* even zwaar als de shimmer-regel (én de zebra) en later in de cascade: vlak grijs, geen statische lichtband */
+  .pb-rij.pb-skelet, .pb-lijst .pb-rij.pb-skelet:nth-child(odd) { background: rgba(255, 255, 255, .05); }
+  .pb-tab, .pb-keuze, .pb-sluit, .pb-meer, .pb-code, .pb-doop-motto button { transition: none; }
+}
+
+
 .vieze-vinger {
   position: fixed; z-index: 702; pointer-events: none; font-size: clamp(2rem, 5vw, 3rem);
   transform: translate(-50%, -120%) rotate(8deg); opacity: 0;

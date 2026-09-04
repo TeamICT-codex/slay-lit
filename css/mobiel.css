@@ -386,6 +386,516 @@ body[data-modus="mobiel"] .overlay {
   padding: calc(16px + var(--sat)) calc(10px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
 }
 body[data-modus="mobiel"] #overlay-codex { padding: calc(10px + var(--sat)) calc(14px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left)); }
+
+/* ============================================================
+   HET PRIKBORD (v103) — MOBIEL SPOOR. Alleen maten, layout en touch; kleuren,
+   papieren en lettertypes komen uit style.css (het laptopblok). De wortel is
+   met id geschreven (#overlay-leaderboard.pb) omdat het laptopspoor daar zijn
+   selectors op hangt (specificiteit 1,1,0) — een kale body[…] .pb-klasse
+   (0,2,1) zou daar het onderspit delven. Volgorde: overlay → kop (titelrij,
+   standkaart, tabs) → de rij → papieren → pamflet → register → voet →
+   doop-overlay → portret-knikken → liggend (≤600px hoog) → kort liggend (≤440).
+   Lettergroottes op mobiel: 1.25 / 1.1 / 1.05 / 1 / .95 / .8rem — niets kleiner
+   dan .8rem (= 12,8px, de leesvloer uit het bouwcontract). Tikdoelen ≥44px.
+   ============================================================ */
+
+/* ---- 1. de overlay: codex-patroon (kop en voet vast, alleen de inhoud scrolt) ---- */
+body[data-modus="mobiel"] #overlay-leaderboard.pb {
+  padding: calc(8px + var(--sat)) calc(8px + env(safe-area-inset-right)) 0 calc(8px + env(safe-area-inset-left));
+  flex-direction: column; align-items: stretch; overflow: hidden;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-kop,
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-inhoud,
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-voet { width: 100%; max-width: none; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-kop { flex-shrink: 0; }
+/* de kopband (assets/ui/prikbord_kop.webp, laptop-inset -14/-20) op de mobiele overlay-padding (8px + safe-area) */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-kop::before { inset: calc(-8px - var(--sat)) calc(-8px - env(safe-area-inset-right)) -6px calc(-8px - env(safe-area-inset-left)); }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-inhoud {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  padding: 6px 0 10px;
+  /* alleen onderaan een fade (scrollhint); de bovenfade van de laptop dimde het stempel */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 14px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 14px), transparent 100%);
+}
+/* [hidden] is de ENIGE schakelaar van panelen, menu, nudge en kolommen — geen display
+   hieronder mag daar doorheen prikken (anders staan alle panelen tegelijk open) */
+body[data-modus="mobiel"] #overlay-leaderboard.pb [hidden] { display: none !important; }
+/* touch: geen hover-lifts (die plakken na een tik), geen grijze tik-flits, geen dubbeltik-zoom */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .knop-groot:hover,
+body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-por-knop:hover { transform: none; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb button,
+body[data-modus="mobiel"] #overlay-leaderboard.pb summary,
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-code,
+body[data-modus="mobiel"] #overlay-leaderboard.pb label { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb input { font-size: 1rem; }   /* ≥16px: iOS zoomt anders in bij focus */
+
+/* ---- 2a. de kop: titelrij van 44px — titel · dagwet-chip (ellipsis) · ✕ 44×44 ---- */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-titelrij {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) 44px;
+  align-items: center; column-gap: 8px; min-height: 44px;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-titel { font-size: 1.25rem; line-height: 1.1; white-space: nowrap; margin: 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-dagwet {
+  display: block; justify-self: start; min-width: 0; max-width: 100%; min-height: 40px;
+  padding: 11px 10px; margin: 0; font-size: .8rem; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-dagwet small { font-size: .8rem; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-sluit {
+  width: 44px; height: 44px; min-height: 44px; padding: 0; margin: 0;
+  font-size: 1.25rem; line-height: 1; display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* ---- 2b. de standkaart: jouw rij (twee regels, 52px) + één knop (48px) ----
+   Smal: knop eronder op volle breedte. ≥400px: knop rechts (zie de portret-knik, §9). */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px 10px; align-items: center;
+  min-height: 60px; padding: 4px 6px; margin: 4px 0 2px; height: auto;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand-tekst { font-size: .95rem; line-height: 1.3; margin: 0; min-width: 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand .pb-actie {
+  width: 100%; min-height: 48px; margin: 0; padding: 6px 14px; font-size: 1.1rem;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand .knop-stil.pb-actie { min-height: 44px; font-size: 1rem; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand .lb-daily-cta { display: inline-flex; margin: 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-naamvorm { display: flex; gap: 6px; align-items: stretch; min-width: 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-naamvorm input { flex: 1 1 auto; min-width: 0; width: auto; min-height: 44px; padding: 0 12px; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-naamvorm .knop-groot {
+  flex: 0 0 auto; width: auto; min-height: 44px; margin: 0; padding: 0 12px; font-size: 1rem;
+  display: inline-flex; align-items: center; white-space: nowrap;
+}
+
+/* ---- 2c. tabs: 3 × 33 %, 44px hoog, tekst 1rem, embleem 20px ---- */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tabs { display: flex; gap: 2px; margin: 2px 0 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tab {
+  flex: 1 1 0; min-width: 0; min-height: 44px; padding: 0 3px; margin: 0; font-size: 1rem;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tab-embleem {
+  flex: 0 0 auto; width: 20px; height: 20px; font-size: 1.1rem; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tab-embleem img { width: 100%; height: 100%; object-fit: contain; display: block; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tab-tekst { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---- 3. DE RIJ: twee regels binnen 52px — regel 1 = naam + score, regel 2 = chip + ctx ----
+   De chip zit in de DOM ín .pb-naam, dus grid-template-areas kan hem niet op regel 2 zetten
+   zonder wrapper. Daarom: .pb-naam { display:contents } zodat kroon/naam/seed/chip/jij losse
+   flex-items worden, flex-wrap met een ::after-regelbreuk (flex-basis:100%) en `order` om de
+   chip achter de breuk te zetten. Rang en score staan absoluut, verticaal gecentreerd over
+   beide regels (de padding links/rechts reserveert hun kolom: 34px + 6 / 64px + 8). */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-rij {
+  display: flex; flex-wrap: wrap; align-items: center; align-content: center;
+  column-gap: 6px; row-gap: 1px; position: relative;
+  min-height: 52px; height: auto; padding: 3px 78px 3px 46px; margin: 0;
+  grid-template-columns: none; grid-template-areas: none;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-rij.pb-skelet { padding: 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-rij::after { content: ''; flex-basis: 100%; height: 0; order: 3; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-rang {
+  position: absolute; left: 6px; top: 50%; translate: 0 -50%;
+  width: 34px; text-align: center; font-size: .95rem; line-height: 1; margin: 0;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-rang [data-icoon] { font-size: 1.1rem; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-rang img { width: 26px; height: 26px; object-fit: contain; display: inline-block; vertical-align: middle; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-naam { display: contents; }
+/* In een wikkelende flex-container WIKKELT een item dat niet past naar een nieuwe regel in
+   plaats van te krimpen. Daarom flex-basis 0 (past altijd op zijn regel) + max-width:max-content
+   (groeit tot zijn eigen tekst, niet verder): naam en seed delen regel 1, chip en ctx regel 2,
+   en wie te lang is krijgt ellipsis — de ctx (grow 1.5) wint het van de chip. */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-naam > b {
+  order: 1; flex: 1 1 0; min-width: 0; max-width: max-content; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: .95rem; line-height: 1.3;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-kroon { order: 1; flex: 0 0 auto; font-size: .95rem; line-height: 1; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-seed {
+  order: 1; flex: 1 1 0; min-width: 2em; max-width: max-content; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: .8rem; line-height: 1.3;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-jij { order: 2; flex: 0 0 auto; font-size: .8rem; line-height: 1.4; padding: 0 7px; margin: 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-chip {
+  order: 4; flex: 1 1 0; min-width: 0; max-width: max-content; margin: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: .8rem; line-height: 1.5;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-chip-embleem {
+  display: inline-block; width: 16px; height: 16px; line-height: 16px; vertical-align: -3px; margin-right: 3px; text-align: center; font-size: .8rem;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-chip-embleem img { width: 100%; height: 100%; object-fit: contain; display: block; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-ctx {
+  order: 5; flex: 1.1 1 0; min-width: 0; max-width: max-content; margin: 0; text-align: left;   /* rechts alleen liggend (één regel); v103-hertest: 1.1 i.p.v. 1.5 zodat de possechip ('De Nachtploeg', 13 tekens) op 360px heel blijft */
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: .8rem; line-height: 1.3;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-score {
+  position: absolute; right: 8px; top: 50%; translate: 0 -50%;
+  width: 66px; text-align: right; font-size: 1.05rem; line-height: 1; margin: 0;
+}
+/* de por-knop vervangt de scorecel in een wacht-rij: 72×44, verticaal gecentreerd */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-rij > .syn-por-knop {
+  position: absolute; right: 6px; top: 50%; translate: 0 -50%;
+  min-width: 72px; min-height: 44px; padding: 0 10px; margin: 0; font-size: .8rem;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-rij:has(> .syn-por-knop) { padding-right: 86px; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-scheider { min-height: 24px; line-height: 24px; text-align: center; }
+
+/* ---- 4. de papieren: compactere padding, koppen, intro, lege staat, skelet ---- */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-papier { padding: 10px 10px 12px; margin: 0 0 8px; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-paneel { width: 100%; min-width: 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stempel { font-size: .8rem; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stempelwoord { font-size: 1.25rem; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-sectiekop { font-size: 1.1rem; line-height: 1.2; margin: 10px 0 4px; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-sectiekop small { font-size: .8rem; }
+/* het ⓘ-tipje in een sectiekop: 40×40 raakvlak zonder de regel hoger te maken */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-sectiekop small[data-tip] {
+  display: inline-flex; align-items: center; justify-content: center; align-self: center;
+  min-width: 40px; min-height: 40px; margin: -12px -6px -12px -2px; vertical-align: middle; font-size: .95rem;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-intro { font-size: .95rem; line-height: 1.35; margin: 2px 0 6px; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-records,
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-moraal,
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-hint { font-size: .8rem; line-height: 1.35; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-dof { font-size: .95rem; line-height: 1.35; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-leeg { padding: 12px 10px; margin: 6px 0 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-leeg p { font-size: .95rem; line-height: 1.35; margin: 4px 0 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-leeg .knop-groot { min-height: 48px; margin: 10px 0 0; padding: 6px 18px; font-size: 1.1rem; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-leeg .knop-stil { min-height: 44px; margin: 6px 0 0; padding: 0 12px; font-size: 1rem; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-laadt { font-size: .95rem; text-align: center; margin: 6px 0 0; }
+
+/* ---- 5a. het pamflet: possekop 44 | tekst | ⋯ 44, code-chip als 44px-pil, popover-menu ---- */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-possekop {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; column-gap: 10px; align-items: center;
+  position: relative; z-index: 5; padding: 0;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-embleem {
+  width: 44px; height: 44px; font-size: 1.25rem; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center; align-self: start;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-embleem img { width: 100%; height: 100%; object-fit: contain; display: block; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-posse-tekst { min-width: 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-possenaam { font-size: 1.25rem; line-height: 1.15; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-motto { font-size: .95rem; line-height: 1.3; margin: 2px 0 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-posse-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px;
+  min-height: 44px; margin: 0; font-size: .8rem; line-height: 1.3;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-code {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 9px; margin: 0;
+  font-size: .8rem; letter-spacing: .04em; white-space: nowrap;
+}
+/* de ::before-scheidingspunt uit style.css staat in de linkermarge van de chip: die marge moet hier terug (margin:0 hierboven) */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-posse-meta > .pb-code:not(:first-child) { margin-left: 1em; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-meer {
+  width: 44px; height: 44px; min-height: 44px; padding: 0; margin: 0; align-self: start;
+  font-size: 1.25rem; font-weight: 700; line-height: 1; display: inline-flex; align-items: center; justify-content: center;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-menu {
+  position: absolute; right: 0; top: 48px; z-index: 2;
+  width: min(300px, 100%); min-width: 0; margin: 0; padding: 6px 0;
+  display: flex; flex-direction: column;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-menu > button,
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-menu > label {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px;
+  padding: 0 14px; margin: 0; text-align: left; font-size: .95rem; line-height: 1.2;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-menu-toggle input { width: 22px; height: 22px; margin: 0; flex: 0 0 auto; }
+
+/* ---- 5b. nudge, vlam, podium, duel, accordeons, wacht/por, tweeluik, tegels ---- */
+/* de nudge als lopende tekst (als flex-wrap brak '. Doop haar.' als los item naar een nieuwe regel) */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-nudge {
+  display: block; padding: 6px 10px; margin: 6px 0 0; font-size: .95rem; line-height: 1.4;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-nudge .knop-stil {
+  display: inline-flex; align-items: center; vertical-align: middle; min-height: 44px; margin: 0 0 0 6px; padding: 0 12px; font-size: 1rem;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-vlam {
+  display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 5px 10px; margin: 6px 0 0;
+  font-size: .95rem; line-height: 1.3; white-space: normal; overflow: visible; text-overflow: clip;
+}
+/* de vlamregel mag op een telefoon twee regels nemen (één regel + ellipsis sloeg de kern weg) */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-vlam > span:last-child {
+  min-width: 0; overflow: hidden; white-space: normal;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-vlam-icoon {
+  flex: 0 0 28px; width: 28px; height: 28px; font-size: 1.25rem; line-height: 1; overflow: visible;   /* 🔥-terugval op 1.25rem = 27,5px breed; in 24px werd hij geknipt */
+  display: inline-flex; align-items: center; justify-content: center;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-vlam-icoon img { width: 100%; height: 100%; object-fit: contain; }
+/* het podium: drie treden die samen in 320px passen; namen op maximaal twee regels.
+   DE TRAP: de inhoud staat onderaan in de trede (justify-content:flex-end) en de treden lijnen onderaan uit, dus
+   alleen de kisthoogte maakt het verschil — en min-height alleen was een vloer die de inhoud (≈97px, 2-regelige
+   naam ≈115px) overal overschreed: 112/112/112, of erger, de derde even hoog als de eerste. Nu: padding-top als
+   vaste trap (28/18/8) PLUS min-heights (135/117/96) die boven de tweeregelige inhoud van de trede eronder liggen,
+   zodat de volgorde nooit kan omkeren: p3 ≤ 114,5 < p2 ≥ 117 < p1 ≥ 135. De stenen plint (background bottom)
+   blijft onderaan zichtbaar; de padding voegt alleen lucht boven de kroon toe. */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-podium { gap: 6px; margin: 6px 0 4px; align-items: flex-end; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-trede { width: min(32%, 150px); padding: 8px 6px; gap: 2px; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-trede.p1 { min-height: 135px; padding-top: 28px; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-trede.p2 { min-height: 117px; padding-top: 18px; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-trede.p3 { min-height: 96px; padding-top: 8px; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-kroon { font-size: 1.25rem; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-naam {
+  font-size: .95rem; line-height: 1.15; white-space: normal; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-score { font-size: 1.25rem; }
+/* de meta-regel ('rij 13 · De Slachter', '👑 won · …') op één regel met ellipsis: een wikkelende meta maakte de
+   trede een regel hoger en brak de trap (.8rem: was .68rem, onder de leesvloer) */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-trede small { font-size: .8rem; line-height: 1.2; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-duel { margin: 6px 0 0; padding: 4px 8px; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-duel-jij { font-size: .95rem; line-height: 1.35; padding: 4px 2px; min-width: 0; max-width: 100%; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb details.pb-acc > summary {
+  display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 6px; margin: 0;
+  font-size: 1.1rem; line-height: 1.2; list-style: none; cursor: pointer;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb details.pb-acc > summary::-webkit-details-marker { display: none; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb details.pb-acc > summary small { font-size: .8rem; }
+/* de duel-samenvatting houdt de laptop-look (Alegreya, .8rem, gecentreerd) maar wordt wél 44px hoog */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-duel details.pb-acc > summary { min-height: 44px; padding: 0; font-size: .8rem; justify-content: center; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .duel-rij { font-size: .95rem; padding: 4px 0; min-height: 32px; gap: 8px; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .duel-kant { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .duel-vrij,
+body[data-modus="mobiel"] #overlay-leaderboard.pb .duel-stand { font-size: .8rem; line-height: 1.3; }   /* was .78rem */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-por-alle {
+  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px;
+  margin: 6px 0 0; padding: 0 12px; font-size: 1rem;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tweeluik { display: flex; flex-direction: column; gap: 2px; margin: 8px 0 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tweeluik > details { width: 100%; min-width: 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stoef { font-size: .95rem; line-height: 1.35; margin: 4px 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tegels { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tegel { padding: 12px 12px 14px; min-width: 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tegel h4 { font-size: 1.1rem; margin: 0 0 4px; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tegel p { font-size: .95rem; line-height: 1.35; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tegel .knop-groot {
+  width: 100%; min-height: 48px; margin: 10px 0 0; padding: 6px 14px; font-size: 1.1rem;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-codevorm { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-codevorm input { flex: 0 0 auto; width: 100%; min-height: 44px; padding: 0 12px; }   /* de laptop-basis 150px zou hier de HOOGTE worden */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-codevorm .knop-groot { margin: 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-hint { margin: 8px 0 0; }
+
+/* ---- 6. het register: segmentschakelaar (mobiel-only element, dus hier mét kleur) + één kolom ---- */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-segment {
+  display: flex; gap: 4px; padding: 3px; margin: 4px 0 6px; border-radius: 12px;
+  background: rgba(0, 0, 0, .35); border: 1px solid var(--rand);
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-seg {
+  flex: 1 1 0; min-width: 0; min-height: 44px; padding: 0 8px; margin: 0; border-radius: 9px;
+  font-family: 'Pirata One', serif; font-size: 1.1rem; letter-spacing: .04em; color: var(--perkament-dof);
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-seg.actief {
+  color: #cfe6ff; background: rgba(120, 170, 220, .22); box-shadow: inset 0 0 0 1px rgba(120, 170, 220, .45);
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-kolommen { display: flex; flex-direction: column; gap: 8px; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-kolom { min-width: 0; }
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-register[data-seg="vandaag"] .pb-kolom[data-kolom="ooit"],
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-register[data-seg="ooit"] .pb-kolom[data-kolom="vandaag"] { display: none; }
+
+/* ---- 7. de voet: eigen balk (NIET .einde-knoppen), rij van drie, safe-area onderaan ---- */
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-voet {
+  flex-shrink: 0; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px;
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); margin: 0;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-voet .knop-stil {
+  flex: 1 1 0; min-width: 0; min-height: 44px; padding: 0 6px; margin: 0; font-size: .95rem; line-height: 42px;
+  display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;
+}
+body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-voet .knop-groot {
+  flex: 0 0 auto; min-height: 44px; margin: 0; padding: 0 18px; font-size: 1.1rem;
+  display: inline-flex; align-items: center;
+}
+
+/* ---- 8. de doop-overlay (#pb-doop, los van het bord): inputs 44px, kiezers 44×44, knoppen 48/44 ---- */
+body[data-modus="mobiel"] #pb-doop { padding: calc(10px + var(--sat)) calc(8px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left)); }
+body[data-modus="mobiel"] #pb-doop .pb-doop { width: min(480px, 100%); max-width: none; padding: 16px 12px 14px; margin: auto; }
+body[data-modus="mobiel"] #pb-doop .scherm-titel { font-size: 1.25rem; margin: 2px 0 4px; }
+body[data-modus="mobiel"] #pb-doop .pb-doop-lead { font-size: .95rem; line-height: 1.35; margin: 0 0 10px; }
+body[data-modus="mobiel"] #pb-doop .pb-doop-voorbeeld { margin: 0 0 10px; text-align: left; }
+body[data-modus="mobiel"] #pb-doop .pb-possekop { display: grid; grid-template-columns: 44px minmax(0, 1fr); column-gap: 10px; align-items: center; padding: 0; }
+body[data-modus="mobiel"] #pb-doop .pb-embleem { width: 44px; height: 44px; font-size: 1.25rem; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+body[data-modus="mobiel"] #pb-doop .pb-embleem img { width: 100%; height: 100%; object-fit: contain; display: block; }
+body[data-modus="mobiel"] #pb-doop .pb-posse-tekst { min-width: 0; }
+body[data-modus="mobiel"] #pb-doop .pb-possenaam { font-size: 1.25rem; line-height: 1.15; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body[data-modus="mobiel"] #pb-doop .pb-motto { font-size: .95rem; line-height: 1.3; margin: 2px 0 0; }
+body[data-modus="mobiel"] #pb-doop .pb-posse-meta { font-size: .8rem; line-height: 1.3; margin: 2px 0 0; }
+body[data-modus="mobiel"] #pb-doop input { width: 100%; min-height: 44px; padding: 0 12px; margin: 0 0 8px; font-size: 1rem; }
+body[data-modus="mobiel"] #pb-doop .pb-doop-motto { display: flex; gap: 6px; align-items: stretch; margin: 0 0 8px; }
+body[data-modus="mobiel"] #pb-doop .pb-doop-motto input { flex: 1 1 auto; min-width: 0; width: auto; margin: 0; }
+body[data-modus="mobiel"] #pb-doop .pb-doop-motto button { flex: 0 0 44px; width: 44px; min-height: 44px; padding: 0; margin: 0; font-size: 1.25rem; line-height: 1; }
+body[data-modus="mobiel"] #pb-doop h4 { font-size: 1.1rem; margin: 6px 0 4px; }
+body[data-modus="mobiel"] #pb-doop .pb-kiezer { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0 0 6px; }
+body[data-modus="mobiel"] #pb-doop .pb-keuze {
+  width: 44px; height: 44px; min-height: 44px; padding: 0; margin: 0; font-size: 1.25rem; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+body[data-modus="mobiel"] #pb-doop .pb-keuze img { width: 32px; height: 32px; object-fit: contain; }
+body[data-modus="mobiel"] #pb-doop .pb-doop-voet { font-size: .8rem; line-height: 1.35; margin: 6px 0 8px; }
+body[data-modus="mobiel"] #pb-doop .pb-doop-knoppen { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 14px; }
+body[data-modus="mobiel"] #pb-doop .pb-doop-knoppen .knop-groot { min-height: 48px; margin: 0; padding: 6px 22px; font-size: 1.1rem; display: inline-flex; align-items: center; }
+body[data-modus="mobiel"] #pb-doop .pb-doop-knoppen .knop-stil { min-height: 44px; margin: 0; padding: 0 12px; font-size: 1rem; display: inline-flex; align-items: center; }
+body[data-modus="mobiel"] #pb-doop button,
+body[data-modus="mobiel"] #pb-doop input { -webkit-tap-highlight-color: transparent; }
+body[data-modus="mobiel"] #pb-doop .knop-groot:hover { transform: none; }
+
+/* ---- 9. breedte-knikken (portret én tablets) ---- */
+/* ≥400px breed: de actieknop rechts naast de rij/tekst (standkaart 60px) */
+@media (min-width: 400px) {
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand[data-stand="rij"],
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand[data-stand="cta"],
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand[data-stand="offline"] { grid-template-columns: minmax(0, 1fr) auto; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand .pb-actie { width: auto; min-width: 120px; }
+}
+/* ≥700px breed (tablet, liggende telefoon): tegels en tweeluik weer naast elkaar */
+@media (min-width: 700px) {
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tegels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tweeluik { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 14px; align-items: start; }
+}
+/* ≥880px breed: register en toestel in twee kolommen (elke kolom ≥ ~420px: naam + chip + held
+   passen op één regel); de segmentschakelaar is dan overbodig. Op 800px was dit te krap. */
+@media (min-width: 880px) {
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-kolommen { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 14px; align-items: start; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-segment { display: none; }
+  /* [data-kolom] erbij: zo weegt deze her-toon-regel (1,6,1) even zwaar als de verbergregels in §6 en wint hij op
+     volgorde — zonder dat attribuut bleef 'Aller tijden' display:none terwijl de schakelaar al weg was (dode halve tab) */
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-register[data-seg] .pb-kolom[data-kolom] { display: block; }
+}
+/* telefoon in portret: de 'held van de dag' uit de dagwet-chip (past nooit naast de titel — de
+   tik toont de wet; de held staat in de dagwet-proclamatie), en in de standrij wijkt de
+   posse-chip voor de context 'rij 13 · Gifmagiër' (de possenaam staat in de tab eronder) */
+@media (orientation: portrait) and (max-width: 599px) {
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-dagwet small { display: none; }
+}
+@media (orientation: portrait) and (max-width: 459px) {
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand-rij .pb-chip { display: none; }
+}
+/* smalle telefoons: onder 400px valt het achtervoegsel ' — AFD. DIEPTE' van het registerstempel weg
+   (354px tekst in 312px), onder 380px het tab-embleem (20px + gap) zodat de possenaam in de tab heel blijft */
+@media (max-width: 399px) {
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stempel-afd { display: none; }
+  /* de meta-regel wikkelt hier vrijwel altijd (216px voor 'gedoopt door X' + chip): dan liever geen punt dan een punt
+     die als opsommingsteken vooraan regel 2 komt te staan — de pil is zelf al de scheiding */
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-posse-meta > .pb-code:not(:first-child) { margin-left: 0; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-posse-meta > .pb-code:not(:first-child)::before { display: none; }
+}
+@media (max-width: 379px) {
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tab-embleem { display: none; }
+}
+
+/* ---- 10. LIGGEND op een korte hoogte (≤600px): de tweekolommer ----
+   Kop = één regel van 48px (titel · dagwet · jouw rij/tekst · actie · ✕) + tabs van 36px;
+   rijen 44px op één regel; het pamflet als grid 36% | 1fr met blok A sticky BINNEN
+   .pb-inhoud (de scroller) — géén 100dvh; geen voetbalk (✕ sluit, nodig-uit zit in ⋯). */
+@media (orientation: landscape) and (max-height: 600px) {
+  body[data-modus="mobiel"] #overlay-leaderboard.pb { padding-top: calc(4px + var(--sat)); }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-inhoud {
+    padding: 4px 0 calc(6px + env(safe-area-inset-bottom));
+    -webkit-mask-image: none; mask-image: none;   /* een fade zou de vastgeplakte possekop dimmen */
+  }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-kop {
+    display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto 44px;
+    grid-template-areas: "titel wet stand actie sluit" "tabs tabs tabs tabs tabs";
+    align-items: center; column-gap: 8px; row-gap: 2px;
+  }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-titelrij,
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand { display: contents; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-titel { grid-area: titel; font-size: 1.1rem; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-dagwet { grid-area: wet; max-width: 36vw; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-dagwet small { display: none; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-sluit { grid-area: sluit; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand-rij,
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand-tekst,
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-naamvorm { grid-area: stand; min-width: 0; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand-tekst { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand[data-stand="naam"] .pb-stand-tekst { display: none; }   /* de naamvorm zegt het zelf */
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand .pb-actie {
+    grid-area: actie; width: auto; min-width: 0; min-height: 44px; padding: 0 12px; font-size: 1rem;
+  }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand-rij { min-height: 44px; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-stand-rij .pb-chip { display: none; }   /* de possenaam staat in de tab eronder; hier wint de context */
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tabs { grid-area: tabs; margin: 0; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tab { min-height: 40px; }   /* contract zei 36; de acceptatie-eis (0 tikdoelen < 40) wint */
+  /* rijen: 44px op één regel (geen wikkeling): ctx rechts uitgelijnd vóór de score, de naam krimpt het eerst */
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-rij { min-height: 44px; flex-wrap: nowrap; padding: 2px 78px 2px 46px; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-rij::after { display: none; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-naam > b { flex: 0 3 auto; max-width: none; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-seed { flex: 0 1 auto; max-width: none; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-chip { flex: 0 2 auto; max-width: 12em; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-ctx { flex: 0 1 auto; max-width: none; margin-left: auto; text-align: right; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-rij > .syn-por-knop { min-height: 40px; }
+  /* het pamflet als tweekolommer; blok A plakt binnen de scroller */
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-pamflet {
+    display: grid; grid-template-columns: 36% minmax(0, 1fr); column-gap: 14px; align-items: start; overflow: visible;
+  }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-pamflet > :not(.pb-blokA):not(.pb-blokB) { grid-column: 1 / -1; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-blokA { grid-column: 1; position: sticky; top: 0; align-self: start; z-index: 3; min-width: 0; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-blokB { grid-column: 2; min-width: 0; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-possenaam { font-size: 1.1rem; }
+  /* het ⋯-menu: liggend is er geen hoogte maar wel breedte → twee kolommen van drie, naar rechts
+     uitgevouwen over blok B (blok A staat op z-index 3) i.p.v. zes rijen die onder het venster vallen */
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-menu {
+    left: 0; right: auto; top: 44px; width: min(480px, calc(100vw - 48px));
+    display: grid; grid-template-columns: 1fr 1fr; padding: 6px;
+  }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-menu > button,
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-menu > label { min-height: 40px; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-menu-gevaar { margin-top: 0; border-top: 0; }
+  /* het tweeluik (eregalerij / gestoef) liggend ONDER elkaar: naast elkaar (2fr/3fr binnen blok B) werden de namen
+     in de eregalerij vermalen ('O…', 'Wi…', 'Cornh…' op 800px) — de ranglijst is er om namen te lezen. Overschrijft
+     de ≥700px-knik uit §9 (zelfde specificiteit, later in de cascade); de datum-ctx blijft gewoon staan. */
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-tweeluik { display: flex; flex-direction: column; gap: 2px; }
+  /* (podium: de trap uit §5b geldt ook liggend ≤600px; enkel ≤440px hoog wordt hij compacter, zie §11) */
+  /* (tegels/tweeluik/register in kolommen: zie de breedte-knikken in §9 — 700px resp. 880px) */
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-voet { display: none; }
+  body[data-modus="mobiel"] #pb-doop .pb-doop { width: min(600px, 96vw); padding-bottom: 0; }
+  /* de doop-overlay scrolt liggend (kaart 513px in 360-412px): de knoppenrij plakt onderaan het scrollvenster
+     zodat '🕯️ Bezegel' altijd in beeld is; de kiezers scrollen eronderdoor. Aan het eind van de scroll staat de
+     rij gewoon op haar plek onderaan de kaart. */
+  body[data-modus="mobiel"] #pb-doop .pb-doop-knoppen {
+    position: sticky; bottom: env(safe-area-inset-bottom); z-index: 2;
+    margin: 0 -12px; padding: 8px 12px 10px; border-radius: 0 0 16px 16px;
+    background: #1b1213; border-top: 1px solid rgba(226, 140, 90, .22); box-shadow: 0 -10px 18px rgba(0, 0, 0, .35);
+  }
+}
+/* ---- 11. kort liggend (≤440px hoog): blok A compacter zodat hij in de scroller past ---- */
+@media (orientation: landscape) and (max-height: 440px) {
+  /* motto én meta-regel (gedoopt door · 🔒 code) weg: de code blijft via ⋯ → Kopieer de code;
+     zo staat de nummer één van het podium ook op 360px hoogte boven de vouw */
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-motto,
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-pamflet .pb-posse-meta { display: none; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-vlam { min-height: 32px; padding: 3px 8px; margin-top: 4px; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-vlam > span:last-child { -webkit-line-clamp: 1; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-sectiekop { margin: 6px 0 2px; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-podium { margin: 4px 0 2px; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-trede { padding: 6px 5px; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-naam { -webkit-line-clamp: 1; }
+  /* namen én meta op één regel → de inhoud is hier deterministisch (≈86px): een compactere trap volstaat (22/14/6) */
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-trede.p1 { min-height: 102px; padding-top: 22px; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-trede.p2 { min-height: 94px; padding-top: 14px; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-trede.p3 { min-height: 86px; padding-top: 6px; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-kroon,
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .syn-score { font-size: 1.1rem; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-duel-jij { padding: 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb details.pb-acc > summary { min-height: 40px; }
+}
+/* liggend ≥880px breed (915×412): twee registerkolommen van ~430px met éénregelige rijen — naam, jij, chip én
+   held/datum knipten er samen 13px. De rij wordt 17px zuiniger: smallere rang- en scorekolom, gap 5, kolomgap 10. */
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 880px) {
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-register .pb-kolommen { gap: 0 10px; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-register .pb-rij { padding: 2px 70px 2px 42px; column-gap: 5px; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-register .pb-rang { left: 4px; width: 32px; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-register .pb-score { width: 58px; right: 6px; }
+}
+/* te kort om te plakken (≤400px hoog): blok A scrolt gewoon mee, de twee kolommen blijven */
+@media (orientation: landscape) and (max-height: 400px) {
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-blokA { position: static; }
+  body[data-modus="mobiel"] #overlay-leaderboard.pb .pb-pamflet { grid-template-columns: minmax(0, 1fr); }   /* v103-hertest: onder 400px hoog geen lege linkerkolom als blok A wegscrolt */
+}
 body[data-modus="mobiel"] #scherm-held,
 body[data-modus="mobiel"] #scherm-event,
 body[data-modus="mobiel"] #scherm-rust,

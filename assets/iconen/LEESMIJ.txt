@@ -21,3 +21,9 @@ Werkwijze (zoals de rest van de art):
 Meer UI-iconen later? Zelfde aanpak: <span data-icoon="<naam>"> in de UI +
 assets/iconen/<naam>.webp. (Roept dit niet vanzelf verfraaiItemArt aan op dat
 scherm, vraag het dan even — dan wire ik de swap erbij.)
+
+Het Prikbord (leaderboard, sept 2026) - prompts in assets/ui/PROMPTS.txt:
+  rang_1/2/3.webp        - rangtekens 1-3 in elke lijst    | terugval: medaille-emoji
+  vlam_brandt.webp       - de Eeuwige Vlam brandt          | terugval: vlam-emoji
+  vlam_flakkert.webp     - de Vlam flakkert                | terugval: vlam-emoji
+  vlam_gedoofd.webp      - de Vlam is gedoofd              | terugval: kaars-emoji

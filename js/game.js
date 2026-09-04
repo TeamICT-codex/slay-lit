@@ -356,6 +356,9 @@ function scherfTeVinden(bron) {
 
 /* ---------- loopbaan: het spoor dat élke run achterlaat (retentiemotor) ---------- */
 const HELDNAAM = id => (window.SPELERS && SPELERS[id] && SPELERS[id].naam) || id;
+/* voor held-id's die van de SERVER komen (het Prikbord): een id die deze client niet kent (een
+   held uit een nieuwere versie) mag nooit rauw als snake_case op het bord — [[lookup-bugklasse]] */
+const heldLabel = id => (window.SPELERS && SPELERS[id] && SPELERS[id].naam) || 'een vreemde held';
 function registreerRun(gewonnen) {
   const h = (S && S.held) || 'slachter';
   const diepte = (S && S.verdieping) || 0;
@@ -740,6 +743,9 @@ async function autoPorNaDaily(dag, score) {
     const doelen = leden.filter(l => l.naam !== ik && !gespeeld[l.naam]);
     if (!doelen.length) return;
     doelen.forEach(l => Online.stuurPor(l.naam, dag, `Ik daalde net af (${score} pt). Jouw beurt — of geef je op?`));
+    /* v103: dezelfde boekhouding als het Prikbord, anders zegt de standkaart daarna 'Por ze (N)' voor pors die al weg zijn */
+    if (_synLeden.dag !== dag) _synLeden = { dag, gespeeld: {}, gepord: {} };
+    doelen.forEach(l => { _synLeden.gepord[l.naam] = true; });
     setTimeout(() => melding(`📣 Auto-por: ${doelen.length} genoot${doelen.length === 1 ? '' : 'en'} uitgedaagd.`), 1600);
   } catch (e) {}
 }
@@ -790,6 +796,21 @@ function toonUitnodiging(code, van, klaar) {
   /* de code via een closure i.p.v. een inline onclick-string (bugklasse: backslash-verminking) */
   el.querySelector('#uitn-join').onclick = () => doeUitnodigingJoin(code);
   el._klaar = klaar || null;
+  /* de doopakte (v103): zodra de possenaam binnen is, roept de kaart je bij naam —
+     en de ⚠️-regel noemt je huidige posse bij de hare */
+  if (Online.posseInfo) {
+    Online.posseInfo(alLid ? [code, alLid.code] : [code]).then(info => {
+      if (!el.isConnected || !info) return;
+      Object.keys(info).forEach(c => onthoudPosseInfo(c, info[c]));
+      const pn = info[code] && info[code].naam;
+      const regel = el.querySelector('.uitn-regel');
+      if (regel && pn) regel.innerHTML = `${van ? `<b>${escSyn(van)}</b> roept je bij` : 'Je bent geroepen bij'} <b>„${escSyn(pn)}"</b> — code <span class="syn-codechip">${escSyn(code)}</span>.<br>
+      Elke dagelijkse afdaling telt mee op jullie gezamenlijke bord — wie durft, stoeft.`;
+      const on = alLid && info[alLid.code] && info[alLid.code].naam;
+      const waarsch = el.querySelector('.uitn-waarschuwing');
+      if (waarsch && on) waarsch.innerHTML = `⚠️ Je verlaat daarmee je huidige syndicaat <b>„${escSyn(on)}"</b>.`;
+    }).catch(() => {});
+  }
   setTimeout(() => { const i = document.getElementById('uitn-naam'); if (i && !i.value) i.focus(); }, 250);
   Klank.sfx('schitter');
 }
@@ -801,7 +822,7 @@ function doeUitnodigingJoin(code) {
   Online.meldAan();
   if (el) { if (el._klaar) el._klaar(); el.remove(); }
   Klank.sfx('schitter');
-  melding(`🔥 Welkom bij ${code}, ${naam} — je volgende dagelijkse afdaling telt mee!`);
+  melding(`🔥 Welkom bij ${possePlaatsVan(code, 'het syndicaat')}, ${naam} — je volgende dagelijkse afdaling telt mee!`);
   setTimeout(toonLeaderboard, 700);
 }
 
@@ -846,9 +867,13 @@ async function checkPorInbox() {
     const nieuw = porren.filter(p => p && p.id && !gezien[p.id]);
     if (!nieuw.length) return;
     const alGespeeld = Daily.laatsteVoltooid === dag;
-    const vanNamen = [...new Set(nieuw.map(p => escSyn(p.van)))];
+    const vanNamen = [...new Set(nieuw.map(p => String(p.van || '')))];   /* melding() zet textContent: niet escapen (anders '&amp;' in beeld) */
     if (!alGespeeld) {
-      const wie = vanNamen.length > 1 ? `${vanNamen.length} syndicaatsgenoten porren` : `${vanNamen[0]} port`;
+      const pn = posseInfoVan(Online.lid().code);
+      const posse = (pn && pn.naam) ? pn.naam : '';
+      const wie = vanNamen.length > 1
+        ? `${vanNamen.length} genoten${posse ? ` van ${posse}` : ''} porren`
+        : `${vanNamen[0]}${posse ? ` (${posse})` : ''} port`;
       setTimeout(() => melding(`📣 ${wie} je: doe je dagelijkse afdaling! 🗓️`), 1800);
     }
     nieuw.forEach(p => { gezien[p.id] = 1; });
@@ -857,57 +882,173 @@ async function checkPorInbox() {
 }
 
 /* ============================================================
-   HET LEADERBOARD (lokaal) — jouw dagelijkse scores + beste runs op dit
-   toestel, met een deelbare scoreregel. (Een écht online bord vraagt een
-   backend — zie de monetisatie-route; dit is de eerlijke eerste trap.)
+   HET PRIKBORD (v103) — het leaderboard als prikbord in de gang van het
+   Slachtblok. Een vaste kop met JOUW rij en één knop, drie papieren waarvan
+   alleen de inhoud scrolt: het PAMFLET (je posse), het PRODUCTIVITEITS-
+   REGISTER (de hele diepte) en je STAAT VAN DIENST (dit toestel). Eén
+   rijcomponent (pbRij) voor élke lijst. De DOM-klassen (.pb-*) zijn het
+   contract met de twee CSS-sporen (style.css / mobiel.css) — niet hernoemen.
+   Geen inline onclick met data (bugklasse): elke knop draagt data-actie en
+   één delegated handler op de overlay routeert (pbActie). De por-knoppen
+   houden hun eigen, oudere delegation (syn-por-knop + data-por → porKlik).
    ============================================================ */
-function toonLeaderboard() {
-  const dailies = (Daily.gesch || []).slice().sort((a, b) => b.score - a.score);
-  const dailyRijen = dailies.slice(0, 10).map((g, i) => `
-    <div class="lb-rij ${i === 0 ? 'lb-top' : ''}">
-      <span class="lb-rang">${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'}</span>
-      <b>${g.score}</b>
-      <span>${g.gewonnen ? '👑' : '💀'} ${HELDNAAM(g.held || 'slachter')} · rij ${g.diepte}</span>
-      <small>${escSyn(rijLabel(g))}</small>
-    </div>`).join('') || '<p class="lb-leeg">Nog geen dagelijkse afdalingen — de diepte wacht.</p>';
-  const runs = (Codex.gesch || []).slice(0, 10).map(g => `
-    <div class="lb-rij">
-      <span class="lb-rang">${g.gewonnen ? '👑' : '💀'}</span>
-      <b>rij ${g.diepte}</b>
-      <span>${HELDNAAM(g.held)}${g.asc ? ` · A${g.asc}` : ''}</span>
-      <small>${g.seed}</small>
-    </div>`).join('') || '<p class="lb-leeg">Nog geen runs geregistreerd.</p>';
-  const besteHelden = Object.entries(Codex.bestDiepte || {}).map(([h, d]) => `${HELDNAAM(h)}: rij ${d}`).join(' · ');
-  let ov = document.getElementById('overlay-leaderboard');
-  if (!ov) {
-    ov = document.createElement('div');
-    ov.id = 'overlay-leaderboard';
-    ov.className = 'overlay';
-    document.body.appendChild(ov);
+const PB_EMBLEEM_EMOJI = { vlam: '🔥', schedel: '💀', dossier: '📁', kroon: '👑', rat: '🐀', zwaard: '🗡️', sleutel: '🗝️', oog: '👁️' };
+const PB_KLEUR_HEX = { ember: '#ff9c3f', goud: '#f5c542', bloed: '#c8342b', gif: '#7ed37a', ijs: '#8fd4ff', schaduw: '#b08cff' };
+const PB_MOTTOS = ['Billability: 0%.', 'Wij zijn de uitzondering op de procedure.', 'Overuren, maar dan in de diepte.', 'De opzegtermijn loopt. De onze niet.', 'Geen meeting overleeft ons.', 'Wij escaleren naar beneden.', 'Kwartaalcijfers zijn ook maar rijen.', 'Het licht dooft. Wij niet.'];
+const PB_TAB_SLEUTEL = 'slayit_bord_tab';
+/* de toestand van het open bord: welke tab, wat al gevuld is, de data die de
+   standkaart nodig heeft (rang + achterblijvers) en of de duiven terugkwamen.
+   'sessie' telt per opening: late fetches van een vorige opening tekenen niets. */
+const _pb = { sessie: 0, dag: null, staat: 'geen', tab: null, gevuld: {}, fout: {}, offline: false, gebruikerKoos: false, dagTop: null, leden: null, wereldDag: null, posse: null, menuWeg: null };
+/* het achtervoegsel apart, zodat mobiel.css het onder 400px kan laten vallen (de volle regel kapte af) */
+const PB_STEMPEL_DIEPTE = 'PRODUCTIVITEITSREGISTER<small class="pb-stempel-afd"> — AFD. DIEPTE</small>';
+
+/* veilige lookups: emblemen/kleuren komen uit de tabel — [[lookup-bugklasse]] */
+function pbEmbleemId(id) { return (window.Online && Online.veiligEmbleem) ? Online.veiligEmbleem(id) : 'vlam'; }
+function pbKleurId(id) { return (window.Online && Online.veiligeKleur) ? Online.veiligeKleur(id) : 'ember'; }
+function pbEmbleemEmoji(id) { return PB_EMBLEEM_EMOJI[pbEmbleemId(id)] || '🔥'; }
+/* het embleem als span met emoji-terugval, of als plaat uit assets/ui/embleem_<id>.webp
+   zodra die in het art-manifest staat (nu nog geen enkele → altijd de emoji) */
+function pbEmbleemHtml(id, klasse) {
+  id = pbEmbleemId(id);
+  const m = window.ART_MANIFEST && ART_MANIFEST.ui;
+  const plaat = Array.isArray(m) && window.artBestaat && artBestaat('ui', 'embleem_' + id);
+  return `<span class="${klasse}" data-embleem="${id}">${plaat ? `<img src="assets/ui/embleem_${id}.webp" alt="">` : pbEmbleemEmoji(id)}</span>`;
+}
+
+/* ---------- de possenaam: één synchrone helper, gevoed door posseInfo/mijnPosse ----------
+   _posseNamen: code → doopakte-rij (null = geen rij). Bij de eerste vraag lezen we
+   lazy het snapshot 'slayit_posse' (geschreven door Online.mijnPosse), zodat de
+   eindscherm-rang en de por-toast de naam al kennen vóór het bord ooit openging. */
+let _posseNamen = {};
+let _posseSnapGelezen = false;
+function posseInfoVan(code) {
+  if (!_posseSnapGelezen) {
+    _posseSnapGelezen = true;
+    try {
+      const s = JSON.parse(localStorage.getItem('slayit_posse') || 'null');
+      if (s && s.code && s.rij && !(s.code in _posseNamen)) _posseNamen[s.code] = s.rij;
+    } catch (e) {}
   }
-  const wetVandaag = DAGWETTEN[wetVanDag()];
+  const basis = (window.Online && Online.basisGroep) ? Online.basisGroep(code) : String(code || '');
+  return _posseNamen[basis] || null;
+}
+function onthoudPosseInfo(code, rij) { if (code) _posseNamen[code] = rij || null; }
+/* 'De Nachtploeg' | 'naamloos' | 'zwerver' — nooit de code (= het toegangswoord) */
+function posseNaamVan(code) {
+  const info = posseInfoVan(code);
+  if (window.Online && Online.posseLabel) return Online.posseLabel(code, info);
+  return (info && info.naam) || 'naamloos';
+}
+/* het tab-label: de gedoopte naam, anders 'Je posse' (kort genoeg voor 360px; de possekop houdt 'Naamloze posse') */
+function pbTabNaam(code) { const info = posseInfoVan(code); return (info && info.naam) ? info.naam : 'Je posse'; }
+/* voor lopende tekst: „De Nachtploeg", of ongedoopt een neutrale omschrijving.
+   RAUW: alleen voor melding()/textContent — in innerHTML altijd escSyn() eromheen */
+function possePlaatsVan(code, ongedoopt) {
+  const info = posseInfoVan(code);
+  return (info && info.naam) ? `„${info.naam}"` : (ongedoopt || 'je posse');
+}
+
+/* ---------- de rijcomponent: één vorm voor élke lijst op het bord ----------
+   o = { rang (1-based; null → '…'), rangHtml (wint), naam, lid (data-lid; standaard = naam,
+         null = geen), eigen, wacht, top1, gepind, klasse, gewonnen (👑 vóór de naam),
+         klein (seed als <small>), chip: {tekst, embleem, eigen, zw}, ctx (al geëscaped),
+         score (getal/tekst; null → leeg), por: 'por' | 'gepord' (vervangt de scorecel) } */
+function pbRij(o) {
+  const kl = ['pb-rij', o.eigen && 'eigen', o.wacht && 'wacht', o.top1 && 'top1', o.gepind && 'gepind', o.klasse].filter(Boolean).join(' ');
+  let rang;
+  if (o.rangHtml != null) rang = o.rangHtml;
+  else if (o.wacht) rang = '⏳';
+  else if (o.rang == null) rang = '…';
+  else if (o.rang <= 3) rang = `<span data-icoon="rang_${o.rang}">${['🥇', '🥈', '🥉'][o.rang - 1]}</span>`;
+  else rang = o.rang + '.';
+  let chip = '';
+  if (o.chip) {
+    const c = o.chip;
+    chip = ` <span class="pb-chip${c.eigen ? ' pb-chip-eigen' : ''}${c.zw ? ' pb-chip-zw' : ''}">${c.embleem ? pbEmbleemHtml(c.embleem, 'pb-chip-embleem') : ''}${escSyn(c.tekst)}</span>`;
+  }
+  let laatste;
+  if (o.por === 'por') laatste = `<button type="button" class="syn-por-knop" data-por="${escSyn(o.naam)}">📣 Por</button>`;
+  else if (o.por === 'gepord') laatste = `<button type="button" class="syn-por-knop gepord" data-por="${escSyn(o.naam)}" disabled>✓ gepord</button>`;
+  else laatste = `<span class="pb-score">${o.score == null ? '' : escSyn(String(o.score))}</span>`;
+  const lid = o.lid === undefined ? o.naam : o.lid;
+  return `<div class="${kl}"${lid ? ` data-lid="${escSyn(lid)}"` : ''}>
+    <span class="pb-rang">${rang}</span>
+    <span class="pb-naam">${o.gewonnen ? '<span class="pb-kroon">👑</span> ' : ''}<b>${escSyn(o.naam)}</b>${o.klein ? ` <small class="pb-seed">${escSyn(o.klein)}</small>` : ''}${chip}${o.eigen ? ' <span class="pb-jij">jij</span>' : ''}</span>
+    <span class="pb-ctx">${o.ctx || ''}</span>
+    ${laatste}
+  </div>`;
+}
+/* lege staat: stempelwoord + één zin + hooguit één knop (per paneel hooguit één .pb-leeg;
+   de overige 'niets hier'-regels zijn kale <p class="pb-dof">) */
+function pbLeeg(woord, zin, knopHtml) {
+  return `<div class="pb-leeg">${woord ? `<span class="pb-stempelwoord">${woord}</span>` : ''}<p>${zin}</p>${knopHtml || ''}</div>`;
+}
+/* laadskelet op eindhoogte: drie rijen + één cursieve regel — geen sprong van de kop */
+function pbSkelet(regel) {
+  return `<div class="pb-lijst pb-laadt">${'<div class="pb-rij pb-skelet"></div>'.repeat(3)}<p class="syn-laadt">${regel}</p></div>`;
+}
+const pbOverlay = () => document.getElementById('overlay-leaderboard');
+const pbPaneel = id => document.querySelector(`#overlay-leaderboard .pb-paneel[data-paneel="${id}"]`);
+const pbOpen = () => { const ov = pbOverlay(); return !!(ov && ov.classList.contains('open')); };
+/* je afgeronde score van vandaag op dit toestel (Daily.gesch), of null */
+function pbVandaagRij() {
+  const dag = _pb.dag || vandaagSleutel();
+  if (Daily.laatsteVoltooid !== dag) return null;
+  return (Daily.gesch || []).find(g => g.dag === dag) || null;
+}
+
+/* ---------- openen: kop + standkaart + tabs + drie panelen synchroon, dan vullen ---------- */
+function toonLeaderboard() {
+  let ov = pbOverlay();
+  if (!ov) { ov = document.createElement('div'); ov.id = 'overlay-leaderboard'; document.body.appendChild(ov); }
+  ov.className = 'overlay pb';   /* .pb = de haak voor alle nieuwe CSS (codex-patroon: kop en voet vast, inhoud scrolt) */
+  const online = !!(window.Online && Online.actief());
+  const lid = online && Online.isLid();
+  const ik = online ? Online.identiteit() : null;
+  pbMenuDicht();   /* een nog open ⋯-menu: eerst zijn document-luisteraars opruimen */
+  _pb.sessie++;
+  _pb.dag = vandaagSleutel();
+  _pb.staat = lid ? 'lid' : (ik ? 'zwerver' : 'geen');
+  _pb.gevuld = {}; _pb.fout = {}; _pb.offline = false; _pb.gebruikerKoos = false;
+  _pb.dagTop = null; _pb.leden = null; _pb.wereldDag = null; _pb.posse = null; _pb.menuWeg = null;
+  ov.dataset.staat = _pb.staat;
+  const wet = DAGWETTEN[wetVanDag()];
+  const eigenInfo = lid ? posseInfoVan(Online.lid().code) : null;
+  const tabs = [];
+  if (online) {
+    tabs.push({ id: 'posse', tekst: lid ? pbTabNaam(Online.lid().code) : 'Het Syndicaat', embleem: lid ? pbEmbleemId(eigenInfo && eigenInfo.embleem) : 'vlam' });
+    tabs.push({ id: 'diepte', tekst: 'De Diepte' });
+  }
+  tabs.push({ id: 'toestel', tekst: 'Dit toestel' });
+  /* de tabkeuze: onthouden zolang ze bestaat; anders lid → posse, zwerver/geen → diepte, zonder config → toestel */
+  let tab = null;
+  try { tab = localStorage.getItem(PB_TAB_SLEUTEL); } catch (e) {}
+  if (!tabs.some(t => t.id === tab)) tab = lid ? 'posse' : (online ? 'diepte' : 'toestel');
+  const kort = !!window.mobiel;   /* telefoons: de korte knoplabels uit §6 (de lange kapten af op 360–412px) */
   ov.innerHTML = `
-    <h2 class="scherm-titel">🏆 Het Leaderboard</h2>
-    <p class="lb-vandaag" data-tip="${wetVandaag.kort}">${wetVandaag.icoon} Vandaag geldt <b>${wetVandaag.naam}</b> · held van de dag: ${SPELERS[heldVanDag()].naam}</p>
-    ${!dailyAlGespeeld() ? `<button class="knop-groot lb-daily-cta" onclick="document.getElementById('overlay-leaderboard').classList.remove('open'); startDaily();">⚔️ Daal vandaag nog af — ${wetVandaag.icoon} ${wetVandaag.naam} wacht</button>` : ''}
-    ${synSectieHtml()}
-    ${wereldSectieHtml()}
-    <div class="lb-kolommen">
-      <div class="lb-kolom">
-        <h3 class="codex-kop">🗓️ Dit toestel <small>beste ${Math.min(10, dailies.length)} · reeks ${Daily.reeks || 0} · beste reeks ${Daily.besteReeks || 0}</small></h3>
-        ${dailyRijen}
+    <header class="pb-kop">
+      <div class="pb-titelrij">
+        <h2 class="pb-titel">Het Prikbord</h2>
+        <button type="button" class="pb-dagwet" data-tip="${escSyn(wet.kort)}">${wet.icoon} ${escSyn(wet.naam)} <small>· held van de dag: ${escSyn(HELDNAAM(heldVanDag()))}</small></button>
+        <button type="button" class="pb-sluit" data-actie="sluit" aria-label="Sluit het leaderboard">✕</button>
       </div>
-      <div class="lb-kolom">
-        <h3 class="codex-kop">⚔️ Laatste runs</h3>
-        ${runs}
-        ${besteHelden ? `<p class="lb-records">🏔️ Diepterecords — ${besteHelden}</p>` : ''}
-      </div>
+      <div class="pb-stand" data-stand="cta"></div>
+      ${tabs.length > 1 ? `<nav class="pb-tabs" role="tablist">${tabs.map(t => `<button type="button" class="pb-tab" role="tab" aria-selected="false" data-tab="${t.id}">${t.embleem ? pbEmbleemHtml(t.embleem, 'pb-tab-embleem') : ''}<span class="pb-tab-tekst">${escSyn(t.tekst)}</span></button>`).join('')}</nav>` : ''}
+    </header>
+    <div class="pb-inhoud" id="pb-inhoud">
+      ${online ? `<section class="pb-paneel pb-papier pb-pamflet" data-paneel="posse" hidden></section>
+      <section class="pb-paneel pb-papier pb-register" data-paneel="diepte" data-seg="vandaag" hidden></section>` : ''}
+      <section class="pb-paneel pb-papier pb-staat" data-paneel="toestel" hidden></section>
     </div>
-    <p class="lb-voet">${window.Online && Online.isLid() ? 'Het syndicaat ziet alles. Stoef verstandig.' : 'Scores leven op dít toestel. Deel je beste dag met de kopieerknop en daag je vrienden uit met dezelfde seed.'}</p>
-    <div class="einde-knoppen">
-      ${dailies.length ? `<button class="knop-stil" onclick="kopieerLeaderboardScore()">📋 Deel je topscore</button>` : ''}
-      <button class="knop-groot" onclick="document.getElementById('overlay-leaderboard').classList.remove('open')">Sluiten</button>
-    </div>`;
+    <footer class="pb-voet">
+      ${online ? `<button type="button" class="knop-stil pb-voet-sociaal" data-actie="${lid ? 'nodig-uit' : 'sticht'}">${lid ? (kort ? '📣 Nodig uit' : '📣 Nodig vrienden uit') : (kort ? '🔥 Sticht' : '🔥 Sticht een syndicaat')}</button>` : ''}
+      <button type="button" class="knop-stil pb-voet-deel" data-actie="deel-stand">📋 Deel je stand</button>
+      <button type="button" class="knop-groot pb-sluiten" data-actie="sluit">Sluiten</button>
+    </footer>`;
+  /* het toestel-paneel is puur lokaal: meteen gevuld, vóór de eerste paint (geen await) */
+  vulStaat(pbPaneel('toestel')); _pb.gevuld.toestel = true;
+  vulStand();
   ov.classList.add('open');
   /* één delegated handler voor alle por-knoppen (de namen zitten in
      data-por, niet in een inline JS-string — zie porKlik) */
@@ -918,82 +1059,682 @@ function toonLeaderboard() {
       if (k && !k.disabled) porKlik(k);
     });
   }
-  if (window.Online && Online.isLid()) vulSyndicaat();
-  if (window.Online && Online.actief()) vulWereldbord();   /* iedereen mag kijken */
+  /* en één voor de rest van het bord: data-actie → pbActie */
+  if (!ov._pbHaak) {
+    ov._pbHaak = true;
+    ov.addEventListener('click', pbKlik);
+    ov.addEventListener('submit', pbSubmit);
+    ov.addEventListener('change', pbChange);
+    /* de code-chip is role=button met tabindex: Enter/Spatie doen wat een tik doet */
+    ov.addEventListener('keydown', e => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.matches && e.target.matches('.pb-code[data-actie]')) { e.preventDefault(); pbActie(e.target.dataset.actie, e.target); }
+    });
+  }
+  kiesPbTab(tab, true);
+  /* de standkaart wil je rang óók als de tab die die data ophaalt niet actief is */
+  if ((lid && tab !== 'posse') || (ik && !lid && tab !== 'diepte')) laadStandData();
   checkPorInbox();   /* verse porren ook zien als de app al openstond (gezien-set dedupet) */
+  if (window.verfraaiItemArt) verfraaiItemArt(ov);
+  Klank.sfx('klik');
+}
+function sluitLeaderboard() {
+  const ov = pbOverlay(); if (!ov) return;
+  pbMenuDicht();
+  ov.classList.remove('open');
+}
+
+/* ---------- tabs: data-tab op de overlay + hidden op de panelen; keuze onthouden ---------- */
+function kiesPbTab(id, init) {
+  const ov = pbOverlay(); if (!ov) return;
+  if (!pbPaneel(id)) id = 'toestel';
+  ov.dataset.tab = id; _pb.tab = id;
+  ov.querySelectorAll('.pb-tab').forEach(b => { const a = b.dataset.tab === id; b.classList.toggle('actief', a); b.setAttribute('aria-selected', a ? 'true' : 'false'); });
+  ov.querySelectorAll('.pb-paneel').forEach(p => { p.hidden = p.dataset.paneel !== id; });
+  if (!init) {
+    _pb.gebruikerKoos = true;
+    try { localStorage.setItem(PB_TAB_SLEUTEL, id); } catch (e) {}
+    const inh = document.getElementById('pb-inhoud'); if (inh) inh.scrollTop = 0;
+    pbMenuDicht();
+    Klank.sfx('klik');
+  }
+  vulPbTab(id);
+}
+/* tab-guard: elk paneel vult één keer per opening (of geforceerd na 'Opnieuw') */
+function vulPbTab(id, forceer) {
+  if (_pb.gevuld[id] && !forceer) return;
+  _pb.gevuld[id] = true;
+  const sec = pbPaneel(id); if (!sec) return;
+  if (id === 'toestel') vulStaat(sec);
+  else if (id === 'posse') vulPamflet(sec);
+  else vulRegister(sec);
+}
+
+/* ---------- de routering: alles via data-actie, niets via inline onclick ---------- */
+function pbKlik(e) {
+  const tab = e.target.closest('.pb-tab[data-tab]');
+  if (tab) { kiesPbTab(tab.dataset.tab); return; }
+  const seg = e.target.closest('.pb-seg[data-seg]');
+  if (seg) {
+    const reg = seg.closest('.pb-register');
+    if (reg) { reg.dataset.seg = seg.dataset.seg; reg.querySelectorAll('.pb-seg').forEach(b => { const a = b === seg; b.classList.toggle('actief', a); b.setAttribute('aria-selected', a ? 'true' : 'false'); }); }
+    Klank.sfx('klik');
+    return;
+  }
+  const k = e.target.closest('[data-actie]');
+  if (!k || k.tagName === 'INPUT' || k.tagName === 'FORM') return;   /* de checkbox → change; de formulieren → submit */
+  pbActie(k.dataset.actie, k);
+}
+function pbSubmit(e) {
+  const f = e.target.closest && e.target.closest('form[data-actie]');
+  if (!f) return;
+  e.preventDefault();
+  if (f.dataset.actie === 'zwerver-join') doeZwerverJoin();
+  else if (f.dataset.actie === 'join') doeSynJoin();
+}
+function pbChange(e) {
+  const t = e.target;
+  if (t && t.matches && t.matches('input[data-actie="autopor"]')) {
+    INST.autoPor = !!t.checked; bewaarInst();
+    melding(t.checked ? '📣 Auto-por aan.' : 'Auto-por uit.');
+  }
+}
+function pbActie(actie, knop) {
+  if (knop && knop.closest && knop.closest('.pb-menu')) pbMenuDicht();
+  switch (actie) {
+    case 'sluit': sluitLeaderboard(); break;
+    case 'daal-af': startDaily(); break;   /* het bord sluit in startDaily zelf, zodra de daily écht start (annuleren = bord blijft) */
+    case 'hervat': sluitLeaderboard(); if (typeof doorgaan === 'function') doorgaan(); break;
+    case 'por-ze': case 'por-alle': porAchterblijvers(); break;
+    case 'daag-uit': deelDagScore(); break;
+    case 'deel-stand':
+      if (pbVandaagRij()) deelDagScore();
+      else if ((Daily.gesch || []).length) kopieerLeaderboardScore();
+      else melding('Nog niets te delen — daal eerst af.');
+      break;
+    case 'opnieuw': pbOpnieuw(); break;
+    case 'menu': pbMenuToggle(knop); break;
+    case 'nodig-uit': deelSyndicaat(); break;
+    case 'kopieer-code': kopieerStrijdkreet(); break;
+    case 'hernoem': vraagHernoem(); break;
+    case 'doop': toonDoopOverlay(); break;
+    case 'verlaat': synVerlaat(); break;
+    case 'sticht': pbSticht(); break;
+    default: break;
+  }
+}
+
+/* ---------- het ⋯-menu: popover onder de knop; dicht bij klik erbuiten of Escape ---------- */
+function pbMenuToggle(knop) {
+  const menu = knop && knop.parentElement && knop.parentElement.querySelector('.pb-menu');
+  if (!menu) return;
+  if (!menu.hidden) { pbMenuDicht(); return; }
+  pbMenuDicht();
+  menu.hidden = false;
+  knop.setAttribute('aria-expanded', 'true');
+  const buiten = e => { if (!(e.target.closest && e.target.closest('.pb-menu, .pb-meer'))) pbMenuDicht(); };
+  const toets = e => { if (e.key === 'Escape') { e.stopPropagation(); pbMenuDicht(); } };
+  /* capture op document: de Escape sluit dan éérst het menu, niet meteen het hele bord */
+  setTimeout(() => { document.addEventListener('pointerdown', buiten); document.addEventListener('keydown', toets, true); }, 0);
+  _pb.menuWeg = () => { document.removeEventListener('pointerdown', buiten); document.removeEventListener('keydown', toets, true); };
+  Klank.sfx('klik');
+}
+function pbMenuDicht() {
+  const ov = pbOverlay();
+  if (ov) {
+    ov.querySelectorAll('.pb-menu').forEach(m => { m.hidden = true; });
+    ov.querySelectorAll('.pb-meer').forEach(b => b.setAttribute('aria-expanded', 'false'));
+  }
+  if (_pb.menuWeg) { _pb.menuWeg(); _pb.menuWeg = null; }
+}
+
+/* ---------- de standkaart: jouw rij + één knop, op elk formaat boven de vouw ---------- */
+function vulStand() {
+  const ov = pbOverlay(); const el = ov && ov.querySelector('.pb-stand'); if (!el) return;
+  const online = !!(window.Online && Online.actief());
+  const ik = online ? Online.identiteit() : null;
+  const lid = online && Online.isLid();
+  const dag = _pb.dag;
+  /* eerst de naamvorm: wie nog geen identiteit heeft, heeft niets aan een offline-melding — en het
+     naamveld is puur lokaal (zonder dit veld kon een nieuwe speler zich offline nergens aanmelden) */
+  if (online && !ik) {
+    if (el.dataset.stand === 'naam' && el.querySelector('#pb-naam')) return;   /* v103-hertest: getypte naam + focus blijven staan */
+    el.dataset.stand = 'naam';
+    el.innerHTML = `<p class="pb-stand-tekst">Je vecht nog naamloos — niemand ziet je vallen.</p><form class="pb-naamvorm" data-actie="zwerver-join"><input id="pb-naam" maxlength="20" placeholder="Je strijdnaam…" autocomplete="off"><button type="submit" class="knop-groot">🥾 Sta op het bord</button></form>`;
+    return;
+  }
+  if (_pb.offline) {
+    el.dataset.stand = 'offline';
+    el.innerHTML = `<p class="pb-stand-tekst">De diepte is even onbereikbaar. Dit toestel onthoudt alles.</p><button type="button" class="knop-stil pb-actie" data-actie="opnieuw">Opnieuw</button>`;
+    return;
+  }
+  const naam = ik ? ik.naam : '';
+  const g = pbVandaagRij();
+  /* de anderen van vandaag + de achterblijvers, uit de al opgehaalde lijsten (null = nog onderweg) */
+  const top = lid ? _pb.dagTop : (ik ? _pb.wereldDag : null);
+  const isIk = r => r && r.naam === naam && (lid || Online.basisGroep(r.groep) === ik.code);
+  const andere = Array.isArray(top) ? top.filter(r => r && !isIk(r)).length : null;
+  /* de PORBARE achterblijvers: leden zonder score vandaag die je vandaag nog niet porde
+     (na het porren valt de knop zo vanzelf terug op 'Daag uit') */
+  const achter = (lid && Array.isArray(_pb.leden) && Array.isArray(_pb.dagTop))
+    ? _pb.leden.filter(l => l && l.naam && l.naam !== naam && !_pb.dagTop.some(r => r && r.naam === l.naam) && !(_synLeden.dag === dag && _synLeden.gepord[l.naam])).length : 0;
+  if (!g) {
+    el.dataset.stand = 'cta';
+    /* gestart maar niet afgerond → hervatten; maar alleen als de DAILY-save er nog écht staat (een
+       gewone run erna overschrijft hem, en 'Hervat' zou dan de verkeerde run laden of niets vinden) */
+    const opg = (() => { try { return JSON.parse(localStorage.getItem(SAVE_SLEUTEL) || 'null'); } catch (e) { return null; } })();
+    const gestart = Daily.laatsteStart === dag && Daily.laatsteVoltooid !== dag;
+    const bezig = gestart && !!(opg && opg.daily && opg.dailyDag === dag);
+    let tekst, knop;
+    if (bezig) { tekst = 'Je afdaling van vandaag loopt nog. Maak haar af.'; knop = `<button type="button" class="knop-groot pb-actie lb-daily-cta" data-actie="hervat">🗺️ Hervat</button>`; }
+    else if (gestart) {
+      /* de poging van vandaag is verbruikt zonder daily-save: geen dode 'Daal af' (startDaily weigert toch) */
+      tekst = 'Je afdaling van vandaag is verspeeld. Morgen wacht een nieuwe.';
+      knop = (Daily.gesch || []).length ? `<button type="button" class="knop-groot pb-actie" data-actie="deel-stand">📋 Deel je stand</button>` : '';
+    } else {
+      if (!online) tekst = 'Je daalde vandaag nog niet af.';
+      else if (lid) tekst = andere == null ? 'Je daalde vandaag nog niet af.' : (andere > 0 ? `Je daalde vandaag nog niet af. <b>${andere}</b> ${andere === 1 ? 'genoot' : 'genoten'} wel.` : 'Nog niemand van de posse daalde vandaag af. Wees de eerste.');
+      else tekst = 'Je daalde vandaag nog niet af. De diepte wacht.';
+      knop = `<button type="button" class="knop-groot pb-actie lb-daily-cta" data-actie="daal-af">⚔️ Daal af</button>`;
+    }
+    el.innerHTML = `<p class="pb-stand-tekst">${tekst}</p>${knop}`;
+    return;
+  }
+  el.dataset.stand = 'rij';
+  let rang = null;
+  if (Array.isArray(top)) { const idx = top.findIndex(isIk); rang = idx >= 0 ? idx + 1 : null; }
+  const info = lid ? posseInfoVan(ik.code) : null;
+  const chip = !online ? null : (lid ? { tekst: posseNaamVan(ik.code), embleem: pbEmbleemId(info && info.embleem), eigen: true } : { tekst: '🥾 zwerver', zw: true });
+  const rij = pbRij({
+    rang, rangHtml: !online ? '' : (!Array.isArray(top) ? '…' : (rang == null ? '' : (rang <= 3 ? undefined : '#' + rang))),   /* '…' alleen tijdens het laden; sta je niet in de geladen top (zwerver buiten de wereld-top-40), dan gewoon leeg */
+    naam: naam || 'Dit toestel', lid: naam || null, eigen: true, klasse: 'pb-stand-rij', gewonnen: !!g.gewonnen, chip,
+    ctx: `rij ${g.diepte | 0} · ${escSyn(heldLabel(g.held || 'slachter'))}`, score: g.score | 0
+  });
+  const actie = (lid && achter > 0) ? { a: 'por-ze', t: `📣 Por ze (${achter})` } : { a: 'daag-uit', t: '📣 Daag uit' };
+  el.innerHTML = rij + `<button type="button" class="knop-groot pb-actie" data-actie="${actie.a}">${actie.t}</button>`;
+  if (window.verfraaiItemArt) verfraaiItemArt(el);
+}
+/* de standkaart-data los ophalen als de tab die ze levert niet open is
+   (lid op de Diepte/het toestel, zwerver op het toestel) */
+async function laadStandData() {
+  if (!(window.Online && Online.actief())) return;
+  const sessie = _pb.sessie; const dag = _pb.dag;
+  try {
+    if (Online.isLid()) {
+      if (!Array.isArray(_pb.dagTop)) {
+        const [top, leden] = await Promise.all([Online.dagTop(dag), Online.leden().catch(() => null)]);
+        if (sessie !== _pb.sessie) return;
+        _pb.dagTop = Array.isArray(top) ? top : []; _pb.leden = leden;
+        _pb.offline = false;
+      }
+    } else if (Online.identiteit() && !Array.isArray(_pb.wereldDag)) {
+      const w = await Online.wereldDag(dag);
+      if (sessie !== _pb.sessie) return;
+      _pb.wereldDag = Array.isArray(w) ? w : [];
+      _pb.offline = false;
+    }
+  } catch (e) {
+    if (sessie !== _pb.sessie) return;
+    _pb.offline = true;   /* geen duiven: de standkaart meldt het; de tabs melden het zelf bij het openen */
+  }
+  vulStand();
+}
+/* 'Opnieuw' (standkaart of paneel): actieve tab + standkaart opnieuw vullen */
+function pbOpnieuw() {
+  _pb.offline = false; _pb.fout = {}; _pb.gebruikerKoos = true;
+  _pb.dagTop = null; _pb.leden = null; _pb.wereldDag = null;
+  vulStand();
+  vulPbTab(_pb.tab || 'toestel', true);
+  /* ook de panelen die eerder faalden meteen hervullen — anders flitst hun foutkaart nog eens bij het aantikken */
+  const gefaald = Object.keys(_pb.gevuld).filter(id => !_pb.gevuld[id]);
+  gefaald.forEach(id => vulPbTab(id, true));
+  const lid = Online.isLid(), ik = Online.identiteit();
+  const bron = lid ? 'posse' : 'diepte';   /* het paneel dat de standkaart-data levert */
+  if (ik && _pb.tab !== bron && !gefaald.includes(bron)) laadStandData();
+  Klank.sfx('klik');
+}
+/* de duiven kwamen niet terug: per paneel één lege staat + Opnieuw; standkaart → offline;
+   faalt de éérste vulling bij het openen, dan land je op het toestel (dat altijd werkt) */
+function pbFout(id, sec) {
+  sec = sec || pbPaneel(id); if (!sec) return;
+  const stempel = id === 'posse' ? 'PAMFLET VAN HET VERZET' : PB_STEMPEL_DIEPTE;
+  sec.innerHTML = `<small class="pb-stempel">${stempel}</small>${pbLeeg('ONBEREIKBAAR', 'De duiven zijn niet teruggekeerd.', '<button type="button" class="knop-stil" data-actie="opnieuw">Opnieuw</button>')}`;
+  _pb.gevuld[id] = false;
+  _pb.fout[id] = true;
+  /* de standkaart gaat alleen 'offline' als HAAR bron faalde: het pamflet (lid) of het register
+     (zwerver) — een falend ander paneel wist geen standkaart die het prima deed */
+  const lid = Online.isLid(), ik = Online.identiteit();
+  if ((id === 'posse' && lid) || (id === 'diepte' && ik && !lid)) _pb.offline = true;
+  vulStand();
+  if (!_pb.gebruikerKoos && _pb.tab === id) kiesPbTab('toestel', true);
+}
+
+/* ---------- paneel TOESTEL: staat van dienst — puur lokaal, zonder netwerk of await ---------- */
+function vulStaat(sec) {
+  sec = sec || pbPaneel('toestel'); if (!sec) return;
+  const dailies = (Daily.gesch || []).slice().sort((a, b) => b.score - a.score).slice(0, 10);
+  const runs = (Codex.gesch || []).slice(0, 10);
+  const dagRijen = dailies.map((g, i) => pbRij({
+    rang: i + 1, naam: HELDNAAM(g.held || 'slachter'), lid: null, gewonnen: !!g.gewonnen,
+    ctx: `${escSyn(rijLabel(g))} · rij ${g.diepte | 0}`, score: g.score | 0
+  })).join('');
+  const runRijen = runs.map(g => pbRij({
+    rangHtml: g.gewonnen ? '👑' : '·', naam: HELDNAAM(g.held || 'slachter'), lid: null, klein: g.seed,
+    ctx: [g.asc ? `A${g.asc}` : '', g.gewonnen ? 'overwinning' : 'gevallen'].filter(Boolean).join(' · '), score: `rij ${g.diepte | 0}`
+  })).join('');
+  const besteHelden = Object.entries(Codex.bestDiepte || {}).map(([h, d]) => `${escSyn(HELDNAAM(h))}: rij ${d | 0}`).join(' · ');
+  const runsN = Codex.runs | 0;
+  const intro = `beste dag <b>${Daily.besteScore | 0}</b> · reeks <b>${Daily.reeks | 0}</b> · beste reeks <b>${Daily.besteReeks | 0}</b> · <b>${runsN}</b> run${runsN === 1 ? '' : 's'}`;
+  const leeg = !dailies.length && !runs.length;
+  sec.innerHTML = `<small class="pb-stempel">STAAT VAN DIENST — DIT TOESTEL</small>
+    <p class="pb-intro">${intro}</p>
+    ${leeg ? pbLeeg('', 'Dit toestel heeft nog niets gezien. Daal af.') : `<div class="pb-kolommen">
+      <div class="pb-kolom"><h4 class="pb-sectiekop">Beste dagen</h4><div class="pb-lijst">${dagRijen || '<p class="pb-dof">Nog geen dagelijkse afdaling op dit toestel.</p>'}</div></div>
+      <div class="pb-kolom"><h4 class="pb-sectiekop">Laatste runs</h4><div class="pb-lijst">${runRijen || '<p class="pb-dof">Nog geen runs geregistreerd.</p>'}</div></div>
+    </div>`}
+    ${besteHelden ? `<p class="pb-records">🏔️ Diepterecords — ${besteHelden}</p>` : ''}`;
+  if (window.verfraaiItemArt) verfraaiItemArt(sec);
+}
+
+/* ---------- paneel DIEPTE: het productiviteitsregister (alle posses en zwervers) ----------
+   Chips dragen de possenaam uit de doopakte (één GET voor alle zichtbare rijen) —
+   NOOIT de code van een andere posse (die is tegelijk haar toegangswoord). */
+async function vulRegister(sec) {
+  sec = sec || pbPaneel('diepte'); if (!sec) return;
+  const sessie = _pb.sessie;
+  const ik = Online.identiteit(); const lid = Online.isLid();
+  const TIP_V = 'zelfde wet, zelfde seed — eerlijke strijd', TIP_O = 'beste run per speler — 🗓️ daily of ⚔️ vrije run';
+  const kop = () => {
+    const eigen = lid ? posseInfoVan(ik.code) : null;
+    const intro = !ik ? 'Kies boven een strijdnaam en je telt wereldwijd mee.'
+      : lid ? ((eigen && eigen.naam) ? `Je staat erin als <b>${escSyn(ik.naam)}</b> · ${escSyn(eigen.naam)}.` : `Je staat erin als <b>${escSyn(ik.naam)}</b> · je posse is nog naamloos.`)
+        : `Je staat erin als <b>${escSyn(ik.naam)}</b>, zwerver.`;
+    const ooit = sec.dataset.seg === 'ooit';
+    return `<small class="pb-stempel">${PB_STEMPEL_DIEPTE}</small>
+    <p class="pb-intro">${intro}</p>
+    <div class="pb-segment" role="tablist"><button type="button" class="pb-seg${ooit ? '' : ' actief'}" role="tab" aria-selected="${!ooit}" data-seg="vandaag">Vandaag</button><button type="button" class="pb-seg${ooit ? ' actief' : ''}" role="tab" aria-selected="${ooit}" data-seg="ooit">Aller tijden</button></div>`;
+  };
+  const kolommen = (v, o) => `<div class="pb-kolommen">
+      <div class="pb-kolom" data-kolom="vandaag"><h4 class="pb-sectiekop">Vandaag <small data-tip="${TIP_V}">ⓘ</small></h4>${v}</div>
+      <div class="pb-kolom" data-kolom="ooit"><h4 class="pb-sectiekop">Aller tijden <small data-tip="${TIP_O}">ⓘ</small></h4>${o}</div>
+    </div>
+    <p class="pb-moraal">Het register vergeet niets. Stoef verstandig.</p>`;
+  sec.innerHTML = kop() + kolommen(pbSkelet('De diepte telt de gevallenen…'), pbSkelet('De diepte telt de gevallenen…'));
+  let vandaag, ooit;
+  try {
+    [vandaag, ooit] = await Promise.all([Online.wereldDag(_pb.dag), Online.wereldOoit()]);
+  } catch (e) {
+    if (sessie === _pb.sessie && sec.isConnected) pbFout('diepte', sec);
+    return;
+  }
+  if (sessie !== _pb.sessie || !sec.isConnected) return;   /* het bord ging intussen dicht of opnieuw open */
+  vandaag = Array.isArray(vandaag) ? vandaag : []; ooit = Array.isArray(ooit) ? ooit : [];
+  /* de possenamen van alle zichtbare rijen in één GET (zwervers/run-groepen zeeft Online eruit) */
+  const codes = [...new Set([...vandaag, ...ooit].map(r => Online.basisGroep(r.groep)).filter(c => c && !/^ZW-/.test(c)))];
+  const info = Online.posseInfo ? await Online.posseInfo(codes).catch(() => ({})) : {};
+  if (sessie !== _pb.sessie || !sec.isConnected) return;
+  /* een onbekende code krijgt null (→ 'naamloos'), maar een al gekende eigen rij
+     (uit mijnPosse) wordt niet door een mislukte GET overschreven */
+  codes.forEach(c => { if (info[c] || !(c in _posseNamen)) onthoudPosseInfo(c, info[c] || null); });
+  _pb.wereldDag = vandaag;
+  if (!lid) _pb.offline = false;   /* de bron van de zwerver-standkaart kwam binnen */
+  const lijst = (rijen, metDag) => {
+    const eigenIdx = ik ? rijen.findIndex(r => r && r.naam === ik.naam && Online.basisGroep(r.groep) === ik.code) : -1;
+    const rij = (r, i) => {
+      const basis = Online.basisGroep(r.groep);
+      const zw = /^ZW-/.test(basis);
+      const pi = zw ? null : posseInfoVan(basis);
+      return pbRij({
+        rang: i + 1, naam: r.naam, eigen: i === eigenIdx, gewonnen: !!r.gewonnen, top1: !metDag && i === 0, gepind: i === eigenIdx && i >= 10,
+        chip: zw ? { tekst: '🥾 zwerver', zw: true } : { tekst: posseNaamVan(basis), embleem: pi ? pbEmbleemId(pi.embleem) : null, eigen: !!(ik && basis === ik.code) },
+        ctx: metDag ? escSyn(rijLabel(r)) : escSyn(heldLabel(r.held || 'slachter')), score: r.score | 0
+      });
+    };
+    let html = rijen.slice(0, 10).map(rij).join('');
+    if (eigenIdx >= 10) html += `<div class="pb-scheider">…</div>` + rij(rijen[eigenIdx], eigenIdx);   /* jouw rij onder de top-10, gepind */
+    return html;
+  };
+  const vHtml = lijst(vandaag, false) || pbLeeg('LEEG', 'Vandaag daalde nog niemand af. De wereldkroon ligt voor het oprapen.');
+  const oHtml = lijst(ooit, true) || '<p class="pb-dof">Nog geen namen. De diepte houdt haar boeken open.</p>';
+  sec.innerHTML = kop() + kolommen(`<div class="pb-lijst">${vHtml}</div>`, `<div class="pb-lijst">${oHtml}</div>`);
+  if (window.verfraaiItemArt) verfraaiItemArt(sec);
+  vulStand();
+}
+
+/* ---------- paneel POSSE, staat GEEN/ZWERVER: de aanmelding (stichten of aansluiten) ---------- */
+function pbAanmeldingHtml() {
+  return `<small class="pb-stempel">AANMELDING</small>
+    <div class="pb-tegels">
+      <div class="pb-tegel"><h4>Sticht een syndicaat</h4><p>Jij krijgt de code, zij krijgen de schaamte.</p><button type="button" class="knop-groot" data-actie="sticht">🔥 Sticht</button></div>
+      <div class="pb-tegel"><h4>Sluit je aan met een code</h4><form class="pb-codevorm" data-actie="join"><input id="pb-code" maxlength="24" placeholder="Syndicaat-code…" autocomplete="off"><button type="submit" class="knop-groot">⚔️ Sluit je aan</button></form><p class="pb-hint">Kreeg je een uitnodigingslink? Tik die gewoon aan — geen code nodig.</p></div>
+    </div>`;
+}
+/* je strijdnaam: je identiteit, anders het naamveld van de standkaart (met de oude id's als terugval) */
+function pbNaamUitVeld() {
+  const ik = window.Online && Online.identiteit();
+  if (ik && ik.naam) return ik.naam;
+  const v = document.getElementById('pb-naam') || document.getElementById('syn-naam') || document.getElementById('wb-naam');
+  return v ? v.value : '';
+}
+/* stichten = een verse code + meteen lid; en zodra de doopakte-tabel er is: dopen */
+function pbSticht() {
+  if (!(window.Online && Online.actief())) return;
+  const naam = Online.normNaam(pbNaamUitVeld());
+  if (!naam) { melding('Kies eerst een strijdnaam.'); const v = document.getElementById('pb-naam'); if (v) v.focus(); return; }
+  const code = Online.verzinCode();
+  const l = Online.wordLid(naam, code);
+  if (!l) { melding('Dat lukte niet — probeer het nog eens.'); return; }
+  Klank.sfx('schitter');
+  melding(`🔥 Syndicaat gesticht, ${l.naam}. Deel de code — en laat ze bloeden.`);
+  toonLeaderboard();
+  if (Online.mijnPosse) Online.mijnPosse().then(p => {
+    if (p && p.beschikbaar && !p.rij && Online.isLid() && Online.lid().code === code) toonDoopOverlay();
+  }).catch(() => {});
+}
+
+/* ---------- paneel POSSE, staat LID: het pamflet van het verzet ---------- */
+async function vulPamflet(sec) {
+  sec = sec || pbPaneel('posse'); if (!sec) return;
+  if (!Online.isLid()) { sec.innerHTML = pbAanmeldingHtml(); return; }
+  const sessie = _pb.sessie;
+  const l = Online.lid(); const ik = l.naam; const code = l.code; const dag = _pb.dag;
+  sec.innerHTML = `<small class="pb-stempel">PAMFLET VAN HET VERZET</small>${pbSkelet('De duiven zijn onderweg…')}`;
+  Online.meldAan();   /* jezelf als lid registreren + 'laatst gezien' verversen */
+  const stil = p => p.catch(() => null);
+  let vandaag, ooit, recent, leden, gesch, posse, nalatenschap;
+  try {
+    [vandaag, ooit, recent, leden, gesch, posse, nalatenschap] = await Promise.all([
+      Online.dagTop(dag), Online.allerTijden(), Online.feed(),
+      stil(Online.leden()), stil(Online.groepGeschiedenis(laatsteDagen(30))),
+      stil(Online.mijnPosse ? Online.mijnPosse() : Promise.resolve(null)), stil(Online.haalNalatenschap ? Online.haalNalatenschap(dag) : Promise.resolve(null))
+    ]);
+  } catch (e) {
+    if (sessie === _pb.sessie && sec.isConnected) pbFout('posse', sec);
+    return;
+  }
+  if (sessie !== _pb.sessie || !sec.isConnected) return;
+  vandaag = Array.isArray(vandaag) ? vandaag : []; ooit = Array.isArray(ooit) ? ooit : []; recent = Array.isArray(recent) ? recent : [];
+  let rij = (posse && posse.rij) ? posse.rij : null;
+  const beschikbaar = !!(posse && posse.beschikbaar);
+  /* een al bekende naam (optimistisch snapshot na de doop, of eerder gelezen) wordt niet door één
+     lege lees-uitkomst weggeveegd; er is geen delete-pad, dus 'geen rij' is nooit nieuwer dan een naam —
+     en de possekop rendert dan uit die bekende akte */
+  if (rij || !posseInfoVan(code)) onthoudPosseInfo(code, rij);
+  else rij = posseInfoVan(code);
+  _pb.posse = posse; _pb.dagTop = vandaag; _pb.leden = leden;
+  _pb.offline = false;   /* de bron van de standkaart kwam binnen */
+  /* wie speelde vandaag al? (kruis de dag-scores tegen de ledenlijst) — voedt ook de por-knoppen */
+  const gespeeld = {}; vandaag.forEach(r => { gespeeld[r.naam] = r; });
+  _synLeden = { dag, gespeeld, gepord: _synLeden.dag === dag ? _synLeden.gepord : {} };
+  const naam = (rij && rij.naam) ? String(rij.naam) : '';
+  const embleem = pbEmbleemId(rij && rij.embleem);
+  sec.dataset.kleur = pbKleurId(rij && rij.kleur);
+  /* de tab volgt de doopakte (naam + zegel) */
+  const tabKnop = document.querySelector('#overlay-leaderboard .pb-tab[data-tab="posse"]');
+  if (tabKnop) {
+    const t = tabKnop.querySelector('.pb-tab-tekst'); if (t) t.textContent = pbTabNaam(code);
+    const e2 = tabKnop.querySelector('.pb-tab-embleem'); if (e2) e2.outerHTML = pbEmbleemHtml(embleem, 'pb-tab-embleem');
+  }
+
+  /* --- blok A: possekop + ⋯-menu, doop-nudge, de Vlam, het podium, jouw duel --- */
+  const possekop = `<div class="pb-possekop">
+      ${pbEmbleemHtml(embleem, 'pb-embleem')}
+      <div class="pb-posse-tekst">
+        <h3 class="pb-possenaam">${naam ? escSyn(naam) : 'Naamloze posse'}</h3>
+        ${rij && rij.motto ? `<p class="pb-motto">„${escSyn(rij.motto)}"</p>` : ''}
+        <p class="pb-posse-meta">${rij && rij.gedoopt_door ? `<span class="pb-doper">gedoopt door ${escSyn(rij.gedoopt_door)}</span> ` : ''}<span class="pb-code" data-actie="kopieer-code" role="button" tabindex="0" data-tip="Het toegangswoord — alleen voor genoten. Tik om te kopiëren.">🔒 ${escSyn(code)}</span></p>
+      </div>
+      <button type="button" class="pb-meer" data-actie="menu" aria-label="Meer" aria-haspopup="true" aria-expanded="false">⋯</button>
+      <div class="pb-menu" hidden>
+        <button type="button" data-actie="nodig-uit">📣 Nodig vrienden uit</button>
+        <button type="button" data-actie="kopieer-code">📋 Kopieer de code</button>
+        <label class="pb-menu-toggle"><input type="checkbox" data-actie="autopor"${INST.autoPor ? ' checked' : ''}> auto-por na mijn afdaling</label>
+        <button type="button" data-actie="hernoem">✏️ Mijn strijdnaam</button>
+        ${beschikbaar ? `<button type="button" data-actie="doop">🕯️ ${naam ? 'Herdoop' : 'Doop'} de posse</button>` : ''}
+        <button type="button" data-actie="verlaat" class="pb-menu-gevaar">🚪 Verlaat de posse</button>
+      </div>
+    </div>`;
+  /* de nudge alleen als de tabel bestaat én er nog geen doopakte is */
+  const nudge = `<div class="pb-nudge"${beschikbaar && !rij ? '' : ' hidden'}>Jullie posse heet nog <b>${escSyn(code)}</b>. Doop haar. <button type="button" class="knop-stil" data-actie="doop">🕯️ Doop</button></div>`;
+  /* DE EEUWIGE VLAM: de posse-reeks als strook (geen geschiedenis → geen strook) */
+  let vlam = '';
+  if (Array.isArray(gesch)) {
+    const v = vlamReeks(gesch);
+    const n = v.reeks >= 60 ? '60+' : v.reeks, dgn = v.reeks === 1 ? 'dag' : 'dagen';
+    if (v.reeks === 0) vlam = `<div class="pb-vlam vlam-uit"><span class="pb-vlam-icoon" data-icoon="vlam_gedoofd">🕯️</span> <span>De Vlam is gedoofd. De eerste afdaling van vandaag herontsteekt haar.</span></div>`;
+    else if (v.vandaagGedekt) vlam = `<div class="pb-vlam"><span class="pb-vlam-icoon" data-icoon="vlam_brandt">🔥</span> <span>De Eeuwige Vlam brandt <b>${n}</b> ${dgn} — vandaag al gered.</span></div>`;
+    else vlam = `<div class="pb-vlam vlam-flakkert"><span class="pb-vlam-icoon" data-icoon="vlam_flakkert">🔥</span> <span>De Vlam brandt ${n} ${dgn}, maar <b>flakkert</b>: nog niemand daalde vandaag af.</span></div>`;
+  }
+  /* het podium (bestaande markup + CSS); alleen de bezette treden, geen 'vrij'-dozen */
+  const podium = vandaag.slice(0, 3);
+  const treden = [1, 0, 2].filter(i => podium[i]).map(i => {
+    const r = podium[i];
+    return `<div class="syn-trede p${i + 1}">
+        <span class="syn-kroon">${['🥇', '🥈', '🥉'][i]}</span>
+        <b class="syn-naam">${escSyn(r.naam)}</b>
+        <span class="syn-score">${r.score | 0}</span>
+        <small>${r.gewonnen ? '👑 won' : 'rij ' + (r.diepte | 0)} · ${escSyn(heldLabel(r.held || 'slachter'))}</small>
+      </div>`;
+  }).join('');
+  const anderen = Array.isArray(leden) ? leden.filter(x => x && x.naam && x.naam !== ik) : null;
+  /* een posse van één: geen andere leden (of, zonder leden-tabel, nergens een andere naam) */
+  const alleen = anderen ? anderen.length === 0 : ![...vandaag, ...ooit, ...recent].some(r => r && r.naam !== ik);
+  /* HET DUELDECREET: jouw paar eerst, met puntenverschil; de rest + weekstand opgevouwen */
+  let duel = '';
+  if (Array.isArray(leden) && leden.length >= 2) {
+    const namen = leden.map(x => x.naam);
+    const { paren, vrijgesteld } = duelParen(namen, dag, code);
+    const sc = n => gespeeld[n] ? gespeeld[n].score | 0 : null;
+    const mijn = paren.find(p => p[0] === ik || p[1] === ik) || null;
+    let jouw = '';
+    if (mijn) {
+      const ander = mijn[0] === ik ? mijn[1] : mijn[0];
+      const sa = sc(ik), sb = sc(ander), an = escSyn(ander);
+      let staart;
+      if (sa !== null && sb !== null) staart = sa === sb ? 'gelijk. Iemand moet het afmaken.' : (sa > sb ? `je leidt met ${sa - sb}. Voorlopig.` : `${sb - sa} punten achter.`);
+      else if (sb !== null) staart = `${an} zette ${sb} neer. Jouw beurt.`;
+      else if (sa !== null) staart = 'nog geen antwoord. De lat ligt er.';   /* naam én score staan al vóór het streepje */
+      else staart = `${an} zwijgt nog. Zet alvast de lat.`;
+      jouw = `<div class="pb-duel-jij">⚔️ Jouw duel: <b>jij</b>${sa !== null ? ' ' + sa : ''} ⚔️ <b>${an}</b>${sb !== null ? ' ' + sb : ''} — <span>${staart}</span></div>`;
+    } else if (vrijgesteld === ik) {
+      jouw = `<div class="pb-duel-jij">⚔️ Vandaag vrijgesteld van het decreet. Geniet ervan, het duurt niet.</div>`;
+    }
+    const rest = paren.filter(p => p !== mijn);
+    const duelRijen = rest.map(([a, b]) => {
+      const sa = sc(a), sb = sc(b);
+      const leidt = (sa !== null || sb !== null) ? ((sa || 0) >= (sb || 0) ? a : b) : null;
+      const kant = (n, s) => `<span class="duel-kant ${leidt === n ? 'duel-leidt' : ''}"><span class="duel-naam">${escSyn(n)}</span> <b>${s === null ? '—' : s}</b></span>`;   /* .duel-naam krimpt (ellipsis), het getal blijft staan */
+      return `<div class="duel-rij">${kant(a, sa)}<span class="duel-vs">⚔️</span>${kant(b, sb)}</div>`;
+    }).join('');
+    /* weekstand: wins over de laatste 7 dagen (alleen dagen waarop beide duellisten scoorden;
+       paren gereconstrueerd met de ledenlijst van nú — goed genoeg op vriendenschaal) */
+    const wins = {};
+    if (Array.isArray(gesch)) {
+      laatsteDagen(7).slice(1).forEach(d7 => {
+        const scoresDag = {};
+        gesch.filter(r => r.dag === d7).forEach(r => { scoresDag[r.naam] = r.score | 0; });
+        duelParen(namen, d7, code).paren.forEach(([a, b]) => {
+          if (scoresDag[a] === undefined || scoresDag[b] === undefined) return;
+          const w = scoresDag[a] >= scoresDag[b] ? a : b;
+          wins[w] = (wins[w] || 0) + 1;
+        });
+      });
+    }
+    const stand = Object.entries(wins).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, w]) => `${escSyn(n)} ${w}`).join(' · ');
+    const vrijRegel = (vrijgesteld && vrijgesteld !== ik) ? `<p class="duel-vrij">${escSyn(vrijgesteld)} is vandaag vrijgesteld van het decreet.</p>` : '';
+    const kopjes = [];
+    if (rest.length) kopjes.push(`andere duels (${rest.length})`);
+    if (stand) kopjes.push('weekstand');
+    const acc = (rest.length || stand || vrijRegel)
+      ? `<details class="pb-acc"><summary>${kopjes.join(' · ') || 'het decreet'}</summary>${duelRijen}${vrijRegel}${stand ? `<p class="duel-stand">Weekstand: ${stand}</p>` : ''}</details>` : '';
+    duel = `<div class="pb-duel">${jouw}${acc}</div>`;
+  }
+
+  /* --- blok B: het dagbord vanaf #4, de wachtenden (met por), eregalerij + gestoef --- */
+  const restRijen = vandaag.slice(3).map((r, i) => pbRij({
+    rang: i + 4, naam: r.naam, eigen: r.naam === ik, gewonnen: !!r.gewonnen,
+    ctx: `rij ${r.diepte | 0} · ${escSyn(heldLabel(r.held || 'slachter'))}`, score: r.score | 0
+  })).join('');
+  const dagbord = restRijen ? `<div class="pb-lijst pb-dagbord">${restRijen}</div>` : '';
+  let wachtBlok = '';
+  let achterblijvers = [];
+  if (!Array.isArray(leden)) {
+    /* geen ledenlijst (SQL 1b niet gedraaid, of die ene GET faalde): zeg het, in plaats van stil het
+       wacht-blok, de por-knop én het duel te laten verdwijnen */
+    wachtBlok = '<p class="pb-dof">De ledenlijst ontbreekt (SQL deel 1b). Porren en het duel blijven stil.</p>';
+  } else if (anderen && !alleen) {
+    achterblijvers = anderen.filter(x => !gespeeld[x.naam]).map(x => x.naam);
+    const ikWacht = !gespeeld[ik];
+    /* jezelf zonder score: één wacht-rij zonder por-knop, bovenaan */
+    const rijen = (ikWacht ? pbRij({ naam: ik, eigen: true, wacht: true, ctx: 'nog niet afgedaald', score: null }) : '')
+      + achterblijvers.map(n => pbRij({ naam: n, wacht: true, ctx: 'nog niet afgedaald', por: _synLeden.gepord[n] ? 'gepord' : 'por' })).join('');
+    /* de kop telt wat de knop eronder port: de genoten die nog moeten (jouw eigen wacht-rij telt niet mee) */
+    const n = achterblijvers.length;
+    wachtBlok = rijen
+      ? `<h4 class="pb-sectiekop">Nog niet afgedaald${n ? ` <small>(${n})</small>` : ''}</h4><div class="pb-lijst pb-wacht">${rijen}</div>`
+        + (n ? `<button type="button" class="knop-stil syn-por-alle" data-actie="por-alle">📣 ${n === 1 ? 'Por de achterblijver' : `Por alle ${n} achterblijvers`}</button>` : '')
+      : '<p class="pb-dof">Iedereen is afgedaald. Het regime is ontstemd.</p>';
+  }
+  const ereRijen = ooit.slice(0, 5).map((r, i) => pbRij({
+    rang: i + 1, naam: r.naam, eigen: r.naam === ik, gewonnen: !!r.gewonnen, ctx: escSyn(rijLabel(r)), score: r.score | 0
+  })).join('');
+  const stoef = [];
+  let nalatenschapHtml = '';
+  if (nalatenschap && nalatenschap.kaart && typeof KAARTEN !== 'undefined' && KAARTEN[nalatenschap.kaart]) {   /* KAARTEN is een const (data.js), geen window-eigenschap */
+    /* v103-fix: als eigen strook BOVEN het tweeluik, niet in het gestoef — op mobiel staan de
+       accordeons dicht en dit is de sterkste terugkeerhaak van het bord */
+    nalatenschapHtml = `<p class="pb-stoef pb-nalatenschap pb-nalatenschap-los">🎁 ${escSyn(nalatenschap.naam)} viel en liet <b>${escSyn(KAARTEN[nalatenschap.kaart].naam)}</b> na — de volgende die afdaalt, erft haar.</p>`;
+  }
+  /* een verse (her)doop (< 7 dagen) spreekt mee in het gestoef — maar alleen een échte doop: een eerste
+     doop heeft gemaakt === gewijzigd, een herdoop een vorige_naam; een kale hernoem-PATCH (gedoopt_door
+     verhuist mee) zet óók 'gewijzigd' en mag niet als tweede doop lezen. De code komt er nooit in (§10). */
+  if (rij && naam && rij.gedoopt_door && rij.gewijzigd && (rij.vorige_naam || rij.gemaakt === rij.gewijzigd) && Date.now() - Date.parse(rij.gewijzigd) < 7 * 864e5) {
+    stoef.push(rij.vorige_naam
+      ? `<p class="pb-stoef pb-doopregel">📜 ${escSyn(rij.gedoopt_door)} herdoopte de posse van „${escSyn(rij.vorige_naam)}" tot „${escSyn(naam)}".</p>`
+      : `<p class="pb-stoef pb-doopregel">📜 ${escSyn(rij.gedoopt_door)} gaf de posse haar naam: „${escSyn(naam)}".</p>`);
+  }
+  recent.slice(0, 5).forEach(r => stoef.push(`<p class="pb-stoef">${synStoefRegel(r)}</p>`));
+
+  const blokA = `<div class="pb-blokA">${possekop}${nudge}${vlam}
+      <h4 class="pb-sectiekop">Afdalers van de dag</h4>
+      ${treden ? `<div class="syn-podium">${treden}</div>` : (alleen ? '' : pbLeeg('VACATURE', 'Nog geen kandidaten. Wie het eerst afdaalt hangt vanavond in de gouden lijst.'))}
+      ${alleen ? pbLeeg('ALLEEN', 'Een posse van één is een monoloog. Nodig iemand uit.', '<button type="button" class="knop-groot" data-actie="nodig-uit">📣 Nodig vrienden uit</button>') : duel}
+    </div>`;
+  const blokB = `<div class="pb-blokB">${dagbord}${wachtBlok}
+      ${nalatenschapHtml}
+      <div class="pb-tweeluik">
+        <details class="pb-acc pb-eregalerij"${window.mobiel ? '' : ' open'}><summary>De Eregalerij <small>aller tijden</small></summary><div class="pb-lijst">${ereRijen || '<p class="pb-dof">Nog geen scores — wees de eerste die hier hangt.</p>'}</div></details>
+        <details class="pb-acc pb-gestoef"${window.mobiel ? '' : ' open'}><summary>Het Gestoef</summary>${stoef.join('') || '<p class="pb-stoef pb-dof">Nog geen wapenfeiten. Iemand moet de eerste zijn — jij, bijvoorbeeld.</p>'}</details>
+      </div>
+    </div>`;
+  sec.innerHTML = `<small class="pb-stempel">PAMFLET VAN HET VERZET</small>${blokA}${blokB}`;
+  if (window.verfraaiItemArt) verfraaiItemArt(sec);
+  vulStand();
+}
+
+/* ---------- de doop-overlay: naam, motto, zegel en kleur voor de posse (SQL 1h) ---------- */
+function toonDoopOverlay() {
+  if (!(window.Online && Online.isLid())) return;
+  const oud = document.getElementById('pb-doop'); if (oud) { if (oud._sluit) oud._sluit(); else oud.remove(); }
+  const code = Online.lid().code;
+  const rij = posseInfoVan(code);
+  const st = { naam: (rij && rij.naam) || '', motto: (rij && rij.motto) || '', embleem: pbEmbleemId(rij && rij.embleem), kleur: pbKleurId(rij && rij.kleur) };
+  const el = document.createElement('div');
+  el.id = 'pb-doop';
+  el.className = 'overlay open';
+  el.innerHTML = `<div class="uitn-kaart pb-doop" data-kleur="${st.kleur}" style="--posse:${PB_KLEUR_HEX[st.kleur]}">
+      <h2 class="scherm-titel">${rij && rij.naam ? 'Herdoop' : 'Doop'} de posse</h2>
+      <p class="pb-doop-lead">Een syndicaat zonder naam is een afdeling. Geef het een naam die de DICKtator nerveus maakt.</p>
+      <div class="pb-doop-voorbeeld"></div>
+      <input id="pb-doop-naam" maxlength="20" placeholder="Hoe heet jullie verzet?" autocomplete="off" value="${escSyn(st.naam)}">
+      <div class="pb-doop-motto"><input id="pb-doop-motto" maxlength="60" placeholder="Een strijdkreet, of een excuus…" autocomplete="off" value="${escSyn(st.motto)}"><button type="button" data-actie="motto-dobbel" data-tip="Verzin er een" aria-label="Verzin een motto">🎲</button></div>
+      <h4>Kies een zegel</h4>
+      <div class="pb-kiezer pb-emblemen">${(Online.EMBLEMEN || Object.keys(PB_EMBLEEM_EMOJI)).map(id => `<button type="button" class="pb-keuze" data-embleem="${id}" aria-label="${id}" aria-pressed="${id === st.embleem}"><span data-embleem="${id}">${pbEmbleemEmoji(id)}</span></button>`).join('')}</div>
+      <h4>En een kleur</h4>
+      <div class="pb-kiezer pb-kleuren">${(Online.KLEUREN || Object.keys(PB_KLEUR_HEX)).map(id => `<button type="button" class="pb-keuze pb-lak" data-kleur="${id}" aria-label="${id}" aria-pressed="${id === st.kleur}" style="--lak:${PB_KLEUR_HEX[id]}"></button>`).join('')}</div>
+      <p class="pb-doop-voet">De hele posse ziet dit — en de rest van de diepte ook. De code blijft ${escSyn(code)}.</p>
+      <div class="pb-doop-knoppen"><button type="button" class="knop-groot" data-actie="bezegel">🕯️ Bezegel</button><button type="button" class="knop-stil" data-actie="doop-sluit">Toch niet</button></div>
+    </div>`;
+  document.body.appendChild(el);
+  const naamVeld = el.querySelector('#pb-doop-naam'), mottoVeld = el.querySelector('#pb-doop-motto');
+  const voorbeeld = () => {
+    st.naam = naamVeld.value; st.motto = mottoVeld.value;
+    const kaart = el.querySelector('.pb-doop');
+    kaart.dataset.kleur = st.kleur; kaart.style.setProperty('--posse', PB_KLEUR_HEX[st.kleur]);
+    const naam = Online.normPosseNaam(st.naam), motto = Online.normMotto(st.motto);
+    el.querySelector('.pb-doop-voorbeeld').innerHTML = `<div class="pb-possekop">${pbEmbleemHtml(st.embleem, 'pb-embleem')}<div class="pb-posse-tekst"><h3 class="pb-possenaam">${naam ? escSyn(naam) : 'Naamloze posse'}</h3>${motto ? `<p class="pb-motto">„${escSyn(motto)}"</p>` : ''}<p class="pb-posse-meta">gedoopt door ${escSyn(Online.lid().naam)}</p></div></div>`;
+  };
+  voorbeeld();
+  naamVeld.addEventListener('input', voorbeeld);
+  mottoVeld.addEventListener('input', voorbeeld);
+  /* Escape op document-niveau (capture): de focus kan op <body> liggen (een knop die
+     zichzelf uitschakelt verliest hem) en dan mag de globale overlay-toets het bord
+     eronder niet sluiten — deze overlay gaat eerst, en helemaal weg (geen spook) */
+  const toets = e => { if (e.key === 'Escape') { e.stopPropagation(); sluit(); } };
+  document.addEventListener('keydown', toets, true);
+  const sluit = () => { document.removeEventListener('keydown', toets, true); el.remove(); };
+  el._sluit = sluit;   /* zodat een volgende toonDoopOverlay() de luisteraar mee opruimt */
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target === naamVeld) { e.preventDefault(); mottoVeld.focus(); }
+    else if (e.key === 'Enter' && e.target === mottoVeld) { e.preventDefault(); bezegel(); }
+  });
+  el.addEventListener('click', e => {
+    const keuze = e.target.closest('.pb-keuze');
+    if (keuze) {
+      const groep = keuze.dataset.embleem ? 'embleem' : 'kleur';
+      st[groep] = keuze.dataset[groep];
+      keuze.parentElement.querySelectorAll('.pb-keuze').forEach(b => b.setAttribute('aria-pressed', b === keuze ? 'true' : 'false'));
+      Klank.sfx('klik');
+      voorbeeld();
+      return;
+    }
+    const k = e.target.closest('[data-actie]');
+    if (!k) return;
+    if (k.dataset.actie === 'doop-sluit') { Klank.sfx('klik'); sluit(); }
+    else if (k.dataset.actie === 'motto-dobbel') {
+      const keus = PB_MOTTOS.filter(m => m !== mottoVeld.value);
+      mottoVeld.value = keus[Math.floor(Math.random() * keus.length)];   /* presentatie: bewust Math.random */
+      Klank.sfx('flip');
+      voorbeeld();
+    } else if (k.dataset.actie === 'bezegel') bezegel();
+  });
+  function bezegel() {
+    const knop = el.querySelector('[data-actie="bezegel"]');
+    if (!knop || knop.disabled) return;
+    const naam = Online.normPosseNaam(naamVeld.value);
+    if ([...naam].length < 2) { melding('Minstens twee tekens — een naam, geen kuch.'); naamVeld.focus(); return; }
+    knop.disabled = true; knop.textContent = '⏳ het zegel droogt…';
+    (Online.doopPosse ? Online.doopPosse({ naam, motto: mottoVeld.value, embleem: st.embleem, kleur: st.kleur, vorige_naam: (rij && rij.naam) || null }) : Promise.resolve(false)).then(uit => {
+      if (uit === true) {
+        const nu = new Date().toISOString();   /* eerste doop: gemaakt === gewijzigd, zoals de trigger het zet */
+        onthoudPosseInfo(code, { groep: code, naam, motto: Online.normMotto(mottoVeld.value) || null, embleem: st.embleem, kleur: st.kleur, gedoopt_door: Online.lid().naam, vorige_naam: (rij && rij.naam && rij.naam !== naam) ? rij.naam : null, gemaakt: (rij && rij.gemaakt) || nu, gewijzigd: nu });
+        Klank.sfx('schitter');
+        melding(`Voortaan vechten jullie als „${naam}".`);
+        sluit();
+        toonLeaderboard();
+      } else {
+        knop.disabled = false; knop.textContent = '🕯️ Bezegel';
+        Klank.sfx('fout');
+        melding(uit === 'geweigerd' ? 'Deze code kan geen doopakte krijgen.' : 'Het zegel pakte niet (offline?). De code werkt gewoon door.');
+      }
+    });
+  }
+  setTimeout(() => { if (naamVeld.isConnected) { naamVeld.focus(); naamVeld.select(); } }, 200);
   Klank.sfx('klik');
 }
 
-/* ---------- HET WERELDBORD: alle posses en zwervers samen ----------
-   Dag-klassement (iedereen speelt dezelfde wet + seed = eerlijke wedstrijd)
-   + aller tijden (beste dag per speler, client-side gededupt). Spelers
-   zonder posse kunnen als ZWERVER meedoen: alleen een strijdnaam kiezen. */
-function wereldSectieHtml() {
-  if (!(window.Online && Online.actief())) return '';
-  const ik = Online.identiteit();
-  const intro = ik
-    ? `Je vecht als <b>${escSyn(ik.naam)}</b>${Online.isLid() ? ` van <span class="syn-codechip">${escSyn(ik.code)}</span>` : ' <small>(zwerver — zonder posse)</small>'}.`
-    : 'Je scores blijven nu op dit toestel. Kies een strijdnaam en je telt wereldwijd mee — een posse is niet verplicht.';
-  const zwerverForm = ik ? '' : `
-    <div class="wb-zwerver">
-      <input id="wb-naam" maxlength="20" placeholder="Je strijdnaam…" autocomplete="off">
-      <button class="knop-stil" onclick="doeZwerverJoin()">🥾 Sta op het wereldbord</button>
-    </div>`;
-  return `<div class="wb-vak">
-    <h3 class="codex-kop">🌍 De hele diepte <small>alle posses en zwervers samen</small></h3>
-    <p class="wb-intro">${intro}</p>
-    ${zwerverForm}
-    <div id="wb-inhoud"><p class="syn-laadt">De diepte telt de gevallenen…</p></div>
-  </div>`;
-}
-function wereldRij(r, i, metDag) {
-  const ik = Online.identiteit();
-  const groepBasis = Online.basisGroep ? Online.basisGroep(r.groep) : (r.groep || '');   /* '…-RUN' = vrije run van dezelfde speler (v100) */
-  const eigen = ik && r.naam === ik.naam && groepBasis === ik.code;
-  /* v102: de groepsCODE is tegelijk het TOEGANGSWOORD van die posse (wordLid neemt elke code
-     aan) — die hoort niet publiek op het wereldbord. Tot de doopakte (Prikbord, SQL 1h) een
-     echte naam levert, heet elke andere posse hier 'naamloze posse'; je eigen posse toont haar code. */
-  const posse = /^ZW-/.test(groepBasis)
-    ? '<small class="wb-zw" data-tip="een zwerver — vecht zonder posse">🥾</small>'
-    : `<small class="wb-posse">${(ik && groepBasis === ik.code) ? escSyn(groepBasis) : 'naamloze posse'}</small>`;
-  return `<div class="lb-rij wb-rij ${eigen ? 'wb-eigen' : ''} ${i === 0 ? 'lb-top' : ''}">
-    <span class="lb-rang">${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'}</span>
-    <b>${r.score | 0}</b>
-    <span>${r.gewonnen ? '👑' : '💀'} ${escSyn(r.naam)} ${posse}</span>
-    <small>${metDag ? escSyn(rijLabel(r)) : escSyn(HELDNAAM(r.held || 'slachter'))}</small>
-  </div>`;
-}
-async function vulWereldbord() {
-  const el = document.getElementById('wb-inhoud');
-  if (!el) return;
-  try {
-    const dag = vandaagSleutel();
-    const [vandaag, ooit] = await Promise.all([Online.wereldDag(dag), Online.wereldOoit()]);
-    if (!document.getElementById('wb-inhoud')) return;   /* overlay intussen dicht */
-    const dagRijen = (vandaag || []).slice(0, 10).map((r, i) => wereldRij(r, i, false)).join('')
-      || '<p class="lb-leeg">Vandaag daalde nog niemand af — pak de wereldkroon. 👑</p>';
-    const ooitRijen = (ooit || []).slice(0, 10).map((r, i) => wereldRij(r, i, true)).join('')
-      || '<p class="lb-leeg">Nog geen scores. De diepte wacht op de eerste.</p>';
-    el.innerHTML = `<div class="lb-kolommen">
-      <div class="lb-kolom"><h4>🗓️ Vandaag <small>zelfde wet, zelfde seed — eerlijke strijd</small></h4>${dagRijen}</div>
-      <div class="lb-kolom"><h4>🏛️ Aller tijden <small>beste run per speler — 🗓️ daily of ⚔️ vrije run</small></h4>${ooitRijen}</div>
-    </div>`;
-  } catch (e) {
-    if (el) el.innerHTML = '<p class="lb-leeg">⚠️ De diepte is onbereikbaar (offline?). Je lokale bord hieronder werkt gewoon.</p>';
-  }
-}
 /* zwerver worden: naam kiezen volstaat. Speelde je vandaag al? Dan gaat die
    score meteen retroactief het wereldbord op. */
 function doeZwerverJoin() {
-  const z = Online.wordZwerver((document.getElementById('wb-naam') || {}).value || '');
-  if (!z) { melding('Kies eerst een strijdnaam.'); return; }
+  const veld = document.getElementById('pb-naam') || document.getElementById('wb-naam');
+  const z = Online.wordZwerver(veld ? veld.value : '');
+  if (!z) { melding('Kies eerst een strijdnaam.'); if (veld) veld.focus(); return; }
   Klank.sfx('schitter');
   melding(`🥾 ${z.naam} — vanaf nu tel je wereldwijd mee.`);
   const dag = vandaagSleutel();
   if (Daily.laatsteVoltooid === dag && (Daily.laatsteScore || 0) > 0) {
     const g = (Daily.gesch || []).find(x => x.dag === dag) || {};
     Online.stuurScore({ dag, score: Daily.laatsteScore, held: g.held || 'slachter', diepte: g.diepte || 0, gewonnen: !!g.gewonnen, seed: dagSeed(dag) })
-      .then(ok => { if (ok) setTimeout(() => melding('🔥 Je score van vandaag staat er meteen op.'), 900); vulWereldbord(); });
+      .then(ok => { if (ok) setTimeout(() => melding('🔥 Je score van vandaag staat er meteen op.'), 900); if (pbOpen()) { _pb.wereldDag = null; vulPbTab('diepte', true); } });
   }
   toonLeaderboard();
 }
@@ -1005,40 +1746,6 @@ function doeZwerverJoin() {
    ============================================================ */
 /* remote strings komen van andere spelers → ALTIJD escapen vóór innerHTML */
 function escSyn(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-
-function synSectieHtml() {
-  if (!window.Online || !Online.actief()) return '';
-  if (!Online.isLid()) {
-    return `<div class="syn-vak syn-join">
-      <h3 class="codex-kop">🔥 Het Syndicaat <small>het onderlinge verzet — stoef met je vrienden</small></h3>
-      <p class="syn-uitleg">Sticht een syndicaat en deel de code, of sluit je aan bij dat van je vrienden. Elke dagelijkse afdaling telt mee op jullie gezamenlijke podium.</p>
-      <div class="syn-formulier">
-        <input id="syn-naam" maxlength="20" placeholder="Je strijdnaam…" autocomplete="off">
-        <span class="syn-code-rij">
-          <input id="syn-code" maxlength="24" placeholder="Syndicaat-code…" autocomplete="off">
-          <button class="knop-stil" data-tip="Verzin een verse code — deel hem daarna met je vrienden" onclick="document.getElementById('syn-code').value = Online.verzinCode()">🎲</button>
-        </span>
-        <button class="knop-groot" onclick="doeSynJoin()">⚔️ Sluit je aan</button>
-      </div>
-      <p class="syn-leek-hint">💡 Makkelijker: kreeg je een <b>uitnodigingslink</b> van een vriend? Tik die gewoon aan — naam kiezen en klaar, geen code nodig.</p>
-    </div>`;
-  }
-  const l = Online.lid();
-  return `<div class="syn-vak">
-    <h3 class="codex-kop">🔥 Het Syndicaat <small>⚔️ ${escSyn(l.naam)}
-      <button class="syn-hernoem" onclick="vraagHernoem()" data-tip="Wijzig je strijdnaam — je scores en geschiedenis verhuizen mee">✏️</button>
-      · code <b class="syn-codechip" data-tip="Deel deze code — wie hem invoert, vecht op jullie bord">${escSyn(l.code)}</b></small></h3>
-    <div id="syn-inhoud"><p class="syn-laadt">De duiven zijn onderweg…</p></div>
-    <div class="syn-knoppen">
-      <button class="knop-groot" onclick="deelSyndicaat()">📣 Nodig vrienden uit</button>
-      <button class="knop-stil" onclick="kopieerStrijdkreet()">📋 Kopieer de code</button>
-      <label class="syn-autopor" data-tip="Na je eigen dagelijkse afdaling porren we automatisch iedereen die nog niet speelde.">
-        <input type="checkbox" ${INST.autoPor ? 'checked' : ''} onchange="INST.autoPor = this.checked; bewaarInst(); melding(this.checked ? '📣 Auto-por aan.' : 'Auto-por uit.');"> auto-por na mijn afdaling
-      </label>
-      <button class="knop-stil syn-verlaat" onclick="synVerlaat()">Verlaat</button>
-    </div>
-  </div>`;
-}
 
 /* je strijdnaam wijzigen ZONDER een spook achter te laten: alle scores,
    porren en je lidmaatschap verhuizen mee naar de nieuwe naam. (Vroeger kon
@@ -1091,13 +1798,28 @@ function doeHernoem() {
 }
 
 function doeSynJoin() {
-  const naam = (document.getElementById('syn-naam') || {}).value;
-  const code = (document.getElementById('syn-code') || {}).value;
+  const naamVeld = document.getElementById('pb-naam') || document.getElementById('syn-naam');
+  const naam = pbNaamUitVeld();
+  const codeVeld = document.getElementById('pb-code') || document.getElementById('syn-code');
+  const code = codeVeld ? codeVeld.value : '';
+  /* zwerver-identiteiten (ZW-…) en vrije-run-groepen (…-RUN) zijn geen posses */
+  if (Online.isGereserveerdeCode && Online.isGereserveerdeCode(code)) { melding('Die code is gereserveerd — kies een andere.'); return; }
   const l = Online.wordLid(naam, code);
-  if (!l) { melding('⚠️ Kies een strijdnaam én een code van minstens 3 tekens.'); return; }
-  melding(`🔥 Welkom bij syndicaat ${l.code}, ${l.naam}. Deel de code — en laat ze bloeden.`);
+  if (!l) {
+    if (!Online.normNaam(naam)) { melding('Kies eerst een strijdnaam.'); if (naamVeld) naamVeld.focus(); }
+    else { melding('⚠️ Kies een code van minstens 3 tekens.'); if (codeVeld) codeVeld.focus(); }
+    return;
+  }
   Klank.sfx('schitter');
   toonLeaderboard();
+  /* de welkom-melding noemt de posse bij haar gedoopte naam zodra die binnen is (v103) */
+  const welkom = rij => melding(`🔥 Welkom bij ${rij && rij.naam ? '„' + rij.naam + '"' : 'het syndicaat'}, ${l.naam}. Deel de code — en laat ze bloeden.`);
+  if (Online.posseInfo) Online.posseInfo([l.code]).then(info => {
+    const rij = info && info[l.code];
+    if (rij) onthoudPosseInfo(l.code, rij);
+    welkom(rij);
+  }).catch(() => welkom(null));
+  else welkom(null);
 }
 function synVerlaat() {
   if (!(window.Online && Online.isLid())) return;   /* geen lid → niets te verlaten (las anders lid.code van null) */
@@ -1105,10 +1827,11 @@ function synVerlaat() {
      speler met een lege geschiedenis en liet de oude naam als spook in de
      ledenlijst achter. Wijs expliciet de ✏️-route aan vóór het weggaan. */
   bevestig(
-    `Je verlaat <b>${escSyn(Online.lid().code)}</b> als <b>${escSyn(Online.lid().naam)}</b>.<br><br>Je scores blijven op het bord staan onder je huidige naam.<br><br><i>Wou je enkel een andere strijdnaam? Sluit dit en gebruik het ✏️ naast je naam — dan verhuist je geschiedenis mee.</i>`,
+    `Je verlaat <b>${escSyn(possePlaatsVan(Online.lid().code, 'het syndicaat'))}</b> als <b>${escSyn(Online.lid().naam)}</b>.<br><br>Je scores blijven op het bord staan onder je huidige naam.<br><br><i>Wou je enkel een andere strijdnaam? Sluit dit en gebruik ✏️ Mijn strijdnaam in het ⋯-menu — dan verhuist je geschiedenis mee.</i>`,
     () => {
+      const weg = possePlaatsVan(Online.lid().code, 'de posse');
       Online.verlaat();
-      melding('Je verliet het syndicaat. De code blijft werken voor wie blijft.');
+      melding(`Je verliet ${weg}. De code blijft werken voor wie blijft.`);
       toonLeaderboard();
     },
     '🚪 Toch verlaten'
@@ -1124,12 +1847,13 @@ function syndicaatUitnodiging() {
   const l = Online.lid(); if (!l) return '';
   const top = (Daily.gesch || []).slice().sort((a, b) => b.score - a.score)[0];
   const scoreDeel = top ? ` Mijn beste dag: ${top.score} punten.` : '';
-  return `⚔️ SLAY LIT — sluit je aan bij mijn syndicaat "${l.code}".${scoreDeel} Eén tik en je staat op ons bord (nog geen SLAY LIT? De link opent meteen het spel): ${syndicaatLink()}`;
+  const pn = posseInfoVan(l.code);
+  const bij = (pn && pn.naam) ? `sluit je aan bij „${pn.naam}" — code ${l.code}` : `sluit je aan bij mijn syndicaat "${l.code}"`;
+  return `⚔️ SLAY LIT — ${bij}.${scoreDeel} Eén tik en je staat op ons bord (nog geen SLAY LIT? De link opent meteen het spel): ${syndicaatLink()}`;
 }
 function kopieerStrijdkreet() {
   const tekst = syndicaatUitnodiging(); if (!tekst) return;
-  try { navigator.clipboard.writeText(tekst); melding('📋 Code + uitnodiging gekopieerd — plak en provoceer!'); }
-  catch (e) { melding('Kopiëren lukte niet: ' + tekst); }
+  kopieerTekst(tekst, '📋 Gekopieerd. Fluister het, schreeuw het niet.', 'Kopiëren lukte niet: ' + tekst);
 }
 /* vrienden toevoegen = de code delen. Op mobiel opent dit de deel-sheet
    (WhatsApp/SMS/…); op laptop valt het terug op kopiëren. */
@@ -1166,132 +1890,6 @@ function synStoefRegel(r) {
    wie er vandaag nog moet (en wie je al gepord hebt) */
 let _synLeden = { dag: null, gespeeld: {}, gepord: {} };
 
-async function vulSyndicaat() {
-  const el = document.getElementById('syn-inhoud');
-  if (!el) return;
-  Online.meldAan();   /* jezelf als lid registreren + 'laatst gezien' verversen */
-  try {
-    const dag = vandaagSleutel();
-    const [vandaag, ooit, recent, leden, gesch] = await Promise.all([Online.dagTop(dag), Online.allerTijden(), Online.feed(), Online.leden().catch(() => null), Online.groepGeschiedenis(laatsteDagen(30)).catch(() => null)]);
-    if (!document.getElementById('syn-inhoud')) return;   /* overlay intussen dicht */
-    /* wie speelde vandaag al? (kruis de dag-scores tegen de ledenlijst) */
-    const gespeeldVandaag = {};
-    (vandaag || []).forEach(r => { gespeeldVandaag[r.naam] = r; });
-    _synLeden = { dag, gespeeld: gespeeldVandaag, gepord: _synLeden.dag === dag ? _synLeden.gepord : {} };
-    const ledenBlok = ledenlijstHtml(leden, gespeeldVandaag, dag);
-    const podium = (vandaag || []).slice(0, 3);
-    const rest = (vandaag || []).slice(3);
-    const treden = [1, 0, 2].map(i => {
-      const r = podium[i];
-      if (!r) return `<div class="syn-trede syn-leeg p${i + 1}"><span class="syn-vraag">?</span><small>vrij</small></div>`;
-      return `<div class="syn-trede p${i + 1}">
-        <span class="syn-kroon">${['🥇', '🥈', '🥉'][i]}</span>
-        <b class="syn-naam">${escSyn(r.naam)}</b>
-        <span class="syn-score">${r.score | 0}</span>
-        <small>${r.gewonnen ? '👑 won' : 'rij ' + (r.diepte | 0)} · ${HELDNAAM(escSyn(r.held))}</small>
-      </div>`;
-    }).join('');
-    const restRijen = rest.map((r, i) => `<div class="lb-rij"><span class="lb-rang">${i + 4}.</span><b>${r.score | 0}</b><span>${escSyn(r.naam)}</span><small>${r.gewonnen ? '👑' : 'rij ' + (r.diepte | 0)}</small></div>`).join('');
-    const ooitRijen = (ooit || []).slice(0, 5).map((r, i) => `<div class="lb-rij ${i === 0 ? 'lb-top' : ''}"><span class="lb-rang">${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'}</span><b>${r.score | 0}</b><span>${escSyn(r.naam)}</span><small>${escSyn(rijLabel(r))}</small></div>`).join('') || '<p class="lb-leeg">Nog geen scores — wees de eerste.</p>';
-    const stoef = (recent || []).slice(0, 5).map(r => `<p class="syn-stoef">${synStoefRegel(r)}</p>`).join('') || '<p class="lb-leeg">Nog geen wapenfeiten. Iemand moet de eerste zijn…</p>';
-    /* DE EEUWIGE VLAM: de posse-reeks als bandje boven het podium */
-    let vlamHtml = '';
-    if (Array.isArray(gesch)) {
-      const v = vlamReeks(gesch);
-      vlamHtml = v.reeks === 0
-        ? `<div class="syn-vlam vlam-uit">🕯️ <b>De Eeuwige Vlam</b> is gedoofd — de eerste afdaling van vandaag herontsteekt haar.</div>`
-        : v.vandaagGedekt
-          ? `<div class="syn-vlam">🔥 <b>De Eeuwige Vlam</b> brandt <b>${v.reeks >= 60 ? '60+' : v.reeks}</b> ${v.reeks === 1 ? 'dag' : 'dagen'} — vandaag al gered.</div>`
-          : `<div class="syn-vlam vlam-flakkert">🔥 <b>De Eeuwige Vlam</b> brandt ${v.reeks} ${v.reeks === 1 ? 'dag' : 'dagen'} — maar <b>flakkert</b>: nog niemand daalde vandaag af!</div>`;
-    }
-    /* HET DUELDECREET: dag-seeded duo's + weekstand uit de geschiedenis */
-    let duelHtml = '';
-    if (Array.isArray(leden) && leden.length >= 2) {
-      const namen = leden.map(l => l.naam);
-      const code = Online.lid().code;
-      const { paren, vrijgesteld } = duelParen(namen, dag, code);
-      const duelRijen = paren.map(([a, b]) => {
-        const sa = gespeeldVandaag[a] ? gespeeldVandaag[a].score | 0 : null;
-        const sb = gespeeldVandaag[b] ? gespeeldVandaag[b].score | 0 : null;
-        const leidt = (sa !== null || sb !== null) ? ((sa || 0) >= (sb || 0) ? a : b) : null;
-        const kant = (n, s) => `<span class="duel-kant ${leidt === n ? 'duel-leidt' : ''}">${escSyn(n)} <b>${s === null ? '—' : s}</b></span>`;
-        return `<div class="duel-rij">${kant(a, sa)}<span class="duel-vs">⚔️</span>${kant(b, sb)}</div>`;
-      }).join('');
-      /* weekstand: wins tellen over de laatste 7 dagen (alleen dagen waarop
-         beide duellisten een score hadden; paren gereconstrueerd met de
-         ledenlijst van nú — goed genoeg op vriendenschaal) */
-      const wins = {};
-      if (Array.isArray(gesch)) {
-        laatsteDagen(7).slice(1).forEach(d7 => {
-          const scoresDag = {};
-          gesch.filter(r => r.dag === d7).forEach(r => { scoresDag[r.naam] = r.score | 0; });
-          duelParen(namen, d7, code).paren.forEach(([a, b]) => {
-            if (scoresDag[a] === undefined || scoresDag[b] === undefined) return;
-            const w = scoresDag[a] >= scoresDag[b] ? a : b;
-            wins[w] = (wins[w] || 0) + 1;
-          });
-        });
-      }
-      const stand = Object.entries(wins).sort((a, b) => b[1] - a[1]).slice(0, 3)
-        .map(([n, w]) => `${escSyn(n)} ${w}`).join(' · ');
-      duelHtml = `<div class="syn-duel"><h4>⚔️ Het Dueldecreet van vandaag</h4>${duelRijen}
-        ${vrijgesteld ? `<p class="duel-vrij">${escSyn(vrijgesteld)} is vandaag vrijgesteld van het decreet.</p>` : ''}
-        ${stand ? `<p class="duel-stand">Weekstand: ${stand}</p>` : ''}</div>`;
-    }
-    el.innerHTML = `
-      ${vlamHtml}
-      <div class="syn-podium">${treden}</div>
-      ${podium.length === 0 ? '<p class="syn-podium-leeg">Het podium van vandaag staat leeg — de eerste afdaling pakt goud. 🥇</p>' : ''}
-      ${restRijen}
-      ${duelHtml}
-      ${ledenBlok}
-      <div class="syn-onder">
-        <div class="syn-kolom"><h4>🏛️ Aller tijden</h4>${ooitRijen}</div>
-        <div class="syn-kolom"><h4>📣 Het gestoef</h4>${stoef}</div>
-      </div>`;
-  } catch (e) {
-    if (el) el.innerHTML = '<p class="lb-leeg">⚠️ Het syndicaat is onbereikbaar (offline?). Je lokale bord hieronder werkt gewoon.</p>';
-  }
-}
-
-/* de ledenlijst: wie zit erin, wie speelde vandaag al (✅) en wie lummelt nog
-   (⏳ — met een por-knop). leden==null → de sociale tabellen bestaan nog niet
-   (SQL deel 1b), dan tonen we een korte hint i.p.v. de lijst. */
-function ledenlijstHtml(leden, gespeeld, dag) {
-  if (!Array.isArray(leden)) {
-    return `<div class="syn-leden syn-leden-uit"><h4>👥 Ledenlijst</h4>
-      <p class="lb-leeg">Zet de sociale laag aan: draai <b>deel 1b</b> van de SQL (leden + porren) uit SUPABASE-SETUP.md.</p></div>`;
-  }
-  const ik = Online.lid().naam;
-  /* achterblijvers bovenaan (die kun je porren), dan wie al speelde */
-  const gesorteerd = leden.slice().sort((a, b) => (!!gespeeld[a.naam]) - (!!gespeeld[b.naam]));
-  const achterblijvers = leden.filter(l => l.naam !== ik && !gespeeld[l.naam]).map(l => l.naam);
-  const rijen = gesorteerd.map(l => {
-    const klaar = !!gespeeld[l.naam];
-    const isIk = l.naam === ik;
-    const alGepord = _synLeden.gepord[l.naam];
-    /* de naam reist via een data-attribuut, NIET via een inline JS-string:
-       een naam met een backslash porde anders de verkeerde persoon
-       ("Pad\Naam" → "PadNaam") en een naam die op \ eindigt brak de knop
-       volledig (SyntaxError → klik deed niets). Zie porKlik hieronder. */
-    const knop = (!klaar && !isIk)
-      ? `<button class="syn-por-knop ${alGepord ? 'gepord' : ''}" ${alGepord ? 'disabled' : ''} data-por="${escSyn(l.naam)}">${alGepord ? '✓ gepord' : '📣 Por'}</button>`
-      : '';
-    return `<div class="syn-lid ${klaar ? 'klaar' : 'wacht'}" data-lid="${escSyn(l.naam)}">
-      <span class="syn-lid-status">${klaar ? '✅' : '⏳'}</span>
-      <b>${escSyn(l.naam)}${isIk ? ' <small>(jij)</small>' : ''}</b>
-      <span class="syn-lid-info">${klaar ? `${gespeeld[l.naam].score} pt · ${gespeeld[l.naam].gewonnen ? '👑' : 'rij ' + (gespeeld[l.naam].diepte | 0)}` : 'nog niet afgedaald'}</span>
-      ${knop}
-    </div>`;
-  }).join('') || '<p class="lb-leeg">Nog niemand aangemeld. Deel de code!</p>';
-  const porAllesKnop = achterblijvers.length
-    ? `<button class="knop-stil syn-por-alle" onclick="porAchterblijvers()">📣 ${achterblijvers.length === 1 ? 'Por de achterblijver' : `Por alle ${achterblijvers.length} achterblijvers`}</button>`
-    : '';
-  return `<div class="syn-leden"><h4>👥 Ledenlijst <small>${leden.length} lid${leden.length === 1 ? '' : 'den'} · ✅ speelde vandaag</small></h4>
-    ${rijen}
-    ${porAllesKnop}</div>`;
-}
-
 /* klik-afhandeling voor de por-knoppen: de naam komt uit het data-attribuut
    (de DOM levert hem exact terug, ongeacht quotes/backslashes) */
 function porKlik(knop) {
@@ -1309,37 +1907,59 @@ function porLid(naam) {
     'Je plek op het podium koelt af. Doe je afdaling!',
     'Ik heb goud gepakt. Durf jij het te evenaren?'
   ]);
+  if (_synLeden.dag !== dag) _synLeden = { dag, gespeeld: {}, gepord: {} };
   _synLeden.gepord[naam] = true;
   Online.stuurPor(naam, dag, bericht).then(ok => {
     melding(ok ? `📣 ${naam} is gepord — nu maar hopen dat 'ie durft.` : `Kon ${naam} niet porren (offline?).`);
   });
+  if (pbOpen()) vulStand();   /* 'Por ze (N)' telt de geporde niet meer mee */
   Klank.sfx('klik');
 }
 /* por iedereen die vandaag nog niet afdaalde, in één klap */
 function porAchterblijvers() {
+  if (!(window.Online && Online.isLid())) return;
   const dag = vandaagSleutel();
   const ik = Online.lid().naam;
-  /* de achterblijvers = leden zonder score vandaag; de naam komt uit het
-     data-attribuut (tekst uitlezen brak op namen met spaties/tekens) */
-  const knoppen = [...document.querySelectorAll('.syn-lid.wacht')];
-  let n = 0;
-  knoppen.forEach(rij => {
-    const naam = rij.dataset ? rij.dataset.lid : '';
+  if (_synLeden.dag !== dag) _synLeden = { dag, gespeeld: {}, gepord: {} };
+  /* de achterblijvers = leden zonder score vandaag; de naam komt uit het data-attribuut van de
+     wacht-rijen (tekst uitlezen brak op namen met spaties/tekens). Staat het pamflet niet in de
+     DOM — de standkaart-knop op de Diepte of het toestel — dan uit de al opgehaalde lijsten. */
+  let doelen = [...document.querySelectorAll('.pb-rij.wacht[data-lid], .syn-lid.wacht')].map(rij => rij.dataset ? rij.dataset.lid : '').filter(Boolean);
+  if (!doelen.length && Array.isArray(_pb.leden) && Array.isArray(_pb.dagTop)) {
+    const gespeeld = {}; _pb.dagTop.forEach(r => { if (r && r.naam) gespeeld[r.naam] = r; });
+    _synLeden.gespeeld = gespeeld;
+    doelen = _pb.leden.map(l => l && l.naam).filter(naam => naam && !gespeeld[naam]);
+  }
+  let n = 0, alGepord = 0;
+  [...new Set(doelen)].forEach(naam => {
     if (!naam || naam === ik || _synLeden.gespeeld[naam]) return;
+    if (_synLeden.gepord[naam]) { alGepord++; return; }   /* vandaag al gepord: niet nog eens (de telling loog anders) */
     _synLeden.gepord[naam] = true;
     Online.stuurPor(naam, dag, 'Het hele syndicaat wacht. Doe je dagelijkse afdaling!');
     n++;
   });
-  melding(n ? `📣 ${n} achterblijver${n === 1 ? '' : 's'} gepord. Geen excuses meer.` : 'Iedereen speelde al — knap syndicaat.');
+  melding(n ? `📣 ${n} achterblijver${n === 1 ? '' : 's'} gepord. Geen excuses meer.` : (alGepord ? 'Iedereen is al gepord. Nu is het aan hen.' : 'Iedereen speelde al — knap syndicaat.'));
   Klank.sfx('schitter');
-  vulSyndicaat();
+  /* de knoppen ter plekke omzetten (geen herlaad met skelet-flits) */
+  document.querySelectorAll('#overlay-leaderboard .syn-por-knop[data-por]').forEach(k => {
+    if (_synLeden.gepord[k.dataset.por]) { k.disabled = true; k.textContent = '✓ gepord'; k.classList.add('gepord'); }
+  });
+  if (pbOpen()) vulStand();   /* de standkaart telt de geporde niet meer mee: 'Por ze (N)' → 'Daag uit' */
 }
 function kopieerLeaderboardScore() {
   const top = (Daily.gesch || []).slice().sort((a, b) => b.score - a.score)[0];
   if (!top) return;
   const tekst = `SLAY LIT 🗓️ ${top.dag} — ${top.score} punten (${top.gewonnen ? 'overwinning 👑' : 'rij ' + top.diepte} met ${HELDNAAM(top.held || 'slachter')}). Durf jij dieper?`;
-  try { navigator.clipboard.writeText(tekst); melding('📋 Scoreregel gekopieerd — plak en daag uit!'); }
-  catch (e) { melding('Kopiëren lukte niet — noteer hem ouderwets: ' + tekst); }
+  kopieerTekst(tekst, '📋 Scoreregel gekopieerd — plak en daag uit!', 'Kopiëren lukte niet — noteer hem ouderwets: ' + tekst);
+}
+/* naar het klembord mét de uitkomst afwachten: writeText is een promise die zonder
+   gebaar/permissie WEIGERT — een kale aanroep gaf dan een onafgevangen fout in de
+   console én een valse 'gekopieerd'-melding */
+function kopieerTekst(tekst, okMelding, foutMelding) {
+  let p = null;
+  try { p = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(tekst) : null; } catch (e) { p = null; }
+  if (p && p.then) p.then(() => melding(okMelding), () => melding(foutMelding));
+  else melding(foutMelding);
 }
 function pasInstToe() {
   document.body.classList.toggle('lite', INST.lite);
@@ -8153,6 +8773,7 @@ function startDaily() {
     }
   } catch (e) {}
   wisSave();
+  if (typeof sluitLeaderboard === 'function' && pbOpen()) sluitLeaderboard();   /* vanaf het Prikbord: het bord pas dicht nu de daily écht start (annuleren hierboven liet het staan) */
   Daily.laatsteStart = vandaagSleutel(); bewaarDaily();   /* poging verbruikt bij START → geen farmen */
   schrijnKeuzes = [];                       /* geen Schrijn-meeneem in de daily */
   scherfKeuzes = [];                        /* idem geen scherf-loadout in de daily (eerlijk veld) — anders lekte een eerder in 'Kies je held' geselecteerde scherf de daily in én uit je stash */
@@ -8310,19 +8931,20 @@ function laadPropAfbeelding(pad, cb) {
 /* de sociale nudge op het daily-eindescherm: deel je score als uitdaging
    (deel-sheet op mobiel, klembord op laptop) — mét dagwet en syndicaat-code */
 function deelDagScore() {
-  const wet = (S && S.dagwet && DAGWETTEN[S.dagwet]) || null;
+  /* vanaf het Prikbord (geen lopende daily) geldt de wet van vandaag als je vandaag afdaalde */
+  const wet = (S && S.daily && S.dagwet && DAGWETTEN[S.dagwet]) || (Daily.laatsteVoltooid === vandaagSleutel() ? DAGWETTEN[wetVanDag()] : null) || null;
   const score = Daily.laatsteScore || 0;
   const l = (window.Online && Online.isLid()) ? Online.lid() : null;
   const graf = stuurGrafschriftUI._verstuurd ? ` Mijn laatste woorden: „${stuurGrafschriftUI._verstuurd}"` : '';
+  const pn = l ? posseInfoVan(l.code) : null;
   const tekst = `⚔️ SLAY LIT — dagelijkse afdaling: ${score} punten${wet ? ` onder ${wet.naam}` : ''}.${graf} `
-    + (l ? `Versla me — één tik en je staat op ons bord: ${syndicaatLink()}`
+    + (l ? `Versla me — één tik en je staat op ${pn && pn.naam ? `het bord van „${pn.naam}"` : 'ons bord'}: ${syndicaatLink()}`
          : 'Versla me: https://teamict-codex.github.io/slay-lit/');
   Klank.sfx('klik');
   if (navigator.share) {
     navigator.share({ title: 'SLAY LIT', text: tekst }).catch(() => {});
   } else {
-    try { navigator.clipboard.writeText(tekst); melding('📋 Uitdaging gekopieerd — plak en provoceer!'); }
-    catch (e) { melding(tekst); }
+    kopieerTekst(tekst, '📋 Uitdaging gekopieerd — plak en provoceer!', tekst);   /* wacht de writeText-promise af (v103) */
   }
 }
 /* jouw plek op het syndicaat-dagbord, asynchroon ingevuld op het eindescherm
@@ -8330,12 +8952,15 @@ function deelDagScore() {
 async function vulEindeSynRang() {
   try {
     await new Promise(r => setTimeout(r, 1500));
-    const top = await Online.dagTop(vandaagSleutel());
+    const [top, posse] = await Promise.all([Online.dagTop(vandaagSleutel()), Online.mijnPosse ? Online.mijnPosse().catch(() => null) : null]);
     const el = document.getElementById('einde-syn-rang');
-    if (!el || !Array.isArray(top)) return;
+    if (!el || !Array.isArray(top) || !Online.isLid()) return;
+    const code = Online.lid().code;
+    if (posse && posse.rij) onthoudPosseInfo(code, posse.rij);
+    const pn = posseInfoVan(code);
     const ik = Online.lid().naam;
     const idx = top.findIndex(r => r && r.naam === ik);
-    if (idx >= 0) el.textContent = `Vandaag ${['🥇', '🥈', '🥉'][idx] || '#' + (idx + 1)} van ${top.length} in ${Online.lid().code}`;
+    if (idx >= 0) el.textContent = `Vandaag ${['🥇', '🥈', '🥉'][idx] || '#' + (idx + 1)} van ${top.length} in ${pn && pn.naam ? pn.naam : 'je posse'}`;
   } catch (e) {}
 }
 

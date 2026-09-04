@@ -50,7 +50,12 @@ const Online = (() => {
   }
 
   /* codes en namen strak normaliseren: ze reizen door URL's én innerHTML */
-  const normCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 24);
+  /* GERESERVEERD (v103): 'ZW-…' is een zwerver-identiteit en '…-RUN' de vrije-run-
+     groep van een posse — wie zo'n code als syndicaat zou nemen, leest andermans
+     rijen als de zijne (en de doopakte-RLS weigert ze toch). normCode geeft er
+     '' voor terug, zodat élk pad (join, uitnodigingslink) ze stil weigert. */
+  const isGereserveerdeCode = c => { const s = String(c || '').toUpperCase().replace(/[^A-Z0-9-]/g, ''); return /^ZW-/.test(s) || /-RUN$/.test(s); };
+  const normCode = c => { const s = String(c || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 24); return isGereserveerdeCode(s) ? '' : s; };
   const normNaam = n => String(n || '').trim().replace(/[<>&"']/g, '').slice(0, 20);
 
   /* woordenlijst voor de code-generator — thematisch, makkelijk door te zeggen */
@@ -82,7 +87,7 @@ const Online = (() => {
     } finally {
       clearTimeout(klok);
     }
-    if (!r.ok) throw new Error('syndicaat-fout ' + r.status);
+    if (!r.ok) { const fout = new Error('syndicaat-fout ' + r.status); fout.status = r.status; throw fout; }   /* status mee: de doopakte leest er 'tabel ontbreekt' (404) en 'geweigerd' (401/403) uit */
     /* een geslaagde insert/upsert komt als 201/204 met LEGE body terug —
        r.json() zou daarop crashen en de upload vals-negatief rapporteren */
     const txt = await r.text();
@@ -99,6 +104,7 @@ const Online = (() => {
   function verlaat() {
     lid = null;
     try { localStorage.removeItem(SLEUTEL); } catch (e) {}
+    wisPosseCache(true);   /* de doopakte van de oude posse hoort niet mee naar de volgende */
   }
 
   /* NAAM WIJZIGEN = VERHUIZEN. De naam is bewust de identiteit (zo tik je op
@@ -129,6 +135,8 @@ const Online = (() => {
       await req(`leden?groep=eq.${g}&naam=eq.${oN}`, { method: 'PATCH', body: JSON.stringify({ naam: nieuw }) }).catch(() => {});
       await req(`porren?groep=eq.${g}&van=eq.${oN}`, { method: 'PATCH', body: JSON.stringify({ van: nieuw }) }).catch(() => {});
       await req(`porren?groep=eq.${g}&naar=eq.${oN}`, { method: 'PATCH', body: JSON.stringify({ naar: nieuw }) }).catch(() => {});
+      /* de doopakte (v103): 'gedoopt door OUD' verhuist mee — alleen voor echte posses, en stil als de tabel er nog niet is */
+      if (lid && _posseTabel !== false) await req(`syndicaten?groep=eq.${g}&gedoopt_door=eq.${oN}`, { method: 'PATCH', body: JSON.stringify({ gedoopt_door: nieuw }) }).catch(() => {});
       if (lid) { lid = { naam: nieuw, code: lid.code }; try { localStorage.setItem(SLEUTEL, JSON.stringify(lid)); } catch (e) {} }
       else { zwerver = { naam: nieuw, code: zwerver.code }; try { localStorage.setItem(ZW_SLEUTEL, JSON.stringify(zwerver)); } catch (e) {} }
       return true;
@@ -325,12 +333,124 @@ const Online = (() => {
   /* mijn inbox voor vandaag: wie heeft míj gepord? */
   const mijnPorren = dag => req(`porren?${q()}&naar=eq.${encodeURIComponent(lid.naam)}&dag=eq.${encodeURIComponent(dag)}&order=gemaakt.desc&limit=20`);
 
+  /* ---------- DE DOOPAKTE (v103, SQL 1h): naam, motto, zegel en kleur per posse ----------
+     Eén rij per syndicaat in de tabel 'syndicaten' (de code blijft de sleutel). De tabel
+     bestaat mogelijk nog NIET: dan zet de eerste 404 de vlag _posseTabel op false en
+     geeft alles hieronder stil lege uitkomsten — het bord werkt dan identiek aan v102.
+     Alles wat hieruit komt is remote tekst: game.js escapet het vóór innerHTML. */
+  const EMBLEMEN = ['vlam', 'schedel', 'dossier', 'kroon', 'rat', 'zwaard', 'sleutel', 'oog'];
+  const KLEUREN = ['ember', 'goud', 'bloed', 'gif', 'ijs', 'schaduw'];
+  /* codepoints i.p.v. UTF-16-units: een emoji in de possenaam telt als één teken, en
+     een slice(0, 20) op een string kan een surrogaatpaar doormidden knippen */
+  /* alleen < en > gaan eruit (zoals normMotto; escSyn dekt & en " af in game.js — 'Jan & Co' en
+     „'t Verzet" blijven heel), en de trim komt NÁ het strippen: zo telt de client exact wat de
+     server met btrim() telt (policy: 2–24 na btrim) en krijgt niemand de verkeerde foutmelding */
+  const normPosseNaam = s => [...String(s || '').replace(/[<>]/g, '').trim()].slice(0, 20).join('');
+  const normMotto = s => [...String(s || '').replace(/[<>]/g, '').trim()].slice(0, 60).join('');
+  /* onbekende id uit de tabel (oudere/nieuwere client, handmatige rij) → terugval, zie [[lookup-bugklasse]] */
+  const veiligEmbleem = id => EMBLEMEN.includes(id) ? id : 'vlam';
+  const veiligeKleur = id => KLEUREN.includes(id) ? id : 'ember';
+  /* terugval 'naamloos' (één woord: 'naamloze posse' kapte in élke chipkolom af tot 'naaml…') */
+  const posseLabel = (code, info) => (info && info.naam) ? info.naam : (/^ZW-/.test(code || '') ? 'zwerver' : 'naamloos');
+  /* 'gemaakt' reist mee: een eerste doop heeft gemaakt === gewijzigd, een herdoop een vorige_naam —
+     een kale hernoem-PATCH (gedoopt_door verhuist mee) zet óók gewijzigd en mag geen tweede doop lijken */
+  const POSSE_SELECT = 'select=groep,naam,motto,embleem,kleur,gedoopt_door,vorige_naam,gemaakt,gewijzigd';
+  let _posseTabel = null;   /* null = nog niet geprobeerd, true = bestaat, false = ontbreekt (404/PGRST205) */
+  const POSSE_SLEUTEL = 'slayit_posse';   /* snapshot van je eigen doopakte: offline blijft de naam op het bord */
+  const POSSE_CACHE_MS = 5 * 60 * 1000;
+  let _posseCache = { code: null, tijd: 0, uit: null };
+  function wisPosseCache(ookSnapshot) {
+    _posseCache = { code: null, tijd: 0, uit: null };
+    if (ookSnapshot) { try { localStorage.removeItem(POSSE_SLEUTEL); } catch (e) {} }
+  }
+  const isTabelWeg = e => !!(e && e.status === 404);
+
+  /* de doopaktes van meerdere posses in ÉÉN GET (voor de chips op het wereldbord).
+     codes = unieke basisgroepen; zwervers en run-groepen worden er hier al uitgezeefd
+     (normCode geeft '' voor gereserveerde codes). Gooit nooit: fout → {} (het bord
+     toont dan 'naamloos'). */
+  async function posseInfo(codes) {
+    /* gereserveerde codes worden eerst tot hun basisgroep herleid (een vrije-run-rij hoort bij haar
+       posse); wat dán nog gereserveerd is (ZW-…) valt weg. Cap op 80: een volle Diepte-pagina past
+       ruim en de in.()-lijst blijft ver van de URL-limiet (414) — de rest valt terug op 'naamloos' */
+    const uniek = [...new Set((Array.isArray(codes) ? codes : []).map(c => normCode(basisGroep(c))).filter(c => c && !isGereserveerdeCode(c)))].slice(0, 80);
+    if (!uniek.length || _posseTabel === false) return {};
+    try {
+      const r = await req(`syndicaten?groep=in.(${uniek.map(encodeURIComponent).join(',')})&${POSSE_SELECT}&limit=80`);
+      _posseTabel = true;
+      const uit = {};
+      (Array.isArray(r) ? r : []).forEach(rij => { if (rij && rij.groep) uit[rij.groep] = rij; });
+      return uit;
+    } catch (e) {
+      if (isTabelWeg(e)) _posseTabel = false;
+      return {};
+    }
+  }
+  /* je eigen doopakte: { beschikbaar (bestaat de tabel?), rij (null = nog niet gedoopt) }.
+     5 minuten geheugencache; offline valt hij terug op het snapshot in localStorage. */
+  async function mijnPosse() {
+    if (!lid) return { beschikbaar: false, rij: null };
+    const code = lid.code;
+    const nu = Date.now();
+    if (_posseCache.code === code && _posseCache.uit && nu - _posseCache.tijd < POSSE_CACHE_MS) return _posseCache.uit;
+    if (_posseTabel === false) return { beschikbaar: false, rij: null };
+    try {
+      const r = await req(`syndicaten?groep=eq.${encodeURIComponent(code)}&${POSSE_SELECT}&limit=1`);
+      _posseTabel = true;
+      const uit = { beschikbaar: true, rij: (Array.isArray(r) && r[0]) ? r[0] : null };
+      _posseCache = { code, tijd: nu, uit };
+      try { localStorage.setItem(POSSE_SLEUTEL, JSON.stringify({ code, rij: uit.rij })); } catch (e) {}
+      return uit;
+    } catch (e) {
+      if (isTabelWeg(e)) { _posseTabel = false; return { beschikbaar: false, rij: null }; }
+      /* offline/time-out: het laatst geziene snapshot houdt de naam op het bord (niet cachen —
+         de volgende poging mag gewoon opnieuw naar de server) */
+      let snap = null;
+      try { snap = JSON.parse(localStorage.getItem(POSSE_SLEUTEL) || 'null'); } catch (e2) {}
+      const geldig = !!(snap && snap.code === code);
+      return { beschikbaar: geldig, rij: geldig ? (snap.rij || null) : null, offline: true };
+    }
+  }
+  /* dopen of herdopen: upsert van het VOLLEDIGE record op de code. gemaakt/gewijzigd gaan
+     bewust NIET mee (de trigger zet ze — niemand pint zijn doop eeuwig bovenaan het gestoef).
+     → true | 'geweigerd' (401/403: RLS zegt nee, bv. een gereserveerde code) | false */
+  async function doopPosse(d) {
+    if (!lid) return false;
+    if (_posseTabel === false) return false;   /* tabel ontbreekt (eerdere 404): de enige schrijver liep anders nog eens tegen de muur */
+    d = d || {};
+    const naam = normPosseNaam(d.naam);
+    if ([...naam].length < 2) return false;
+    const oudeRij = (_posseCache.code === lid.code && _posseCache.uit && _posseCache.uit.rij) ? _posseCache.uit.rij : null;
+    let oud = null;
+    if (oudeRij) oud = oudeRij.naam || null;
+    else if (d.vorige_naam) oud = String(d.vorige_naam);
+    const motto = normMotto(d.motto);
+    const rij = {
+      groep: lid.code, naam, motto: motto || null,
+      embleem: veiligEmbleem(d.embleem), kleur: veiligeKleur(d.kleur),
+      gedoopt_door: lid.naam, vorige_naam: (oud && oud !== naam) ? normPosseNaam(oud) : null
+    };
+    try {
+      await req('syndicaten?on_conflict=groep', { method: 'POST', prefer: 'resolution=merge-duplicates', body: JSON.stringify(rij) });
+      _posseTabel = true;
+      wisPosseCache(false);
+      /* het snapshot alvast bijwerken: het bord toont de nieuwe naam ook als de herlaad-GET even hapert */
+      const nu = new Date().toISOString();   /* eerste doop: gemaakt === gewijzigd (zoals de trigger het zet) → de doopregel in het gestoef */
+      try { localStorage.setItem(POSSE_SLEUTEL, JSON.stringify({ code: lid.code, rij: Object.assign({}, rij, { gemaakt: (oudeRij && oudeRij.gemaakt) || nu, gewijzigd: nu }) })); } catch (e) {}
+      return true;
+    } catch (e) {
+      if (e && (e.status === 401 || e.status === 403)) return 'geweigerd';
+      return false;
+    }
+  }
+
   /* DEV-haakje: config vanuit de console zetten om te testen zonder hardcoden
      (bv. Online._dev('https://xyz.supabase.co', 'sleutel')) */
   function _dev(url, key) { CONFIG.url = url || CONFIG.url; CONFIG.anonKey = key || CONFIG.anonKey; }
 
-  return { actief, isLid, lid: () => lid, normCode, normNaam, verzinCode, wordLid, verlaat,
+  return { actief, isLid, lid: () => lid, normCode, normNaam, isGereserveerdeCode, verzinCode, wordLid, verlaat,
            identiteit, isZwerver, wordZwerver, hernoem,
+           posseInfo, mijnPosse, doopPosse, posseLabel, normPosseNaam, normMotto, EMBLEMEN, KLEUREN, veiligEmbleem, veiligeKleur,
            stuurScore, stuurRunScore, isRunGroep, basisGroep, stuurGrafschrift, dagTop, allerTijden, feed,
            groepGeschiedenis, stuurNalatenschap, haalNalatenschap,
            wereldDag, wereldOoit,
