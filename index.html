@@ -185,14 +185,19 @@
         <input type="checkbox" id="inst-daglicht" onchange="instWijzig()"></label>
       <label class="inst-rij inst-mobiel">📲 Volledig scherm
         <input type="checkbox" id="inst-fullscreen" onchange="wisselFullscreen(this.checked)"></label>
+      <label class="inst-rij inst-mobiel">👁 Topbalk doorschijnend
+        <input type="checkbox" id="inst-topdoorzicht" onchange="instWijzig()"></label>
     </div>
     <button type="button" class="knop-groot inst-install-knop" id="inst-install" onclick="installeerApp()" style="display:none">📥 Installeer als app</button>
-    <p class="inst-hint">Lite-modus schakelt zware effecten uit — handig op oudere laptops of bij een lege batterij. Daglichtmodus maakt het beeld lichter — handig buiten of bij fel omgevingslicht.</p>
+    <p class="inst-hint">Lite-modus schakelt zware effecten uit — handig op oudere laptops of bij een lege batterij. Daglichtmodus maakt het beeld lichter — handig buiten of bij fel omgevingslicht. Topbalk doorschijnend laat in het gevecht de bovenrand van het slagveld door de hp-, fakkel- en goudbalk schemeren — handig tegen bazen die de hele hoogte opeisen.</p>
     <button class="knop-groot" onclick="sluitInstellingen()">Klaar</button>
     <button class="knop-stil inst-reset" onclick="vraagVoortgangReset()" data-tip="Wist de lopende run, dagelijkse scores en de Codex op dit toestel. Instellingen en je syndicaat blijven staan.">🧹 Wis alle voortgang op dit toestel…</button>
   </div>
 
   <!-- fakkel-vignet: het donker kruipt vanaf de schermranden naar binnen -->
+  <!-- DE INZAGE (mobiel, alleen in het gevecht): vaste knop links; body.inzage zet de hold-peek vast.
+       Bewust een body-kind: binnen #scherm-gevecht (stapelcontext z 1) zou hij altijd onder de topbalk vallen. -->
+  <button type="button" id="inzage-knop" onclick="wisselInzage()" aria-pressed="false" aria-label="Inzage" data-tip="Inzage — je hand gaat opzij en elke status en intentie wordt leesbaar. Nog eens tikken, of Einde beurt, sluit het dossier."></button>
   <div id="licht-vignet"></div>
 
   <!-- draai-blok: sommige schermen spelen liggend (gevecht, smederij, kaartkeuze), andere staand

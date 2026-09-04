@@ -138,7 +138,8 @@ body[data-modus="mobiel"] #topbalk {
   height: calc(var(--tbh, 40px) + var(--sat));
   padding: var(--sat) calc(8px + env(safe-area-inset-right)) 0 calc(8px + env(safe-area-inset-left));
   gap: 8px; font-size: .92rem; border-bottom: none;
-  background: linear-gradient(180deg, rgba(13, 10, 18, .8), rgba(13, 10, 18, .32) 72%, transparent);
+  background: linear-gradient(180deg, rgba(13, 10, 18, calc(.8 * var(--tb-a, 1))), rgba(13, 10, 18, calc(.32 * var(--tb-a, 1))) 72%, transparent);   /* v104: --tb-a = doorzichtigheid (Inzage / 'Topbalk doorschijnend') */
+  transition: background .18s ease;
 }
 body[data-modus="mobiel"] #topbalk .tb-logo { display: none; }
 body[data-modus="mobiel"] #tb-verdieping { display: none; }       /* diepte niet nodig tijdens battle */
@@ -1049,7 +1050,12 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] #scherm-gevecht .hp-balk { width: 84px; height: 16px; }
   body[data-modus="mobiel"] #scherm-gevecht .speler-hp { width: 104px; }
   body[data-modus="mobiel"] .speler-figuur { width: 122px; height: 122px; }
-  body[data-modus="mobiel"] #vijanden-rij { gap: 8px 10px; flex-wrap: wrap; justify-content: center; max-width: min(52vw, 300px); }
+  body[data-modus="mobiel"] #vijanden-rij { gap: 8px 10px; flex-wrap: wrap; justify-content: center; max-width: min(56vw, 300px); }   /* v104: 56vw — twee kolommen van 94px + gap passen op 360px */
+  /* v104 (meting 4 sep): met 3-4 vijanden werd de rij 600-800px hoog (1 vijand per rij, kolommen tot 188px
+     door de chip-max-width) en liep vijand 0 BOVEN het scherm uit (art op y-245). Kleinere figuren vanaf
+     3 vijanden + chips die de kolom niet meer oprekken → 2 per rij, alles in beeld. */
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas):not(.is-episch) .vijand-art { width: 86px; height: 86px; }
+  body[data-modus="mobiel"] #vijanden-rij .blok-status { width: 0; min-width: 100%; max-width: none; }
   body[data-modus="mobiel"] .vijand { min-width: 0; padding: 4px; }
   body[data-modus="mobiel"] .vijand-art { width: 104px; height: 104px; }
   body[data-modus="mobiel"] .is-elite .vijand-art { width: 118px; height: 118px; }
@@ -1312,3 +1318,49 @@ body[data-modus="mobiel"] .vloek-reveal-overlay .kaart.groot.kaart-focus .kaart-
   body[data-modus="mobiel"]:has(#scherm-nudge) .scherm:not(#scherm-gevecht) { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
   body[data-modus="mobiel"]:has(#scherm-nudge) #scherm-held { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
 }
+
+/* ---------- F. DE INZAGE (v104) — de speler heeft inzagerecht in het dossier van elk figuur: de knop
+   links zet de hold-peek (body.statuskijk) vast, de hand gaat opzij, de onderbalk-sluier, de topbalk-
+   achtergrond en de baasbalk wijken. Niets wordt bewaard: inzage is een moment, geen beleid.
+   Meting 4 sep: liggend valt GEEN enkele statuschip onder de topbalk — alles zit onder de kaartwaaier
+   (40% van het scherm) en de sluier; rij 2 van de chips was 0% zichtbaar, in het baasgevecht 9/9 bedekt. */
+#inzage-knop { display: none; }
+body[data-modus="mobiel"][data-scherm="gevecht"] #inzage-knop {
+  display: flex; position: fixed; z-index: 55;                 /* boven #topbalk (50), onder elke overlay (800+) */
+  left: env(safe-area-inset-left, 0px); top: 50%; translate: 0 -50%;
+  width: 44px; height: 64px; padding: 0; margin: 0; border: 0; background: transparent;   /* 44px-raakzone, 22px zichtbaar lipje */
+  align-items: center; justify-content: flex-start; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+body[data-modus="mobiel"] #inzage-knop::before {
+  content: '👁'; display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 44px; font-size: 15px; border-radius: 0 10px 10px 0;
+  background: rgba(13, 10, 18, .55); border: 1px solid rgba(245, 197, 66, .35); border-left: 0;
+  opacity: .55; transition: opacity .18s, background .18s;
+}
+body[data-modus="mobiel"].inzage #inzage-knop::before { opacity: 1; background: rgba(120, 90, 20, .85); border-color: rgba(245, 197, 66, .9); }
+@media (orientation: portrait) { body[data-modus="mobiel"][data-scherm="gevecht"] #inzage-knop { top: 28%; } }   /* liggend: strook x0-40 y46-320 vrij; portret: alleen boven y≈300 (daaronder staat de held) */
+/* weg tijdens elke overlay/cinematic (dezelfde lijst als de nudge in style.css) */
+body[data-modus="mobiel"]:has(.overlay.open) #inzage-knop, body[data-modus="mobiel"]:has(#overlay-slachtblok.open) #inzage-knop,
+body[data-modus="mobiel"]:has(.kaart-reveal-overlay) #inzage-knop, body[data-modus="mobiel"]:has(.vloek-reveal-overlay) #inzage-knop,
+body[data-modus="mobiel"]:has(.scherf-reveal-overlay) #inzage-knop, body[data-modus="mobiel"]:has(.relikwie-reveal-overlay) #inzage-knop,
+body[data-modus="mobiel"]:has(#baas-intro) #inzage-knop, body[data-modus="mobiel"]:has(.roof-overlay.open) #inzage-knop,
+body[data-modus="mobiel"]:has(#dagwet-proc) #inzage-knop, body[data-modus="mobiel"]:has(#draai-blok.toon) #inzage-knop { display: none; }
+/* de stand: DEZELFDE waarden als body.statuskijk (style.css) → vasthouden + knop combineren zonder sprongen */
+body[data-modus="mobiel"].inzage #hand { opacity: .14; pointer-events: none; }
+body[data-modus="mobiel"].inzage #tb-relikwieen, body[data-modus="mobiel"].inzage #tb-dranken { opacity: .15; pointer-events: none; }
+body[data-modus="mobiel"] #onderbalk { transition: background .18s ease; }
+body[data-modus="mobiel"].inzage #onderbalk { background: transparent; pointer-events: none; }   /* sluier weg + de chips eronder worden tikbaar */
+body[data-modus="mobiel"].inzage #onderbalk > :not(#hand) { pointer-events: auto; }             /* Einde beurt, orb en stapels blijven werken */
+body[data-modus="mobiel"] #baas-balk { transition: opacity .18s ease; }
+body[data-modus="mobiel"].inzage #baas-balk { opacity: .3; }
+/* Thomas' letterlijke wens als rust-instelling (INST.topDoorzicht), alleen in het gevecht; de Inzage gaat verder */
+body[data-modus="mobiel"].top-doorzicht[data-scherm="gevecht"] #topbalk { --tb-a: .45; }
+body[data-modus="mobiel"].top-doorzicht[data-scherm="gevecht"] #tb-relikwieen { opacity: .6; }
+body[data-modus="mobiel"][data-scherm="gevecht"].inzage #topbalk { --tb-a: .25; }   /* hp/fakkel/goud-chips zelf blijven opacity 1 */
+/* CHIPS: dicht dekvlak + schaduw op het getal (contrast over drukke art: van ≈2,3:1 naar ≥7:1) en niet mee-krimpen
+   met .vijand-klein (scale .82). Blijft binnen de vaste 24px-chiprij (overflow visible) → figuren schuiven niet. */
+body[data-modus="mobiel"] #scherm-gevecht .status { background: rgba(16, 10, 20, .86); }
+body[data-modus="mobiel"] #scherm-gevecht .status.s-goed { background: rgba(72, 54, 14, .9); }
+body[data-modus="mobiel"] #scherm-gevecht .status.s-slecht { background: rgba(78, 20, 38, .9); }
+body[data-modus="mobiel"] #scherm-gevecht .status b { text-shadow: 0 1px 2px #000; }
+body[data-modus="mobiel"] #scherm-gevecht .vijand.vijand-klein .blok-status { scale: 1.2; transform-origin: top center; }

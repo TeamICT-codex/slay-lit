@@ -165,7 +165,7 @@ const INST = Object.assign(
   /* op mobiel standaard 3D UIT (onspeelbaar daar), maar lite NIET geforceerd:
      lite dooft de animaties, en juist die geven het spel leven. Lite alleen
      bij echt zwakke hardware. Op laptop ongewijzigd want mobiel=false. */
-  { lite: standaardLite, d3: !standaardLite && !mobiel, spraak: true, daglicht: mobiel, autoPor: true },
+  { lite: standaardLite, d3: !standaardLite && !mobiel, spraak: true, daglicht: mobiel, autoPor: true, topDoorzicht: false, inzageGezien: false, inzageHintGezien: false },
   veiligLees('slayit_inst')
 );
 /* mobiel-migratie: forceer 3D uit (onspeelbaar op telefoon) en zet lite weer uit op
@@ -1964,6 +1964,7 @@ function kopieerTekst(tekst, okMelding, foutMelding) {
 function pasInstToe() {
   document.body.classList.toggle('lite', INST.lite);
   document.body.classList.toggle('daglicht', !!INST.daglicht);
+  document.body.classList.toggle('top-doorzicht', !!INST.topDoorzicht);   /* v104: 'Topbalk doorschijnend' (mobiel, alleen in het gevecht via CSS) */
 }
 
 /* ---------- de Tikker: rAF-klok met achtergrond-fallback ----------
@@ -4234,8 +4235,13 @@ function startGevecht(samenstelling, soort, rij) {
 
   Klank.muziek(soort === 'baas' ? 'baas' : (soort === 'elite' || soort === 'episch' ? 'elite' : 'gevecht'));
   toonScherm('gevecht');
+  if (typeof wisselInzage === 'function') wisselInzage(false);   /* v104: nooit met een 14%-hand een nieuw gevecht in */
   zetLichtVisueel();
   renderGevecht();
+  if (window.mobiel && !INST.inzageHintGezien) {   /* v104: eenmalige hint bij het eerste mobiele gevecht */
+    INST.inzageHintGezien = true; bewaarInst();
+    setTimeout(() => melding('👁 Nieuw: het oog links geeft inzage in alle statussen. Een figuur vasthouden werkt ook — kort.'), 1400);
+  }
   /* Het Metgezel-Mysterie: de Erfprins-ontmoeting telt mee (cross-run escalatie)
      en levert gegarandeerd de baas-scherf — zo is zelfs een verloren run progressie. */
   if (soort === 'baas' && g.vijanden.some(v => v.id === 'de_erfprins')) {
@@ -6378,6 +6384,7 @@ async function eindBeurt() {
   /* gestopt(): dit gevecht is intussen voorbij of vervangen door een nieuw */
   const gestopt = () => S.gevecht !== g || g.voorbij;
   g.bezig = true;
+  if (document.body.classList.contains('inzage')) wisselInzage(false);   /* v104: de nieuwe hand komt zichtbaar binnen */
   g.gekozenKaart = null; g.gekozenDrank = null; g.voorbeeldKaart = null;
 
   /* De Laatste Vonk (Act 3-kracht): aan het einde van elke beurt gloeit je fakkel op */
@@ -9262,6 +9269,7 @@ function toonInstellingen() {
   $('#inst-lite').checked = INST.lite;
   if ($('#inst-spraak')) $('#inst-spraak').checked = INST.spraak !== false;
   if ($('#inst-daglicht')) $('#inst-daglicht').checked = !!INST.daglicht;
+  if ($('#inst-topdoorzicht')) $('#inst-topdoorzicht').checked = !!INST.topDoorzicht;
   if ($('#inst-fullscreen')) $('#inst-fullscreen').checked = !!document.fullscreenElement;
   /* install-knop: toon wanneer installeerbaar (Android: prompt klaar) of op iOS
      (daar via de Deel-instructie), en nog niet geïnstalleerd */
@@ -9386,6 +9394,7 @@ function instWijzig() {
   INST.lite = $('#inst-lite').checked;
   if ($('#inst-spraak')) INST.spraak = $('#inst-spraak').checked;
   if ($('#inst-daglicht')) INST.daglicht = $('#inst-daglicht').checked;
+  if ($('#inst-topdoorzicht')) INST.topDoorzicht = $('#inst-topdoorzicht').checked;
   bewaarInst();
   pasInstToe();
   zetLichtVisueel();              /* Daglichtmodus live: vignet + gevechtsplaat */
@@ -9524,6 +9533,18 @@ document.addEventListener('contextmenu', e => {
     if (lang && e.target.closest(SEL)) { e.preventDefault(); e.stopPropagation(); lang = false; }
   }, true);
 })();
+
+/* DE INZAGE (v104, mobiel): de vaste knop links (#inzage-knop, body-kind) zet de hold-peek hieronder
+   VAST en laat via CSS (mobiel.css blok F) ook de onderbalk-sluier, de topbalk-achtergrond en de
+   baasbalk wijken. Geen persist: een 14%-hand bij het volgende gevecht zou een val zijn — reset bij
+   startGevecht en bij Einde beurt (de nieuwe hand komt zichtbaar binnen). Meting 4 sep: liggend viel
+   geen enkele statuschip onder de topbalk, alles zat onder de kaartwaaier en de sluier. */
+function wisselInzage(aan) {
+  const nu = aan === undefined ? !document.body.classList.contains('inzage') : !!aan;
+  document.body.classList.toggle('inzage', nu);
+  const k = $('#inzage-knop'); if (k) k.setAttribute('aria-pressed', String(nu));
+  if (nu && !INST.inzageGezien) { INST.inzageGezien = true; bewaarInst(); melding('👁 Inzage verleend. Kaarten spelen kan weer zodra je het dossier sluit.'); }
+}
 
 /* touch: je held of een vijand VASTHOUDEN maakt de kaarthand ÉN de bezit-rij
    (relikwieën + drankjes in de topbalk) even doorzichtig, zodat je de statussen,
@@ -9895,6 +9916,13 @@ window.addEventListener('DOMContentLoaded', () => {
   $('#vijanden-rij').addEventListener('click', e => {
     const el = e.target.closest('.vijand');
     if (el) klikVijand(parseInt(el.dataset.i, 10));
+  });
+  /* v104 Inzage: een tik naast alles (achtergrond van het slagveld) sluit het dossier; figuren, HUD en
+     chips (tooltip) laten de stand staan */
+  $('#scherm-gevecht').addEventListener('click', e => {
+    if (!document.body.classList.contains('inzage')) return;
+    if (e.target.closest('.vijand, #speler-zone, #metgezel-zone, #onderbalk, #topbalk, [data-tip]')) return;
+    wisselInzage(false);
   });
 
   /* fullscreen op mobiel: weg met de statusbalk/klok tijdens het spelen.
