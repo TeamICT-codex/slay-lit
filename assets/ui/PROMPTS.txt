@@ -48,3 +48,270 @@ the stone shape cleanly cut out.
 Zelfde stijl-lock en kleuren, maar een eenvoudiger rechtopstaande grafsteen
 met een gladde ronde top en een brede lege middenplaat; minder mos, meer
 strakke gebeitelde rand. Zelfde lege-graveervlak- en transparantie-eisen.
+
+
+======================================================================
+HET PRIKBORD — de leaderboard-set (sept 2026)
+======================================================================
+Zes slotfamilies voor het herontworpen leaderboard ("Het Prikbord"). Alles
+dropt PLAT in assets/ui/ (geen submappen — het art-manifest kijkt per map).
+Pijplijn: verwijder_dambord.py (ui draait in 'icoon'-modus) → converteer_webp.py
+→ manifest → cache-bump. converteer_webp.py kapt deze set per bestandsnaam af
+(emblemen/rang/vlam 384px, treden en zegel 512px): genereer gerust op 1024,
+uitgeleverd wordt klein. Elk slot heeft in de code een emoji- of CSS-terugval,
+dus het bord werkt vóór er één plaat bestaat; de volgorde hieronder is de
+volgorde van winst.
+
+  bestand                    getoond op        terugval     functie
+  embleem_<id>.webp (8):     24 / 48 px        Pirata-      het zegel van een gedoopt syndicaat
+    vlam · schedel · dossier (16 px = kleur-  initiaal     (possekop, chips, uitnodiging)
+    kroon · rat · zwaard      stip, motief
+    sleutel · oog             leest vanaf 24)
+  rang_1/2/3.webp            20-28 px          🥇🥈🥉       rang 1-3 in elke lijst
+  trede_1/2/3.webp           88-130 px hoog    gradient     de drie podiumtreden (1 = goud)
+  vlam_brandt/flakkert/      28-40 px          🔥/🪔/🕯️     de Eeuwige Vlam in drie standen
+    gedoofd.webp
+  decreet_zegel.webp         40 / 56 / 92 px   CSS-cirkel   het lakzegel van het regime op het Decreet
+  prikbord_kop.webp          band 64-150 px    titel op     de bovenrand van het prikbord (kopband)
+                                               blur
+
+Genereer een familie liefst in één sessie/chat (stijl blijft dan consistent);
+de acht emblemen, de drie rangtekens en de drie treden moeten telkens als één
+set ogen — maar élk blok is één losse afbeelding. Voor alles met vuur/gloed
+geldt de bloom-les uit assets/iconen/PROMPTS.txt: geen wit, geen waas.
+Bleek-neutrale onderwerpen (zilver, as) zijn hier bewust getint: het
+dambord-script pelt licht-kleurloze randvlekjes weg. Controleer elke drop op
+een DONKERE achtergrond en kijk bij rang_2, trede_2 en vlam_gedoofd specifiek
+naar happen uit de rand. Belichting: één lichtrichting per set (linksboven)
+mét het letterlijke Act 1/2-anker erachter; alleen het decreetzegel draagt het
+Act 3-anker (het is het regime). De kopband is een volvlak-scène zonder
+transparantie: verwijder_dambord.py moet er letterlijk "geen dambordkleuren
+gevonden?!" voor printen — staat er iets anders, herstel dan uit originelen/.
+
+
+------------------------- EMBLEMEN (8 losse zegels) -------------------------
+
+========================= embleem_vlam.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A round guild seal: dark blood-red wax inside a THIN charcoal-black iron rim no thicker than 6% of the seal's diameter, with exactly four small rivets on the rim at the 12, 3, 6 and 9 o'clock positions. The relief pressed into the wax, in pale parchment tone and high contrast, fills about 70% of the wax disc edge to edge: one stylised upright FLAME with three tongues, wide at the base. Very bold, thick, simple shapes — the motif must stay recognisable at 24 pixels. Warm ember-orange torchlight from the upper left, deep purple shadow on the lower right. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Isolated on a fully transparent background, the seal cleanly cut out. No text, no letters, no numbers, no frame, no UI, no scene, no ground shadow. The seal is centered and fills about 85% of a square 1024x1024 canvas. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: keep the rim thickness, the four rivets, the wax colour, the camera angle and the lighting identical to the other seals in this series.
+
+========================= embleem_schedel.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A round guild seal: dark blood-red wax inside a THIN charcoal-black iron rim no thicker than 6% of the seal's diameter, with exactly four small rivets on the rim at the 12, 3, 6 and 9 o'clock positions. The relief pressed into the wax, in pale parchment tone and high contrast, fills about 70% of the wax disc edge to edge: one grinning SKULL seen straight from the front, jaw slightly open, big round eye sockets. Very bold, thick, simple shapes — the motif must stay recognisable at 24 pixels. Warm ember-orange torchlight from the upper left, deep purple shadow on the lower right. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Isolated on a fully transparent background, the seal cleanly cut out. No text, no letters, no numbers, no frame, no UI, no scene, no ground shadow. The seal is centered and fills about 85% of a square 1024x1024 canvas. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: keep the rim thickness, the four rivets, the wax colour, the camera angle and the lighting identical to the other seals in this series.
+
+========================= embleem_dossier.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A round guild seal: dark blood-red wax inside a THIN charcoal-black iron rim no thicker than 6% of the seal's diameter, with exactly four small rivets on the rim at the 12, 3, 6 and 9 o'clock positions. The relief pressed into the wax, in pale parchment tone and high contrast, fills about 70% of the wax disc edge to edge: one thick BUNDLE OF PAPERS seen from the front, held together by a heavy iron clip at the top, the lower corners curling up — a dossier, drawn as one solid blocky shape. Very bold, thick, simple shapes — the motif must stay recognisable at 24 pixels. Warm ember-orange torchlight from the upper left, deep purple shadow on the lower right. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Isolated on a fully transparent background, the seal cleanly cut out. No text, no letters, no numbers, no writing on the papers, no frame, no UI, no scene, no ground shadow. The seal is centered and fills about 85% of a square 1024x1024 canvas. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: keep the rim thickness, the four rivets, the wax colour, the camera angle and the lighting identical to the other seals in this series.
+
+========================= embleem_kroon.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A round guild seal: dark blood-red wax inside a THIN charcoal-black iron rim no thicker than 6% of the seal's diameter, with exactly four small rivets on the rim at the 12, 3, 6 and 9 o'clock positions. The relief pressed into the wax, in pale parchment tone and high contrast, fills about 70% of the wax disc edge to edge: one crooked iron CROWN, wide and squat, with five points of which one is bent over. Very bold, thick, simple shapes — the motif must stay recognisable at 24 pixels. Warm ember-orange torchlight from the upper left, deep purple shadow on the lower right. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Isolated on a fully transparent background, the seal cleanly cut out. No text, no letters, no numbers, no frame, no UI, no scene, no ground shadow. The seal is centered and fills about 85% of a square 1024x1024 canvas. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: keep the rim thickness, the four rivets, the wax colour, the camera angle and the lighting identical to the other seals in this series.
+
+========================= embleem_rat.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A round guild seal: dark blood-red wax inside a THIN charcoal-black iron rim no thicker than 6% of the seal's diameter, with exactly four small rivets on the rim at the 12, 3, 6 and 9 o'clock positions. The relief pressed into the wax, in pale parchment tone and high contrast, fills about 70% of the wax disc edge to edge: one RAT rearing up on its hind legs in side view, big round ears, long tail curled beneath it in one thick stroke. Very bold, thick, simple shapes — the motif must stay recognisable at 24 pixels. Warm ember-orange torchlight from the upper left, deep purple shadow on the lower right. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Isolated on a fully transparent background, the seal cleanly cut out. No text, no letters, no numbers, no frame, no UI, no scene, no ground shadow. The seal is centered and fills about 85% of a square 1024x1024 canvas. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: keep the rim thickness, the four rivets, the wax colour, the camera angle and the lighting identical to the other seals in this series.
+
+========================= embleem_zwaard.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A round guild seal: dark blood-red wax inside a THIN charcoal-black iron rim no thicker than 6% of the seal's diameter, with exactly four small rivets on the rim at the 12, 3, 6 and 9 o'clock positions. The relief pressed into the wax, in pale parchment tone and high contrast, fills about 70% of the wax disc edge to edge: one short broad SWORD, point up, with a very wide straight crossguard reaching almost the full width of the disc — the whole shape reads as a bold cross. Very bold, thick, simple shapes — the motif must stay recognisable at 24 pixels. Warm ember-orange torchlight from the upper left, deep purple shadow on the lower right. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Isolated on a fully transparent background, the seal cleanly cut out. No text, no letters, no numbers, no frame, no UI, no scene, no ground shadow. The seal is centered and fills about 85% of a square 1024x1024 canvas. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: keep the rim thickness, the four rivets, the wax colour, the camera angle and the lighting identical to the other seals in this series.
+
+========================= embleem_sleutel.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A round guild seal: dark blood-red wax inside a THIN charcoal-black iron rim no thicker than 6% of the seal's diameter, with exactly four small rivets on the rim at the 12, 3, 6 and 9 o'clock positions. The relief pressed into the wax, in pale parchment tone and high contrast, fills about 70% of the wax disc edge to edge: one heavy dungeon KEY lying DIAGONALLY across the disc from lower left to upper right, with an oversized round bow taking up a third of the disc and a chunky two-toothed bit — the shape must read as 'big ring plus stub', never as a thin vertical bar. Very bold, thick, simple shapes — the motif must stay recognisable at 24 pixels. Warm ember-orange torchlight from the upper left, deep purple shadow on the lower right. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Isolated on a fully transparent background, the seal cleanly cut out. No text, no letters, no numbers, no frame, no UI, no scene, no ground shadow. The seal is centered and fills about 85% of a square 1024x1024 canvas. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: keep the rim thickness, the four rivets, the wax colour, the camera angle and the lighting identical to the other seals in this series.
+
+========================= embleem_oog.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A round guild seal: dark blood-red wax inside a THIN charcoal-black iron rim no thicker than 6% of the seal's diameter, with exactly four small rivets on the rim at the 12, 3, 6 and 9 o'clock positions. The relief pressed into the wax, in pale parchment tone and high contrast, fills about 70% of the wax disc edge to edge: one single wide-open EYE seen straight on, the lids drawn as two bold arcs, with a narrow vertical slit pupil. Very bold, thick, simple shapes — the motif must stay recognisable at 24 pixels. Warm ember-orange torchlight from the upper left, deep purple shadow on the lower right. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Isolated on a fully transparent background, the seal cleanly cut out. No text, no letters, no numbers, no frame, no UI, no scene, no ground shadow. The seal is centered and fills about 85% of a square 1024x1024 canvas. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: keep the rim thickness, the four rivets, the wax colour, the camera angle and the lighting identical to the other seals in this series.
+
+
+------------------------- RANGTEKENS (3 medailles) -------------------------
+
+========================= rang_1.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+One round hammered GOLD medal, the metal warm and richly coloured with saturated highlights (never pure white). The rim is a raised wreath of small flame tongues; on the face a simple engraved flame. Above it only a short stub of a full, wide, frayed dark-red ribbon, never more than a fifth of the image height — the medal DISC itself fills about 75% of the canvas. The three medals of this series must be tellable apart by SHAPE alone at 20 pixels, not only by metal colour: this one is the ornate one. Bold, simple, readable at 20 pixels. Warm ember-orange torchlight from the upper left, deep purple shadow on the lower right. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Isolated on a fully transparent background, the medal cleanly cut out. No text, no letters, no numbers, no frame, no UI, no scene, no ground shadow. Centered on a square 1024x1024 canvas. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: keep the disc size, the ribbon colour, the engraving and the lighting identical to the other medals in this series.
+
+========================= rang_2.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+One round brushed SILVER medal: a mid-tone cool blue-grey metal with a clear blue tint even in its highlights, noticeably darker than white, never a neutral pale grey, with a few warm ember reflections. A plain smooth rim; on the face a simple engraved flame. Above it only a short stub of a slightly narrower frayed dark-red ribbon, never more than a fifth of the image height — the medal DISC itself fills about 75% of the canvas. The three medals of this series must be tellable apart by SHAPE alone at 20 pixels, not only by metal colour: this one is the plain one. Bold, simple, readable at 20 pixels. Warm ember-orange torchlight from the upper left, deep purple shadow on the lower right. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Isolated on a fully transparent background, the medal cleanly cut out. No text, no letters, no numbers, no frame, no UI, no scene, no ground shadow. Centered on a square 1024x1024 canvas. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: keep the disc size, the ribbon colour, the engraving and the lighting identical to the other medals in this series.
+
+========================= rang_3.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+One round dull worn BRONZE medal, brown-copper metal with a hint of green patina (never pure white). A plain rim with one chipped notch missing from its edge; on the face a simple engraved flame. Above it only a very short frayed stub of dark-red ribbon, never more than a fifth of the image height — the medal DISC itself fills about 75% of the canvas. The three medals of this series must be tellable apart by SHAPE alone at 20 pixels, not only by metal colour: this one is the battered one. Bold, simple, readable at 20 pixels. Warm ember-orange torchlight from the upper left, deep purple shadow on the lower right. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Isolated on a fully transparent background, the medal cleanly cut out. No text, no letters, no numbers, no frame, no UI, no scene, no ground shadow. Centered on a square 1024x1024 canvas. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: keep the disc size, the ribbon colour, the engraving and the lighting identical to the other medals in this series.
+
+
+------------------------- PODIUMTREDEN (3 losse blokken) -------------------------
+
+!! CRUCIAAL — DE PLINT MOET LEEG BLIJVEN. Op elke trede komt LIVE HTML-tekst
+   (naam, score, held). Dus: GEEN 1, GEEN 2, GEEN 3, geen cijfers, geen
+   laurier, geen plaquette, geen reliëf op het front. En: ÉÉN blok per
+   afbeelding — geen olympisch podium van drie treden naast elkaar.
+
+========================= trede_1.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+One squat rectangular stone podium block seen from slightly above: the front face square to the camera, tilted about 12 degrees downward so that only a shallow sliver of the flat top surface shows as a thin horizontal band — the top must read as a narrow strip, never as a deep receding plane. A thick band of hammered GOLD metal caps the block, glowing in rich coloured light, never pure white; the charcoal stone below is cracked, with cool grey-violet ash (mid-tone, never a pale near-white grey) settled in the cracks. The whole front face and the top strip are completely BLANK, smooth, uncarved stone — absolutely no number, no numeral 1, 2 or 3, no roman numerals, no engraved plaque, no laurel, no relief. Draw ONE single isolated block: do NOT draw an Olympic podium, no staircase of blocks, no first/second/third place platform, no second block anywhere in the image. Warm ember-orange torchlight from the left, deep purple shadow on the right side. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Landscape 1280x1024 canvas: the block is wide and low, fills about 90% of the canvas width and about 55% of its height, horizontally centered and standing on the bottom edge. Everything above and beside it is empty and fully transparent — no statue, no trophy, no figure, no banner, no background, no ground line. No text, no letters, no numbers, no frame, no UI. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: keep the camera angle, the 12-degree tilt, the proportions, the stone and the lighting identical to the other blocks in this series; only the cap metal differs.
+
+========================= trede_2.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+One squat rectangular stone podium block seen from slightly above: the front face square to the camera, tilted about 12 degrees downward so that only a shallow sliver of the flat top surface shows as a thin horizontal band — the top must read as a narrow strip, never as a deep receding plane. A thick band of brushed SILVER metal caps the block: a mid-tone cool blue-grey metal with a clear blue tint even in its highlights, noticeably darker than white, never a neutral pale grey, with warm reflections; the charcoal stone below is cracked, with cool grey-violet ash (mid-tone, never a pale near-white grey) settled in the cracks. The whole front face and the top strip are completely BLANK, smooth, uncarved stone — absolutely no number, no numeral 1, 2 or 3, no roman numerals, no engraved plaque, no laurel, no relief. Draw ONE single isolated block: do NOT draw an Olympic podium, no staircase of blocks, no first/second/third place platform, no second block anywhere in the image. Warm ember-orange torchlight from the left, deep purple shadow on the right side. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Landscape 1280x1024 canvas: the block is wide and low, fills about 90% of the canvas width and about 55% of its height, horizontally centered and standing on the bottom edge. Everything above and beside it is empty and fully transparent — no statue, no trophy, no figure, no banner, no background, no ground line. No text, no letters, no numbers, no frame, no UI. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: keep the camera angle, the 12-degree tilt, the proportions, the stone and the lighting identical to the other blocks in this series; only the cap metal differs.
+
+========================= trede_3.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+One squat rectangular stone podium block seen from slightly above: the front face square to the camera, tilted about 12 degrees downward so that only a shallow sliver of the flat top surface shows as a thin horizontal band — the top must read as a narrow strip, never as a deep receding plane. A thick band of dull worn BRONZE metal with one chipped corner caps the block, brown-copper with a hint of green patina, never pure white; the charcoal stone below is cracked, with cool grey-violet ash (mid-tone, never a pale near-white grey) settled in the cracks. The whole front face and the top strip are completely BLANK, smooth, uncarved stone — absolutely no number, no numeral 1, 2 or 3, no roman numerals, no engraved plaque, no laurel, no relief. Draw ONE single isolated block: do NOT draw an Olympic podium, no staircase of blocks, no first/second/third place platform, no second block anywhere in the image. Warm ember-orange torchlight from the left, deep purple shadow on the right side. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Landscape 1280x1024 canvas: the block is wide and low, fills about 90% of the canvas width and about 55% of its height, horizontally centered and standing on the bottom edge. Everything above and beside it is empty and fully transparent — no statue, no trophy, no figure, no banner, no background, no ground line. No text, no letters, no numbers, no frame, no UI. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: keep the camera angle, the 12-degree tilt, the proportions, the stone and the lighting identical to the other blocks in this series; only the cap metal differs.
+
+
+------------------------- DE EEUWIGE VLAM (3 standen) -------------------------
+
+========================= vlam_brandt.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+One small iron fire basket — a brazier bowl on three short legs — BURNING: a tall, steady, richly coloured orange-gold flame rises from it, core bright yellow but never pure white, with a few small crisp saturated-orange spark dots. Seen in a three-quarter view from slightly above eye level: the bowl's rim reads as a shallow ellipse (not a circle, not a straight line) and all three legs are visible, two in front and one behind. Bold simple shape, readable at 28 pixels. Warm ember-orange light from the flame itself on the iron, deep purple shadow underneath. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Isolated on a fully transparent background, the brazier and flame cleanly cut out. No text, no letters, no numbers, no frame, no UI, no scene, no ground shadow. Centered, filling about 85% of a square 1024x1024 canvas. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: the same bowl, the same three legs, the same camera angle and the same lighting as the other states of this brazier in this series.
+
+========================= vlam_flakkert.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+One small iron fire basket — a brazier bowl on three short legs — FLICKERING, about to die: a low, thin, guttering flame leans sideways out of the bowl, about a third of the height of a healthy fire, orange at the tip and cooler blue-violet at its base, with one thin dark thread of soot rising from it; a few embers glow dull red in the bowl. Seen in a three-quarter view from slightly above eye level: the bowl's rim reads as a shallow ellipse (not a circle, not a straight line) and all three legs are visible, two in front and one behind. Bold simple shape, readable at 28 pixels. Faint warm light on the iron, deep purple shadow underneath. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, no grey smoke cloud. Isolated on a fully transparent background, the brazier and flame cleanly cut out. No text, no letters, no numbers, no frame, no UI, no scene, no ground shadow. Centered, filling about 85% of a square 1024x1024 canvas. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: the same bowl, the same three legs, the same camera angle and the same lighting as the other states of this brazier in this series.
+
+========================= vlam_gedoofd.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+One small iron brazier bowl on three short legs standing COLD, DEAD and EMPTY. There is NO fire anywhere in this image — no flame, no flame tongue, no burning, no fire glow, no light coming out of the bowl. The bowl holds only cool grey-violet ash (mid-tone, never a pale near-white grey) and blackened charcoal stubs, plus a single dull dark-red ember point the size of a pinhead that gives off no light at all; the iron is cold, shaded in purple-grey. Seen in a three-quarter view from slightly above eye level: the bowl's rim reads as a shallow ellipse (not a circle, not a straight line) and all three legs are visible, two in front and one behind. Bold simple shape, readable at 28 pixels. Deep purple shadow underneath. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon at the moment the torch died.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke — and again: no fire, no flames, no sparks, no glow, no light source. Isolated on a fully transparent background, the brazier cleanly cut out. No text, no letters, no numbers, no frame, no UI, no scene, no ground shadow. Centered, filling about 85% of a square 1024x1024 canvas. Painted illustration style only.
+
+Series note, for consistency only — do not draw them: the same bowl, the same three legs, the same camera angle and the same lighting as the other states of this brazier in this series.
+
+
+------------------------- HET DECREET (Act 3-anker: het regime) -------------------------
+
+========================= decreet_zegel.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, NOT a side-by-side comparison, no second copy, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+One large round wax seal of an authoritarian regime in a dark-fantasy office satire: deep oxblood, almost black wax with a hard sharp lip and a few drips frozen at the rim, set on a thin ring of arrogant polished GOLD (no iron, no rivets) — clearly larger and darker than a guild seal, never to be mistaken for one. The relief pressed into the wax, in pale parchment tone and high contrast: a clenched fist seen from the side slamming a rubber office stamp straight down, fist and stamp fused into one compact, chunky, bold silhouette; no arm, no wrist, no desk, no paper. The lower edge of the wax itself burns a dull molten red, the glow staying strictly INSIDE the seal's outline — no light, haze or halo spilling outside the silhouette. Readable at 40 pixels. Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches (banners, armor, seals, statues).
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom, NO misty halo, NO smoke. Isolated on a fully transparent background, the seal cleanly cut out — no paper, no document under it. No text, no letters, no numbers in the relief, no frame, no UI, no scene, no ground shadow. Centered, filling about 90% of a square 1024x1024 canvas. Painted illustration style only.
+
+
+------------------------- DE KOPBAND (volvlak, geen transparantie) -------------------------
+
+========================= prikbord_kop.png =========================
+ONE single image of ONE wide horizontal header band — one standalone painting, NOT a sheet, NOT a grid, no variations.
+
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Landscape 2048x512: the top edge of a battered wooden notice board in a torchlit dungeon corridor of a grim 1980s-office-meets-fantasy regime. Dark stained planks with a worn upper ledge, rusty nails and bent iron brackets, a few torn BLANK paper corners still held by old drawing pins, one red wax seal stuck to the wood, ash and dust settled on the ledge, and one iron torch sconce with a richly coloured orange-gold flame (core yellow, never pure white) placed at about 75% of the width, not at the very edge. The composition must survive heavy cropping to a very wide band (up to 10:1): keep the outer 15% on the left and right free of key elements and spread the planks, nails, brackets and pinned paper corners evenly across the full width. Do NOT paint a gradient, vignette or fade at the bottom; keep the lower third an even, quiet, dark plank-and-shadow area with no detail that matters (the page applies its own fade). Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon. The torch flame stays richly coloured — NO white glow, NO hazy bloom, NO misty halo washing over the planks.
+
+Full-bleed painted scene, no transparency. No characters, NO text, NO letters or numbers on the papers or the wood, no UI, no frame, no watermark. Painted illustration style only.
