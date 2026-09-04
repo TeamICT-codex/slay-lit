@@ -689,6 +689,46 @@ function registreerDaily(gewonnen) {
   }
   return { totaal, reeks: Daily.reeks, besteReeks: Daily.besteReeks, nieuweTop };
 }
+/* ---------- VRIJE RUNS OP HET WERELDBORD (v100) ----------
+   Tot nu verstuurde alleen de daily een score: wie in een gewone run de DICKtator
+   versloeg stond nergens (Thomas, 3 sep). Elke afgeronde vrije run gaat nu óók de
+   scores-tabel in, met dezelfde formule (dagscore) en een EIGEN dagsleutel per run
+   ('run-<datum>-A<ascensie>-<seed>'): zo botst ze nooit met de daily van die dag
+   ((groep,naam,dag) is uniek) en blijft het dagbord ('Vandaag' = dag-eq-vandaag)
+   zuiver daily. 'Aller tijden' dedupt per speler op de beste rij → wordt daarmee
+   écht de beste run per speler, daily of vrij. Geen databasewijziging nodig. */
+/* leesbare rijlabel op de borden: daily = 🗓️ datum, vrije run (groep '…-RUN') = ⚔️ datum · A<ascensie>
+   (de ascensie reist mee in de seed-kolom als 'A5:<seed>') */
+function rijLabel(r) {
+  const dag = String((r && r.dag) || '');
+  if (window.Online && Online.isRunGroep && Online.isRunGroep(r.groep)) {
+    const m = String(r.seed || '').match(/^A(\d+):/);
+    const asc = m ? Number(m[1]) : 0;
+    return '⚔️ ' + dag + (asc > 0 ? ' · A' + asc : '');
+  }
+  return dag ? '🗓️ ' + dag : '';
+}
+function stuurRunScore(gewonnen) {
+  if (!S || S.daily) return;                                   /* de daily heeft haar eigen pad */
+  if (!(window.Online && Online.identiteit && Online.identiteit() && Online.stuurRunScore)) return;   /* zonder strijdnaam gebeurt er stilletjes niets */
+  if (S.runScoreVerstuurd) return;                             /* outro-pad + eindscherm: één keer */
+  S.runScoreVerstuurd = true;
+  const totaal = dagscore(gewonnen).totaal;
+  const payload = { dag: vandaagSleutel(), score: totaal, held: S.held, diepte: S.verdieping || 0, gewonnen: !!gewonnen, seed: 'A' + (S.ascensie | 0) + ':' + String(S.seed || '') };
+  const meld = uit => {
+    if (uit === 'lager') melding('🌍 Je betere run van vandaag blijft op het wereldbord staan.');
+    else if (uit) melding(gewonnen ? '👑 Je overwinning staat op het wereldbord.' : '🌍 Je run staat op het wereldbord.');
+  };
+  Online.stuurRunScore(payload)
+    .then(uit => {
+      if (uit) return uit;
+      melding('📡 Run kon niet naar het wereldbord — nog één poging…');
+      return new Promise(r => setTimeout(() => r(Online.stuurRunScore(payload)), 2600))
+        .then(uit3 => { if (!uit3) melding('📡 Niet gelukt — je run telt lokaal, maar het wereldbord mist haar.'); return uit3; });
+    })
+    .then(meld);
+}
+
 /* na je eigen daily: elke genoot die vandaag nog niet afdaalde krijgt een por.
    Bewust ná je eigen afdaling — je stoeft mét je score. Anti-spam: 1×/dag/koppel. */
 async function autoPorNaDaily(dag, score) {
@@ -828,7 +868,7 @@ function toonLeaderboard() {
       <span class="lb-rang">${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'}</span>
       <b>${g.score}</b>
       <span>${g.gewonnen ? '👑' : '💀'} ${HELDNAAM(g.held || 'slachter')} · rij ${g.diepte}</span>
-      <small>${g.dag}</small>
+      <small>${escSyn(rijLabel(g))}</small>
     </div>`).join('') || '<p class="lb-leeg">Nog geen dagelijkse afdalingen — de diepte wacht.</p>';
   const runs = (Codex.gesch || []).slice(0, 10).map(g => `
     <div class="lb-rij">
@@ -908,15 +948,16 @@ function wereldSectieHtml() {
 }
 function wereldRij(r, i, metDag) {
   const ik = Online.identiteit();
-  const eigen = ik && r.naam === ik.naam && r.groep === ik.code;
-  const posse = /^ZW-/.test(r.groep || '')
+  const groepBasis = Online.basisGroep ? Online.basisGroep(r.groep) : (r.groep || '');   /* '…-RUN' = vrije run van dezelfde speler (v100) */
+  const eigen = ik && r.naam === ik.naam && groepBasis === ik.code;
+  const posse = /^ZW-/.test(groepBasis)
     ? '<small class="wb-zw" data-tip="een zwerver — vecht zonder posse">🥾</small>'
-    : `<small class="wb-posse">${escSyn(r.groep || '')}</small>`;
+    : `<small class="wb-posse">${escSyn(groepBasis)}</small>`;
   return `<div class="lb-rij wb-rij ${eigen ? 'wb-eigen' : ''} ${i === 0 ? 'lb-top' : ''}">
     <span class="lb-rang">${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'}</span>
     <b>${r.score | 0}</b>
     <span>${r.gewonnen ? '👑' : '💀'} ${escSyn(r.naam)} ${posse}</span>
-    <small>${metDag ? escSyn(r.dag || '') : escSyn(HELDNAAM(r.held || 'slachter'))}</small>
+    <small>${metDag ? escSyn(rijLabel(r)) : escSyn(HELDNAAM(r.held || 'slachter'))}</small>
   </div>`;
 }
 async function vulWereldbord() {
@@ -932,7 +973,7 @@ async function vulWereldbord() {
       || '<p class="lb-leeg">Nog geen scores. De diepte wacht op de eerste.</p>';
     el.innerHTML = `<div class="lb-kolommen">
       <div class="lb-kolom"><h4>🗓️ Vandaag <small>zelfde wet, zelfde seed — eerlijke strijd</small></h4>${dagRijen}</div>
-      <div class="lb-kolom"><h4>🏛️ Aller tijden <small>beste dag per speler</small></h4>${ooitRijen}</div>
+      <div class="lb-kolom"><h4>🏛️ Aller tijden <small>beste run per speler — 🗓️ daily of ⚔️ vrije run</small></h4>${ooitRijen}</div>
     </div>`;
   } catch (e) {
     if (el) el.innerHTML = '<p class="lb-leeg">⚠️ De diepte is onbereikbaar (offline?). Je lokale bord hieronder werkt gewoon.</p>';
@@ -1148,7 +1189,7 @@ async function vulSyndicaat() {
       </div>`;
     }).join('');
     const restRijen = rest.map((r, i) => `<div class="lb-rij"><span class="lb-rang">${i + 4}.</span><b>${r.score | 0}</b><span>${escSyn(r.naam)}</span><small>${r.gewonnen ? '👑' : 'rij ' + (r.diepte | 0)}</small></div>`).join('');
-    const ooitRijen = (ooit || []).slice(0, 5).map((r, i) => `<div class="lb-rij ${i === 0 ? 'lb-top' : ''}"><span class="lb-rang">${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'}</span><b>${r.score | 0}</b><span>${escSyn(r.naam)}</span><small>${escSyn(r.dag)}</small></div>`).join('') || '<p class="lb-leeg">Nog geen scores — wees de eerste.</p>';
+    const ooitRijen = (ooit || []).slice(0, 5).map((r, i) => `<div class="lb-rij ${i === 0 ? 'lb-top' : ''}"><span class="lb-rang">${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'}</span><b>${r.score | 0}</b><span>${escSyn(r.naam)}</span><small>${escSyn(rijLabel(r))}</small></div>`).join('') || '<p class="lb-leeg">Nog geen scores — wees de eerste.</p>';
     const stoef = (recent || []).slice(0, 5).map(r => `<p class="syn-stoef">${synStoefRegel(r)}</p>`).join('') || '<p class="lb-leeg">Nog geen wapenfeiten. Iemand moet de eerste zijn…</p>';
     /* DE EEUWIGE VLAM: de posse-reeks als bandje boven het podium */
     let vlamHtml = '';
@@ -6030,6 +6071,7 @@ async function gevechtGewonnen() {
       if (!S.runGeregistreerd) {
         S._uitslagVooraf = registreerRun(true);
         if (S.daily) { const du = registreerDaily(true); S.dailyNieuweTop = du.nieuweTop; }
+        else stuurRunScore(true);   /* v100: de DICKtator-overwinning van een vrije run gaat het bord op */
         bankGedragen();
         S.runGeregistreerd = true;
       }
@@ -7888,6 +7930,7 @@ function toonEinde(gewonnen, verslagenBaas) {
   if (!S.runGeregistreerd) {
     uitslag = registreerRun(gewonnen);
     if (S.daily) { const du = registreerDaily(gewonnen); S.dailyNieuweTop = du.nieuweTop; wisSave(); }
+    else stuurRunScore(gewonnen);   /* v100: ook een vrije run telt op het wereldbord */
     if (gewonnen) bankGedragen();   /* overleefd → ALLE gedragen scherven bankt veilig op de stash */
     else {
       /* DOOD: wat je tíjdens de run VOND blijft behouden (bank het), enkel de bewust MEEGEBRACHTE

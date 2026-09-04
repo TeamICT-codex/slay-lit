@@ -156,6 +156,40 @@ const Online = (() => {
     } catch (e) { return false; }
   }
 
+  /* ---------- VRIJE RUNS (v100) ----------
+     De RLS-policy eist dag = echte datum, dus een vrije run krijgt geen eigen
+     dag-sleutel maar een eigen GROEP: '<code>-RUN'. Zo botst ze nooit met de
+     daily van dezelfde dag ((groep,naam,dag) uniek), blijven de posse-borden
+     (groep=eq.<code>) zuiver daily, en filtert het wereldbord ze bewust:
+     'Vandaag' laat ze weg, 'Aller tijden' dedupt op de BASISgroep zodat elke
+     speler één rij houdt — zijn beste, daily óf vrij. Eén vrije run per dag per
+     speler; een lagere score van dezelfde dag overschrijft de betere niet. */
+  const RUN_SUFFIX = '-RUN';
+  const isRunGroep = g => /-RUN$/.test(String(g || ''));
+  const basisGroep = g => String(g || '').replace(/-RUN$/, '');
+  async function stuurRunScore(d) {
+    const ik = identiteit();
+    if (!ik) return false;
+    const groep = basisGroep(ik.code).slice(0, 24 - RUN_SUFFIX.length) + RUN_SUFFIX;   /* policy: max 24 tekens */
+    const dag = String(d.dag || '');
+    const score = Math.max(0, d.score | 0);
+    try {
+      const q = `groep=eq.${encodeURIComponent(groep)}&naam=eq.${encodeURIComponent(ik.naam)}&dag=eq.${encodeURIComponent(dag)}&select=score`;
+      const bestaand = await req('scores?' + q);
+      if (Array.isArray(bestaand) && bestaand.length && (bestaand[0].score | 0) >= score) return 'lager';
+      await req('scores?on_conflict=groep,naam,dag', {
+        method: 'POST',
+        prefer: 'resolution=merge-duplicates',
+        body: JSON.stringify({
+          groep, naam: ik.naam, dag, score,
+          held: String(d.held || 'slachter'), diepte: Math.min(99, Math.max(0, d.diepte | 0)),
+          gewonnen: !!d.gewonnen, seed: String(d.seed || '').slice(0, 24)
+        })
+      });
+      return true;
+    } catch (e) { return false; }
+  }
+
   /* HET GRAFSCHRIFT: je laatste woorden op je score-rij van vandaag (kolom
      'boodschap', SQL deel 1d). Best-effort PATCH — de score-upload loopt
      hier nooit gevaar door. return=representation onthult of er écht een
@@ -232,7 +266,8 @@ const Online = (() => {
   const zonderTest = r => (Array.isArray(r) ? r.filter(x => x && !isTestGroep(x.groep)) : r);
   /* het wereld-dagklassement: iedereen die vandaag afdaalde, alle groepen.
      (groep,naam,dag) is uniek → geen dubbele spelers op één dag. */
-  const wereldDag = dag => req(`scores?dag=eq.${encodeURIComponent(dag)}&order=score.desc&limit=40`).then(zonderTest);
+  const wereldDag = dag => req(`scores?dag=eq.${encodeURIComponent(dag)}&order=score.desc&limit=40`)
+    .then(zonderTest).then(r => (Array.isArray(r) ? r.filter(x => !isRunGroep(x.groep)) : r));   /* 'Vandaag' = zelfde seed → alleen dailies (v100) */
   /* aller tijden wereldwijd: haal ruim op en houd per speler (groep+naam)
      alleen zijn beste dag over — PostgREST kan geen DISTINCT ON, dus de
      dedup gebeurt hier (client), ruim binnen de vriendenschaal */
@@ -240,7 +275,7 @@ const Online = (() => {
     const beste = [];
     const gezien = {};
     (zonderTest(rijen) || []).forEach(r => {
-      const sleutel = r.groep + '|' + r.naam; /* zichtbare scheider: '|' kan nooit in een code (normCode); hier stond een ONZICHTBARE controlebyte (0x01) die als lege string oogde */
+      const sleutel = basisGroep(r.groep) + '|' + r.naam; /* basisgroep: daily én vrije run van dezelfde speler tellen als één (v100). Zichtbare scheider: '|' kan nooit in een code (normCode); hier stond een ONZICHTBARE controlebyte (0x01) die als lege string oogde */
       if (!gezien[sleutel]) { gezien[sleutel] = true; beste.push(r); }
     });
     return beste;
@@ -296,7 +331,7 @@ const Online = (() => {
 
   return { actief, isLid, lid: () => lid, normCode, normNaam, verzinCode, wordLid, verlaat,
            identiteit, isZwerver, wordZwerver, hernoem,
-           stuurScore, stuurGrafschrift, dagTop, allerTijden, feed,
+           stuurScore, stuurRunScore, isRunGroep, basisGroep, stuurGrafschrift, dagTop, allerTijden, feed,
            groepGeschiedenis, stuurNalatenschap, haalNalatenschap,
            wereldDag, wereldOoit,
            meldAan, leden, stuurPor, mijnPorren, _dev };

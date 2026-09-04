@@ -109,6 +109,17 @@ Twee dingen om te weten:
 - **Zwervers** (spelers zonder syndicaat) krijgen client-side een verborgen
   persoonlijke code (`ZW-XXXXXX`) als groep: een posse-van-één. Zo blijft
   `(groep, naam, dag)` uniek per speler zonder schema-wijziging.
+
+**Vrije runs (v100, sept 2026).** Ook een gewone run (geen daily) gaat het
+wereldbord op, met dezelfde scoreformule. Omdat de insert-policy `dag` als echte
+datum eist, krijgt zo'n rij geen eigen dag-sleutel maar een eigen groep:
+`<code>-RUN` (bv. `KELDER-9104-RUN`, past in de `^[A-Z0-9-]+$`-regel en de
+24-tekengrens). De ascensie reist mee in `seed` als `A5:<seed>`. Gevolgen:
+één vrije run per speler per dag (een lagere score van dezelfde dag overschrijft
+de betere niet — de client leest eerst), de posse-borden (`groep=eq.<code>`)
+blijven zuiver daily, 'Vandaag' filtert `-RUN` weg, en 'Aller tijden' dedupt op
+de basisgroep zodat elke speler één rij houdt: zijn beste run, daily óf vrij.
+Geen SQL nodig.
 - **Dev-/testrijen** met groepen die beginnen met `TEST-`, `ETEST-` of
   `PROBE-` worden client-side van het wereldbord gefilterd. Fysiek wissen kan
   altijd via Table Editor → `scores` → filter op die groepen → delete.
