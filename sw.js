@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v101'; // v101: laatste 4 hit-poses (Fluisteraar, Vaandeldrager, Ophitser, Gouden Garde), 2 metgezel-victories, echte Act 3 EPISCH 3-plaat
+const CACHE = 'slayit-v102'; // v102: het wereldbord toont geen possecodes (= toegangswoorden) van anderen meer
 const BESTANDEN = [
   '.',
   'css/style.css',

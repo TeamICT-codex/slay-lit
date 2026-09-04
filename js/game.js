@@ -950,9 +950,12 @@ function wereldRij(r, i, metDag) {
   const ik = Online.identiteit();
   const groepBasis = Online.basisGroep ? Online.basisGroep(r.groep) : (r.groep || '');   /* '…-RUN' = vrije run van dezelfde speler (v100) */
   const eigen = ik && r.naam === ik.naam && groepBasis === ik.code;
+  /* v102: de groepsCODE is tegelijk het TOEGANGSWOORD van die posse (wordLid neemt elke code
+     aan) — die hoort niet publiek op het wereldbord. Tot de doopakte (Prikbord, SQL 1h) een
+     echte naam levert, heet elke andere posse hier 'naamloze posse'; je eigen posse toont haar code. */
   const posse = /^ZW-/.test(groepBasis)
     ? '<small class="wb-zw" data-tip="een zwerver — vecht zonder posse">🥾</small>'
-    : `<small class="wb-posse">${escSyn(groepBasis)}</small>`;
+    : `<small class="wb-posse">${(ik && groepBasis === ik.code) ? escSyn(groepBasis) : 'naamloze posse'}</small>`;
   return `<div class="lb-rij wb-rij ${eigen ? 'wb-eigen' : ''} ${i === 0 ? 'lb-top' : ''}">
     <span class="lb-rang">${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'}</span>
     <b>${r.score | 0}</b>
