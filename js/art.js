@@ -564,7 +564,7 @@ window.laadRelikwieAfbeelding = maakArtLader('assets/relikwieen/');
 window.VOETMARGE = {
   bandiet: 2.7, blauwe_slijm: 1.0, de_aanklager: 2.2, de_archivaris: 2.9,
   de_deadline: 1.8, de_dicktator: 3.0, de_drempelwachter: 2.0, de_erfprins: 3.6,
-  de_fluisteraar: 1.7, de_gouden_garde: 1.8, de_hofnar: 1.4, de_inktvlek: 5.7,
+  de_fluisteraar: 1.4, de_gouden_garde: 1.8, de_hofnar: 1.4, de_inktvlek: 5.7,
   de_mal: 2.6, de_omroeper: 2.7, de_ophitser: 1.8, de_rechter: 1.4,
   de_redacteur: 1.4, de_uitgewiste: 3.6, de_vaandeldrager: 2.1, de_verzwolgene: 2.2,
   de_zondebok: 11.4, doorslag: 2.2, doorslag_kopie: 2.8, dossierwurm: 3.0,
@@ -578,6 +578,28 @@ window.VOETMARGE = {
      voetlijn tijdens een treffer (gemeten op de v91-hit-drops; schaduw_hit = 0) */
   bandiet_hit: 4.5, blauwe_slijm_hit: 2.9, echo_hit: 7.9, groene_slijm_hit: 6.3,
   grotrat_hit: 2.0, kultist_hit: 4.5, paddenstoelman_hit: 5.7, pekziel_hit: 3.6, steengolem_hit: 2.9,
+  de_gouden_garde_hit: 4.2, de_ophitser_hit: 3.2, de_vaandeldrager_hit: 5.2,   /* v101-hits (alfa-scan 4 sep) */
+  vlamwachter_victory: 1.8,   /* v101: de vuistheffende Vlamwachter staat 3,6% lager in zijn kader dan zijn basis. drops_victory BEWUST niet: zijn 14% marge is de sprong zelf (zoals drops_attack/hit/death) */
+  /* v101: volledige alfa-scan van ALLE poses (196 stuks) — elke pose die 1,5% of meer van zijn basis
+     afwijkt krijgt een eigen marge: geen zwevende lijken of aanvallers meer, en ook geen poses die
+     ONDER de voetlijn geduwd werden (negatieve afwijking, bv. de_erfprins_cast). De sprongen van de
+     honden (drops/drops_wit attack/hit/offer/victory) staan er bewust niet in: daar is de marge de sprong. */
+  bandiet_attack: 7.2, blauwe_slijm_attack: 3.8, blauwe_slijm_death: 10.6, de_aanklager_attack: 5.8, de_archivaris_block: 5.9,
+  de_archivaris_cast: 1.2, de_archivaris_hit: 5.3, de_deadline_attack: 4.9, de_deadline_hit: 3.9, de_drempelwachter_attack: 6.5,
+  de_erfprins_attack: 0.8, de_erfprins_cast: 0.0, de_erfprins_hit: 0.8, de_erfprins_plagiaat: 0.8, de_erfprins_plagiaat_variant: 0.6,
+  de_fluisteraar_attack: 4.7, de_fluisteraar_death: 4.4, de_gouden_garde_cast: 0.0, de_hofnar_attack: 4.1, de_hofnar_hit: 3.1,
+  de_inktvlek_attack: 10.1, de_inktvlek_death: 20.4, de_mal_death: 7.3, de_omroeper_attack: 4.5, de_omroeper_block: 4.4,
+  de_ophitser_attack: 6.1, de_rechter_attack: 4.3, de_rechter_death: 3.0, de_redacteur_attack: 5.7, de_redacteur_death: 3.6,
+  de_vaandeldrager_attack: 6.2, de_verzwolgene_attack: 13.1, de_verzwolgene_block: 4.3, de_zondebok_death: 9.0, de_zondebok_hit: 4.9,
+  doorslag_attack: 5.9, doorslag_block: 6.8, drops_death: 20.9, echo_attack: 9.3, gifmagier_attack: 4.0,
+  gifmagier_block: 8.5, gifmagier_cast: 4.0, gifmagier_death: 9.5, gifmagier_hit: 4.8, groene_slijm_attack: 6.5,
+  groene_slijm_death: 11.8, grotrat_attack: 11.5, grotrat_death: 13.6, het_origineel_attack: 7.7, inktklerk_death: 5.3,
+  kultist_death: 10.4, mosgeest_attack: 8.7, mosgeest_death: 1.3, naaper_attack: 8.1, paddenstoelman_attack: 7.4,
+  paddenstoelman_death: 5.4, pekziel_attack: 9.3, pekziel_gif: 0.5, slijmkoning_attack: 11.4, slijmkoning_block: 7.7,
+  slijmkoning_death: 10.4, slijmkoning_hit: 4.5, speler_attack: 12.2, speler_block: 7.1, speler_cast: 5.7,
+  speler_death: 5.5, speler_hit: 4.3, spiegelwachter_gif: 3.0, steengolem_attack: 5.5, steengolem_death: 5.6,
+  stempelaar_attack: 11.6, stempelaar_block: 7.2, stempelaar_cast: 6.1, stempelaar_hit: 1.3, thoverk_block: 6.1,
+  thoverk_death: 4.5, thoverk_hit: 3.4, vlamwachter_death: 3.5,
 };
 window.laadDrankAfbeelding = maakArtLader('assets/dranken/');
 window.laadIcoonAfbeelding = maakArtLader('assets/iconen/');   /* UI-iconen (rust-opties enz.) */

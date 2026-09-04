@@ -30,8 +30,8 @@ Nederlands.
   cache-bump → commit + push). Nooit rauwe PNG's in de repo laten staan;
   originelen horen in `assets-bron/`.
 - Elke pose = een APARTE afbeelding, bestandsnaam `{id}_{pose}`.
-  Facing: helden kijken naar RECHTS, vijanden/metgezellen naar LINKS
-  (ze staan in het gevecht tegenover elkaar).
+  Facing: helden EN metgezellen kijken naar RECHTS, vijanden naar LINKS
+  (de metgezel staat naast de held; ze staan tegenover de vijanden).
 - Elk nieuw art-vereist element (vijand, kaart, relikwie, icoon, metgezel,
   achtergrond…) krijgt meteen zijn prompt in de juiste
   `assets/**/PROMPTS.txt`, met stijlanker per act (Act 3-handtekening:

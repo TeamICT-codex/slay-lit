@@ -6017,7 +6017,7 @@ async function gevechtGewonnen() {
   if (window.Vista) Vista.pose(g.speler, 'victory', 2.5);
   pose2D(g.speler, 'victory', 2.5);
   /* de metgezel viert mee — pose2D valt stil terug voor wie geen victory-art
-     heeft (nu enkel drops_wit: de blije witte hond) */
+     heeft (sinds v101 hebben drops en vlamwachter er ook een; alleen mosgeest nog niet) */
   if (g.metgezel && !g.metgezel.dood) {
     if (window.Vista) Vista.pose(g.metgezel, 'victory', 2.5);
     pose2D(g.metgezel, 'victory', 2.5);
