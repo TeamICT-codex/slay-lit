@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v104'; // v104: DE INZAGE - vaste kijk-knop links in het mobiele gevecht, chips met dicht dekvlak, portret-vijandenrij in beeld, instelling 'Topbalk doorschijnend'
+const CACHE = 'slayit-v105'; // v105: Inzage-knop zonder tooltip (de uitleg verscheen bij elke tik); alleen nog de eenmalige melding
 const BESTANDEN = [
   '.',
   'css/style.css',

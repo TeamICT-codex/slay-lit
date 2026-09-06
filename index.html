@@ -197,7 +197,7 @@
   <!-- fakkel-vignet: het donker kruipt vanaf de schermranden naar binnen -->
   <!-- DE INZAGE (mobiel, alleen in het gevecht): vaste knop links; body.inzage zet de hold-peek vast.
        Bewust een body-kind: binnen #scherm-gevecht (stapelcontext z 1) zou hij altijd onder de topbalk vallen. -->
-  <button type="button" id="inzage-knop" onclick="wisselInzage()" aria-pressed="false" aria-label="Inzage" data-tip="Inzage — je hand gaat opzij en elke status en intentie wordt leesbaar. Nog eens tikken, of Einde beurt, sluit het dossier."></button>
+  <button type="button" id="inzage-knop" onclick="wisselInzage()" aria-pressed="false" aria-label="Inzage" title="Inzage"></button>   <!-- v105: geen data-tip meer — op touch toonde die bij ELKE tik de uitleg; de eenmalige melding volstaat -->
   <div id="licht-vignet"></div>
 
   <!-- draai-blok: sommige schermen spelen liggend (gevecht, smederij, kaartkeuze), andere staand
