@@ -677,7 +677,15 @@ const ACHTERGRONDEN = {
       'Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 2.webp',
       'Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 3.webp'
     ],
-    finale: 'Act 3 achtergronden/Achtergrond ACT 3 FINALE.webp',
+    /* het eindgevecht: het drieluik 'De Raadzaal' (toneelstandaard: vloerrand 56%, midden leeg).
+       `finale` = plaat 1 (De Zitting, intact); `finaleFasen` zijn de twee vervolgplaten voor de
+       baas-crossfade (fase 2: het goud loopt; Herverkiezing: puin) — data klaar, de wissel volgt
+       met de bouw van 'Het Proces'. De oude 'Achtergrond ACT 3 FINALE.webp' blijft als reserve. */
+    finale: 'Act 3 achtergronden/Gevechtstijl Act 3 FINALE 1 zitting.webp',
+    finaleFasen: {
+      verschuiving: 'Act 3 achtergronden/Gevechtstijl Act 3 FINALE 2 verschuiving.webp',
+      herverkiezing: 'Act 3 achtergronden/Gevechtstijl Act 3 FINALE 3 herverkiezing.webp'
+    },
     winkel: 'Act 3 achtergronden/Achtergrond verkoper ACT3.webp',
     winkelEasterEgg: 'Act 3 achtergronden/Achtergrond verkoper ACT3 easter egg.webp',
     event: 'Act 3 achtergronden/Achtergrondvraagtekenencounter ACT3.webp',

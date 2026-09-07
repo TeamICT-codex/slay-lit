@@ -337,3 +337,399 @@ dominates. Landscape 16:9 composition (~1672x941). The BOTTOM THIRD of the image
 is an open, mostly empty dark stone floor where the combatants will stand — keep
 it clear of large objects. No text, no frame, no UI.
 Painted illustration style only.
+
+
+################################################################################
+############  GEVECHTSTONEEL — GRONDLIJN 56% (toneelonderzoek, 6 sep 2026)  ####
+################################################################################
+Zes gevechtsplaten met een vaste toneelstandaard, zodat held en vijanden overal
+op dezelfde grond staan: de verre rand van de loopvloer = EEN rechte horizontale
+lijn op 56% van boven, het middelste 80% van de breedte daaronder LEEG, hoge
+elementen alleen in de buitenste 10% links en rechts, een focaal bouwsel in het
+bovenmidden tussen 20% en 48%. Drie platen VERVANGEN bestaande bestanden (zelfde
+naam, overschrijven); de drie FINALE-platen zijn nieuw (het drieluik "De Raadzaal"
+voor het DICKtator-eindgevecht: intact / het goud loopt / puin). Genereer de drie
+FINALE-platen in DEZELFDE sessie met plaat 1 als beeldreferentie.
+Dropmappen: "Act 3 achtergronden/" resp. "Act 2 achtergronden/".
+
+========================= Gevechtstijl Act 3 FINALE 1 zitting.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Environment plate, wide establishing shot: THE COUNCIL HALL OF THE REGIME — a vast throne-hall built as a tribunal-theatre, black cracked basalt with arrogant polished gold plated onto everything the regime touches. Far centre, standing on a low one-step dais whose front edge runs as ONE straight horizontal line across the entire width at 56% down the frame: a COLOSSAL EMPTY GOLDEN THRONE welded together from gilded axe-heads, rolled and sealed decrees and heavy chains, absurdly too large for any man, its high back rising to about 20% from the top of the frame. Above and behind it, emerging from the back wall, a gigantic gilded statue-HAND pointing with one enormous accusing index finger diagonally down toward the LEFT side of the hall (where the accused stands). Left and right of the dais: tiers of empty gilded tribune benches with blank gold nameplates, a tiny regime pennant planted in every seat like a silent audience of flags, the tiers receding into deep shadow. Tall gothic windows upper-left and upper-right with storm-violet lightning outside. Along the front edge of the dais runs a FOOTLIGHT RAIL: a seam of glowing molten vents lighting the throne and the giant hand harshly from BELOW, theatre style. Left wing of the frame (outer 10%): a low black-iron dock railing — the accused's box — with a single torch bracket burning SOFT AMBER, the only gentle light in the hall. Right wing (outer 10%): gold banner-poles with blank gold seal medallions and hanging chains. The near floor, filling the whole lower part of the frame: flat matte black basalt slabs with faint dim red seams, falling away into darkness toward the bottom edge.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches (banners, armor, seals, statues). The world itself burns harsh and red; the hero's torch remains the only SOFT amber light. Colour temperature split: soft amber only on the left wing, harsh red-gold-violet on the right and centre; equal brightness both sides.
+
+STAGE COMPOSITION (strict): camera at standing eye level, straight-on, shallow one-point perspective with the vanishing point at centre, no fisheye, no bird's-eye view. The far edge of the walkable floor is ONE straight horizontal line at 56% down the frame across the middle 80% of the width — no V-shaped perspective dip at the sides. Everything below that line across the middle 80% of the width is EMPTY flat matte floor: no pillars, braziers, statues, stairs, furniture, debris or falls standing there. Tall framing elements only in the outer 10% left and right. One single focal structure (the throne and the hand) in the upper centre between 20% and 48% down the frame. The lower third of the frame falls into deep low-texture shadow with a soft dark vignette in the corners; no bright light sources below the floor line except the footlight rail itself. Include one human-scale reference on the floor line (the dock railing and a doorway height of about 22% of the frame) so the throne reads as 1.7 times a man's height. Mood: pompous, intact, awaiting a verdict.
+
+Painted illustration style only. Full-bleed 16:9 landscape environment plate (1920x1080), no transparency. No characters, no creatures, no figures, no crowd, no faces, no text, no letters, no numbers, no signage, no frame, no UI.
+
+========================= Gevechtstijl Act 3 FINALE 2 verschuiving.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Environment plate — THE SAME COUNCIL HALL OF THE REGIME as the reference plate: SAME camera, SAME architecture, SAME placement of the colossal empty golden throne on the low dais (front edge = one straight horizontal line at 56% down the frame), the giant gilded statue-hand pointing down-left above it, the tiers of gilded tribune benches left and right, the gothic storm windows, the molten FOOTLIGHT RAIL along the dais edge, the black-iron dock railing with its soft amber torch in the left wing and the gold banner-poles in the right wing, the flat matte black basalt floor filling the lower part of the frame.
+
+STATE CHANGE — the regime's gold is starting to RUN: the throne stands tilted with one leg sunk into a glowing crack in the dais, gilding dripping down it like hot wax, the giant hand's pointing finger cracked through, banners scorched and half-fallen, half of the tiny pennants toppled and scattered on the tribune steps (the audience is deserting), the footlight rail flaring brighter and more ragged, lightning striking closer, thin smoke drifting under the vaults. The walkable floor stays flat and intact: hairline cracks glow red but there are no holes, no debris and nothing standing in the middle 80% of the width below the floor line.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches (banners, armor, seals, statues). The world itself burns harsh and red; the hero's torch remains the only SOFT amber light. Soft amber only on the left wing, harsh red-gold-violet on the right and centre; equal brightness both sides.
+
+STAGE COMPOSITION (strict): camera at standing eye level, straight-on, shallow one-point perspective, no fisheye. The far edge of the walkable floor is ONE straight horizontal line at 56% down the frame across the middle 80% of the width. Everything below that line across the middle 80% of the width is EMPTY flat matte floor. Tall framing elements only in the outer 10% left and right. One focal structure (throne and hand) in the upper centre between 20% and 48% down the frame. The lower third falls into deep low-texture shadow with a soft dark vignette in the corners; no bright light sources below the floor line except the footlight rail.
+
+Painted illustration style only. Full-bleed 16:9 landscape environment plate (1920x1080), no transparency. No characters, no creatures, no figures, no crowd, no faces, no text, no letters, no numbers, no signage, no frame, no UI.
+
+========================= Gevechtstijl Act 3 FINALE 3 herverkiezing.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Environment plate — THE SAME COUNCIL HALL OF THE REGIME as the reference plate: SAME camera, SAME architecture, the low dais with its front edge as one straight horizontal line at 56% down the frame, the tiers of tribune benches left and right, the gothic windows, the dock railing in the left wing, the banner-poles in the right wing, the flat matte black basalt floor filling the lower part of the frame.
+
+STATE CHANGE — the hall in RUIN: the colossal golden throne has toppled and lies burning on its side across the dais, the giant gilded statue-hand has broken off the wall and fallen diagonally across the right-hand tribunes, the vaulted roof is torn open and storm-violet lightning pours straight into the hall, every pennant is gone or burning, gold runs molten in streams down the dais step, the footlight rail has erupted into a full wall of ember light behind the dais, ash and sparks drift down. The dock railing on the left is bent but its small amber torch still burns. The walkable floor is scarred but INTACT and flat: glowing cracks only, no holes, no rubble and nothing standing in the middle 80% of the width below the floor line — the ruin lives on the dais and above, never on the stage.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches (banners, armor, seals, statues). The world itself burns harsh and red; the hero's torch remains the only SOFT amber light. Soft amber only on the left wing, harsh red-gold-violet on the right and centre; equal brightness both sides.
+
+STAGE COMPOSITION (strict): camera at standing eye level, straight-on, shallow one-point perspective, no fisheye. The far edge of the walkable floor is ONE straight horizontal line at 56% down the frame across the middle 80% of the width. Everything below that line across the middle 80% of the width is EMPTY flat matte floor. Tall framing elements only in the outer 10% left and right. One focal mass (the fallen throne and broken hand under the torn roof) in the upper centre between 20% and 48% down the frame. The lower third falls into deep low-texture shadow with a soft dark vignette in the corners; no bright light sources below the floor line except the erupted footlight rail at the dais edge.
+
+Painted illustration style only. Full-bleed 16:9 landscape environment plate (1920x1080), no transparency. No characters, no creatures, no figures, no crowd, no faces, no text, no letters, no numbers, no signage, no frame, no UI.
+
+========================= Gevechtstijl Act 3 stijl 3.png =========================
+(VERVANGT de bestaande te smalle ronde arena — zelfde naam, overschrijven.)
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Environment plate, wide establishing shot: THE RITUAL ARENA OF THE SLAUGHTER-BLOCK, seen from ON the arena itself. We stand on a huge circular platform of black cracked basalt so wide that its FAR curved rim runs almost straight across the entire width of the frame at 56% down the frame, marked by a ring of black-iron obelisks joined by heavy chains; the rim carries a FOOTLIGHT RAIL of molten vents glowing up from below. Beyond the rim the ground drops into a bottomless chasm, and far across it rises the focal structure in the upper centre: the gothic spire-citadel of the regime with one red beacon burning at its top, banded by storm-violet lightning. The chasm and the citadel are entirely BEHIND the rim — nothing of the drop is visible in front of it. Left wing (outer 10%): a tall iron lamp-post with a caged flame burning SOFT AMBER, the only gentle light; right wing (outer 10%): a chained gold-faced regime banner-pole and a broken statue plinth. The arena floor filling the whole lower part of the frame: flat, matte, near-black basalt with a faint carved ring-pattern and dim red seams, fading into darkness toward the bottom edge.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches (banners, armor, seals, statues). The world itself burns harsh and red; the hero's torch remains the only SOFT amber light. Soft amber only on the left wing, harsh red-gold-violet on the right and centre; equal brightness both sides.
+
+STAGE COMPOSITION (strict): camera at standing eye level, straight-on, shallow one-point perspective with the vanishing point at centre, no fisheye, no bird's-eye view. The far edge of the walkable floor (the arena rim) is ONE nearly straight horizontal line at 56% down the frame across the middle 80% of the width — no V-shaped dip, no arena edge curving into the foreground. Everything below that line across the middle 80% of the width is EMPTY flat matte floor: no obelisks, braziers, statues, stairs, chains or debris standing there. Tall framing elements only in the outer 10% left and right. One single focal structure (the citadel with the beacon) in the upper centre between 20% and 48% down the frame. The lower third falls into deep low-texture shadow with a soft dark vignette in the corners; no bright light sources below the floor line except the footlight rail. Include a human-scale reference on the floor line (an obelisk about 22% of the frame height).
+
+Painted illustration style only. Full-bleed 16:9 landscape environment plate (1920x1080), no transparency. No characters, no creatures, no figures, no text, no letters, no signage, no frame, no UI.
+
+========================= Gevechtstijl Act 3 stijl 1.png =========================
+(VERVANGT de bestaande lavaval-plaat waarin de held stond — zelfde naam, overschrijven.)
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Environment plate, wide establishing shot: THE PROCESSIONAL ESPLANADE BEFORE THE CITADEL — a broad, flat parade-ground of black cracked basalt slabs spanning the entire width of the frame, the route the condemned are marched along. Its far edge is a low black-iron curb running as ONE straight horizontal line across the whole width at 56% down the frame, with a FOOTLIGHT RAIL of molten vents glowing up along it. Beyond the curb the ground falls away and, in the upper centre, the focal structure rises: the burning gate of the gothic spire-citadel with its red beacon, a great chain-drawbridge lowered toward us, storm-violet lightning above. Two LAVA FALLS pour from the cliffs — but only in the outer 8% of the frame left and right and far behind the curb, never in front of it, their glow reflected faintly on the wet basalt. Left wing (outer 10%): a gallows-post used as a lamp-post with a lantern burning SOFT AMBER, the only gentle light. Right wing (outer 10%): a colossal chained statue-foot of the tyrant on a plinth and a gold banner-pole. Heavy chains cross the sky high above (above 45% of the frame). The esplanade filling the whole lower part of the frame: flat, matte, near-black slabs with dim red seams, fading into darkness toward the bottom edge.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches (banners, armor, seals, statues). The world itself burns harsh and red; the hero's torch remains the only SOFT amber light. Soft amber only on the left wing, harsh red-gold-violet on the right and centre; equal brightness both sides.
+
+STAGE COMPOSITION (strict): camera at standing eye level, straight-on, shallow one-point perspective with the vanishing point at centre, no fisheye. The far edge of the walkable floor is ONE straight horizontal line at 56% down the frame across the middle 80% of the width — no V-shaped dip at the sides. Everything below that line across the middle 80% of the width is EMPTY flat matte floor: no pillars, braziers, lava, statues, stairs or debris standing there. Tall framing elements only in the outer 10% left and right. One single focal structure (the citadel gate) in the upper centre between 20% and 48% down the frame. The lower third falls into deep low-texture shadow with a soft dark vignette in the corners; no bright light sources below the floor line except the footlight rail. Include a human-scale reference on the floor line (the gate's portcullis about 24% of the frame height, the statue-foot as tall as a house).
+
+Painted illustration style only. Full-bleed 16:9 landscape environment plate (1920x1080), no transparency. No characters, no creatures, no figures, no text, no letters, no signage, no frame, no UI.
+
+========================= Gevechtstijl5act2.png =========================
+(VERVANGT de helderste plaat van het spel — amberraam achter de chips — zelfde naam, overschrijven. Dropmap "Act 2 achtergronden/".)
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Environment plate, wide establishing shot: THE INDEX-ROTUNDA OF THE DEAD ARCHIVE — a vast circular records-hall whose curved walls are concentric rings of numbered bone-niches and tagged ledger-shelves (all tags and labels BLANK), the shelving bases ending on ONE straight horizontal skirting line that runs across the entire width of the frame at 56% down the frame. In the upper centre, the focal structure: a raised central catalogue-altar, a black-iron card-index engine crowned with a brass indexing-wheel, lit by one cold shaft of grey-blue light falling from a high oculus far above — the shaft strikes the altar and the far wall only, between 20% and 48% down the frame, and never reaches the floor in front. Left wing (outer 10%): a clerk's reading-stand with a hooded lantern burning SOFT AMBER, the one warm, uncopyable light. Right wing (outer 10%): a rolling archive ladder and a hanging chain of sealed contracts. The floor filling the whole lower part of the frame: flat, matte, dark slate flagstones with a faint worn ring-pattern, no paper on the floor, fading into darkness toward the bottom edge.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon. For this Act 2 archive the palette is tilted COLD: blue-grey clerical 'system light' from the oculus, paper-yellow only as a faint accent on the shelves, and the warm torch-glow confined to the left wing; identical, duplicated, mirrored shelving on both sides (copies of copies).
+
+STAGE COMPOSITION (strict): camera at standing eye level, straight-on, shallow one-point perspective with the vanishing point at centre, no fisheye. The far edge of the walkable floor (the shelving skirting) is ONE straight horizontal line at 56% down the frame across the middle 80% of the width — the shelves must NOT run down into the foreground at the sides. Everything below that line across the middle 80% of the width is EMPTY flat matte floor: no lecterns, books, candles, pillars, stairs or debris standing there. Tall framing elements only in the outer 10% left and right. One single focal structure (the catalogue-altar under the light shaft) in the upper centre between 20% and 48% down the frame. The band between 60% and 82% down the frame and the lower third in general stay DARK and low in texture, with a soft dark vignette in the corners; no windows, no candle rows, no bright light pools below the floor line. Include a human-scale reference on the floor line (a shelving bay about 22% of the frame height).
+
+Painted illustration style only. Full-bleed 16:9 landscape environment plate (1920x1080), no transparency. No characters, no creatures, no figures, no text, no letters, no numbers, no signage, no frame, no UI.
+
+
+################################################################################
+############  DE AFDALING — BIOOM-LAGEN (Dead Cells-richting, 6 sep 2026)  #####
+################################################################################
+De verkenbare afdaling (spike "De Richels", vlag ?wereld=1) wordt een zijaanzicht-
+wereld met PARALLAX: per act vijf lagen + losse rekwisieten. Alles in deze sectie
+is NIEUW en experimenteel; de klassieke kaart blijft bestaan.
+
+DROPMAP: assets/achtergronden/Afdaling/   (nieuwe map; originelen in assets-bron/)
+
+DE VIJF LAGEN PER ACT (van achter naar voor, met hun parallax-factor):
+  1. *_verte.png      0,1  — verre diepte, VOLVLAK (geen transparantie), breed.
+  2. *_midden.png     0,4  — architectuur op TRANSPARANTE achtergrond met grote
+                              open gaten (de verte moet erdoor zichtbaar zijn).
+  3. *_grond.png      1,0  — de richel waarop de held loopt: bovenkant = dunne
+                              vlakke looplijn, daaronder de voorkant van de richel,
+                              BOVEN de looplijn volledig transparant. Herhaalt
+                              horizontaal.
+  4. *_voorgrond.png  1,3  — bijna zwarte silhouetten in de bovenhoeken en langs
+                              de bovenrand (kettingen, wortels, vaandels), midden
+                              LEEG en transparant.
+  5. *_poort.png      1,0  — de deuromlijsting waar de held door naar binnen gaat;
+                              de OPENING is volledig transparant (het spel legt de
+                              gevechtsplaat als doorkijk erachter).
+  + 4 rekwisieten per act (vierkant 1024, transparant, staand op een onzichtbare
+    vloerlijn onderaan of hangend aan de bovenrand): worden los op de richel gezet,
+    per seed anders.
+
+FORMATEN: brede lagen (verte/midden/grond/voorgrond) liefst 21:9 (2560x1080); kan
+je tool dat niet, dan 16:9 (1920x1080) — wij spiegelen en herhalen. Poort en
+rekwisieten: vierkant 1024x1024 zoals de karakters. Transparante lagen: zelfde
+regel als de karakters ("isolated on a fully transparent background"); levert je
+tool een dambord, dan haalt verwijder_dambord.py dat weg. De transparante BREDE
+lagen (midden/grond/voorgrond) zijn het experimentele deel — lukt het niet
+proper, meld het, dan schakelen we voor die laag over op "op puur zwart" en keyen
+we hem in CSS.
+
+GEEN TEKST in beeld (ook niet op borden/affiches: het spel zet zelf de satire-tekst
+erop). Geen figuren, geen wezens.
+
+PRIORITEIT: Act 1 volledig eerst (P1 = de vertical slice), daarna Act 2 en Act 3.
+Genereer per act in EEN sessie en geef de verte-plaat als beeldreferentie mee bij
+de andere lagen van die act, zodat palet en penseel gelijk blijven.
+
+STIJLANKERS (letterlijk overnemen):
+  Act 1 — De Diepte:   Warm torchlight rim lighting, palette of deep purples,
+                       charcoal and ember orange, matching a torchlit dungeon.
+  Act 2 — Het Archief: zelfde basis, palet gekanteld naar KOUD blauw-grijs
+                       "systeem-licht", papiergeel als zwak accent, identieke
+                       gedupliceerde/gespiegelde architectuur (kopieën van
+                       kopieën); de warme fakkel is het enige warme licht.
+  Act 3 — Het Slachtblok: zwart bazalt en zwart ijzer, gesmolten rood ONDERLICHT
+                       uit naden en roosters, stormviolette bliksem, arrogant
+                       gepolijst goud voor alles wat het regime raakt.
+
+
+------------------------------ ACT 1 — DE DIEPTE (P1) ------------------------------
+
+========================= afdaling_a1_verte.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Very wide PANORAMIC BACKGROUND LAYER for a side-scrolling parallax world, far distance only: the deep interior of an ancient torchlit dungeon seen straight from the side — a long receding sequence of brick vaults and squat stone pillars fading into purple haze, a distant lower gallery with a few tiny torches burning far away, roots and cobwebs hanging from the vaults high up, faint drifting mist between the pillars, ember sparks floating in the air. Everything is soft, hazy and low in contrast (atmospheric perspective); nothing sharp, nothing in the foreground. The composition is horizontally CONTINUOUS with a repeating rhythm of vaults and pillars and NO single central focal point. The lower 15% of the image fades to near-black (the walkway of the world will stand in front of it). The left and right edges are calm dark areas without prominent shapes touching the edge, so the image can be placed mirrored side by side without a visible seam.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Painted illustration style only. Full-bleed landscape plate, 21:9 (2560x1080) or 16:9 (1920x1080), no transparency. No characters, no creatures, no figures, no text, no letters, no signage, no frame, no UI.
+
+========================= afdaling_a1_midden.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Wide MID-DISTANCE ARCHITECTURE LAYER for a side-scrolling parallax world, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: a row of five or six heavy dungeon pillars and broken brick arches standing on an invisible floor line at the very bottom edge of the canvas, with LARGE OPEN GAPS between them (at least half of the width is empty transparent space, so the layer behind stays visible). Iron rings and short chains bolted to the pillars, a rusted wall-torch bracket on two of them with a small ember flame, moss and roots creeping over the brick, a collapsed arch stump on one side. The whole layer is slightly darker and less saturated than a foreground object (it sits in the middle distance), with thin warm rim light on the pillar edges. No ground plane, no floor, no cast shadow on the ground, nothing above the arches (the top third of the canvas is empty and transparent). The left and right edges end in empty transparent space; no shape is cut off by the edge.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Painted illustration style only. Landscape canvas 21:9 (2560x1080) or 16:9 (1920x1080), fully transparent background, no ground, no shadow. No characters, no creatures, no figures, no text, no letters, no signage, no frame, no UI.
+
+========================= afdaling_a1_grond.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A long horizontal WALKWAY LEDGE for a side-scrolling world, seen exactly from the side at eye level, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: the top of the ledge is one thin, flat, perfectly horizontal line of worn purple-grey flagstones at 40% down the canvas (the walkable surface, seen edge-on so it is only a thin strip); below it the FRONT FACE of the ledge — large rough dungeon stone blocks with dark mortar, a few cracked and shifted, moss in the joints, thin roots and a short rusted chain hanging down over the face, faint ember glow catching the top edges of the blocks; the face fades to pure black toward the bottom edge of the canvas. Everything ABOVE the walkway line is empty and fully transparent. The strip is designed to REPEAT horizontally: the left and right edges are cut straight through continuous stonework at exactly the same height, with no object touching or cut off by either edge.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Painted illustration style only. Landscape canvas 21:9 (2560x1080) or 16:9 (1920x1080), fully transparent above the walkway line, no sky, no background. No characters, no creatures, no figures, no text, no letters, no signage, no frame, no UI.
+
+========================= afdaling_a1_voorgrond.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Wide NEAR-FOREGROUND OVERLAY LAYER for a side-scrolling parallax world, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: very dark, almost black silhouettes, slightly soft-edged as if out of focus and very close to the camera — thick hanging roots and two rusted chains dropping down from the TOP EDGE in the upper-left and upper-right corners, a fragment of a broken vault rib across the top-left corner, a cluster of dry cobwebs in the top-right corner, and one small dark stone stump in the bottom-left corner. The entire CENTRE of the canvas and the whole lower edge except that stump are EMPTY and transparent. Only the thinnest warm ember rim light touches the silhouettes.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Painted illustration style only. Landscape canvas 21:9 (2560x1080) or 16:9 (1920x1080), fully transparent background, centre empty. No characters, no creatures, no figures, no text, no letters, no signage, no frame, no UI.
+
+========================= afdaling_a1_poort.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single DUNGEON DOORWAY seen exactly straight on, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: a tall rounded stone arch of heavy purple-grey blocks with a worn keystone, iron hinge-pins and a broken iron bracket on the jambs, a ragged fragment of brick wall around the arch that dissolves into transparency toward the outer edges. THE OPENING OF THE ARCH IS COMPLETELY EMPTY AND TRANSPARENT — no door leaf, no darkness, no interior, no glow: we see nothing inside the arch at all, only the frame and the jambs. A small ember-lit torch bracket burns on the left jamb. The arch stands on an invisible floor line at the bottom edge of the canvas; no ground, no threshold slab, no cast shadow. The doorway fills about 85% of the canvas height.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background AND fully transparent arch opening. No characters, no creatures, no figures, no text, no letters, no signage, no frame, no UI.
+
+========================= afdaling_a1_prop_kooi.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single rusted iron HANGING GIBBET CAGE, empty, seen from the side, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: a tall narrow cage of bent iron bars with a domed top, hanging from a short heavy chain that runs up to and out of the TOP EDGE of the canvas; the cage door hangs open on one hinge; the bars catch a thin warm ember rim light on one side; a few old straw wisps stuck in the bottom bars. The cage occupies about 80% of the canvas height and hangs from the top edge; nothing touches the bottom edge. No ground, no shadow.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background. No characters, no creatures, no figures, no bones, no text, no frame, no UI.
+
+========================= afdaling_a1_prop_zuil.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single BROKEN STONE PILLAR STUMP, seen from the side, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: a thick round dungeon column snapped off at about two thirds of the canvas height with a jagged top, purple-grey stone with deep chisel marks, a rusted iron ring bolted to its side with a short dangling chain, moss and a few pale mushrooms at its base, warm ember rim light on the left edge. It stands on an invisible floor line at the bottom edge of the canvas; no ground plane, no cast shadow, no rubble spreading sideways.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background. No characters, no creatures, no figures, no text, no frame, no UI.
+
+========================= afdaling_a1_prop_prikklok.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single old-fashioned wall-mounted PUNCH CLOCK (a factory time-clock for stamping time cards) reimagined as a dungeon relic, seen from the side-front, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: a tall cast-iron box on a short iron post, a round clock face with NO numbers and NO hands, only a blank pale dial, a card slot with a crooked bundle of blank yellowed cards, a small brass bell on top, cobwebs in the corners, rust streaks, one warm ember glint on the brass. It stands on an invisible floor line at the bottom edge of the canvas, about 75% of the canvas height; no ground, no shadow.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background. No characters, no figures, no text, no letters, no numbers, no frame, no UI.
+
+========================= afdaling_a1_prop_lift.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single abandoned MINE-ELEVATOR CAGE, closed off and out of service, seen straight from the side, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: a tall rusted iron lift cage with a folding lattice gate, the gate chained shut with a heavy padlock, a thick frayed cable running from its roof up to and out of the TOP EDGE of the canvas, a small blank wooden sign board nailed crookedly across the gate (NO text on it), dust and cobwebs inside, warm ember rim light along one side. The cage stands on an invisible floor line at the bottom edge and reaches the top edge via its cable; no ground, no shadow, no shaft walls.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background. No characters, no figures, no text, no letters, no frame, no UI.
+
+
+------------------------------ ACT 2 — HET ARCHIEF (P2) ------------------------------
+
+========================= afdaling_a2_verte.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Very wide PANORAMIC BACKGROUND LAYER for a side-scrolling parallax world, far distance only: the endless interior of a dead ARCHIVE seen straight from the side — wall after wall of towering ledger-shelves and bone-niches receding into cold blue-grey haze, every bay IDENTICAL and mirrored like copies of copies, distant rolling ladders, a few thin cold shafts of grey light falling from unseen high oculi and catching slow dust, all tags and spines BLANK. Everything soft, hazy and low in contrast; nothing in the foreground. Horizontally CONTINUOUS with a repeating rhythm of shelving bays and NO central focal point. The lower 15% fades to near-black. Left and right edges are calm dark areas with no prominent shape touching the edge, so the image can be mirrored side by side without a seam.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon — tilted COLD for this archive: blue-grey clerical 'system light', paper-yellow only as a faint accent, no warm light anywhere in this far layer.
+
+Painted illustration style only. Full-bleed landscape plate, 21:9 (2560x1080) or 16:9 (1920x1080), no transparency. No characters, no creatures, no figures, no text, no letters, no numbers, no signage, no frame, no UI.
+
+========================= afdaling_a2_midden.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Wide MID-DISTANCE ARCHITECTURE LAYER for a side-scrolling parallax world, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: four or five tall free-standing ARCHIVE SHELVING STACKS of black iron and dark wood standing on an invisible floor line at the very bottom edge of the canvas, each stack stuffed with blank ledgers, tied bundles of yellowed paper and small bone-niches, with LARGE OPEN GAPS between the stacks (at least half of the width empty and transparent). One stack leans, spilling a few loose blank sheets that hang in the air; a rolling ladder rests against another; wax-sealed strings of contracts hang between two stacks. Slightly darker and less saturated than a foreground object, with thin cold blue-grey rim light on the iron edges and one faint paper-yellow accent. No ground plane, no floor, no cast shadow; the top third of the canvas is empty and transparent. The left and right edges end in empty transparent space; nothing is cut off by the edge.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon — tilted COLD for this archive: blue-grey clerical 'system light', paper-yellow as a faint accent; identical, duplicated, mirrored shelving (copies of copies).
+
+Painted illustration style only. Landscape canvas 21:9 (2560x1080) or 16:9 (1920x1080), fully transparent background, no ground, no shadow. No characters, no creatures, no figures, no text, no letters, no numbers, no signage, no frame, no UI.
+
+========================= afdaling_a2_grond.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A long horizontal WALKWAY LEDGE for a side-scrolling world, seen exactly from the side at eye level, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: the top of the ledge is one thin, flat, perfectly horizontal line of dark slate flagstones at 40% down the canvas (the walkable surface, edge-on, only a thin strip); below it the FRONT FACE of the ledge — a long archive gallery balustrade made of stacked black-iron filing drawers and dark wooden shelf-fronts with blank paper labels, a few drawers pulled half open with yellowed cards sticking out, cold dust on every edge, one string of wax-sealed contracts hanging down over the face; the face fades to pure black toward the bottom edge. Everything ABOVE the walkway line is empty and fully transparent. Designed to REPEAT horizontally: left and right edges cut straight through continuous drawer-fronts at exactly the same height, nothing touching or cut off by either edge.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon — tilted COLD for this archive: blue-grey clerical 'system light', paper-yellow as a faint accent.
+
+Painted illustration style only. Landscape canvas 21:9 (2560x1080) or 16:9 (1920x1080), fully transparent above the walkway line. No characters, no creatures, no figures, no text, no letters, no numbers, no signage, no frame, no UI.
+
+========================= afdaling_a2_voorgrond.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Wide NEAR-FOREGROUND OVERLAY LAYER for a side-scrolling parallax world, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: very dark, almost black, slightly out-of-focus silhouettes very close to the camera — strings of wax-sealed contracts and loose paper sheets hanging down from the TOP EDGE in both upper corners, the dark corner of a towering shelf across the top-left, a hanging brass reading-lamp (unlit) in the top-right corner, and one small stack of ledgers in the bottom-right corner. The entire CENTRE and the rest of the lower edge are EMPTY and transparent. Only the thinnest cold blue-grey rim light touches the silhouettes.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon — tilted COLD for this archive: blue-grey clerical 'system light'.
+
+Painted illustration style only. Landscape canvas 21:9 (2560x1080) or 16:9 (1920x1080), fully transparent background, centre empty. No characters, no creatures, no figures, no text, no letters, no numbers, no signage, no frame, no UI.
+
+========================= afdaling_a2_poort.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single ARCHIVE VAULT DOORWAY seen exactly straight on, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: a tall rectangular frame of black iron with riveted bands and a shallow pointed top, flanked by two narrow columns of tiny blank index-drawers built into the jambs, a large blank wax seal hanging on a ribbon from the lintel, a fragment of shelving wall around the frame that dissolves into transparency toward the outer edges. THE OPENING IS COMPLETELY EMPTY AND TRANSPARENT — no door leaf, no darkness, no interior, no glow; only the frame and jambs are painted. Cold blue-grey rim light on the iron, one faint paper-yellow accent on the drawers. Stands on an invisible floor line at the bottom edge; no ground, no threshold, no shadow. Fills about 85% of the canvas height.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon — tilted COLD for this archive: blue-grey clerical 'system light'.
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background AND fully transparent opening. No characters, no creatures, no figures, no text, no letters, no numbers, no frame, no UI.
+
+========================= afdaling_a2_prop_dossierkast.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single towering black-iron FILING CABINET, seen from the side-front, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: eight narrow drawers stacked far too high, several pulled out at different depths with yellowed blank cards spilling over their edges, one drawer fallen open and hanging by a chain, a cracked wax seal stuck on the top drawer, dust and cobwebs, cold blue-grey rim light on the iron edges. It stands on an invisible floor line at the bottom edge of the canvas, about 85% of the canvas height; no ground, no shadow.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon — tilted COLD for this archive: blue-grey clerical 'system light', paper-yellow as a faint accent.
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background. No characters, no figures, no text, no letters, no numbers, no frame, no UI.
+
+========================= afdaling_a2_prop_ladder.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single tall ROLLING LIBRARY LADDER of dark wood and black iron, seen from the side, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: the ladder leans slightly, its iron wheels resting on an invisible floor line at the bottom edge, its top hooks reaching up to and out of the TOP EDGE of the canvas, a few rungs cracked, a blank ledger left lying on one rung, a tied bundle of yellowed paper hanging from a hook, cold blue-grey rim light on the iron. No ground, no shadow, no shelf behind it.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon — tilted COLD for this archive: blue-grey clerical 'system light'.
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background. No characters, no figures, no text, no letters, no frame, no UI.
+
+========================= afdaling_a2_prop_contracten.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single HANGING STRING OF SEALED CONTRACTS, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: a thin iron chain hanging from the TOP EDGE of the canvas down to about 80% of its height, with seven or eight rolled and folded parchment documents clipped along it, each closed with a large dark-red wax seal on a ribbon, the parchment yellowed and BLANK (no writing), the lowest document half unrolled and torn, slow dust in the air around it, cold blue-grey rim light on the chain. Nothing touches the bottom edge; no ground, no shadow.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon — tilted COLD for this archive: blue-grey clerical 'system light', paper-yellow as a faint accent.
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background. No characters, no figures, no text, no letters, no numbers, no frame, no UI.
+
+========================= afdaling_a2_prop_lessenaar.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single tall CLERK'S STANDING DESK (a lectern-style writing stand) of dark wood and black iron, seen from the side-front, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: a sloped desktop with an open blank ledger, an inkwell and a quill, a small hooded lantern hanging from an iron arm above the desk burning SOFT AMBER (the one warm light in the archive), stacks of blank index cards on the lower shelf, a rubber stamp and a stick of dark-red sealing wax, cold blue-grey light on the iron, warm amber only close around the lantern. Stands on an invisible floor line at the bottom edge, about 75% of the canvas height; no ground, no shadow.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon — tilted COLD for this archive: blue-grey clerical 'system light'; the lantern is the only warm light.
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background. No characters, no figures, no text, no letters, no numbers, no frame, no UI.
+
+
+------------------------------ ACT 3 — HET SLACHTBLOK (P2) ------------------------------
+
+========================= afdaling_a3_verte.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Very wide PANORAMIC BACKGROUND LAYER for a side-scrolling parallax world, far distance only: the outer terraces of THE SLAUGHTER-BLOCK seen straight from the side — a horizon of black basalt cliffs and terraces with molten ember-red seams glowing in the cracks far below, a blood-red storm sky banded with distant storm-violet lightning, the gothic spire-citadel of the regime with its red beacon small and far away off-centre, several colossal statues of the tyrant standing on distant terraces like dark pillars, heavy chains strung between far towers, ash drifting in the air. Everything soft, hazy and low in contrast; nothing in the foreground. Horizontally CONTINUOUS with a repeating rhythm of terraces and statues and NO single central focal point. The lower 15% fades to near-black. Left and right edges are calm dark areas without prominent shapes touching the edge, so the image can be mirrored side by side without a seam.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches (banners, armor, seals, statues). The world itself burns harsh and red; the hero's torch remains the only SOFT amber light.
+
+Painted illustration style only. Full-bleed landscape plate, 21:9 (2560x1080) or 16:9 (1920x1080), no transparency. No characters, no creatures, no figures, no text, no letters, no signage, no frame, no UI.
+
+========================= afdaling_a3_midden.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Wide MID-DISTANCE ARCHITECTURE LAYER for a side-scrolling parallax world, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: a row of four or five black-iron GALLOWS-FRAMES and basalt obelisks of the regime standing on an invisible floor line at the very bottom edge of the canvas, joined by heavy sagging chains, with LARGE OPEN GAPS between them (at least half of the width empty and transparent). Long gold-fringed regime banners hang from two of the frames (BLANK, no emblem, no text), a brazier-cage on top of one obelisk glows ember-red, gold plating flakes off the iron. Lit harshly from BELOW by molten red light so the undersides glow and the tops fall into shadow; slightly darker and less saturated than a foreground object. No ground plane, no floor, no cast shadow; the top third of the canvas is empty and transparent. Left and right edges end in empty transparent space; nothing is cut off by the edge.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches (banners, armor, seals, statues).
+
+Painted illustration style only. Landscape canvas 21:9 (2560x1080) or 16:9 (1920x1080), fully transparent background, no ground, no shadow. No characters, no creatures, no figures, no faces, no text, no letters, no signage, no frame, no UI.
+
+========================= afdaling_a3_grond.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A long horizontal WALKWAY LEDGE for a side-scrolling world, seen exactly from the side at eye level, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: the top of the ledge is one thin, flat, perfectly horizontal line of black basalt slabs at 40% down the canvas (the walkable surface, edge-on, only a thin strip); below it the FRONT FACE of the ledge — huge cracked black basalt blocks with MOLTEN EMBER-RED SEAMS glowing between them and lighting the block edges from below, black-iron reinforcement bands with gold-plated rivets, a heavy chain hanging down over the face, thin smoke rising from one seam; the face fades to pure black toward the bottom edge. Everything ABOVE the walkway line is empty and fully transparent. Designed to REPEAT horizontally: left and right edges cut straight through continuous basalt at exactly the same height, nothing touching or cut off by either edge.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), and arrogant polished GOLD for everything the regime touches.
+
+Painted illustration style only. Landscape canvas 21:9 (2560x1080) or 16:9 (1920x1080), fully transparent above the walkway line. No characters, no creatures, no figures, no text, no letters, no signage, no frame, no UI.
+
+========================= afdaling_a3_voorgrond.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Wide NEAR-FOREGROUND OVERLAY LAYER for a side-scrolling parallax world, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: very dark, almost black, slightly out-of-focus silhouettes very close to the camera — two heavy iron chains with gold-plated links dropping from the TOP EDGE in the upper corners, the torn lower edge of a gold-fringed regime banner across the top-left (BLANK, no emblem), a jagged basalt overhang across the top-right corner with one thin molten seam, and one small dark iron spike-post in the bottom-left corner. The entire CENTRE and the rest of the lower edge are EMPTY and transparent. Only a thin ember-red rim light from below touches the silhouettes.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from below, storm-violet lightning accents, and arrogant polished GOLD for everything the regime touches.
+
+Painted illustration style only. Landscape canvas 21:9 (2560x1080) or 16:9 (1920x1080), fully transparent background, centre empty. No characters, no creatures, no figures, no text, no letters, no signage, no frame, no UI.
+
+========================= afdaling_a3_poort.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single REGIME GATEWAY seen exactly straight on, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: a tall pointed gothic arch of black basalt blocks plated with arrogant polished gold on the mouldings, a large blank gold seal medallion at the apex, black-iron spikes along the arch edge, two short chains hanging from the jambs, a fragment of cracked basalt wall around the arch with one molten seam glowing red from below, dissolving into transparency toward the outer edges. THE OPENING IS COMPLETELY EMPTY AND TRANSPARENT — no gate leaf, no portcullis, no darkness, no interior, no glow; only the frame and the jambs are painted. Lit harshly from BELOW in ember red; the gold catches it. Stands on an invisible floor line at the bottom edge; no ground, no threshold, no shadow. Fills about 85% of the canvas height.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW, storm-violet lightning accents, and arrogant polished GOLD for everything the regime touches.
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background AND fully transparent arch opening. No characters, no creatures, no figures, no faces, no text, no letters, no frame, no UI.
+
+========================= afdaling_a3_prop_schavot.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single EXECUTIONER'S BLOCK on a low platform, seen from the side-front, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: a squat block of black basalt with a worn notch on top, a huge ceremonial axe with a gold-plated head leaning against it, a coil of chain on the platform, a small gold regime seal nailed to the block's front (BLANK), the whole thing lit harshly from BELOW by a molten red seam in the platform so the undersides glow. No blood, no bones, no body. Stands on an invisible floor line at the bottom edge, about 55% of the canvas height; no ground beyond the platform, no shadow.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW, and arrogant polished GOLD for everything the regime touches.
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background. No characters, no figures, no gore, no text, no letters, no frame, no UI.
+
+========================= afdaling_a3_prop_zegelketting.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single HANGING CHAIN WITH A GIANT GOLD SEAL, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: a heavy black-iron chain hanging from the TOP EDGE of the canvas down to about 80% of its height, ending in a huge round polished gold seal-medallion the size of a shield, its face BLANK (no emblem, no letters), scorched and dented, a torn strip of dark-red ribbon knotted to it, lit harshly from BELOW in ember red so the underside of the gold glows and the top falls into shadow, ash flecks in the air. Nothing touches the bottom edge; no ground, no shadow.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from below, and arrogant polished GOLD for everything the regime touches.
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background. No characters, no figures, no text, no letters, no frame, no UI.
+
+========================= afdaling_a3_prop_standbeeldvoet.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single COLOSSAL STATUE FOOT on a plinth — all that fits in frame of a gigantic gold-plated statue of a tyrant — seen from the side, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: an enormous sandalled foot of gold-plated black basalt, the gold flaking to reveal the black stone, standing on a cracked basalt plinth with a blank gold plaque (NO text), the ankle and the hem of a gilded robe cut off by the TOP EDGE of the canvas, chains wrapped around the ankle, a molten seam in the plinth lighting the foot harshly from BELOW. Stands on an invisible floor line at the bottom edge; no ground beyond the plinth, no shadow.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW, and arrogant polished GOLD for everything the regime touches (statues above all).
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background. No faces, no full figures, no text, no letters, no frame, no UI.
+
+========================= afdaling_a3_prop_vuurkorf.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single tall REGIME BRAZIER on a gold-plated black-iron post, seen from the side, ISOLATED ON A FULLY TRANSPARENT BACKGROUND: a slender black-iron post with gold-plated bands, a wide iron fire-basket on top burning with harsh ember-red flame and sparks, a small blank gold pennant hanging from a crossbar below the basket (no emblem, no text), the post's base bolted to a cracked basalt block, the light of the fire falling DOWN onto the post while a molten seam in the block lights it from BELOW. Stands on an invisible floor line at the bottom edge, about 90% of the canvas height; no ground beyond the block, no shadow.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW, and arrogant polished GOLD for everything the regime touches.
+
+Painted illustration style only. Square 1024x1024 canvas, fully transparent background. No characters, no figures, no text, no letters, no frame, no UI.
+
+(Later, na het ontwerppanel: per act een *_baaspoort.png (bredere poort voor de eindbaas), ladders/liften/valgat-randen voor de traversal, en de held-bewegingsframes in assets/karakters/STATE-PROMPTS.txt.)

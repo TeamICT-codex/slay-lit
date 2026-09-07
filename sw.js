@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v105'; // v105: Inzage-knop zonder tooltip (de uitleg verscheen bij elke tik); alleen nog de eenmalige melding
+const CACHE = 'slayit-v106'; // v106: zes toneelplaten (drieluik De Raadzaal als FINALE, Act 3 stijl 1+3 en Act 2 stijl 5 vervangen)
 const BESTANDEN = [
   '.',
   'css/style.css',
