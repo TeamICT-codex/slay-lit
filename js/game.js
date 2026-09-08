@@ -2879,7 +2879,9 @@ function aanvalOp(doel, basis) {
 /* meerdere klappen op één doelwit — zichtbaar als reeks */
 async function reeksAanval(doel, dmg, keren) {
   for (let i = 0; i < keren; i++) {
-    if (!inGevecht() || doel.dood) return;
+    /* v109: valt DE HERVERKIEZING midden in je reeks, dan landen de resterende slagen
+       NIET op de verse vorm 2 - de ceremonie is de knip (g.herrijzenisNu). */
+    if (!inGevecht() || doel.dood || S.gevecht.herrijzenisNu) return;
     aanvalOp(doel, dmg);
     renderGevecht();
     if (i < keren - 1) await slaap(200);
@@ -2891,7 +2893,7 @@ async function reeksAanvalAlle(dmg, naSlag) {
   const doelen = alleVijanden();
   for (let i = 0; i < doelen.length; i++) {
     const v = doelen[i];
-    if (!inGevecht()) return;
+    if (!inGevecht() || S.gevecht.herrijzenisNu) return;   /* v109: idem bij een AoE-reeks */
     if (v.dood) continue;
     aanvalOp(v, dmg);
     if (naSlag && !v.dood) naSlag(v);
@@ -3081,21 +3083,74 @@ function verliesHp(doel, n, bron) {
       }, 950);
       renderGevecht();
     }
-    /* DE HERVERKIEZING: de DICKtator herrijst éénmalig uit de dood — we leren
-       niet uit de fouten van het verleden. HP terug naar 40%, meteen de
-       wanhoopsfase; de gewone dood-tak hieronder ziet dan weer hp > 0. */
+    /* IV · DE HERVERKIEZING — de DICKtator herrijst éénmalig uit de dood: we leren niet
+       uit de fouten van het verleden. Wie je liet staan, STEMT op hem (+1 Kracht per
+       kiezer), zijn blijvende Kracht komt terug, en hij begint aan HET MANDAAT.
+       NOOIT g.bezig aanraken: verliesHp kan binnen eindBeurt vuren (waar bezig al true is)
+       of binnen speelKaart, waarvan drie finally-blokken hem onvoorwaardelijk op false
+       zetten. Daarom een eigen vlag: g.ceremonie. */
     if (doel.hp <= 0 && !doel.dood && doel.id === 'de_dicktator' && !doel.herrezen) {
+      const g2 = S.gevecht;
       doel.herrezen = true;
-      doel.hp = Math.ceil((doel.maxHp || 240) * 0.4);
+      doel.hp = Math.ceil((doel.maxHp || DICK.hp) * DICK.vorm2Pct);
       doel.blok = 0;
+      if (g2) { g2.ceremonie = true; g2.herrijzenisNu = true; }
+      /* DE KIEZERS. Ze sterven METEEN in de staat (geen verliesHp → geen bijDood, geen
+         Galgentouw, geen Epidemie-verspreiding); de gouden vlucht is de animatie
+         eroverheen. Zo kan geen enkele timer-race de REDE laten denken dat er nog een
+         deurwaarder in leven is. */
+      const kiezers = g2 ? dicktatorHof(g2) : [];
+      doel._kiezers = Math.min(DICK.kiezersCap, kiezers.length);
+      kiezers.forEach(x => {
+        x.dood = true; x.hp = 0; x.blok = 0; x.status = {};
+        const xe = actorEl(x); if (xe) xe.classList.add('kiezer');
+      });
       doel.status = {};                       /* de wederopstanding wist je opgebouwde gif/zwak — vers bloed, oude leugens */
+      const kracht = doel._kiezers + Math.min(DICK.krachtVastCap, doel.krachtVast || 0);
+      if (kracht > 0) geefStatus(doel, 'kracht', kracht);   /* NA de wis, anders sneeuwt ze onder */
+      doel.vorm2 = true;
       doel.fase = 3;                          /* meteen de wanhoopsfase (pips + woede); geen tweede fase-flits meer */
-      { const wel = actorEl(doel); if (wel) wel.classList.add('woede'); }
-      baasFaseMoment('DE HERVERKIEZING', '„Jullie dachten dat het voorbij was? Dat denken jullie ELKE keer."');
-      baasSpreekt(UITSPRAKEN._dicktator.herrijzenis);
-      schudScherm(); Klank.sfx('dood'); setTimeout(() => Klank.sfx('zwareklap'), 450);
-      if (window.Vista) Vista.pose(doel, 'cast', 2.2);
-      pose2D(doel, 'cast', 2.2);
+      doel.vorm2Start = null;                 /* de klok begint pas met DE HERVERKIEZINGSREDE */
+      doel.decreten = DICK.decreetCap;        /* in vorm 2 bestaat de griffie niet meer */
+      doel.facturen2 = 0;
+      if (g2 && g2.aangezegd) g2.aangezegd.clear();   /* het open dossier valt weg met de vorige regering */
+      _bbExtraSig = null;
+      doel.intent = VIJANDEN[doel.id].kies(doel, doel.beurtTeller || 0);   /* = DE HERVERKIEZINGSREDE (0 schade → hersync veilig) */
+      /* --- de beat (elke timeout guardt op hetzelfde gevecht) --- */
+      const veilig = fn => () => { if (S.gevecht === g2 && !g2.voorbij) fn(); };
+      schudScherm(); Klank.sfx('dood'); Klank.duck(0.6, 1.5); Klank.muziek('stil');
+      pose2D(doel, 'death', 1.2);
+      setTimeout(veilig(() => {
+        kiezers.forEach(x => {
+          const xe = actorEl(x); if (xe) xe.classList.add('sterft', 'vlucht');
+          pose2D(x, 'death', 3);
+          if (window.Vista) Vista.sterf(x);
+        });
+        if (kiezers.length) Klank.sfx('applaus');
+        renderGevecht();
+      }), dtempo(950));
+      setTimeout(veilig(() => {
+        const sc = $('#scherm-gevecht');
+        if (sc) { sc.classList.add('goud-flits'); setTimeout(() => sc.classList.remove('goud-flits'), dtempo(900)); }
+        baasFaseMoment('IV · DE HERVERKIEZING', '„Jullie dachten dat het voorbij was? Dat denken jullie ELKE keer."');
+        baasSpreekt(UITSPRAKEN._dicktator.herrijzenis);
+        if (doel._kiezers > 0) setTimeout(veilig(() => baasSpreekt(UITSPRAKEN._dicktator.kiezers)), dtempo(1500));
+      }), dtempo(2200));
+      setTimeout(veilig(() => {
+        if (window.ACHTERGRONDEN && ACHTERGRONDEN.act3 && ACHTERGRONDEN.act3.finaleFasen) {
+          toonArenaWissel(ACHTERGRONDEN.basis + ACHTERGRONDEN.act3.finaleFasen.herverkiezing);
+        }
+        const bb = $('#baas-balk'); if (bb) bb.dataset.vorm = '2';
+        const wel = actorEl(doel); if (wel) wel.classList.add('woede', 'herverkozen');
+        pose2D(doel, 'herkozen', 3);
+        if (window.Vista) Vista.pose(doel, 'cast', 2.2);
+        Klank.muziek('finale');
+        renderGevecht();
+      }), dtempo(3200));
+      setTimeout(() => {
+        if (S.gevecht === g2) g2.ceremonie = false;   /* beginSpelerBeurt geeft de invoer sowieso vrij */
+        if (S.gevecht === g2 && !g2.voorbij) renderGevecht();
+      }, dtempo(4000));
       renderGevecht();
     }
     if (doel.hp <= 0 && !doel.dood) {
@@ -3105,6 +3160,9 @@ function verliesHp(doel, n, bron) {
       /* per-vijand dood-haak (data-gestuurd; bv. de Zondebok: "de schuld is
          weggedragen" → de rest +1 Kracht). Defensief: nooit de dood-flow breken. */
       if (VIJANDEN[doel.id] && VIJANDEN[doel.id].bijDood) { try { VIJANDEN[doel.id].bijDood(doel); } catch (e) {} }
+      /* v109: de TWEEDE dood van de DICKtator is definitief - zijn hof vlucht (geen bijDood,
+         geen Galgentouw) zodat de overwinning meteen kan vallen i.p.v. op restklapvee te wachten. */
+      if (doel.id === 'de_dicktator' && typeof dicktatorHofVlucht === 'function') dicktatorHofVlucht(S.gevecht);
       if (window.Vista) Vista.sterf(doel);
       pose2D(doel, 'death', 3);
       if (el) el.classList.add('sterft');
@@ -3764,6 +3822,7 @@ function gebruikDrank(i) {
   /* een nieuwe drank-tik breekt een lopende doelkeuze af: anders blijft gekozenDrank op een
      nu-stale slot-index staan terwijl een splice de tas hieronder inkrimpt → een latere
      vijand-klik leest S.dranken[stale]=undefined → DRANKEN[undefined].drink() crasht. */
+  if (inGevecht() && S.gevecht.ceremonie) return;   /* v109: geen drank midden in de ceremonie */
   if (inGevecht()) { S.gevecht.gekozenDrank = null; S.gevecht.gekozenKaart = null; }
   if (def.doel === 'vijand') {
     if (!inGevecht()) { melding('Alleen bruikbaar in een gevecht.'); return; }
@@ -5127,7 +5186,7 @@ function renderGevecht() {
   $('#energie-orb').innerHTML = `<b>${g.energie}</b>/${g.maxEnergie}`;
   $('#stapel-trek').innerHTML = `🂠 ${g.trek.length}`;
   $('#stapel-afleg').innerHTML = `🗂️ ${g.afleg.length}`;
-  $('#knop-eindbeurt').disabled = g.bezig;
+  $('#knop-eindbeurt').disabled = g.bezig || !!g.ceremonie;
   $('#beurt-label').textContent = 'Beurt ' + (g.beurt + 1);
   renderTopbalk();
 }
@@ -5847,6 +5906,7 @@ function klikVijand(i) {
 
 async function speelKaart(c, doel) {
   const g = S.gevecht;
+  if (!g || g.ceremonie) return;   /* v109: tijdens DE HERVERKIEZING ligt het klikpad stil (NOOIT g.bezig gebruiken) */
   const def = kdef(c);
   g.energie -= kkost(c);
   g.kaartGespeeldDezeBeurt = true;   /* De Vergadering belast alleen je éérste kaart */
@@ -5939,6 +5999,7 @@ async function speelKaart(c, doel) {
 
 function naActie() {
   if (!S.gevecht || S.gevecht.voorbij) return;
+  S.gevecht.herrijzenisNu = false;   /* v109: de knip geldt alleen voor de lopende reeks */
   if (alleVijanden().length === 0) { gevechtGewonnen(); return; }
   checkBaasFase();
   renderGevecht();
@@ -6570,6 +6631,20 @@ function hofLid(g, id) { return g ? g.vijanden.find(v => v.id === id && !v.dood)
    echte run nooit uiteenlopen (het hof komt uit DE DELEGATIE, niet uit de samenstelling) */
 function baasSamenstelling(id) { return [id]; }
 
+/* de tweede dood is definitief: het hof vlucht van het toneel. Geen verliesHp (dus geen
+   bijDood, geen Galgentouw, geen Epidemie-kettting), wel de death-pose en de vlucht-klasse,
+   zodat alleVijanden() meteen leeg is en de overwinning kan vallen. */
+function dicktatorHofVlucht(g) {
+  if (!g) return;
+  g.vijanden.forEach(x => {
+    if (!x.hof || x.dood) return;
+    x.dood = true; x.hp = 0; x.blok = 0;
+    const el = actorEl(x); if (el) el.classList.add('sterft', 'vlucht');
+    pose2D(x, 'death', 3);
+    if (window.Vista) Vista.sterf(x);
+  });
+}
+
 /* een hoveling oproepen. Geeft null als de vijand-cap (4 levenden) vol zit; elke
    nieuwkomer krijgt TREEDT AAN als eerste intent — nooit een klap zonder telegraaf. */
 function dicktatorRoep(id, opts = {}) {
@@ -7027,7 +7102,7 @@ function voegVijandToe(id) {
 /* ---------- beurtverloop ---------- */
 async function eindBeurt() {
   const g = S.gevecht;
-  if (!g || g.bezig || g.voorbij) return;
+  if (!g || g.bezig || g.voorbij || g.ceremonie) return;
   /* gestopt(): dit gevecht is intussen voorbij of vervangen door een nieuw */
   const gestopt = () => S.gevecht !== g || g.voorbij;
   g.bezig = true;
@@ -7073,6 +7148,7 @@ async function eindBeurt() {
      nieuwkomer nog DEZELFDE beurt laten toeslaan — een klap zonder telegraaf. Met de
      snapshot staat hij één volle spelersbeurt met zichtbare intentie klaar. */
   for (const v of [...g.vijanden]) {
+    g.herrijzenisNu = false;   /* v109: de knip geldt per reeks, niet voor de hele vijandbeurt */
     if (v.dood || gestopt()) continue;
     v.blok = 0;
 
