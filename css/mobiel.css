@@ -296,6 +296,28 @@ body[data-modus="mobiel"] #baas-balk[data-baas="de_erfprins"] .bb-balk.bb-woede:
   background: linear-gradient(to top, #ff5cc0 0 calc(var(--hp, 100) * 1%), #241229 calc(var(--hp, 100) * 1%) 100%);
   filter: drop-shadow(0 0 8px rgba(255, 92, 192, .75));
 }
+/* v109 (HET PROCES) — HET MANDAAT: het hart verguldt zodra hij herkozen is (zelfde
+   patroon als de Erfprins-kleuring hierboven; de woede-variant blijft de heetste). */
+body[data-modus="mobiel"] #baas-balk[data-vorm="2"] .bb-balk::before {
+  background: linear-gradient(to top, #ffd24a 0 calc(var(--hp, 100) * 1%), #2b1c10 calc(var(--hp, 100) * 1%) 100%);
+  filter: drop-shadow(0 0 7px rgba(255, 210, 74, .7));
+}
+body[data-modus="mobiel"] #baas-balk[data-vorm="2"] .bb-balk.bb-woede::before {
+  background: linear-gradient(to top, #ffb03a 0 calc(var(--hp, 100) * 1%), #2b1c10 calc(var(--hp, 100) * 1%) 100%);
+  filter: drop-shadow(0 0 9px rgba(255, 176, 58, .85));
+}
+/* de nieuwe pillen mogen nooit wrappen op een telefoon: een regel met ellipsis */
+body[data-modus="mobiel"] .intent-decreet,
+body[data-modus="mobiel"] .intent-factuur,
+body[data-modus="mobiel"] .intent-hof {
+  white-space: nowrap; max-width: 38vw; overflow: hidden; text-overflow: ellipsis;
+}
+/* het shortlist-zegel kleiner en binnen de 44px-raakzones van de handkaart */
+body[data-modus="mobiel"] #hand .kaart .kaart-zegel {
+  font-size: .68rem; padding: 1px 5px; bottom: -7px; left: -7px;
+}
+body[data-modus="mobiel"] #hand .kaart .kaart-zegel b { font-size: .62rem; }
+
 /* Copycat-arsenaalpil (#baas-balk rechtsboven): compact + 1 regel met ellipsis,
    anders wrapt de kaartnamenlijst en botst ze met de rechts-staande baasfiguur. */
 body[data-modus="mobiel"] #baas-balk .bb-aegis {
@@ -1150,6 +1172,16 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      (≈360–500px hoog) imposant oogt; min/max houden 'm leesbaar én onder de topbalk */
   body[data-modus="mobiel"] .is-baas .vijand-art { width: clamp(120px, 42vh, 210px); height: clamp(120px, 42vh, 210px); }
   body[data-modus="mobiel"] #vijanden-rij { gap: 10px; flex-wrap: nowrap; max-width: none; }
+  /* v109: het hof van HET PROCES zet baas + 3 hovelingen naast elkaar. Liggend is de rij
+     nowrap ZONDER krimp (de portret-regel op :has(nth-child(3)) geldt hier niet), dus op
+     667x375 liep 157px baas + 3x98px over de rand. Vanaf 3 figuren krimpen ze allebei. */
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas):not(.is-episch) .vijand-art {
+    width: clamp(64px, 20vh, 96px); height: clamp(64px, 20vh, 96px);
+  }
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .is-baas .vijand-art {
+    width: clamp(110px, 34vh, 170px); height: clamp(110px, 34vh, 170px);
+  }
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) { gap: 6px; }
   /* (baas: eigen HP-balk wegwerken staat nu onvoorwaardelijk in sectie A, zodat
      het óók in portret-baasgevechten geldt — niet enkel liggend.) */
 
