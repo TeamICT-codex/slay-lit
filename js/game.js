@@ -5613,6 +5613,17 @@ function verfraaiItemArt(wortel) {
   }
 }
 
+/* DE SHORTLIST (v109): staat deze kaart in het open dossier van de DICKtator? Geeft
+   { naam, teller } terug — teller = hoe vaak je haar sinds de aanzegging speelde. Defensief
+   (S.gevecht kan er niet zijn: dek-overzicht, winkel, beloning). */
+function kaartAangezegd(c) {
+  const g = S.gevecht;
+  if (!g || !g.aangezegd || !c) return null;
+  const d = g.aangezegd.get(c.uid);
+  if (!d) return null;
+  return { naam: d.naam, teller: Math.max(0, ((g.gespeeld && g.gespeeld[c.id]) || 0) - (d.start || 0)) };
+}
+
 function maakKaartEl(c) {
   const def = kdef(c);
   const el = document.createElement('div');
@@ -5622,6 +5633,7 @@ function maakKaartEl(c) {
     ${def.licht ? '<div class="kaart-lichtkost" data-tip="Verbrandt fakkellicht bij het spelen"></div>' : ''}
     <div class="kaart-vonk" style="display:none"></div>
     <div class="kaart-aangetast" style="display:none"></div>
+    <div class="kaart-zegel" style="display:none"></div>
     <div class="kaart-naam"></div>
     <div class="kaart-icoon" data-kicoon="${c.id}">${def.icoon}</div>
     <div class="kaart-tekst"></div>
@@ -5670,6 +5682,19 @@ function bijwerkKaartEl(el, c, klikbaar) {
       aangetastEl.dataset.tip = 'Aangetast: door de Erfprins gecorrumpeerd — +1 Energie en uitputtend (eenmalig speelbaar)';
     } else {
       aangetastEl.style.display = 'none';
+    }
+  }
+  /* Shortlist-zegel (v109) — zelfde toggle-patroon als de vonk- en aangetast-badges:
+     een losse klasse zou verdwijnen omdat el.className hierboven volledig herschreven wordt. */
+  const zegelEl = el.querySelector('.kaart-zegel');
+  if (zegelEl) {
+    const az = kaartAangezegd(c);
+    if (az) {
+      zegelEl.style.display = '';
+      zegelEl.innerHTML = `📜<b>${az.teller}</b>`;
+      zegelEl.dataset.tip = `AANGEZEGD: deze kaart staat op de shortlist van de DICKtator. Je speelde haar ${az.teller}× sinds de aanzegging — de MINST gespeelde van de twee wordt afgeschreven.`;
+    } else {
+      zegelEl.style.display = 'none';
     }
   }
   const naamEl = el.querySelector('.kaart-naam');
@@ -7446,6 +7471,7 @@ function kaartHtml(c, klikbaar) {
     ${def.licht ? `<div class="kaart-lichtkost" data-tip="Verbrandt fakkellicht bij het spelen">🔥${kval(c, 'licht')}</div>` : ''}
     ${c.vonk ? `<div class="kaart-vonk ${c.vonk > 0 ? 'vonk-helder' : 'vonk-duister'}" data-tip="${c.vonk > 0 ? 'Heldering: +' + vonkBedrag(c) + ' fakkellicht telkens je deze kaart speelt' : 'Verduistering: verbrandt ' + vonkBedrag(c) + ' fakkellicht bij het spelen, maar geeft je evenveel Blok'}">${c.vonk > 0 ? '🔥' : '🜂'}${vonkBedrag(c)}</div>` : ''}
     ${c.aangetast ? `<div class="kaart-aangetast" data-tip="Aangetast: door de Erfprins gecorrumpeerd — +1 Energie en uitputtend (eenmalig speelbaar)">🩸</div>` : ''}
+    ${(() => { const az = kaartAangezegd(c); return az ? `<div class="kaart-zegel" data-tip="AANGEZEGD: deze kaart staat op de shortlist van de DICKtator (${az.teller}× gespeeld sinds de aanzegging) — de minst gespeelde van de twee wordt afgeschreven.">📜<b>${az.teller}</b></div>` : ''; })()}
     <div class="kaart-naam">${knaam(c)}</div>
     <div class="kaart-icoon" data-kicoon="${c.id}">${def.icoon}</div>
     <div class="kaart-tekst">${def.tekst(c)}</div>
