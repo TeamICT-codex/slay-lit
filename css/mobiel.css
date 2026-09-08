@@ -1079,12 +1079,28 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   /* v104 (meting 4 sep): met 3-4 vijanden werd de rij 600-800px hoog (1 vijand per rij, kolommen tot 188px
      door de chip-max-width) en liep vijand 0 BOVEN het scherm uit (art op y-245). Kleinere figuren vanaf
      3 vijanden + chips die de kolom niet meer oprekken → 2 per rij, alles in beeld. */
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas):not(.is-episch) .vijand-art { width: 86px; height: 86px; }
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas):not(.is-episch) .vijand-art { width: 76px; height: 76px; }
   /* v109: met het hof erbij (baas + 3) krimpt ook de baas, en klemt de intent-pil op de
      kolombreedte - anders loopt de rij op 412px een paar pixels over de rechterrand. */
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .is-baas .vijand-art { width: 120px; height: 120px; }
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .is-baas .vijand-art { width: 104px; height: 104px; }
   body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas) .intent {
     max-width: 88px; overflow: hidden; text-overflow: ellipsis; padding: 3px 7px;
+  }
+  /* v109-fix — DE BAAS MOET IN BEELD BLIJVEN. Gemeten met baas + hof:
+       412x915, 4 figuren: rij 30..617 (587 hoog), baaspil y 34 achter de topbalk (76)
+       360x800, 4 figuren: rij -272..502 — de baas stond VOLLEDIG boven het scherm
+       360x800, 3 figuren: rij -85..502 — ook het gewone openingsbeeld (griffier +
+                deurwaarder) was al stuk, dus dit gold niet alleen voor het volle hof.
+     De rij is flex-end-verankerd: is ze hoger dan het strijdveld, dan loopt ze aan de
+     BOVENkant weg. Ze werd te hoog omdat de kolommen niet naast elkaar pasten (56vw =
+     231px op 412, terwijl baas 128 + gap 10 + hoveling 94 = 232 — 1px te veel) en de rij
+     dus naar drie/vier regels wrapte. Iets meer breedte, kleinere gap en een maatje
+     kleinere figuren vanaf 3 stuks: alles past weer op twee/drie regels binnen beeld
+     (gemeten 412: rij 245..617 · 360: rij 130..502, pil vrij). Dit gold ook vóór v109
+     (Slijmkoning + 3 gespleten slijmen), maar met een vast hof is het structureel. */
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) { max-width: min(64vw, 320px); gap: 8px 6px; }
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .is-baas .intent {
+    max-width: 118px; overflow: hidden; text-overflow: ellipsis; padding: 3px 7px;
   }
   body[data-modus="mobiel"] #vijanden-rij .blok-status { width: 0; min-width: 100%; max-width: none; }
   body[data-modus="mobiel"] .vijand { min-width: 0; padding: 4px; }
