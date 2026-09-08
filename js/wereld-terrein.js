@@ -8,7 +8,7 @@
    - Levelvorm B: je landt op een GALERIJ (−170) bóven de deurbaan (0), ≥ 1,5 kolom
      van de open deur; bordes (−95), kloof met put (+70), ladder, kruipbalk, nis.
    - DETERMINISME: hier komt NOOIT de gedeelde seed-generator van game.js voor — alleen
-     loterij() (eigen mulberry32 op een eigen tekst-hash). Geen Math.random.
+     loterij() (eigen mulberry32 op een eigen tekst-hash), nooit een globale ruisbron.
    - Fysica: swept top-only botsing tegen ≤ 12 vloersegmenten per verdieping, dt-cap 0,05
      (Tikker). Geen valschade, geen dood: elke put heeft een bodem.
    ============================================================ */
@@ -149,9 +149,15 @@ const WereldTerrein = (() => {
     }
     const nA = 1 + Math.floor(R() * 2);
     for (let i = 0; i < nA; i++) {
-      const x = Math.round(K.MARGE + 100 + R() * (K.BREEDTE - 2 * K.MARGE - 200));
-      if (bezetDoor(x, K.POORT_B / 2 + 50) || sj.affiches.some(a => Math.abs(a.x - x) < 200)) continue;
-      sj.affiches.push({ x, tekst: Math.floor(R() * 1000), schuin: (R() * 8 - 4) });
+      for (let poging = 0; poging < 12; poging++) {
+        const x = Math.round(K.MARGE + 100 + R() * (K.BREEDTE - 2 * K.MARGE - 200));
+        if (bezetDoor(x, K.POORT_B / 2 + 40)) continue;
+        if (!vrij(x - 60, x + 60, sj.kloven)) continue;
+        if (sj.affiches.some(a => Math.abs(a.x - x) < 200)) continue;
+        if (sj.rekw.some(q => Math.abs(q.x - x) < 130)) continue;
+        sj.affiches.push({ x, tekst: Math.floor(R() * 1000), schuin: (R() * 8 - 4) });
+        break;
+      }
     }
     sj.verte = 1 + Math.floor(loterij(ctx.zaad, 'verte|' + r)() * 4);
 

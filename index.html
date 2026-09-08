@@ -82,24 +82,32 @@
     <div id="seed-label" data-tip="Deel deze seed: iedereen met dezelfde seed speelt exact dezelfde run"></div>
   </div>
 
-  <!-- DE WERELD (spike "De Richels", DEV-vlag ?wereld=1 / body.wereld): dezelfde afdaling als
-       beloopbaar zijaanzicht-terrein — js/wereld.js vult dit; zonder vlag blijft het leeg. -->
+  <!-- DE AFDALING (DEV-vlag body.wereld): dezelfde afdaling als beloopbaar zijaanzicht-level.
+       js/wereld-terrein.js rekent (sjabloon, fysica, autoroute), js/wereld.js tekent en bedient;
+       zonder vlag blijft dit leeg en tekent game.js de klassieke knopenkaart. Lagen van achter
+       naar voor: verte -> midden -> vlak -> lichtcanvas -> voorgrond -> deeltjes -> doek -> HUD. -->
   <div class="scherm" id="scherm-wereld" data-act="1">
     <div id="wereld-kijker">
-      <div class="w-laag w-ver"></div><!-- verte: de act-gevechtsplaat, parallax ×0,15 -->
-      <div id="wereld-vlak"><!-- wereldcoördinaten: camera = één transform -->
+      <div class="w-laag w-ver"></div><!-- verte: de bioomplaat van deze richel, parallax x0,10 -->
+      <div class="w-laag w-mid"></div><!-- midden: pilaar- en boogfragmenten, x0,40 -->
+      <div id="wereld-vlak"><!-- wereldcoordinaten: camera + schaal in een transform -->
         <div class="w-laag w-richels"></div>
+        <div id="w-metgezel"></div>
         <div id="w-held"></div>
       </div>
-      <div id="wereld-licht"></div><!-- de fakkelplas: radiaal gat dat de held volgt -->
-      <div class="w-laag w-gloeiers"></div><!-- gloed van de plekken, óók buiten het licht -->
+      <canvas id="w-licht"></canvas><!-- duister -> fakkelplas -> gloeiers (DPR <= 1,5) -->
+      <div class="w-laag w-voor"></div><!-- voorgrond: hangers, bijna zwart, x1,30 -->
+      <div class="w-deeltjes"></div><!-- vuurvliegjes + druppels, CSS-sprites -->
+      <div id="w-doek" hidden></div><!-- titelkaart en de overgang naar de kamer -->
       <div id="wereld-hud">
         <span id="w-verdieping"></span>
-        <button type="button" id="w-klassiek">🗺️ Klassieke kaart</button>
-        <button type="button" id="w-binnen" class="knop-groot" hidden></button>
+        <button type="button" id="w-plattegrond">&#128506;&#65039; Kaart</button>
+        <button type="button" id="w-actie" class="knop-groot" hidden></button>
+        <button type="button" id="w-rol" aria-label="Rollen">&#9686;</button>
+        <button type="button" id="w-spring" aria-label="Springen">&#9650;</button>
       </div>
     </div>
-    <div id="w-paneel"></div><!-- portret: de open deuren als grote tikkaarten -->
+    <div id="w-paneel"></div><!-- portret: geleide modus met tikkaarten -->
   </div>
 
   <!-- gevecht -->
@@ -244,6 +252,7 @@
   <script src="js/outro.js"></script>
   <script src="js/online.js"></script>
   <script src="js/game.js"></script>
-  <script src="js/wereld.js"></script><!-- DE WERELD (spike): NA game.js — de haak in renderKaartScherm checkt window.Wereld -->
+  <script src="js/wereld-terrein.js"></script><!-- DE AFDALING: terrein, fysica, autoroute (DOM-vrij) -->
+  <script src="js/wereld.js"></script><!-- DE AFDALING: tekenen + bedienen; NA game.js (de haak in renderKaartScherm checkt window.Wereld) -->
 </body>
 </html>

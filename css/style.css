@@ -4825,24 +4825,22 @@ body:has(#dagwet-proc) #scherm-nudge { display: none; }
 #dev-menu .dev-voet { display: block; margin-top: 8px; color: var(--perkament-dof); font-size: .66rem; }
 
 /* ============================================================
-   DE WERELD (spike "De Richels") — js/wereld.js, achter de DEV-vlag body.wereld
+   DE AFDALING — js/wereld.js + js/wereld-terrein.js, achter de DEV-vlag body.wereld
    ------------------------------------------------------------
-   Lagen in #wereld-kijker (van achter naar voor): .w-ver (verte, parallax ×0,15)
-   → #wereld-vlak (de wereldcoördinaten: richels + held, één camera-transform)
-   → #wereld-licht (de fakkelplas: een vooraf geschilderd radiaal gat dat alleen
-   VERPLAATST wordt — nooit een gradient per frame herberekenen) → .w-gloeiers
-   (de gloed van de plekken, óók buiten het licht) → #wereld-hud.
-   Alle maten hangen aan --kh (kijkerhoogte in px, gezet door hermeet) en
-   --rh (richelhoogte) — nooit aan vh: de portret-topbalk is 76px.
-   Mobiele maten/raakvlakken staan in mobiel.css (body[data-modus="mobiel"]).
+   Lagen in #wereld-kijker (van achter naar voor):
+     .w-ver (verte, x0,10) → .w-mid (midden, x0,40) → #wereld-vlak (alle geometrie,
+     één transform: camera + schaal k) → <canvas id="w-licht"> (duister/plas/gloeiers)
+     → .w-voor (voorgrond, x1,30, NA het canvas) → .w-deeltjes → #w-doek → #wereld-hud.
+   ALLES BINNEN #wereld-vlak, .w-mid EN .w-voor REKENT IN WERELD-EENHEDEN (wu): die
+   lagen dragen scale(k), dus 1px in deze regels = 1 wu. De held is 170 wu hoog en
+   wordt op elk toestel dezelfde sprong; k komt uit hermeet() (--k).
+   Mobiele maten/raakvlakken staan in mobiel.css blok G.
    ============================================================ */
 #scherm-wereld {
+  --k: 1;
   --kh: 600px;
-  --rh: 340px;
   --wb: 1700px;
-  --w-held: clamp(120px, calc(var(--kh) * .24), 210px);   /* de held: ±een kwart van het kijkvenster */
-  --w-deur: calc(var(--w-held) * 1.22);                    /* een deur is net hoger dan de held */
-  --w-deur-b: calc(var(--w-deur) * .66);
+  --heldpx: 170px;
   --w-nacht: #07050b;
   background: var(--w-nacht);
   overflow: hidden;
@@ -4853,138 +4851,203 @@ body:has(#dagwet-proc) #scherm-nudge { display: none; }
   position: relative; flex: 1 1 auto; min-height: 0; width: 100%;
   overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent; cursor: pointer;
-  background: radial-gradient(ellipse 90% 70% at 50% 38%, #1a1324, var(--w-nacht) 80%);
+  background: radial-gradient(ellipse 90% 70% at 50% 40%, #170f21, var(--w-nacht) 82%);
 }
-.w-laag { position: absolute; will-change: transform; }
-/* verte: de act-gevechtsplaat, gedimd; marges voor de parallax (±128px horizontaal,
-   de oude plaat schuift bij een daling 0,15×richel omhoog) */
-.w-ver { left: -150px; right: -150px; top: -80px; bottom: -80px; pointer-events: none; }
-.w-ver-plaat {
-  position: absolute; inset: 0;
-  background-size: cover; background-position: center 30%;
-  filter: brightness(calc(.5 * var(--vd, 1))) saturate(.85);
-  will-change: transform, opacity;
+.w-laag { position: absolute; will-change: transform; pointer-events: none; }
+
+/* ---- laag 1: de verte (bioomplaat per richel, geen filter — de kleur zit in de plaat) ---- */
+.w-ver { left: -12%; right: -12%; top: -10%; bottom: -10%; z-index: 0; }
+.w-ver img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 42%; opacity: .55; }
+.w-ver::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(7, 5, 11, .55), transparent 30%, transparent 58%, rgba(7, 5, 11, .72) 88%, var(--w-nacht));
 }
-.w-ver-plaat.weg { transition: opacity 1.1s ease .1s; opacity: 0; }
-.w-ver::after {   /* de verte doezelt weg naar boven én richting de grond */
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(180deg, rgba(7, 5, 11, .6), transparent 32%, transparent 50%, rgba(7, 5, 11, .7) 82%, var(--w-nacht));
-}
-#wereld-vlak { position: absolute; left: 0; top: 0; width: 0; height: 0; will-change: transform; }
+#scherm-wereld[data-act="2"] .w-ver img { filter: sepia(.25) hue-rotate(-14deg) brightness(.9); }
+#scherm-wereld[data-act="3"] .w-ver img { filter: saturate(1.25) hue-rotate(-16deg) brightness(.8); }
+
+/* ---- laag 2: het midden (pilaren en bogen met open gaten, gespiegeld getegeld) ---- */
+.w-mid { left: 0; top: 0; width: 0; height: 0; z-index: 1; transform-origin: 0 0; }
+.w-mid img { position: absolute; opacity: .82; filter: brightness(.42) saturate(.8); }
+.w-mid img.spiegel { scale: -1 1; }
+
+/* ---- laag 3: het vlak (wereldcoördinaten) ---- */
+#wereld-vlak { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 2; will-change: transform; transform-origin: 0 0; }
 .w-richels { left: 0; top: 0; }
-
-/* ---- de richel ---- */
-.w-richel { position: absolute; left: 0; top: calc(var(--r) * var(--rh)); width: var(--wb); height: 0; }
-.w-grond {   /* de grondstrook onder de richelrand; de uiteinden verdwijnen als puin in het donker */
-  position: absolute; left: -420px; right: -420px; top: 0; height: 130px;
-  background: linear-gradient(180deg, #2b2233 0, #1b1522 16px, #110c17 62px, var(--w-nacht) 130px);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 400px, #000 calc(100% - 400px), transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0, #000 400px, #000 calc(100% - 400px), transparent 100%);
-}
-.w-kant {   /* kantstenen: het basaltblok met de gesmolten bovenkant (assets/ui/trede_1..3), gouden rand óp de richellijn */
-  position: absolute; left: 0; width: var(--wb); height: 88px; top: -37px;
-  background: url('../assets/ui/trede_1.webp') repeat-x; background-size: 110px 88px;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 40px, #000 calc(100% - 40px), transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0, #000 40px, #000 calc(100% - 40px), transparent 100%);
-  pointer-events: none;
-}
-.w-kant.k2 { background-image: url('../assets/ui/trede_2.webp'); }
-.w-kant.k3 { background-image: url('../assets/ui/trede_3.webp'); }
-/* act-anker op de kantstenen: Act 2 archief-vergeeld, Act 3 het gesmolten rood onderlicht */
-#scherm-wereld[data-act="2"] .w-kant { filter: sepia(.35) hue-rotate(-8deg) brightness(.82); }
-#scherm-wereld[data-act="3"] .w-kant { filter: saturate(1.5) hue-rotate(-22deg) brightness(1.08); }
-#scherm-wereld[data-act="3"] .w-grond { background: linear-gradient(180deg, #3a1a1c 0, #221016 16px, #140a0e 62px, var(--w-nacht) 130px); }
-.w-vorige { opacity: .78; }
-.w-volgende .w-plek, .w-volgende .w-bord, .w-volgende .w-ingang { display: none; }   /* de volgende richel: alleen haar gloeiers */
+.w-richel { position: absolute; left: 0; width: var(--wb); height: 0; }
+.w-vorige { opacity: .55; }
+.w-volgende { opacity: .5; }
+.w-volgende .w-plek, .w-volgende .w-bord, .w-volgende .w-affiche, .w-vorige .w-affiche { display: none; }
 .w-vorige .w-plek { pointer-events: none; }
-.w-vorige .w-rekw, .w-vorige .w-bordje, .w-vorige .w-rune { display: none; }   /* hertest: zwevende korven boven het baasvoorplein */
 
-/* ---- de plekken: elke knoop een deur met de act-plaat als doorkijk ---- */
+/* ---- de vloeren: de richelstrook herhaald; de looplijn ligt op 57,8% van de plaat ---- */
+.w-vloer { position: absolute; z-index: 1; pointer-events: none; }
+/* de galerij en het bordes hangen BOVEN de deurbaan: ze horen dus VOOR de deuren
+   (een balkon over een deurgat), anders staat de held op de boogtoppen te zweven */
+.w-vloer-galerij, .w-vloer-bordes { z-index: 5; }
+.w-vloer-put { z-index: 4; }
+.w-vloer.bio {
+  background: url('../assets/achtergronden/Afdaling/afdaling_a1_grond.webp') repeat-x left top;
+  background-size: 1000px 400px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 min(34px, 12%), #000 calc(100% - min(34px, 12%)), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 min(34px, 12%), #000 calc(100% - min(34px, 12%)), transparent 100%);
+}
+/* terugval (Act 2/3 tot hun eigen bioom er is): een geschilderde bazaltrand */
+.w-vloer:not(.bio) {
+  background: linear-gradient(180deg, transparent 0 231px, #3a3046 231px, #241c30 244px, #150f1e 292px, rgba(7, 5, 11, .9) 380px, transparent 400px);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 min(34px, 12%), #000 calc(100% - min(34px, 12%)), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 min(34px, 12%), #000 calc(100% - min(34px, 12%)), transparent 100%);
+  box-shadow: inset 0 232px 0 -230px rgba(255, 156, 63, .28);
+}
+#scherm-wereld[data-act="3"] .w-vloer:not(.bio) { box-shadow: inset 0 232px 0 -230px rgba(200, 50, 30, .55); }
+/* de kloof: een spleet die je ZIET voor je springt (randlicht + diepte) */
+.w-kloof {
+  position: absolute; top: -16px; height: 300px; z-index: 2; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 156, 63, .16), rgba(6, 3, 10, .9) 34px, #05030a 120px);
+  box-shadow: inset 3px 0 8px -2px rgba(0, 0, 0, .9), inset -3px 0 8px -2px rgba(0, 0, 0, .9);
+}
+/* de kettingladder: een gradient met sporten (CSS-terugval tot de plaat er is) */
+.w-ladder {
+  position: absolute; width: 46px; translate: -50% 0; z-index: 4; pointer-events: none;
+  background:
+    repeating-linear-gradient(180deg, rgba(196, 168, 120, .85) 0 6px, transparent 6px 30px),
+    linear-gradient(90deg, transparent 0 5px, rgba(120, 100, 74, .8) 5px 10px, transparent 10px calc(100% - 10px), rgba(120, 100, 74, .8) calc(100% - 10px) calc(100% - 5px), transparent calc(100% - 5px));
+  filter: drop-shadow(0 0 6px rgba(0, 0, 0, .8));
+}
+/* de kruipbalk: rollen is de sleutel */
+.w-balk {
+  position: absolute; z-index: 4; pointer-events: none;
+  background: linear-gradient(180deg, #47372a, #2a2019 60%, #17110e);
+  border-top: 3px solid #6a5236; box-shadow: 0 6px 16px rgba(0, 0, 0, .7);
+}
+.w-balk i {
+  position: absolute; left: 50%; top: -30px; translate: -50% 0; white-space: nowrap; font-style: normal;
+  font: 18px/1.1 'Special Elite', 'Courier New', monospace; letter-spacing: .1em; color: #b79a6a; opacity: .7;
+}
+/* de personeelsschacht (richel 0) en het valgat (de uitgang naar beneden) */
+.w-ingang {
+  position: absolute; bottom: 0; width: 96px; height: 460px; translate: -50% 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(120, 140, 170, .12), rgba(0, 0, 0, .5) 34%, rgba(0, 0, 0, .82));
+  border-left: 3px solid rgba(64, 48, 78, .55); border-right: 3px solid rgba(64, 48, 78, .55);
+}
+.w-ingang i, .w-valgat-bord {
+  position: absolute; left: 50%; bottom: 330px; translate: -50% 0; rotate: 2deg; white-space: nowrap; font-style: normal;
+  font: 19px/1.2 'Special Elite', 'Courier New', monospace; letter-spacing: .1em; color: #9d8b6a;
+  background: #1c1710; border: 2px solid #4a3a22; padding: 4px 10px; z-index: 5;
+}
+.w-valgat { position: absolute; bottom: 0; height: 300px; translate: -50% 0; z-index: 3; pointer-events: none; }
+.w-valgat-schacht {
+  position: absolute; left: 0; right: 0; top: 0; height: 0;
+  background: linear-gradient(180deg, rgba(255, 156, 63, .2), rgba(6, 3, 10, .92) 40px, #05030a);
+  transition: height .45s cubic-bezier(.3, 1, .5, 1);
+}
+.w-valgat.open .w-valgat-schacht { height: 300px; }
+.w-valgat-bord { rotate: -6deg; color: #e8d5ae; background: #2b1d14; border-color: #6a4a2a; opacity: 0; transition: opacity .5s .25s; }
+.w-valgat.open .w-valgat-bord { opacity: 1; }
+
+/* ---- rekwisieten en affiches: wie hier de baas is, staat in het decor ---- */
+.w-prop { position: absolute; width: 420px; translate: -50% 0; z-index: 0; pointer-events: none; filter: brightness(.5) saturate(.85) drop-shadow(0 10px 18px rgba(0, 0, 0, .8)); }
+.w-prop.spiegel { scale: -1 1; }
+.w-prop-kooi { width: 360px; z-index: 6; filter: brightness(.34) drop-shadow(0 12px 20px rgba(0, 0, 0, .85)); }
+.w-prop-lift { width: 470px; }
+.w-affiche {
+  position: absolute; bottom: 210px; width: 210px; z-index: 3; pointer-events: none;
+  background: linear-gradient(#d9c9a4, #b7a684); border: 2px solid #6a5735; box-shadow: 0 6px 14px rgba(0, 0, 0, .7);
+  padding: 12px 8px; text-align: center;
+}
+.w-affiche span { font: 17px/1.15 'Special Elite', 'Courier New', monospace; letter-spacing: .06em; color: #2a2118; }
+
+/* ---- het verdiepingsbord ---- */
+.w-bord {
+  position: absolute; translate: -50% 0; rotate: -2deg; z-index: 5; pointer-events: none; white-space: nowrap; text-align: center;
+  font-family: 'Special Elite', 'Courier New', monospace; color: #e2cfa6;
+  background: linear-gradient(#2a2118, #1b150f); border: 3px solid #5b4326;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, .65); padding: 10px 22px 8px;
+}
+.w-bord b { display: block; font-weight: normal; font-size: 30px; letter-spacing: .14em; }
+.w-bord small { display: block; font-size: 17px; letter-spacing: .06em; color: #b59f78; margin-top: 3px; }
+
+/* ---- de deuren: de poortplaat met de doorkijk erachter ---- */
 .w-plek {
-  position: absolute; left: var(--px); bottom: 0; translate: -50% 0;
-  width: var(--w-deur-b); height: var(--w-deur);
-  display: block; padding: 0; margin: 0; border: 0; background: none; opacity: 1;
-  cursor: pointer; z-index: 2; font: inherit; color: inherit; text-align: center;
+  position: absolute; bottom: 0; translate: -50% 0; z-index: 3;
+  display: block; padding: 0; margin: 0; border: 0; background: none;
+  cursor: pointer; font: inherit; color: inherit; text-align: center;
 }
 .w-plek.dicht { cursor: default; }
 .w-plek:focus { outline: none; }
-.w-plek.kan:focus-visible .w-deur { outline: 3px solid var(--goud); outline-offset: 4px; }
-.w-deur {
+.w-plek.kan:focus-visible { outline: 4px solid var(--goud); outline-offset: 6px; }
+.w-doorkijk {
+  position: absolute; background-size: cover; background-position: center 72%; background-color: #0d0812;
+  filter: brightness(calc(.62 * var(--dh, 1))) saturate(.9);
+  transition: filter .35s;
+}
+.w-plek.bio .w-doorkijk { left: 26.5%; top: 18%; width: 46.3%; height: 82%; }
+.w-plek.bio .w-poort {
   position: absolute; inset: 0;
+  background: url('../assets/achtergronden/Afdaling/afdaling_a1_poort.webp') center bottom / contain no-repeat;
+  filter: brightness(.62) drop-shadow(0 10px 20px rgba(0, 0, 0, .8));
+}
+/* terugval zonder bioomplaat (Act 2/3): de gemetselde boog van de spike */
+.w-plek:not(.bio) .w-doorkijk {
+  inset: 12% 18% 0 18%;
   border-radius: 50% 50% 5px 5px / 40% 40% 5px 5px;
-  background-size: cover; background-position: center 72%; background-color: #120c18;
-  filter: brightness(calc(.55 * var(--dh, 1))) saturate(.85);
-  box-shadow: inset 0 0 0 5px #241b2c, inset 0 0 0 8px #3b2d46, inset 0 -22px 34px rgba(0, 0, 0, .65),
-              0 0 0 3px #150f1c, 0 12px 26px rgba(0, 0, 0, .65);
-  transition: filter .35s, transform .35s;
+  box-shadow: inset 0 0 0 6px #241b2c, inset 0 0 0 10px #3b2d46, inset 0 -26px 40px rgba(0, 0, 0, .65),
+              0 0 0 4px #150f1c, 0 14px 30px rgba(0, 0, 0, .65);
 }
-/* per act een eigen helderheidsanker (hertest: Act 1-doorkijk onleesbaar donker, Act 3 lichtte
-   ver buiten de plas): --dh vermenigvuldigt de deurhelderheid, --vd die van de verte */
-#scherm-wereld[data-act="1"] { --dh: 1.3; --vd: 1.15; }
-#scherm-wereld[data-act="3"] { --dh: .7; --vd: .65; }
-.w-plek.kan .w-deur { filter: brightness(calc(.82 * var(--dh, 1))) saturate(1); }
-.w-plek.kan:hover .w-deur, .w-plek.kan:focus-visible .w-deur, .w-plek.nabij .w-deur { filter: brightness(calc(1.02 * var(--dh, 1))) saturate(1.05); }
-.w-plek.opent .w-deur { filter: brightness(calc(1.5 * var(--dh, 1))) saturate(1.1); transform: scale(1.05); }
-.w-plek.dicht .w-deur { filter: grayscale(.75) brightness(calc(.32 * var(--dh, 1))); }
-.w-plek-event .w-deur::after {   /* onbekend blijft onbekend: een gordijn van mist voor de alkoof */
-  content: ''; position: absolute; inset: 0; border-radius: inherit;
-  background: linear-gradient(180deg, rgba(111, 179, 196, .10), rgba(20, 24, 40, .55) 45%, rgba(10, 8, 16, .85));
-}
-.w-plek-elite .w-deur { border-radius: 44% 44% 4px 4px / 30% 30% 4px 4px; box-shadow: inset 0 0 0 5px #2c1a22, inset 0 0 0 8px #4a2530, inset 0 -22px 34px rgba(0, 0, 0, .65), 0 0 0 3px #150f1c, 0 12px 26px rgba(0, 0, 0, .65); }
-.w-plek-episch .w-deur { border-radius: 50% 50% 4px 4px / 62% 62% 4px 4px; box-shadow: inset 0 0 0 5px #251b33, inset 0 0 0 8px #43305e, inset 0 -22px 34px rgba(0, 0, 0, .65), 0 0 0 3px #150f1c, 0 12px 26px rgba(0, 0, 0, .65); }
-.w-plek-baas { width: calc(var(--w-deur-b) * 1.3); height: calc(var(--w-deur) * 1.25); }   /* breed, maar de trapkolom ernaast blijft vrij */
-.w-plek-baas .w-deur { border-radius: 46% 46% 4px 4px / 34% 34% 4px 4px; box-shadow: inset 0 0 0 7px #2c1418, inset 0 0 0 11px #5a2020, inset 0 -30px 40px rgba(0, 0, 0, .7), 0 0 0 4px #150f1c, 0 14px 30px rgba(0, 0, 0, .7); }
-.w-plek-rust .w-deur { border-radius: 50% 50% 5px 5px / 50% 50% 5px 5px; filter: brightness(calc(.7 * var(--dh, 1))) saturate(1.1); }
-.w-plek-winkel .w-deur { border-radius: 10px 10px 4px 4px; }
-.w-plek-schat .w-deur { border-radius: 40% 40% 4px 4px / 26% 26% 4px 4px; box-shadow: inset 0 0 0 5px #2a2416, inset 0 0 0 8px #4f4220, inset 0 -22px 34px rgba(0, 0, 0, .65), 0 0 0 3px #150f1c, 0 12px 26px rgba(0, 0, 0, .65); }
-/* de gloed per type: --gl is de kleur; open plekken gloeien, verzegelde niet */
+.w-plek:not(.bio) .w-poort { display: none; }
+#scherm-wereld[data-act="1"] { --dh: 1.25; }
+#scherm-wereld[data-act="3"] { --dh: .75; }
+.w-plek.kan .w-doorkijk { filter: brightness(calc(.9 * var(--dh, 1))) saturate(1); }
+.w-plek.kan:hover .w-doorkijk, .w-plek.kan:focus-visible .w-doorkijk, .w-plek.nabij .w-doorkijk { filter: brightness(calc(1.12 * var(--dh, 1))) saturate(1.08); }
+.w-plek.opent .w-doorkijk { filter: brightness(calc(1.55 * var(--dh, 1))) saturate(1.12); }
+.w-plek.dicht .w-doorkijk { filter: grayscale(.8) brightness(calc(.3 * var(--dh, 1))); }
 .w-plek { --gl: rgba(255, 156, 63, .55); }
-.w-plek-elite, .w-gloei-elite { --gl: rgba(200, 56, 90, .7); }
-.w-plek-episch, .w-gloei-episch { --gl: rgba(168, 111, 224, .7); }
-.w-plek-rust, .w-gloei-rust { --gl: rgba(255, 170, 70, .85); }
-.w-plek-schat, .w-gloei-schat { --gl: rgba(245, 197, 66, .7); }
-.w-plek-event, .w-gloei-event { --gl: rgba(111, 179, 196, .55); }
-.w-plek-winkel, .w-gloei-winkel { --gl: rgba(255, 214, 130, .6); }
-.w-plek-baas, .w-gloei-baas { --gl: rgba(225, 50, 60, .8); }
+.w-plek-elite { --gl: rgba(200, 56, 90, .7); }
+.w-plek-episch { --gl: rgba(168, 111, 224, .7); }
+.w-plek-rust { --gl: rgba(255, 170, 70, .85); }
+.w-plek-schat { --gl: rgba(245, 197, 66, .7); }
+.w-plek-event { --gl: rgba(111, 179, 196, .55); }
+.w-plek-winkel { --gl: rgba(255, 214, 130, .6); }
+.w-plek-baas { --gl: rgba(225, 50, 60, .8); }
+.w-plek-baas { width: 340px !important; height: 340px !important; }
 .w-gloed {
-  position: absolute; left: 50%; bottom: -8px; width: 150%; height: 38px; translate: -50% 0;
+  position: absolute; left: 50%; bottom: -14px; width: 150%; height: 60px; translate: -50% 0;
   border-radius: 50%; background: radial-gradient(ellipse at center, var(--gl), transparent 70%);
   opacity: 0; pointer-events: none; transition: opacity .4s;
 }
 .w-plek.kan .w-gloed { opacity: 1; }
 .w-label {
-  position: absolute; left: 50%; top: -36px; translate: -50% 0; white-space: nowrap;
-  font-family: 'Alegreya', serif; font-size: .84rem; color: var(--perkament);
-  text-shadow: 0 1px 2px #000, 0 0 8px #000; opacity: 0; transition: opacity .3s; pointer-events: none;
+  position: absolute; left: 50%; top: -34px; translate: -50% 0; white-space: nowrap;
+  font-family: 'Alegreya', serif; font-size: 23px; color: var(--perkament);
+  text-shadow: 0 2px 4px #000, 0 0 14px #000; opacity: 0; transition: opacity .3s; pointer-events: none;
 }
-.w-plek.kan .w-label { opacity: .9; }
-/* rekwisieten: vuurkorf (elite/baas), kampvuur + bedrol (rust), geldbuidel + bordje (winkel), rune (episch) */
-.w-rekw { position: absolute; pointer-events: none; -webkit-user-drag: none; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .7)); }
-.w-korf { bottom: -2px; width: 26%; }
-.w-korf-l { left: -30%; } .w-korf-r { right: -30%; }
-.w-vuur { left: 50%; bottom: 2%; width: 44%; translate: -50% 0; }
-.w-bedrol { right: -52%; bottom: -4px; width: 56%; opacity: .95; }
-.w-buidel { left: -40%; bottom: 0; width: 40%; }
+/* het label van een verre deur blijft zacht: de gloed zegt 'hier kan je heen', de tekst
+   pas als je erheen kijkt — anders staan er drie prijskaartjes over de held heen */
+.w-plek.kan .w-label { opacity: .45; }
+.w-plek.kan:hover .w-label, .w-plek.kan:focus-visible .w-label, .w-plek.nabij .w-label { opacity: .95; }
+.w-rekw { position: absolute; pointer-events: none; -webkit-user-drag: none; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .7)); }
+.w-korf { bottom: -4px; width: 26%; }
+.w-korf-l { left: -26%; } .w-korf-r { right: -26%; }
+.w-vuur { left: 50%; bottom: 2%; width: 34%; translate: -50% 0; }
 .w-bordje {
-  position: absolute; left: 50%; top: 6%; translate: -50% 0; rotate: -3deg; white-space: nowrap; font-style: normal;
-  font: .5rem/1.2 'Special Elite', 'Courier New', monospace; letter-spacing: .06em; color: #e2cfa6;
-  background: #2b2118; border: 1px solid #6a4f2a; padding: 2px 5px; pointer-events: none;
+  position: absolute; left: 50%; top: 8%; translate: -50% 0; rotate: -3deg; white-space: nowrap; font-style: normal;
+  font: 15px/1.2 'Special Elite', 'Courier New', monospace; letter-spacing: .06em; color: #e2cfa6;
+  background: #2b2118; border: 2px solid #6a4f2a; padding: 4px 8px; pointer-events: none;
 }
-.w-rune { position: absolute; left: 50%; top: -22px; translate: -50% 0; font-style: normal; color: var(--paars); font-size: 1.1rem; text-shadow: 0 0 10px var(--paars); pointer-events: none; }
-.w-plek-baas .w-label { display: none; }   /* de baas heeft zijn gebeitelde naam al */
+.w-rune { position: absolute; left: 50%; top: -34px; translate: -50% 0; font-style: normal; color: var(--paars); font-size: 34px; text-shadow: 0 0 18px var(--paars); pointer-events: none; }
+.w-plek-baas .w-label { display: none; }
 .w-baasnaam {
-  position: absolute; left: 50%; top: -62px; translate: -50% 0; white-space: nowrap;
-  font-family: 'Pirata One', serif; font-weight: normal; font-size: 1.35rem; letter-spacing: .08em; color: #e6b0b0;
-  text-shadow: 0 0 14px rgba(225, 50, 60, .7), 0 2px 0 #000; pointer-events: none;
+  position: absolute; left: 50%; top: -76px; translate: -50% 0; white-space: nowrap;
+  font-family: 'Pirata One', serif; font-weight: normal; font-size: 44px; letter-spacing: .08em; color: #e6b0b0;
+  text-shadow: 0 0 20px rgba(225, 50, 60, .7), 0 3px 0 #000; pointer-events: none;
 }
-/* verzegeld: het rode zegel + de stempel — een dichte deur is wereldfictie, geen disabled-knop */
-.w-zegel { position: absolute; left: 50%; top: 40%; translate: -50% -50%; width: 46%; aspect-ratio: 1; display: none; pointer-events: none; }
+/* verzegeld: een dichte deur is wereldfictie, geen disabled-knop */
+.w-zegel { position: absolute; left: 50%; top: 46%; translate: -50% -50%; width: 40%; aspect-ratio: 1; display: none; pointer-events: none; }
 .w-plek.dicht .w-zegel { display: block; }
-.w-zegel img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .75)); -webkit-user-drag: none; }
+.w-zegel img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .8)); -webkit-user-drag: none; }
 .w-zegel i {
   position: absolute; left: 50%; top: 104%; translate: -50% 0; rotate: -8deg; white-space: nowrap; font-style: normal;
-  font: .55rem/1.15 'Special Elite', 'Courier New', monospace; letter-spacing: .08em; color: #e0435a;
-  background: rgba(22, 8, 12, .8); border: 1px solid rgba(224, 67, 90, .6); padding: 2px 5px;
+  font: 15px/1.15 'Special Elite', 'Courier New', monospace; letter-spacing: .08em; color: #e0435a;
+  background: rgba(22, 8, 12, .82); border: 1px solid rgba(224, 67, 90, .6); padding: 3px 7px;
 }
 .w-plek.w-verlaten:not(.verzegeld):not(.verzegelt) .w-zegel { opacity: 0; }
 .w-plek.w-verlaten.verzegelt .w-zegel { animation: wZegelKlap .45s cubic-bezier(.2, 1.4, .4, 1) both; }
@@ -4993,148 +5056,156 @@ body:has(#dagwet-proc) #scherm-nudge { display: none; }
   60% { opacity: 1; scale: .94; rotate: 4deg; }
   100% { opacity: 1; scale: 1; rotate: 0deg; }
 }
-/* de ingang (richel 0: een smalle schacht van boven, zo kwam je binnen — tussen twee kolommen, nooit óp een deur)
-   en de trap (waarlangs je kwam — ingestort zodra je beneden bent) */
-.w-ingang {
-  position: absolute; left: var(--px); bottom: 0; translate: -50% 0; width: 84px; height: var(--rh);
-  background: linear-gradient(180deg, rgba(120, 140, 170, .10), rgba(0, 0, 0, .45) 30%, rgba(0, 0, 0, .8));
-  border-left: 2px solid rgba(64, 48, 78, .55); border-right: 2px solid rgba(64, 48, 78, .55);
-  pointer-events: none;
-}
-.w-ingang i {
-  position: absolute; left: 50%; bottom: calc(var(--w-deur) - 8px); translate: -50% 0; rotate: 2deg; white-space: nowrap; font-style: normal;
-  font: .58rem/1.2 'Special Elite', 'Courier New', monospace; letter-spacing: .1em; color: #9d8b6a;
-  background: #1c1710; border: 1px solid #4a3a22; padding: 3px 7px; z-index: 3;
-}
-.w-trap { position: absolute; left: var(--px); bottom: 0; translate: -50% 0; width: 84px; height: var(--rh); pointer-events: none; z-index: 1; }
-.w-trap-schacht {
-  position: absolute; inset: 0;
-  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .5) 22%, rgba(0, 0, 0, .78));
-  border-left: 2px solid rgba(64, 48, 78, .55); border-right: 2px solid rgba(64, 48, 78, .55);
-}
-.w-trap-trede { position: absolute; left: 50%; width: 66px; height: 53px; translate: -50% 0; background: url('../assets/ui/trede_1.webp') center / contain no-repeat; transition: rotate .6s, translate .6s, opacity .6s; }
-.w-trap-trede.t1 { top: 48%; } .w-trap-trede.t2 { top: 66%; } .w-trap-trede.t3 { top: 84%; }
-.w-trap.dicht .w-trap-trede.t1 { rotate: -28deg; translate: -70% 26%; opacity: .6; }
-.w-trap.dicht .w-trap-trede.t2 { rotate: 19deg; translate: -30% 14%; opacity: .7; }
-.w-trap.dicht .w-trap-trede.t3 { rotate: -7deg; translate: -58% 6%; }
-.w-trap-bord {   /* boven de deurtoppen, anders staat de held (die net afdaalde) ervoor */
-  position: absolute; left: 50%; bottom: calc(var(--w-deur) - 8px); translate: -50% 0; rotate: -6deg; white-space: nowrap; font-style: normal; z-index: 3;
-  font: .6rem/1.2 'Special Elite', 'Courier New', monospace; letter-spacing: .1em; color: #e8d5ae;
-  background: #2b1d14; border: 2px solid #6a4a2a; padding: 4px 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, .6);
-  opacity: 0; transition: opacity .5s .3s;
-}
-.w-trap.dicht .w-trap-bord { opacity: 1; }
-/* het verdiepingsbord (Special Elite, gestempeld); hoe dieper, hoe schever (--schuin) */
-.w-bord {
-  position: absolute; left: var(--px); bottom: calc(var(--w-deur) + 40px); translate: -50% 0; rotate: var(--schuin, -2deg);
-  text-align: center; font-family: 'Special Elite', 'Courier New', monospace; color: #e2cfa6;
-  background: linear-gradient(#2a2118, #1b150f); border: 2px solid #5b4326;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, .6), inset 0 0 0 1px rgba(255, 255, 255, .05);
-  padding: 6px 14px 5px; pointer-events: none; z-index: 3; white-space: nowrap;   /* hangt vóór de deuren (de baaspoort is breed) */
-}
-.w-bord::before, .w-bord::after { content: ''; position: absolute; top: 4px; width: 5px; height: 5px; border-radius: 50%; background: #8a7150; box-shadow: inset 0 1px 1px #000; }
-.w-bord::before { left: 5px; } .w-bord::after { right: 5px; }
-.w-bord b { display: block; font-weight: normal; font-size: .95rem; letter-spacing: .14em; }
-.w-bord small { display: block; font-size: .58rem; letter-spacing: .06em; color: #b59f78; margin-top: 2px; }
 
-/* ---- de held: de marionet (geen loopcyclus — bob + lean + squash + skew op de basis-art) ---- */
-#w-held { position: absolute; left: 0; top: 0; width: 0; height: 0; will-change: transform; z-index: 5; pointer-events: none; }
-.w-fig { position: absolute; left: 0; bottom: 0; translate: -50% 0; height: var(--w-held); width: var(--w-held); transform-origin: 50% 100%; }
-.w-fig.links { transform: scaleX(-1); }   /* helden kijken naar rechts (art-conventie); naar links = spiegelen */
-.w-fig img {
-  display: block; width: 100%; height: 100%; object-fit: contain; object-position: center bottom;
-  translate: 0 var(--voetc, 0%);   /* de gemeten transparante voetmarge wegdrukken (VOETMARGE, art.js) */
-  transform-origin: 50% 100%;
-  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .75));
-  animation: wAdem 2.8s ease-in-out infinite;
-  -webkit-user-drag: none;
+/* ---- de nis: licht en lore achter een gebaar ---- */
+.w-nis { position: absolute; translate: -50% 0; z-index: 2; pointer-events: auto; cursor: pointer; }
+.w-nis-holte {
+  position: absolute; inset: 0; border-radius: 50% 50% 6px 6px / 62% 62% 6px 6px;
+  background: linear-gradient(180deg, #16101d, #0a0710 70%);
+  box-shadow: inset 0 0 0 5px #241b2c, inset 0 14px 26px rgba(0, 0, 0, .9);
 }
-.w-fig.loopt img { animation: wLoop .42s ease-in-out infinite; }
-.w-fig.daalt img { animation: wLoop .36s ease-in-out infinite; }
-.w-fig-terugval { position: absolute; left: 50%; bottom: 0; translate: -50% 0; font-size: calc(var(--w-held) * .5); line-height: 1; }
-@keyframes wAdem {
-  0%, 100% { transform: scaleY(1); }
-  50% { transform: scaleY(1.012) scaleX(.995); }
+.w-nis-vondst { position: absolute; left: 50%; bottom: 12%; width: 52%; translate: -50% 0; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .8)); }
+.w-nis-vondst.weg { animation: wNisWeg .45s ease-in forwards; }
+@keyframes wNisWeg { to { opacity: 0; translate: -50% -60px; scale: .6; } }
+.w-nis-gloed {
+  position: absolute; left: 50%; bottom: 0; width: 150%; height: 70px; translate: -50% 30%;
+  border-radius: 50%; background: radial-gradient(ellipse at center, rgba(255, 190, 110, .55), transparent 70%);
 }
+.w-nis.nabij .w-nis-gloed { background: radial-gradient(ellipse at center, rgba(255, 214, 140, .85), transparent 70%); }
+.w-nis-op { position: absolute; left: 50%; bottom: 30%; translate: -50% 0; font-style: normal; font: 18px/1 'Special Elite', monospace; color: #6a5c46; }
+.w-nis.leeg { pointer-events: none; }
+
+/* ---- de held: de marionet als skelet, de losse frames als huid ---- */
+#w-held { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 6; pointer-events: none; will-change: transform; }
+#w-metgezel { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 5; pointer-events: none; will-change: transform; }
+.w-fig { position: absolute; left: 0; bottom: 0; width: 170px; height: 170px; transform-origin: 50% 100%; }
+.w-pose {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center bottom;
+  translate: 0 var(--voetc, 0%);
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, .75));
+  opacity: 0; transition: opacity .09s linear; -webkit-user-drag: none;
+}
+.w-pose.aan { opacity: 1; }
+.w-fig-terugval { position: absolute; left: 50%; bottom: 0; translate: -50% 0; font-size: 90px; line-height: 1; }
+/* de marionet: bob/adem als er nog geen frames zijn (de klasse wisselt bij toestandswissel) */
+.w-fig .w-pose { animation: wAdem 2.8s ease-in-out infinite; }
+.w-fig.t-loopt .w-pose { animation: wLoop .42s ease-in-out infinite; }
+.w-fig.t-klim .w-pose { animation: wKlim .6s ease-in-out infinite; }
+.w-fig.t-rol .w-pose { animation: wRol .32s linear; }
+.w-fig.t-spring .w-pose, .w-fig.t-val .w-pose, .w-fig.t-land .w-pose { animation: none; }
+@keyframes wAdem { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.012) scaleX(.995); } }
 @keyframes wLoop {
-  0%, 100% { transform: translateY(0) rotate(0deg) skewX(0deg) scale(1, 1); }
-  25% { transform: translateY(-6px) rotate(2.5deg) skewX(1.5deg) scale(1, 1); }
-  50% { transform: translateY(0) rotate(1deg) skewX(0deg) scale(1.03, .97); }   /* landing: squash */
-  75% { transform: translateY(-6px) rotate(2.5deg) skewX(-1.5deg) scale(1, 1); }
+  0%, 100% { transform: translateY(0) rotate(0deg) skewX(0deg); }
+  25% { transform: translateY(-5px) rotate(2deg) skewX(1.5deg); }
+  50% { transform: translateY(0) rotate(.8deg) scale(1.03, .97); }
+  75% { transform: translateY(-5px) rotate(2deg) skewX(-1.5deg); }
+}
+@keyframes wKlim { 0%, 100% { transform: translateY(0) scaleX(1); } 50% { transform: translateY(-6px) scaleX(-1); } }
+@keyframes wRol { from { transform: rotate(0deg) scale(.82); } to { transform: rotate(360deg) scale(.82); } }
+/* de naloop: de mantel die 70 ms achterblijft (§3.4 — de laag die de marionet miste) */
+.w-naloop {
+  position: absolute; left: 50%; bottom: 6%; width: 56%; height: 62%; translate: -50% 0; z-index: -1;
+  border-radius: 50% 50% 30% 30% / 60% 60% 40% 40%;
+  background: linear-gradient(180deg, rgba(24, 16, 32, .0), rgba(24, 16, 32, .55) 40%, rgba(10, 6, 14, .7));
+  filter: blur(3px); opacity: .5; pointer-events: none;
 }
 .w-schaduw {
-  position: absolute; left: 50%; bottom: -3px; width: 62%; height: 11%; translate: -50% 0;
-  border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0, 0, 0, .7), transparent 68%);
+  position: absolute; left: 50%; bottom: -4px; width: 66%; height: 16px; translate: -50% 0;
+  border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0, 0, 0, .75), transparent 68%);
+}
+.w-mfig { position: absolute; left: 0; bottom: 0; width: 130px; height: 130px; translate: -50% 0; }
+.w-mfig.links { scale: -1 1; }
+.w-mfig img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .7)) brightness(.9); -webkit-user-drag: none; }
+.w-mfig-terugval { position: absolute; left: 50%; bottom: 0; translate: -50% 0; font-size: 64px; }
+/* de stofpool: acht pufjes die om de beurt herstarten (nul DOM-werk per frame) */
+.w-stofpool { position: absolute; left: 0; bottom: 0; width: 0; height: 0; }
+.w-stof {
+  position: absolute; left: 0; bottom: 0; width: 26px; height: 26px; translate: -50% 0; border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, rgba(190, 170, 150, .55), rgba(120, 105, 92, .15) 60%, transparent 72%);
+  opacity: 0; pointer-events: none;
+}
+.w-stof.puf { animation: wPuf .62s ease-out forwards; }
+@keyframes wPuf {
+  from { opacity: .8; transform: translate(0, 0) scale(.4); }
+  to { opacity: 0; transform: translate(var(--dx, 0), var(--dy, -20px)) scale(var(--ds, 1)); }
 }
 
-/* ---- het licht: één groot, vooraf geschilderd radiaal gat dat de held volgt ---- */
-#wereld-licht {
-  position: absolute; left: 0; top: 0; width: 200%; height: 200%;
-  --lr: 260px;
-  background: radial-gradient(circle at center,
-    rgba(255, 165, 80, .07) 0, rgba(255, 140, 60, .03) calc(var(--lr) * .45),
-    rgba(6, 3, 10, .48) var(--lr), rgba(6, 3, 10, .88) calc(var(--lr) * 1.9), rgba(6, 3, 10, .93) 100%);
-  pointer-events: none; will-change: transform; z-index: 6; transform-origin: 50% 50%;
+/* ---- laag 4: het lichtcanvas (duister → plas → gloeiers) ---- */
+#w-licht { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none; }
+
+/* ---- laag 5: de voorgrond (NA het canvas: mist hoort vóór de lens) ---- */
+.w-voor { left: 0; top: 0; width: 0; height: 0; z-index: 4; transform-origin: 0 0; }
+.w-voor img { position: absolute; filter: brightness(.14) saturate(.5); opacity: .95; }
+
+/* ---- laag 6: de deeltjes (CSS-sprites, schermvast, nul JS per frame) ---- */
+.w-deeltjes { position: absolute; inset: 0; z-index: 5; pointer-events: none; overflow: hidden; contain: strict; }
+.w-vlieg {
+  position: absolute; width: 4px; height: 4px; border-radius: 50%;
+  background: #cfe08a; box-shadow: 0 0 8px 2px rgba(190, 220, 120, .55);
+  animation: wVlieg 11s ease-in-out infinite;
 }
-body:not(.lite) #wereld-licht { animation: wLichtAdem 3.4s ease-in-out infinite; }   /* de fakkel ademt: schaal, geen gradient-herberekening */
-@keyframes wLichtAdem {
-  0%, 100% { scale: 1; }
-  50% { scale: 1.035; }
+@keyframes wVlieg {
+  0%, 100% { transform: translate(0, 0); opacity: .15; }
+  25% { transform: translate(26px, -22px); opacity: .85; }
+  50% { transform: translate(-14px, -44px); opacity: .5; }
+  75% { transform: translate(-30px, -16px); opacity: .8; }
 }
-.w-gloeiers { left: 0; top: 0; pointer-events: none; z-index: 7; }
-.w-gloei {
-  position: absolute; left: var(--px); top: calc(var(--r) * var(--rh)); translate: -50% -58%;
-  width: 96px; height: 62px; border-radius: 50%;
-  --gl: rgba(255, 156, 63, .5);
-  background: radial-gradient(ellipse at center, var(--gl), transparent 68%);
-  mix-blend-mode: screen; opacity: .22; pointer-events: none;
+.w-druppel {
+  position: absolute; top: -20px; width: 1px; height: 14px;
+  background: linear-gradient(180deg, transparent, rgba(160, 190, 210, .55));
+  animation: wDruppel .9s linear infinite;
 }
-.w-gloei.kan { opacity: .72; }
-.w-gloei.w-vorige { opacity: .1; }
-.w-gloei.w-volgende { opacity: .3; }
-.w-gloei-rust { width: 170px; height: 110px; }
-.w-gloei-baas { width: 260px; height: 150px; }
-.w-gloei-elite { width: 130px; height: 80px; }
-body:not(.lite) .w-gloei-rust, body:not(.lite) .w-gloei-elite, body:not(.lite) .w-gloei-baas { animation: wVuur 1.3s ease-in-out infinite alternate; }
-@keyframes wVuur {
-  0% { scale: 1; opacity: .62; }
-  100% { scale: 1.08; opacity: .8; }
+@keyframes wDruppel { from { transform: translateY(-20px); opacity: 0; } 20% { opacity: .8; } to { transform: translateY(110vh); opacity: 0; } }
+
+/* ---- laag 7: doek + titelkaart ---- */
+#w-doek { position: absolute; inset: 0; z-index: 6; pointer-events: none; opacity: 0; background: #05030a; transition: opacity .36s ease; }
+#w-doek[hidden] { display: none; }
+#w-doek.doek.aan { opacity: .93; }
+#w-doek.titel {
+  opacity: 1; display: grid; place-items: center;
+  background: radial-gradient(ellipse 70% 50% at 50% 45%, rgba(255, 156, 63, .16), transparent 62%), rgba(5, 3, 10, .93);
+  transition: opacity .5s ease;
 }
+#w-doek.titel:not(.aan) { opacity: 0; }
+.w-titel { text-align: center; animation: wTitelIn .7s ease-out both; }
+.w-titel b { display: block; font-family: 'Pirata One', serif; font-weight: normal; font-size: clamp(2.4rem, 9vw, 5rem); letter-spacing: .1em; color: var(--goud); text-shadow: 0 0 30px rgba(255, 156, 63, .5), 0 4px 0 #000; }
+.w-titel small { display: block; margin-top: .3em; font: .95rem/1.4 'Special Elite', 'Courier New', monospace; letter-spacing: .22em; color: var(--perkament-dof); }
+.w-titel i { display: inline-block; margin-top: 1.1em; rotate: -3deg; font-style: normal; font: .8rem/1.2 'Special Elite', 'Courier New', monospace; letter-spacing: .1em; color: #e0435a; border: 2px solid rgba(224, 67, 90, .55); padding: 5px 10px; }
+@keyframes wTitelIn { from { opacity: 0; scale: 1.12; } to { opacity: 1; scale: 1; } }
 
 /* ---- HUD ---- */
-#wereld-hud { position: absolute; inset: 8px 0 0 0; display: flex; justify-content: space-between; align-items: flex-start; padding: 0 12px; pointer-events: none; z-index: 8; }   /* spant het hele kijkvenster: #w-binnen rekent zijn bottom erop */
+#wereld-hud { position: absolute; inset: 8px 0 0 0; display: flex; justify-content: space-between; align-items: flex-start; padding: 0 12px; pointer-events: none; z-index: 7; }
 #wereld-hud > * { pointer-events: auto; }
 #w-verdieping {
   font-family: 'Special Elite', 'Courier New', monospace; font-size: .8rem; letter-spacing: .12em; color: #cbb58d;
   background: rgba(13, 10, 18, .66); border: 1px solid var(--rand); padding: 5px 10px; border-radius: 4px;
 }
 #w-verdieping small { font-size: .66rem; letter-spacing: .06em; color: var(--perkament-dof); }
-#w-klassiek {
+#w-plattegrond {
   font-family: 'Alegreya', serif; font-size: .86rem; color: var(--perkament-dof);
   background: rgba(13, 10, 18, .66); border: 1px solid var(--rand); border-radius: 8px; padding: 6px 10px;
 }
-#w-klassiek:hover { color: var(--perkament); border-color: var(--ember); }
-#w-binnen {
-  position: absolute; left: 50%; bottom: max(10%, calc(var(--kh, 800px) * .40 - 64px)); translate: -50% 0; margin: 0;
+#w-plattegrond:hover { color: var(--perkament); border-color: var(--ember); }
+#w-actie {
+  position: absolute; left: 50%; bottom: max(10%, calc(var(--kh, 800px) * .18)); translate: -50% 0; margin: 0;
   font-size: 1.15rem; padding: 11px 26px; min-height: 48px; white-space: nowrap;
-  animation: wBinnenIn .28s ease-out;
+  animation: wActieIn .28s ease-out;
 }
-#w-binnen[hidden] { display: none; }
-@keyframes wBinnenIn {
-  from { opacity: 0; translate: -50% 10px; }
-  to { opacity: 1; translate: -50% 0; }
-}
-#w-paneel { display: none; }   /* alleen portret-mobiel (mobiel.css) */
+#w-actie[hidden] { display: none; }
+@keyframes wActieIn { from { opacity: 0; translate: -50% 10px; } to { opacity: 1; translate: -50% 0; } }
+#w-spring, #w-rol { display: none; }   /* gebaarknoppen: alleen touch (mobiel.css blok G) */
+#w-paneel { display: none; }           /* alleen portret-mobiel (mobiel.css blok G) */
 
-/* lite / reduced-motion: de lus blijft draaien, de franje dooft (marionet enkel bob, licht stil) */
-body.lite .w-fig.loopt img, body.lite .w-fig.daalt img { animation-name: wLoopLite; }
-@keyframes wLoopLite {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-body.lite .w-fig img { filter: none; }
-body.lite .w-deur, body.lite .w-gloed, body.lite .w-label { transition: none; }
+/* ---- lite / reduced-motion: de lus blijft, de franje dooft ---- */
+body.lite .w-mid, body.lite .w-voor, body.lite .w-deeltjes,
+body.w-lite .w-mid, body.w-lite .w-voor, body.w-lite .w-deeltjes { display: none; }
+body.lite .w-naloop, body.w-lite .w-naloop { display: none; }
+body.lite .w-pose, body.w-lite .w-pose { filter: none; transition: none; }
+body.lite .w-fig.t-loopt .w-pose, body.w-lite .w-fig.t-loopt .w-pose { animation-name: wLoopLite; }
+@keyframes wLoopLite { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) {
-  .w-fig img, #wereld-licht, .w-gloei, .w-plek.w-verlaten.verzegelt .w-zegel, #w-binnen { animation: none !important; }
+  .w-mid, .w-voor, .w-deeltjes { display: none; }
+  .w-pose, .w-nis-gloed, .w-plek.w-verlaten.verzegelt .w-zegel, #w-actie, .w-titel { animation: none !important; }
+  .w-pose { transition: none; }
   .w-plek.w-verlaten.verzegelt .w-zegel { opacity: 1; }
 }

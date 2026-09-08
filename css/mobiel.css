@@ -1365,34 +1365,44 @@ body[data-modus="mobiel"] #scherm-gevecht .status.s-slecht { background: rgba(78
 body[data-modus="mobiel"] #scherm-gevecht .status b { text-shadow: 0 1px 2px #000; }
 body[data-modus="mobiel"] #scherm-gevecht .vijand.vijand-klein .blok-status { scale: 1.2; transform-origin: top center; }
 
-/* ---------- G. DE WERELD (spike "De Richels", js/wereld.js, DEV-vlag body.wereld) ----------
+/* ---------- G. DE AFDALING (js/wereld.js + js/wereld-terrein.js, DEV-vlag body.wereld) ----------
    Touch-maten en de twee oriëntaties. Het scherm erft `top: calc(var(--tbh,40px) + var(--sat))`
    van de .scherm-regel hierboven, dus de HUD (absoluut ín het kijkvenster) hoeft alleen een
-   kleine eigen marge. Maten rekenen in --kh (kijkerhoogte in px, gezet door Wereld.hermeet),
-   nooit in vh: de portret-topbalk is 76px. Geen env(safe-area-inset-bottom) in het paneel:
-   .scherm draagt die padding al (anders dubbeltelling). */
-body[data-modus="mobiel"] #scherm-wereld {
-  --w-held: clamp(88px, 22vh, calc(var(--kh, 400px) * .38));   /* de held 22vh, nooit onder 88px, nooit groter dan 38% van het kijkvenster (portret-band) */
-  --w-deur: calc(var(--w-held) * 1.2);
-}
-body[data-modus="mobiel"] .w-plek { min-width: 44px; min-height: 44px; }       /* raakvlak ≥44px ECHT (geen zoom hier, anders dan de knopenkaart) */
-body[data-modus="mobiel"] .w-plek.kan:hover .w-deur { filter: brightness(.82) saturate(1); }   /* geen hover-lift: die plakt na een tik */
-body[data-modus="mobiel"] .w-plek.nabij .w-deur { filter: brightness(1.02) saturate(1.05); }
-body[data-modus="mobiel"] .w-label { font-size: .78rem; }
-body[data-modus="mobiel"] .w-bord b { font-size: .8rem; }
-body[data-modus="mobiel"] .w-bord small { font-size: .52rem; }
-body[data-modus="mobiel"] .w-baasnaam { font-size: 1.1rem; }
-body[data-modus="mobiel"] #wereld-hud { inset: 6px 0 0 0; padding: 0 8px; }
+   kleine eigen marge. De HELDMAAT is GEEN CSS-maat meer: hij komt uit de camera-schaal k
+   (hermeet(), --k) zodat de sprong op telefoon en laptop identiek is; --heldpx is alleen
+   informatief. Raakvlakken van de HUD staan BUITEN de geschaalde lagen, dus 44px = 44px.
+   Geen env(safe-area-inset-bottom) in het paneel: .scherm draagt die padding al. */
+body[data-modus="mobiel"] #wereld-kijker { touch-action: none; overscroll-behavior: contain; }
+body[data-modus="mobiel"] #wereld-hud { inset: calc(6px + var(--sat)) 0 0 0; padding: 0 8px; }
 body[data-modus="mobiel"] #w-verdieping { font-size: .68rem; padding: 6px 8px; letter-spacing: .08em; }
 body[data-modus="mobiel"] #w-verdieping small { display: none; }               /* seed/act passen niet naast de knop op 360px */
-body[data-modus="mobiel"] #w-klassiek { min-height: 40px; font-size: .84rem; }
-body[data-modus="mobiel"] #w-binnen { min-height: 56px; font-size: 1.08rem; padding: 12px 20px; bottom: 12px; max-width: calc(100% - 24px); white-space: normal; line-height: 1.15; }
-body[data-modus="mobiel"] #wereld-licht { --lr: 200px; }
+body[data-modus="mobiel"] #w-plattegrond { min-height: 44px; min-width: 44px; font-size: .84rem; }
+body[data-modus="mobiel"] .w-label { font-size: 30px; }                        /* wereld-eenheden: k schaalt mee */
+body[data-modus="mobiel"] #w-actie {
+  min-height: 56px; font-size: 1.05rem; padding: 12px 20px; bottom: 12px;
+  max-width: calc(100% - 150px); white-space: normal; line-height: 1.15;
+}
 
-/* PORTRET: band (46% van het scherm) + de open deuren als grote tikkaarten eronder (C's antwoord) */
+/* de gebaarknoppen: rechtsonder ▲ SPRING, links ervan ◐ ROL (contract §3.6) */
+body[data-modus="mobiel"] #w-spring, body[data-modus="mobiel"] #w-rol {
+  display: flex; align-items: center; justify-content: center;
+  position: absolute; bottom: 12px; border-radius: 50%;
+  background: rgba(20, 14, 28, .62); border: 2px solid rgba(255, 156, 63, .45); color: var(--ember-fel);
+  font-size: 1.5rem; line-height: 1; padding: 0; -webkit-tap-highlight-color: transparent;
+  text-shadow: 0 0 10px rgba(255, 156, 63, .5); touch-action: none;
+}
+body[data-modus="mobiel"] #w-spring { right: 12px; width: 64px; height: 64px; }
+body[data-modus="mobiel"] #w-rol { right: 84px; width: 56px; height: 56px; font-size: 1.3rem; }
+body[data-modus="mobiel"] #w-spring.in, body[data-modus="mobiel"] #w-rol.in {
+  background: rgba(255, 156, 63, .3); border-color: var(--ember); scale: .94;
+}
+
+/* PORTRET = GELEIDE MODUS: band van 46% + de open deuren (en de nis) als tikkaarten.
+   De camera-y staat vast op de deurbaan en de autoroute doet de ladders en kloven. */
 @media (orientation: portrait) {
   body[data-modus="mobiel"] #wereld-kijker { flex: 0 0 46%; height: 46%; }
-  body[data-modus="mobiel"] .w-label { display: none; }   /* het paneel eronder toont naam + kost al */
+  body[data-modus="mobiel"] .w-label, body[data-modus="mobiel"] #w-spring, body[data-modus="mobiel"] #w-rol { display: none; }
+  body[data-modus="mobiel"] #w-actie { max-width: calc(100% - 24px); }
   body[data-modus="mobiel"] #w-paneel {
     display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; min-height: 0; width: 100%;
     overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 10px 12px 12px;
@@ -1408,8 +1418,9 @@ body[data-modus="mobiel"] #wereld-licht { --lr: 200px; }
   body[data-modus="mobiel"] .w-kaart-deur {
     width: 64px; height: 52px; border-radius: 50% 50% 4px 4px / 45% 45% 4px 4px;
     background-size: cover; background-position: center 70%; background-color: #120c18;
-    filter: brightness(.72); box-shadow: inset 0 0 0 3px #241b2c, inset 0 0 0 5px #3b2d46;
+    filter: brightness(.78); box-shadow: inset 0 0 0 3px #241b2c, inset 0 0 0 5px #3b2d46;
   }
+  body[data-modus="mobiel"] .w-kaart-deur.nis { background-size: 60%; background-position: center; background-repeat: no-repeat; border-radius: 10px; }
   body[data-modus="mobiel"] .w-kaart-tekst { min-width: 0; }
   body[data-modus="mobiel"] .w-kaart b { display: block; font-family: 'Pirata One', serif; font-weight: normal; font-size: 1.15rem; letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   body[data-modus="mobiel"] .w-kaart small { display: block; color: var(--perkament-dof); font-size: .8rem; }
@@ -1419,17 +1430,20 @@ body[data-modus="mobiel"] #wereld-licht { --lr: 200px; }
   }
   body[data-modus="mobiel"] .w-kaart.nabij { border-color: var(--ember); box-shadow: 0 0 14px rgba(255, 156, 63, .35); }
   body[data-modus="mobiel"] .w-kaart.nabij em { background: var(--ember); color: var(--nacht); border-color: var(--ember); }
+  body[data-modus="mobiel"] .w-kaart-nis { border-color: rgba(255, 190, 110, .5); }
   body[data-modus="mobiel"] .w-kaart-elite .w-kaart-deur { box-shadow: inset 0 0 0 3px #2c1a22, inset 0 0 0 5px #4a2530; }
   body[data-modus="mobiel"] .w-kaart-episch .w-kaart-deur { box-shadow: inset 0 0 0 3px #251b33, inset 0 0 0 5px #43305e; }
   body[data-modus="mobiel"] .w-kaart-baas .w-kaart-deur { box-shadow: inset 0 0 0 3px #2c1418, inset 0 0 0 5px #5a2020; }
 }
-/* LIGGEND: het kijkvenster vult alles, het paneel verdwijnt (3,5 kolom in beeld) */
+/* LIGGEND: het kijkvenster vult alles, het paneel verdwijnt, de gebaarknoppen staan er */
 @media (orientation: landscape) {
   body[data-modus="mobiel"] #wereld-kijker { flex: 1 1 auto; height: auto; }
   body[data-modus="mobiel"] #w-paneel { display: none; }
 }
-/* kort liggend: kleinere borden, HUD compacter */
+/* KORT LIGGEND (Thomas' toestel, ~420px hoog): knoppen 56/48, de actieknop lager */
 @media (orientation: landscape) and (max-height: 440px) {
-  body[data-modus="mobiel"] .w-bord { padding: 4px 10px 3px; bottom: calc(var(--w-deur) + 28px); }
-  body[data-modus="mobiel"] #w-binnen { min-height: 48px; bottom: 8px; padding: 9px 16px; font-size: 1rem; }
+  body[data-modus="mobiel"] #w-spring { width: 56px; height: 56px; bottom: 8px; right: 10px; }
+  body[data-modus="mobiel"] #w-rol { width: 48px; height: 48px; bottom: 12px; right: 74px; }
+  body[data-modus="mobiel"] #w-actie { min-height: 48px; bottom: 8px; padding: 9px 16px; font-size: .98rem; max-width: calc(100% - 140px); }
+  body[data-modus="mobiel"] #w-plattegrond { font-size: .78rem; padding: 5px 8px; }
 }

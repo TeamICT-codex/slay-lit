@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v108'; // v108: Het Proces stap 1 — DICKtator-fases werken (pips/woede), Decreet als eigen intent, herlaad-checkpoint in het baasgevecht
+const CACHE = 'slayit-v110'; // v110: DE AFDALING — de vertical slice van de Dead Cells-afdaling (gelaagde diepte, gebaren met gewicht, levelvorm B, nissen); v109 is voorbehouden aan de baasbouw
 const BESTANDEN = [
   '.',
   'css/style.css',
@@ -16,6 +16,7 @@ const BESTANDEN = [
   'js/outro.js',
   'js/online.js',
   'js/game.js',
+  'js/wereld-terrein.js',
   'js/wereld.js',
   'assets/fonts/fonts.css',
   'assets/fonts/PirataOne-400-normal.woff2',
@@ -42,6 +43,20 @@ const BESTANDEN = [
    BEST-EFFORT: een hapering mag de kern-install niet laten mislukken; de
    cache-first /assets/-tak vangt gemiste platen bij het eerste echte bezoek. */
 const ZWAAR = [
+  /* DE AFDALING — de Act 1-bioomlagen (±2,2 MB): best-effort, de cache-first /assets/-tak
+     vangt wat hier mist bij het eerste echte bezoek. */
+  'assets/achtergronden/Afdaling/afdaling_a1_grond.webp',
+  'assets/achtergronden/Afdaling/afdaling_a1_midden.webp',
+  'assets/achtergronden/Afdaling/afdaling_a1_voorgrond.webp',
+  'assets/achtergronden/Afdaling/afdaling_a1_poort.webp',
+  'assets/achtergronden/Afdaling/afdaling_a1_verte_1.webp',
+  'assets/achtergronden/Afdaling/afdaling_a1_verte_2.webp',
+  'assets/achtergronden/Afdaling/afdaling_a1_verte_3.webp',
+  'assets/achtergronden/Afdaling/afdaling_a1_verte_4.webp',
+  'assets/achtergronden/Afdaling/afdaling_a1_prop_zuil.webp',
+  'assets/achtergronden/Afdaling/afdaling_a1_prop_kooi.webp',
+  'assets/achtergronden/Afdaling/afdaling_a1_prop_lift.webp',
+  'assets/achtergronden/Afdaling/afdaling_a1_prop_prikklok.webp',
   'assets/proloog/kantoor-overzicht.webp',
   'assets/proloog/de-oprichter.webp',
   'assets/proloog/foto-kind.webp',

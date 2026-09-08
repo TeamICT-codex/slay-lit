@@ -3961,6 +3961,28 @@ function kiesNode(id) {
   setTimeout(() => { reisBezig = false; kiesNodeEcht(id); }, 1250);
 }
 
+/* ============================================================
+   DE NIS (de afdaling, js/wereld.js) — HET ENIGE AFREKENPUNT voor een vondst.
+   De wereld rekent nooit zelf af: zij kiest plaats en soort met haar eigen loterij
+   (dus zonder de gedeelde seed-stroom te verschuiven) en roept dit aan met een
+   sleutel 'act|rij'. Vondsten geven LICHT en LORE, nooit goud: goud telt direct mee
+   in het Prikbord (dagscore rekent Math.floor(S.goud/5)) en zou de wereldspeler
+   15-30 punten voorsprong geven op wie dezelfde run op de klassieke kaart speelt.
+   ============================================================ */
+function kiesNisEcht(sleutel, soort, tekst) {
+  if (!S || !S.kaart || typeof sleutel !== 'string') return false;
+  if (!Array.isArray(S.wn)) S.wn = [];
+  if (S.wn.indexOf(sleutel) >= 0) return false;      /* guard: één nis per richel, één keer */
+  S.wn.push(sleutel);
+  if (soort === 'olie') { zetFakkel(3); melding('🛢️ Een kruik lampolie. +3 licht.'); }
+  else if (soort === 'fakkel') melding('🕯️ ' + (tekst || 'De koude fakkel van een voorganger.'));
+  else melding('📄 ' + (tekst || 'Circulaire nr. 7: licht is een kostenpost.'));
+  saveSpel();
+  renderTopbalk();
+  return true;
+}
+window.kiesNisEcht = kiesNisEcht;
+
 function kiesNodeEcht(id) {
   const n = S.kaart[id];
   if (!n) return;
