@@ -9052,7 +9052,14 @@ function devMenu() {
       ['🫠 Slijmkoning', () => devSlijmkoning()],
       ['🤴 Erfprins', () => devErfprins()],
       ['🃏 Erfprins · 1e ontmoeting (intro)', () => devErfprinsIntro()],
-      ['👑 DICKtator', () => devDicktator()],
+      ['👑 HET PROCES · mediäan', () => devDicktator('slachter_mid')],
+      ['☠️ HET PROCES · gif_opt', () => devDicktator('gif_opt')],
+      ['🐛 HET PROCES · gif_matig', () => devDicktator('gif_matig')],
+      ['🎭 HET PROCES · choreo', () => devDicktator('choreo')],
+      ['⚖️ sprong · het hof (66%)', () => devDicktator('slachter_mid', { hof: true })],
+      ['🗣️ sprong · de tirade (33%)', () => devDicktator('slachter_mid', { tirade: true })],
+      ['🗳️ sprong · vorm 2', () => devDicktator('gif_opt', { vorm2: true })],
+      ['⏳ sprong · de staart', () => devDicktator('gif_matig', { staart: true })],
     ]],
     ['Metgezel (in gevecht: vanaf het volgende)', [
       ['🐕 Drops', () => devMetgezel('drops')],
@@ -9088,51 +9095,147 @@ function devMenu() {
   ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
 }
 
-/* DEV-SHORTCUT: meteen tegen de DICKtator — met een geloofwaardig dek (het Decreet
-   vreet kaarten, dus een kaal startdek van 10 maakt de test zinloos) + ruime HP.
-   Ook als devDicktator() in de console. Weg vóór release. */
-function devDicktator() {
-  if (!S) nieuwSpel('slachter');
+/* DEV-SHORTCUT: de vaste PLAYTEST-BUILDS — exact dezelfde als BUILDS in het meetharnas
+   (.claude/notities/baas-meting/dick_sim_proces.js), zodat de bot-meting en Thomas' hand-
+   playtest over precies hetzelfde dek en dezelfde relikwieën praten. Weg vóór release. */
+const DEV_BUILDS = {
+  slachter_mid: {
+    held: 'slachter', hp: 88, label: 'Slachter gemiddeld (de MEDIAAN-speler)',
+    relikwieen: ['brandend_bloed', 'krachtsteen', 'stalen_vuist', 'stempelkussen', 'brandmerkijzer'],
+    dranken: ['heeldrank'], laster: 1, metgezel: 'drops',
+    dek: [['slag', 1], ['slag', 1], ['slag', 0], ['slag', 0], ['verdediging', 1], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0],
+          ['knal', 0], ['zware_klap', 1], ['dubbelslag', 0], ['in_drievoud', 0], ['uithaal', 0], ['executie', 0], ['afgekeurd', 0],
+          ['ontslagbrief', 0], ['tribunaal', 0], ['schildmuur', 1], ['schildmuur', 0], ['metaalhuid', 0], ['het_hakblok', 0], ['originele_handtekening', 0]]
+  },
+  gif_opt: {
+    held: 'gifmagier', hp: 74, label: 'Gifmagiër geoptimaliseerd (de STERKSTE build)',
+    relikwieen: ['slangenamulet', 'smaragden_ring', 'inktpot', 'oorlogsbanier', 'stempelkussen', 'martelaarskroon'],
+    dranken: ['heeldrank'], laster: 0, metgezel: 'drops',
+    dek: [['prik', 0], ['prik', 1], ['dodelijke_kus', 1], ['gifflits', 1], ['gifflits', 0], ['gifpamflet', 1], ['gifpamflet', 0],
+          ['inktklerk_steek', 0], ['snelle_steek', 1], ['slangenbeet', 0], ['giftand', 1], ['katalyse', 1], ['nachtschade', 0],
+          ['karaktermoord', 0], ['de_gifbeker', 0], ['lastercampagne', 0], ['verlammend_gif', 0],
+          ['sluiproute', 1], ['sluiproute', 0], ['verdediging', 1], ['verdediging', 0], ['verdediging', 0]]
+  },
+  gif_opt_kristal: {
+    held: 'gifmagier', hp: 74, label: 'Gifmagiër geoptimaliseerd + Energiekristal',
+    relikwieen: ['slangenamulet', 'smaragden_ring', 'inktpot', 'oorlogsbanier', 'stempelkussen', 'energiekristal'],
+    dranken: ['heeldrank'], laster: 0, metgezel: 'drops',
+    dek: [['prik', 0], ['prik', 1], ['dodelijke_kus', 1], ['gifflits', 1], ['gifflits', 0], ['gifpamflet', 1], ['gifpamflet', 0],
+          ['inktklerk_steek', 0], ['snelle_steek', 1], ['slangenbeet', 0], ['giftand', 1], ['katalyse', 1], ['nachtschade', 0],
+          ['karaktermoord', 0], ['de_gifbeker', 0], ['lastercampagne', 0], ['verlammend_gif', 0],
+          ['sluiproute', 1], ['sluiproute', 0], ['verdediging', 1], ['verdediging', 0], ['verdediging', 0]]
+  },
+  gif_matig: {
+    held: 'gifmagier', hp: 70, label: 'Gifmagiër matig (die NIET vermorzeld mag worden)',
+    relikwieen: ['slangenamulet'], dranken: [], laster: 1, metgezel: null,
+    dek: [['prik', 0], ['prik', 0], ['prik', 0], ['prik', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0],
+          ['dodelijke_kus', 0], ['gifflits', 0], ['giftige_steek', 0], ['slangenbeet', 0], ['venijnregen', 0], ['sluiproute', 0], ['gifwolk', 0]]
+  }
+};
+
+/* DEV-SHORTCUT: meteen tegen HET PROCES, met een REALISTISCHE speler.
+   devDicktator(profiel, opties) — profiel: 'slachter_mid' (standaard) | 'gif_opt' |
+   'gif_opt_kristal' | 'gif_matig' | 'choreo' (het oude, milde gedrag: alleen om de
+   voorstelling te bekijken). opties: { vorm2, hof, tirade, staart }.
+   Ook als devDicktator('gif_opt', {vorm2:true}) in de console. Weg vóór release. */
+function devDicktator(profiel = 'slachter_mid', opties = {}) {
+  const b = DEV_BUILDS[profiel];
+  if (b) nieuwSpel(b.held);        /* een vaste build begint altijd van nul */
+  else if (!S) nieuwSpel('slachter');
   if (inGevecht()) stopGevechtLus();
   S.gevecht = null;
   S.act = 3;
   S.fakkel = fakkelMax();
   S.pos = null;
-  S.maxHp = Math.max(S.maxHp || 0, 150);
-  S.hp = S.maxHp;
-  S.dranken = [];
-  while (S.dranken.length < drankSlots()) S.dranken.push('heeldrank');
+  S.ascensie = 0;
+  S.dagwet = null;   /* een meting die per ongeluk op een Glazen-Zielen-dag draait is onbruikbaar */
   delete S.beloning; delete S.winkel; delete S.huidigEvent;
-  /* dek aandikken tot ±20 kaarten zodat het Decreet iets te vreten heeft
-     (zelfde patroon als devErfprins: uit de eigen heldPool) */
-  if (S.dek.length < 18) {
-    const pool = heldPool();
-    let veiligheid = 0;
-    while (S.dek.length < 20 && pool.length && veiligheid++ < 40) S.dek.push(nieuweKaart(kiesUit(pool)));
+  if (!b) {
+    /* 'choreo': het oude gedrag — ruime HP, volle dranken, willekeurig dek van 20 */
+    S.maxHp = Math.max(S.maxHp || 0, 150);
+    S.hp = S.maxHp;
+    S.dranken = [];
+    while (S.dranken.length < drankSlots()) S.dranken.push('heeldrank');
+    if (S.dek.length < 18) {
+      const pool = heldPool();
+      let veiligheid = 0;
+      while (S.dek.length < 20 && pool.length && veiligheid++ < 40) S.dek.push(nieuweKaart(kiesUit(pool)));
+    }
+    melding('⚡ DEV: HET PROCES — choreo-modus (150 HP, volle dranken). Alleen om de voorstelling te bekijken, niet om te balanceren.');
+  } else {
+    S.maxHp = b.hp;
+    S.hp = Math.round(b.hp * (opties.staart ? 0.40 : 0.62));   /* 'de staart': een uitgeklede staat */
+    S.relikwieen = b.relikwieen.slice();
+    S.dek = b.dek.map(([id, up]) => { const c = nieuweKaart(id); c.up = !!up; return c; });
+    S.dranken = opties.staart ? [] : b.dranken.slice();
+    for (let i = 0; i < (b.laster || 0); i++) S.dek.push(nieuweKaart('laster'));
+    if (b.metgezel) { geefMetgezel(b.metgezel); if (S.metgezel) S.metgezel.hp = Math.max(1, Math.round(metgezelMaxHp(b.metgezel) * 0.6)); }
+    else S.metgezel = null;
+    melding(`⚡ DEV: HET PROCES — ${b.label}: ${S.hp}/${S.maxHp} HP, ${S.dek.length} kaarten, ${S.relikwieen.length} relikwieën.`);
   }
   S.kaart = genereerKaart();
   saveSpel();
-  melding('⚡ DEV: rechtstreeks naar de DICKtator — 150 HP, dek aangedikt tot 20.');
-  startGevecht(['de_dicktator'], 'baas', 12);
+  startGevecht(baasSamenstelling('de_dicktator'), 'baas', 12);
+  /* de sprongen: elk zet het gevecht in een latere staat zodat je die fase kunt bekijken */
+  const g = S.gevecht, v = g && g.vijanden[0];
+  if (!v) return;
+  /* het hof mee op het toneel (layoutcheck baas + 3 figuren) zonder de delegatie af te wachten */
+  const roepHof = () => {
+    ['de_griffier', 'de_deurwaarder'].forEach(id => { const n = dicktatorRoep(id); if (n) n._aangetreden = true; });
+    v.beurtTeller = 3;                       /* de volgende zet is de klapbeurt (t=4) */
+    dicktatorShortlist(g, v);
+    v.intent = VIJANDEN[v.id].kies(v, v.beurtTeller);
+    dicktatorHersync(false);
+  };
+  if (opties.staart) {
+    /* de plek waar het écht kan gaan slepen: vorm 2, drie decreten gevallen, alles op */
+    v.krachtVast = DICK.krachtVastCap;
+    for (let i = 0; i < 3 && S.dek.length > 3; i++) { S.dek.pop(); S.dek.push(nieuweKaart('laster')); }
+    g.trek = schud([...S.dek]); g.hand = []; g.afleg = []; trekKaarten(5);
+    v.hp = 1;
+  } else if (opties.vorm2) {
+    v.hp = 1;   /* je eerste klap geeft de volledige beat: kiezers, arena, muziek */
+  } else if (opties.tirade) {
+    roepHof();
+    v.hp = Math.floor(v.maxHp * 0.32); checkBaasFase();
+  } else if (opties.hof) {
+    roepHof();
+    v.hp = Math.floor(v.maxHp * 0.66); checkBaasFase();
+  }
+  renderGevecht();
 }
 
 /* DEV-SHORTCUT: spring meteen naar Act 3 (het Slachtblok) om het roster te testen
    zonder Act 1-2 door te spelen. Act 3 is live (ACTS_MAX=3). Weg vóór release. */
-function devSprongAct3() {
-  if (!S) nieuwSpel('slachter');
+function devSprongAct3(profiel) {
+  const b = DEV_BUILDS[profiel];
+  if (b) nieuwSpel(b.held);
+  else if (!S) nieuwSpel('slachter');
   if (inGevecht()) stopGevechtLus();
   S.gevecht = null;
   S.act = 3;
   S.fakkel = fakkelMax();
   S.pos = null;
-  S.maxHp = Math.max(S.maxHp || 0, 150);
-  S.hp = S.maxHp;
-  S.dranken = [];
-  while (S.dranken.length < drankSlots()) S.dranken.push('heeldrank');
   delete S.beloning; delete S.winkel; delete S.huidigEvent;
+  if (b) {
+    /* zelfde vaste build als devDicktator/het meetharnas, maar dan vóór de ladder */
+    S.ascensie = 0; S.dagwet = null;
+    S.maxHp = b.hp; S.hp = Math.round(b.hp * 0.62);
+    S.relikwieen = b.relikwieen.slice();
+    S.dek = b.dek.map(([id, up]) => { const c = nieuweKaart(id); c.up = !!up; return c; });
+    S.dranken = b.dranken.slice();
+    for (let i = 0; i < (b.laster || 0); i++) S.dek.push(nieuweKaart('laster'));
+    if (b.metgezel) { geefMetgezel(b.metgezel); if (S.metgezel) S.metgezel.hp = Math.max(1, Math.round(metgezelMaxHp(b.metgezel) * 0.6)); }
+    melding(`⚡ DEV: Act 3 — Het Slachtblok, ${b.label}: ${S.hp}/${S.maxHp} HP.`);
+  } else {
+    S.maxHp = Math.max(S.maxHp || 0, 150);
+    S.hp = S.maxHp;
+    S.dranken = [];
+    while (S.dranken.length < drankSlots()) S.dranken.push('heeldrank');
+    melding('⚡ DEV: Act 3 — Het Slachtblok. 150 HP + volle heeldranken. De baas-node is HET PROCES (de DICKtator).');
+  }
   S.kaart = genereerKaart();   /* act-bewust → de Act 3-ladder */
   saveSpel();
-  melding('⚡ DEV: Act 3 — Het Slachtblok. 150 HP + volle heeldranken. (Baas-node = nog de Slijmkoning tot de DICKtator er is.)');
   renderKaartScherm();
 }
 function devDropsWis() {
