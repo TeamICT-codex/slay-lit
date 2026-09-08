@@ -4575,6 +4575,12 @@ function toonBaasIntro(g) {
     setTimeout(() => { Klank.sfx('dood'); schudScherm(); }, 700);
     setTimeout(() => el.remove(), 3600);
     setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(baasUitspraken(b.id).intro); }, 3900);
+    /* v109 — DE OUVERTURE: meteen na het staatsieportret opent hij het tribunaal.
+       Vanaf hier draagt elk bedrijf zijn eigen banner (II · HET PROCES, III · DE TIRADE,
+       IV · DE HERVERKIEZING), zodat je aan de banner ziet waar je in het stuk zit. */
+    setTimeout(() => {
+      if (S.gevecht === g && !g.voorbij) baasFaseMoment('I · DE ZITTING', '„De zitting is geopend."');
+    }, 5600);
     return;
   }
   const isErf = (b.id === 'de_erfprins');
