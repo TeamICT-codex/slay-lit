@@ -2538,7 +2538,9 @@ function pose2D(actor, state, duur) {
    en idempotent per figuur (g._poseWarm) — dus ook bruikbaar voor bijgeroepen
    vijanden en de metgezel-terugkeer. Zonder manifest: de vaste lijst van v89. */
 const POSE_VOLGORDE = ['attack', 'hit', 'cast', 'block', 'death', 'victory', 'gif'];
-const POSE_STATES = new Set([...POSE_VOLGORDE, 'decreet', 'plagiaat', 'plagiaat_variant', 'beulswerk', 'moederslang', 'flame', 'offer', 'terugkeer']);
+/* v109: 'factuur' (de baas int zelf) en 'herkozen' (de vastgehouden standbeeldpose na
+   DE HERVERKIEZING) horen erbij, anders slaat de preload ze over. */
+const POSE_STATES = new Set([...POSE_VOLGORDE, 'decreet', 'plagiaat', 'plagiaat_variant', 'beulswerk', 'moederslang', 'flame', 'offer', 'terugkeer', 'factuur', 'herkozen']);
 function figuurPoses(map, basis) {
   const m = window.ART_MANIFEST && window.ART_MANIFEST[map];
   if (!Array.isArray(m)) return POSE_VOLGORDE.filter(s => s !== 'gif' || map === 'karakters');
@@ -2906,9 +2908,14 @@ function actDmg(basis) {
 /* vijand valt aan — meestal de speler, soms vangt de metgezel de klap op.
    gedwongenDoel: een intent kan een doelwit afdwingen (bv. de Erfprins die
    gericht Drops wegwuift). */
-function vijandAanval(v, basis, gedwongenDoel) {
+function vijandAanval(v, basis, gedwongenDoel, opts = {}) {
   if (v.dood) return;   /* een aan Doornen gesneuvelde vijand slaat niet meer */
-  basis = actDmg(basis);   /* latere acts: hardere klappen (zelfde bron als de telegraaf) */
+  /* v109 (HET PROCES): opts.vast = het getal op de pil IS het getal op je HP - geen
+     act-schaling (DE FACTUUR, EXECUTIE, BETAALD APPLAUS, HET ONTSLAG). opts.geenKracht =
+     Kracht telt niet mee (een rekening is geen vuistslag). Zwak/Kwetsbaar/blok/Dossier/
+     Glazen Zielen blijven gewoon werken. De vlag staat op BEIDE plekken: hier en in
+     intentTekst - anders liegt de pil. */
+  basis = opts.vast ? basis : actDmg(basis);   /* latere acts: hardere klappen (zelfde bron als de telegraaf) */
   const doel = (gedwongenDoel && !gedwongenDoel.dood) ? gedwongenDoel : kiesAanvalDoel(v);
   if (window.Vista) Vista.aanval(v, sp());   /* visueel altijd richting het heldenvak (de metgezel staat ernaast) */
   pose2D(v, 'attack', 0.5);
@@ -2917,7 +2924,7 @@ function vijandAanval(v, basis, gedwongenDoel) {
     const evf = pose2DArtEl(v);
     if (evf) { evf.classList.remove('valt-aan-v'); void evf.offsetWidth; evf.classList.add('valt-aan-v'); }
   }
-  let dmg = basis + (v.status.kracht || 0);
+  let dmg = basis + (opts.geenKracht ? 0 : (v.status.kracht || 0));
   if ((v.status.zwak || 0) > 0) dmg = Math.floor(dmg * 0.75);
   if ((doel.status.kwetsbaar || 0) > 0) dmg = Math.floor(dmg * 1.5);
   if (doel.isMetgezel) {
@@ -4910,7 +4917,7 @@ function intentTekst(v) {
     }
     const mDoel = it.doelMetgezel ? gMet() : null;
     const richtMet = !!(mDoel && !mDoel.dood);   /* een intent kan de metgezel viseren (it.doelMetgezel) */
-    let dmg = actDmg(it.dmg) + (v.status.kracht || 0);   /* zelfde act-schaling als de echte klap */
+    let dmg = (it.vast ? it.dmg : actDmg(it.dmg)) + (v.status.kracht || 0);   /* zelfde act-schaling als de echte klap; it.vast = het getal telt niet op (v109) */
     if ((v.status.zwak || 0) > 0) dmg = Math.floor(dmg * 0.75);
     if (((richtMet ? mDoel : sp()).status.kwetsbaar || 0) > 0) dmg = Math.floor(dmg * 1.5);
     dmg = glasDmg(dmg);   /* GLAZEN ZIELEN telegrafeert mee — de balk loog een derde te laag (debug-sweep) */
@@ -4930,6 +4937,32 @@ function intentTekst(v) {
   }
   if (it.type === 'blok') {
     return `<span class="intent intent-blok" data-tip="${it.naam}: verdedigt zich">🛡️ ${verborgen ? '?' : it.blok}</span>`;
+  }
+  /* DE FACTUUR (v109): het bedrag loopt LIVE op terwijl jij speelt - een bron van waarheid
+     (dicktatorFactuurBedrag) voedt zowel deze pil als de echte klap. Vast (geen act-schaling),
+     zonder Kracht, maar met Zwak op de slaande figuur, Kwetsbaar op jou en Glazen Zielen. */
+  if (it.type === 'factuur') {
+    if (verborgen) return `<span class="intent intent-factuur" data-tip="${it.naam}: hij stuurt een rekening - te donker om het bedrag te lezen">🧾 ?</span>`;
+    const gF = S.gevecht;
+    let bed = dicktatorFactuurBedrag(gF, it);
+    if ((v.status.zwak || 0) > 0) bed = Math.floor(bed * 0.75);
+    if ((sp().status.kwetsbaar || 0) > 0) bed = Math.floor(bed * 1.5);
+    bed = glasDmg(bed);
+    const posten = (gF && gF.posten) || 0;
+    const hovN = gF ? gF.vijanden.filter(x => x.hof && !x.dood).length : 0;
+    const toeslag = Math.min(DICK.FACTUUR.hofCap, posten * hovN);
+    const basis = it.basis != null ? it.basis : DICK.FACTUUR.basis;
+    const tarief = it.tarief != null ? it.tarief : DICK.FACTUUR.tarief;
+    /* laptop: de hele rekensom; mobiel alleen het bedrag (een tik op de pil is daar een
+       doelwitklik, dus de formule staat in de eenmalige melding en in de Codex - v105) */
+    const som = window.mobiel ? `🧾 ${bed}` : `🧾 ${basis} + ${tarief}×${posten}${toeslag ? ' +' + toeslag : ''} = ${bed}`;
+    return `<span class="intent intent-factuur" data-tip="${it.naam}: ${basis} basis + ${tarief} per post × ${posten} posten${toeslag ? ' + ' + toeslag + ' hoftoeslag' : ''} = ${bed} schade. Elke gespeelde kaart is een post: gratis = 2, 1 energie = 1, 2+ = aftrekbaar.">${som}</span>`;
+  }
+  /* HET HOF (v109): een zet zonder schade die wel iets doet (delegeren, laten innen, de
+     zitting, de betekening, de peiling). Nooit in de default-tak - die zegt 'verzwakt jou'. */
+  if (it.type === 'hof') {
+    const kort = it.kort || it.naam;
+    return `<span class="intent intent-hof" data-tip="${it.naam}: ${it.tip || 'geen schade deze beurt'}">${it.icoon || '🪑'} ${verborgen ? '?' : kort}</span>`;
   }
   if (it.type === 'decreet') {   /* v108: HET DECREET was een 'buff'-pil ("versterkt zichzelf") — nu zie je de kaartverwijdering aankomen */
     if (verborgen) return `<span class="intent intent-decreet" data-tip="HET DECREET — te donker om te zien wat hij afschrijft">📜 ?</span>`;
@@ -6237,6 +6270,69 @@ function copycatNaSchade(v, n, bron) {
    Drie fases op HP (aankondiging + escalatie); bij fase 2 keert de
    JEUGDDROOM uit de proloog terug — voorziening getroffen, afgeschreven.
    ============================================================ */
+/* ============================================================
+   HET PROCES - alle getallen van de eindbaas in een blok, zodat een balansronde
+   niet door de code hoeft te grasduinen (contract paragraaf 6). tempo = ceremonieschaal
+   (het meetharnas zet 'm op 0.02 om de beats over te slaan).
+   ============================================================ */
+const DICK = {
+  hp: 220,                                  /* was 240: het hof + vorm 2 leveren nu de druk */
+  vorm2Pct: 0.40,                           /* DE HERVERKIEZING: terug op 40% = 88 HP */
+  fase2: 0.66, fase3: 0.33,
+  AANZEGGING: 8, KARAKTERMOORD: 8, KM_PER_VLOEK: 3,
+  EXECUTIE: 22, DONDERREDE: 11, ONTSLAG: 22,
+  APPLAUS: 5,
+  FACTUUR: { basis: 6, tarief: 4, basis3: 10, tarief3: 5, index: 2, hofCap: 6 },
+  decreetCap: 3,          /* harde grens: nooit meer dan 3 kaarten per gevecht */
+  speelbaarGuard: 6,      /* bestaande guard: onder 7 speelbare kaarten geen decreet meer */
+  lasterCap: 3, dekMinLaster: 16,
+  krachtVastCap: 3, kiezersCap: 3,
+  claqueurHp: 16, deurwaarderVorm2Hp: 30,
+  claqueurVanaf: 3,       /* vanaf welke fase het betaald applaus aantreedt (balansknop) */
+  tempo: 1
+};
+window.DICK = DICK;
+const dtempo = ms => Math.max(1, Math.round(ms * (DICK.tempo || 1)));
+
+/* het tarief van dit moment: bedrijf I-II goedkoop, vanaf DE TIRADE duurder en
+   geindexeerd (+2 basis per uitgevoerde factuur; vorm 2 telt opnieuw). */
+function dicktatorTarief(b) {
+  const F = DICK.FACTUUR;
+  if (!b) return { basis: F.basis, tarief: F.tarief };
+  if (b.vorm2) return { basis: F.basis3 + F.index * (b.facturen2 || 0), tarief: F.tarief3 };
+  if ((b.fase || 1) >= 3) return { basis: F.basis3 + F.index * (b.facturen3 || 0), tarief: F.tarief3 };
+  return { basis: F.basis, tarief: F.tarief };
+}
+/* EEN BRON VAN WAARHEID voor de pil en de klap (les van de Glazen-Zielen-fix):
+   FACTUUR = basis + tarief x posten + min(6, posten x levende hovelingen). */
+function dicktatorFactuurBedrag(g, it) {
+  if (!g || !it) return 0;
+  const posten = g.posten || 0;
+  const hovelingen = g.vijanden.filter(x => x.hof && !x.dood).length;
+  const basis = it.basis != null ? it.basis : DICK.FACTUUR.basis;
+  const tarief = it.tarief != null ? it.tarief : DICK.FACTUUR.tarief;
+  return basis + tarief * posten + Math.min(DICK.FACTUUR.hofCap, posten * hovelingen);
+}
+/* de figuur die de rekening deze beurt komt innen (de deurwaarder, of de baas zelf) */
+function dicktatorFactuurBron(g) {
+  if (!g) return null;
+  return g.vijanden.find(x => !x.dood && x.intent && x.intent.type === 'factuur') || null;
+}
+function dicktatorFactuurNu(g) {
+  const v = dicktatorFactuurBron(g);
+  return v ? dicktatorFactuurBedrag(g, v.intent) : null;
+}
+/* de kassa-tik: speel je een kaart terwijl er een factuur op het bord staat, dan zie je
+   het bedrag ter plekke oplopen (+8 / +4) of niet bewegen ("+0 aftrekbaar"). */
+function dicktatorKassaTik(g, voor, posten) {
+  if (voor == null) return;
+  const v = dicktatorFactuurBron(g); if (!v) return;
+  const el = actorEl(v); if (!el) return;
+  const na = dicktatorFactuurBedrag(g, v.intent);
+  if (na > voor) { fxNummer(el, '+' + (na - voor), 'fx-debuff'); Klank.sfx('goud'); }
+  else if (posten === 0) fxNummer(el, '+0 aftrekbaar', 'fx-blok');
+}
+
 /* v109 (stap 2) — voorlopige haken voor het hof; het volledige brein volgt in stap 5.
    Ze staan hier al zodat de nieuwe VIJANDEN-defs (de_griffier/de_deurwaarder/de_claqueur)
    nooit naar een onbestaande functie wijzen (lookup-bugklasse). */
@@ -6592,11 +6688,16 @@ async function eindBeurt() {
 
     const it = v.intent;
     if (it) {
-      if (it.type === 'aanval') {
-        const slagen = it.hits || 1;
+      if (it.type === 'aanval' || it.type === 'factuur') {
+        /* v109: een factuur is een klap, vast en zonder Kracht; het bedrag komt uit dezelfde
+           functie als de pil (dicktatorFactuurBedrag), dus wat je las is wat je krijgt. */
+        const factuur = it.type === 'factuur';
+        const bedrag = factuur ? dicktatorFactuurBedrag(g, it) : it.dmg;
+        const slagen = factuur ? 1 : (it.hits || 1);
         const gericht = it.doelMetgezel ? gMet() : null;   /* bv. de Erfprins die Drops wegwuift */
+        if (factuur) pose2D(v, 'factuur', 0.6);
         for (let h = 0; h < slagen; h++) {
-          vijandAanval(v, it.dmg, gericht);
+          vijandAanval(v, bedrag, gericht, { vast: factuur || !!it.vast, geenKracht: factuur });
           renderGevecht();
           if (gestopt()) return;
           if (v.dood) break;                 /* doodgegaan aan Doornen mid-reeks → stop de reeks */
@@ -6609,7 +6710,7 @@ async function eindBeurt() {
         if (window.Vista) Vista.pose(v, 'block', bd);
         pose2D(v, 'block', bd);
       }
-      if (it.type === 'buff' || it.type === 'debuff') {
+      if (it.type === 'buff' || it.type === 'debuff' || (it.type === 'hof' && it.cast)) {
         const cd = VIJANDEN[v.id].baas ? 2.6 : (VIJANDEN[v.id].elite ? 1.9 : 1.5);
         if (window.Vista) Vista.pose(v, 'cast', cd);
         pose2D(v, 'cast', cd);
