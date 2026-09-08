@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v106'; // v106: zes toneelplaten (drieluik De Raadzaal als FINALE, Act 3 stijl 1+3 en Act 2 stijl 5 vervangen)
+const CACHE = 'slayit-v107'; // v107: DE WERELD (spike "De Richels") — js/wereld.js erbij, achter de DEV-vlag ?wereld=1
 const BESTANDEN = [
   '.',
   'css/style.css',
@@ -16,6 +16,7 @@ const BESTANDEN = [
   'js/outro.js',
   'js/online.js',
   'js/game.js',
+  'js/wereld.js',
   'assets/fonts/fonts.css',
   'assets/fonts/PirataOne-400-normal.woff2',
   'assets/fonts/Alegreya-400-normal.woff2',

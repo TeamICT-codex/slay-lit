@@ -483,6 +483,9 @@ STIJLANKERS (letterlijk overnemen):
 
 ------------------------------ ACT 1 — DE DIEPTE (P1) ------------------------------
 
+STAND 7 sep: EERSTE REEKS VOLLEDIG BINNEN — verte (4 varianten, afdaling_a1_verte_1..4), midden, grond,
+voorgrond, poort en de vier rekwisieten staan als WebP in Afdaling/. Volgende: de P1b-objecten hieronder + de Slachter-frames.
+
 ========================= afdaling_a1_verte.png =========================
 Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
 
@@ -732,4 +735,78 @@ Palette of black basalt and black iron, molten ember-red light glowing UP from c
 
 Painted illustration style only. Square 1024x1024 canvas, fully transparent background. No characters, no figures, no text, no letters, no frame, no UI.
 
-(Later, na het ontwerppanel: per act een *_baaspoort.png (bredere poort voor de eindbaas), ladders/liften/valgat-randen voor de traversal, en de held-bewegingsframes in assets/karakters/STATE-PROMPTS.txt.)
+------------------------ ACT 1 — TRAVERSAL-OBJECTEN (P1b, uit het ontwerppanel van 7 sep) ------------------------
+De tweede reeks voor de vertical slice: wat de held nodig heeft om te SPRINGEN, KLIMMEN
+en te VALLEN en wat het rondkijken betaalt. Zelfde dropmap (assets/achtergronden/Afdaling/),
+zelfde regels: geen tekst, geen figuren, "isolated on a fully transparent background".
+Nieuw t.o.v. de eerste reeks: overal "crisp edges, NO white glow, NO bloom" — een witte
+gloeirand rond een object valt op tegen het donker van de wereld.
+Eén object per beeld: begin élke prompt met de regel "ONE single object, alone in the
+frame" — anders plakt de generator varianten naast elkaar.
+
+========================= afdaling_a1_bordes.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, no second copy, no variations.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A single raised broken slab of dungeon ledge seen exactly from the side, floating on transparency: a thick horizontal slab of dark cracked stone blocks with a flat walkable top, a carved LEFT END CAP and a carved RIGHT END CAP (small broken corner stones with a rusted iron support bracket bolted under each end), and a calm, even, low-detail middle section between the caps with no distinctive feature (the middle is stretched in the game). Unique silhouette element: the right end cap is snapped off at a diagonal with one short chain dangling from its bracket. Colour accent: a thin dull hammered-gold line along the top edge and one faint ember glow in a crack under the left cap.
+
+Warm torchlight rim lighting from the left, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges and a hard clean silhouette; NO white glow, NO hazy bloom. Landscape canvas about 3:1 (768x256; a wider canvas is fine, keep the slab centered): the slab spans about 94% of the width, its walking line at about 30% from the top, the hanging rubble ending above the bottom edge. No characters, no text, no frame, no UI, no ground, no shadow, no background. Painted illustration style only. Isolated on a fully transparent background.
+
+========================= afdaling_a1_ladder.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, no second copy, no variations.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A tall hanging CHAIN LADDER seen exactly from the front, isolated: two vertical rusted black-iron chains hanging straight down from one heavy wall bracket at the very top of the canvas, joined by evenly spaced dark worn wooden rungs of equal size all the way down, a couple of rungs slightly cracked, the lowest rung dangling free near the bottom edge. Unique silhouette element: the top bracket is a stylized iron hand gripping both chains. Colour accent: warm ember light catching the right side of every rung, cool grey-violet rust flakes on the chains.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges; NO white glow, NO bloom. Tall portrait canvas (256x1024 or 9:16), the ladder centered, about 70% of the width, the bracket touching the top edge, the ladder spanning the full height. No characters, no wall, no ground, no shadow, no text, no frame, no UI. Painted illustration style only. Isolated on a fully transparent background between and around the chains.
+
+========================= afdaling_a1_valgat.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, no second copy, no variations.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A COLLAPSED SECTION of a dungeon stone ledge seen exactly from the side: on the LEFT a short stub of cracked dark stone floor ending in a jagged broken lip, on the RIGHT the matching stub with its own broken lip, and between them an open GAP where the floor fell away, with a few loose stones and one snapped wooden plank still tumbling down into the gap and a torn rope hanging from the left lip. Both stubs carry the thin dull hammered-gold edge line of the dungeon ledges, torn open at the break. Unique silhouette element: a broken rusted iron trapdoor hinge on the left lip. Colour accent: a faint warm ember glow rising from below the gap.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges; NO white glow, NO bloom. Landscape canvas about 2:1 (768x384): the floor line at about 40% from the top, the two stubs each about 27% of the width at the outer edges, the gap the central 46%. The gap between the stubs MUST be fully transparent (a shaft is drawn behind it in the game), as must everything above the floor line and below the falling debris. No characters, no text, no frame, no UI, no background. Painted illustration style only. Isolated on a fully transparent background, including the transparent gap.
+
+========================= afdaling_a1_nis_rust.png =========================
+!! LET OP — GEEN vuur in beeld: het spel tekent zelf een geanimeerd kampvuur in de haardring. Houd de ring leeg.
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, no second copy, no variations.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+An OPEN sheltered resting alcove carved into dungeon stone, seen straight from the front, standing on a flat base line on the bottom edge: a wide, low, rounded niche of warm violet-grey rock with a PAINTED solid back wall (this is a niche, not a doorway), a rough stone bench along the back on the left, a rolled-up bedroll leaning against the left side, a short fallen log to sit on at the right, and in the front center a ring of blackened hearth stones with old scorch marks but NO flame and NO embers inside the ring, a small iron kettle and a hanging bundle of dried herbs on a hook. The alcove interior already glows a soft warm amber, warmer than the surrounding stone, as if a fire will burn there. Unique silhouette element: a crooked wooden beam props up the top of the niche with a tin cup hanging from it. Colour accent: the bedroll's faded wine-red blanket.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined outer edges; NO white glow, NO bloom. Square 1024x1024 canvas: the alcove fills about 85%, its floor on the bottom edge. No characters, no fire, no text, no frame, no UI, no ground outside the alcove, no shadow, no background. Painted illustration style only. Isolated on a fully transparent background around the outside of the alcove.
+
+========================= afdaling_affiche.png =========================
+!! CRUCIAAL — HET PAPIER BLIJFT LEEG. Op dit affiche komt LIVE tekst (de B.A.A.S.-slogans, per act anders). Geen letters, geen woorden, geen cijfers, geen symbolen op het papier. Eén affiche voor alle acts.
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, no second copy, no variations.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A blank propaganda poster seen straight from the front: an aged, slightly yellowed, water-stained parchment sheet pinned with four black iron tacks to a small dark wooden board, the lower corners curling forward, one torn edge, a faint coffee-ring stain in one corner. The central area of the paper is smooth, plain and COMPLETELY EMPTY. Unique silhouette element: a torn triangular flap at the bottom right corner. Colour accent: a small faint blank dull-red circular wax seal impression at the lower right with no relief inside, and a tiny embossed gold emblem of a crown over a coin at the very top (abstract, no letters). Warm ember-orange torchlight from the left, deep purple shadow on the right.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges; NO white glow, NO bloom. Portrait canvas 4:5 (512x640 or larger), the poster centered and filling about 88%. Absolutely no text, no letters, no numbers, no frame, no UI, no wall, no background. Painted illustration style only. Isolated on a fully transparent background.
+
+========================= afdaling_kist.png =========================
+(Eén kist voor alle acts: het lichaam van een vondst in een nis. Open = deksel via CSS.)
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, no second copy, no variations.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A small battered office strongbox from a forgotten bureaucracy, CLOSED, seen from the front at a slight three-quarter angle: dented dark green-grey painted steel with rust blooming at the corners, riveted iron edges, a brass hasp closed with a large dull-red wax seal (the seal is a blank blob — no symbol, no letters), a faded paper label on the lid that is completely BLANK, and a thin line of warm golden light seeping from the lid seam. Unique silhouette element: one corner is crushed inward and a carry handle hangs broken on one side. Colour accent: the dull institutional green of the paint against the warm dungeon light.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+
+Crisp, sharply defined edges; NO white glow, NO bloom. Square canvas (512x512 or 1024x1024), the strongbox filling about 80%, resting on the bottom edge. No characters, no text, no letters, no frame, no UI, no ground, no shadow, no background. Painted illustration style only. Isolated on a fully transparent background.
+
+(De zes bewegingsframes van de Slachter — walk_a, walk_b, jump, land, roll, climb — staan in
+assets/karakters/STATE-PROMPTS.txt onder "DE SLACHTER — TRAVERSAL", dropmap assets/karakters/.
+Later: per act een bredere baaspoort, Act 2/3-traversalobjecten en de frames van de andere helden.)

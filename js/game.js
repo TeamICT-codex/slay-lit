@@ -138,6 +138,35 @@ window.addEventListener('keydown', function (e) {
   if (e.ctrlKey && e.shiftKey && (e.key === 'M' || e.key === 'm')) { e.preventDefault(); window.devMobiel(); }
 });
 
+/* DEV-SHORTCUT: DE WERELD (spike "De Richels") — de afdaalkaart als beloopbaar
+   zijaanzicht-terrein (js/wereld.js). Aan via ?wereld=<dev-sleutel> (blijft aan over reloads
+   via localStorage 'slayit_wereld') of devWereld(true) in de console; devWereld(false)
+   = de klassieke knopenkaart, ongewijzigd (tegelijk de plattegrond én de noodrem).
+   Wisselen midden in een run is veilig: de wereldgeometrie is een pure functie van
+   S.kaart/seed/act, alleen S.w (waar de held staat) komt er additief bij.
+   Vóór release samen met de andere DEV-shortcuts verwijderen. */
+/* Niet publiek: de wereld gaat alleen aan met de DEV-SLEUTEL in de URL (?wereld=<sleutel>;
+   alleen de hash van de sleutel staat in de code) of via devWereld(true) in de console.
+   ?wereld=0 zet hem weer uit. De sleutel zelf staat in het geheugen van de sessie (stand-van-zaken). */
+const WERELD_SLEUTEL_HASH = 1420830265;
+const wereldParam = (location.search.match(/[?&]wereld=([^&#]+)/) || [])[1];
+const wereldWens = wereldParam == null ? null : (decodeURIComponent(wereldParam) === '0' ? false
+  : (zaadVanTekst(decodeURIComponent(wereldParam)) === WERELD_SLEUTEL_HASH ? true : null));
+try {
+  if (wereldWens === true) localStorage.setItem('slayit_wereld', '1');
+  else if (wereldWens === false) localStorage.setItem('slayit_wereld', '0');
+  if (localStorage.getItem('slayit_wereld') === '1') document.body.classList.add('wereld');
+} catch (e) { /* opslag optioneel: dan enkel de URL-sleutel voor deze pagina */ if (wereldWens === true) document.body.classList.add('wereld'); }
+window.devWereld = function (aan) {
+  const wil = aan !== false;
+  document.body.classList.toggle('wereld', wil);
+  try { localStorage.setItem('slayit_wereld', wil ? '1' : '0'); } catch (e) {}
+  /* sta je op de kaart/richel, hertekenen in de andere vorm (zelfde S.pos, zelfde open deuren) */
+  if (typeof S !== 'undefined' && S && S.kaart && ['kaart', 'wereld'].includes(document.body.dataset.scherm) && typeof renderKaartScherm === 'function') renderKaartScherm();
+  try { if (typeof melding === 'function') melding('DEV: wereld ' + (wil ? 'AAN' : 'uit — klassieke kaart')); } catch (e) {}
+  console.info('[DEV] wereld', wil ? 'AAN' : 'uit');
+};
+
 /* Three.js (~600 KB) alleen laden waar 3D überhaupt kán draaien: desktop op http.
    Op mobiel en file:// is 3D altijd uit (zie d3Gewenst), dus daar nooit de
    download+parse betalen. Async geïnjecteerd → blokkeert de eerste render niet en
@@ -2393,6 +2422,10 @@ function zetLichtVisueel() {
     else if (fk >= 1) sterkte = 0.56 + 0.24 * (30 - fk) / 29;
     else sterkte = 0.92;
     if (INST.daglicht) sterkte *= 0.22;                 /* daglicht: het duister-vignet véél zachter */
+    /* de wereld (js/wereld.js) heeft haar eigen duister rond de held (de lichtplas) —
+       het randvignet op halve kracht, anders dubbel donker. Hier in JS, niet in CSS:
+       de inline opacity hieronder zou een CSS-regel stil overstemmen. */
+    if (document.body.dataset.scherm === 'wereld') sterkte *= 0.5;
     vignet.style.opacity = sterkte.toFixed(2);
     vignet.classList.toggle('flikker', fk < 30);
   }
@@ -3503,7 +3536,8 @@ function kiesGevechtAchtergrond(soort) {
 /* ---------- schermen & muziekscènes ---------- */
 const SCHERM_MUZIEK = {
   titel: 'titel', held: 'titel', kaart: 'kaart', rust: 'rust',
-  winkel: 'kaart', event: 'kaart', schat: 'kaart', beloning: 'kaart'
+  winkel: 'kaart', event: 'kaart', schat: 'kaart', beloning: 'kaart',
+  wereld: 'kaart'   /* de wereld (js/wereld.js) is dezelfde afdaling → zelfde muziek, anders valt ze stil */
 };
 function toonScherm(naam) {
   $$('.scherm').forEach(el => el.classList.remove('actief'));
@@ -3801,7 +3835,15 @@ function nodePositie(n) {
 }
 
 let _kaartZoom = 1;   /* schaalfactor van de afdaalkaart op smalle schermen (zoom) */
+/* DE HAAK: met de wereld-vlag aan (body.wereld, zie devWereld) tekent js/wereld.js de
+   afdaling als beloopbare richel; anders de klassieke knopenkaart hieronder. Eén
+   wrapper dekt alle aanroepplaatsen in één keer — ook de inline onclick-strings
+   (schat/winkel/event/act-overgang) en de twee vertraagde rust-timers. */
 function renderKaartScherm() {
+  if (window.Wereld && Wereld.actief()) { Wereld.render(); return; }
+  renderKaartSchermKlassiek();
+}
+function renderKaartSchermKlassiek() {
   toonScherm('kaart');
   saveSpel();
   /* HET GRAFSCHRIFT: passeer je op de kaart de val-verdieping van een
@@ -4106,6 +4148,8 @@ function opSchermDraai() {
      overlopend/afgeknipt (liggend→portret). Licht gedebounced tegen resize-burst. */
   clearTimeout(_draaiHertekenTimer);
   _draaiHertekenTimer = setTimeout(() => {
+    /* de wereld hertekent niet: ze hermeet alleen (vw/vh/richelhoogte gecacht in de lus) */
+    if (document.body.dataset.scherm === 'wereld' && window.Wereld) { Wereld.hermeet(); return; }
     if (document.body.dataset.scherm === 'kaart' && typeof S !== 'undefined' && S && S.kaart) renderKaartScherm();
   }, 140);
 }

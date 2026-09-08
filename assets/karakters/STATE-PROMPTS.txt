@@ -2282,3 +2282,92 @@ Pose (HIT — recoil): one massive DENT and a spiderweb crack smashed into the m
 loose and spinning through the air, the knight reeling but RAMMING the halberd butt into the ground to stay
 standing, molten red under-light flaring inside the fresh crack.
 Accent: één deuk in de perfecte parade-glans — en het rode onderlicht vlamt erin.
+
+
+
+#################### DE SLACHTER — TRAVERSAL (De Afdaling, 7 sep 2026) ####################
+Zes losse bewegingsframes voor de verkenbare afdaling (spike "De Richels"). Het spel
+gebruikt ze als HUID over de CSS-marionet: walk_a/walk_b wisselen af tijdens het lopen,
+jump/land/roll/climb bij de gebaren; ontbreekt een frame, dan valt die toestand terug
+op de marionet. Daarom is CONSISTENTIE belangrijker dan schoonheid:
+  - alle zes in EEN sessie, met speler.png als bijlage bij ELKE generatie (en het
+    vorige frame erbij waar het blok dat zegt);
+  - zelfde schaal en zelfde plaats op het canvas als de basis (kap en voeten op
+    dezelfde hoogte), alleen ledematen en mantel veranderen;
+  - GEEN motion blur, GEEN snelheidsstrepen, GEEN stofwolk (dat doet het spel zelf);
+  - facing RIGHT, transparant, een APARTE afbeelding per frame (nooit een sheet).
+Dropmap: assets/karakters/. Na de drop keur ik ze in een flipbook op flikkering vóór
+ze in het spel gaan.
+
+=================== speler_walk_a.png ===================
+Use the attached reference image (speler.png): the EXACT same character, same design, colors, outfit, proportions and painterly style. This is one standalone image — NOT a sprite sheet, NOT a grid, no second copy, no variations, one frame only.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body character, centered, three-quarter side view, facing RIGHT. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+Character: the grim hooded swordsman hero in dark indigo robes with ember-orange trim, glowing amber eyes barely visible under the hood, a gleaming silver longsword, a tattered flowing cape, a leather belt with a golden buckle.
+Pose (WALK CYCLE frame A, the contact stride): mid-walk, the near (right) leg planted forward with the heel just touching the ground, the far (left) leg trailing behind on the toes, torso leaning slightly forward with purposeful weight, the sword held LOW in the right hand pointing back and down along the trailing leg, the left arm swinging forward, the cape trailing behind at mid height. A steady, heavy, determined stride — not running, not sneaking.
+FRAME CONSISTENCY: keep the figure at the SAME scale and the SAME position as in the reference — top of the hood and the feet at the same heights on the canvas. Change ONLY the legs, arms and cape; head, hood, torso and colours stay identical. No motion blur, no speed lines, no dust, no second figure.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge.
+
+=================== speler_walk_b.png ===================
+Use the attached reference images (speler.png AND speler_walk_a.png): the EXACT same character, same design, colors, outfit, proportions and painterly style. This is one standalone image — NOT a sprite sheet, NOT a grid, no second copy, no variations, one frame only.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body character, centered, three-quarter side view, facing RIGHT. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+Character: the grim hooded swordsman hero in dark indigo robes with ember-orange trim, glowing amber eyes barely visible under the hood, a gleaming silver longsword, a tattered flowing cape, a leather belt with a golden buckle.
+Pose (WALK CYCLE frame B, the OPPOSITE contact stride of frame A): now the far (left) leg is planted forward with the heel down and the near (right) leg trails behind on the toes, torso leaning slightly forward exactly like frame A, the sword still held LOW in the right hand but swung slightly forward beside the hip, the left arm swung back, the cape at its lowest point. Same calm heavy walk as speler_walk_a, one half-step later.
+FRAME CONSISTENCY: keep the figure at the SAME scale and the SAME position as in speler_walk_a.png — top of the hood and the feet at the same heights on the canvas. Change ONLY the legs, arms and cape; head, hood, torso and colours stay identical. No motion blur, no speed lines, no dust, no second figure.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge.
+
+=================== speler_jump.png ===================
+Use the attached reference images (speler.png AND speler_walk_a.png): the EXACT same character, same design, colors, outfit, proportions and painterly style. This is one standalone image — NOT a sprite sheet, NOT a grid, no second copy, no variations, one frame only.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body character, centered, three-quarter side view, facing RIGHT. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+Character: the grim hooded swordsman hero in dark indigo robes with ember-orange trim, glowing amber eyes barely visible under the hood, a gleaming silver longsword, a tattered flowing cape, a leather belt with a golden buckle.
+Pose (JUMP, airborne): mid-air in a forward leap to the RIGHT — both knees tucked up toward the chest, the free left arm reaching forward, the sword arm swung back and down for balance with the blade pointing behind him, the cape flaring UP and back above his shoulders, the hood pressed back by the air but still on. Compact, weighty, athletic — a vault over a gap, not a superhero flight. Feet clearly OFF the ground.
+FRAME CONSISTENCY: same scale as the reference (the tucked body is naturally shorter — keep the head the same size as in speler.png, do NOT enlarge the figure to fill the height); change only the limbs and cape. No motion blur, no speed lines, no dust, no second figure.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 80% of a square 1024x1024 canvas, the lowest point of the figure near the bottom edge.
+
+=================== speler_land.png ===================
+Use the attached reference images (speler.png AND speler_jump.png): the EXACT same character, same design, colors, outfit, proportions and painterly style. This is one standalone image — NOT a sprite sheet, NOT a grid, no second copy, no variations, one frame only.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body character, centered, three-quarter side view, facing RIGHT. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+Character: the grim hooded swordsman hero in dark indigo robes with ember-orange trim, glowing amber eyes barely visible under the hood, a gleaming silver longsword, a tattered flowing cape, a leather belt with a golden buckle.
+Pose (HEAVY LANDING, the instant of impact): a deep crouch on both feet planted wide and flat, knees bent low, the free left hand pressed flat on the ground in front of him, the sword arm stretched out to the side with the blade level for balance, head low, the cape collapsing forward over his shoulders from the momentum, the hood fallen half over the eyes. Weight, impact, absorption — just the body.
+FRAME CONSISTENCY: same scale as the reference (the crouched figure is naturally about two thirds of the standing height — keep the head the same size as in speler.png, do NOT enlarge him to fill the height); keep colours and outfit identical. No motion blur, no dust cloud, no cracks, no second figure.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character sits in the lower part of a square 1024x1024 canvas, about 80% of its width, feet and hand near the bottom edge.
+
+=================== speler_roll.png ===================
+Use the attached reference images (speler.png AND speler_land.png): the EXACT same character, same design, colors, outfit, proportions and painterly style. This is one standalone image — NOT a sprite sheet, NOT a grid, no second copy, no variations, one frame only.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body character, centered, side view, rolling toward the RIGHT. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+Character: the grim hooded swordsman hero in dark indigo robes with ember-orange trim, glowing amber eyes barely visible under the hood, a gleaming silver longsword, a tattered flowing cape, a leather belt with a golden buckle.
+Pose (FORWARD ROLL, the moment his back touches the ground): the body curled tightly into a ball, chin tucked to the chest, knees pulled up to the torso, the sword held flat along the shins with the blade pointing back, the cape wrapped around the curled body, the hood still covering the head; the silhouette reads as one compact rounded shape with the hooded head on the RIGHT side and the golden buckle visible at the front.
+FRAME CONSISTENCY: same scale as the reference (the curled figure is naturally small, about 60% of the standing height — do NOT enlarge him); keep colours and outfit identical. No motion blur, no ground, no dust, no second figure.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The figure sits in the lower half of a square 1024x1024 canvas, its lowest point near the bottom edge.
+
+=================== speler_climb.png ===================
+Use the attached reference image (speler.png): the EXACT same character, same design, colors, outfit, proportions and painterly style. This is one standalone image — NOT a sprite sheet, NOT a grid, no second copy, no variations, one frame only.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body character, centered, three-quarter side view, facing RIGHT toward an invisible ladder. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
+Character: the grim hooded swordsman hero in dark indigo robes with ember-orange trim, glowing amber eyes barely visible under the hood, a gleaming silver longsword, a tattered flowing cape, a leather belt with a golden buckle.
+Pose (CLIMBING A LADDER — the ladder itself is NOT drawn): body upright and close to the invisible ladder plane, the right hand gripping high above the head around an invisible rung, the left hand gripping at chest height, the right knee raised high as if standing on a rung, the left leg straight below, the sword tucked under the belt at his back with the blade pointing down and back, the cape hanging straight down. Hands closed in a gripping shape around empty air.
+FRAME CONSISTENCY: same scale and position as the reference — top of the hood and the lowest foot at the same heights on the canvas; keep head, hood, torso and colours identical. Do NOT draw the ladder, the rungs, or a wall. No motion blur, no second figure.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, lowest foot near the bottom edge.
+
+
+#################### HET PROCES — eindbaas-herontwerp (7 sep 2026) ####################
+Twee nieuwe signatuurposes voor HET PROCES (factuur = hij laat innen; herkozen = de herverkiezing).
+speler-referentie: de_dicktator.png als bijlage, facing LEFT.
+
+========================= de_dicktator_factuur.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+Single full-body character, centered, three-quarter side view, facing LEFT. The gilded demagogue-king of the slaughter-block, SAME character as de_dicktator (golden lion's-combover mane, self-awarded laurel, gold-drowned armor, conspicuously SMALL hands in oversized golden gauntlets, the absurdly long crimson sash-banner spilling off-frame). Pose — DE FACTUUR: he thrusts forward with both tiny gauntlets a LEDGER-SIZED glowing INVOICE, an unrolling parchment as tall as his torso, columns of golden figures crawling down the page like a tapeworm (abstract marks, no readable text), a wax seal at the bottom dripping molten gold, the total at the foot of the page glowing hottest ember-red; his head tilted in bored, patient contempt, chin up, one eyebrow raised — payment expected now. The sash coils once around his boot. Colder than his attack, grander than his cast.
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches. Unique silhouette: the huge invoice held out like a shield. Accent: parchment-gold ledger + the ember-red glowing total.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge. This is ONE separate image of a single pose, not a sprite sheet or collage.
+```
+Gebruik: pose `factuur` (1,6 s) bij de zelf-inning en in vorm 2; terugval `attack`.
+
+```
+
+========================= de_dicktator_herkozen.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+Single full-body character, centered, three-quarter side view, facing LEFT. The RE-ELECTED gilded demagogue-king of the slaughter-block, second form, SAME character as de_dicktator (broad-chested tyrant in gold-drowned armor, extravagant swept golden lion's-combover mane, conspicuously SMALL hands in oversized golden gauntlets, the absurdly long crimson sash-banner) but now: a DOUBLE self-awarded laurel, the second wreath fused crookedly into the first; his self-minted medals half-MELTED into the breastplate; the endless crimson sash turned to LIQUID MOLTEN GOLD, dripping heavy drops from its hem; both gauntlets glowing from within; the smirk widened past anything human, eyes lit with mandate; he stands a shade broader and taller than before, chest thrown out, one tiny finger raised for silence — the unanimous winner. Torn, stamped ballot-decree snippets swirl around his boots like confetti. Harsh molten ember-red footlight from below; the gold catches it and burns.
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches. Unique silhouette: the double laurel and the liquid-gold sash pooling at his feet. Accent: molten liquid gold + a second violet-lit laurel.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge. This is ONE separate image of a single pose, not a sprite sheet or collage.
+```
+Gebruik: vastgehouden standbeeldpose `herkozen` na DE HERVERKIEZING; terugval `.herverkozen`-CSS op de basisplaat.
+
+```

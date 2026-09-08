@@ -789,3 +789,90 @@ no UI. The object fills about 85% of a square 1024x1024 canvas, base near the
 bottom edge.
 Painted illustration style only.
 (Het proloog-beeld van het Slachtblok-smeedscherm; drop in assets/karakters/.)
+
+
+#################### HET PROCES — eindbaas-herontwerp (7 sep 2026) ####################
+Het hof van de DICKtator (drie nieuwe vijand-ids, spelen tot de drop op de terugvalplaten
+omroeper/aanklager/klapvee) plus twee nieuwe baasposes. Vijanden kijken LINKS, elke pose een
+APARTE afbeelding, Act 3-anker letterlijk (gesmolten rood onderlicht, goud = het regime).
+Volledig ontwerp: .claude/notities/eindbaas_contract.md.
+
+========================= de_griffier.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body creature, centered, three-quarter side view, facing LEFT.
+Character: DE GRIFFIER, the court clerk of a demagogue-king. Unique silhouette: a hunched, spindly scribe whose bent SPINE is a visible stack of bound ledgers pressing him forward, dwarfed by an enormous BRASS SEAL-PRESS hanging from his neck on a chain like a millstone (the stamp that makes a decree official). His right arm is a QUILL as long as a spear — bone shaft, molten-gold nib dripping ink. From his mouth unspools a TONGUE OF PARCHMENT, a dossier covered in two names and tally marks (abstract marks, not readable), curling down to his knees. Ink-black robes with a stiff white ruff stained grey, ink-blackened fingers, one gold monocle-seal over a squinting eye, a tiny regime pennant tucked behind one ear. Fussy, servile, a little afraid.
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches. The molten red footlight throws the ledger-spine in relief, one thin violet storm-accent behind him. Accent: ink-black robes + molten-gold nib + wax-red seal on the press.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge. This is ONE single figure in ONE image — not a sprite sheet, grid or collage.
+```
+
+```
+
+========================= de_griffier_cast.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body creature, centered, three-quarter side view, facing LEFT.
+Character: DE GRIFFIER — same hunched scribe as de_griffier.png: ledger-stack spine, giant brass seal-press on a neck chain, spear-long bone quill with a molten-gold nib, parchment tongue, ink-black robes with a stained ruff, gold monocle-seal. Pose (SEPARATE image, same character, same style, same LEFT facing): DE ZITTING — he slams the brass seal-press DOWN with both arms onto the parchment dossier held flat in front of him, a burst of wax-red sparks and molten-gold ink spraying LEFT, his monocle flashing, the parchment tongue snapping taut; the moment the decree becomes official.
+Palette of black basalt and black iron, molten ember-red light glowing UP from below (harsh hellish footlight), storm-violet lightning accents, arrogant polished GOLD for everything the regime touches. Accent: ink-black + molten-gold nib + wax-red seal burst.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge. One figure, one image — no sprite sheet.
+```
+
+```
+
+========================= de_griffier_hit.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body creature, centered, three-quarter side view, facing LEFT.
+Character: DE GRIFFIER — same hunched scribe as de_griffier.png (ledger-stack spine, brass seal-press on a chain, bone quill with molten-gold nib, parchment tongue, ink-black robes, stained ruff, gold monocle-seal). Pose (SEPARATE image): STRUCK — he staggers back a half-step, the ledger-spine fanning open and loose pages flying up around him, the seal-press swinging wildly on its chain, the monocle popping loose, ink splashing from the quill, mouth open in a squeak with the parchment tongue flapping.
+Palette of black basalt and black iron, molten ember-red light glowing UP from below (harsh hellish footlight), storm-violet lightning accents, arrogant polished GOLD for everything the regime touches. Accent: ink-black + molten-gold + wax-red.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge. One figure, one image — no sprite sheet.
+```
+
+```
+
+========================= de_griffier_death.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body creature, centered, three-quarter side view, facing LEFT.
+Character: DE GRIFFIER — same hunched scribe as de_griffier.png. Pose (SEPARATE image): THE FILE IS CLOSED — he collapses to his knees crushed under his own ledger-spine which has burst into a slumping heap of books, the brass seal-press fallen and cracked in two beside him, the bone quill snapped, its molten-gold nib gone dull grey, the parchment tongue burning away to ash from the end inward, the monocle-seal shattered; colors duller, the red underlight dying to embers.
+Palette of black basalt and black iron, molten ember-red light glowing UP from below (harsh hellish footlight), storm-violet lightning accents, arrogant polished GOLD for everything the regime touches. Accent: dulled ink-black + dead gold + ash.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge. One figure, one image — no sprite sheet.
+```
+
+```
+
+========================= de_deurwaarder.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body creature, centered, three-quarter side view, facing LEFT.
+Character: DE DEURWAARDER, the bailiff who collects the tyrant's invoices. Unique silhouette: a squat, top-heavy walking IRON STRONGBOX — his torso IS a riveted black-iron safe with a glowing ember-red coin-slot for a mouth and a huge polished GOLD KEY turning slowly in a lock where his heart would be. Stubby armoured legs, but one absurdly LONG thin arm ending in a bony collector's claw holding out a smoking INVOICE scroll toward the LEFT, wax-sealed in regime gold, its columns of figures glowing hot (abstract marks, no readable text). A belt of padlocked chains and repossessed trinkets (a boot, a cup, a small crown) dangles from his waist; a gold regime seal is riveted to his chest-door. Patient, immovable, faintly bored.
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches. Molten red footlight glows up through his seams, one violet storm-accent. Accent: black riveted iron + polished gold key + ember-red coin-slot glow.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge. This is ONE single figure in ONE image — not a sprite sheet, grid or collage.
+```
+
+```
+
+========================= de_deurwaarder_attack.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body creature, centered, three-quarter side view, facing LEFT.
+Character: DE DEURWAARDER — same walking iron strongbox as de_deurwaarder.png: riveted black-iron safe torso, ember-red coin-slot mouth, gold key in the chest lock, long bony collector's arm, belt of padlocked chains and repossessed trinkets, gold regime seal. Pose (SEPARATE image, same character, same style, same LEFT facing): DE INVORDERING — he lunges LEFT, the chest-door of the safe flung OPEN spilling a blast of white-hot molten gold coins and burning invoice pages toward the left, the long arm slamming the wax-sealed invoice forward like a hammer, chains whipping, the coin-slot mouth blazing.
+Palette of black basalt and black iron, molten ember-red light glowing UP from below (harsh hellish footlight), storm-violet lightning accents, arrogant polished GOLD for everything the regime touches. Accent: black iron + gold key + ember-red blast.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge. One figure, one image — no sprite sheet.
+```
+
+```
+
+========================= de_deurwaarder_hit.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body creature, centered, three-quarter side view, facing LEFT.
+Character: DE DEURWAARDER — same walking iron strongbox as de_deurwaarder.png. Pose (SEPARATE image): STRUCK — he rocks back on his stubby legs, a dent caving in the riveted safe-torso, rivets popping out as sparks, the gold key jolted half out of its lock, coins rattling loose from the coin-slot mouth, the invoice scroll crumpling in his claw, chains and trinkets flying up.
+Palette of black basalt and black iron, molten ember-red light glowing UP from below (harsh hellish footlight), storm-violet lightning accents, arrogant polished GOLD for everything the regime touches. Accent: black iron + gold key + ember-red sparks.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge. One figure, one image — no sprite sheet.
+```
+
+```
+
+========================= de_deurwaarder_death.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body creature, centered, three-quarter side view, facing LEFT.
+Character: DE DEURWAARDER — same walking iron strongbox as de_deurwaarder.png. Pose (SEPARATE image): ONINBAAR — the safe-torso splits open along its rivets and sags apart, the gold key falls out and lies dull near the bottom edge, the coin-slot mouth goes dark, the long arm drops with the invoice scroll unrolling and burning to ash, the padlocked chains slither off the belt and the repossessed trinkets scatter; colors duller, the red underlight dying to embers.
+Palette of black basalt and black iron, molten ember-red light glowing UP from below (harsh hellish footlight), storm-violet lightning accents, arrogant polished GOLD for everything the regime touches. Accent: dead black iron + tarnished gold + ash.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge. One figure, one image — no sprite sheet.
+```
+
+```
+
+========================= de_claqueur.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body creature, centered, three-quarter side view, facing LEFT.
+Character: DE CLAQUEUR, the PAID claque — a shambling mound fused from dozens of clapping hands and identical blank grinning faces stacked like a human haystack, no single head (the crowd IS the body), but hired: every wrist wears a small dangling PRICE TAG on a string, a few hands wave tiny regime pennants, one hand at the top holds up a gold coin as if checking it is real, and a single crude gold VOTING-SLIP is pinned to the front of the mass like a badge. All palms frozen mid-applause; the grins a little too wide, a little too paid. Pathetic alone, menacing in mass.
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches. Molten red underlight catches every identical smile. Unique silhouette: the haystack of hands with the raised coin on top. Accent: pale flesh-grey mass + dangling parchment price tags + one gold coin.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The creature fills about 85% of a square 1024x1024 canvas, feet near the bottom edge. This is ONE separate image of a single pose, not a sprite sheet or collage.
+```
+Gebruik: basisplaat van `de_claqueur`; attack/hit/death vallen via `artIdVan` per pose terug op `het_klapvee_*`.

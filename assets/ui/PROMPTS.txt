@@ -319,3 +319,26 @@ Stylized painterly digital illustration for a dark fantasy card game, hand-paint
 Landscape 2048x512: the top edge of a battered wooden notice board in a torchlit dungeon corridor of a grim 1980s-office-meets-fantasy regime. Dark stained planks with a worn upper ledge, rusty nails and bent iron brackets, a few torn BLANK paper corners still held by old drawing pins, one red wax seal stuck to the wood, ash and dust settled on the ledge, and one iron torch sconce with a richly coloured orange-gold flame (core yellow, never pure white) placed at about 75% of the width, not at the very edge. The composition must survive heavy cropping to a very wide band (up to 10:1): keep the outer 15% on the left and right free of key elements and spread the planks, nails, brackets and pinned paper corners evenly across the full width. Do NOT paint a gradient, vignette or fade at the bottom; keep the lower third an even, quiet, dark plank-and-shadow area with no detail that matters (the page applies its own fade). Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon. The torch flame stays richly coloured — NO white glow, NO hazy bloom, NO misty halo washing over the planks.
 
 Full-bleed painted scene, no transparency. No characters, NO text, NO letters or numbers on the papers or the wood, no UI, no frame, no watermark. Painted illustration style only.
+
+
+#################### HET PROCES — eindbaas-herontwerp (7 sep 2026) ####################
+Twee UI-platen voor HET PROCES: het factuurzegel (intent-pil) en de ontslag-zandloper (klok van Vorm 2). Emoji-terugval tot de drop.
+Volledig ontwerp: .claude/notities/eindbaas_contract.md.
+
+========================= factuur_zegel.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+A single small UI ICON, centered: a rolled parchment INVOICE bound with a black iron clasp, a heavy round wax seal of polished regime GOLD on its front bearing a tiny crowned finger-print, one corner of the parchment curling and glowing ember-red as if about to catch fire, a few abstract golden tally-strokes visible on the paper (no readable letters or numbers), a curl of smoke rising from the seal as if freshly stamped. Lit from below by harsh molten ember-red light; a faint storm-violet rim on the top edge. Bold, readable silhouette at 48 pixels: thick shapes, high contrast.
+Palette of black basalt and black iron, molten ember-red underlight, storm-violet accent, arrogant polished GOLD for the seal.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The icon fills about 80% of a square 512x512 canvas, centered. This is ONE separate image, not a sheet.
+```
+Gebruik: icoon in de Factuur-pil en de strook (terugval 🧾).
+
+```
+
+========================= ontslag_zandloper.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+A single small UI ICON, centered: a squat brass HOURGLASS in a black iron frame stamped with a tiny gold regime crown at the top; the sand inside is not sand but glowing molten ember-red slag, almost all of it run into the lower bulb; a hairline crack of storm-violet light on the glass. Harsh molten ember-red light from below. Bold, readable silhouette at 48 pixels.
+Palette of black basalt and black iron, molten ember-red underlight, storm-violet accent, arrogant polished GOLD for the crown.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The icon fills about 80% of a square 512x512 canvas, centered. This is ONE separate image, not a sheet.
+```
+Gebruik: de klok in de vorm-2-strook `⏳ ONTSLAG over 2` (terugval ⏳).
