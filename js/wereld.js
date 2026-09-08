@@ -537,7 +537,7 @@ const Wereld = (() => {
       const voorlopig = maak(actieveRij, null);
       const n = S.kaart[S.pos];
       const kinderen = (n && n.verb ? n.verb : []).map(id => S.kaart[id] ? plekX(S.kaart[id]) : BREEDTE / 2);
-      const ex = TT.exitX(zaad, sjab[vorigeRij], voorlopig, kinderen.length ? kinderen : [BREEDTE / 2], n ? n.c : 3);
+      const ex = TT.exitX(zaad, sjab[vorigeRij], voorlopig, kinderen.length ? kinderen : [BREEDTE / 2], n ? n.c : 3, n ? plekX(n) : BREEDTE / 2);
       exitVanRij = ex;
       valgat = { r: vorigeRij, x: ex, y: vorigeRij * RH };
       sjab[actieveRij] = maak(actieveRij, ex);
@@ -643,11 +643,11 @@ const Wereld = (() => {
   /* ---------- de afdaling naar de volgende verdieping ---------- */
   function startDaling() {
     bezig = true; dalingBezig = true; dalingFase = 'zegel';
-    na(300, () => {
+    na(220, () => {
       const deur = els.richels.querySelector('.w-vorige .w-plek.w-verlaten');
       if (deur) deur.classList.add('verzegelt');
       Klank.sfx('klap');
-      na(280, () => {
+      na(200, () => {
         const gat = els.richels.querySelector('.w-valgat');
         if (gat) gat.classList.add('open');
         Klank.sfx('stap');

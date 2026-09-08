@@ -221,7 +221,7 @@ const WereldTerrein = (() => {
      "89% één uitgang"), op een echt baansegment (niet in een kloof, niet onder een deur,
      balk, ladder, galerij of bordes van r), en de landing op r+1 (galerij ± 40) vrij van
      kloof, bordes en balk. Elk niveau laat één eis vallen; falen kan niet (BREEDTE/2). */
-  function exitX(zaad, sjR, sjVolgende, kinderenX, kolom) {
+  function exitX(zaad, sjR, sjVolgende, kinderenX, kolom, ouderX) {
     const gbV = sjVolgende ? sjVolgende.galerijB : 480;
     const deuren = sjR.deuren || [];
     /* [kolomeis, landing vrij van bordes, landing vrij van kloof/balk, marge rond terrein van r] */
@@ -257,9 +257,24 @@ const WereldTerrein = (() => {
         }
         kand.push(klem(x, K.MARGE + 40, K.BREEDTE - K.MARGE - 40));
       }
-      if (kand.length) return kiesMet(loterij(zaad, 'uitgang|' + sjR.r + '|' + kolom), kand);
+      if (kand.length) return kiesUitKandidaten(zaad, sjR, kolom, kand, kinderenX, ouderX);
     }
     return K.BREEDTE / 2;
+  }
+  /* TEMPO (gemeten: 6,1 s per verdieping, doel <= 5): de eis is "ver genoeg van de deur
+     van r+1", niet "zo ver mogelijk". Daarom eerst de kandidaten die HOOGSTENS 3 kolommen
+     van de dichtstbijzijnde open deur liggen, en dan de helft die het dichtst bij de deur
+     ligt waar je NET uitkwam — dat scheelt een halve richel lopen zonder de landingseis
+     of het determinisme aan te raken (de keuze blijft loterij('uitgang|r|c')). */
+  function kiesUitKandidaten(zaad, sjR, kolom, kand, kinderenX, ouderX) {
+    const afKind = x => kinderenX.length ? Math.min.apply(null, kinderenX.map(kx => Math.abs(kx - x))) : 0;
+    let pool = kand.filter(x => afKind(x) <= 3.0 * K.KOL_B);
+    if (!pool.length) pool = kand;
+    if (typeof ouderX === 'number') {
+      const gesorteerd = pool.slice().sort((a, b) => Math.abs(a - ouderX) - Math.abs(b - ouderX));
+      pool = gesorteerd.slice(0, Math.max(3, Math.ceil(gesorteerd.length * 0.5)));
+    }
+    return kiesMet(loterij(zaad, 'uitgang|' + sjR.r + '|' + kolom), pool);
   }
 
   /* ---------- de fysieke wereld uit één of meer sjablonen ----------
