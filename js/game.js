@@ -4028,10 +4028,10 @@ function kiesNodeEcht(id) {
         if (huidigeAct() >= 3 && !S.slachtblokGedaan && !S.daily) {
           /* de vlag valt pas ná het ritueel: een reload tijdens het smeden geeft het
              Slachtblok opnieuw i.p.v. het stil over te slaan (debug-sweep 27 aug) */
-          toonSlachtblok('altaar', () => { S.slachtblokGedaan = true; saveSpel(); startGevecht([huidigeBaas().id], 'baas', n.r); });
+          toonSlachtblok('altaar', () => { S.slachtblokGedaan = true; saveSpel(); startGevecht(baasSamenstelling(huidigeBaas().id), 'baas', n.r); });
           break;
         }
-        startGevecht([huidigeBaas().id], 'baas', n.r);
+        startGevecht(baasSamenstelling(huidigeBaas().id), 'baas', n.r);
         break;
       }
       case 'rust': toonRust(); break;
@@ -4970,6 +4970,21 @@ function intentTekst(v) {
   }
   if (it.type === 'buff') return `<span class="intent intent-buff" data-tip="${it.tip || (it.naam + ': versterkt zichzelf')}">💪</span>`;
   return `<span class="intent intent-debuff" data-tip="${it.tip || (it.naam + ': verzwakt jou')}">🌀</span>`;
+}
+
+/* de verwachte schade van een intent in EEN functie — dezelfde regels als vijandAanval
+   (vaste klappen zonder act-schaling, de Factuur zonder Kracht, Zwak/Kwetsbaar/Glazen
+   Zielen). Gebruikt door het meetharnas en door alles wat "hoeveel komt er aan?" vraagt. */
+function intentVerwachteSchade(v) {
+  const it = v && v.intent; if (!it || !S.gevecht) return 0;
+  let d;
+  if (it.type === 'factuur') d = dicktatorFactuurBedrag(S.gevecht, it);
+  else if (it.type === 'aanval') d = (it.vast ? it.dmg : actDmg(it.dmg)) + (v.status.kracht || 0);
+  else return 0;
+  if ((v.status.zwak || 0) > 0) d = Math.floor(d * 0.75);
+  if ((sp().status.kwetsbaar || 0) > 0) d = Math.floor(d * 1.5);
+  d = glasDmg(d);
+  return it.type === 'aanval' ? d * (it.hits || 1) : d;
 }
 
 function statusBadges(actor) {
@@ -6333,12 +6348,6 @@ function dicktatorKassaTik(g, voor, posten) {
   else if (posten === 0) fxNummer(el, '+0 aftrekbaar', 'fx-blok');
 }
 
-/* v109 (stap 2) — voorlopige haken voor het hof; het volledige brein volgt in stap 5.
-   Ze staan hier al zodat de nieuwe VIJANDEN-defs (de_griffier/de_deurwaarder/de_claqueur)
-   nooit naar een onbestaande functie wijzen (lookup-bugklasse). */
-function hofIntent(v, beurt) { return { naam: 'TREEDT AAN', type: 'hof', icoon: '🪑' }; }
-function dicktatorHersync(ookBaas) { /* stap 5 */ }
-
 function vloekenInGevecht(g) {
   return g.trek.concat(g.hand, g.afleg).filter(c => kdef(c).type === 'vloek').length;
 }
@@ -6418,32 +6427,331 @@ function toonDecreetReveal(c) {
   setTimeout(() => { const kw = ov.querySelector('.decreet-kaartwrap'); if (kw && ov.isConnected) kw.classList.add('verbrandt'); }, 2100);
   setTimeout(() => { if (ov.isConnected) { ov.classList.add('weg'); setTimeout(() => ov.remove(), 400); } }, 3600);
 }
-function dicktatorKies(v, beurt) {
-  const g = S.gevecht; if (!g) return { type: 'aanval', naam: 'Wijzend vonnis', dmg: 10 };
-  /* de fase-aankondiging zit sinds v108 in checkDicktatorFase (via checkBaasFase); kies() blijft puur */
-  const fase = dicktatorFase(v);
-  const t = (v.beurtTeller || 0) + 1;   /* READ-ONLY: eindBeurt hoogt de teller al op — de oude dubbeltelling hield t altijd oneven en doofde HET DECREET in fase 3 (debug-sweep 27 aug) */
-  /* HET DECREET: elke 3e beurt (fase 3: elke 2e) — getelegrafeerd. Bij een
-     uitgemergeld dek (≤ 6 speelbare kaarten) valt hij terug op de Executie:
-     hij kan je niet verder afschrijven, dus hij hakt zelf. */
-  const decreetBeurt = fase >= 3 ? (t % 2 === 0) : (t % 3 === 0);
-  if (decreetBeurt) {
-    const speelbaar = S.dek.filter(c => kdef(c).type !== 'vloek').length;
-    if (speelbaar > 6) return { naam: 'HET DECREET', type: 'decreet', doe: () => dicktatorDecreet(v) };
-    return { naam: 'EXECUTIE', type: 'aanval', dmg: 18 };
-  }
-  /* de vloeken-as + het gewone hof-repertoire */
-  const vloeken = vloekenInGevecht(g);
-  const r = willekeurig();
-  if (r < 0.4) return { naam: 'Karaktermoord', type: 'aanval', dmg: 9 + 2 * vloeken };
-  if (r < 0.7) return { naam: 'Lasterdecreet', type: 'buff', tip: 'Lasterdecreet: schuift een Laster tussen je kaarten en wordt sterker (+1 Kracht)', doe: () => {
-    g.trek.splice(Math.floor(willekeurig() * (g.trek.length + 1)), 0, nieuweKaart('laster'));
-    geefStatus(v, 'kracht', 1);
-    melding('👑 Een gestempeld lasterdecreet schuift tussen je kaarten.');
-  } };
-  return { naam: 'Gouden garde', type: 'blok', blok: 14 };
+/* ============================================================
+   HET PROCES — het brein van de DICKtator en zijn hof.
+   Vorm 1 loopt in een vaste cyclus van drie: slot 1 = de klap (AANZEGGING /
+   KARAKTERMOORD), slot 2 = de rekening (LAAT INNEN → de deurwaarder int, of
+   DE FACTUUR als hij het zelf moet doen), slot 3 = de zitting (HET DECREET /
+   GRIFFIE GESLOTEN / EXECUTIE). Vorm 2 (HET MANDAAT) loopt op een zichtbare
+   klok naar HET ONTSLAG. Geen RNG in de hele moveset: elke zet staat één volle
+   spelersbeurt op de pil vóór ze valt.
+   dicktatorKies is PUUR — alle mutatie zit in de it.doe()-riders hieronder.
+   ============================================================ */
+function dicktatorBaas(g) { return g ? g.vijanden.find(v => v.id === 'de_dicktator') : null; }
+function dicktatorHof(g) { return g ? g.vijanden.filter(v => v.hof && !v.dood) : []; }
+function hofLid(g, id) { return g ? g.vijanden.find(v => v.id === id && !v.dood) : null; }
+/* één helper voor de samenstelling van een baasgevecht, zodat de DEV-shortcut en de
+   echte run nooit uiteenlopen (het hof komt uit DE DELEGATIE, niet uit de samenstelling) */
+function baasSamenstelling(id) { return [id]; }
+
+/* een hoveling oproepen. Geeft null als de vijand-cap (4 levenden) vol zit; elke
+   nieuwkomer krijgt TREEDT AAN als eerste intent — nooit een klap zonder telegraaf. */
+function dicktatorRoep(id, opts = {}) {
+  const g = S.gevecht; if (!g || g.voorbij) return null;
+  if (g.vijanden.filter(v => !v.dood).length >= 4) return null;
+  const n = voegVijandToe(id);
+  if (!n) return null;
+  n.hof = true;
+  if (opts.hp) { n.hp = opts.hp; n.maxHp = opts.hp; }
+  if (opts.vorm2) n.rolVorm2 = true;
+  n._aangetreden = false;
+  n.intent = {
+    naam: 'TREEDT AAN', type: 'hof', icoon: '🪑', kort: 'TREEDT AAN',
+    tip: 'komt de zaal binnen — deze beurt geen schade',
+    doe: vv => { vv._aangetreden = true; }
+  };
+  renderGevecht();
+  return n;
 }
 
+/* de intent-hersync: na een fase-overgang, een dode hoveling of een oproep liegt een
+   pil anders een hele beurt (de deurwaarder valt weg → de baas-pil moet omslaan van
+   "🪑 laat innen" naar "🧾 …"). ookBaas=false laat de baas met rust. */
+function dicktatorHersync(ookBaas) {
+  const g = S.gevecht; if (!g || g.voorbij) return;
+  const b = dicktatorBaas(g);
+  if (ookBaas && b && !b.dood) b.intent = VIJANDEN[b.id].kies(b, b.beurtTeller || 0);
+  g.vijanden.forEach(x => { if (x.hof && !x.dood) x.intent = hofIntent(x, x.beurtTeller || 0); });
+  renderGevecht();
+}
+
+/* Kracht die de statuswis van DE HERVERKIEZING overleeft: uit gemiste zittingen,
+   zelf-inningen en de executie van zijn eigen griffier. Cap 3. */
+function dicktatorKrachtVast(v) {
+  if (!v || (v.krachtVast || 0) >= DICK.krachtVastCap) return;
+  v.krachtVast = (v.krachtVast || 0) + 1;
+  geefStatus(v, 'kracht', 1);
+  fxNummer(actorEl(v), '💪 driester', 'fx-buff');
+}
+
+/* ---------- DE SHORTLIST ---------- */
+/* expliciete rangmap: een lookup op een later toegevoegde zeldzaamheid mag nooit
+   undefined geven (lookup-bugklasse) — vandaar de ?? 0 */
+const DICK_RANG = { basis: 0, start: 0, gewoon: 1, ongewoon: 2, gesmeed: 2, zeldzaam: 3, episch: 4 };
+function dicktatorShortlist(g, v) {
+  g = g || S.gevecht; if (!g) return null;
+  g.aangezegd = g.aangezegd || new Map();
+  g.aangezegd.clear();
+  /* uitgeput = "al geboekt": die kaarten liggen deze ronde buiten het dossier */
+  const kand = S.dek.filter(c => kdef(c).type !== 'vloek' && !g.uitgeput.includes(c));
+  if (kand.length < 2) return null;
+  const rang = c => DICK_RANG[kdef(c).zeld] ?? 0;
+  const gesp = c => (g.gespeeld && g.gespeeld[c.id]) || 0;
+  const kost = c => kval(c, 'kost') || 0;
+  const vergelijk = (a, b) => { for (let i = 0; i < a.length; i++) { if (a[i] !== b[i]) return a[i] > b[i] ? 1 : -1; } return 0; };
+  const beste = (lijst, sleutels) => {
+    let top = null, res = [];
+    for (const c of lijst) {
+      const w = sleutels.map(f => f(c));
+      const cmp = top === null ? 1 : vergelijk(w, top);
+      if (cmp > 0) { top = w; res = [c]; } else if (cmp === 0) res.push(c);
+    }
+    return res.length ? kiesUit(res) : null;
+  };
+  const gespeeldIets = Object.values(g.gespeeld || {}).some(n => n > 0);
+  /* A = meest gespeeld (bij t=1 nog niets gespeeld → de duurste), B = de duurste ≠ A */
+  const A = gespeeldIets ? beste(kand, [gesp, rang, kost]) : beste(kand, [kost, rang]);
+  if (!A) return null;
+  const B = beste(kand.filter(c => c !== A), [kost, rang]);
+  if (!B) return null;
+  g.aangezegd.set(A.uid, { uid: A.uid, id: A.id, naam: knaam(A), start: gesp(A), reden: gespeeldIets ? 'Meest gespeeld' : 'De duurste post' });
+  g.aangezegd.set(B.uid, { uid: B.uid, id: B.id, naam: knaam(B), start: gesp(B), reden: gespeeldIets ? 'De duurste post' : 'De op een na duurste post' });
+  /* het criterium wordt HARDOP gezegd: je moet weten waarom juist deze twee */
+  baasSpreekt(String(UITSPRAKEN._dicktator.aanzegging).replace('{A}', knaam(A)).replace('{B}', knaam(B)));
+  melding(`📜 DE AANZEGGING: „${knaam(A)}" en „${knaam(B)}" staan op de shortlist — de kaart die je tot de zitting het MINST speelt, valt.`);
+  renderGevecht();
+  return [A, B];
+}
+
+/* ---------- de riders van vorm 1 ---------- */
+function dicktatorDelegatie(v, g) {
+  g = g || S.gevecht; if (!g || g.voorbij) return;
+  baasSpreekt(UITSPRAKEN._dicktator.delegatie);
+  if (window.Vista) Vista.pose(v, 'cast', 2.2);
+  pose2D(v, 'cast', 2.2);
+  dicktatorRoep('de_griffier');
+  dicktatorRoep('de_deurwaarder');
+  dicktatorShortlist(g, v);
+}
+
+/* de klapbeurt regelt ook het personeelsbeleid: een dode griffier wordt herbenoemd
+   (zolang hij zijn hof nog erkent, dus fase < 3); de deurwaarder krijgt precies ÉÉN
+   herbenoeming, en pas vanaf bedrijf II. Een OPEN dossier krijgt geen nieuwe namen. */
+function dicktatorAanzeg(v, g, fase) {
+  g = g || S.gevecht; if (!g || g.voorbij) return;
+  if (fase < 3) {
+    if (!hofLid(g, 'de_griffier')) dicktatorRoep('de_griffier');
+    if (!hofLid(g, 'de_deurwaarder') && fase >= 2 && !v.deurwaarderHerbenoemd) {
+      if (dicktatorRoep('de_deurwaarder')) v.deurwaarderHerbenoemd = true;
+    }
+  }
+  if (!g.aangezegd || g.aangezegd.size === 0) dicktatorShortlist(g, v);
+}
+
+/* na een uitgevoerde factuur: indexeren (+2 basis vanaf DE TIRADE / in vorm 2) en spreken.
+   zelf = er is géén deurwaarder meer → hij int persoonlijk en wordt daar driester van. */
+function dicktatorNaFactuur(b, zelf) {
+  if (!b) return;
+  b.facturen = (b.facturen || 0) + 1;
+  if (b.vorm2) b.facturen2 = (b.facturen2 || 0) + 1;
+  else if ((b.fase || 1) >= 3) b.facturen3 = (b.facturen3 || 0) + 1;
+  if (b.dood) return;
+  if (zelf) { dicktatorKrachtVast(b); baasSpreekt(UITSPRAKEN._dicktator.zelf); }
+  else if ((b.fase || 1) >= 3 || b.vorm2) baasSpreekt(UITSPRAKEN._dicktator.geindexeerd);
+  else baasSpreekt(kiesUit(UITSPRAKEN._dicktator.factuur));
+}
+
+/* geen griffier op het moment van de zitting: uitstel is geen afstel, en uitstel kost rente */
+function dicktatorGriffieGesloten(v, g) {
+  g = g || S.gevecht; if (!g || g.voorbij) return;
+  baasFaseMoment('DE GRIFFIE IS GESLOTEN', UITSPRAKEN._dicktator.griffie);
+  dicktatorKrachtVast(v);
+  renderGevecht();
+}
+
+/* ---------- de riders van vorm 2 ---------- */
+function dicktatorRede(v, g) {
+  g = g || S.gevecht; if (!g || g.voorbij) return;
+  baasSpreekt(UITSPRAKEN._dicktator.rede);
+  if (window.Vista) Vista.pose(v, 'cast', 2.6);
+  pose2D(v, 'cast', 2.6);
+  if (!hofLid(g, 'de_claqueur')) dicktatorRoep('de_claqueur', { hp: DICK.claqueurHp });
+  if (!hofLid(g, 'de_deurwaarder')) dicktatorRoep('de_deurwaarder', { hp: DICK.deurwaarderVorm2Hp, vorm2: true });
+  /* de klok begint pas hier te lopen — of de REDE nu binnen of ná de vijandbeurt viel,
+     k staat op de eerste échte vorm-2-beurt altijd op 2 (contract §5) */
+  v.vorm2Start = v.beurtTeller || 0;
+}
+function dicktatorPeiling(v, g) {
+  g = g || S.gevecht; if (!g || g.voorbij) return;
+  geefStatus(v, 'kracht', 1);
+  fxNummer(actorEl(v), '📊 +1 Kracht', 'fx-buff');
+  baasSpreekt(UITSPRAKEN._dicktator.peiling);
+  /* precies ÉÉN aanvulling per peiling — nooit allebei (anders is het een tredmolen) */
+  if (!hofLid(g, 'de_deurwaarder')) dicktatorRoep('de_deurwaarder', { hp: DICK.deurwaarderVorm2Hp, vorm2: true });
+  else if (!hofLid(g, 'de_claqueur')) dicktatorRoep('de_claqueur', { hp: DICK.claqueurHp });
+  dicktatorHersync(false);
+}
+function dicktatorOntslagBeat(v) {
+  baasSpreekt(UITSPRAKEN._dicktator.ontslag);
+  schudScherm();
+  Klank.duck(0.6, 0.9);
+  const el = $('#scherm-gevecht');
+  if (el && !document.body.classList.contains('lite')) {
+    el.classList.add('slowmo');
+    setTimeout(() => el.classList.remove('slowmo'), dtempo(320));
+  }
+}
+
+/* de klok in de vorm-2-strook: over hoeveel beurten valt HET ONTSLAG? (0 = NU) */
+function dicktatorKlok(b) {
+  if (!b || b.vorm2Start == null) return 2;
+  const k = (b.beurtTeller || 0) + 1 - b.vorm2Start;
+  if (k < 2) return 2;
+  const volgende = 3 + 3 * Math.max(0, Math.ceil((k - 3) / 3));
+  return Math.max(0, volgende - k);
+}
+
+/* ---------- de keuze zelf (PUUR) ---------- */
+function dicktatorKies(v, beurt) {
+  const g = S.gevecht;
+  if (!g) return { type: 'aanval', naam: 'Wijzend vonnis', dmg: 10 };
+  if (v.vorm2) return dicktatorKiesVorm2(v, g);
+  /* de fase-aankondiging zit sinds v108 in checkDicktatorFase (via checkBaasFase); kies() blijft puur */
+  const fase = v.fase || dicktatorFase(v);
+  const t = (v.beurtTeller || 0) + 1;   /* READ-ONLY: eindBeurt hoogt de teller zelf op */
+  const tar = dicktatorTarief(v);
+
+  /* t = 1 — DE DELEGATIE: het hof treedt aan, de shortlist wordt gezet, 0 schade */
+  if (t === 1) return {
+    naam: 'DE DELEGATIE', type: 'hof', icoon: '🪑', kort: 'delegeert',
+    tip: 'hij laat zijn hof aantreden en zegt twee van je kaarten aan — deze beurt geen schade',
+    doe: vv => dicktatorDelegatie(vv, g)
+  };
+
+  const slot = t % 3;
+
+  /* slot 2 — DE REKENING. Leeft er een deurwaarder die al aantrad, dan toont de baas
+     alleen "🪑 laat innen" en komt de klap van HÉM (één pil, één klap, één figuur).
+     Anders int de baas zelf: kaler, en zonder personeel wordt hij driester. */
+  if (slot === 2) {
+    const dw = hofLid(g, 'de_deurwaarder');
+    if (dw && dw._aangetreden) return {
+      naam: 'LAAT INNEN', type: 'hof', icoon: '🪑', kort: 'laat innen',
+      tip: 'de deurwaarder komt de rekening innen — het bedrag staat op ZIJN pil',
+      laatInnen: true, doe: () => baasSpreekt(UITSPRAKEN._dicktator.laatInnen)
+    };
+    const zelf = !dw;   /* écht zonder deurwaarder (niet: hij trad nog niet aan) */
+    return {
+      naam: 'DE FACTUUR', type: 'factuur', vast: true, zelf,
+      basis: tar.basis, tarief: tar.tarief,
+      doe: vv => dicktatorNaFactuur(vv, zelf)
+    };
+  }
+
+  /* slot 3 — DE ZITTING */
+  if (slot === 0) {
+    const speelbaar = S.dek.filter(c => kdef(c).type !== 'vloek').length;
+    /* harde grenzen: cap 3 decreten, de bestaande uitgemergeld-dek-guard, en vanaf
+       DE TIRADE bestaat de griffie niet meer → dan hakt hij zelf */
+    if ((v.decreten || 0) >= DICK.decreetCap || speelbaar <= DICK.speelbaarGuard || fase >= 3) {
+      return {
+        naam: 'EXECUTIE', type: 'aanval', dmg: DICK.EXECUTIE, vast: true,
+        doe: () => baasSpreekt(UITSPRAKEN._dicktator.executie)
+      };
+    }
+    if (!hofLid(g, 'de_griffier')) return {
+      naam: 'GRIFFIE GESLOTEN', type: 'hof', icoon: '📜', kort: 'GESLOTEN',
+      tip: 'zonder griffier geen zitting — het dossier blijft OPEN en hij wordt driester',
+      doe: vv => dicktatorGriffieGesloten(vv, g)
+    };
+    const dossier = [...(g.aangezegd ? g.aangezegd.values() : [])];
+    if (dossier.length < 2) return {
+      naam: 'EXECUTIE', type: 'aanval', dmg: DICK.EXECUTIE, vast: true,
+      doe: () => baasSpreekt(UITSPRAKEN._dicktator.executie)
+    };
+    return {
+      naam: 'HET DECREET', type: 'decreet', namen: dossier.map(d => d.naam),
+      doe: vv => dicktatorDecreet(vv)
+    };
+  }
+
+  /* slot 1 — DE KLAP */
+  const rider = vv => dicktatorAanzeg(vv, g, fase);
+  if (fase <= 1) return { naam: 'DE AANZEGGING', type: 'aanval', dmg: DICK.AANZEGGING, doe: rider };
+  return { naam: 'KARAKTERMOORD', type: 'aanval', dmg: DICK.KARAKTERMOORD + DICK.KM_PER_VLOEK * vloekenInGevecht(g), doe: rider };
+}
+
+/* ---------- V · HET MANDAAT (vorm 2) ---------- */
+function dicktatorKiesVorm2(v, g) {
+  const tar = dicktatorTarief(v);
+  /* zolang de rede niet uitgevoerd is, is de rede de enige zet (0 schade — daardoor is
+     de hersync veilig, ook als hij haar nog dezelfde vijandbeurt uitvoert) */
+  if (v.vorm2Start == null) return {
+    naam: 'DE HERVERKIEZINGSREDE', type: 'hof', cast: true, icoon: '🗳️', kort: 'DE REDE',
+    tip: 'hij bedankt zijn kiezers en stelt een nieuwe deurwaarder aan — deze beurt geen schade',
+    doe: vv => dicktatorRede(vv, g)
+  };
+  const k = (v.beurtTeller || 0) + 1 - v.vorm2Start;
+  const slot = (((k - 2) % 3) + 3) % 3;
+  const cyclus = Math.floor((k - 2) / 3);
+  if (slot === 0) {
+    if (cyclus % 2 === 0) return {
+      naam: 'DE FACTUUR', type: 'factuur', vast: true, zelf: true,
+      basis: tar.basis, tarief: tar.tarief,
+      doe: vv => { dicktatorNaFactuur(vv, false); if (!vv.dood) baasSpreekt(UITSPRAKEN._dicktator.opzegtermijn); }
+    };
+    return { naam: 'DONDERREDE', type: 'aanval', dmg: DICK.DONDERREDE };
+  }
+  if (slot === 1) {
+    if (hofLid(g, 'de_deurwaarder')) return {
+      naam: 'HET ONTSLAG', type: 'aanval', dmg: DICK.ONTSLAG, vast: true, ontslag: true,
+      doe: vv => dicktatorOntslagBeat(vv)
+    };
+    return {
+      naam: 'DONDERREDE', type: 'aanval', dmg: DICK.DONDERREDE,
+      doe: vv => { if (!vv.dood) baasSpreekt(UITSPRAKEN._dicktator.zonderBetekening); }
+    };
+  }
+  return {
+    naam: 'DE PEILING', type: 'hof', icoon: '📊', kort: 'DE PEILING',
+    tip: 'hij meet zijn draagvlak: +1 Kracht en hij vult één plek in zijn hof aan',
+    doe: vv => dicktatorPeiling(vv, g)
+  };
+}
+
+/* ---------- het brein van het hof ---------- */
+/* De hovelingen lezen de baas-intent pas aan het einde van hun eigen beurt: de baas staat
+   op index 0 en heeft dan al gekozen. Bij elke hersync buiten eindBeurt gaan zij mee. */
+function hofIntent(v, beurt) {
+  const g = S.gevecht;
+  const stil = { naam: 'TREEDT AAN', type: 'hof', icoon: '🪑', kort: 'TREEDT AAN', tip: 'komt de zaal binnen — deze beurt geen schade' };
+  if (!g) return stil;
+  const b = dicktatorBaas(g);
+  const bi = (b && !b.dood) ? b.intent : null;
+  if (v.id === 'de_griffier') {
+    if (bi && bi.type === 'decreet') return {
+      naam: 'DE ZITTING', type: 'hof', cast: true, icoon: '🖋️', kort: 'DE ZITTING',
+      tip: 'hij stempelt het dossier — hierdoor kan het decreet vallen'
+    };
+    return { naam: 'HET DOSSIER', type: 'hof', icoon: '📋', kort: 'het dossier', tip: 'houdt het dossier van de shortlist bij — deze beurt geen schade' };
+  }
+  if (v.id === 'de_deurwaarder') {
+    if (v.rolVorm2) return { naam: 'DE BETEKENING', type: 'hof', icoon: '📨', kort: 'betekening', tip: 'houdt het ontslagbriefje klaar — zonder hem kan HET ONTSLAG niet vallen' };
+    if (bi && bi.laatInnen) {
+      const tar = dicktatorTarief(b);
+      return {
+        naam: 'DE INVORDERING', type: 'factuur', vast: true, basis: tar.basis, tarief: tar.tarief,
+        doe: () => dicktatorNaFactuur(dicktatorBaas(S.gevecht), false)
+      };
+    }
+    return { naam: 'DE INVENTARIS', type: 'hof', icoon: '🧮', kort: 'telt uw posten', tip: 'telt uw posten voor de volgende rekening — deze beurt geen schade' };
+  }
+  if (v.id === 'de_claqueur') {
+    if (bi && bi.ontslag) return { naam: 'ADEMLOZE STILTE', type: 'hof', icoon: '🤫', kort: 'stilte', tip: 'zelfs het betaald applaus houdt zijn adem in' };
+    return { naam: 'BETAALD APPLAUS', type: 'aanval', dmg: DICK.APPLAUS, vast: true };
+  }
+  return stil;
+}
 function copycatKies(v, beurt) {
   const g = S.gevecht; if (!g) return { type: 'aanval', naam: 'Geschreeuw', dmg: 6 };
   /* vóór DE ROOF: hij neemt je op en wácht tot je toeslaat — je eerste aanval ontketent
@@ -6570,7 +6878,9 @@ function baasFaseMoment(titel, sub) {
 /* vijand toevoegen midden in het gevecht (de splijtende koning) */
 function voegVijandToe(id) {
   const g = S.gevecht;
-  if (!g || g.vijanden.filter(v => !v.dood).length >= 4) return;
+  /* v109: geeft de nieuwkomer TERUG (of null als de cap van 4 levenden vol zit), zodat
+     dicktatorRoep zijn HP/rol kan zetten en weet of de oproep gelukt is. */
+  if (!g || g.vijanden.filter(v => !v.dood).length >= 4) return null;
   const v = maakVijand(id, 0);
   v.intent = VIJANDEN[id].kies(v, g.beurt);
   if (g.gedoofd) v.status.kracht = (v.status.kracht || 0) + 1;
@@ -6585,6 +6895,7 @@ function voegVijandToe(id) {
     triggerEntree(wraps[wraps.length - 1], 0);
   }
   renderGevecht();
+  return v;
 }
 
 /* ---------- beurtverloop ---------- */
