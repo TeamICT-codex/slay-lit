@@ -5947,7 +5947,10 @@ async function speelKaart(c, doel) {
   g.gespeeld = g.gespeeld || {};
   g.gespeeld[c.id] = (g.gespeeld[c.id] || 0) + 1;
   const _kost = kval(c, 'kost');
-  const _posten = _kost === 0 ? 2 : (_kost === 1 ? 1 : 0);
+  /* gewichten uit DICK (contract §8 stap 14, knop 1): alle balansgetallen in één blok,
+     zodat een balansronde ze kan draaien zonder deze functie aan te raken. */
+  const _pw = DICK.POSTEN || { gratis: 2, een: 1 };
+  const _posten = _kost === 0 ? _pw.gratis : (_kost === 1 ? _pw.een : 0);
   if (_posten > 0 || typeof dicktatorKassaTik === 'function') {
     const _voor = typeof dicktatorFactuurNu === 'function' ? dicktatorFactuurNu(g) : null;
     g.posten = (g.posten || 0) + _posten;
@@ -6394,7 +6397,13 @@ function copycatNaSchade(v, n, bron) {
    (het meetharnas zet 'm op 0.02 om de beats over te slaan).
    ============================================================ */
 const DICK = {
-  hp: 200,                                  /* was 240, na de balansronde 220 -> 200 (knop 4): het hof + vorm 2 leveren nu de druk */
+  hp: 240,                                  /* balansknop 4. 240 -> 220 -> 200 was de verkeerde kant op:
+                                               het gevecht was al TE KORT (mediaan 6 rondes tegen de 9-15 uit
+                                               §9) en de sterkste build won 12/12 tegen de gevraagde 9-11.
+                                               Op 240 gemeten: gif_opt 9/12 in 7 rondes, slachter_mid 12/12 in
+                                               10. §9 wijst HP ook expliciet aan als de LENGTE-knop
+                                               ("nooit schade omhoog"). Deze regel is de bron van waarheid:
+                                               game.js schrijft haar bij het laden in VIJANDEN.de_dicktator. */
   vorm2Pct: 0.40,                           /* DE HERVERKIEZING: terug op 40% = 88 HP */
   fase2: 0.66, fase3: 0.33,
   AANZEGGING: 8, KARAKTERMOORD: 8, KM_PER_VLOEK: 3,
@@ -6402,6 +6411,7 @@ const DICK = {
   APPLAUS: 3,
   KM_VLOEK_CAP: 3,        /* de vloeken-as houdt tanden, maar geen 23-schade-spike */
   FACTUUR: { basis: 5, tarief: 3, basis3: 7, tarief3: 4, index: 1, hofCap: 4 },
+  POSTEN: { gratis: 2, een: 1 },   /* gewicht per gespeelde kaart: 0 energie = 2 posten, 1 = 1, 2+ = 0 */
   decreetCap: 3,          /* harde grens: nooit meer dan 3 kaarten per gevecht */
   speelbaarGuard: 6,      /* bestaande guard: onder 7 speelbare kaarten geen decreet meer */
   lasterCap: 3, dekMinLaster: 16,
@@ -6411,6 +6421,11 @@ const DICK = {
   tempo: 1
 };
 window.DICK = DICK;
+/* ÉÉN BRON VAN WAARHEID voor zijn HP. data.js laadt VÓÓR game.js, dus de vijand-def moet
+   het getal zelf dragen; DICK.hp is de balansknop. Zonder deze regel was DICK.hp een DODE
+   knop (hij werd alleen nog gelezen als fallback bij de herrijzenis) en balanceerde je met
+   een cijfer dat niets deed — gemeten: hp 180/220/240 in DICK gaf drie identieke runs. */
+if (typeof VIJANDEN !== 'undefined' && VIJANDEN.de_dicktator) VIJANDEN.de_dicktator.hp = [DICK.hp, DICK.hp];
 const dtempo = ms => Math.max(1, Math.round(ms * (DICK.tempo || 1)));
 
 /* het tarief van dit moment: bedrijf I-II goedkoop, vanaf DE TIRADE duurder en
