@@ -45,6 +45,12 @@ const Wereld = (() => {
 
   /* ---------- maten in wereld-eenheden (wu), vast op elk toestel ---------- */
   const HELD_MIN_PX = 110;              /* DE HELDMAAT-KNOP: kort liggend (~420px) geeft ~110px held */
+  /* HELD_MAX_PX is DE knop voor de camera-schaal k (= heldPx/170) en daarmee voor de hele
+     vulsnelheid: alles in #wereld-vlak en de twee parallaxlagen schaalt met k^2. Gemeten op
+     1440x900 in de headless software-rasterizer: 210 -> 51,3 fps (p95 33,4), 190 -> 54,2,
+     170 -> 57,5 fps (p95 16,8). Bewust NIET verlaagd: de heldmaat is een ontwerpkeuze van
+     Thomas ('de maat als een knop'), geen bug. Dit is de hefboom als een echte laptop de
+     60 fps niet haalt. */
   const HELD_MAX_PX = 210;
   const KUNST = 'assets/achtergronden/Afdaling/';
   /* de richelstrook: de looplijn zit op 57,8% van de plaat (gemeten alfa-snede) */
@@ -303,6 +309,7 @@ const Wereld = (() => {
     if (!ctx2d) ctx2d = els.canvas.getContext('2d');
     if (!plasSprite) bakSprites();
     camX = klem(camX, camMin(), camMax());
+    legLagen();                                     /* het aantal parallaxtegels hangt van vw en k af */
     schrijfTransforms();
     tekenLicht();
   }
@@ -351,18 +358,46 @@ const Wereld = (() => {
     }
   }
 
-  /* ---------- opbouw van de lagen ---------- */
+  /* ---------- opbouw van de lagen ----------
+     De midden- en voorgrondlaag lagen op een VASTE tegelbreedte (2 x 1500 en 3 x 1500 wu),
+     ongeacht het kijkvenster. Op 1920x1080 was dat 4500 wu voorgrond op 1745 wu die je ooit
+     kunt zien: drie keer overtekenen van een grote geschaalde plaat, elk frame. tegelsNodig()
+     rekent uit hoeveel er echt nodig zijn.
+     Afleiding: de laag staat op translate(vw/2 − (camX − BREEDTE/2)·f·k) en schaalt met k, dus
+     een punt op laag-coördinaat u landt op vw/2 + (u − (camX − BREEDTE/2)·f)·k. Om [0, vw] te
+     dekken voor élke camX moet u lopen van −(D·f + vw/2k) tot +(D·f + vw/2k), met
+     D = max(0, BREEDTE/2 − vw/2k) het halve camerabereik. */
+  function tegelsNodig(f, tb) {
+    const D = Math.max(0, BREEDTE / 2 - vw / (2 * k));
+    return Math.max(1, Math.ceil((vw / k + 2 * D * f + 140) / tb));
+  }
+  let laagStand = '';
+  function legLagen() {
+    if (!els || !vw || !k) return;
+    const aan = heeftBioom() && !lite();
+    const nm = aan ? tegelsNodig(0.40, MID_TB) : 0;
+    const nv = aan ? tegelsNodig(1.30, VOOR_TB) : 0;
+    const stand = huidigeAct() + '|' + nm + '|' + nv;
+    if (stand === laagStand) return;                /* niets veranderd: de platen niet opnieuw laten decoderen */
+    laagStand = stand;
+    if (!aan) { els.mid.innerHTML = ''; els.voor.innerHTML = ''; return; }
+    let h = '';
+    for (let i = 0; i < nm; i++) {
+      h += `<img${i % 2 ? ' class="spiegel"' : ''} src="${KUNST}afdaling_a1_midden.webp" alt="" draggable="false"`
+        + ` style="left:${Math.round((i - nm / 2) * MID_TB)}px;top:${MID_OFF - MID_TH}px;width:${MID_TB}px">`;
+    }
+    els.mid.innerHTML = h;
+    h = '';
+    for (let i = 0; i < nv; i++) {
+      h += `<img src="${KUNST}afdaling_a1_voorgrond.webp" alt="" draggable="false"`
+        + ` style="left:${Math.round((i - nv / 2) * VOOR_TB)}px;top:${VOOR_OFF}px;width:${VOOR_TB}px">`;
+    }
+    els.voor.innerHTML = h;
+  }
   function bouwLagen(sj) {
     haakBioom();
     els.ver.innerHTML = `<img src="${vertePad(sj)}" alt="" draggable="false">`;
-    if (heeftBioom() && !lite()) {
-      const h = `<img src="${KUNST}afdaling_a1_midden.webp" alt="" draggable="false" style="left:${-MID_TB}px;top:${MID_OFF - MID_TH}px;width:${MID_TB}px">`
-        + `<img class="spiegel" src="${KUNST}afdaling_a1_midden.webp" alt="" draggable="false" style="left:${-Math.round(MID_TB * 0.08)}px;top:${MID_OFF - MID_TH}px;width:${MID_TB}px">`;
-      els.mid.innerHTML = h;
-      let v = '';
-      for (let i = -1; i <= 1; i++) v += `<img src="${KUNST}afdaling_a1_voorgrond.webp" alt="" draggable="false" style="left:${i * VOOR_TB - VOOR_TB / 2}px;top:${VOOR_OFF}px;width:${VOOR_TB}px">`;
-      els.voor.innerHTML = v;
-    } else { els.mid.innerHTML = ''; els.voor.innerHTML = ''; }
+    legLagen();
   }
 
   /* de deeltjes: <= 24 CSS-sprites, schermvast, nul JS per frame (§2.1 laag 6) */
@@ -1037,7 +1072,7 @@ const Wereld = (() => {
          niet aanzetten — pas als de MEDIAAN ook zakt is het toestel echt te traag */
       if (p95 > 24 && p50 > 19) {
         document.body.classList.add('w-lite');
-        bouwDeeltjes();
+        bouwDeeltjes(); legLagen();
         console.log('[wereld] auto-lite: p50 ' + p50.toFixed(1) + ' / p95 ' + p95.toFixed(1) + ' ms');
       }
     }
