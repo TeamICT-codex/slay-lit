@@ -4189,7 +4189,13 @@ function startGevecht(samenstelling, soort, rij) {
     beurt: 0, bezig: false, voorbij: false,
     gekozenKaart: null, gekozenDrank: null,
     /* THE COPYCAT: zijn observatie-buffer + breekstatus leven op het gevecht */
-    laatstGespeeld: [], vorigeId: null, copycatGebroken: false, raakteCopycat: false
+    laatstGespeeld: [], vorigeId: null, copycatGebroken: false, raakteCopycat: false,
+    /* HET PROCES (v109): de boekhouding van de DICKtator. Alles leeft op het GEVECHT,
+       dus saveSpel (gevecht: null) hoeft er niets van te migreren.
+       gespeeld = hoe vaak elke kaart-id dit gevecht gespeeld is (shortlist-criterium),
+       posten/kaartenDezeBeurt = de Factuur-teller van DEZE spelersbeurt,
+       aangezegd = de open shortlist (uid -> {id, start}) voor de zegels op je kaarten. */
+    gespeeld: {}, posten: 0, kaartenDezeBeurt: 0, aangezegd: new Map()
   };
   S.gevecht = g;
   /* v108: CHECKPOINT voor het baasgevecht — een tab die op een telefoon sneuvelt midden in een
@@ -5782,6 +5788,23 @@ async function speelKaart(c, doel) {
     heldFx('hfx-cast', 1400);
   }
   S.stats.kaarten++;
+  /* DE FACTUUR PER POST (v109): elke gespeelde kaart is een post op basis van haar
+     ECHTE kost (kval, statisch + upgrade-bewust) - NIET kkost: anders maakt de
+     Overschreven Poster een 2-kost-bom ineens 2 posten en beschermt De Vergadering je.
+     0 energie = 2 posten ("gratis bestaat niet"), 1 = 1 post, 2+ = 0 ("aftrekbaar").
+     Eenmaal per speelKaart-aanroep, dus een Doorslag-recast telt terecht niet dubbel. */
+  g.kaartenDezeBeurt = (g.kaartenDezeBeurt || 0) + 1;
+  g.gespeeld = g.gespeeld || {};
+  g.gespeeld[c.id] = (g.gespeeld[c.id] || 0) + 1;
+  const _kost = kval(c, 'kost');
+  const _posten = _kost === 0 ? 2 : (_kost === 1 ? 1 : 0);
+  if (_posten > 0 || typeof dicktatorKassaTik === 'function') {
+    const _voor = typeof dicktatorFactuurNu === 'function' ? dicktatorFactuurNu(g) : null;
+    g.posten = (g.posten || 0) + _posten;
+    if (typeof dicktatorKassaTik === 'function') dicktatorKassaTik(g, _voor, _posten);
+  } else {
+    g.posten = (g.posten || 0) + _posten;
+  }
   const resultaat = def.speel(c, doel);
   if (resultaat && resultaat.then) {
     /* meertraps kaarteffect: invoer kort vergrendelen tijdens de animatie */
@@ -6625,6 +6648,9 @@ function beginSpelerBeurt() {
   s.blok = (heeftRelikwie('was_zegel') && g.beurt === 1) ? s.blok : 0;   /* Was-zegel: behoud de overgebleven Blok van je openingsbeurt één beurt langer */
   g.aanvalDezeBeurt = 0;   /* Act 2: Originele Handtekening telt of dit je eerste aanval is */
   g.kaartGespeeldDezeBeurt = false;   /* De Vergadering: verse beurt, verse toeslag */
+  g.kaartenDezeBeurt = 0; g.posten = 0;   /* v109: de Factuur telt per SPELERSBEURT (zie speelKaart) */
+  g.ceremonie = false;                    /* v109: een nieuwe spelersbeurt geeft de invoer altijd vrij */
+  g.herrijzenisNu = false;
   g._epidemieGespreid = false;   /* Epidemie mag deze beurt weer 1× verspreiden */
   g._hakblokGebruikt = false;    /* Het Hakblok slijpt elke beurt een verse eerste snede */
   s.status.doorslag = 0;   /* Doorslag vervalt per beurt — geen carry-over (de kaart zegt "deze beurt") */
