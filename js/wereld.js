@@ -53,7 +53,7 @@ const Wereld = (() => {
   const POORT_W = 250;                  /* de poortplaat is vierkant; het gat zit op 26,5-72,8% x 18-100% */
   const NIS_W = 160, NIS_H = 150;
   const LICHT_STRAAL = { helder: 260, schemer: 190, duister: 130, gedoofd: 90 };
-  const DUISTER = { helder: 0.88, schemer: 0.90, duister: 0.93, gedoofd: 0.93 };
+  const DUISTER = { helder: 0.86, schemer: 0.89, duister: 0.92, gedoofd: 0.93 };
   const ACT_STEMPEL = {
     1: 'GEEN LIFT. B.A.A.S. BESPAART.',
     2: 'STILTE — ARCHIEF IN GEBRUIK',
@@ -108,7 +108,7 @@ const Wereld = (() => {
   let sleep = [];                       /* ringbuffer voor de metgezel (positie-replay) */
   let frames = {}, figA = null, figB = null, figAan = 'a';
   let ctx2d = null, plasSprite = null, gloedSprite = null, canvasDpr = 1;
-  let dtLog = [], meetTot = 0, autoLiteKlaar = false;
+  let dtLog = [], liteLog = [], meetTot = 0, autoLiteKlaar = false;
   let titelBezig = false;
   const raakt = new Map();              /* pointerId -> slot (twee duimen: lopen + springen) */
   const inv = { links: false, rechts: false, spring: false, omhoog: false, omlaag: false, rol: false, snel: false };
@@ -697,7 +697,7 @@ const Wereld = (() => {
   }
 
   /* ---------- de lus ---------- */
-  function start() { stop(); meetTot = 0; dtLog = []; autoLiteKlaar = lite(); afmeld = Tikker.abonneer(stap); }
+  function start() { stop(); meetTot = 0; dtLog = []; liteLog = []; autoLiteKlaar = lite(); afmeld = Tikker.abonneer(stap); }
   function stop() { if (afmeld) { afmeld(); afmeld = null; } }
   function na(ms, fn) {
     const t = setTimeout(() => { timers = timers.filter(q => q !== t); fn(); }, ms);
@@ -781,7 +781,10 @@ const Wereld = (() => {
     if (Math.abs(doelX - camX) < 0.05) camX = doelX;
 
     let doelY;
-    if (geleid()) doelY = actieveRij * RH;                       /* geleide modus: de deurbaan vast in beeld */
+    /* geleide modus: de deurbaan blijft in beeld, maar de camera laat de held nooit
+       uit de band lopen — op de galerij stak zijn hoofd anders boven het kijkvenster uit
+       (gemeten op 360x800: voeten op 91 px, dus hoofd op -19) */
+    if (geleid()) doelY = klem(st.y, actieveRij * RH - 110, actieveRij * RH);
     else {
       doelY = st.y;
       if (st.grond && st.grond.soort === 'galerij') doelY += 60;  /* je kijkt neer op de deuren: het keuzemoment */
@@ -919,14 +922,22 @@ const Wereld = (() => {
         const gy = ((actieveRij * RH - camY) * k + grondY + schokY - POORT_W * 0.5 * k) * d;
         if (gx < -300 || gx > w + 300) continue;
         const maat = (p.type === 'rust' ? 170 : p.type === 'baas' ? 240 : p.type === 'elite' ? 130 : 96) * k * d;
-        g.globalAlpha = p.open ? 0.5 : 0.13;
+        g.globalAlpha = p.open ? 0.62 : 0.16;
         g.drawImage(kleurGloed(p.type), gx - maat, gy - maat * 0.65, maat * 2, maat * 1.3);
+      }
+      const sjN = sjab[actieveRij];
+      if (sjN && sjN.nis && !nisGepakt(sjN.r)) {
+        const nx = ((sjN.nis.x - camX) * k + vw / 2 + schokX) * d;
+        const ny = ((actieveRij * RH + sjN.nis.y - camY) * k + grondY + schokY - 60 * k) * d;
+        const m = 110 * k * d;
+        g.globalAlpha = 0.5;
+        g.drawImage(kleurGloed('nis'), nx - m, ny - m * 0.7, m * 2, m * 1.4);
       }
       g.globalAlpha = 1;
     }
     g.globalCompositeOperation = 'source-over';
   }
-  const GLOED_KLEUR = { rust: '255,170,70', baas: '225,60,60', elite: '210,60,95', episch: '168,111,224', event: '111,179,196', winkel: '255,214,130', schat: '245,197,66' };
+  const GLOED_KLEUR = { nis: '255,196,120', rust: '255,170,70', baas: '225,60,60', elite: '210,60,95', episch: '168,111,224', event: '111,179,196', winkel: '255,214,130', schat: '245,197,66' };
   const gloedCache = {};
   function kleurGloed(type) {
     const kl = GLOED_KLEUR[type] || '255,156,63';
@@ -947,14 +958,22 @@ const Wereld = (() => {
     dtLog.push(dt * 1000);
     if (dtLog.length > 600) dtLog.shift();
     meetTot += dt;
-    if (!autoLiteKlaar && meetTot > 4 && dtLog.length > 60) {
+    /* AUTO-LITE: pas meten NA de eerste 1,5 s. De laadhapering (art decoderen, fonts,
+       de titelkaart) gaf anders een p95 van 30+ ms op een laptop die daarna vlot 60 fps
+       draaide — en die zette lite onterecht aan (gemeten). */
+    if (autoLiteKlaar) return;
+    if (meetTot > 1.5 && dt < 0.2) liteLog.push(dt * 1000);
+    if (meetTot > 5.5 && liteLog.length > 90) {
       autoLiteKlaar = true;
-      const s = dtLog.slice().sort((a, b) => a - b);
-      const p95 = s[Math.floor(s.length * 0.95)];
-      if (p95 > 24) {
+      const s = liteLog.slice().sort((a, b) => a - b);
+      const p95 = s[Math.floor(s.length * 0.95)], p50 = s[Math.floor(s.length * 0.5)];
+      window.__wLiteMeting = { p50: +p50.toFixed(1), p95: +p95.toFixed(1), n: s.length };
+      /* twee eisen: een enkele hapering (een deur die opengaat, art dat decodeert) mag lite
+         niet aanzetten — pas als de MEDIAAN ook zakt is het toestel echt te traag */
+      if (p95 > 24 && p50 > 19) {
         document.body.classList.add('w-lite');
         bouwDeeltjes();
-        console.log('[wereld] auto-lite: p95 dt = ' + p95.toFixed(1) + ' ms');
+        console.log('[wereld] auto-lite: p50 ' + p50.toFixed(1) + ' / p95 ' + p95.toFixed(1) + ' ms');
       }
     }
   }
@@ -1123,15 +1142,19 @@ const Wereld = (() => {
       if (Math.abs(e.clientX - heldScherm) > 12) slot.richting = e.clientX < heldScherm ? -1 : 1;
       return;
     }
-    const dx = e.clientX - slot.x0, dy = e.clientY - slot.y0;
+    const dx = e.clientX - slot.x0, dy = e.clientY - slot.y0, verstreken = Date.now() - slot.t0;
     /* VEEG: omhoog = springen, omlaag = van de rand / de ladder af / door een bordes */
-    if (Math.abs(dy) >= 40 && Math.abs(dy) > 1.5 * Math.abs(dx) && Date.now() - slot.t0 < 250) {
+    if (Math.abs(dy) >= 40 && Math.abs(dy) > 1.5 * Math.abs(dx) && verstreken < 250) {
       clearTimeout(slot.timer); raakt.delete(e.pointerId);
       if (bezig) return;
       if (dy < 0) inv.spring = true;
       else { toets.omlaag = true; setTimeout(() => { toets.omlaag = false; }, 320); }
       return;
     }
+    /* een veeg IN WORDING mag geen 'houden' worden: de eerste 10 px van een verticale veeg
+       haalden anders al de loop-modus binnen en de veeg werd nooit herkend (gemeten: 0 van
+       de 4 veegsprongen kwam aan) */
+    if (verstreken < 250 && Math.abs(dy) > Math.abs(dx)) return;
     if (Math.hypot(dx, dy) > 10 && !bezig) { clearTimeout(slot.timer); beginHoud(slot); }
   }
   function opPointerUp(e) {
