@@ -3722,6 +3722,18 @@ body.lite .kies-slot.leeg, body.lite .kies-actiebalk .kies-bevestig:not(:disable
   will-change: transform;
 }
 #gevecht-achtergrond.zichtbaar { display: block; }
+/* v109 (HET PROCES): de tweede arena-laag voor de crossfade tussen de drie
+   Raadzaal-platen (zitting -> verschuiving -> herverkiezing). Zelfde geometrie als
+   de laag eronder, toonArenaWissel ruimt haar zelf op. */
+#gevecht-achtergrond-2 {
+  position: fixed; inset: -28px;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;   /* zelfde laag, maar later in de DOM = eroverheen */
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  pointer-events: none;
+}
 
 #vista-canvas {
   display: none;

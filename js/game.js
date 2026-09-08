@@ -6384,20 +6384,83 @@ function dicktatorFase(v) {
    (na elke actie), niet meer via zijn kies() — die vuurde pas op de volgende vijandbeurt en
    schreef v.fase nooit, zodat de bazenbalk-pips en de woede-gloed nooit brandden. Alleen
    omhoog: na de herverkiezing (fase 3 gezet) komt er geen tweede fase-flits. */
+/* de arena wisselt van plaat zonder harde knip: een tweede laag komt eroverheen
+   en neemt het beeld over. In lite/reduced-motion en in 3D (Vista tekent daar zelf
+   de achtergrond) is het een harde wissel — bekende Vista-pariteitsbeperking. */
+function toonArenaWissel(url) {
+  const g = S.gevecht;
+  const bgEl = $('#gevecht-achtergrond');
+  if (!bgEl || !url) return;
+  const beeld = `linear-gradient(rgba(13,10,18,.32), rgba(13,10,18,.5)), url("${url}")`;
+  /* GRONDANKER: het Raadzaal-drieluik (887×1774, vogelvlucht) heeft geen grondlijn —
+     onder-ankeren zou er een willekeurige band uitsnijden, dus 'center' (zie startGevecht). */
+  const pos = /FINALE/i.test(url) ? 'center' : '';
+  if (g) g.achtergrond = url;
+  const hard = () => {
+    bgEl.style.backgroundImage = beeld;
+    bgEl.style.backgroundPosition = pos;
+    bgEl.classList.add('zichtbaar');
+  };
+  const rustig = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (document.body.classList.contains('lite') || rustig || d3Actief()) { hard(); return; }
+  const oud = document.getElementById('gevecht-achtergrond-2');
+  if (oud) oud.remove();
+  const laag = document.createElement('div');
+  laag.id = 'gevecht-achtergrond-2';
+  laag.className = 'zichtbaar';
+  laag.style.backgroundImage = beeld;
+  laag.style.backgroundPosition = pos;
+  laag.style.filter = bgEl.style.filter;   /* zelfde fakkel-helderheid als de laag eronder */
+  laag.style.opacity = '0';
+  bgEl.parentNode.insertBefore(laag, bgEl.nextSibling);
+  requestAnimationFrame(() => { if (laag.isConnected) laag.style.opacity = '1'; });
+  setTimeout(() => { hard(); if (laag.isConnected) laag.remove(); }, dtempo(1300));
+}
+
+/* v108 (Het Proces, stap 1a): de fase-overgang van de DICKtator loopt via checkBaasFase
+   (na elke actie), niet meer via zijn kies() — die vuurde pas op de volgende vijandbeurt en
+   schreef v.fase nooit, zodat de bazenbalk-pips en de woede-gloed nooit brandden. Alleen
+   omhoog: na de herverkiezing (fase 3 gezet) komt er geen tweede fase-flits.
+   v109: elk bedrijf krijgt zijn eigen banner, arena en personeelsbesluit. */
 function checkDicktatorFase(b, g) {
   const nieuw = dicktatorFase(b);
   if (nieuw <= (b.fase || 1)) return;
   b.fase = nieuw;
-  baasFaseMoment(nieuw === 2 ? 'DE LAUWERKRANS VERSCHUIFT' : 'DE LAATSTE TIRADE', '');
-  baasSpreekt(nieuw === 2 ? UITSPRAKEN._dicktator.fase2 : UITSPRAKEN._dicktator.fase3);
   if (nieuw === 2) {
+    /* II · HET PROCES — het goud loopt, de arena verschuift, Karaktermoord vervangt de aanzegging */
+    baasFaseMoment('II · HET PROCES', '');
+    baasSpreekt(UITSPRAKEN._dicktator.fase2);
     const droom = jeugddroomTekst();
     if (droom) setTimeout(() => {
       if (S.gevecht === g && !g.voorbij) baasSpreekt(`„Uw jeugddroom — ‚${droom}'. Voorziening getroffen. AFGESCHREVEN."`);
-    }, 3400);
+    }, dtempo(3400));
+    if (window.ACHTERGRONDEN && ACHTERGRONDEN.act3 && ACHTERGRONDEN.act3.finaleFasen) {
+      toonArenaWissel(ACHTERGRONDEN.basis + ACHTERGRONDEN.act3.finaleFasen.verschuiving);
+    }
+  } else {
+    /* III · DE TIRADE — hij ontslaat zijn eigen griffier en indexeert het tarief */
+    baasFaseMoment('III · DE TIRADE', '');
+    baasSpreekt(UITSPRAKEN._dicktator.fase3);
+    const gr = hofLid(g, 'de_griffier');
+    if (gr) {
+      /* „U bent ONTSLAGEN." — hij executeert hem zelf; de death-pose speelt gewoon
+         (de griffier heeft geen Kracht-haak bij dood, alleen een intent-hersync). */
+      pose2D(b, 'attack', 0.6);
+      verliesHp(gr, gr.hp);
+      dicktatorKrachtVast(b);
+      baasSpreekt(UITSPRAKEN._dicktator.griffierOntslag[0]);
+      setTimeout(() => {
+        if (S.gevecht === g && !g.voorbij) baasSpreekt(UITSPRAKEN._dicktator.griffierOntslag[1]);
+      }, dtempo(2600));
+    }
+    const el = actorEl(b); if (el) el.classList.add('woede');
+  }
+  /* het betaald applaus treedt aan vanaf het ingestelde bedrijf (balansknop DICK.claqueurVanaf) */
+  if (nieuw >= DICK.claqueurVanaf && !hofLid(g, 'de_claqueur')) {
+    dicktatorRoep('de_claqueur', { hp: DICK.claqueurHp });
   }
   b.intent = VIJANDEN[b.id].kies(b, b.beurtTeller || 0);   /* nieuw patroon meteen tonen (slijmkoning-patroon) */
-  if (nieuw >= 3) { const el = actorEl(b); if (el) el.classList.add('woede'); }
+  dicktatorHersync(false);                                  /* en het hof mee, anders liegt hun pil een beurt */
 }
 /* de jeugddroom: een lopende run wint, anders de proloog-overdracht */
 function jeugddroomTekst() {
