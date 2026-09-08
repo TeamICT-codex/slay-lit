@@ -30,7 +30,8 @@
      olie uit een nis uitsluitend in kiesNisEcht (game.js). De wereld rekent nooit af.
    - Save-formaat: additief. S.w = { rij, x, y, act } (alleen op vaste grond),
      S.wn = ['act|rij', ...] (gepakte nissen), S.wg = de landings-x van de richel
-     waar je staat, S.wt = de act waarvan de titelkaart al speelde.
+     waar je staat, S.wgv = die van de richel erboven (zodat het decor van de vorige richel
+     na een reload identiek blijft), S.wt = de act waarvan de titelkaart al speelde.
    - De lus (Tikker) schrijft per frame alleen transforms + een canvas-pass; alles
      wat layout forceert wordt in hermeet() gecacht.
    - Idempotent: render() mag twee keer na elkaar zonder dubbele lus of daling.
@@ -113,7 +114,7 @@ const Wereld = (() => {
   let sleep = [];                       /* ringbuffer voor de metgezel (positie-replay) */
   let frames = {}, figA = null, figB = null, figAan = 'a';
   let ctx2d = null, plasSprite = null, gloedSprite = null, canvasDpr = 1;
-  let dtLog = [], liteLog = [], meetTot = 0, autoLiteKlaar = false;
+  let dtLog = [], liteLog = [], meetTot = 0, autoLiteKlaar = false, warmT = 0, liteGemeten = null;
   let titelBezig = false;
   const raakt = new Map();              /* pointerId -> slot (twee duimen: lopen + springen) */
   const inv = { links: false, rechts: false, spring: false, omhoog: false, omlaag: false, rol: false, snel: false };
@@ -560,6 +561,7 @@ const Wereld = (() => {
     if (moetDalen) {
       /* je staat nog op de vorige richel; het valgat breekt daar open */
       sjab[vorigeRij] = maak(vorigeRij, landXvorige);
+      S.wgv = landXvorige;                          /* bewaren: anders mist die richel na een reload zijn galerij */
       const voorlopig = maak(actieveRij, null);
       const n = S.kaart[S.pos];
       const kinderen = (n && n.verb ? n.verb : []).map(id => S.kaart[id] ? plekX(S.kaart[id]) : BREEDTE / 2);
@@ -572,7 +574,10 @@ const Wereld = (() => {
       const lx = actieveRij === 0 ? K.INGANG_X : (landXvorige !== null ? landXvorige : BREEDTE / 2);
       sjab[actieveRij] = maak(actieveRij, lx);
       landXvan[actieveRij] = lx;
-      if (vorigeRij >= 0) sjab[vorigeRij] = maak(vorigeRij, null);
+      /* de richel waar je vandaan komt wordt met ZIJN eigen landings-x opgebouwd; met null
+         miste hij zijn galerij en ladder, en dan zag hij er na een reload anders uit dan
+         vlak voor de afdaling (gemeten: 11 vloeren vóór de reload, 10 erna). */
+      if (vorigeRij >= 0) sjab[vorigeRij] = maak(vorigeRij, (typeof S.wgv === 'number') ? S.wgv : null);
       S.wg = lx;
     }
     if (actieveRij + 1 <= RIJEN) sjab[actieveRij + 1] = maak(actieveRij + 1, null);
@@ -723,7 +728,18 @@ const Wereld = (() => {
   }
 
   /* ---------- de lus ---------- */
-  function start() { stop(); meetTot = 0; dtLog = []; liteLog = []; autoLiteKlaar = lite(); afmeld = Tikker.abonneer(stap); }
+  /* start() wist alleen dtLog (dat is voor stats()) en de warmloopteller. De AUTO-LITE-meting
+     overleeft de verdiepingswissel: elke render() zette meetTot/liteLog vroeger terug op nul
+     terwijl de meting 5,5 s en 90 frames vroeg, en een verdieping duurt per ontwerp minder dan
+     5 s — gemeten bleef window.__wLiteMeting over 10 verdiepingen op 1920x1080 gewoon null.
+     Alleen als de lite-stand zelf verandert begint de meting opnieuw: een meting in lite zegt
+     niets over de gewone modus en omgekeerd. */
+  function start() {
+    stop();
+    dtLog = []; warmT = 0;
+    if (liteGemeten !== lite()) { liteGemeten = lite(); meetTot = 0; liteLog = []; autoLiteKlaar = lite(); }
+    afmeld = Tikker.abonneer(stap);
+  }
   function stop() { if (afmeld) { afmeld(); afmeld = null; } }
   /* na(ms, fn, bak): bak = de timerlijst die dit wachtje bezit (standaard de algemene). */
   function na(ms, fn, bak) {
@@ -773,9 +789,8 @@ const Wereld = (() => {
     const ev = TT.stapFysica(st, i, dt, W);
     verwerkGebeurtenissen(ev, i, dt);
 
-    /* --- het valgat als triggerzone --- */
+    /* --- het valgat als triggerzone (bestaat alleen tijdens de daling) --- */
     if (dalingBezig && dalingFase === 'lopen' && st.opGrond && Math.abs(st.x - valgat.x) < 26 && Math.abs(st.y - valgat.y) < 2) valIn();
-    else if (!dalingBezig && valgat && st.opGrond && Math.abs(st.x - valgat.x) < 26 && Math.abs(st.y - valgat.y) < 2) valIn();
     if (dalingBezig && dalingFase === 'vallen' && st.opGrond) eindDaling(false);
 
     /* --- de richel waar hij nu staat --- */
@@ -998,13 +1013,16 @@ const Wereld = (() => {
   function meetLus(dt) {
     dtLog.push(dt * 1000);
     if (dtLog.length > 600) dtLog.shift();
-    meetTot += dt;
-    /* AUTO-LITE: pas meten NA de eerste 1,5 s. De laadhapering (art decoderen, fonts,
-       de titelkaart) gaf anders een p95 van 30+ ms op een laptop die daarna vlot 60 fps
-       draaide — en die zette lite onterecht aan (gemeten). */
+    warmT += dt;
+    /* AUTO-LITE: de eerste 1,2 s NA ELKE render blijven buiten de meting. De laadhapering
+       (art decoderen, fonts, de titelkaart) gaf anders een p95 van 30+ ms op een laptop die
+       daarna vlot 60 fps draaide — en die zette lite onterecht aan (gemeten). meetTot telt
+       alleen de GEMETEN tijd op en loopt dus door over verdiepingen heen. */
     if (autoLiteKlaar) return;
-    if (meetTot > 1.5 && dt < 0.2) liteLog.push(dt * 1000);
-    if (meetTot > 5.5 && liteLog.length > 90) {
+    if (warmT < 1.2 || dt >= 0.2) return;
+    liteLog.push(dt * 1000);
+    meetTot += dt;
+    if (meetTot > 4 && liteLog.length > 90) {
       autoLiteKlaar = true;
       const s = liteLog.slice().sort((a, b) => a - b);
       const p95 = s[Math.floor(s.length * 0.95)], p50 = s[Math.floor(s.length * 0.5)];
@@ -1040,7 +1058,6 @@ const Wereld = (() => {
       }
       const sj = sjab[actieveRij];
       if (!nieuw && opRij && sj && sj.nis && !nisGepakt(sj.r) && Math.abs(st.x - sj.nis.x) < 90 && Math.abs(st.y - (actieveRij * RH + sj.nis.y)) < 40) nieuw = { soort: 'nis', nis: sj.nis };
-      if (!nieuw && valgat && Math.abs(st.x - valgat.x) < 80 && Math.abs(st.y - valgat.y) < 4) nieuw = { soort: 'valgat' };
       if (!nieuw && sj && sj.ladder) {
         const ly = actieveRij * RH;
         if (Math.abs(st.x - sj.ladder.x) < 40 && st.y >= ly + sj.ladder.y0 - 4 && st.y <= ly + sj.ladder.y1 + 4) {
@@ -1066,8 +1083,7 @@ const Wereld = (() => {
       const el = els.richels.querySelector('.w-actief .w-nis'); if (el) el.classList.add('nabij');
       const em = els.paneel.querySelector('.w-kaart-nis em'); if (em) em.textContent = 'Openen';
       tekst = `🔦 ${v.naam} · Nis openen`;
-    } else if (nabij.soort === 'valgat') tekst = '⬇️ Daal af';
-    else if (nabij.soort === 'ladder') tekst = nabij.omhoog ? '🪜 Klim op' : '🪜 Klim af';
+    } else if (nabij.soort === 'ladder') tekst = nabij.omhoog ? '🪜 Klim op' : '🪜 Klim af';
     els.actie.textContent = tekst;
     els.actie.hidden = false;
   }
@@ -1077,7 +1093,6 @@ const Wereld = (() => {
     if (!nabij || bezig) { if (dalingBezig) slaDalingOver(); return; }
     if (nabij.soort === 'deur') betreden(nabij.p.id);
     else if (nabij.soort === 'nis') pakNis();
-    else if (nabij.soort === 'valgat') valIn();
     else if (nabij.soort === 'ladder') { if (nabij.omhoog) toets.omhoog = true; else toets.omlaag = true; na(420, () => { toets.omhoog = false; toets.omlaag = false; }); }
   }
   /* naar een deur/nis lopen (autoroute over banen, ladders en kloven); sta je er al, dan meteen */
