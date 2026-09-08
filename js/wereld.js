@@ -103,7 +103,10 @@ const Wereld = (() => {
   let nabij = null, valgat = null, exitVanRij = null;
   let bezig = false, dalingBezig = false, dalingFase = '';
   let auto = null, autoDoel = null;
-  let afmeld = null, timers = [], ro = null, hintGetoond = false;
+  /* DRIE timerlijsten: de titelkaart en de daling mogen ALLEEN hun eigen wachtjes wissen.
+     Eén gedeelde lijst kaapte de na(620, kiesNodeEcht) die betreden() net had gezet: één tik
+     tijdens de titelkaart en de wereld hing (bezig bleef true, de kamer kwam nooit). */
+  let afmeld = null, timers = [], titelTimers = [], dalingTimers = [], ro = null, hintGetoond = false;
   let stapKlok = 0, loopToestand = '', wasLinks = false;
   let sleep = [];                       /* ringbuffer voor de metgezel (positie-replay) */
   let frames = {}, figA = null, figB = null, figAan = 'a';
@@ -523,7 +526,7 @@ const Wereld = (() => {
     saveSpel();
     setTimeout(checkGrafsteen, 700);
     stop();
-    timers.forEach(clearTimeout); timers = [];
+    wisTimers(timers); wisTimers(titelTimers); wisTimers(dalingTimers);
     bezig = false; dalingBezig = false; dalingFase = ''; deurPlaten = {}; auto = null; autoDoel = null;
     nabij = null; valgat = null; titelBezig = false; losAlles();
     inv.spring = inv.rol = false;
@@ -648,12 +651,12 @@ const Wereld = (() => {
     els.doek.className = 'titel aan';
     na(1900, () => {
       els.doek.classList.remove('aan');
-      na(500, () => { els.doek.hidden = true; els.doek.innerHTML = ''; els.doek.className = ''; titelBezig = false; });
-    });
+      na(500, () => { els.doek.hidden = true; els.doek.innerHTML = ''; els.doek.className = ''; titelBezig = false; }, titelTimers);
+    }, titelTimers);
   }
   function slaTitelOver() {
-    if (!titelBezig) return false;
-    timers.forEach(clearTimeout); timers = [];
+    if (!titelBezig || inOvergang()) return false;
+    wisTimers(titelTimers);
     els.doek.hidden = true; els.doek.innerHTML = ''; els.doek.className = ''; titelBezig = false;
     return true;
   }
@@ -676,7 +679,7 @@ const Wereld = (() => {
       const vl = TT.vloerOp(W, valgat.x, valgat.y);
       auto = vl ? TT.maakAuto(W, st, { vloerId: vl.id, x: valgat.x }) : null;
       if (!auto) valIn();
-    });
+    }, dalingTimers);
   }
   function valIn() {
     if (dalingFase === 'vallen') return;
@@ -687,7 +690,7 @@ const Wereld = (() => {
   /* een tik of toets tijdens de sequentie: meteen naar het eind (de spike-les: 48x wachten per run) */
   function slaDalingOver() {
     if (!dalingBezig) return false;
-    timers.forEach(clearTimeout); timers = [];
+    wisTimers(dalingTimers);
     const deur = els.richels.querySelector('.w-vorige .w-plek.w-verlaten');
     if (deur) { deur.classList.remove('verzegelt'); deur.classList.add('verzegeld'); }
     const gat = els.richels.querySelector('.w-valgat');
@@ -717,11 +720,16 @@ const Wereld = (() => {
   /* ---------- de lus ---------- */
   function start() { stop(); meetTot = 0; dtLog = []; liteLog = []; autoLiteKlaar = lite(); afmeld = Tikker.abonneer(stap); }
   function stop() { if (afmeld) { afmeld(); afmeld = null; } }
-  function na(ms, fn) {
-    const t = setTimeout(() => { timers = timers.filter(q => q !== t); fn(); }, ms);
-    timers.push(t);
+  /* na(ms, fn, bak): bak = de timerlijst die dit wachtje bezit (standaard de algemene). */
+  function na(ms, fn, bak) {
+    const lijst = bak || timers;
+    const t = setTimeout(() => { const i = lijst.indexOf(t); if (i >= 0) lijst.splice(i, 1); fn(); }, ms);
+    lijst.push(t);
     return t;
   }
+  function wisTimers(lijst) { lijst.forEach(clearTimeout); lijst.length = 0; }
+  /* een kamerovergang loopt (betreden): dan mag NIETS meer onderbroken worden */
+  const inOvergang = () => bezig && !dalingBezig;
 
   function stap(dt) {
     if (document.body.dataset.scherm !== 'wereld') { stop(); return; }
@@ -1138,6 +1146,7 @@ const Wereld = (() => {
   function opPointerDown(e) {
     if (!els || e.target.closest('#wereld-hud')) return;
     if (e.button !== undefined && e.button !== 0) return;
+    if (inOvergang()) return;                       /* de deur gaat al open: niets mag die overgang breken */
     if (slaTitelOver()) return;
     if (dalingBezig) { slaDalingOver(); return; }
     const deur = e.target.closest('.w-plek.kan');
@@ -1207,6 +1216,7 @@ const Wereld = (() => {
   function opToetsNeer(e) {
     if (!toetsMag(e)) return;
     if (e.repeat && !/^(ArrowLeft|ArrowRight|ArrowUp|ArrowDown|a|A|d|D|w|W|s|S)$/.test(e.key)) return;
+    if (inOvergang()) return;                       /* de deur gaat al open: geen invoer meer */
     if ((titelBezig || dalingBezig) && !e.repeat && /^(ArrowLeft|ArrowRight|ArrowUp|ArrowDown|Enter| |a|A|d|D|e|E|w|W|s|S)$/.test(e.key)) {
       e.preventDefault();
       if (slaTitelOver()) return;
