@@ -5025,7 +5025,15 @@ function intentTekst(v) {
   }
   if (it.type === 'decreet') {   /* v108: HET DECREET was een 'buff'-pil ("versterkt zichzelf") — nu zie je de kaartverwijdering aankomen */
     if (verborgen) return `<span class="intent intent-decreet" data-tip="HET DECREET — te donker om te zien wat hij afschrijft">📜 ?</span>`;
-    return `<span class="intent intent-decreet" data-tip="${it.naam}: schrijft volgende beurt PERMANENT een kaart uit je dek af">📜 DECREET</span>`;
+    /* v109: de pil NOEMT de twee kaarten (laptop). Op mobiel dragen de zegels op de
+       handkaarten de namen en de tellers; daar past alleen het aantal beurten. */
+    const namen = (it.namen || []).map(n => n.length > 11 ? n.slice(0, 10) + '…' : n);
+    const gD = S.gevecht;
+    const tD = (v.beurtTeller || 0) + 1;
+    const overD = (3 - (tD % 3)) % 3;
+    const kort = window.mobiel || namen.length < 2;
+    const tekst = kort ? (overD === 0 ? '📜 NU' : '📜 over ' + overD) : `📜 ${namen[0]} ⚖ ${namen[1]}`;
+    return `<span class="intent intent-decreet" data-tip="HET DECREET: schrijft één van beide voorgoed af — de MINST gebruikte${(it.namen || []).length ? ' van „' + it.namen[0] + '” en „' + it.namen[1] + '”' : ''}.">${tekst}</span>`;
   }
   if (it.type === 'buff') return `<span class="intent intent-buff" data-tip="${it.tip || (it.naam + ': versterkt zichzelf')}">💪</span>`;
   return `<span class="intent intent-debuff" data-tip="${it.tip || (it.naam + ': verzwakt jou')}">🌀</span>`;
