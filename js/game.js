@@ -5073,6 +5073,7 @@ function renderGevecht() {
       bb.style.display = 'block';
       if (bb.dataset.baas !== b.id) {   /* nieuwe baas → structuur (her)bouwen */
         bb.dataset.baas = b.id;         /* per-baas kleuring van het HP-hart/de balk (zie css) */
+        bb.dataset.vorm = '';           /* v109: de vierde kroon-pip hoort alleen bij vorm 2 */
         _bbExtraSig = null;
         bb.innerHTML = `
           <div class="bb-naam">👑 ${b.naam}</div>
@@ -5081,8 +5082,8 @@ function renderGevecht() {
             <div class="bb-vul"></div>
             <span class="bb-tekst"></span>
           </div>
-          <div class="bb-fases" data-tip="De baas vecht in drie bedrijven — verzwak hem en zie wat er gebeurt...">
-            ${[1, 2, 3].map(() => `<span class="bb-pip"></span>`).join('')}
+          <div class="bb-fases" data-tip="De baas vecht in drie bedrijven — verzwak hem en zie wat er gebeurt... en wie hem velt, ziet hem herkozen worden.">
+            ${[1, 2, 3].map(() => `<span class="bb-pip"></span>`).join('')}<span class="bb-pip kroon"></span>
           </div>
           <div class="bb-extra"></div>`;
       }
@@ -5092,13 +5093,15 @@ function renderGevecht() {
       balkEl.style.setProperty('--hp', Math.round(pct));
       bb.querySelector('.bb-vul').style.width = pct + '%';
       bb.querySelector('.bb-tekst').textContent = `${b.hp}/${b.maxHp}`;
-      bb.querySelectorAll('.bb-pip').forEach((p, i) => p.classList.toggle('aan', (b.fase || 1) >= i + 1));
+      /* de vierde pip is de KROON van vorm 2: de bestaande fase-toggle zet 'm nooit aan */
+      bb.querySelectorAll('.bb-pip').forEach((p, i) => p.classList.toggle('aan', i === 3 ? bb.dataset.vorm === '2' : (b.fase || 1) >= i + 1));
       /* de arsenaal-/copycat-strook alleen herbouwen als de inhoud écht wijzigde */
-      const extra = VIJANDEN[b.id].copycat ? copycatBalk(b) : '';
+      const extra = VIJANDEN[b.id].copycat ? copycatBalk(b) : (b.id === 'de_dicktator' ? dicktatorBalk(b) : '');
       if (extra !== _bbExtraSig) { _bbExtraSig = extra; bb.querySelector('.bb-extra').innerHTML = extra; }
     } else {
       bb.style.display = 'none';
       bb.dataset.baas = '';
+      bb.dataset.vorm = '';
       _bbExtraSig = null;
     }
   }
@@ -7063,6 +7066,40 @@ function copycatBalk(b) {
   const inline = (!window.mobiel && arsenaal.length) ? ` (${namen})` : '';
   const tipNamen = (window.mobiel && arsenaal.length) ? ` Nu in zijn greep: ${namen}.` : '';
   return `<div class="bb-aegis" data-tip="Geroofd arsenaal: kaarten die de Erfprins uit je dek griste. Aanvallen speelt hij opgewaardeerd terug en verbrandt ze dan; de rest stuurt hij uitgeput naar je trek. Overleef tot zijn stapel op is (fase ${b.fase || 1}).${tipNamen}">🎭 Geroofd · ${arsenaal.length}${inline}</div>`;
+}
+
+/* de strook onder de bazenbalk: het BELEID van dit moment (tarief, open dossier, klok,
+   kiezers). De pillen op de figuren dragen de getallen; deze strook draagt de regels.
+   Eén regel, met ellipsis op mobiel (zelfde patroon als de Copycat-arsenaalpil). */
+function dicktatorBalk(b) {
+  const g = S.gevecht; if (!g || !b) return '';
+  const mob = !!window.mobiel;
+  const tar = dicktatorTarief(b);
+  const delen = [];
+  let tip = 'DE FACTUUR: ' + tar.basis + ' basis + ' + tar.tarief + ' per post. Elke gespeelde kaart is een post: gratis = 2, 1 energie = 1, 2+ = aftrekbaar. Elke levende hoveling int mee (+1 per post, max +6).';
+  if (b.vorm2) {
+    const klok = dicktatorKlok(b);
+    delen.push('⏳ ' + (klok === 0 ? 'ONTSLAG NU' : 'ONTSLAG over ' + klok));
+    delen.push('🧾 ' + tar.basis + '+' + tar.tarief + (mob ? '' : '/post'));
+    tip = 'HET MANDAAT: de klok loopt naar HET ONTSLAG (alleen met een levende deurwaarder — dood hem en het wordt een Donderrede). ' + tip;
+  } else {
+    delen.push('🧾 ' + tar.basis + '+' + tar.tarief + (mob ? '' : '/post · +1/post per hoveling'));
+    const dossier = [...(g.aangezegd ? g.aangezegd.values() : [])];
+    const t = (b.beurtTeller || 0) + 1;
+    const over = (3 - (t % 3)) % 3;
+    if (dossier.length) {
+      const teller = d => Math.max(0, ((g.gespeeld && g.gespeeld[d.id]) || 0) - (d.start || 0));
+      if (mob) delen.push('📜 ' + (over === 0 ? 'zitting NU' : 'over ' + over));
+      else delen.push('📜 ' + dossier.map(d => d.naam + ' ' + teller(d) + '×').join(' · ') + ' · ' + (over === 0 ? 'zitting NU' : 'over ' + over));
+      tip += ' DE SHORTLIST: van deze twee valt de kaart die je tot de zitting het MINST speelde.';
+    }
+    const kiezers = dicktatorHof(g).length;
+    if ((b.fase || 1) >= 3 && kiezers > 0) {
+      delen.push('🗳️ ' + (mob ? kiezers : 'kiezers ' + kiezers));
+      tip += ' KIEZERS: elke hoveling die nog leeft als hij valt, stemt op hem (+1 Kracht in vorm 2).';
+    }
+  }
+  return `<div class="bb-aegis bb-proces" data-tip="${tip}">${delen.join(' · ')}</div>`;
 }
 
 function baasFaseMoment(titel, sub) {
