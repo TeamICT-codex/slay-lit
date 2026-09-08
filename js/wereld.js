@@ -330,17 +330,23 @@ const Wereld = (() => {
 
   /* ---------- DE ASSET-HAAK voor de vier stukken die nog CSS-terugval zijn ----------
      Bordes, kettingladder, valgat en rustnis bestaan nu als CSS; hun prompts staan al in
-     assets/achtergronden/PROMPTS.txt. Zodra de platen als afdaling_aN_<naam>.webp in de
-     PLATTE dropmap assets/wereld/ landen en converteer_webp.py het manifest herschrijft,
-     zet deze haak ze automatisch in — zonder één 404-probe, want artBestaat leest het
-     manifest. Ontbreekt een plaat, dan blijft de CSS-terugval staan (var(--w-x, ...)). */
+     assets/achtergronden/PROMPTS.txt en wijzen naar dezelfde dropmap als de twaalf platen
+     die er wél zijn: assets/achtergronden/Afdaling/ (= KUNST). converteer_webp.py zet die
+     submap onder de sleutel 'achtergronden/Afdaling' in het manifest, dus zodra
+     afdaling_aN_<naam>.webp binnenkomt en het script gedraaid heeft, zet deze haak de plaat
+     automatisch in — zonder één 404-probe, want artBestaat leest het manifest. Ontbreekt een
+     plaat, dan blijft de CSS-terugval staan (var(--w-x, ...)).
+     LET OP: een url() in een custom property die via element.style wordt gezet, wordt
+     opgelost tegen de DOCUMENT-basis (index.html in de wortel) — vandaar geen '../'. */
+  const BIOOM_MAP = 'achtergronden/Afdaling';
   const BIOOM_HAAK = [['bordes', '--w-bordes'], ['ladder', '--w-ladder'], ['valgat', '--w-valgat'], ['nis_rust', '--w-nis']];
   function haakBioom() {
     const act = huidigeAct();
+    const heeftMap = !!(window.ART_MANIFEST && window.ART_MANIFEST[BIOOM_MAP]);
     for (const [naam, prop] of BIOOM_HAAK) {
       const id = 'afdaling_a' + act + '_' + naam;
-      const heeft = (typeof artBestaat === 'function') && artBestaat('wereld', id) && !!(window.ART_MANIFEST && window.ART_MANIFEST.wereld);
-      if (heeft) els.scherm.style.setProperty(prop, "url('assets/wereld/" + id + ".webp')");
+      const heeft = heeftMap && (typeof artBestaat === 'function') && artBestaat(BIOOM_MAP, id);
+      if (heeft) els.scherm.style.setProperty(prop, "url('" + KUNST + id + ".webp')");
       else els.scherm.style.removeProperty(prop);
     }
   }

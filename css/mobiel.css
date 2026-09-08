@@ -1373,7 +1373,11 @@ body[data-modus="mobiel"] #scherm-gevecht .vijand.vijand-klein .blok-status { sc
    informatief. Raakvlakken van de HUD staan BUITEN de geschaalde lagen, dus 44px = 44px.
    Geen env(safe-area-inset-bottom) in het paneel: .scherm draagt die padding al. */
 body[data-modus="mobiel"] #wereld-kijker { touch-action: none; overscroll-behavior: contain; }
-body[data-modus="mobiel"] #wereld-hud { inset: calc(6px + var(--sat)) 0 0 0; padding: 0 8px; }
+/* GEEN var(--sat) hier: #scherm-wereld draagt via de .scherm-regel al top: calc(--tbh + --sat),
+   en de HUD zit absoluut IN het kijkvenster. Met de opslag erbij ging op een liggend scherm
+   van 420px 26px hoogte verloren (6% van het beeld) — het patroon waar mobiel-laptop-sporen.md
+   voor waarschuwt. */
+body[data-modus="mobiel"] #wereld-hud { inset: 6px 0 0 0; padding: 0 8px; }
 body[data-modus="mobiel"] #w-verdieping { font-size: .68rem; padding: 6px 8px; letter-spacing: .08em; }
 body[data-modus="mobiel"] #w-verdieping small { display: none; }               /* seed/act passen niet naast de knop op 360px */
 body[data-modus="mobiel"] #w-plattegrond { min-height: 44px; min-width: 44px; font-size: .84rem; }
