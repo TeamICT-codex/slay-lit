@@ -108,6 +108,8 @@ const Wereld = (() => {
      tijdens de titelkaart en de wereld hing (bezig bleef true, de kamer kwam nooit). */
   let afmeld = null, timers = [], titelTimers = [], dalingTimers = [], ro = null, hintGetoond = false;
   let stapKlok = 0, loopToestand = '', wasLinks = false;
+  let renT = 0, renKant = 0;                    /* de renpas: hoe lang houdt hij dezelfde kant al vast? */
+  const REN_NA = 0.4;                           /* seconden vasthouden voor hij van looppas naar renpas gaat */
   let sleep = [];                       /* ringbuffer voor de metgezel (positie-replay) */
   let frames = {}, figA = null, figB = null, figAan = 'a';
   let ctx2d = null, plasSprite = null, gloedSprite = null, canvasDpr = 1;
@@ -742,6 +744,7 @@ const Wereld = (() => {
     inv.spring = false; inv.rol = false;
     if (bezig && dalingFase !== 'lopen') { i.spring = false; i.rol = false; }
     if (auto) {
+      renT = 0; renKant = 0;
       const a = TT.stuurAuto(auto, W, st, dt);
       i.links = a.links; i.rechts = a.rechts; i.spring = i.spring || a.spring;
       i.omhoog = a.omhoog; i.omlaag = a.omlaag; i.rol = i.rol || a.rol; i.snel = a.snel;
@@ -754,7 +757,14 @@ const Wereld = (() => {
       i.rechts = toets.rechts || houd > 0;
       i.omhoog = toets.omhoog;
       i.omlaag = toets.omlaag;
-    }
+      /* DE RENPAS (§7 tempo): houd je dezelfde kant langer dan REN_NA vast, dan gaat hij
+         van de looppas (F.loop 230) naar de renpas (F.auto 340) — dezelfde snelheid als de
+         autoroute, zodat wie zélf loopt niet structureel 45% trager is dan wie tikt. Kort
+         tikkend bijsturen blijft de nauwkeurige looppas. */
+      const wil = (i.rechts ? 1 : 0) - (i.links ? 1 : 0);
+      if (wil && wil === renKant) renT += dt; else { renKant = wil; renT = 0; }
+      i.snel = !!wil && renT > REN_NA;
+    } else { renT = 0; renKant = 0; }
 
     /* --- fysica --- */
     const ev = TT.stapFysica(st, i, dt, W);

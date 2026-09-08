@@ -44,6 +44,23 @@ const WereldTerrein = (() => {
   };
   const VONDST_TABEL = [['olie', 45], ['pamflet', 40], ['fakkel', 15]];
 
+  /* TEMPO-KNOPPEN (contract §3.7): het verplichte pad moet <= 5 s per verdieping blijven.
+     Gemeten over 200 seeds x 6 verdiepingen ging de mediaan van 5,16 -> 4,50 s (autoroute)
+     en van 6,61 -> 4,80 s (handmatig) door VIER dingen, in volgorde van opbrengst:
+       1. de renpas in wereld.js (handmatig lopen haalt nu ook 340 wu/s)
+       2. planRoute weegt loopafstand mee (koos altijd de linkerrand van de galerij)
+       3. de galerij korter — de hefboom die het contract zelf noemt (560 -> 420 -> 300-380):
+          een galerij breder dan 2 x 253 wu reikt vóórbij de deur, dus je viel eraf en moest
+          terug (0,5-0,6 s per verdieping)
+       4. de sprong-aanloop overslaan als hij al op renpas de goede kant op gaat
+     De afstandseis blijft daardoor op 1,5 kolom: hefboom 2 van het contract was niet nodig. */
+  /* GALERIJBREEDTE (contract §3.7, hefboom 1: "galerij korter, 560 -> 420"). De landing ligt
+     >= 1,5 kolom (345 wu) van de deur, dus je doelpunt ligt op >= 253 wu van het galerijmidden.
+     Was de galerij breder dan 2x253 = 506, dan viel je VOORBIJ de deur van de rand en moest je
+     terugkomen — dat was 0,5-0,6 s per verdieping. 400-490 houdt de rand altijd binnen bereik. */
+  const GALERIJ_B0 = 300, GALERIJ_BD = 80;            /* galerijbreedte 400-490 wu */
+  const EXIT_KOLOM = 1.5;                             /* landing >= zoveel kolommen van elke open deur van r+1 (§3, levelvorm B) */
+
   const klem = (v, a, b) => Math.max(a, Math.min(b, v));
 
   /* ---------- eigen hash + PRNG (nooit de gedeelde seed-generator) ---------- */
@@ -84,7 +101,7 @@ const WereldTerrein = (() => {
     const vrij = (x0, x1, lijst) => !lijst.some(s => x1 > s.x0 && x0 < s.x1);
 
     /* galerijbreedte (nu getrokken, plaatsing zodra landX bekend is) */
-    sj.galerijB = voorplein ? 520 : 420 + Math.round(T() * 140);
+    sj.galerijB = voorplein ? 520 : GALERIJ_B0 + Math.round(T() * GALERIJ_BD);
 
     /* kloven 0-2 (rij ≥ 10: +1), 80-115 breed, nooit onder een deur, onderling ≥ 260 uit elkaar */
     let nK = voorplein ? 0 : Math.floor(T() * (tab.klovenMax + 1));
@@ -225,10 +242,11 @@ const WereldTerrein = (() => {
     const gbV = sjVolgende ? sjVolgende.galerijB : 480;
     const deuren = sjR.deuren || [];
     /* [kolomeis, landing vrij van bordes, landing vrij van kloof/balk, marge rond terrein van r] */
+    const E = EXIT_KOLOM;
     const NIVEAUS = [
-      [1.5, true, true, 1], [1.5, false, true, 1], [1.5, false, false, 1],
-      [1.3, false, false, 1], [1.1, false, false, 1], [0.9, false, false, 1],
-      [1.5, false, false, 0], [0.9, false, false, 0], [0, false, false, 0]
+      [E, true, true, 1], [E, false, true, 1], [E, false, false, 1],
+      [E * 0.87, false, false, 1], [E * 0.73, false, false, 1], [E * 0.6, false, false, 1],
+      [E, false, false, 0], [E * 0.6, false, false, 0], [0, false, false, 0]
     ];
     for (const [eis, eisBordes, eisKloof, streng] of NIVEAUS) {
       const kand = [];
@@ -261,18 +279,27 @@ const WereldTerrein = (() => {
     }
     return K.BREEDTE / 2;
   }
-  /* TEMPO (gemeten: 6,1 s per verdieping, doel <= 5): de eis is "ver genoeg van de deur
-     van r+1", niet "zo ver mogelijk". Daarom eerst de kandidaten die HOOGSTENS 3 kolommen
-     van de dichtstbijzijnde open deur liggen, en dan de helft die het dichtst bij de deur
+  /* TEMPO (§7, doel <= 5 s per verdieping): de eis is "ver genoeg van de deur van r+1",
+     niet "zo ver mogelijk". Daarom eerst de kandidaten die HOOGSTENS 2,2 kolommen van de
+     dichtstbijzijnde open deur liggen, en dan het derde deel dat het dichtst bij de deur
      ligt waar je NET uitkwam — dat scheelt een halve richel lopen zonder de landingseis
-     of het determinisme aan te raken (de keuze blijft loterij('uitgang|r|c')). */
+     of het determinisme aan te raken (de keuze blijft loterij('uitgang|r|c')). Beide
+     grenzen zijn een SELECTIE binnen al goedgekeurde kandidaten: de harde eisen (kolomeis,
+     echte baan, vrije landing) zijn in exitX al afgehandeld. */
+  const EXIT_KIND_MAX = 1.7;                          /* kolommen van de dichtstbijzijnde open deur van r+1 */
+  const EXIT_OUDER_DEEL = 0.35;                       /* aandeel van de pool dat het dichtst bij de vorige deur ligt */
   function kiesUitKandidaten(zaad, sjR, kolom, kand, kinderenX, ouderX) {
     const afKind = x => kinderenX.length ? Math.min.apply(null, kinderenX.map(kx => Math.abs(kx - x))) : 0;
-    let pool = kand.filter(x => afKind(x) <= 3.0 * K.KOL_B);
-    if (!pool.length) pool = kand;
+    let pool = kand.filter(x => afKind(x) <= EXIT_KIND_MAX * K.KOL_B);
+    /* leeg? dan niet terugvallen op ALLE kandidaten (dat gaf de langste verdiepingen),
+       maar op de helft die het dichtst bij de volgende open deur ligt. */
+    if (!pool.length) {
+      const opAfstand = kand.slice().sort((a, b) => afKind(a) - afKind(b));
+      pool = opAfstand.slice(0, Math.max(3, Math.ceil(opAfstand.length * 0.5)));
+    }
     if (typeof ouderX === 'number') {
       const gesorteerd = pool.slice().sort((a, b) => Math.abs(a - ouderX) - Math.abs(b - ouderX));
-      pool = gesorteerd.slice(0, Math.max(3, Math.ceil(gesorteerd.length * 0.5)));
+      pool = gesorteerd.slice(0, Math.max(3, Math.ceil(gesorteerd.length * EXIT_OUDER_DEEL)));
     }
     return kiesMet(loterij(zaad, 'uitgang|' + sjR.r + '|' + kolom), pool);
   }
@@ -503,19 +530,32 @@ const WereldTerrein = (() => {
     }
     return R;
   }
-  const VOORKEUR = { val: 1, klimaf: 1.2, spring: 1.1, springop: 1.3, klimop: 1.4 };
-  function planRoute(W, vanId, naarId) {
+  /* De randkosten zijn geijkt op TIJD, uitgedrukt in kolommen loopafstand (1 kolom = 230 wu
+     = 0,68 s op renpas). Vallen 170 wu = 0,35 s + 0,12 landing ~ 0,7 kolom; een ladder van
+     dezelfde hoogte kost 1,0 s = 1,5 kolom. Met de oude gelijke kosten koos de route de
+     ladder even vaak als de rand, en dat is per verdieping 0,65 s duurder. */
+  const VOORKEUR = { val: 0.7, spring: 0.8, springop: 1.1, klimaf: 1.6, klimop: 1.9 };
+  /* Dijkstra over de vlakken. De kost is gebaar + LOOPAFSTAND (in kolommen): zonder die
+     afstandsterm kostte elke rand evenveel en won simpelweg de eerst gevonden — dat is de
+     rand van kant −1, dus de autoroute stapte ALTIJD van de linkerrand van de galerij, ook
+     als de deur rechts lag (gemeten: mediaan 0,63 s van de 2,35 s liep hij achteruit).
+     vanX/doelX zijn optioneel; zonder die twee is het gedrag als vanouds. */
+  function planRoute(W, vanId, naarId, vanX, doelX) {
     if (vanId === naarId) return [];
     const R = W._randen || (W._randen = randen(W));
-    const kost = { [vanId]: 0 }, via = {}, open = [vanId];
+    const metX = typeof vanX === 'number';
+    const eind = metX && typeof doelX === 'number';
+    const kost = { [vanId]: 0 }, via = {}, plek = { [vanId]: metX ? vanX : 0 }, open = [vanId];
     while (open.length) {
       open.sort((a, b) => kost[a] - kost[b]);
       const u = open.shift();
       if (u === naarId) break;
       for (const e of R) {
         if (e.van !== u) continue;
-        const c = kost[u] + (VOORKEUR[e.gebaar] || 1);
-        if (kost[e.naar] === undefined || c < kost[e.naar]) { kost[e.naar] = c; via[e.naar] = e; if (!open.includes(e.naar)) open.push(e.naar); }
+        let c = kost[u] + (VOORKEUR[e.gebaar] || 1);
+        if (metX) c += Math.abs(e.x - plek[u]) / K.KOL_B;
+        if (eind && e.naar === naarId) c += Math.abs(doelX - e.x) / K.KOL_B;
+        if (kost[e.naar] === undefined || c < kost[e.naar]) { kost[e.naar] = c; via[e.naar] = e; plek[e.naar] = e.x; if (!open.includes(e.naar)) open.push(e.naar); }
       }
     }
     if (kost[naarId] === undefined) return null;
@@ -528,7 +568,7 @@ const WereldTerrein = (() => {
      doel = { vloerId, x } ; geeft { klaar, mislukt } terug via opvolgen(). */
   function maakAuto(W, st, doel) {
     const vanId = st.grond ? st.grond.id : (vloerOnder(W, st.x, st.y - 1) || {}).id;
-    const route = vanId ? planRoute(W, vanId, doel.vloerId) : null;
+    const route = vanId ? planRoute(W, vanId, doel.vloerId, st.x, doel.x) : null;
     if (!route) return null;
     return { route, i: 0, doel, wachtT: 0, gedaan: false, fase: 0, herplan: 0, klaar: false, mislukt: false, richtingLucht: 0 };
   }
@@ -570,8 +610,13 @@ const WereldTerrein = (() => {
     if (e.gebaar === 'spring' || e.gebaar === 'springop') {
       const g = st.grond;
       const aanloop = klem(e.x - r * 95, (g ? g.x0 : W.xMin) + K.VOET + 2, (g ? g.x1 : W.xMax) - K.VOET - 2);
+      /* TEMPO: loopt hij al op renpas de goede kant op, dan is de aanloop overbodig — die
+         190 wu heen-en-weer kostte een halve seconde per kloof. 0,9 x F.auto geeft 0,64 s
+         luchttijd x 306 wu/s = 196 wu, ruim over de breedste kloof (125 + 2 x VOET). Bij
+         'springop' blijft de aanloop staan: daar moet hij op de juiste x afzetten. */
+      const opGang = e.gebaar === 'spring' && Math.sign(st.vx) === r && Math.abs(st.vx) > F.auto * 0.9;
       if (!A.fase) {
-        if ((r > 0 && st.x > aanloop + 8) || (r < 0 && st.x < aanloop - 8)) {
+        if (!opGang && ((r > 0 && st.x > aanloop + 8) || (r < 0 && st.x < aanloop - 8))) {
           const rr = Math.sign(aanloop - st.x); zet(rr); balkCheck(inv, W, st, rr); inv.snel = false; A.richtingLucht = rr;
           return inv;
         }
@@ -604,7 +649,7 @@ const WereldTerrein = (() => {
   function herplan(A, W, st) {
     A.herplan++;
     if (A.herplan > 3 || !st.grond) { A.mislukt = true; return; }
-    const route = planRoute(W, st.grond.id, A.doel.vloerId);
+    const route = planRoute(W, st.grond.id, A.doel.vloerId, st.x, A.doel.x);
     if (!route) { A.mislukt = true; return; }
     A.route = route; A.i = 0; A.wachtT = 0; A.gedaan = false; A.fase = 0;
   }
