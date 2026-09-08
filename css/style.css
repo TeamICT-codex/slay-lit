@@ -2682,9 +2682,19 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
 
 /* v109 — HET ZEGEL VAN DE SHORTLIST: deze kaart is AANGEZEGD. De teller telt hoe vaak
    je haar sinds de aanzegging speelde; de minst gespeelde van de twee wordt afgeschreven.
-   Linksonder, zodat ze de vonk-badge (rechtsonder) en de kost (linksboven) niet raakt. */
+   BOVENRAND, direct RECHTS VAN DE KOSTBOL. Twee gemeten redenen om niet linksonder te
+   hangen zoals de vonk- en aangetast-badges (die vallen zelf ook buiten beeld):
+   (1) de handkaarten rusten bewust ~1/5 ONDER de schermrand (#hand met negatieve bottom),
+       dus alles aan de ONDERrand van een handkaart is onzichtbaar op 375, 800x360,
+       915x412 en 1440x900;
+   (2) de waaier overlapt: van elke handkaart is alleen de LINKER ~65% vrij (gemeten
+       70-76px vrij van 105-113px op mobiel), dus rechtsboven verdwijnt onder de kostbol
+       van de buurkaart.
+   Links van x=24px zit de kostbol zelf, rechts van ~70px de buurkaart → daartussen.
+   Juist dit zegel draagt op mobiel de namen en tellers (de pil toont daar alleen
+   'over n'), dus het moet leesbaar zijn. Buiten de lichtkost (rechtsboven) blijft het zo. */
 .kaart-zegel {
-  position: absolute; bottom: -10px; left: -10px;
+  position: absolute; top: -17px; left: 26px;
   padding: 2px 7px;
   border-radius: 14px;
   font-family: 'Pirata One', serif;
@@ -2697,7 +2707,7 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
   z-index: 4;
 }
 .kaart-zegel b { font-family: 'Alegreya', serif; font-size: .78rem; margin-left: 2px; }
-.kaart-focus .kaart-zegel { font-size: 1.1rem; bottom: -14px; left: -14px; }
+.kaart-focus .kaart-zegel { font-size: 1.1rem; top: -22px; left: 38px; }
 
 /* VERDUISTERD: de Redacteur heeft je hand doorgehaald — verberg de face, toon een
    inkt-rug. De kaart blijft klikbaar (je speelt blind). */

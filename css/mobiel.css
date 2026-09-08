@@ -312,9 +312,12 @@ body[data-modus="mobiel"] .intent-factuur,
 body[data-modus="mobiel"] .intent-hof {
   white-space: nowrap; max-width: 38vw; overflow: hidden; text-overflow: ellipsis;
 }
-/* het shortlist-zegel kleiner en binnen de 44px-raakzones van de handkaart */
+/* het shortlist-zegel kleiner en binnen de 44px-raakzones van de handkaart. Aan de
+   BOVENRAND naast de kostbol (zie style.css): de onderrand van een handkaart hangt onder
+   het scherm en de rechterhelft ligt onder de buurkaart van de waaier — en juist op mobiel
+   draagt dit zegel de naam-en-teller-lezing die de pil ('over n') en de strook niet tonen. */
 body[data-modus="mobiel"] #hand .kaart .kaart-zegel {
-  font-size: .68rem; padding: 1px 5px; bottom: -7px; left: -7px;
+  font-size: .68rem; padding: 1px 5px; top: -14px; left: 24px;
 }
 body[data-modus="mobiel"] #hand .kaart .kaart-zegel b { font-size: .62rem; }
 
