@@ -2499,23 +2499,29 @@ function pose2D(actor, state, duur) {
        en de eerste klap tijdens de preload weg (debug v95: "steengolem valt aan,
        maar de pose komt niet"). Vastgehouden standen (block/death) mogen altijd. */
     const verstreken = Date.now() - t0;
-    const vast = state === 'block' || state === 'death';
+    const vast = state === 'block' || state === 'death' || state === 'herkozen';   /* v109: de herverkozen standbeeldpose blijft staan */
     if (!vast && verstreken > Math.max(400, raam * 0.6)) return;
     im.src = img.src;
-    /* pose-eigen voetmarge (VOETMARGE['<id>_<state>']) zodat de voetlijn niet verspringt */
+    /* pose-eigen voetmarge (VOETMARGE['<id>_<state>']) zodat de voetlijn niet verspringt;
+       v109: via de terugvalplaat (hovelingen zonder eigen art delen de voetmarge van hun plaat) */
     const vm = window.VOETMARGE || {};
-    if (vm[basis + '_' + state] != null) el.style.setProperty('--voetc', vm[basis + '_' + state] + '%');
+    const vmSleutel = window.artTerugval ? artTerugval(basis + '_' + state) : basis + '_' + state;
+    const vmBasis = window.artTerugval ? artTerugval(basis) : basis;
+    if (vm[vmSleutel] != null) el.style.setProperty('--voetc', vm[vmSleutel] + '%');
     clearTimeout(pose2DTimers.get(actor));
     /* de blok-pose is een VASTGEHOUDEN verdedigende houding: geen auto-revert.
        Ze blijft staan tot een volgende pose (aanval/cast/treffer) haar vervangt —
-       een volledig geblokte klap laat de stand dus mooi staan. */
-    if (state === 'block') return;
+       een volledig geblokte klap laat de stand dus mooi staan. (v109: idem 'herkozen') */
+    if (state === 'block' || state === 'herkozen') return;
     pose2DTimers.set(actor, setTimeout(() => {
       if (actor.dood) return;            /* dood blijft op de death-pose */
-      lader(basis, terug => {
+      /* v109: een herverkozen DICKtator keert terug naar zijn standbeeldpose, niet naar de basisplaat */
+      const rust = (actor.herrezen && actor.id === 'de_dicktator' && typeof artBestaat === 'function' && artBestaat('karakters', basis + '_herkozen')) ? basis + '_herkozen' : basis;
+      lader(rust, terug => {
         const i2 = el.querySelector('img');
         if (i2 && terug) i2.src = terug.src;
-        if (vm[basis] != null) el.style.setProperty('--voetc', vm[basis] + '%'); else el.style.removeProperty('--voetc');
+        const vmR = window.artTerugval ? artTerugval(rust) : rust;
+        if (vm[vmR] != null) el.style.setProperty('--voetc', vm[vmR] + '%'); else if (vm[vmBasis] != null) el.style.setProperty('--voetc', vm[vmBasis] + '%'); else el.style.removeProperty('--voetc');
       });
     }, Math.max(150, raam - verstreken)));   /* de REST van het venster, geen vol nieuw venster (v95) */
   });
@@ -2552,7 +2558,11 @@ function preloadPoses2D(g) {
   };
   if (!d3Actief()) {   /* in 3D tekent Vista de figuren zelf; alleen de metgezel blijft 2D */
     plan(laadKarakterAfbeelding, 'karakters', huidigeHeld().art);
-    g.vijanden.forEach(v => plan(laadKarakterAfbeelding, 'karakters', v.id));
+    g.vijanden.forEach(v => {
+      plan(laadKarakterAfbeelding, 'karakters', v.id);
+      /* v109: een hoveling op een terugvalplaat warmt óók de poses van die plaat (figuurPoses kijkt op stam) */
+      if (window.artIdVan && artIdVan(v.id) !== v.id) plan(laadKarakterAfbeelding, 'karakters', artIdVan(v.id));
+    });
   }
   if (g.metgezel && window.laadMetgezelAfbeelding) plan(laadMetgezelAfbeelding, 'metgezellen', METGEZELLEN[g.metgezel.id].art);
   let i = 0;
@@ -4676,7 +4686,7 @@ function bouwGevechtDom(g) {
       <div class="hp-balk"><div class="hp-vulling"></div><span class="hp-tekst"></span><span class="blok-schild" data-tip="Blok: vangt aanvalsschade op, verdwijnt aan het begin van de eigen beurt"><svg viewBox="0 0 24 28" aria-hidden="true"><path fill="url(#blokgrad)" stroke="#0c1c2e" stroke-width="1.6" d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg><b></b></span></div>
       <div class="blok-status"></div>`;
     /* voetcorrectie: de gemeten transparante marge onder de voeten wegdrukken (zie VOETMARGE in art.js) */
-    const vm = window.VOETMARGE && VOETMARGE[v.id];
+    const vm = window.VOETMARGE && VOETMARGE[window.artIdVan ? artIdVan(v.id) : v.id];   /* v109: hovelingen op een terugvalplaat erven haar voetmarge */
     if (vm) wrap.querySelector('.vijand-art').style.setProperty('--voetc', vm + '%');
     rij.appendChild(wrap);
     GDOM.vijanden.push({
@@ -6204,6 +6214,12 @@ function copycatNaSchade(v, n, bron) {
    Drie fases op HP (aankondiging + escalatie); bij fase 2 keert de
    JEUGDDROOM uit de proloog terug — voorziening getroffen, afgeschreven.
    ============================================================ */
+/* v109 (stap 2) — voorlopige haken voor het hof; het volledige brein volgt in stap 5.
+   Ze staan hier al zodat de nieuwe VIJANDEN-defs (de_griffier/de_deurwaarder/de_claqueur)
+   nooit naar een onbestaande functie wijzen (lookup-bugklasse). */
+function hofIntent(v, beurt) { return { naam: 'TREEDT AAN', type: 'hof', icoon: '🪑' }; }
+function dicktatorHersync(ookBaas) { /* stap 5 */ }
+
 function vloekenInGevecht(g) {
   return g.trek.concat(g.hand, g.afleg).filter(c => kdef(c).type === 'vloek').length;
 }

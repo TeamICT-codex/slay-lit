@@ -512,7 +512,30 @@ function artBestaat(map, id) {
   if (!m._set) Object.defineProperty(m, '_set', { value: new Set(m), enumerable: false });
   return m._set.has(id);
 }
+/* v109 (Het Proces): TERUGVALPLATEN. Een figuur zonder eigen art (de hovelingen van de
+   DICKtator: griffier/deurwaarder/claqueur) speelt op de plaat van een bestaand figuur
+   (VIJANDEN[id].artId) — per pose: zodra zijn eigen `<id>_<pose>.webp` in het manifest
+   staat, schakelt die pose vanzelf om. artIdVan(id, state) geeft de basis-id die je voor
+   déze pose moet laden; artTerugval('de_griffier_cast') → 'de_omroeper_cast'. */
+function artIdVan(id, state) {
+  const eigen = state ? id + '_' + state : id;
+  if (artBestaat('karakters', eigen)) return id;
+  const def = (typeof VIJANDEN !== 'undefined' && VIJANDEN[id]) || null;
+  return (def && def.artId) ? def.artId : id;
+}
+function artTerugval(volledigId) {
+  if (!volledigId || artBestaat('karakters', volledigId) || typeof VIJANDEN === 'undefined') return volledigId;
+  for (const k in VIJANDEN) {
+    const d = VIJANDEN[k];
+    if (!d || !d.artId) continue;
+    if (volledigId === k) return d.artId;
+    if (volledigId.startsWith(k + '_')) return d.artId + volledigId.slice(k.length);
+  }
+  return volledigId;
+}
+window.artIdVan = artIdVan; window.artTerugval = artTerugval;
 function laadKarakterAfbeelding(id, cb) {
+  id = artTerugval(id);   /* v109: hovelingen zonder eigen plaat → de plaat van hun artId */
   const c = KARAKTER_FOTOS.cache;
   if (id in c) { cb(c[id]); return; }                                   /* positieve hit: altijd hergebruiken */
   if (!artBestaat('karakters', id)) { cb(null); return; }               /* v95: manifest zegt nee → geen netwerk */
