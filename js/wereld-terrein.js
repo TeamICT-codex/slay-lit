@@ -87,6 +87,20 @@ const WereldTerrein = (() => {
     return tabel[tabel.length - 1][0];
   }
 
+  /* De verte-variant (1-4) van richel r, nooit dezelfde als die van r-1: er is er maar een
+     tegelijk in beeld, dus twee gelijke op rij betekent dat de achtergrond bij het afdalen
+     niet verandert (gemeten op seed ART-1: 3,3,1,1,2 - twee dode overgangen van de vier).
+     Iteratief vanaf 0 zodat hij puur en deterministisch blijft; r is hooguit 15. */
+  function verteVan(zaadTekst, r) {
+    let vorige = 0;
+    for (let i = 0; i <= r; i++) {
+      let v = 1 + Math.floor(loterij(zaadTekst, 'verte|' + i)() * 4);
+      if (v === vorige) v = 1 + ((vorige + Math.floor(loterij(zaadTekst, 'verte2|' + i)() * 3)) % 4);
+      vorige = v;
+    }
+    return vorige;
+  }
+
   /* ---------- het sjabloon van een verdieping ----------
      ctx = { zaad: 'seed|act', act, r, rijen, deuren: [{ id, x, c, type, open }], landX (of null) }
      Alles behalve galerij/ladder/galerij-nis is onafhankelijk van landX, zodat de volgende
@@ -148,6 +162,21 @@ const WereldTerrein = (() => {
       }
     }
 
+    /* HET VERDIEPINGSBORD hangt boven de galerij, dus zijn x volgt uit landX en de
+       galerijbreedte - allebei hier al bekend. Hij wordt VOOR de rekwisieten berekend zodat
+       de hangende kooi (die op dezelfde hoogte hangt) hem niet meer kan afdekken; gemeten
+       raakte 13,3% van de verdiepingen zijn eigen bord kwijt achter een kooi. */
+    const gbNu = sj.galerijB;
+    const heeftLand = ctx.landX !== null && ctx.landX !== undefined;
+    const galMid = heeftLand ? klem(ctx.landX, K.MARGE + gbNu / 2 + 60, K.BREEDTE - K.MARGE - gbNu / 2 - 60) : K.BREEDTE / 2;
+    sj.bordX = Math.round(klem(galMid, K.RAND, K.BREEDTE - K.RAND));
+    /* richel 0 draagt ook het ingangsbord van de personeelsschacht, en die landt per
+       definitie op INGANG_X: het verdiepingsbord wijkt daar opzij. */
+    if (r === 0 && Math.abs(sj.bordX - K.INGANG_X) < 280) {
+      const opzij = K.INGANG_X < K.BREEDTE / 2 ? 1 : -1;
+      sj.bordX = Math.round(klem(K.INGANG_X + opzij * 330, K.RAND, K.BREEDTE - K.RAND));
+    }
+
     /* rekwisieten (loterij 'rekw'): 1-3 losse props op vrije plekken, plus 1-2 affiches */
     const R = loterij(ctx.zaad, 'rekw|' + r);
     const soorten = ['zuil', 'prikklok', 'lift', 'kooi'];
@@ -157,6 +186,7 @@ const WereldTerrein = (() => {
       for (let poging = 0; poging < 10; poging++) {
         const x = Math.round(K.MARGE + 80 + R() * (K.BREEDTE - 2 * K.MARGE - 160));
         if (soort !== 'kooi' && bezetDoor(x, K.POORT_B / 2 + 70)) continue;
+        if (soort === 'kooi' && Math.abs(x - sj.bordX) < 220) continue;   /* de kooi hangt op bordhoogte */
         if (!vrij(x - 70, x + 70, sj.kloven)) continue;
         if (sj.balk && !vrij(x - 80, x + 80, [sj.balk])) continue;
         if (sj.rekw.some(q => Math.abs(q.x - x) < 150)) continue;
@@ -176,7 +206,7 @@ const WereldTerrein = (() => {
         break;
       }
     }
-    sj.verte = 1 + Math.floor(loterij(ctx.zaad, 'verte|' + r)() * 4);
+    sj.verte = verteVan(ctx.zaad, r);
 
     /* vondst (loterij 'vondst'): aanwezig? soort? De plek volgt uit het terrein. */
     const V = loterij(ctx.zaad, 'vondst|' + r);
@@ -208,7 +238,35 @@ const WereldTerrein = (() => {
   }
 
   /* de nis: achter de balk (rollen), op het bordes (springen), in een put (vallen), of aan het
-     verre galerij-einde (alleen als er een ladder is: dan blijft hij bereikbaar na de afdaling) */
+     verre galerij-einde (alleen als er een ladder is: dan blijft hij bereikbaar na de afdaling).
+     plaatsNis was de ENIGE plaatsing zonder deurcheck: 27,4% van de nissen raakte het poortvlak
+     en 9,6% lag in de poort, tot op 10 wu van het deurmidden - met de nisstempel dwars over een
+     verzegelde deurboog. De poortplaat is 250 wu breed en loopt van de baan tot -250, dus balk
+     (y 0), bordes (-95) en galerij (-170) overlappen hem allemaal; alleen de put (+70) niet.
+     Elke plek levert nu KANDIDATEN; de eerste die vrij is wint, anders de volgende plek. */
+  const NIS_POORT_M = 205;                            /* (poortplaat 250 + nisbreedte 160) / 2 */
+  function nisKandidaten(sj, plek) {
+    if (plek === 'balk') {
+      /* aan de kant van de balk die het verst van het richelmidden ligt, zodat je er niet toevallig al staat */
+      const kant = (sj.balk.x0 + 45) < K.BREEDTE / 2 ? -1 : 1;
+      const a = kant < 0 ? sj.balk.x0 - 70 : sj.balk.x1 + 70;
+      const b = kant < 0 ? sj.balk.x1 + 70 : sj.balk.x0 - 70;
+      return [a, b].filter(x => x >= K.MARGE + 20 && x <= K.BREEDTE - K.MARGE - 20).map(x => ({ x: Math.round(x), y: 0 }));
+    }
+    if (plek === 'bordes') {
+      const m = (sj.bordes.x0 + sj.bordes.x1) / 2;
+      return [m, sj.bordes.x0 + 60, sj.bordes.x1 - 60].map(x => ({ x: Math.round(x), y: K.BORDES_Y }));
+    }
+    if (plek === 'put') {
+      const eerst = Math.floor(sj.nisKeuze * sj.putten.length);
+      return sj.putten.map((_, i) => sj.putten[(eerst + i) % sj.putten.length])
+        .map(q => ({ x: Math.round((q.x0 + q.x1) / 2), y: K.PUT_Y }));
+    }
+    const mid = (sj.galerij.x0 + sj.galerij.x1) / 2;
+    const ver = sj.ladder.x > mid ? sj.galerij.x0 + 50 : sj.galerij.x1 - 50;
+    const dichtbij = sj.ladder.x > mid ? sj.galerij.x1 - 50 : sj.galerij.x0 + 50;
+    return [ver, dichtbij].map(x => ({ x: Math.round(x), y: K.GALERIJ_Y }));
+  }
   function plaatsNis(sj, metGalerij) {
     if (!sj.wilNis) return;
     const opties = [];
@@ -217,17 +275,18 @@ const WereldTerrein = (() => {
     if (sj.putten.length) opties.push('put');
     if (metGalerij && sj.galerij && sj.ladder) opties.push('galerij');
     if (!opties.length) return;
-    const plek = opties[Math.floor(sj.nisKeuze * opties.length)];
-    let x, y;
-    if (plek === 'balk') {
-      /* aan de kant van de balk die het verst van het richelmidden ligt, zodat je er niet 'toevallig' al staat */
-      const kant = (sj.balk.x0 + 45) < K.BREEDTE / 2 ? -1 : 1;
-      x = kant < 0 ? sj.balk.x0 - 70 : sj.balk.x1 + 70; y = 0;
-      if (x < K.MARGE + 20 || x > K.BREEDTE - K.MARGE - 20) { x = kant < 0 ? sj.balk.x1 + 70 : sj.balk.x0 - 70; }
-    } else if (plek === 'bordes') { x = Math.round((sj.bordes.x0 + sj.bordes.x1) / 2); y = K.BORDES_Y; }
-    else if (plek === 'put') { const p = sj.putten[Math.floor(sj.nisKeuze * sj.putten.length)]; x = Math.round((p.x0 + p.x1) / 2); y = K.PUT_Y; }
-    else { x = sj.ladder.x > (sj.galerij.x0 + sj.galerij.x1) / 2 ? sj.galerij.x0 + 50 : sj.galerij.x1 - 50; y = K.GALERIJ_Y; }
-    sj.nis = { x, y, plek, soort: sj.nisSoort, id: sj.r };
+    const deuren = sj.deuren || [];
+    const vrijVanPoort = kp => kp.y > 0 || !deuren.some(d => Math.abs(d.x - kp.x) < NIS_POORT_M);
+    const eerst = Math.floor(sj.nisKeuze * opties.length);
+    for (let n = 0; n < opties.length; n++) {
+      const plek = opties[(eerst + n) % opties.length];
+      for (const kp of nisKandidaten(sj, plek)) {
+        if (!vrijVanPoort(kp)) continue;
+        sj.nis = { x: kp.x, y: kp.y, plek, soort: sj.nisSoort, id: sj.r };
+        return;
+      }
+    }
+    /* geen enkele plek vrij: dan liever geen nis dan een nis in een deurboog */
   }
 
   /* ---------- de uitgang van richel r (het valgat) ----------

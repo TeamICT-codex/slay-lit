@@ -413,7 +413,9 @@ const Wereld = (() => {
     }
 
     /* --- het verdiepingsbord --- */
-    const bordX = klem(sj.galerij ? (sj.galerij.x0 + sj.galerij.x1) / 2 : BREEDTE / 2, RAND, BREEDTE - RAND);
+    /* bordX komt uit het sjabloon: daar wordt hij VOOR de rekwisieten berekend zodat de
+       hangende kooi hem niet afdekt (zie wereld-terrein.js). */
+    const bordX = (typeof sj.bordX === 'number') ? sj.bordX : klem(sj.galerij ? (sj.galerij.x0 + sj.galerij.x1) / 2 : BREEDTE / 2, RAND, BREEDTE - RAND);
     h += `<div class="w-bord" style="left:${bordX}px;top:${(sj.galerij ? K.GALERIJ_Y : 0) - 300}px">`
       + `<b>VERDIEPING −${sj.r + 1}</b><small>${ACT_STEMPEL[act] || ACT_STEMPEL[1]}</small></div>`;
 
