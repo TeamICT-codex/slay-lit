@@ -6522,10 +6522,18 @@ function checkDicktatorFase(b, g) {
     baasSpreekt(UITSPRAKEN._dicktator.fase3);
     const gr = hofLid(g, 'de_griffier');
     if (gr) {
-      /* „U bent ONTSLAGEN." — hij executeert hem zelf; de death-pose speelt gewoon
-         (de griffier heeft geen Kracht-haak bij dood, alleen een intent-hersync). */
+      /* „U bent ONTSLAGEN." — hij executeert hem zelf. CONTRACT §2: death-pose, GEEN bijDood.
+         Niet via verliesHp: dat vuurt de gewone dood-tak (de bijDood-hersync van de griffier
+         midden in deze fase-overgang) én de Epidemie-verspreiding van de speler — gratis gif
+         over het hele bord uit een executie die de baas zelf uitvoert. Hij valt daarom zoals
+         de kiezers in dicktatorHofVlucht, en de ene hersync onderaan deze functie volstaat. */
       pose2D(b, 'attack', 0.6);
-      verliesHp(gr, gr.hp);
+      gr.dood = true; gr.hp = 0; gr.blok = 0;
+      const grEl = actorEl(gr); if (grEl) grEl.classList.add('sterft');
+      Klank.sfx('dood');
+      if (UITSPRAKEN.de_griffier) spreek(gr, UITSPRAKEN.de_griffier.dood, 0.4);
+      pose2D(gr, 'death', 3);
+      if (window.Vista) Vista.sterf(gr);
       dicktatorKrachtVast(b);
       baasSpreekt(UITSPRAKEN._dicktator.griffierOntslag[0]);
       setTimeout(() => {
@@ -6731,7 +6739,12 @@ function dicktatorShortlist(g, v) {
   /* A = meest gespeeld (bij t=1 nog niets gespeeld → de duurste), B = de duurste ≠ A */
   const A = gespeeldIets ? beste(kand, [gesp, rang, kost]) : beste(kand, [kost, rang]);
   if (!A) return null;
-  const B = beste(kand.filter(c => c !== A), [kost, rang]);
+  /* B moet een ANDERE KAARTNAAM zijn dan A, anders is je keuze schijn: g.gespeeld telt per
+     id, dus bij twee exemplaren van dezelfde kaart staan beide tellers altijd gelijk en wint
+     de tie-break altijd B, hoe je ook speelt (en de strook noemt twee keer dezelfde naam).
+     Alleen als het dek echt geen tweede kaart-id bevat vallen we terug op een kopie. */
+  const restAnders = kand.filter(c => c !== A && c.id !== A.id);
+  const B = beste(restAnders.length ? restAnders : kand.filter(c => c !== A), [kost, rang]);
   if (!B) return null;
   g.aangezegd.set(A.uid, { uid: A.uid, id: A.id, naam: knaam(A), start: gesp(A), reden: gespeeldIets ? 'Meest gespeeld' : 'De duurste post' });
   g.aangezegd.set(B.uid, { uid: B.uid, id: B.id, naam: knaam(B), start: gesp(B), reden: gespeeldIets ? 'De duurste post' : 'De op een na duurste post' });
@@ -6944,7 +6957,19 @@ function dicktatorKiesVorm2(v, g) {
    op index 0 en heeft dan al gekozen. Bij elke hersync buiten eindBeurt gaan zij mee. */
 function hofIntent(v, beurt) {
   const g = S.gevecht;
-  const stil = { naam: 'TREEDT AAN', type: 'hof', icoon: '🪑', kort: 'TREEDT AAN', tip: 'komt de zaal binnen — deze beurt geen schade' };
+  /* de aantreed-intent DRAAGT ZIJN EIGEN RIDER: hofIntent is niet alleen het brein per beurt
+     (VIJANDEN[...].kies) maar ook wat dicktatorHersync over elke levende hoveling schrijft.
+     Zonder rider zou een hersync de intent uit dicktatorRoep overschrijven en _aangetreden
+     nooit op true zetten — de figuur bleef dan eeuwig aantreden. */
+  const stil = {
+    naam: 'TREEDT AAN', type: 'hof', icoon: '🪑', kort: 'TREEDT AAN',
+    tip: 'komt de zaal binnen — deze beurt geen schade',
+    doe: vv => { vv._aangetreden = true; }
+  };
+  /* CONTRACT §2 (graft C): nooit een klap zonder volle beurt telegraaf. checkDicktatorFase
+     roept de claqueur en hersynct twee regels verder nog binnen JOUW beurt; die hersync mag
+     de aantreedbeurt van een nieuwkomer niet wegschrijven. */
+  if (!v || !v._aangetreden) return stil;
   if (!g) return stil;
   const b = dicktatorBaas(g);
   const bi = (b && !b.dood) ? b.intent : null;
