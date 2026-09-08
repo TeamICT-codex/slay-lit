@@ -4884,6 +4884,8 @@ body:has(#dagwet-proc) #scherm-nudge { display: none; }
 /* de galerij en het bordes hangen BOVEN de deurbaan: ze horen dus VOOR de deuren
    (een balkon over een deurgat), anders staat de held op de boogtoppen te zweven */
 .w-vloer-galerij, .w-vloer-bordes { z-index: 5; }
+/* de bordesplaat zodra ze bestaat (haakBioom); anders blijft de richelstrook staan */
+.w-vloer-bordes.bio { background-image: var(--w-bordes, url('../assets/achtergronden/Afdaling/afdaling_a1_grond.webp')); }
 .w-vloer-put { z-index: 4; }
 .w-vloer.bio {
   background: url('../assets/achtergronden/Afdaling/afdaling_a1_grond.webp') repeat-x left top;
@@ -4908,9 +4910,12 @@ body:has(#dagwet-proc) #scherm-nudge { display: none; }
 /* de kettingladder: een gradient met sporten (CSS-terugval tot de plaat er is) */
 .w-ladder {
   position: absolute; width: 46px; translate: -50% 0; z-index: 4; pointer-events: none;
-  background:
-    repeating-linear-gradient(180deg, rgba(196, 168, 120, .85) 0 6px, transparent 6px 30px),
+  /* --w-ladder wordt gezet zodra de plaat in assets/wereld/ ligt (zie haakBioom); tot dan
+     de CSS-terugval: twee stijlen met sporten ertussen */
+  background: var(--w-ladder,
+    repeating-linear-gradient(180deg, rgba(196, 168, 120, .85) 0 6px, transparent 6px 30px)),
     linear-gradient(90deg, transparent 0 5px, rgba(120, 100, 74, .8) 5px 10px, transparent 10px calc(100% - 10px), rgba(120, 100, 74, .8) calc(100% - 10px) calc(100% - 5px), transparent calc(100% - 5px));
+  background-size: 100% 30px, 100% 100%; background-repeat: repeat-y, no-repeat;
   filter: drop-shadow(0 0 6px rgba(0, 0, 0, .8));
 }
 /* de kruipbalk: rollen is de sleutel */
@@ -4937,7 +4942,8 @@ body:has(#dagwet-proc) #scherm-nudge { display: none; }
 .w-valgat { position: absolute; bottom: 0; height: 300px; translate: -50% 0; z-index: 3; pointer-events: none; }
 .w-valgat-schacht {
   position: absolute; left: 0; right: 0; top: 0; height: 0;
-  background: linear-gradient(180deg, rgba(255, 156, 63, .2), rgba(6, 3, 10, .92) 40px, #05030a);
+  background: var(--w-valgat, linear-gradient(180deg, rgba(255, 156, 63, .2), rgba(6, 3, 10, .92) 40px, #05030a));
+  background-size: cover; background-position: center top;
   transition: height .45s cubic-bezier(.3, 1, .5, 1);
 }
 .w-valgat.open .w-valgat-schacht { height: 300px; }
@@ -4950,8 +4956,10 @@ body:has(#dagwet-proc) #scherm-nudge { display: none; }
 .w-prop.spiegel { scale: -1 1; }
 .w-prop-kooi { width: 250px; z-index: 6; filter: brightness(.34) drop-shadow(0 12px 20px rgba(0, 0, 0, .85)); }
 .w-prop-lift { width: 340px; }
+/* affiches hangen aan de WAND: achter de deuren en achter de galerij (anders zweefde
+   een plakkaat pal voor de held die net geland was) */
 .w-affiche {
-  position: absolute; bottom: 210px; width: 210px; z-index: 3; pointer-events: none;
+  position: absolute; bottom: 210px; width: 210px; z-index: 0; pointer-events: none; filter: brightness(.86);
   background: linear-gradient(#d9c9a4, #b7a684); border: 2px solid #6a5735; box-shadow: 0 6px 14px rgba(0, 0, 0, .7);
   padding: 12px 8px; text-align: center;
 }
@@ -5062,7 +5070,8 @@ body:has(#dagwet-proc) #scherm-nudge { display: none; }
 .w-nis { position: absolute; translate: -50% 0; z-index: 2; pointer-events: auto; cursor: pointer; }
 .w-nis-holte {
   position: absolute; inset: 0; border-radius: 50% 50% 6px 6px / 62% 62% 6px 6px;
-  background: linear-gradient(180deg, #1b1425, #0a0710 72%);
+  background: var(--w-nis, linear-gradient(180deg, #1b1425, #0a0710 72%));
+  background-size: contain; background-position: center bottom; background-repeat: no-repeat;
   box-shadow: inset 0 0 0 6px #38294a, inset 0 0 0 9px #1a1224, inset 0 14px 26px rgba(0, 0, 0, .9), 0 0 26px rgba(255, 180, 100, .18);
 }
 .w-nis-vondst { position: absolute; left: 50%; bottom: 14%; width: 62%; translate: -50% 0; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .8)); }

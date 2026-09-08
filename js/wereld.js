@@ -322,8 +322,26 @@ const Wereld = (() => {
     gloedSprite = mk(128, [[0, 'rgba(255,255,255,1)'], [0.35, 'rgba(255,255,255,.5)'], [1, 'rgba(255,255,255,0)']]);
   }
 
+  /* ---------- DE ASSET-HAAK voor de vier stukken die nog CSS-terugval zijn ----------
+     Bordes, kettingladder, valgat en rustnis bestaan nu als CSS; hun prompts staan al in
+     assets/achtergronden/PROMPTS.txt. Zodra de platen als afdaling_aN_<naam>.webp in de
+     PLATTE dropmap assets/wereld/ landen en converteer_webp.py het manifest herschrijft,
+     zet deze haak ze automatisch in — zonder één 404-probe, want artBestaat leest het
+     manifest. Ontbreekt een plaat, dan blijft de CSS-terugval staan (var(--w-x, ...)). */
+  const BIOOM_HAAK = [['bordes', '--w-bordes'], ['ladder', '--w-ladder'], ['valgat', '--w-valgat'], ['nis_rust', '--w-nis']];
+  function haakBioom() {
+    const act = huidigeAct();
+    for (const [naam, prop] of BIOOM_HAAK) {
+      const id = 'afdaling_a' + act + '_' + naam;
+      const heeft = (typeof artBestaat === 'function') && artBestaat('wereld', id) && !!(window.ART_MANIFEST && window.ART_MANIFEST.wereld);
+      if (heeft) els.scherm.style.setProperty(prop, "url('assets/wereld/" + id + ".webp')");
+      else els.scherm.style.removeProperty(prop);
+    }
+  }
+
   /* ---------- opbouw van de lagen ---------- */
   function bouwLagen(sj) {
+    haakBioom();
     els.ver.innerHTML = `<img src="${vertePad(sj)}" alt="" draggable="false">`;
     if (heeftBioom() && !lite()) {
       const h = `<img src="${KUNST}afdaling_a1_midden.webp" alt="" draggable="false" style="left:${-MID_TB}px;top:${MID_OFF - MID_TH}px;width:${MID_TB}px">`
@@ -643,21 +661,21 @@ const Wereld = (() => {
   /* ---------- de afdaling naar de volgende verdieping ---------- */
   function startDaling() {
     bezig = true; dalingBezig = true; dalingFase = 'zegel';
-    na(220, () => {
+    /* TEMPO: het zegel klapt en de vloer breekt in DEZELFDE tel, en hij loopt er meteen
+       heen — de zegelanimatie speelt over zijn eerste passen. Twee gescripte wachtjes
+       achter elkaar kostten 420 ms dode tijd per verdieping (contract 3.8: dode tijd weg). */
+    na(180, () => {
       const deur = els.richels.querySelector('.w-vorige .w-plek.w-verlaten');
       if (deur) deur.classList.add('verzegelt');
       Klank.sfx('klap');
-      na(200, () => {
-        const gat = els.richels.querySelector('.w-valgat');
-        if (gat) gat.classList.add('open');
-        Klank.sfx('stap');
-        puin(valgat.x, valgat.y, 4);
-        schok(4);
-        dalingFase = 'lopen';
-        const vl = TT.vloerOp(W, valgat.x, valgat.y);
-        auto = vl ? TT.maakAuto(W, st, { vloerId: vl.id, x: valgat.x }) : null;
-        if (!auto) valIn();
-      });
+      const gat = els.richels.querySelector('.w-valgat');
+      if (gat) gat.classList.add('open');
+      puin(valgat.x, valgat.y, 4);
+      schok(4);
+      dalingFase = 'lopen';
+      const vl = TT.vloerOp(W, valgat.x, valgat.y);
+      auto = vl ? TT.maakAuto(W, st, { vloerId: vl.id, x: valgat.x }) : null;
+      if (!auto) valIn();
     });
   }
   function valIn() {
@@ -732,7 +750,7 @@ const Wereld = (() => {
 
     /* --- fysica --- */
     const ev = TT.stapFysica(st, i, dt, W);
-    verwerkGebeurtenissen(ev, i);
+    verwerkGebeurtenissen(ev, i, dt);
 
     /* --- het valgat als triggerzone --- */
     if (dalingBezig && dalingFase === 'lopen' && st.opGrond && Math.abs(st.x - valgat.x) < 26 && Math.abs(st.y - valgat.y) < 2) valIn();
@@ -751,20 +769,22 @@ const Wereld = (() => {
     checkNabij();
   }
 
-  function verwerkGebeurtenissen(ev, i) {
+  function verwerkGebeurtenissen(ev, i, dt) {
     for (const e of ev) {
       if (e === 'spring') { Klank.sfx('stap'); puin(st.x, st.y, 1); }
       else if (e === 'land-licht') { puin(st.x, st.y, 2); Klank.sfx('stap'); }
       else if (e === 'land-zwaar') {
         puin(st.x, st.y, lite() ? 1 : 6); schok(6);
-        Klank.sfx(Klank.klanken && Klank.klanken.plof ? 'plof' : 'klap');
+        /* 'plof' (de zware landing) is een P3-klank in audio.js; tot dan de zware klap.
+           Klank.sfx negeert een onbekende naam stil, dus dit blijft één regel om te wisselen. */
+        Klank.sfx('zwareklap');
         if (!dalingBezig) bewaarPlekStraks();
       } else if (e === 'rol') Klank.sfx('stap');
       else if (e === 'klim-af') bewaarPlekStraks();
     }
     /* stap-timbre op de cadans */
     if (st.opGrond && Math.abs(st.vx) > 30 && !st.klimt) {
-      stapKlok -= 1 / 60;
+      stapKlok -= dt;
       if (stapKlok <= 0) { stapKlok = FY.cadans * (Math.abs(st.vx) > FY.loop + 40 ? 0.72 : 1); Klank.sfx('stap'); if (!lite()) puin(st.x, st.y, 1); }
     } else stapKlok = 0;
   }
