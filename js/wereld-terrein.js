@@ -19,6 +19,12 @@ const WereldTerrein = (() => {
   const K = {
     HELD: 170, KOL_B: 230, RAND: 160, RH: 400, MARGE: 60,
     GALERIJ_Y: -170, BORDES_Y: -95, PUT_Y: 70, BALK_H: 119,
+    /* DE KRUIPBALK HANGT: onderkant BALK_OPEN boven de vloer, dus de opening (60 wu) is
+       lager dan de held (170) en hoger dan een rol. BALK_STOP is de botsingsband, gemeten
+       vanaf de vloer: hoger dan de sprongtop (900^2/(2*2800) = 145 wu, dus eroverheen
+       springen kan niet meer) en lager dan de galerij (-170, anders zou de held die boven
+       een balk ligt vastlopen). */
+    BALK_OPEN: 60, BALK_STOP: 160,
     VOET: 18,                     /* halve voetbreedte voor randen (vergevingsgezind zoals Dead Cells) */
     VALGAT_B: 84, KLOOF_MIN: 80, KLOOF_MAX: 115, PUT_EXTRA: 40,
     POORT_B: 190
@@ -502,7 +508,10 @@ const WereldTerrein = (() => {
     }
     for (const b of W.balken) {
       if (st.rolT > 0) continue;
-      if (st.y > b.y - 40 && st.y <= b.y + 2 && st.x > b.x0 - K.VOET && st.x < b.x1 + K.VOET) {
+      /* de volle balkhoogte, niet alleen de onderste 40 wu: met de oude band vloog je er met
+         een gewone sprong overheen en was het rolgebaar nergens verplicht (gemeten: lopen =
+         geblokkeerd, rollen = door in 1,13 s, SPRINGEN = door in 1,52 s) */
+      if (st.y > b.y - K.BALK_STOP && st.y <= b.y + 2 && st.x > b.x0 - K.VOET && st.x < b.x1 + K.VOET) {
         /* niet rollend onder de balk: naar de dichtstbijzijnde kant duwen */
         st.x = (st.x - b.x0 < b.x1 - st.x) ? b.x0 - K.VOET : b.x1 + K.VOET;
         st.vx = 0;

@@ -392,7 +392,8 @@ const Wereld = (() => {
     for (const kl of sj.kloven) h += `<div class="w-kloof" style="left:${kl.x0}px;width:${kl.x1 - kl.x0}px"></div>`;
     /* ladder (kettingladder), kruipbalk, valgat */
     if (sj.ladder) h += `<div class="w-ladder" style="left:${sj.ladder.x}px;top:${sj.ladder.y0}px;height:${sj.ladder.y1 - sj.ladder.y0}px"></div>`;
-    if (sj.balk) h += `<div class="w-balk" style="left:${sj.balk.x0}px;top:${-K.BALK_H}px;width:${sj.balk.x1 - sj.balk.x0}px;height:${K.BALK_H}px"><i>ROL ERONDER</i></div>`;
+    /* de balk HANGT: onderkant K.BALK_OPEN boven de vloer, zodat er ook echt iets is om onder te rollen */
+    if (sj.balk) h += `<div class="w-balk" style="left:${sj.balk.x0}px;top:${-(K.BALK_OPEN + K.BALK_H)}px;width:${sj.balk.x1 - sj.balk.x0}px;height:${K.BALK_H}px"><i>ROL ERONDER</i></div>`;
     if (isActief && sj.r === 0) h += `<div class="w-ingang" style="left:${K.INGANG_X}px"><i>INGANG · UITSLUITEND PERSONEEL</i></div>`;
     if (valgat && valgat.r === sj.r) {
       h += `<div class="w-valgat${verzegeld ? ' open' : ''}" style="left:${valgat.x}px;width:${K.VALGAT_B}px">`

@@ -4918,11 +4918,14 @@ body:has(#dagwet-proc) #scherm-nudge { display: none; }
   background-size: 100% 30px, 100% 100%; background-repeat: repeat-y, no-repeat;
   filter: drop-shadow(0 0 6px rgba(0, 0, 0, .8));
 }
-/* de kruipbalk: rollen is de sleutel */
+/* de kruipbalk: hij HANGT (onderkant 60 wu boven de vloer), rollen is de sleutel.
+   De onderrand krijgt een lichtlijn en een slagschaduw op de vloer, zodat je van ver ziet
+   dat er een opening onder zit en niet dat er een muur staat. */
 .w-balk {
   position: absolute; z-index: 4; pointer-events: none;
   background: linear-gradient(180deg, #47372a, #2a2019 60%, #17110e);
-  border-top: 3px solid #6a5236; box-shadow: 0 6px 16px rgba(0, 0, 0, .7);
+  border-top: 3px solid #6a5236; border-bottom: 3px solid #7d6340;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .7), 0 66px 26px -18px rgba(0, 0, 0, .75);
 }
 .w-balk i {
   position: absolute; left: 50%; top: -30px; translate: -50% 0; white-space: nowrap; font-style: normal;
