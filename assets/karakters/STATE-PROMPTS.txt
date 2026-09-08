@@ -2371,3 +2371,24 @@ Painted illustration style only. Isolated on a fully transparent background. No 
 Gebruik: vastgehouden standbeeldpose `herkozen` na DE HERVERKIEZING; terugval `.herverkozen`-CSS op de basisplaat.
 
 ```
+
+==========================================================
+HET PROCES (v109) — TWEE NIEUWE BAASPOSES
+==========================================================
+Beide zijn STATE-poses van de_dicktator (referentie: de_dicktator.png).
+'factuur' speelt 1,6 s als hij de rekening zelf komt innen (terugval: _attack).
+'herkozen' is een VASTGEHOUDEN standbeeldpose na DE HERVERKIEZING — ze dooft
+niet vanzelf (pose2D houdt haar vast, net als block/death). Terugval zolang de
+plaat er niet is: de CSS-klasse .herverkozen op de basisplaat.
+
+========================= de_dicktator_factuur.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+Single full-body character, centered, three-quarter side view, facing LEFT. The gilded demagogue-king of the slaughter-block, SAME character as de_dicktator (golden lion's-combover mane, self-awarded laurel, gold-drowned armor, conspicuously SMALL hands in oversized golden gauntlets, the absurdly long crimson sash-banner spilling off-frame). Pose — DE FACTUUR: he thrusts forward with both tiny gauntlets a LEDGER-SIZED glowing INVOICE, an unrolling parchment as tall as his torso, columns of golden figures crawling down the page like a tapeworm (abstract marks, no readable text), a wax seal at the bottom dripping molten gold, the total at the foot of the page glowing hottest ember-red; his head tilted in bored, patient contempt, chin up, one eyebrow raised — payment expected now. The sash coils once around his boot. Colder than his attack, grander than his cast.
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches. Unique silhouette: the huge invoice held out like a shield. Accent: parchment-gold ledger + the ember-red glowing total.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge. This is ONE separate image of a single pose, not a sprite sheet or collage.
+
+========================= de_dicktator_herkozen.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+Single full-body character, centered, three-quarter side view, facing LEFT. The RE-ELECTED gilded demagogue-king of the slaughter-block, second form, SAME character as de_dicktator (broad-chested tyrant in gold-drowned armor, extravagant swept golden lion's-combover mane, conspicuously SMALL hands in oversized golden gauntlets, the absurdly long crimson sash-banner) but now: a DOUBLE self-awarded laurel, the second wreath fused crookedly into the first; his self-minted medals half-MELTED into the breastplate; the endless crimson sash turned to LIQUID MOLTEN GOLD, dripping heavy drops from its hem; both gauntlets glowing from within; the smirk widened past anything human, eyes lit with mandate; he stands a shade broader and taller than before, chest thrown out, one tiny finger raised for silence — the unanimous winner. Torn, stamped ballot-decree snippets swirl around his boots like confetti. Harsh molten ember-red footlight from below; the gold catches it and burns.
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches. Unique silhouette: the double laurel and the liquid-gold sash pooling at his feet. Accent: molten liquid gold + a second violet-lit laurel.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge. This is ONE separate image of a single pose, not a sprite sheet or collage.

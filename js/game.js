@@ -533,7 +533,7 @@ const DAGWETTEN = {
   },
   glas: {
     naam: 'GLAZEN ZIELEN', icoon: '💥',
-    kort: 'Alles breekt sneller: elke klap doet anderhalf keer zoveel pijn — ook die op jou.',
+    kort: 'Alles breekt sneller: elke klap doet anderhalf keer zoveel pijn — ook die op jou, en ook de facturen van het Slachtblok.',
     scoreBonus: 0.10,
     baas: 'slijmkoning', baasArt: 'slijmkoning',
     quote: 'Alles smelt. Alles breekt. Vandaag… ietsje sneller.'
@@ -7310,6 +7310,12 @@ function beginSpelerBeurt() {
   g.aanvalDezeBeurt = 0;   /* Act 2: Originele Handtekening telt of dit je eerste aanval is */
   g.kaartGespeeldDezeBeurt = false;   /* De Vergadering: verse beurt, verse toeslag */
   g.kaartenDezeBeurt = 0; g.posten = 0;   /* v109: de Factuur telt per SPELERSBEURT (zie speelKaart) */
+  /* EENMALIGE UITLEG bij je eerste Factuur: op mobiel past de formule niet op de pil
+     (een tik is daar een doelwitklik), dus de regel staat hier en in de Codex. */
+  if (!g._factuurUitleg && typeof dicktatorFactuurBron === 'function' && dicktatorFactuurBron(g)) {
+    g._factuurUitleg = true;
+    melding('🧾 DE FACTUUR: elke kaart die je speelt is een post — gratis = 2, 1 energie = 1, 2+ is aftrekbaar. Elke levende hoveling int mee. Speel dus GROOT, of speel weinig.');
+  }
   g.ceremonie = false;                    /* v109: een nieuwe spelersbeurt geeft de invoer altijd vrij */
   g.herrijzenisNu = false;
   g._epidemieGespreid = false;   /* Epidemie mag deze beurt weer 1× verspreiden */

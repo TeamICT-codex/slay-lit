@@ -342,3 +342,21 @@ Palette of black basalt and black iron, molten ember-red underlight, storm-viole
 Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The icon fills about 80% of a square 512x512 canvas, centered. This is ONE separate image, not a sheet.
 ```
 Gebruik: de klok in de vorm-2-strook `⏳ ONTSLAG over 2` (terugval ⏳).
+
+==========================================================
+HET PROCES (v109) — TWEE UI-ICONEN
+==========================================================
+Tot de drop draaien beide op hun emoji-terugval (🧾 en ⏳). Het zegel op de
+aangezegde kaart gebruikt het bestaande decreet_zegel.webp.
+
+========================= factuur_zegel.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+A single small UI ICON, centered: a rolled parchment INVOICE bound with a black iron clasp, a heavy round wax seal of polished regime GOLD on its front bearing a tiny crowned finger-print, one corner of the parchment curling and glowing ember-red as if about to catch fire, a few abstract golden tally-strokes visible on the paper (no readable letters or numbers), a curl of smoke rising from the seal as if freshly stamped. Lit from below by harsh molten ember-red light; a faint storm-violet rim on the top edge. Bold, readable silhouette at 48 pixels: thick shapes, high contrast.
+Palette of black basalt and black iron, molten ember-red underlight, storm-violet accent, arrogant polished GOLD for the seal.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The icon fills about 80% of a square 512x512 canvas, centered. This is ONE separate image, not a sheet.
+
+========================= ontslag_zandloper.png =========================
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+A single small UI ICON, centered: a squat brass HOURGLASS in a black iron frame stamped with a tiny gold regime crown at the top; the sand inside is not sand but glowing molten ember-red slag, almost all of it run into the lower bulb; a hairline crack of storm-violet light on the glass. Harsh molten ember-red light from below. Bold, readable silhouette at 48 pixels.
+Palette of black basalt and black iron, molten ember-red underlight, storm-violet accent, arrogant polished GOLD for the crown.
+Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The icon fills about 80% of a square 512x512 canvas, centered. This is ONE separate image, not a sheet.

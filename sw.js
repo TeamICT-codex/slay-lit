@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v108'; // v108: Het Proces stap 1 — DICKtator-fases werken (pips/woede), Decreet als eigen intent, herlaad-checkpoint in het baasgevecht
+const CACHE = 'slayit-v109'; // v109: HET PROCES — de Act 3-eindbaas als tribunaal in vijf bedrijven: het hof (griffier/deurwaarder/claqueur), DE FACTUUR per post, DE SHORTLIST, DE HERVERKIEZING en HET MANDAAT
 const BESTANDEN = [
   '.',
   'css/style.css',
