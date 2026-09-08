@@ -6407,35 +6407,73 @@ function jeugddroomTekst() {
     return (p && p.jeugddroom) || null;
   } catch (e) { return null; }
 }
+/* HET DECREET — de zitting. Hij noemde twee kaarten; nu valt er precies ÉÉN: die
+   welke jij sinds de aanzegging het MINST speelde („Het is niet mijn beslissing.
+   Het is uw gebruik."). Gelijk → de duurste van de twee → anders de tweede naam.
+   Async: geeft een promise van ~2,4 s terug zodat de beat landt vóór de volgende
+   vijand slaat (eindBeurt awaitet elke it.doe die een then heeft). */
 function dicktatorDecreet(v) {
-  const g = S.gevecht; if (!g || g.voorbij) return;
-  const kandidaten = S.dek.filter(c => kdef(c).type !== 'vloek');
-  if (!kandidaten.length) return;
-  const c = kiesUit(kandidaten);
+  const g = S.gevecht;
+  if (!g || g.voorbij) return;
+  const dossier = [...(g.aangezegd ? g.aangezegd.values() : [])];
+  const inDek = uid => S.dek.find(x => x.uid === uid) || null;
+  let verliezer = null, kop = '';
+  if (dossier.length >= 2) {
+    const gespeeldSinds = d => Math.max(0, ((g.gespeeld && g.gespeeld[d.id]) || 0) - (d.start || 0));
+    const kostVan = d => { const c = inDek(d.uid); return c ? (kval(c, 'kost') || 0) : 0; };
+    const [a, b] = dossier;
+    const va = gespeeldSinds(a), vb = gespeeldSinds(b);
+    /* minst gespeeld → duurste → B (de tweede naam) */
+    let keus;
+    if (va !== vb) keus = va < vb ? a : b;
+    else if (kostVan(a) !== kostVan(b)) keus = kostVan(a) > kostVan(b) ? a : b;
+    else keus = b;
+    kop = `SHORTLIST · ${a.naam} ${va}× · ${b.naam} ${vb}× → AFGESCHREVEN`;
+    /* het EXEMPLAAR: bij kopieën eerst de opgewaardeerde ("uw beste exemplaar") */
+    const zelfde = S.dek.filter(x => x.id === keus.id);
+    verliezer = zelfde.slice().sort((x, y) => (y.up ? 1 : 0) - (x.up ? 1 : 0))[0] || inDek(keus.uid);
+  }
+  /* vangnet: geen bruikbaar dossier meer (dek gekrompen) → pak de duurste niet-vloek */
+  if (!verliezer) {
+    const kand = S.dek.filter(c => kdef(c).type !== 'vloek');
+    if (!kand.length) { g.aangezegd.clear(); renderGevecht(); return; }
+    verliezer = kand.slice().sort((x, y) => (kval(y, 'kost') || 0) - (kval(x, 'kost') || 0))[0];
+  }
+  const c = verliezer;
   /* PERMANENT: uit je run-dek én uit alle gevechtsstapels (zelfde referentie) */
   S.dek = S.dek.filter(x => x !== c);
   g.trek = g.trek.filter(x => x !== c);
   g.hand = g.hand.filter(x => x !== c);
   g.afleg = g.afleg.filter(x => x !== c);
   g.uitgeput = g.uitgeput.filter(x => x !== c);
+  v.decreten = (v.decreten || 0) + 1;
+  /* DE VACATURE: een Laster schuift tussen je kaarten — alleen bij een dek dat het draagt
+     (≥ 16 vóór de verwijdering) en hoogstens 3 per gevecht. Kleine dekken worden niet verzopen. */
+  if (S.dek.length + 1 >= DICK.dekMinLaster && (v.lasters || 0) < DICK.lasterCap) {
+    v.lasters = (v.lasters || 0) + 1;
+    g.trek.splice(Math.floor(willekeurig() * (g.trek.length + 1)), 0, nieuweKaart('laster'));
+    melding('👑 Een gestempeld lasterdecreet schuift tussen je kaarten.');
+  }
+  g.aangezegd.clear();   /* het dossier is gesloten; de volgende aanzegging opent een nieuw */
   pose2D(v, 'decreet', 2.2);   /* de signature-pose (de_dicktator_decreet-art) */
   if (window.Vista) Vista.pose(v, 'cast', 2.2);
-  toonDecreetReveal(c);        /* de vernietigde kaart GROOT in beeld: stempel + verbranding */
-  baasSpreekt(kiesUit(UITSPRAKEN._dicktator.decreet));
+  toonDecreetReveal(c, kop);   /* de vernietigde kaart GROOT in beeld: stempel + verbranding */
+  baasSpreekt(UITSPRAKEN._dicktator.decreetKeuze);
+  setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(kiesUit(UITSPRAKEN._dicktator.decreet)); }, dtempo(1400));
   saveSpel();
   renderGevecht();
+  /* de beat: altijd oplossen (nooit hangen), ook als het gevecht intussen voorbij is */
+  return new Promise(res => setTimeout(res, dtempo(2400)));
 }
 
-/* HET DECREET-MOMENT: permanente vernietiging hoort te doen wankelen — de
-   afgeschreven kaart komt GROOT in beeld, de rode stempel slaat erop neer,
-   en dan verbrandt ze. (playtest: banner-alleen kwam niet hard genoeg aan) */
-function toonDecreetReveal(c) {
+function toonDecreetReveal(c, kopregel) {
   document.querySelectorAll('.decreet-overlay').forEach(n => n.remove());
   const ov = document.createElement('div');
   ov.className = 'vloek-reveal-overlay decreet-overlay';
   ov.innerHTML = `
     <div class="vloek-reveal-binnen">
       <div class="vloek-reveal-kop">👑 HET DECREET</div>
+      ${kopregel ? `<div class="decreet-shortlist">${kopregel}</div>` : ''}
       <div class="vloek-reveal-kaartwrap decreet-kaartwrap">
         <div class="kaart-focus-houder"><div class="focus-rij">
           ${kaartHtml(c, false).replace('kaart groot', 'kaart groot kaart-focus')}
