@@ -126,7 +126,15 @@ const Klank = (() => {
     drank()     { [500, 700, 600].forEach((f, i) => toon(f, 0.06, 'sine', 0.07, f * 1.15, ctx && ctx.currentTime + i * 0.05)); },
     stap()      { toon(330, 0.06, 'triangle', 0.05); },
     flip()      { ruis(0.13, 'bandpass', 900, 2800, 0.12); toon(620, 0.07, 'triangle', 0.05); },
-    schitter()  { [880, 1175, 1568, 2093].forEach((f, i) => toon(f, 0.16, 'sine', 0.06, null, ctx && ctx.currentTime + i * 0.07)); }
+    schitter()  { [880, 1175, 1568, 2093].forEach((f, i) => toon(f, 0.16, 'sine', 0.06, null, ctx && ctx.currentTime + i * 0.07)); },
+    /* BETAALD APPLAUS (v109): zes korte ruisstootjes met jitter — handen die klappen
+       omdat ze betaald worden, net niet gelijk. */
+    applaus()   {
+      const t0 = ctx ? ctx.currentTime : 0;
+      for (let i = 0; i < 6; i++) {
+        ruis(0.05 + Math.random() * 0.04, 'bandpass', 1400 + Math.random() * 1200, 700, 0.09 + Math.random() * 0.05, t0 + i * 0.055 + Math.random() * 0.03);
+      }
+    }
   };
 
   function sfx(naam) { if (klaar && SFX[naam]) SFX[naam](); }
@@ -153,6 +161,11 @@ const Klank = (() => {
     gevecht: { droneVol: 0.13, root: 55, schaal: [0, 3, 5, 7, 10], bpm: 84, padKans: 0.5, plukKans: 0.15, puls: true, spanning: 0.3 },
     elite:   { droneVol: 0.15, root: 51.9, schaal: [0, 1, 5, 7, 8], bpm: 96, padKans: 0.55, plukKans: 0.12, puls: true, spanning: 0.6 },
     baas:    { droneVol: 0.17, root: 41.2, schaal: [0, 1, 5, 7, 8], bpm: 104, padKans: 0.7, plukKans: 0.1, puls: true, spanning: 1 },
+    /* HET MANDAAT (v109): de tweede vorm van de DICKtator. Zelfde grondtoon als 'baas'
+       maar sneller, dichter en met een grote-terts-schijn in de schaal — de triomfmars
+       van iemand die zichzelf herkozen heeft. LET OP: de naam moet exact 'finale' zijn
+       (een typefout betekent stilte, zie muziek() hieronder). */
+    finale:  { droneVol: 0.20, root: 41.2, schaal: [0, 1, 4, 5, 8], bpm: 120, padKans: 0.8, plukKans: 0.08, puls: true, spanning: 1.2 },
     /* de outro (js/outro.js): de eerste échte chiptune van het spel — de
        bedrijfsjingle als 8-bit strijdlied in mineur (subdiv 4 = 16e noten;
        lagen stapelen per verdieping via zetChipLagen). 'outro_slot' is
