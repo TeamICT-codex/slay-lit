@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v110'; // v110: DE AFDALING — de vertical slice van de Dead Cells-afdaling (gelaagde diepte, gebaren met gewicht, levelvorm B, nissen); v109 is voorbehouden aan de baasbouw
+const CACHE = 'slayit-v111'; // v111: afdaling-nazorg - timerkaping, tempo (renpas + routekeuze + kortere galerij), kruipbalk, nis/kooi/verte, auto-lite, asset-haak, veilige zone, framebudget
 const BESTANDEN = [
   '.',
   'css/style.css',
