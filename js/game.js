@@ -3072,7 +3072,8 @@ function verliesHp(doel, n, bron) {
       doel.hp = Math.ceil((doel.maxHp || 240) * 0.4);
       doel.blok = 0;
       doel.status = {};                       /* de wederopstanding wist je opgebouwde gif/zwak — vers bloed, oude leugens */
-      doel.faseGezien = 3;
+      doel.fase = 3;                          /* meteen de wanhoopsfase (pips + woede); geen tweede fase-flits meer */
+      { const wel = actorEl(doel); if (wel) wel.classList.add('woede'); }
       baasFaseMoment('DE HERVERKIEZING', '„Jullie dachten dat het voorbij was? Dat denken jullie ELKE keer."');
       baasSpreekt(UITSPRAKEN._dicktator.herrijzenis);
       schudScherm(); Klank.sfx('dood'); setTimeout(() => Klank.sfx('zwareklap'), 450);
@@ -3603,6 +3604,16 @@ function laadSpel() {
        reload de kaart zonder één klikbare knoop achter → run onherstelbaar. De vlag laat
        beschikbareNodes de kamer opnieuw aanbieden, zonder dubbele verdieping/fakkelkost. */
     if (S.pos !== null && S.kaart[S.pos] && !(S.kaart[S.pos].verb || []).length) S._herbetreed = S.pos;
+    /* v108: het baasgevecht-checkpoint terugzetten — het gevecht begint opnieuw, dus ook jouw dossier */
+    if (S.checkpoint && typeof S.checkpoint === 'object' && Array.isArray(S.checkpoint.dek) && S.checkpoint.dek.length) {
+      const cp = S.checkpoint;
+      S.hp = cp.hp; S.maxHp = cp.maxHp || S.maxHp;
+      if (typeof cp.fakkel === 'number') S.fakkel = cp.fakkel;
+      S.dek = cp.dek.filter(c => c && c.id && KAARTEN[c.id]);
+      if (Array.isArray(cp.dranken)) S.dranken = cp.dranken.filter(d => DRANKEN[d]);
+      delete S.checkpoint;
+      setTimeout(() => { try { melding('📁 Het gevecht begint opnieuw — uw dossier is hersteld.'); } catch (e) {} }, 1400);
+    }
     if (typeof S.hp !== 'number') S.hp = huidigeHeld().hp;
     if (typeof S.maxHp !== 'number') S.maxHp = S.hp;
     if (typeof S.goud !== 'number') S.goud = 0;
@@ -4171,6 +4182,13 @@ function startGevecht(samenstelling, soort, rij) {
     laatstGespeeld: [], vorigeId: null, copycatGebroken: false, raakteCopycat: false
   };
   S.gevecht = g;
+  /* v108: CHECKPOINT voor het baasgevecht — een tab die op een telefoon sneuvelt midden in een
+     gevecht van 10-15 rondes kostte anders HP, licht en gedecreteerde kaarten terwijl de baas
+     vers herstartte. laadSpel zet dit terug; gevechtGewonnen/nederlaag wissen het. */
+  if (soort === 'baas') {
+    S.checkpoint = { hp: S.hp, maxHp: S.maxHp, fakkel: S.fakkel, dek: S.dek.map(c => ({ ...c })), dranken: [...S.dranken] };
+    saveSpel();
+  } else if (S.checkpoint) delete S.checkpoint;
 
   /* metgezel mee het gevecht in: eigen HP uit de run-state, verse blok/status */
   if (heeftMetgezel()) {
@@ -4897,8 +4915,12 @@ function intentTekst(v) {
   if (it.type === 'blok') {
     return `<span class="intent intent-blok" data-tip="${it.naam}: verdedigt zich">🛡️ ${verborgen ? '?' : it.blok}</span>`;
   }
-  if (it.type === 'buff') return `<span class="intent intent-buff" data-tip="${it.naam}: versterkt zichzelf">💪</span>`;
-  return `<span class="intent intent-debuff" data-tip="${it.naam}: verzwakt jou">🌀</span>`;
+  if (it.type === 'decreet') {   /* v108: HET DECREET was een 'buff'-pil ("versterkt zichzelf") — nu zie je de kaartverwijdering aankomen */
+    if (verborgen) return `<span class="intent intent-decreet" data-tip="HET DECREET — te donker om te zien wat hij afschrijft">📜 ?</span>`;
+    return `<span class="intent intent-decreet" data-tip="${it.naam}: schrijft volgende beurt PERMANENT een kaart uit je dek af">📜 DECREET</span>`;
+  }
+  if (it.type === 'buff') return `<span class="intent intent-buff" data-tip="${it.tip || (it.naam + ': versterkt zichzelf')}">💪</span>`;
+  return `<span class="intent intent-debuff" data-tip="${it.tip || (it.naam + ': verzwakt jou')}">🌀</span>`;
 }
 
 function statusBadges(actor) {
@@ -5823,6 +5845,7 @@ function checkBaasFase() {
   const b = g.vijanden.find(v => VIJANDEN[v.id].baas && !v.dood);
   if (!b) return;
   if (VIJANDEN[b.id].copycat) { checkCopycatFase(b, g); return; }
+  if (b.id === 'de_dicktator') { checkDicktatorFase(b, g); return; }
   if (b.id !== 'slijmkoning') return;   /* andere bazen: (nog) geen fase-script */
   const pct = b.hp / b.maxHp;
   if ((b.fase || 1) < 2 && pct <= 0.5) {
@@ -6188,6 +6211,25 @@ function dicktatorFase(v) {
   const p = v.hp / (v.maxHp || 1);
   return p > 0.66 ? 1 : (p > 0.33 ? 2 : 3);
 }
+/* v108 (Het Proces, stap 1a): de fase-overgang van de DICKtator loopt nu via checkBaasFase
+   (na elke actie), niet meer via zijn kies() — die vuurde pas op de volgende vijandbeurt en
+   schreef v.fase nooit, zodat de bazenbalk-pips en de woede-gloed nooit brandden. Alleen
+   omhoog: na de herverkiezing (fase 3 gezet) komt er geen tweede fase-flits. */
+function checkDicktatorFase(b, g) {
+  const nieuw = dicktatorFase(b);
+  if (nieuw <= (b.fase || 1)) return;
+  b.fase = nieuw;
+  baasFaseMoment(nieuw === 2 ? 'DE LAUWERKRANS VERSCHUIFT' : 'DE LAATSTE TIRADE', '');
+  baasSpreekt(nieuw === 2 ? UITSPRAKEN._dicktator.fase2 : UITSPRAKEN._dicktator.fase3);
+  if (nieuw === 2) {
+    const droom = jeugddroomTekst();
+    if (droom) setTimeout(() => {
+      if (S.gevecht === g && !g.voorbij) baasSpreekt(`„Uw jeugddroom — ‚${droom}'. Voorziening getroffen. AFGESCHREVEN."`);
+    }, 3400);
+  }
+  b.intent = VIJANDEN[b.id].kies(b, b.beurtTeller || 0);   /* nieuw patroon meteen tonen (slijmkoning-patroon) */
+  if (nieuw >= 3) { const el = actorEl(b); if (el) el.classList.add('woede'); }
+}
 /* de jeugddroom: een lopende run wint, anders de proloog-overdracht */
 function jeugddroomTekst() {
   if (S && S.jeugddroom) return S.jeugddroom;
@@ -6243,19 +6285,8 @@ function toonDecreetReveal(c) {
 }
 function dicktatorKies(v, beurt) {
   const g = S.gevecht; if (!g) return { type: 'aanval', naam: 'Wijzend vonnis', dmg: 10 };
-  /* fase-aankondiging (eenmalig per fase) + de jeugddroom-terugkeer bij fase 2 */
+  /* de fase-aankondiging zit sinds v108 in checkDicktatorFase (via checkBaasFase); kies() blijft puur */
   const fase = dicktatorFase(v);
-  if (fase > (v.faseGezien || 1)) {
-    v.faseGezien = fase;
-    baasFaseMoment(fase === 2 ? 'DE LAUWERKRANS VERSCHUIFT' : 'DE LAATSTE TIRADE', '');
-    baasSpreekt(fase === 2 ? UITSPRAKEN._dicktator.fase2 : UITSPRAKEN._dicktator.fase3);
-    if (fase === 2) {
-      const droom = jeugddroomTekst();
-      if (droom) setTimeout(() => {
-        if (S.gevecht === g && !g.voorbij) baasSpreekt(`„Uw jeugddroom — ‚${droom}'. Voorziening getroffen. AFGESCHREVEN."`);
-      }, 3400);
-    }
-  }
   const t = (v.beurtTeller || 0) + 1;   /* READ-ONLY: eindBeurt hoogt de teller al op — de oude dubbeltelling hield t altijd oneven en doofde HET DECREET in fase 3 (debug-sweep 27 aug) */
   /* HET DECREET: elke 3e beurt (fase 3: elke 2e) — getelegrafeerd. Bij een
      uitgemergeld dek (≤ 6 speelbare kaarten) valt hij terug op de Executie:
@@ -6263,14 +6294,14 @@ function dicktatorKies(v, beurt) {
   const decreetBeurt = fase >= 3 ? (t % 2 === 0) : (t % 3 === 0);
   if (decreetBeurt) {
     const speelbaar = S.dek.filter(c => kdef(c).type !== 'vloek').length;
-    if (speelbaar > 6) return { naam: 'HET DECREET', type: 'buff', doe: () => dicktatorDecreet(v) };
+    if (speelbaar > 6) return { naam: 'HET DECREET', type: 'decreet', doe: () => dicktatorDecreet(v) };
     return { naam: 'EXECUTIE', type: 'aanval', dmg: 18 };
   }
   /* de vloeken-as + het gewone hof-repertoire */
   const vloeken = vloekenInGevecht(g);
   const r = willekeurig();
   if (r < 0.4) return { naam: 'Karaktermoord', type: 'aanval', dmg: 9 + 2 * vloeken };
-  if (r < 0.7) return { naam: 'Lasterdecreet', type: 'buff', doe: () => {
+  if (r < 0.7) return { naam: 'Lasterdecreet', type: 'buff', tip: 'Lasterdecreet: schuift een Laster tussen je kaarten en wordt sterker (+1 Kracht)', doe: () => {
     g.trek.splice(Math.floor(willekeurig() * (g.trek.length + 1)), 0, nieuweKaart('laster'));
     geefStatus(v, 'kracht', 1);
     melding('👑 Een gestempeld lasterdecreet schuift tussen je kaarten.');
@@ -6682,6 +6713,7 @@ async function gevechtGewonnen() {
   const g = S.gevecht;
   if (!g || g.voorbij) return;
   g.voorbij = true;
+  if (S.checkpoint) delete S.checkpoint;   /* v108: het baas-checkpoint is niet meer nodig */
   /* een episch-vijand-gevecht laat bij winst een episch-scherf vallen (bankt op je stash) */
   if (g.epischScherf) { const sid = vindScherf('episch'); if (sid) toonScherfReveal(sid, { kop: '🜂 DE EPISCHE VIJAND LAAT IETS NA' }); }
   /* Act 2+: elite-winst kan een willekeurige scherf opleveren (Act 1 is bewust scherven-stil) */
@@ -6818,6 +6850,7 @@ function nederlaag() {
   if (!g || g.voorbij) return;
   g.voorbij = true;
   g.bezig = true;
+  if (S.checkpoint) delete S.checkpoint;   /* v108 */
   Klank.sfx('verlies');
   wisSave();
   setTimeout(() => {

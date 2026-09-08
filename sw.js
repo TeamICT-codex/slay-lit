@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v107'; // v107: DE WERELD (spike "De Richels") — js/wereld.js erbij, achter de DEV-vlag ?wereld=1
+const CACHE = 'slayit-v108'; // v108: Het Proces stap 1 — DICKtator-fases werken (pips/woede), Decreet als eigen intent, herlaad-checkpoint in het baasgevecht
 const BESTANDEN = [
   '.',
   'css/style.css',
