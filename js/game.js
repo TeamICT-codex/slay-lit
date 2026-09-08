@@ -6388,13 +6388,14 @@ function copycatNaSchade(v, n, bron) {
    (het meetharnas zet 'm op 0.02 om de beats over te slaan).
    ============================================================ */
 const DICK = {
-  hp: 220,                                  /* was 240: het hof + vorm 2 leveren nu de druk */
+  hp: 200,                                  /* was 240, na de balansronde 220 -> 200 (knop 4): het hof + vorm 2 leveren nu de druk */
   vorm2Pct: 0.40,                           /* DE HERVERKIEZING: terug op 40% = 88 HP */
   fase2: 0.66, fase3: 0.33,
   AANZEGGING: 8, KARAKTERMOORD: 8, KM_PER_VLOEK: 3,
-  EXECUTIE: 22, DONDERREDE: 11, ONTSLAG: 22,
-  APPLAUS: 5,
-  FACTUUR: { basis: 6, tarief: 4, basis3: 10, tarief3: 5, index: 2, hofCap: 6 },
+  EXECUTIE: 18, DONDERREDE: 11, ONTSLAG: 18,
+  APPLAUS: 3,
+  KM_VLOEK_CAP: 3,        /* de vloeken-as houdt tanden, maar geen 23-schade-spike */
+  FACTUUR: { basis: 5, tarief: 3, basis3: 7, tarief3: 4, index: 1, hofCap: 4 },
   decreetCap: 3,          /* harde grens: nooit meer dan 3 kaarten per gevecht */
   speelbaarGuard: 6,      /* bestaande guard: onder 7 speelbare kaarten geen decreet meer */
   lasterCap: 3, dekMinLaster: 16,
@@ -6890,7 +6891,8 @@ function dicktatorKies(v, beurt) {
   /* slot 1 — DE KLAP */
   const rider = vv => dicktatorAanzeg(vv, g, fase);
   if (fase <= 1) return { naam: 'DE AANZEGGING', type: 'aanval', dmg: DICK.AANZEGGING, doe: rider };
-  return { naam: 'KARAKTERMOORD', type: 'aanval', dmg: DICK.KARAKTERMOORD + DICK.KM_PER_VLOEK * vloekenInGevecht(g), doe: rider };
+  const vloeken = Math.min(DICK.KM_VLOEK_CAP, vloekenInGevecht(g));
+  return { naam: 'KARAKTERMOORD', type: 'aanval', dmg: DICK.KARAKTERMOORD + DICK.KM_PER_VLOEK * vloeken, doe: rider };
 }
 
 /* ---------- V · HET MANDAAT (vorm 2) ---------- */

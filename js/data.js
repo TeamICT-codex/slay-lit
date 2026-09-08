@@ -1328,7 +1328,7 @@ const VIJANDEN = {
   de_dicktator: {
     /* v109 HET PROCES: 240 → 220 — het hof (optioneel te doden) en vorm 2 (HET MANDAAT) voegen de
        druk toe die de kale HP-muur vroeger moest leveren (contract §6). Getallen: DICK in game.js. */
-    naam: 'de DICKtator', art: '👑', hp: [220, 220], baas: true,
+    naam: 'de DICKtator', art: '👑', hp: [200, 200], baas: true,
     titel: 'Heerser van het Slachtblok',
     kies: (v, beurt) => dicktatorKies(v, beurt)
   },
