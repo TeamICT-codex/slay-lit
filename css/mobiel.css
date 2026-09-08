@@ -1077,6 +1077,12 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      door de chip-max-width) en liep vijand 0 BOVEN het scherm uit (art op y-245). Kleinere figuren vanaf
      3 vijanden + chips die de kolom niet meer oprekken → 2 per rij, alles in beeld. */
   body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas):not(.is-episch) .vijand-art { width: 86px; height: 86px; }
+  /* v109: met het hof erbij (baas + 3) krimpt ook de baas, en klemt de intent-pil op de
+     kolombreedte - anders loopt de rij op 412px een paar pixels over de rechterrand. */
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .is-baas .vijand-art { width: 120px; height: 120px; }
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas) .intent {
+    max-width: 88px; overflow: hidden; text-overflow: ellipsis; padding: 3px 7px;
+  }
   body[data-modus="mobiel"] #vijanden-rij .blok-status { width: 0; min-width: 100%; max-width: none; }
   body[data-modus="mobiel"] .vijand { min-width: 0; padding: 4px; }
   body[data-modus="mobiel"] .vijand-art { width: 104px; height: 104px; }
@@ -1182,6 +1188,16 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
     width: clamp(110px, 34vh, 170px); height: clamp(110px, 34vh, 170px);
   }
   body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) { gap: 6px; }
+  /* de INTENT-PIL is de brede boosdoener, niet de figuur: 'inventaris'/'betekening' maakte
+     de kolom 155px terwijl de hp-balk 84px is. Vanaf 3 figuren klemt de pil op de balkbreedte
+     (de volledige naam blijft in de tik-tooltip staan). */
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas) .intent {
+    max-width: 88px; overflow: hidden; text-overflow: ellipsis; padding: 3px 7px;
+  }
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas) .intent-rij { max-width: 92px; }
+  /* en de hp-balk is de tweede breedte-driver (84px); met vier figuren naast elkaar mag ze
+     smaller - de naam staat er toch op en het getal zit in de tik-tooltip. */
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas) .hp-balk { width: 66px; }
   /* (baas: eigen HP-balk wegwerken staat nu onvoorwaardelijk in sectie A, zodat
      het óók in portret-baasgevechten geldt — niet enkel liggend.) */
 

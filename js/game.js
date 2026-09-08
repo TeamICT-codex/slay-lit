@@ -6945,7 +6945,7 @@ function hofIntent(v, beurt) {
       naam: 'DE ZITTING', type: 'hof', cast: true, icoon: '🖋️', kort: 'DE ZITTING',
       tip: 'hij stempelt het dossier — hierdoor kan het decreet vallen'
     };
-    return { naam: 'HET DOSSIER', type: 'hof', icoon: '📋', kort: 'het dossier', tip: 'houdt het dossier van de shortlist bij — deze beurt geen schade' };
+    return { naam: 'HET DOSSIER', type: 'hof', icoon: '📋', kort: 'dossier', tip: 'houdt het dossier van de shortlist bij — deze beurt geen schade' };
   }
   if (v.id === 'de_deurwaarder') {
     if (v.rolVorm2) return { naam: 'DE BETEKENING', type: 'hof', icoon: '📨', kort: 'betekening', tip: 'houdt het ontslagbriefje klaar — zonder hem kan HET ONTSLAG niet vallen' };
@@ -6956,7 +6956,7 @@ function hofIntent(v, beurt) {
         doe: () => dicktatorNaFactuur(dicktatorBaas(S.gevecht), false)
       };
     }
-    return { naam: 'DE INVENTARIS', type: 'hof', icoon: '🧮', kort: 'telt uw posten', tip: 'telt uw posten voor de volgende rekening — deze beurt geen schade' };
+    return { naam: 'DE INVENTARIS', type: 'hof', icoon: '🧮', kort: 'inventaris', tip: 'telt uw posten voor de volgende rekening — deze beurt geen schade' };
   }
   if (v.id === 'de_claqueur') {
     if (bi && bi.ontslag) return { naam: 'ADEMLOZE STILTE', type: 'hof', icoon: '🤫', kort: 'stilte', tip: 'zelfs het betaald applaus houdt zijn adem in' };
