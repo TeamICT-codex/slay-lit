@@ -681,8 +681,13 @@ const Vista = (() => {
 
       a.sprite.scale.set(a.schaal * sx, a.schaal * sy, 1);
       a.mat.rotation = rot;
-      /* voeten blijven geplant: bij samenpersen zakt het middelpunt mee */
-      a.sprite.position.y = a.basisY + Math.sin(tijd * 2 + a.fase) * 0.06 - (1 - sy) * a.schaal / 2;
+      /* voeten blijven geplant: bij samenpersen zakt het middelpunt mee.
+         De idle-adem tilt het hele lijf op en neer, maar de grondschaduw blijft
+         liggen — een te grote uitslag leest dus letterlijk als zweven. 0.06 was
+         ±0,75% vh (±6,7px op 1440x900) en at de hele foutmarge van de voetlijn op;
+         0.02 (±0,25% vh) komt overeen met de 2px van het 2D-toneel ('subtieler ->
+         minder zwevend', style.css @keyframes beef). */
+      a.sprite.position.y = a.basisY + Math.sin(tijd * 2 + a.fase) * 0.02 - (1 - sy) * a.schaal / 2;
       a.sprite.position.x = a.basisX + offX;
       a.schaduw.position.x = a.basisX + offX;
       a.schaduw.scale.set(a.schaal * 0.85 * sx, a.schaal * 0.4, 1);
