@@ -133,6 +133,7 @@ window.devMobiel = function (forceer) {
   const aan = (forceer !== undefined) ? !!forceer : (document.body.dataset.modus !== 'mobiel');
   document.body.dataset.modus = aan ? 'mobiel' : 'laptop';
   window.mobiel = aan;
+  try { if (typeof zetToneelSchaal === 'function') zetToneelSchaal(); } catch (e) {}   /* v114: --toneel-k hangt aan het spoor */
   try { if (typeof S !== 'undefined' && S && S.gevecht && typeof renderGevecht === 'function') renderGevecht(); } catch (e) {}
   try { if (typeof melding === 'function') melding('DEV: mobiel-spoor ' + (aan ? 'AAN' : 'uit')); } catch (e) {}
   console.info('[DEV] mobiel-spoor', aan ? 'AAN' : 'uit', '(data-modus=' + document.body.dataset.modus + ')');
@@ -3612,8 +3613,21 @@ function herpasSchermAchtergronden() {
 function zetToneelSchaal() {
   const el = $('#scherm-gevecht');
   if (!el) return;
-  const k = Math.min(1.35, Math.max(0.75, (window.innerHeight || 900) / 900));
+  /* v114-fix: op het MOBIELE spoor blijft k op 1. Mobiel heeft zijn eigen, al
+     schermrelatieve maatsysteem (de vh-clamps in mobiel.css) en die overschrijven
+     alleen width/height — nooit font-size. Een k < 1 lekte daardoor door naar de
+     letter-/emoji-maat: op 800x360 (k = 0,75) kromp een emoji-vijand van 96 naar
+     71 px hoog terwijl zijn box 94 px bleef. Dat raakt élke vijand zonder eigen
+     karakterbestand, inclusief het hele hof van de DICKtator. Met k = 1 is het
+     mobiele spoor exact wat het vóór v114 was (contract §9.3: "mobiel ongewijzigd
+     of beter"), en houdt mobiel één maatsysteem i.p.v. twee. */
+  const k = (document.body.dataset.modus === 'mobiel')
+    ? 1
+    : Math.min(1.35, Math.max(0.75, (window.innerHeight || 900) / 900));
   el.style.setProperty('--toneel-k', k.toFixed(3));
+  /* de metgezel-art schaalt mee (zie style.css) → de in 3D gecachete voetmaat
+     klopt na een maatwissel niet meer; laten hermeten. */
+  try { if (typeof GDOM !== 'undefined' && GDOM && GDOM.metgezel) GDOM.metgezel.artVoet = 0; } catch (e) {}
 }
 window.zetToneelSchaal = zetToneelSchaal;
 

@@ -1324,8 +1324,13 @@ body.lite .lb-daily-cta { animation: none; }
 #metgezel-zone[hidden] { display: none; }
 @keyframes metgezelOp { from { opacity: 0; transform: translateY(16px) scale(.82); } }
 .metgezel-art {
-  font-size: 3.4rem;
-  width: 88px; height: 88px;
+  /* v114-fix: als enige 2D-figuur stond de metgezel nog in vaste px, terwijl held en
+     vijanden via --toneel-k met de schermhoogte meegroeien. Op 1920x1080 zakte de
+     verhouding metgezel/held daardoor van 0,89 naar 0,74 — Drops oogde op een
+     Chromebook merkbaar kleiner naast de held dan op Thomas' laptop. Mobiel niet:
+     daar staat k op 1 en winnen de vh-clamps in mobiel.css. */
+  font-size: calc(3.4rem * var(--toneel-k, 1));
+  width: calc(88px * var(--toneel-k, 1)); height: calc(88px * var(--toneel-k, 1));
   display: flex; align-items: flex-end; justify-content: center;
   position: relative;
   filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .7)) drop-shadow(0 0 16px rgba(var(--mgk, 255, 156, 63), .35));
@@ -1334,7 +1339,7 @@ body.lite .lb-daily-cta { animation: none; }
 /* het PODIUM (playtest 27 aug: 'ik voel ze niet') — groter op laptop, een halve stap
    vóór de held (overlap), met een familie-aura als grondcirkel. Mobiel houdt zijn
    eigen zorgvuldig getunede clamps (mobiel.css wint op specificiteit). */
-body[data-modus="laptop"] .metgezel-art { width: 110px; height: 110px; font-size: 4.2rem; }
+body[data-modus="laptop"] .metgezel-art { width: calc(110px * var(--toneel-k, 1)); height: calc(110px * var(--toneel-k, 1)); font-size: calc(4.2rem * var(--toneel-k, 1)); }
 body[data-modus="laptop"] #metgezel-zone { margin-left: -30px; z-index: 2; }
 body[data-modus="laptop"] .d3-actief #metgezel-zone { margin-left: 0; }   /* in 3D plaatst gevechtTik de zone — de 2D-overlap-margin zou dubbel tellen (review) */
 body[data-modus="laptop"] .metgezel-hp { width: 100px; }
