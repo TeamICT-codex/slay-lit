@@ -3267,7 +3267,9 @@ body.lite .kies-slot.leeg, body.lite .kies-actiebalk .kies-bevestig:not(:disable
     rgba(255, 235, 200, .25), rgba(255, 255, 255, .04) 38%, transparent 65%);
   pointer-events: none;
 }
-.kaart-focus .kaart-naam { font-size: 1.6rem; margin-top: 5px; }
+/* v114-fix: ook hier de afrondingsrest van de -webkit-box opvangen. Op de zoomkaart
+   kost die px niets (ruimte zat), dus hij staat er onvoorwaardelijk. */
+.kaart-focus .kaart-naam { font-size: 1.6rem; margin-top: 5px; padding-bottom: 2px; }
 .kaart-focus .kaart-icoon { font-size: 4.1rem; margin: 10px 0 8px; }
 .kaart.groot.kaart-focus .kaart-icoon img { width: 218px; height: 154px; border-radius: 8px; }
 /* compactere tekst + meer verticale ruimte (art verkleind hierboven) zodat lange teksten —
