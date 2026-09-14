@@ -1,5 +1,5 @@
 /* ============================================================================
-   HET TONEEL IN 3D (v116) — HERTEST-SUITE
+   HET TONEEL IN 3D (v116/v117) — HERTEST-SUITE
 
    Draaien (Windows, vanuit de map waar `playwright` geïnstalleerd staat):
        node toneel3d_acceptatie.js
@@ -325,7 +325,7 @@ async function huidigeAfwijking(page) {
     t(page.__f.length === 0, 'geen paginafouten' + (page.__f.length ? ' — ' + page.__f[0] : ''));
     await ctx.close();
   }
-  t(/const CACHE = 'slayit-v116'/.test(fs.readFileSync(path.join(WORKTREE, 'sw.js'), 'utf8')), "sw.js staat op slayit-v116");
+  t(/const CACHE = 'slayit-v117'/.test(fs.readFileSync(path.join(WORKTREE, 'sw.js'), 'utf8')), "sw.js staat op slayit-v117");
 
   await browser.close();
   console.log('\nSAMENVATTING ok ' + ok + ' fout ' + fout + '   (screenshots: ' + SHOTS + ')');

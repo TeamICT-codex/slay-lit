@@ -10762,6 +10762,12 @@ function vraagShellVersie() {
   }
   _versieUitBestand();
 }
+/* TERUGVAL — en meteen de grens ervan: deze fetch loopt door de fetch-handler van
+   de (mogelijk oude) service worker, die voor code network-first is. Wat hier
+   terugkomt is dus de versie op de SERVER, niet met zekerheid de shell die deze
+   browser draait — precies het verschil dat het label zichtbaar moet maken. Alleen
+   de twee SW-bronnen (het activate-bericht en het antwoord op 'versie?') zijn daar
+   hard bewijs van; daarom overschrijft een SW-antwoord deze waarde altijd. */
 function _versieUitBestand() {
   fetch('sw.js', { cache: 'no-store' })
     .then(r => (r.ok ? r.text() : ''))

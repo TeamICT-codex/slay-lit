@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v116'; // v116: HET TONEEL IN 3D (de gevechtsplaat staat nu ook op het 3D-toneel op haar eigen grondlijn: voetlijn = schermprojectie van de sprite-voeten, vaste camerahoogte) + zichtbaar versielabel in de instellingen
+const CACHE = 'slayit-v117'; // v117: de figuren staan nu ECHT op de vloer (voetmarge-correctie op het 3D-toneel, rustigere idle-adem, voetlijn per acteur)
 const BESTANDEN = [
   '.',
   'css/style.css',
