@@ -3635,6 +3635,11 @@ function _voetschaduwPaar(f, s) {
      klein/groot-maat van de vijand en niets anders. */
   const kl = parseFloat(getComputedStyle(f).scale);
   const breed = f.offsetWidth * (isFinite(kl) && kl > 0 ? kl : 1);
+  /* v114-fix: een figuur die verborgen of 0 px breed is (bv. in 3D, waar Vista tekent)
+     mag hier GEEN `--vs-b: 0px` achterlaten — dat schakelt de CSS-terugval
+     var(--vs-b, 76px) permanent uit en er komt dan nooit meer een ovaal, ook niet als
+     de figuur zichtbaar terugkomt. Dan liever de property weghalen. */
+  if (!(breed > 0)) { s.style.removeProperty('--vs-b'); s.style.removeProperty('--vs-dy'); return; }
   s.style.setProperty('--vs-b', Math.round(breed * 0.7) + 'px');
   /* HOOGTE: het schaduw-broertje staat de kolom-gap (5-8px, per spoor anders) onder
      de voet van de figuur. Eerst terugzetten, dan meten, dan het verschil als
@@ -4515,8 +4520,7 @@ function startGevecht(samenstelling, soort, rij) {
   if (g.gedoofd) g.vijanden.forEach(v => v.status.kracht = (v.status.kracht || 0) + 1);
   g.heldArt = huidigeHeld().art;
 
-  bouwGevechtDom(g);
-  requestAnimationFrame(zetVoetschaduwen);   /* contactschaduw op maat van de verse figuren (v114) */
+  bouwGevechtDom(g);   /* zet zelf de contactschaduwen op maat (v114) */
   /* poses warm vóór de eerste klap (v89) — maar pas ná ~1,2 s (v95): de plaat en de
      handkaart-art krijgen eerst de lijn; de eerste vijandelijke klap komt toch pas
      na jouw beurt. Gespreid en alleen bestaande poses (zie preloadPoses2D). */
@@ -5095,6 +5099,15 @@ function bouwGevechtDom(g) {
   }
 
   $('#hand').innerHTML = '';
+  /* v114-fix: de contactschaduwen horen BIJ deze herbouw, niet bij de aanroepers.
+     bouwGevechtDom() vervangt de hele rij, dus na elke aanroep zijn de gemeten
+     --vs-b/-maten van ALLE figuren weg — ook die van de held en de metgezel, niet
+     alleen die van een nieuwkomer. startGevecht riep zetVoetschaduwen() zelf aan,
+     maar voegVijandToe() (splijtende Slijmkoning, dicktatorRoep/het hof) en het
+     Drops-de-Witte-moment niet, waardoor de ovaal terugviel op haar vaste 76px en
+     een paar px onder de voeten bleef liggen tot de volgende resize. Hier staat hij
+     één keer, zodat geen enkele toekomstige aanroeper hem nog kan vergeten. */
+  requestAnimationFrame(zetVoetschaduwen);
 }
 
 function trekKaarten(n) {
@@ -10672,6 +10685,9 @@ function instWijzig() {
     if (d3Gewenst() && Vista.start($('#vista-canvas'))) {
       scherm.classList.add('d3-actief');
       Vista.gevechtStart(S.gevecht, S.gevecht.soort, !!S.gevecht.achtergrond);
+      /* v114-fix: op het 3D-toneel is de plaat de achterwand van Vista — de px-maat
+         van plaatsGevechtsplaat() weer vrijgeven, zodat de CSS-cover terug geldt. */
+      plaatsGevechtsplaat();
     } else {
       if (window.Vista) Vista.gevechtEind();
       scherm.classList.remove('d3-actief');
@@ -10679,6 +10695,13 @@ function instWijzig() {
       GDOM.vijanden.forEach(d => { d.wrap.style.left = ''; d.wrap.style.top = ''; d.spacer.style.height = ''; });
       if (GDOM.speler) { GDOM.speler.wrap.style.left = ''; GDOM.speler.wrap.style.top = ''; GDOM.speler.spacer.style.height = ''; }
       if (GDOM.metgezel) { GDOM.metgezel.wrap.style.left = ''; GDOM.metgezel.wrap.style.top = ''; }   /* terug naar de 2D flex-indeling */
+      /* v114-fix: 3D UIT midden in een gevecht gaf het 2D-toneel terug zónder zijn twee
+         v114-metingen — de plaat bleef op `cover` (precies de zwevende plaatsing die
+         deze ronde oplost) en de figuren stonden zonder contactschaduw, tot de eerste
+         resize. Juist deze knop staat in het testrecept ("zet 3D UIT") en het tandwiel
+         is tijdens een gevecht bereikbaar. */
+      plaatsGevechtsplaat();
+      requestAnimationFrame(zetVoetschaduwen);
     }
   }
 }
