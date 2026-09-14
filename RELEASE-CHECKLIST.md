@@ -44,9 +44,9 @@
 | Heal-na-elk-gevecht te mild? (tot +17 HP/gevecht) | de heal-hook in `gevechtGewonnen` (opties: <50%-HP-gate / halveren / enkel na elite+) |
 | Slijmkoning-intro-pacing | `STAP` (nu 3900 ms per stadium) |
 | Gifmagiër (co-)sterkste held | pas ná playtest; zo ja: tempo-hefboom (gifflits 0→1), niet de gif-getallen |
-| HET PROCES: is de matige gifbuild te hard gestraft? (bot-meting: 0/12 winst zonder dranken/metgezel) | `DICK.hp` (180/200/220), `DICK.vorm2Pct` (0.35/0.40), `DICK.FACTUUR.tarief` (3/4) — allemaal in één blok bovenaan de DICKtator-sectie |
-| HET PROCES: valt de mediaan-Slachter te makkelijk? (bot: 12/12, eindigt op ±31% HP) | `DICK.FACTUUR` omhoog (5+3 → 6+4), `DICK.EXECUTIE` (18/22), `DICK.ONTSLAG` (18/22/26) |
-| HET PROCES: te veel lege rondes? | `DICK.claqueurVanaf` (3 → 2: het betaald applaus treedt dan al in bedrijf II aan) |
+| HET PROCES: is de matige gifbuild te hard gestraft? (bot-meting: 0/12 winst, ook mét heeldrank en metgezel) | **GEEN dial helpt** — gemeten, 12 seeds per cel: hp 200 / 160 / 120 → 0-1/12, tarief 2/3 → 0/12, hofcap 2 → 0/12, 0-kostgewicht 1 → 0/12, claqueur vanaf II → 0/12, factuur bijna uit (2 + 1/post, cap 2) → 1/12. Pas met de Factuur VOLLEDIG uit wint hij 8-10/12. Dit is een ontwerpkeuze, geen knop: zie de drie ontwerpvragen onderaan §6 van `.claude/notities/eindbaas_contract.md` |
+| HET PROCES: valt de mediaan-Slachter te makkelijk? (bot: 12/10/12 over drie beleidsregels, eindigt op ±25% HP) | `DICK.EXECUTIE` (18 → 22) **of** `DICK.FACTUUR.basis3` (7 → 10), niet allebei: samen zakt hij naar 8/12 agressief. `DICK.ONTSLAG` (18/22/26) is nog ongebruikt |
+| HET PROCES: te veel lege rondes? | `DICK.claqueurVanaf` (3 → 2) is gemeten en **werkt niet**: nulschade blijft 32-48% (de vaste cyclus van drie zet zelf al één schadeloze decreetronde per drie = 33% bodem) en de mediaan-Slachter zakt naar 8/12 factuurbewust. Eerst de definitie vastleggen (§6, ontwerpvraag 2) |
 | HET PROCES: dagwet GLAZEN ZIELEN × de Factuur | bewust brutaal gelaten (de speler kiest die dag zelf); de dagwettekst noemt het nu expliciet. Clampen kan in één regel: `glasDmg` overslaan voor `opts.vast` in `vijandAanval` |
 
 ---
