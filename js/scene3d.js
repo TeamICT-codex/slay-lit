@@ -752,49 +752,66 @@ const Vista = (() => {
     return { x: voet.x, topY: top.y, voetY: voet.y };
   }
 
-  /* ---------- DE VOETLIJN VAN HET 3D-TONEEL (v116) ----------
+  /* ---------- DE VOETLIJN VAN HET 3D-TONEEL (v116, verfijnd in v117) ----------
      Op het 2D-toneel is de voetlijn de onderkant van de figuur-wrapper; in 3D
      bestaat die DOM-figuur niet (Vista tekent sprites). De voetlijn is hier de
-     SCHERMPROJECTIE van de sprite-voeten: elke acteur staat met zijn voeten op
-     wereld-y VOET_WERELD_Y (= basisY - schaal/2 uit maakActeur), elk op zijn
-     eigen diepte z. Perspectief maakt daar onvermijdelijk een BAND van: de
-     achterste rij (z -0.4) landt hoger in beeld dan de voorste (z +0.4, waar de
-     held staat). We geven het MIDDEN van die band terug — zo staat elke figuur
-     even ver van de geschilderde vloerrand (de halve spreiding, ~1,4% vh op
-     1440x900) i.p.v. één rij perfect en de andere er dubbel naast.
+     SCHERMPROJECTIE van de GETEKENDE voeten: elke acteur staat met zijn voeten op
+     wereld-y VOET_WERELD_Y (sinds v117 dankzij de voetmarge-correctie ook echt de
+     geschilderde voet, niet de onderkant van de quad).
 
-     Twee bewuste keuzes:
-     - DODE acteurs tellen mee voor de diepte-band: hun z verandert niet, en zo
+     Perspectief maakt daar onvermijdelijk een BAND van, en die heeft TWEE termen:
+     - DIEPTE: de achterste rij (z -0.4) landt hoger in beeld dan de voorste
+       (z +0.4, waar de held staat) — 2,71% vh op 1440x900.
+     - ZIJKANT (v117): een voet op x -3.7 projecteert niet op dezelfde hoogte als
+       een voet op x +3.1 bij gelijke z; gemeten ~0,43% vh. In v116 werd alles op
+       x=0 geprojecteerd en verdween die term in de restafwijking van de speler.
+     Daarom projecteren we nu per acteur op zijn EIGEN x en z, en geven we het
+     MIDDEN van de werkelijke band terug: zo staat elke figuur even ver van de
+     geschilderde vloerrand (de halve spreiding) i.p.v. één rij perfect en de
+     andere er dubbel naast.
+
+     Twee bewuste keuzes blijven:
+     - DODE acteurs tellen mee voor de band: hun plek verandert niet, en zo
        verspringt de plaat niet op het moment dat een vijand valt.
-     - Gemeten met de RUSTcamera (zonder de trage zwaai en de klap-kick), anders
-       beeft de plaat elk frame mee. De camerabeweging zit al in de parallax die
-       gevechtTik op de hele laag zet. */
+     - Gemeten met de RUSTcamera (zonder de trage zwaai en de klap-kick) en op de
+       RUSTpositie van elke acteur (basisX, niet de uitval), anders beeft de plaat
+       elk frame mee. De camerabeweging zit al in de parallax die gevechtTik op de
+       hele laag zet. */
   const VOET_Z_SPELER = 0.4, VOET_Z_VIJAND = -0.4;   /* terugval vóór gevechtStart */
-  function _voetY(z) { return projecteer(0, VOET_WERELD_Y, z).y; }
+  const VOET_X_SPELER = -3.7, VOET_X_VIJAND = 3.1;
+  function _voetY(x, z) { return projecteer(x, VOET_WERELD_Y, z).y; }
   function voetlijnInfo() {
     if (!klaar || !camera) return null;
-    let zLaag = null, zHoog = null, zSpeler = null, zVLaag = null, zVHoog = null;
+    /* eerst alle (x,z)-paren verzamelen, dan pas projecteren: de projectie moet op
+       de rustcamera gebeuren en die zetten we maar één keer. */
+    const punten = [];
     for (const [actor, a] of acteurs) {
-      const z = a.sprite.position.z;
-      if (zLaag === null || z < zLaag) zLaag = z;
-      if (zHoog === null || z > zHoog) zHoog = z;
-      if (actor && actor.isSpeler) zSpeler = z;
-      else {
-        if (zVLaag === null || z < zVLaag) zVLaag = z;
-        if (zVHoog === null || z > zVHoog) zVHoog = z;
-      }
+      punten.push({ x: a.basisX, z: a.sprite.position.z, speler: !!(actor && actor.isSpeler) });
     }
-    if (zLaag === null) { zLaag = VOET_Z_VIJAND; zHoog = VOET_Z_SPELER; }
+    if (!punten.length) {
+      punten.push({ x: VOET_X_SPELER, z: VOET_Z_SPELER, speler: true });
+      punten.push({ x: VOET_X_VIJAND, z: VOET_Z_VIJAND, speler: false });
+    }
     const px = camera.position.x, py = camera.position.y, pz = camera.position.z;
     camera.position.set(0, 2.6, 8.8);
     camera.lookAt(0, kijkY, 0);
     camera.updateMatrixWorld(true);      /* Camera zet hier ook matrixWorldInverse — project() leest die */
-    const yLaag = _voetY(zLaag), yHoog = _voetY(zHoog);
+    let laag = null, hoog = null, speler = null, vLaag = null, vHoog = null;
+    for (const p of punten) {
+      const y = _voetY(p.x, p.z);
+      if (laag === null || y < laag) laag = y;
+      if (hoog === null || y > hoog) hoog = y;
+      if (p.speler) speler = y;
+      else {
+        if (vLaag === null || y < vLaag) vLaag = y;
+        if (vHoog === null || y > vHoog) vHoog = y;
+      }
+    }
     const info = {
-      y: (yLaag + yHoog) / 2,
-      spreiding: yHoog - yLaag,
-      speler: zSpeler === null ? null : _voetY(zSpeler),
-      vijanden: zVLaag === null ? null : (_voetY(zVLaag) + _voetY(zVHoog)) / 2
+      y: (laag + hoog) / 2,
+      spreiding: hoog - laag,
+      speler,
+      vijanden: vLaag === null ? null : (vLaag + vHoog) / 2
     };
     camera.position.set(px, py, pz);
     camera.lookAt(0, kijkY, 0);
