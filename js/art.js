@@ -724,3 +724,65 @@ const ACHTERGRONDEN = {
   }
 };
 window.ACHTERGRONDEN = ACHTERGRONDEN;
+
+/* ============================================================
+   GRONDLIJN PER GEVECHTSPLAAT (v114 — HET TONEEL)
+   ------------------------------------------------------------
+   ACHTERGRONDEN blijft een tabel van KALE STRINGS: de wereld (js/wereld.js),
+   renderKaartScherm en schermAchtergrond lezen die paden rechtstreeks, en een
+   object-entry zou daar stil een "[object Object]"-url opleveren. Vandaar een
+   PARALLELLE tabel op pad -> { grond, midden }:
+     grond  = het percentage van de PLAATHOOGTE waar de voeten van de figuren
+              horen te landen (gemeten aan de figuurkanten, bron-x 20% / 80%;
+              bij de toneelstandaard-platen is dat de vloerrand 56% + 5%).
+     midden = het bron-x-percentage dat in het midden van het scherm moet
+              blijven als de plaat breder is dan het venster (default 50).
+   Lezer: grondVan(pad) — met of zonder de ACHTERGRONDEN.basis-prefix, en met
+   terugval 0.62 (de oude, globale voetlijn) voor elke plaat die hier niet in
+   staat. Zo kan er nooit een lookup-gat ontstaan als er een plaat bijkomt.
+   Bron van de getallen: .claude/notities/toneel_contract.md sect. 2.
+   ============================================================ */
+const GROND = {
+  /* --- Act 1 — De Kerker --- */
+  'Act 1 achtergronden/Gevechtstijl1act1.webp': { grond: 68 },                    /* tegelvloer begint pas op 68% */
+  'Act 1 achtergronden/Gevechtsijl2act1.webp': { grond: 64 },                     /* helling 57-72%, tredelijn 64 */
+  'Act 1 achtergronden/Gevechtstijl3act1.webp': { grond: 61, midden: 59 },
+  'Act 1 achtergronden/GevechtstijlEPISCHGEVECHTACT1.webp': { grond: 65 },         /* plint tot 67% aan de heldkant */
+  'Act 1 achtergronden/GevechtstijlEPISCHGEVECHT2ACT1.webp': { grond: 65, midden: 59 },
+  /* --- Act 2 — Het Archief --- */
+  'Act 2 achtergronden/Gevechtstijl1act2.webp': { grond: 71, midden: 62 },         /* rekken tot 73% — hergeneratie-kandidaat */
+  'Act 2 achtergronden/Gevechtstijl2act2.webp': { grond: 68, midden: 57 },
+  'Act 2 achtergronden/Gevechtstijl3act2.webp': { grond: 69, midden: 57 },         /* kastenwand tot 72% */
+  'Act 2 achtergronden/Gevechtstijl4act2.webp': { grond: 67, midden: 57 },         /* boek links-vooraan achter de held */
+  'Act 2 achtergronden/Gevechtstijl5act2.webp': { grond: 61, midden: 56 },         /* toneelstandaard: vloerrand 56% */
+  'Act 2 achtergronden/Gevechtstijl act2 EPISCH 1.webp': { grond: 69, midden: 62 },/* drukste textuur — hergeneratie-kandidaat */
+  'Act 2 achtergronden/Gevechtstijl act2 EPISCH 2.webp': { grond: 69, midden: 68 },/* dossiertoren met trap — hergeneratie-kandidaat */
+  'Act 2 achtergronden/Gevechtstijl act2 EPISCH 3.webp': { grond: 64 },
+  /* --- Act 3 — Het Slachtblok --- */
+  'Act 3 achtergronden/Gevechtstijl Act 3 stijl 1.webp': { grond: 61, midden: 56 },
+  'Act 3 achtergronden/Gevechtstijl Act 3 stijl 2.webp': { grond: 63, midden: 55 },/* lavaval links: held op mobiel erin */
+  'Act 3 achtergronden/Gevechtstijl Act 3 stijl 3.webp': { grond: 61, midden: 56 },
+  'Act 3 achtergronden/Gevechtstijl Act 3 stijl 4.webp': { grond: 66 },            /* vuurschalen onder held/vijand 2 */
+  'Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 1.webp': { grond: 62 },
+  'Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 2.webp': { grond: 66 },     /* smalle brugarm */
+  'Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 3.webp': { grond: 62 },
+  /* --- het Raadzaal-drieluik (toneelstandaard): alle drie dezelfde grond, anders
+         springt de vloer tijdens de arena-crossfade van Het Proces --- */
+  'Act 3 achtergronden/Gevechtstijl Act 3 FINALE 1 zitting.webp': { grond: 61, midden: 56 },
+  'Act 3 achtergronden/Gevechtstijl Act 3 FINALE 2 verschuiving.webp': { grond: 61, midden: 56 },
+  'Act 3 achtergronden/Gevechtstijl Act 3 FINALE 3 herverkiezing.webp': { grond: 61, midden: 56 }
+};
+window.GROND = GROND;
+/* pad mag de volledige url zijn (basis + pad) of het kale manifest-pad; ook een
+   absolute/encoded url uit een style-attribuut valt hier netjes op zijn plaats. */
+window.grondVan = function grondVan(pad) {
+  const terugval = { grond: 0.62, midden: 0.5 };
+  if (!pad) return terugval;
+  let p = String(pad);
+  try { p = decodeURIComponent(p); } catch (e) { /* al leesbaar */ }
+  const i = p.indexOf(ACHTERGRONDEN.basis);
+  if (i >= 0) p = p.slice(i + ACHTERGRONDEN.basis.length);
+  const g = GROND[p];
+  if (!g) return terugval;
+  return { grond: g.grond / 100, midden: (g.midden === undefined ? 50 : g.midden) / 100 };
+};

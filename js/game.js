@@ -3596,6 +3596,113 @@ function herpasSchermAchtergronden() {
   });
 }
 
+/* ============================================================
+   HET TONEEL (v114) — plaatsGevechtsplaat()
+   ------------------------------------------------------------
+   Vervangt `background-size: cover` + `background-position` voor de
+   gevechtsplaat. Waarom: cover is op laptop en in portret HOOGTE-gedreven
+   (getekende hoogte == elementhoogte), dus background-position-y is daar een
+   NO-OP; de geschilderde vloerrand kon nooit op de voetlijn gezet worden en de
+   figuren zweefden 50-90 px boven de vloer (gemeten, zie toneel_contract.md).
+   De enige knop die wél werkt is background-SIZE: uitzoomen tot de bron-rij
+   `grond` exact op de gemeten voetlijn valt.
+
+   Met element vw x vh (inclusief de -28px parallaxmarge), de plaatverhouding r
+   (breedte/hoogte uit het geladen Image), de CSS-voetlijn voetY (gemeten, niet
+   aangenomen) en grond (fractie):
+
+     H    = max( vh,                        // dekt de hoogte
+                 vw / r,                    // dekt de breedte
+                 voetY / grond,             // vloerrand niet boven de voetlijn
+                 (vh - voetY) / (1 - grond) )   // plaat loopt door tot onderaan
+     W    = H * r
+     top  = voetY - grond * H               // <= 0 per constructie
+     left = clamp( vw/2 - midden * W, vw - W, 0 )
+
+   Altijd oplosbaar (H groeit tot beide randvoorwaarden kloppen); de prijs is
+   bijsnijden, nooit een gat. Op het 3D-toneel (d3-actief) laten we de plaat met
+   rust: daar staat ze als achterwand van het Vista-toneel.
+   ============================================================ */
+const _plaatRatio = new Map();       /* url -> breedte/hoogte, eenmalig gemeten */
+const _plaatBezig = new Set();       /* url -> Image loopt, geen dubbele laders */
+
+/* de gemeten voetlijn, in px vanaf de BOVENkant van het plaat-element.
+   Niet aangenomen: de portret-topbalk (76px) / liggend (40px), --voetc per held
+   en de mobiele clamps verschuiven hem allemaal. De figuur-wrapper is de waarheid
+   (de img erin staat via `translate: 0 var(--voetc)` al met zijn getekende voeten
+   op de onderrand van de wrapper). Terugval: #strijdveld minus zijn padding. */
+function _voetlijnVan(rTop) {
+  const fig = $('.speler-figuur') || $('#vijanden-rij .vijand-art');
+  if (fig) {
+    const fr = fig.getBoundingClientRect();
+    if (fr.height > 0) return fr.bottom - rTop;
+  }
+  const sv = $('#strijdveld');
+  if (sv) {
+    const sr = sv.getBoundingClientRect();
+    const pb = parseFloat(getComputedStyle(sv).paddingBottom) || 0;
+    return sr.bottom - pb - rTop;
+  }
+  return null;
+}
+
+/* zet één laag (de plaat zelf of de crossfade-laag van Het Proces) op zijn grond */
+function _plaatsLaag(el, url) {
+  if (!el || !url) return;
+  const ratio = _plaatRatio.get(url);
+  if (!ratio) { _laadPlaatRatio(url); el.style.backgroundSize = ''; el.style.backgroundPosition = ''; return; }
+  const r = el.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  const voetY = _voetlijnVan(r.top);
+  const g = (window.grondVan ? grondVan(url) : { grond: 0.62, midden: 0.5 });
+  const grond = Math.min(0.95, Math.max(0.05, g.grond));
+  if (voetY === null || !isFinite(voetY)) { el.style.backgroundSize = ''; el.style.backgroundPosition = ''; return; }
+  const v = Math.min(r.height, Math.max(0, voetY));
+  const H = Math.max(r.height, r.width / ratio, v / grond, (r.height - v) / (1 - grond));
+  const W = H * ratio;
+  const top = v - grond * H;
+  const left = Math.min(0, Math.max(r.width - W, r.width / 2 - g.midden * W));
+  el.style.backgroundSize = Math.round(W) + 'px ' + Math.round(H) + 'px';
+  el.style.backgroundPosition = Math.round(left) + 'px ' + Math.round(top) + 'px';
+  el.style.backgroundRepeat = 'no-repeat';
+}
+
+/* verhouding eenmalig meten; daarna de plaat opnieuw zetten (tot dan: cover) */
+function _laadPlaatRatio(url) {
+  if (_plaatRatio.has(url) || _plaatBezig.has(url)) return;
+  _plaatBezig.add(url);
+  const im = new Image();
+  im.onload = () => {
+    _plaatBezig.delete(url);
+    if (im.naturalWidth && im.naturalHeight) {
+      _plaatRatio.set(url, im.naturalWidth / im.naturalHeight);
+      plaatsGevechtsplaat();
+    }
+  };
+  im.onerror = () => { _plaatBezig.delete(url); };
+  im.src = url;
+}
+
+/* de publieke haak: bij startGevecht, bij resize/draai (opSchermDraai), bij de
+   arena-crossfade van Het Proces en eenmalig zodra de plaat geladen is. */
+function plaatsGevechtsplaat() {
+  const bg = $('#gevecht-achtergrond');
+  const laag2 = document.getElementById('gevecht-achtergrond-2');
+  const url = (typeof S !== 'undefined' && S && S.gevecht && S.gevecht.achtergrond) || null;
+  if (!bg) return;
+  /* 3D-toneel: Vista zet de plaat als achterwand — niets aanraken (en een eerder
+     gezette px-maat weer vrijgeven zodat de CSS-cover terug geldt). */
+  if (d3Actief() || !bg.classList.contains('zichtbaar') || !url) {
+    bg.style.backgroundSize = ''; bg.style.backgroundPosition = '';
+    if (laag2) { laag2.style.backgroundSize = ''; laag2.style.backgroundPosition = ''; }
+    return;
+  }
+  _plaatsLaag(bg, url);
+  /* de crossfade-laag toont de NIEUWE plaat; die staat in haar eigen data-plaat */
+  if (laag2) _plaatsLaag(laag2, laag2.dataset.plaat || url);
+}
+window.plaatsGevechtsplaat = plaatsGevechtsplaat;
+
 /* gevechtsplaat kiezen (willekeurige variant; episch voor elite/baas) */
 function kiesGevechtAchtergrond(soort) {
   const A = window.ACHTERGRONDEN;
@@ -4252,6 +4359,10 @@ function toonEpischIntro(g) {
 let _draaiHertekenTimer = null;
 function opSchermDraai() {
   evalueerDraaiBlok();
+  /* HET TONEEL (v114): de grondlijn hangt aan de venstermaat én aan de voetlijn
+     (portret-topbalk 76px, liggend 40) — bij elke resize/draai opnieuw rekenen,
+     meteen (niet gedebounced) zodat er geen frame met een verschoven vloer staat. */
+  if (document.body.dataset.scherm === 'gevecht') plaatsGevechtsplaat();
   /* afdaalkaart herschalen bij draaien: de zoom hangt aan de schermbreedte, en
      zonder hertekenen blijft 'ie stale → te klein (na portret→liggend) of
      overlopend/afgeknipt (liggend→portret). Licht gedebounced tegen resize-burst. */
@@ -4364,13 +4475,16 @@ function startGevecht(samenstelling, soort, rij) {
   if (g.achtergrond) {
     bgEl.style.backgroundImage =
       `linear-gradient(rgba(13,10,18,.32), rgba(13,10,18,.5)), url("${g.achtergrond}")`;
-    /* GRONDANKER: leeg laten → CSS beslist per spoor (laptop center, mobiel
-       center bottom). Uitzondering: de FINALE-plaat (887×1774, vogelvlucht
-       de diepte in) heeft GEEN grondlijn — onder-ankeren zou er een
-       willekeurige band uitsnijden, dus die blijft overal 'center'. */
-    bgEl.style.backgroundPosition = /FINALE/i.test(g.achtergrond) ? 'center' : '';
+    /* GRONDANKER (v114): niet meer via background-position (op laptop en in
+       portret een no-op) maar via plaatsGevechtsplaat() — die zoomt de plaat zo
+       dat haar bron-rij `grond` exact op de gemeten voetlijn valt. Tot de
+       verhouding gemeten is, blijft de CSS-cover als terugval staan. */
+    bgEl.style.backgroundPosition = '';
+    bgEl.style.backgroundSize = '';
     bgEl.style.transform = '';
     bgEl.classList.add('zichtbaar');
+    plaatsGevechtsplaat();
+    requestAnimationFrame(plaatsGevechtsplaat);   /* na de eerste layout van het verse gevecht-DOM */
   } else {
     bgEl.classList.remove('zichtbaar');
   }
@@ -6558,14 +6672,16 @@ function toonArenaWissel(url) {
   const bgEl = $('#gevecht-achtergrond');
   if (!bgEl || !url) return;
   const beeld = `linear-gradient(rgba(13,10,18,.32), rgba(13,10,18,.5)), url("${url}")`;
-  /* GRONDANKER: het Raadzaal-drieluik (887×1774, vogelvlucht) heeft geen grondlijn —
-     onder-ankeren zou er een willekeurige band uitsnijden, dus 'center' (zie startGevecht). */
-  const pos = /FINALE/i.test(url) ? 'center' : '';
+  /* GRONDANKER (v114): beide lagen krijgen dezelfde grondlijn via
+     plaatsGevechtsplaat(), zodat de vloer tijdens de crossfade niet verspringt.
+     Het Raadzaal-drieluik deelt daarom één grond-waarde in de GROND-tabel. */
   if (g) g.achtergrond = url;
   const hard = () => {
     bgEl.style.backgroundImage = beeld;
-    bgEl.style.backgroundPosition = pos;
+    bgEl.style.backgroundPosition = '';
+    bgEl.style.backgroundSize = '';
     bgEl.classList.add('zichtbaar');
+    plaatsGevechtsplaat();
   };
   const rustig = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (document.body.classList.contains('lite') || rustig || d3Actief()) { hard(); return; }
@@ -6575,7 +6691,7 @@ function toonArenaWissel(url) {
   laag.id = 'gevecht-achtergrond-2';
   laag.className = 'zichtbaar';
   laag.style.backgroundImage = beeld;
-  laag.style.backgroundPosition = pos;
+  laag.dataset.plaat = url;                 /* plaatsGevechtsplaat() zet hem op dezelfde grond */
   laag.style.filter = bgEl.style.filter;   /* zelfde fakkel-helderheid als de laag eronder */
   laag.style.opacity = '0';
   bgEl.parentNode.insertBefore(laag, bgEl.nextSibling);
