@@ -427,6 +427,66 @@ Painted illustration style only. Full-bleed 16:9 landscape environment plate (19
 
 
 ################################################################################
+############  GEVECHTSTONEEL — RONDE 2: DE DRIE ACT 2-FALERS (v114, 14 sep)  ###
+################################################################################
+Na de grondlijn-per-plaat (v114, plaatsGevechtsplaat) staan alle 21 platen exact
+op hun eigen vloerrand — maar drie Act 2-platen VECHTEN tegen het toneel en
+moeten daarvoor te ver uitgezoomd worden (Act 2 gevecht 1 snijdt 32% van de
+breedte weg op 1440x900, de andere twee 27%). Het zijn precies de drie waarvan de
+compositie de speelzone volbouwt: rekken die tot 73% doorlopen, een trap op de
+voetlijn, en de drukste textuur van het spel pal achter de statuschips.
+Hergenereren volgens de TONEELSTANDAARD: de verre rand van de loopvloer is EEN
+rechte horizontale lijn op 56% van boven, het middelste 80% van de breedte
+daaronder LEEG en vlak, hoge elementen alleen in de buitenste 10%, een focaal
+bouwsel in het bovenmidden tussen 20% en 48%, en de band tussen 60% en 82% DONKER
+en textuurarm (daar hangen naam, hp-balk en statuschips).
+Alle drie VERVANGEN een bestaand bestand — zelfde naam, overschrijven.
+Dropmap: "Act 2 achtergronden/". Na de drop worden hun grond-waarden in
+js/art.js (tabel GROND) 61 en vervallen hun midden-waarden.
+
+========================= Gevechtstijl act2 EPISCH 2.png =========================
+(VERVANGT de dossiertoren met trap — de trap ligt pal op de voetlijn, dus er is
+geen vlakke vloer om op te staan; zelfde naam, overschrijven. grond nu 69/midden 68 -> wordt 61.)
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Environment plate, wide establishing shot: THE HEART OF THE INDEX — a colossal mechanical card-catalogue engine at the far end of a records hall. We stand on the working floor in front of it. The engine's black-iron base ends on ONE straight horizontal plinth line running across the entire width of the frame at 56% down the frame; above that line the machine climbs in the upper centre as the focal structure: tier upon tier of identical brass drawers, a great toothed indexing wheel, rotating arms that pull duplicate slips from one drawer and feed them into the next, driving belts and counterweights disappearing into the dark vault above. Cold grey-blue clerical light falls from a high slit far above onto the engine and the wall only. The STAIRS that used to run down into the foreground are gone: the engine is reached by a narrow service ladder bolted flat against its side, entirely BEHIND the plinth line. Left wing (outer 10%): a clerk's hooded lantern on an iron bracket burning SOFT AMBER, the one warm, uncopyable light, with a single bundle of sealed contracts hanging beside it. Right wing (outer 10%): a tall drive-shaft with a chained counterweight and a blank brass tally-board. The floor filling the whole lower part of the frame: flat, matte, dark slate flagstones, worn smooth in one broad path, a few discarded slips pressed FLAT into the stone (nothing standing, nothing higher than a fingernail), fading into darkness toward the bottom edge.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon. For this Act 2 archive the palette is tilted COLD: blue-grey clerical 'system light' from above, paper-yellow only as a faint accent high up on the machine, and the warm torch-glow confined to the left wing; identical, duplicated, mirrored drawer-banks (copies of copies).
+
+STAGE COMPOSITION (strict): camera at standing eye level, straight-on, shallow one-point perspective with the vanishing point at centre, no fisheye, no bird's-eye view. The far edge of the walkable floor (the engine plinth) is ONE straight horizontal line at 56% down the frame across the middle 80% of the width — no V-shaped dip at the sides, and NO steps, stairs, treads or ramps anywhere in the middle 80% of the width. Everything below that line across the middle 80% of the width is EMPTY flat matte floor: no drawers, lecterns, crates, pillars or debris standing there. Tall framing elements only in the outer 10% left and right. One single focal structure (the catalogue engine with its indexing wheel) in the upper centre between 20% and 48% down the frame. The band between 60% and 82% down the frame stays DARK and low in texture (average luminance under 25 of 255), with a soft dark vignette in the corners; no bright light pools, no white paper and no light sources below the floor line. Include a human-scale reference on the floor line (a drawer bank about 22% of the frame height) so the engine reads as many times a man's height. Mood: tireless, indifferent, copying forever.
+
+Painted illustration style only. Full-bleed 16:9 landscape environment plate (1920x1080), no transparency. No characters, no creatures, no figures, no crowd, no faces, no text, no letters, no numbers, no signage, no frame, no UI.
+
+========================= Gevechtstijl act2 EPISCH 1.png =========================
+(VERVANGT de papierkathedraal — de drukste textuur van het spel zit precies achter
+de naam/hp/chip-band, en de vloerrand loopt aan de figuurkanten tot 73%; zelfde naam,
+overschrijven. grond nu 69/midden 62 -> wordt 61.)
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Environment plate, wide establishing shot: THE NAVE OF THE DEAD ARCHIVE — a cathedral-scale central hall whose side walls are colossal banks of tagged bone-files (all tags BLANK) climbing out of frame into darkness. The walls stop on ONE straight horizontal skirting line that runs across the entire width of the frame at 56% down the frame; below that line there is nothing but floor. In the upper centre, the focal structure: a raised altar-desk built of sealed contracts and iron seals under a high, narrow clerestory slit, one cold shaft of grey-blue light striking the altar and the far wall only, between 20% and 48% down the frame, never reaching the floor in front. Left wing (outer 10%): a lectern-post with a hooded lantern burning SOFT AMBER, the one warm, uncopyable light. Right wing (outer 10%): a hanging chain of blank wax seals and a rolling archive ladder parked against the wall. The floor filling the whole lower part of the frame: flat, matte, dark slate flagstones, deliberately PLAIN and almost textureless — no scattered paper, no inlay, no carved patterns, no reflections — fading into near-black toward the bottom edge.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon. For this Act 2 archive the palette is tilted COLD: blue-grey clerical 'system light' from the clerestory, paper-yellow only as a faint accent high on the file walls (above 45% of the frame), and the warm torch-glow confined to the left wing; identical, duplicated, mirrored file banks (copies of copies).
+
+STAGE COMPOSITION (strict): camera at standing eye level, straight-on, shallow one-point perspective with the vanishing point at centre, no fisheye, no bird's-eye view. The far edge of the walkable floor (the wall skirting) is ONE straight horizontal line at 56% down the frame across the middle 80% of the width — the file walls must NOT run down into the foreground at the sides. Everything below that line across the middle 80% of the width is EMPTY flat matte floor: no pews, lecterns, crates, candle rows, pillars or debris standing there. Tall framing elements only in the outer 10% left and right. One single focal structure (the altar-desk under the light shaft) in the upper centre between 20% and 48% down the frame. CRITICAL for this plate: the band between 60% and 82% down the frame is the quietest, darkest part of the whole image (average luminance under 25 of 255, no highlight above 55) — flat shadowed stone, no paper, no gold, no white, no lettering-like speckle, no busy detail of any kind, with a soft dark vignette in the corners. Include a human-scale reference on the floor line (a file bay about 22% of the frame height) so the nave reads as cathedral-scale. Mood: reverent, cold, bureaucratic.
+
+Painted illustration style only. Full-bleed 16:9 landscape environment plate (1920x1080), no transparency. No characters, no creatures, no figures, no crowd, no faces, no text, no letters, no numbers, no signage, no frame, no UI.
+
+========================= Gevechtstijl1act2.png =========================
+(VERVANGT de schedelgang — de rekken lopen aan de figuurkanten tot 73% door, de
+slechtste plaat van de 21: 32% breedte moet weggesneden worden om de voeten op de
+vloer te krijgen; zelfde naam, overschrijven. grond nu 71/midden 62 -> wordt 61.)
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Environment plate, wide establishing shot: THE MAIN AISLE OF THE DEAD ARCHIVE — a wide clerical hall with towering shelves of tagged bone-files and bundled contracts (all tags BLANK) along both side walls. The shelving is set BACK against the walls and its bases end on ONE straight horizontal skirting line running across the entire width of the frame at 56% down the frame — the racks do not step forward toward the camera at the sides. In the upper centre, the focal structure: a great blank-faced archive clock-gate at the end of the aisle, an iron portal crowned with a dial of counters that has no numbers on it, backlit by one cold grey-blue shaft from a high vent, sitting between 20% and 48% down the frame. Left wing (outer 10%): an iron stanchion with a hooded lantern burning SOFT AMBER, the one warm, uncopyable light, and a low velvet queue-rope. Right wing (outer 10%): a rolling archive ladder and a chained bundle of sealed contracts hanging from a bracket. The aisle floor filling the whole lower part of the frame: flat, matte, dark slate flagstones with a faint worn walking path and nothing on it, fading into darkness toward the bottom edge.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon. For this Act 2 archive the palette is tilted COLD: blue-grey clerical 'system light' from the vent, paper-yellow only as a faint accent high on the shelving, and the warm torch-glow confined to the left wing; identical, duplicated, mirrored shelving on both sides (copies of copies).
+
+STAGE COMPOSITION (strict): camera at standing eye level, straight-on, shallow one-point perspective with the vanishing point at centre, no fisheye, no bird's-eye view. The far edge of the walkable floor (the shelving skirting) is ONE straight horizontal line at 56% down the frame across the middle 80% of the width — no V-shaped dip, and the shelf bases must NOT descend toward the lower corners. Everything below that line across the middle 80% of the width is EMPTY flat matte floor: no racks, crates, skulls, lecterns, stairs or debris standing there. Tall framing elements only in the outer 10% left and right. One single focal structure (the blank clock-gate) in the upper centre between 20% and 48% down the frame. The band between 60% and 82% down the frame stays DARK and low in texture (average luminance under 25 of 255), with a soft dark vignette in the corners; no bright light pools, no white paper and no light sources below the floor line. Include a human-scale reference on the floor line (a shelving bay about 22% of the frame height). Mood: endless, orderly, indifferent.
+
+Painted illustration style only. Full-bleed 16:9 landscape environment plate (1920x1080), no transparency. No characters, no creatures, no figures, no crowd, no faces, no text, no letters, no numbers, no signage, no frame, no UI.
+
+
+################################################################################
 ############  DE AFDALING — BIOOM-LAGEN (Dead Cells-richting, 6 sep 2026)  #####
 ################################################################################
 De verkenbare afdaling (spike "De Richels", vlag ?wereld=1) wordt een zijaanzicht-

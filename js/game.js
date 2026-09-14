@@ -105,13 +105,16 @@ const mobiel =
   /Android|iPhone|iPad|iPod|Mobile|Silk/i.test(navigator.userAgent || '');
 window.mobiel = mobiel;
 
-/* lite = zwakke hardware of OS-reduced-motion. Op MOBIEL is de RAM/cores-drempel
-   te streng: Chrome clampt navigator.deviceMemory grof (talloze capabele telefoons
-   melden gewoon 4) -> daar enkel bij écht zwak (<=1 GB / <=2 cores) of expliciete
-   reduced-motion naar lite. Op laptop ongewijzigd (<=4). */
+/* lite = zwakke hardware of OS-reduced-motion. De RAM/cores-drempel is op BEIDE
+   sporen te streng gebleken: Chrome clampt navigator.deviceMemory grof (op 4 of 8),
+   dus een doodgewone Chromebook meldt 4 kernen / 4 GB en belandde met de oude
+   laptop-drempel (<=4) in lite -> 3D uit -> het 2D-toneel met zijn VASTE px-maten,
+   waar de figuren op een 1920x1080-Chromebook piepklein ogen (v114, HET TONEEL).
+   Nu op beide sporen enkel bij écht zwak (<=2 kernen / <=2 GB) of expliciete
+   reduced-motion. De lite-knop in de instellingen blijft gewoon werken. */
 const standaardLite =
-  (navigator.hardwareConcurrency || 8) <= (mobiel ? 2 : 4) ||
-  (navigator.deviceMemory || 8) <= (mobiel ? 1 : 4) ||
+  (navigator.hardwareConcurrency || 8) <= 2 ||
+  (navigator.deviceMemory || 8) <= (mobiel ? 1 : 2) ||
   (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 /* het presentatiespoor: laptop (gedeelde basis) of mobiel (css/mobiel.css).
@@ -130,6 +133,7 @@ window.devMobiel = function (forceer) {
   const aan = (forceer !== undefined) ? !!forceer : (document.body.dataset.modus !== 'mobiel');
   document.body.dataset.modus = aan ? 'mobiel' : 'laptop';
   window.mobiel = aan;
+  try { if (typeof zetToneelSchaal === 'function') zetToneelSchaal(); } catch (e) {}   /* v114: --toneel-k hangt aan het spoor */
   try { if (typeof S !== 'undefined' && S && S.gevecht && typeof renderGevecht === 'function') renderGevecht(); } catch (e) {}
   try { if (typeof melding === 'function') melding('DEV: mobiel-spoor ' + (aan ? 'AAN' : 'uit')); } catch (e) {}
   console.info('[DEV] mobiel-spoor', aan ? 'AAN' : 'uit', '(data-modus=' + document.body.dataset.modus + ')');
@@ -3596,6 +3600,215 @@ function herpasSchermAchtergronden() {
   });
 }
 
+/* ============================================================
+   HET TONEEL (v114) — zetToneelSchaal()
+   ------------------------------------------------------------
+   Op het 2D-toneel stonden de figuren in VASTE pixels (vijand 108, elite 136,
+   episch 158, baas 176, held 124). Op een Windows-laptop met 125-150% OS-schaling
+   oogt dat normaal; op een Chromebook zonder schaling (1920x1080 CSS-px) is het
+   piepklein. Eén schermrelatieve factor voor alle 2D-figuurmaten, zodat de
+   VERHOUDING tussen held/vijand/elite/episch/baas exact blijft en alleen de maat
+   meegroeit met de schermhoogte. 900 px hoogte = de ijklaptop (k = 1).
+   Mobiel heeft zijn eigen vh-clamps in mobiel.css en blijft daar ongemoeid. */
+function zetToneelSchaal() {
+  const el = $('#scherm-gevecht');
+  if (!el) return;
+  /* v114-fix: op het MOBIELE spoor blijft k op 1. Mobiel heeft zijn eigen, al
+     schermrelatieve maatsysteem (de vh-clamps in mobiel.css) en die overschrijven
+     alleen width/height — nooit font-size. Een k < 1 lekte daardoor door naar de
+     letter-/emoji-maat: op 800x360 (k = 0,75) kromp een emoji-vijand van 96 naar
+     71 px hoog terwijl zijn box 94 px bleef. Dat raakt élke vijand zonder eigen
+     karakterbestand, inclusief het hele hof van de DICKtator. Met k = 1 is het
+     mobiele spoor exact wat het vóór v114 was (contract §9.3: "mobiel ongewijzigd
+     of beter"), en houdt mobiel één maatsysteem i.p.v. twee. */
+  const k = (document.body.dataset.modus === 'mobiel')
+    ? 1
+    : Math.min(1.35, Math.max(1, (window.innerHeight || 900) / 900));   /* architect (naverificatie v114, bevinding 8): ondergrens 1 —
+       de figuren worden op een kort venster (1280x620) nooit KLEINER dan vóór v114; k groeit alleen op hoge schermen (Chromebook 1080p → 1,2). */
+  el.style.setProperty('--toneel-k', k.toFixed(3));
+  /* de metgezel-art schaalt mee (zie style.css) → de in 3D gecachete voetmaat
+     klopt na een maatwissel niet meer; laten hermeten. */
+  try { if (typeof GDOM !== 'undefined' && GDOM && GDOM.metgezel) GDOM.metgezel.artVoet = 0; } catch (e) {}
+}
+window.zetToneelSchaal = zetToneelSchaal;
+
+/* ============================================================
+   HET TONEEL (v114) — zetVoetschaduwen()
+   ------------------------------------------------------------
+   De contactschaduw (één zachte ovaal op de voetlijn + een bredere sokkel die
+   naar beneden over naam/hp/chips uitloopt) staat als eigen, ONgefilterd
+   broertje naast elke figuur. De maat komt uit de GEMETEN figuurbreedte i.p.v.
+   uit een tweede set CSS-maten: zo volgt ze automatisch --toneel-k, de mobiele
+   vh-clamps, de :has-krimpregels én de klein/groot-scale, zonder dat er ooit
+   twee maatsystemen uit elkaar kunnen lopen. Geen animatie — dus in lite en
+   onder reduced-motion vanzelf identiek. Geen filter: drop-shadow (kost fps).
+   Aangeroepen na bouwGevechtDom en bij elke resize/draai. */
+/* de LAYOUT-onderkant van een figuur in viewport-px. NIET getBoundingClientRect():
+   die telt de lopende 'adem'-animatie mee (translateY(-2px) scale(1.012)), waardoor
+   elke aanroep 1-3px anders uitkomt en de plaat per meting een tikje verspringt.
+   offsetTop/offsetHeight zijn transform-vrij; de ouder-rect levert het viewport-anker
+   (en verrekent dus wél een eventuele transform hoger in de boom). */
+function _layoutOnder(el) {
+  if (!el) return null;
+  const p = el.offsetParent;
+  if (p) {
+    const pr = p.getBoundingClientRect();
+    const bt = parseFloat(getComputedStyle(p).borderTopWidth) || 0;
+    return pr.top + bt + el.offsetTop + el.offsetHeight;
+  }
+  return el.getBoundingClientRect().bottom;
+}
+
+function _voetschaduwPaar(f, s) {
+  if (!f || !s) return;
+  /* BREEDTE: offsetWidth (layout, dus zonder de 'adem'-animatie die via transform
+     1,2% op en neer schaalt) maal de losse `scale:`-prop — dat is precies de
+     klein/groot-maat van de vijand en niets anders. */
+  const kl = parseFloat(getComputedStyle(f).scale);
+  const breed = f.offsetWidth * (isFinite(kl) && kl > 0 ? kl : 1);
+  /* v114-fix: een figuur die verborgen of 0 px breed is (bv. in 3D, waar Vista tekent)
+     mag hier GEEN `--vs-b: 0px` achterlaten — dat schakelt de CSS-terugval
+     var(--vs-b, 76px) permanent uit en er komt dan nooit meer een ovaal, ook niet als
+     de figuur zichtbaar terugkomt. Dan liever de property weghalen. */
+  if (!(breed > 0)) { s.style.removeProperty('--vs-b'); s.style.removeProperty('--vs-gap'); return; }
+  s.style.setProperty('--vs-b', Math.round(breed * 0.7) + 'px');
+  /* HOOGTE: het schaduw-broertje staat de kolom-gap (5-6px, per zone anders) onder de
+     voet van de figuur. v114-fix: dat wegwerken met een relatieve `top` verschoof wel
+     de ovaal, maar de 0px-hoge div TELT als flex-item en kostte de kolom dus nog altijd
+     één extra gap — de held stond daardoor 6px hoger dan in main en de vijanden 5px, en
+     de vloerlijn (die op de HELD gemeten wordt) liep een paar px naast de vijanden.
+     Een NEGATIEVE margin-top haalt de gap er echt uit: de ovaal ligt op de voetlijn én
+     de kolom is weer even hoog als zonder schaduw-broertje.
+     De gap wordt in LAYOUT-coördinaten gemeten (offsetTop, dus zonder de adem-animatie)
+     en eerst op 0 gezet, anders meten we onze eigen vorige correctie mee. */
+  s.style.setProperty('--vs-gap', '0px');
+  const gap = (s.offsetParent && s.offsetParent === f.offsetParent)
+    ? s.offsetTop - (f.offsetTop + f.offsetHeight)
+    : s.getBoundingClientRect().top - _layoutOnder(f);
+  s.style.setProperty('--vs-gap', Math.max(0, Math.round(gap)) + 'px');
+}
+function zetVoetschaduwen() {
+  _voetschaduwPaar($('#speler-zone .speler-figuur'), $('#speler-zone .voetschaduw'));
+  _voetschaduwPaar($('#metgezel-zone .metgezel-art'), $('#metgezel-zone .voetschaduw'));
+  $$('#vijanden-rij .vijand').forEach(v =>
+    _voetschaduwPaar(v.querySelector('.vijand-art'), v.querySelector('.voetschaduw')));
+  /* de negatieve marges maken de kolommen korter; omdat ze flex-end uitgelijnd staan
+     zakt de voetlijn daardoor mee — de plaat moet er dus opnieuw op geankerd worden. */
+  if (typeof plaatsGevechtsplaat === 'function') plaatsGevechtsplaat();
+}
+window.zetVoetschaduwen = zetVoetschaduwen;
+
+/* ============================================================
+   HET TONEEL (v114) — plaatsGevechtsplaat()
+   ------------------------------------------------------------
+   Vervangt `background-size: cover` + `background-position` voor de
+   gevechtsplaat. Waarom: cover is op laptop en in portret HOOGTE-gedreven
+   (getekende hoogte == elementhoogte), dus background-position-y is daar een
+   NO-OP; de geschilderde vloerrand kon nooit op de voetlijn gezet worden en de
+   figuren zweefden 50-90 px boven de vloer (gemeten, zie toneel_contract.md).
+   De enige knop die wél werkt is background-SIZE: uitzoomen tot de bron-rij
+   `grond` exact op de gemeten voetlijn valt.
+
+   Met element vw x vh (inclusief de -28px parallaxmarge), de plaatverhouding r
+   (breedte/hoogte uit het geladen Image), de CSS-voetlijn voetY (gemeten, niet
+   aangenomen) en grond (fractie):
+
+     H    = max( vh,                        // dekt de hoogte
+                 vw / r,                    // dekt de breedte
+                 voetY / grond,             // vloerrand niet boven de voetlijn
+                 (vh - voetY) / (1 - grond) )   // plaat loopt door tot onderaan
+     W    = H * r
+     top  = voetY - grond * H               // <= 0 per constructie
+     left = clamp( vw/2 - midden * W, vw - W, 0 )
+
+   Altijd oplosbaar (H groeit tot beide randvoorwaarden kloppen); de prijs is
+   bijsnijden, nooit een gat. Op het 3D-toneel (d3-actief) laten we de plaat met
+   rust: daar staat ze als achterwand van het Vista-toneel.
+   ============================================================ */
+const _plaatRatio = new Map();       /* url -> breedte/hoogte, eenmalig gemeten */
+const _plaatBezig = new Set();       /* url -> Image loopt, geen dubbele laders */
+
+/* de gemeten voetlijn, in px vanaf de BOVENkant van het plaat-element.
+   Niet aangenomen: de portret-topbalk (76px) / liggend (40px), --voetc per held
+   en de mobiele clamps verschuiven hem allemaal. De figuur-wrapper is de waarheid
+   (de img erin staat via `translate: 0 var(--voetc)` al met zijn getekende voeten
+   op de onderrand van de wrapper). Terugval: #strijdveld minus zijn padding. */
+function _voetlijnVan(rTop) {
+  const fig = $('.speler-figuur') || $('#vijanden-rij .vijand-art');
+  if (fig && fig.offsetHeight > 0) {
+    /* v114-fix: via de LAYOUT-onderkant, niet via de rect — die ademt mee (zie
+       _layoutOnder) en liet de plaat per aanroep 1-3px verspringen. */
+    const y = _layoutOnder(fig);
+    if (y !== null && isFinite(y)) return y - rTop;
+  }
+  const sv = $('#strijdveld');
+  if (sv) {
+    const sr = sv.getBoundingClientRect();
+    const pb = parseFloat(getComputedStyle(sv).paddingBottom) || 0;
+    return sr.bottom - pb - rTop;
+  }
+  return null;
+}
+
+/* zet één laag (de plaat zelf of de crossfade-laag van Het Proces) op zijn grond */
+function _plaatsLaag(el, url) {
+  if (!el || !url) return;
+  const ratio = _plaatRatio.get(url);
+  if (!ratio) { _laadPlaatRatio(url); el.style.backgroundSize = ''; el.style.backgroundPosition = ''; return; }
+  const r = el.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  const voetY = _voetlijnVan(r.top);
+  const g = (window.grondVan ? grondVan(url) : { grond: 0.62, midden: 0.5 });
+  const grond = Math.min(0.95, Math.max(0.05, g.grond));
+  if (voetY === null || !isFinite(voetY)) { el.style.backgroundSize = ''; el.style.backgroundPosition = ''; return; }
+  const v = Math.min(r.height, Math.max(0, voetY));
+  const H = Math.max(r.height, r.width / ratio, v / grond, (r.height - v) / (1 - grond));
+  const W = H * ratio;
+  const top = v - grond * H;
+  const left = Math.min(0, Math.max(r.width - W, r.width / 2 - g.midden * W));
+  el.style.backgroundSize = Math.round(W) + 'px ' + Math.round(H) + 'px';
+  el.style.backgroundPosition = Math.round(left) + 'px ' + Math.round(top) + 'px';
+  el.style.backgroundRepeat = 'no-repeat';
+}
+
+/* verhouding eenmalig meten; daarna de plaat opnieuw zetten (tot dan: cover) */
+function _laadPlaatRatio(url) {
+  if (_plaatRatio.has(url) || _plaatBezig.has(url)) return;
+  _plaatBezig.add(url);
+  const im = new Image();
+  im.onload = () => {
+    _plaatBezig.delete(url);
+    if (im.naturalWidth && im.naturalHeight) {
+      _plaatRatio.set(url, im.naturalWidth / im.naturalHeight);
+      plaatsGevechtsplaat();
+    }
+  };
+  im.onerror = () => { _plaatBezig.delete(url); };
+  im.src = url;
+}
+
+/* de publieke haak: bij startGevecht, bij resize/draai (opSchermDraai), bij de
+   arena-crossfade van Het Proces en eenmalig zodra de plaat geladen is. */
+function plaatsGevechtsplaat() {
+  const bg = $('#gevecht-achtergrond');
+  const laag2 = document.getElementById('gevecht-achtergrond-2');
+  const url = (typeof S !== 'undefined' && S && S.gevecht && S.gevecht.achtergrond) || null;
+  if (!bg) return;
+  /* 3D-toneel: Vista zet de plaat als achterwand — niets aanraken (en een eerder
+     gezette px-maat weer vrijgeven zodat de CSS-cover terug geldt). */
+  if (d3Actief() || !bg.classList.contains('zichtbaar') || !url) {
+    bg.style.backgroundSize = ''; bg.style.backgroundPosition = '';
+    if (laag2) { laag2.style.backgroundSize = ''; laag2.style.backgroundPosition = ''; }
+    return;
+  }
+  /* tijdens een arena-crossfade toont de ONDERSTE laag nog de oude plaat (toonArenaWissel
+     parkeert die url in dataset.plaat); S.gevecht.achtergrond is dan al de nieuwe. */
+  _plaatsLaag(bg, bg.dataset.plaat || url);
+  /* de crossfade-laag toont de NIEUWE plaat; die staat in haar eigen data-plaat */
+  if (laag2) _plaatsLaag(laag2, laag2.dataset.plaat || url);
+}
+window.plaatsGevechtsplaat = plaatsGevechtsplaat;
+
 /* gevechtsplaat kiezen (willekeurige variant; episch voor elite/baas) */
 function kiesGevechtAchtergrond(soort) {
   const A = window.ACHTERGRONDEN;
@@ -4252,6 +4465,12 @@ function toonEpischIntro(g) {
 let _draaiHertekenTimer = null;
 function opSchermDraai() {
   evalueerDraaiBlok();
+  /* HET TONEEL (v114): de grondlijn hangt aan de venstermaat én aan de voetlijn
+     (portret-topbalk 76px, liggend 40) — bij elke resize/draai opnieuw rekenen,
+     meteen (niet gedebounced) zodat er geen frame met een verschoven vloer staat.
+     De figuurschaal hangt aan dezelfde hoogte, dus die eerst (hij verzet de voetlijn). */
+  zetToneelSchaal();
+  if (document.body.dataset.scherm === 'gevecht') { plaatsGevechtsplaat(); zetVoetschaduwen(); }
   /* afdaalkaart herschalen bij draaien: de zoom hangt aan de schermbreedte, en
      zonder hertekenen blijft 'ie stale → te klein (na portret→liggend) of
      overlopend/afgeknipt (liggend→portret). Licht gedebounced tegen resize-burst. */
@@ -4264,6 +4483,7 @@ function opSchermDraai() {
 }
 window.addEventListener('orientationchange', opSchermDraai);
 window.addEventListener('resize', opSchermDraai);
+zetToneelSchaal();   /* meteen bij het laden, vóór het eerste gevecht (v114) */
 
 function startGevecht(samenstelling, soort, rij) {
   const g = {
@@ -4343,7 +4563,7 @@ function startGevecht(samenstelling, soort, rij) {
   if (g.gedoofd) g.vijanden.forEach(v => v.status.kracht = (v.status.kracht || 0) + 1);
   g.heldArt = huidigeHeld().art;
 
-  bouwGevechtDom(g);
+  bouwGevechtDom(g);   /* zet zelf de contactschaduwen op maat (v114) */
   /* poses warm vóór de eerste klap (v89) — maar pas ná ~1,2 s (v95): de plaat en de
      handkaart-art krijgen eerst de lijn; de eerste vijandelijke klap komt toch pas
      na jouw beurt. Gespreid en alleen bestaande poses (zie preloadPoses2D). */
@@ -4364,13 +4584,16 @@ function startGevecht(samenstelling, soort, rij) {
   if (g.achtergrond) {
     bgEl.style.backgroundImage =
       `linear-gradient(rgba(13,10,18,.32), rgba(13,10,18,.5)), url("${g.achtergrond}")`;
-    /* GRONDANKER: leeg laten → CSS beslist per spoor (laptop center, mobiel
-       center bottom). Uitzondering: de FINALE-plaat (887×1774, vogelvlucht
-       de diepte in) heeft GEEN grondlijn — onder-ankeren zou er een
-       willekeurige band uitsnijden, dus die blijft overal 'center'. */
-    bgEl.style.backgroundPosition = /FINALE/i.test(g.achtergrond) ? 'center' : '';
+    /* GRONDANKER (v114): niet meer via background-position (op laptop en in
+       portret een no-op) maar via plaatsGevechtsplaat() — die zoomt de plaat zo
+       dat haar bron-rij `grond` exact op de gemeten voetlijn valt. Tot de
+       verhouding gemeten is, blijft de CSS-cover als terugval staan. */
+    bgEl.style.backgroundPosition = '';
+    bgEl.style.backgroundSize = '';
     bgEl.style.transform = '';
     bgEl.classList.add('zichtbaar');
+    plaatsGevechtsplaat();
+    requestAnimationFrame(plaatsGevechtsplaat);   /* na de eerste layout van het verse gevecht-DOM */
   } else {
     bgEl.classList.remove('zichtbaar');
   }
@@ -4774,13 +4997,14 @@ function bouwGevechtDom(g) {
     wrap.className = 'vijand' + (def.baas ? ' is-baas' : '') + (def.elite ? ' is-elite' : '') + (def.episch ? ' is-episch' : '')
       + (VIJAND_KLEIN.has(v.id) ? ' vijand-klein' : '') + (VIJAND_GROOT.has(v.id) ? ' vijand-groot' : '')   /* grootte-variatie (transform-scale, origin bottom → breekt de grondlijn niet) */
       + (VIJAND_ENTREE[v.id] ? ' entree-' + VIJAND_ENTREE[v.id] : '')   /* binnenkomst-variant (de .entree-trigger zet startGevecht/voegVijandToe erbij) */
-      + (v.dood ? ' sterft' : '');   /* al gesneuvelde vijand blijft verborgen na een herbouw (voegVijandToe/reveal) — anders 'herrijst' hij zichtbaar */
+      + (v.dood ? ' sterft lijk-weg' : '');   /* al gesneuvelde vijand blijft verborgen na een herbouw (voegVijandToe/reveal) — anders 'herrijst' hij zichtbaar; v114: en geeft meteen zijn kolom terug */
     wrap.dataset.i = i;
     const art = (window.karakterSvg && karakterSvg(v.id))
       || `${v.art}${def.baas ? '<span class="kroon">👑</span>' : ''}`;
     wrap.innerHTML = `
       <div class="intent-rij"></div>
       <div class="vijand-art">${art}</div>
+      <div class="voetschaduw" aria-hidden="true"></div>
       <div class="sprite-ruimte"></div>
       <div class="vijand-naam">${v.naam}</div>
       <div class="hp-balk"><div class="hp-vulling"></div><span class="hp-tekst"></span><span class="blok-schild" data-tip="Blok: vangt aanvalsschade op, verdwijnt aan het begin van de eigen beurt"><svg viewBox="0 0 24 28" aria-hidden="true"><path fill="url(#blokgrad)" stroke="#0c1c2e" stroke-width="1.6" d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg><b></b></span></div>
@@ -4816,6 +5040,7 @@ function bouwGevechtDom(g) {
   ).join('');
   zone.innerHTML = `
     <div id="speler-figuur" class="speler-figuur"${(window.VOETMARGE && VOETMARGE[heldDef.art]) ? ` style="--voetc:${VOETMARGE[heldDef.art]}%"` : ''}>${spelerArt}</div>
+    <div class="voetschaduw" aria-hidden="true"></div>
     <div class="sprite-ruimte"><div id="held-fx">
       <div class="hfx hfx-schild"></div>
       <div class="hfx hfx-cast"><span class="cast-ring"></span><span class="cast-ring" style="--delay:.8s"></span><span class="cast-ring" style="--delay:1.6s"></span></div>
@@ -4864,6 +5089,7 @@ function bouwGevechtDom(g) {
         ${synBadge}
         <div class="metgezel-intent"></div>
         <div class="metgezel-art" data-tip="${md.naam} — ${md.fluister || '…'}"${(window.VOETMARGE && VOETMARGE[g.metgezel.id]) ? ` style="--voetc:${VOETMARGE[g.metgezel.id]}%"` : ''}>${md.icoon}</div>
+        <div class="voetschaduw" aria-hidden="true"></div>
         <div class="metgezel-naam">${md.naam}</div>
         <div class="hp-balk metgezel-hp"><div class="hp-vulling"></div><span class="hp-tekst"></span><span class="blok-schild" data-tip="Blok: vangt aanvalsschade op"><svg viewBox="0 0 24 28" aria-hidden="true"><path fill="url(#blokgrad)" stroke="#0c1c2e" stroke-width="1.6" d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg><b></b></span></div>
         <div class="blok-status"></div>
@@ -4916,6 +5142,15 @@ function bouwGevechtDom(g) {
   }
 
   $('#hand').innerHTML = '';
+  /* v114-fix: de contactschaduwen horen BIJ deze herbouw, niet bij de aanroepers.
+     bouwGevechtDom() vervangt de hele rij, dus na elke aanroep zijn de gemeten
+     --vs-b/-maten van ALLE figuren weg — ook die van de held en de metgezel, niet
+     alleen die van een nieuwkomer. startGevecht riep zetVoetschaduwen() zelf aan,
+     maar voegVijandToe() (splijtende Slijmkoning, dicktatorRoep/het hof) en het
+     Drops-de-Witte-moment niet, waardoor de ovaal terugviel op haar vaste 76px en
+     een paar px onder de voeten bleef liggen tot de volgende resize. Hier staat hij
+     één keer, zodat geen enkele toekomstige aanroeper hem nog kan vergeten. */
+  requestAnimationFrame(zetVoetschaduwen);
 }
 
 function trekKaarten(n) {
@@ -5164,7 +5399,19 @@ function renderGevecht() {
     const d = GDOM.vijanden[i];
     if (!d) return;
     const doelbaar = (g.gekozenKaart !== null || g.gekozenDrank !== null) && !v.dood;
+    /* v114: een lijk geeft na zijn fade zijn KOLOM terug (display:none). Met alleen
+       opacity:0 bleef de kolom én de flex-gap staan, en dat duwde in portret de hele
+       vijandenrij een regel omhoog — tot boven de topbalk. Pas ná de fade, zodat de
+       sterf-animatie intact blijft; bij een herrijzenis (v.dood weer false) valt de
+       kolom vanzelf terug. Indexen in GDOM.vijanden blijven ongemoeid: het element
+       blijft in de DOM staan, het neemt alleen geen ruimte meer. */
+    const wasDood = d.wrap.classList.contains('sterft');
     d.wrap.classList.toggle('sterft', v.dood);
+    if (!v.dood) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); }
+    else if (!wasDood) {
+      clearTimeout(d._lijkT);
+      d._lijkT = setTimeout(() => { if (v.dood) d.wrap.classList.add('lijk-weg'); }, dtempo(750));
+    }
     d.wrap.classList.toggle('doelbaar', doelbaar);
     d.intent.innerHTML = v.dood ? '' : intentTekst(v);
     d.hpV.style.width = Math.max(0, v.hp / v.maxHp * 100) + '%';
@@ -5727,6 +5974,117 @@ function kaartAangezegd(c) {
   return { naam: d.naam, teller: Math.max(0, ((g.gespeeld && g.gespeeld[c.id]) || 0) - (d.start || 0)) };
 }
 
+/* v114 (HET TONEEL, §7) — de trede-klasse voor een kaarttitel. Op het LANGSTE WOORD,
+   niet op de totale lengte: alleen dat woord bepaalt of de browser überhaupt ergens
+   zou moeten breken. "Originele Handtekening" (22 tekens) heeft een langste woord van
+   12 en past prima; "De Schaduwboekhouding" (21) heeft er een van 18 — dat is de
+   echte boosdoener, en die viel met een drempel op de totale lengte in dezelfde bak. */
+function naamKlassen(nm) {
+  const w = String(nm || '').replace(/<[^>]*>/g, ' ').split(/[\s'’-]+/).reduce((m, x) => Math.max(m, x.length), 0);
+  if (w >= 16) return 'xxl-naam';
+  if (w >= 13) return 'xl-naam';
+  if (w >= 10) return 'lange-naam';
+  return '';
+}
+
+/* past de titel in zijn (2 regels hoge) clamp-box? De marge van 1,5px vangt de
+   afrondingsrest van de -webkit-box op, niet een echte derde regel. */
+function _naamPast(el) {
+  return el.scrollWidth <= el.clientWidth + 0.5 && el.scrollHeight <= el.clientHeight + 1.5;
+}
+
+/* v114 (HET TONEEL, §7) — KRIMP-TOT-HET-PAST voor de kaarttitel.
+   De CSS breekt woorden niet meer open (overflow-wrap/word-break: normal), dus een
+   te lang woord zou buíten de kaart bleeden. Chrome hyfeneert alleen als er een
+   nl-woordenlijst beschikbaar is — daar mogen we niet op rekenen. Vandaar deze
+   laatste stap: zolang de titel niet past, de letter een tikje kleiner.
+   Tot 6 stappen van 8% (samen ~39%) met een ondergrens van 7px; daaronder wint de
+   ellipsis van de line-clamp. Zet de maat NIET zelf terug — zetKaartNaam() doet dat,
+   die meet eerst of er überhaupt gekrompen moet worden. */
+function pasKaartNaamAan(naamEl) {
+  if (!naamEl) return;
+  for (let i = 0; i < 6; i++) {
+    if (_naamPast(naamEl)) return;
+    const fs = parseFloat(getComputedStyle(naamEl).fontSize) || 16;
+    if (fs <= 7) return;
+    naamEl.style.fontSize = Math.max(7, fs * 0.92).toFixed(2) + 'px';
+  }
+}
+
+/* v114-fix (§7) — EERST METEN, DAN PAS KRIMPEN.
+   De trede-klasse werd blind op het langste woord gezet, ongeacht of de naam bij de
+   grotere letter al paste — en sinds v114 óók op de grote kaarten (dek, altaar,
+   winkel, smid), waar ruimte zat is. Gemeten over alle 125 kaarten op 1440x900:
+   63 grote kaarten krompen van 16 naar 13,44px terwijl ze op één regel pasten;
+   'Schuldverschuiving' zelfs naar 10,24px. Zonder trede blijkt maar ÉÉN titel op de
+   grote kaart echt te klein te zijn ('De Schaduwboekhouding'). Vandaar: klasse en
+   krimp eerst weghalen, meten, en alleen krimpen als het echt niet past. De trede
+   blijft daarbij het startpunt (één CSS-stap), de JS-krimp het sluitstuk. */
+/* klemt de REGELTEKST van deze kaart? De naam is de identiteit (v95), maar een
+   grotere titel mag geen regeltekst opeten: .kaart-tekst vangt de krimp op en kapt
+   dus af zodra de titel een regel hoger wordt. */
+function _tekstKlemt(naamEl) {
+  const k = naamEl.closest && naamEl.closest('.kaart');
+  const t = k && k.querySelector('.kaart-tekst');
+  return !!(t && t.scrollHeight > t.clientHeight + 1);
+}
+
+function zetKaartNaam(naamEl, nm) {
+  if (!naamEl) return;
+  if (nm !== undefined && nm !== null) naamEl.textContent = nm;
+  const kl = naamKlassen(naamEl.textContent || '');
+  const kaal = () => { naamEl.classList.remove('lange-naam', 'xl-naam', 'xxl-naam'); naamEl.style.fontSize = ''; };
+  /* korte naam: nooit iets doen — en vooral niets SCHRIJVEN, want een schrijfactie
+     gevolgd door een meting verderop kost een layout-pas per kaart (het dek toont er
+     125 in een keer). Alleen opruimen als er iets op te ruimen valt. */
+  if (!kl) {
+    if (naamEl.style.fontSize || naamEl.classList.contains('lange-naam') ||
+      naamEl.classList.contains('xl-naam') || naamEl.classList.contains('xxl-naam')) kaal();
+    return;
+  }
+  kaal();
+  /* clientWidth 0 = nog niet in de DOM: dan de oude, blinde weg (beter iets te klein
+     dan een naam die buiten de kaart loopt); de sweep hieronder corrigeert hem zodra
+     hij wél gelayout is. */
+  if (naamEl.clientWidth <= 0) { naamEl.classList.add(kl); return; }
+  const past = _naamPast(naamEl);
+  if (past && !_tekstKlemt(naamEl)) return;         /* past én kost geen regeltekst */
+  naamEl.classList.add(kl);
+  pasKaartNaamAan(naamEl);
+  /* redde de kleinere letter de regeltekst niet, en paste de naam op volle maat
+     gewoon? Dan de volle maat terugnemen — krimpen zonder winst is precies de bug. */
+  if (past && _tekstKlemt(naamEl)) {
+    naamEl.classList.remove('lange-naam', 'xl-naam', 'xxl-naam');
+    naamEl.style.fontSize = '';
+  }
+}
+
+/* kaartHtml() levert een STRING op; de grote kaarten kunnen dus pas gemeten worden
+   nadat de aanroeper ze in de DOM heeft gezet. Eén gebundelde sweep per frame (en
+   nog een late, voor de onthul-animaties die pas na een tel invoegen) doet dat voor
+   alle aanroepers tegelijk — dek, altaren, winkel, smid, beloning en de zoomkaart.
+   De handkaarten lopen mee: bij de eerste render is hun flex-layout nog niet
+   uitgerekend, waardoor de directe meting in bijwerkKaartEl de regeltekst nog niet
+   ziet klemmen. Idempotent: de sweep haalt klasse en maat eerst weg en meet opnieuw. */
+let _kaartNaamSweep = 0;
+function _sweepKaartNamen(sel) {
+  document.querySelectorAll(sel).forEach(el => zetKaartNaam(el));
+}
+function _plandeKaartNamen() {
+  if (_kaartNaamSweep) return;
+  _kaartNaamSweep = requestAnimationFrame(() => requestAnimationFrame(() => {
+    _kaartNaamSweep = 0;
+    /* DUBBELE rAF: de handzone krijgt haar definitieve flex-layout pas na de eerste
+       frame van renderGevecht, en in die ene frame ziet de directe meting de
+       regeltekst nog niet klemmen. Twee frames later staat alles; dat is ~32ms en
+       dus onzichtbaar. */
+    _sweepKaartNamen('.kaart.groot .kaart-naam, #hand .kaart .kaart-naam');
+    /* de late pas is alleen voor de onthul-animaties die pas na een tel invoegen
+       (booster/beloning); handkaarten blijven eruit, daar zou hij zichtbaar zijn. */
+    setTimeout(() => _sweepKaartNamen('.kaart.groot .kaart-naam'), 400);
+  }));
+}
+
 function maakKaartEl(c) {
   const def = kdef(c);
   const el = document.createElement('div');
@@ -5802,12 +6160,19 @@ function bijwerkKaartEl(el, c, klikbaar) {
   }
   const naamEl = el.querySelector('.kaart-naam');
   const nm = knaam(c);
-  naamEl.textContent = nm;
   /* lange samengestelde namen iets verkleinen zodat ze netjes in 2 regels passen i.p.v. lelijk
      af te kappen (bv. "Originele Handtekening") — tunebaar via de drempels/klassen in style.css */
-  naamEl.classList.toggle('lange-naam', nm.length >= 15 && nm.length < 19);
-  naamEl.classList.toggle('xl-naam', nm.length >= 19);
+  /* v114 (HET TONEEL, §7): de treden staan op het LANGSTE WOORD, niet op de totale
+     lengte — dat woord moet op één regel passen, want alleen dan hoeft de browser
+     nergens middenin te breken. "Originele Handtekening" (22 tekens) heeft een
+     langste woord van 12; "De Schaduwboekhouding" (21) een van 18, en die is dus
+     het echte probleem. v114-fix: zetKaartNaam meet eerst of het bij de volle maat
+     al past — krimpen is de uitzondering, niet de regel. De regeltekst gaat er wél
+     vóór (zetKaartNaam kijkt of de titel geen regeltekst opeet). */
+  naamEl.textContent = nm;
   el.querySelector('.kaart-tekst').innerHTML = def.tekst(c);
+  zetKaartNaam(naamEl, nm);
+  _plandeKaartNamen();   /* en nog eens nadat de handlayout is uitgerekend */
 }
 
 function renderHand() {
@@ -6558,28 +6923,47 @@ function toonArenaWissel(url) {
   const bgEl = $('#gevecht-achtergrond');
   if (!bgEl || !url) return;
   const beeld = `linear-gradient(rgba(13,10,18,.32), rgba(13,10,18,.5)), url("${url}")`;
-  /* GRONDANKER: het Raadzaal-drieluik (887×1774, vogelvlucht) heeft geen grondlijn —
-     onder-ankeren zou er een willekeurige band uitsnijden, dus 'center' (zie startGevecht). */
-  const pos = /FINALE/i.test(url) ? 'center' : '';
+  /* GRONDANKER (v114): beide lagen krijgen dezelfde grondlijn via
+     plaatsGevechtsplaat(), zodat de vloer tijdens de crossfade niet verspringt.
+     Het Raadzaal-drieluik deelt daarom één grond-waarde in de GROND-tabel.
+     v114-fix: plaatsGevechtsplaat() moet ook ECHT lopen zolang de fade duurt. Stond
+     hij er alleen in hard() (t=1300ms), dan zweefde de inkomende arena de hele fade
+     lang op `cover` — de oude, ongeankerde plaatsing — en klapte ze daarna in één
+     frame op haar grondlijn (gemeten: 36,5px = 9,9% vh op 800x360). Vandaar de
+     aanroep meteen na het invoegen én in de rAF waarin de laag zichtbaar wordt.
+     En zolang de fade loopt toont de ONDERSTE laag nog de OUDE plaat, terwijl
+     S.gevecht.achtergrond al de nieuwe is: die oude url parkeren we in
+     bgEl.dataset.plaat tot hard() draait, anders rekent _plaatsLaag() de onderste
+     laag op de grond van een plaat die ze niet toont. */
+  const oudePlaat = (g && g.achtergrond) || null;
   if (g) g.achtergrond = url;
   const hard = () => {
+    delete bgEl.dataset.plaat;
     bgEl.style.backgroundImage = beeld;
-    bgEl.style.backgroundPosition = pos;
+    bgEl.style.backgroundPosition = '';
+    bgEl.style.backgroundSize = '';
     bgEl.classList.add('zichtbaar');
+    plaatsGevechtsplaat();
   };
   const rustig = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (document.body.classList.contains('lite') || rustig || d3Actief()) { hard(); return; }
   const oud = document.getElementById('gevecht-achtergrond-2');
   if (oud) oud.remove();
+  if (oudePlaat) bgEl.dataset.plaat = oudePlaat; else delete bgEl.dataset.plaat;
   const laag = document.createElement('div');
   laag.id = 'gevecht-achtergrond-2';
   laag.className = 'zichtbaar';
   laag.style.backgroundImage = beeld;
-  laag.style.backgroundPosition = pos;
+  laag.dataset.plaat = url;                 /* plaatsGevechtsplaat() zet hem op dezelfde grond */
   laag.style.filter = bgEl.style.filter;   /* zelfde fakkel-helderheid als de laag eronder */
   laag.style.opacity = '0';
   bgEl.parentNode.insertBefore(laag, bgEl.nextSibling);
-  requestAnimationFrame(() => { if (laag.isConnected) laag.style.opacity = '1'; });
+  plaatsGevechtsplaat();                    /* meteen op de grondlijn (start ook _laadPlaatRatio) */
+  requestAnimationFrame(() => {
+    if (!laag.isConnected) return;
+    laag.style.opacity = '1';
+    plaatsGevechtsplaat();                  /* nu is de laag gelayout: de maat klopt zeker */
+  });
   setTimeout(() => { hard(); if (laag.isConnected) laag.remove(); }, dtempo(1300));
 }
 
@@ -7823,6 +8207,7 @@ function toonKaartBeloning() {
 /* ---------- kaartkeuze-overlay ---------- */
 function kaartHtml(c, klikbaar) {
   const def = kdef(c);
+  _plandeKaartNamen();   /* v114-fix: de titels pas MÉTEN als de aanroeper ze heeft ingevoegd */
   return `<div class="kaart groot ktype-${def.type} zeld-${def.zeld} ${def.licht || def.vuur ? 'kaart-licht' : ''} ${c.aangetast ? 'kaart-aangetast-art' : ''} ${klikbaar ? 'klikbaar' : ''}" data-uid="${c.uid}">
     <div class="kaart-kost">${kkost(c) === null ? '✕' : kkost(c)}</div>
     ${def.licht ? `<div class="kaart-lichtkost" data-tip="Verbrandt fakkellicht bij het spelen">🔥${kval(c, 'licht')}</div>` : ''}
@@ -10422,6 +10807,9 @@ function instWijzig() {
     if (d3Gewenst() && Vista.start($('#vista-canvas'))) {
       scherm.classList.add('d3-actief');
       Vista.gevechtStart(S.gevecht, S.gevecht.soort, !!S.gevecht.achtergrond);
+      /* v114-fix: op het 3D-toneel is de plaat de achterwand van Vista — de px-maat
+         van plaatsGevechtsplaat() weer vrijgeven, zodat de CSS-cover terug geldt. */
+      plaatsGevechtsplaat();
     } else {
       if (window.Vista) Vista.gevechtEind();
       scherm.classList.remove('d3-actief');
@@ -10429,6 +10817,13 @@ function instWijzig() {
       GDOM.vijanden.forEach(d => { d.wrap.style.left = ''; d.wrap.style.top = ''; d.spacer.style.height = ''; });
       if (GDOM.speler) { GDOM.speler.wrap.style.left = ''; GDOM.speler.wrap.style.top = ''; GDOM.speler.spacer.style.height = ''; }
       if (GDOM.metgezel) { GDOM.metgezel.wrap.style.left = ''; GDOM.metgezel.wrap.style.top = ''; }   /* terug naar de 2D flex-indeling */
+      /* v114-fix: 3D UIT midden in een gevecht gaf het 2D-toneel terug zónder zijn twee
+         v114-metingen — de plaat bleef op `cover` (precies de zwevende plaatsing die
+         deze ronde oplost) en de figuren stonden zonder contactschaduw, tot de eerste
+         resize. Juist deze knop staat in het testrecept ("zet 3D UIT") en het tandwiel
+         is tijdens een gevecht bereikbaar. */
+      plaatsGevechtsplaat();
+      requestAnimationFrame(zetVoetschaduwen);
     }
   }
 }

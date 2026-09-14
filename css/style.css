@@ -1285,8 +1285,11 @@ body.lite .lb-daily-cta { animation: none; }
   min-width: 170px;
 }
 .speler-figuur {
-  font-size: 5.5rem;
-  width: 124px; height: 124px;
+  /* v114 (HET TONEEL): schermrelatief via --toneel-k (zetToneelSchaal, JS) i.p.v.
+     vaste px — anders is de held op een 1920x1080-Chromebook half zo groot als op
+     een 1440x900-laptop met OS-schaling. Terugval 1 = exact de oude maat. */
+  font-size: calc(5.5rem * var(--toneel-k, 1));
+  width: calc(124px * var(--toneel-k, 1)); height: calc(124px * var(--toneel-k, 1));
   display: flex; align-items: flex-end; justify-content: center;
   /* tightere, donkere voet-schaduw → de figuur 'staat' op de grond i.p.v. te zweven */
   filter: drop-shadow(0 9px 5px rgba(0, 0, 0, .6)) drop-shadow(0 2px 3px rgba(0, 0, 0, .55));
@@ -1321,8 +1324,13 @@ body.lite .lb-daily-cta { animation: none; }
 #metgezel-zone[hidden] { display: none; }
 @keyframes metgezelOp { from { opacity: 0; transform: translateY(16px) scale(.82); } }
 .metgezel-art {
-  font-size: 3.4rem;
-  width: 88px; height: 88px;
+  /* v114-fix: als enige 2D-figuur stond de metgezel nog in vaste px, terwijl held en
+     vijanden via --toneel-k met de schermhoogte meegroeien. Op 1920x1080 zakte de
+     verhouding metgezel/held daardoor van 0,89 naar 0,74 — Drops oogde op een
+     Chromebook merkbaar kleiner naast de held dan op Thomas' laptop. Mobiel niet:
+     daar staat k op 1 en winnen de vh-clamps in mobiel.css. */
+  font-size: calc(3.4rem * var(--toneel-k, 1));
+  width: calc(88px * var(--toneel-k, 1)); height: calc(88px * var(--toneel-k, 1));
   display: flex; align-items: flex-end; justify-content: center;
   position: relative;
   filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .7)) drop-shadow(0 0 16px rgba(var(--mgk, 255, 156, 63), .35));
@@ -1331,7 +1339,7 @@ body.lite .lb-daily-cta { animation: none; }
 /* het PODIUM (playtest 27 aug: 'ik voel ze niet') — groter op laptop, een halve stap
    vóór de held (overlap), met een familie-aura als grondcirkel. Mobiel houdt zijn
    eigen zorgvuldig getunede clamps (mobiel.css wint op specificiteit). */
-body[data-modus="laptop"] .metgezel-art { width: 110px; height: 110px; font-size: 4.2rem; }
+body[data-modus="laptop"] .metgezel-art { width: calc(110px * var(--toneel-k, 1)); height: calc(110px * var(--toneel-k, 1)); font-size: calc(4.2rem * var(--toneel-k, 1)); }
 body[data-modus="laptop"] #metgezel-zone { margin-left: -30px; z-index: 2; }
 body[data-modus="laptop"] .d3-actief #metgezel-zone { margin-left: 0; }   /* in 3D plaatst gevechtTik de zone — de 2D-overlap-margin zou dubbel tellen (review) */
 body[data-modus="laptop"] .metgezel-hp { width: 100px; }
@@ -1526,8 +1534,10 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
   position: relative;
 }
 .vijand-art {
-  font-size: 4.2rem;
-  width: 108px; height: 108px;
+  /* v114 (HET TONEEL): zie .speler-figuur — één factor voor alle 2D-figuren, zodat
+     de verhouding vijand/elite/episch/baas/held exact blijft. */
+  font-size: calc(4.2rem * var(--toneel-k, 1));
+  width: calc(108px * var(--toneel-k, 1)); height: calc(108px * var(--toneel-k, 1));
   display: flex; align-items: flex-end; justify-content: center;
   position: relative;
   /* tightere voet-schaduw → 'op de grond' i.p.v. zwevend */
@@ -1539,10 +1549,56 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
   width: 100%; height: 100%;
   object-fit: contain;
 }
-.is-elite .vijand-art { font-size: 5.2rem; width: 136px; height: 136px; }
-.is-baas .vijand-art { font-size: 6.4rem; width: 176px; height: 176px; }
+.is-elite .vijand-art { font-size: calc(5.2rem * var(--toneel-k, 1)); width: calc(136px * var(--toneel-k, 1)); height: calc(136px * var(--toneel-k, 1)); }
+.is-baas .vijand-art { font-size: calc(6.4rem * var(--toneel-k, 1)); width: calc(176px * var(--toneel-k, 1)); height: calc(176px * var(--toneel-k, 1)); }
 /* episch (bv. Het Origineel) = imposant, duidelijk GROTER dan de held (108→158px), tussen elite en baas */
-.is-episch .vijand-art { font-size: 5.9rem; width: 158px; height: 158px; }
+.is-episch .vijand-art { font-size: calc(5.9rem * var(--toneel-k, 1)); width: calc(158px * var(--toneel-k, 1)); height: calc(158px * var(--toneel-k, 1)); }
+
+/* ---------- CONTACTSCHADUW (v114 — HET TONEEL) ----------
+   Elke figuur (held, metgezel, vijand, hoveling) krijgt een zachte ovaal op zijn
+   voetlijn, plus een bredere, veel zachtere sokkel die naar beneden uitloopt en
+   tegelijk het contrast achter naam/hp/chips draagt (plaat-onafhankelijk: op de
+   drukke Act 2-platen waren de chips anders nauwelijks leesbaar).
+   Het element is 0 px hoog en dus layout-neutraal; de breedte (--vs-b = 70% van de
+   gemeten figuurbreedte) zet zetVoetschaduwen() in JS, zodat één maatsysteem
+   volstaat. Bewust GEEN filter: drop-shadow (kost fps, zie wereld-fix 7) en bewust
+   geen animatie — daardoor is lite/reduced-motion vanzelf identiek. */
+.voetschaduw {
+  position: relative;
+  /* de kolom-gap wegwerken (zetVoetschaduwen meet hem). v114-fix: als NEGATIEVE
+     margin, niet als relatieve `top` — een 0px-hoge div telt namelijk nog altijd mee
+     als flex-item en kostte de kolom dus één extra gap (held 6px, vijanden en
+     metgezel 5px hoger dan in main, waardoor de vloerlijn — die op de HELD gemeten
+     wordt — een paar px naast de vijanden liep). Zo is het broertje écht
+     layout-neutraal, in beide sporen en bij elke gap. */
+  margin-top: calc(-1 * var(--vs-gap, 0px));
+  width: 100%; height: 0;
+  pointer-events: none;
+}
+/* de sokkel: breed en zacht, hangt grotendeels ONDER de voetlijn (achter de labels) */
+.voetschaduw::before {
+  content: ''; position: absolute; left: 50%; top: 0;
+  width: calc(var(--vs-b, 76px) * 1.85);
+  height: calc(var(--vs-b, 76px) * 1.15);
+  transform: translate(-50%, -26%);
+  background: radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, .34) 0%, rgba(0, 0, 0, .16) 52%, rgba(0, 0, 0, 0) 78%);
+  pointer-events: none;
+}
+/* de contactovaal zelf: 70% breed, ~12% van de figuurhoogte, op de voetlijn */
+.voetschaduw::after {
+  content: ''; position: absolute; left: 50%; top: 0;
+  width: var(--vs-b, 76px);
+  height: calc(var(--vs-b, 76px) * .17);
+  transform: translate(-50%, -50%);
+  background: radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, .55) 0%, rgba(0, 0, 0, .3) 54%, rgba(0, 0, 0, 0) 78%);
+  pointer-events: none;
+}
+/* de figuur staat BÓVEN zijn eigen schaduw (DOM-volgorde zou hem eronder zetten) */
+.vijand-art, .speler-figuur, .metgezel-art { z-index: 1; }
+.speler-figuur, .metgezel-art { position: relative; }
+/* 3D-toneel: Vista tekent held en vijanden (én hun schaduw) zelf — alleen de
+   metgezel blijft 2D en houdt dus wél zijn ovaal. */
+.d3-actief #vijanden-rij .voetschaduw, .d3-actief #speler-zone .voetschaduw { display: none; }
 
 /* ---------- zichtbare kaart-steel (de Erfprins grist/kaatst een kaart) ---------- */
 .steel-vlieger {
@@ -2350,8 +2406,13 @@ body.lite .pb-skelet, body.lite .pb-lijst .pb-rij.pb-skelet:nth-child(odd) { bac
    naar z'n klein/groot-maat ('eerst een grote rat, dan schaalt ie naar beneden'); nu
    staat de maat er meteen, ook tijdens de binnenkomst. transform-origin geldt ook voor
    `scale:`/`translate:` → voeten blijven op de grondlijn. */
-.vijand.vijand-klein { scale: .82; transform-origin: bottom center; }
-.vijand.vijand-groot { scale: 1.18; transform-origin: bottom center; }
+/* v114 (HET TONEEL): de scale zit op de FIGUUR, niet meer op de hele kolom. Op de
+   kolom (origin bottom center = onder de hp-balk) verschoof hij de voeten 8-19px per
+   vijand — klein stond te laag, groot te hoog, en de mobiele -10px-lift was daar de
+   pleister op. Op .vijand-art is de onderrand précies de voetlijn, dus de maat
+   verandert wel en de grondlijn niet. Naam/hp/chips krimpen niet meer mee. */
+.vijand.vijand-klein .vijand-art { scale: .82; transform-origin: bottom center; }
+.vijand.vijand-groot .vijand-art { scale: 1.18; transform-origin: bottom center; }
 .kroon {
   position: absolute; top: -26px; left: 50%; transform: translateX(-50%) rotate(-8deg);
   font-size: 2.2rem;
@@ -2360,6 +2421,10 @@ body.lite .pb-skelet, body.lite .pb-lijst .pb-rij.pb-skelet:nth-child(odd) { bac
 .is-elite .vijand-naam { color: var(--bloed); }
 .is-baas .vijand-naam { color: var(--goud); font-size: 1.25rem; }
 .vijand.sterft { opacity: 0; transform: scale(.6) rotate(8deg); pointer-events: none; }
+/* v114 (HET TONEEL): ná de sterf-fade verdwijnt de kolom écht — met alleen opacity:0
+   bleven kolombreedte én flex-gap staan. In portret duwde dat de vijandenrij een hele
+   regel omhoog (baas achter de topbalk). renderGevecht zet de klasse met vertraging. */
+.vijand.lijk-weg { display: none; }
 .vijand.actief .vijand-art { animation: uithaal-anim .4s ease; }
 @keyframes uithaal-anim {
   0%, 100% { transform: translateX(0); }
@@ -2737,14 +2802,34 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
   box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
 }
 .kaart-naam { font-size: 1rem; color: var(--perkament); margin-top: 2px; text-align: center; line-height: 1.12; padding-top: 1px; flex-shrink: 0;   /* v97: 1.05 knipte Pirata-stokletters af in de clamp-box */   /* v95: de naam is de identiteit — bij lange (vloek)teksten krimpt de tekst, niet de naam */
-  /* lange samengestelde namen (bv. "Paddenstoelenstoofpotje") mogen afbreken en blijven binnen de kaart
-     i.p.v. over de randen te bleeden; max 2 regels, anders ellipsis */
-  overflow-wrap: anywhere; word-break: break-word; padding: 0 3px; max-width: 100%; box-sizing: border-box;
+  /* v114 (HET TONEEL, §7): NOOIT midden in een woord breken. `overflow-wrap: anywhere`
+     + `word-break: break-word` deed precies dat ("Paddenstoelensto|ofpot" op mobiel).
+     Nu breken woorden alleen op een nette lettergreepgrens MÉT koppelteken
+     (hyphens:auto leest de nl-woordenlijst via <html lang="nl">) — en anders niet.
+     De hand-only regel in mobiel.css deed dit sinds v104 al; hij geldt nu overal
+     (dek, altaren, winkel, smid). */
+  overflow-wrap: normal; word-break: normal; hyphens: auto; -webkit-hyphens: auto;
+  /* v114-fix: 1px boven én onder. De shorthand hierboven overschreef sinds v97 de
+     losse `padding-top: 1px` (dezelfde regel, later in de declaratie) — de Pirata-
+     stokletters stonden dus alsnog tegen de rand van de clamp-box. En de -webkit-box
+     rondt zijn twee regels net iets hoger af dan de clientHeight, waardoor gekrompen
+     titels 1px overliepen en hun onderrand werd afgesneden; die 1px zit er nu in. */
+  padding: 0 3px; max-width: 100%; box-sizing: border-box;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 /* lange namen op de (kleine) hand-/dekkaarten trapsgewijs verkleinen → passen netjes in 2 regels
-   zonder lelijke mid-woord-afkap; NIET op de grote focus-kaart (die heeft ruimte zat) */
+   zonder lelijke mid-woord-afkap; NIET op de grote focus-kaart (die heeft ruimte zat).
+   v114: drie treden, en ze staan op het LANGSTE WOORD (>=10 / >=13 / >=16 tekens) i.p.v.
+   op de totale titellengte — alleen dat woord bepaalt of er ergens gebroken moet worden.
+   Gelden ook op de grote kaarten (dek, altaren, winkel, smid), niet op de zoomkaart. */
+/* v114-fix: alleen de GEKROMPEN titels krijgen er 1px onder bij. De -webkit-box rondt
+   zijn regelhoogte net iets hoger af dan de clientHeight, waardoor precies die titels
+   1px overliepen en de staarten van de Pirata-letters werden afgesneden (gemeten: 59
+   van de 125 titels op 1440x900). Op een titel die NIET krimpt zou die px regeltekst
+   kosten (.kaart-tekst vangt de krimp op), dus die blijft zoals hij was. */
+.kaart-naam.lange-naam, .kaart-naam.xl-naam, .kaart-naam.xxl-naam { padding-bottom: 1px; }
 .kaart:not(.kaart-focus) .kaart-naam.lange-naam { font-size: .84rem; }
 .kaart:not(.kaart-focus) .kaart-naam.xl-naam { font-size: .72rem; letter-spacing: -.01em; }
+.kaart:not(.kaart-focus) .kaart-naam.xxl-naam { font-size: .64rem; letter-spacing: -.015em; }
 .kaart-icoon { font-size: 2.3rem; margin: 6px 0 4px; filter: drop-shadow(0 3px 6px rgba(0,0,0,.6)); }
 /* eigen kaart-art: vol-bleed venster in het frame */
 .kaart-icoon img {
@@ -3182,7 +3267,9 @@ body.lite .kies-slot.leeg, body.lite .kies-actiebalk .kies-bevestig:not(:disable
     rgba(255, 235, 200, .25), rgba(255, 255, 255, .04) 38%, transparent 65%);
   pointer-events: none;
 }
-.kaart-focus .kaart-naam { font-size: 1.6rem; margin-top: 5px; }
+/* v114-fix: ook hier de afrondingsrest van de -webkit-box opvangen. Op de zoomkaart
+   kost die px niets (ruimte zat), dus hij staat er onvoorwaardelijk. */
+.kaart-focus .kaart-naam { font-size: 1.6rem; margin-top: 5px; padding-bottom: 2px; }
 .kaart-focus .kaart-icoon { font-size: 4.1rem; margin: 10px 0 8px; }
 .kaart.groot.kaart-focus .kaart-icoon img { width: 218px; height: 154px; border-radius: 8px; }
 /* compactere tekst + meer verticale ruimte (art verkleind hierboven) zodat lange teksten —

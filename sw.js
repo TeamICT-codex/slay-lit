@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v114'; // v114: tweede Act 1-reeks van de afdaling: bordes, ladder, valgat, rustnis, affiche, kist
+const CACHE = 'slayit-v115'; // v115: HET TONEEL (grondlijn per gevechtsplaat, schermrelatieve figuurmaat, contactschaduw, portret met metgezel+hof, kaarttitels) + tweede Act 1-reeks van de afdaling (bordes, ladder, valgat, rustnis, affiche, kist) + de zes Slachter-bewegingsframes
 const BESTANDEN = [
   '.',
   'css/style.css',
