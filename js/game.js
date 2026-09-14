@@ -3753,7 +3753,9 @@ function plaatsGevechtsplaat() {
     if (laag2) { laag2.style.backgroundSize = ''; laag2.style.backgroundPosition = ''; }
     return;
   }
-  _plaatsLaag(bg, url);
+  /* tijdens een arena-crossfade toont de ONDERSTE laag nog de oude plaat (toonArenaWissel
+     parkeert die url in dataset.plaat); S.gevecht.achtergrond is dan al de nieuwe. */
+  _plaatsLaag(bg, bg.dataset.plaat || url);
   /* de crossfade-laag toont de NIEUWE plaat; die staat in haar eigen data-plaat */
   if (laag2) _plaatsLaag(laag2, laag2.dataset.plaat || url);
 }
@@ -6789,9 +6791,20 @@ function toonArenaWissel(url) {
   const beeld = `linear-gradient(rgba(13,10,18,.32), rgba(13,10,18,.5)), url("${url}")`;
   /* GRONDANKER (v114): beide lagen krijgen dezelfde grondlijn via
      plaatsGevechtsplaat(), zodat de vloer tijdens de crossfade niet verspringt.
-     Het Raadzaal-drieluik deelt daarom één grond-waarde in de GROND-tabel. */
+     Het Raadzaal-drieluik deelt daarom één grond-waarde in de GROND-tabel.
+     v114-fix: plaatsGevechtsplaat() moet ook ECHT lopen zolang de fade duurt. Stond
+     hij er alleen in hard() (t=1300ms), dan zweefde de inkomende arena de hele fade
+     lang op `cover` — de oude, ongeankerde plaatsing — en klapte ze daarna in één
+     frame op haar grondlijn (gemeten: 36,5px = 9,9% vh op 800x360). Vandaar de
+     aanroep meteen na het invoegen én in de rAF waarin de laag zichtbaar wordt.
+     En zolang de fade loopt toont de ONDERSTE laag nog de OUDE plaat, terwijl
+     S.gevecht.achtergrond al de nieuwe is: die oude url parkeren we in
+     bgEl.dataset.plaat tot hard() draait, anders rekent _plaatsLaag() de onderste
+     laag op de grond van een plaat die ze niet toont. */
+  const oudePlaat = (g && g.achtergrond) || null;
   if (g) g.achtergrond = url;
   const hard = () => {
+    delete bgEl.dataset.plaat;
     bgEl.style.backgroundImage = beeld;
     bgEl.style.backgroundPosition = '';
     bgEl.style.backgroundSize = '';
@@ -6802,6 +6815,7 @@ function toonArenaWissel(url) {
   if (document.body.classList.contains('lite') || rustig || d3Actief()) { hard(); return; }
   const oud = document.getElementById('gevecht-achtergrond-2');
   if (oud) oud.remove();
+  if (oudePlaat) bgEl.dataset.plaat = oudePlaat; else delete bgEl.dataset.plaat;
   const laag = document.createElement('div');
   laag.id = 'gevecht-achtergrond-2';
   laag.className = 'zichtbaar';
@@ -6810,7 +6824,12 @@ function toonArenaWissel(url) {
   laag.style.filter = bgEl.style.filter;   /* zelfde fakkel-helderheid als de laag eronder */
   laag.style.opacity = '0';
   bgEl.parentNode.insertBefore(laag, bgEl.nextSibling);
-  requestAnimationFrame(() => { if (laag.isConnected) laag.style.opacity = '1'; });
+  plaatsGevechtsplaat();                    /* meteen op de grondlijn (start ook _laadPlaatRatio) */
+  requestAnimationFrame(() => {
+    if (!laag.isConnected) return;
+    laag.style.opacity = '1';
+    plaatsGevechtsplaat();                  /* nu is de laag gelayout: de maat klopt zeker */
+  });
   setTimeout(() => { hard(); if (laag.isConnected) laag.remove(); }, dtempo(1300));
 }
 
