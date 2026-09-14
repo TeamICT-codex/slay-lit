@@ -10717,10 +10717,71 @@ function toonInstellingen() {
     const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
     ib.style.display = (!appGeinstalleerd() && (_installPrompt || (window.mobiel && ios))) ? '' : 'none';
   }
+  vraagShellVersie();              /* v116: klein versielabel onderaan */
   $('#overlay-instellingen').classList.add('open');
 }
 function sluitInstellingen() { $('#overlay-instellingen').classList.remove('open'); }
 
+/* ============================================================
+   HET VERSIELABEL (v116)
+   ------------------------------------------------------------
+   Thomas moet kunnen ZIEN welke shell zijn browser draait: de service worker kan
+   (na een hapering of zonder cache-bump) de oude build blijven serveren, en dan
+   lijkt een deploy niets gedaan te hebben. Bron van de waarheid is de CACHE-naam
+   van de service worker zelf — GEEN tweede hardgecodeerde versieconstante hier,
+   die zou vroeg of laat uit de pas lopen met sw.js.
+   Drie wegen naar diezelfde naam:
+     1. de SW stuurt hem bij 'activate' naar al zijn clients (postMessage);
+     2. de pagina vraagt hem aan de actieve SW (voor een tab die later opent);
+     3. terugval zonder SW (file://, dev, geblokkeerde SW): sw.js ophalen met
+        cache:'no-store' en de CACHE-regel lezen.
+   De SW-bronnen winnen van de terugval: die laatste haalt sw.js van het NET en
+   kan dus een nieuwere versie tonen dan de shell die hier echt draait — precies
+   het verschil dat we zichtbaar willen maken.
+   ============================================================ */
+let _shellVersie = null;
+function toonShellVersie(naam, vanSw) {
+  if (!naam) return;
+  if (_shellVersie && !vanSw) return;      /* een SW-antwoord overschrijft de terugval, niet omgekeerd */
+  _shellVersie = String(naam);
+  const el = $('#inst-versie');
+  if (!el) return;
+  const m = /v(\d+)/i.exec(_shellVersie);
+  el.textContent = m ? ('v' + m[1]) : _shellVersie;
+  el.setAttribute('title', _shellVersie);
+}
+function vraagShellVersie() {
+  if (_shellVersie) { toonShellVersie(_shellVersie, true); return; }
+  let sw = null;
+  try { sw = navigator.serviceWorker || null; } catch (e) { sw = null; }
+  if (sw && sw.controller) {
+    try { sw.controller.postMessage({ type: 'versie?' }); } catch (e) {}
+    /* geen antwoord binnen 1,2s (oude SW zonder message-handler)? dan de terugval */
+    setTimeout(() => { if (!_shellVersie) _versieUitBestand(); }, 1200);
+    return;
+  }
+  _versieUitBestand();
+}
+function _versieUitBestand() {
+  fetch('sw.js', { cache: 'no-store' })
+    .then(r => (r.ok ? r.text() : ''))
+    .then(tekst => {
+      const m = /CACHE\s*=\s*['"]([^'"]+)['"]/.exec(tekst || '');
+      if (m) toonShellVersie(m[1], false);
+    })
+    .catch(() => { /* offline zonder SW: dan geen label, geen drama */ });
+}
+/* het bericht van de service worker (bij 'activate' naar alle clients, en als
+   antwoord op 'versie?'). Ook bruikbaar in een test: dispatch een MessageEvent
+   op navigator.serviceWorker met {type:'versie', cache:'slayit-vNN'}. */
+try {
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.addEventListener('message', e => {
+      const d = e && e.data;
+      if (d && d.type === 'versie' && d.cache) toonShellVersie(d.cache, true);
+    });
+  }
+} catch (e) { /* geen SW-API: de terugval doet het werk */ }
 
 /* volledig scherm aan/uit (statusbalk/klok weg). Werkt betrouwbaar omdat de
    speler de schakelaar zelf aantikt = direct gebruikersgebaar. */
