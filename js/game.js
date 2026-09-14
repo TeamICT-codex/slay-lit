@@ -4948,7 +4948,7 @@ function bouwGevechtDom(g) {
     wrap.className = 'vijand' + (def.baas ? ' is-baas' : '') + (def.elite ? ' is-elite' : '') + (def.episch ? ' is-episch' : '')
       + (VIJAND_KLEIN.has(v.id) ? ' vijand-klein' : '') + (VIJAND_GROOT.has(v.id) ? ' vijand-groot' : '')   /* grootte-variatie (transform-scale, origin bottom → breekt de grondlijn niet) */
       + (VIJAND_ENTREE[v.id] ? ' entree-' + VIJAND_ENTREE[v.id] : '')   /* binnenkomst-variant (de .entree-trigger zet startGevecht/voegVijandToe erbij) */
-      + (v.dood ? ' sterft' : '');   /* al gesneuvelde vijand blijft verborgen na een herbouw (voegVijandToe/reveal) — anders 'herrijst' hij zichtbaar */
+      + (v.dood ? ' sterft lijk-weg' : '');   /* al gesneuvelde vijand blijft verborgen na een herbouw (voegVijandToe/reveal) — anders 'herrijst' hij zichtbaar; v114: en geeft meteen zijn kolom terug */
     wrap.dataset.i = i;
     const art = (window.karakterSvg && karakterSvg(v.id))
       || `${v.art}${def.baas ? '<span class="kroon">👑</span>' : ''}`;
@@ -5341,7 +5341,19 @@ function renderGevecht() {
     const d = GDOM.vijanden[i];
     if (!d) return;
     const doelbaar = (g.gekozenKaart !== null || g.gekozenDrank !== null) && !v.dood;
+    /* v114: een lijk geeft na zijn fade zijn KOLOM terug (display:none). Met alleen
+       opacity:0 bleef de kolom én de flex-gap staan, en dat duwde in portret de hele
+       vijandenrij een regel omhoog — tot boven de topbalk. Pas ná de fade, zodat de
+       sterf-animatie intact blijft; bij een herrijzenis (v.dood weer false) valt de
+       kolom vanzelf terug. Indexen in GDOM.vijanden blijven ongemoeid: het element
+       blijft in de DOM staan, het neemt alleen geen ruimte meer. */
+    const wasDood = d.wrap.classList.contains('sterft');
     d.wrap.classList.toggle('sterft', v.dood);
+    if (!v.dood) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); }
+    else if (!wasDood) {
+      clearTimeout(d._lijkT);
+      d._lijkT = setTimeout(() => { if (v.dood) d.wrap.classList.add('lijk-weg'); }, dtempo(750));
+    }
     d.wrap.classList.toggle('doelbaar', doelbaar);
     d.intent.innerHTML = v.dood ? '' : intentTekst(v);
     d.hpV.style.width = Math.max(0, v.hp / v.maxHp * 100) + '%';

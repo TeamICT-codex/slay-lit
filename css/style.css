@@ -2410,6 +2410,10 @@ body.lite .pb-skelet, body.lite .pb-lijst .pb-rij.pb-skelet:nth-child(odd) { bac
 .is-elite .vijand-naam { color: var(--bloed); }
 .is-baas .vijand-naam { color: var(--goud); font-size: 1.25rem; }
 .vijand.sterft { opacity: 0; transform: scale(.6) rotate(8deg); pointer-events: none; }
+/* v114 (HET TONEEL): ná de sterf-fade verdwijnt de kolom écht — met alleen opacity:0
+   bleven kolombreedte én flex-gap staan. In portret duwde dat de vijandenrij een hele
+   regel omhoog (baas achter de topbalk). renderGevecht zet de klasse met vertraging. */
+.vijand.lijk-weg { display: none; }
 .vijand.actief .vijand-art { animation: uithaal-anim .4s ease; }
 @keyframes uithaal-anim {
   0%, 100% { transform: translateX(0); }

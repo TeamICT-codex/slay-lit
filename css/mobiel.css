@@ -1081,7 +1081,26 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] #scherm-gevecht .hp-balk { width: 84px; height: 16px; }
   body[data-modus="mobiel"] #scherm-gevecht .speler-hp { width: 104px; }
   body[data-modus="mobiel"] .speler-figuur { width: 122px; height: 122px; }
-  body[data-modus="mobiel"] #vijanden-rij { gap: 8px 10px; flex-wrap: wrap; justify-content: center; max-width: min(56vw, 300px); }   /* v104: 56vw — twee kolommen van 94px + gap passen op 360px */
+  /* v114 (HET TONEEL, §6): de METGEZEL is in portret geen derde KOLOM meer. Hij nam
+     126px — een derde van een 412px-scherm — waardoor #vijanden-rij tot 140px kromp,
+     de rij naar 4 regels wrapte en aan de BOVENkant wegliep (baas-pil achter de
+     topbalk). Nu staat hij absoluut in dezelfde kolom als de held, half achter hem,
+     met dezelfde onderrand (bottom:0 in een cluster dat toch al flex-end is, dus de
+     voetlijn blijft exact wat ze was). #held-cluster is daarmee weer even breed als
+     de held alleen, en de vijandenrij houdt haar volle breedte, met of zonder
+     metgezel. Hij wordt ook een maatje kleiner: hij is de zijfiguur, niet de held. */
+  body[data-modus="mobiel"] #held-cluster { position: relative; gap: 0; }
+  body[data-modus="mobiel"] #speler-zone { position: relative; z-index: 2; }
+  body[data-modus="mobiel"] #metgezel-zone {
+    position: absolute; right: -14px; left: auto; bottom: 0;
+    width: 88px; min-width: 0; margin-left: 0; z-index: 1;
+  }
+  body[data-modus="mobiel"] #metgezel-zone[hidden] { display: none; }
+  body[data-modus="mobiel"] .metgezel-art { width: clamp(52px, 13vh, 84px); height: clamp(52px, 13vh, 84px); font-size: 2.6rem; }
+  body[data-modus="mobiel"] #scherm-gevecht .metgezel-hp { width: 70px; }
+  /* v114: met de metgezel uit de kolom is er ruimte over — de rij mag breder, zodat
+     twee kolommen altijd naast elkaar passen en de rij hooguit twee regels wordt. */
+  body[data-modus="mobiel"] #vijanden-rij { gap: 8px 10px; flex-wrap: wrap; justify-content: center; max-width: min(68vw, 300px); }
   /* v104 (meting 4 sep): met 3-4 vijanden werd de rij 600-800px hoog (1 vijand per rij, kolommen tot 188px
      door de chip-max-width) en liep vijand 0 BOVEN het scherm uit (art op y-245). Kleinere figuren vanaf
      3 vijanden + chips die de kolom niet meer oprekken → 2 per rij, alles in beeld. */
@@ -1104,7 +1123,7 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      kleinere figuren vanaf 3 stuks: alles past weer op twee/drie regels binnen beeld
      (gemeten 412: rij 245..617 · 360: rij 130..502, pil vrij). Dit gold ook vóór v109
      (Slijmkoning + 3 gespleten slijmen), maar met een vast hof is het structureel. */
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) { max-width: min(64vw, 320px); gap: 8px 6px; }
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) { max-width: min(72vw, 320px); gap: 8px 6px; }
   body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .is-baas .intent {
     max-width: 118px; overflow: hidden; text-overflow: ellipsis; padding: 3px 7px;
   }
@@ -1148,6 +1167,26 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] #knop-eindbeurt { right: calc(10px + env(safe-area-inset-right)); bottom: 230px; min-height: 46px; padding: 11px 20px; font-size: 1.05rem; }
   body[data-modus="mobiel"] #stapel-trek { left: calc(12px + env(safe-area-inset-left)); bottom: 266px; }
   body[data-modus="mobiel"] #stapel-afleg { right: calc(12px + env(safe-area-inset-right)); bottom: 266px; }
+}
+
+/* ---------- B2. staand gevecht op een SMAL scherm (<= 389 px) ----------
+   v114 (HET TONEEL, §6): op 360x800 pasten baas (114 px) + hoveling (96 px) net
+   NIET naast elkaar in de 214 px die naast de held overblijft — twee pixels te veel.
+   De rij wrapte daardoor naar drie regels (566 px hoog in 426 px ruimte) en liep aan
+   de bovenkant weg, met de baas-pil achter de topbalk. Vanaf 3 figuren krijgen de
+   intent-pil en de hp-balk hier een krappere klem en de baas een maatje kleinere art;
+   de volledige intent-naam en het hp-getal staan in de tik-tooltip. Op 412 px is dit
+   niet nodig (die matrix was al groen), dus de regels stoppen bij 389 px. */
+@media (orientation: portrait) and (max-width: 389px) {
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand { padding: 4px 2px; }
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .is-baas .vijand-art { width: 96px; height: 96px; }
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .is-baas .intent { max-width: 82px; }
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas) .intent { max-width: 80px; }
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas) .hp-balk { width: 68px; }
+  /* krappere pil-padding en een tikje kleinere letter: zo blijft er méér van de
+     intent-naam leesbaar binnen dezelfde kolombreedte (de volledige naam staat in
+     de tik-tooltip). */
+  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .intent { padding: 4px 6px; font-size: .78rem; gap: 2px; }
 }
 
 /* ---------- C. liggend gevecht (telefoon, korte hoogte) ----------
