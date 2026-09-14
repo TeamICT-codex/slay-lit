@@ -145,16 +145,24 @@ async function meetPlaat(page, pad, grond) {
   ]) {
     const { ctx, page } = await open(browser, f);
     await naarGevecht(page); await slaap(400);
-    let mis = 0, gaten = 0, crop = [];
+    let mis = 0, gaten = 0, crop = [], cropLet = [];
     for (const [sleutel, pad, grond] of GRONDTABEL) {
       const m = await meetPlaat(page, pad, grond);
       if (Math.abs(m.deltaPctVh) > 2) { mis++; console.log('        ' + sleutel + ' delta ' + m.deltaPctVh + '% vh'); }
       if (m.gat) { gaten++; console.log('        ' + sleutel + ' GAT'); }
-      if (m.cropX > 30 && !HERGENEREER.has(sleutel) && f.h < f.w) crop.push(sleutel + ' ' + m.cropX + '%');
+      /* Een hergeneratie-kandidaat mag boven de 30% uitkomen tot zijn nieuwe plaat er
+         is, maar hij wordt NIET stil weggefilterd: dan zou de test groen worden door de
+         falende casus uit te sluiten. Hij komt als WAARSCHUWING met het gemeten getal
+         in beeld, zodat de afwijking zichtbaar blijft zolang ze bestaat. */
+      if (m.cropX > 30 && f.h < f.w) {
+        (HERGENEREER.has(sleutel) ? cropLet : crop).push(sleutel + ' ' + m.cropX + '%');
+      }
     }
     t(mis === 0, f.naam + ': alle 21 platen binnen 2% vh' + (mis ? ' (' + mis + ' mis)' : ''));
     t(gaten === 0, f.naam + ': geen plaat toont een gat');
-    t(crop.length === 0, f.naam + ': horizontale crop <= 30% (hergeneratie-kandidaten en portret uitgezonderd)' + (crop.length ? ' — ' + crop.join(', ') : ''));
+    if (cropLet.length) console.log('   LET OP ' + f.naam + ': crop > 30% bij een hergeneratie-kandidaat — ' + cropLet.join(', ') +
+      '  (contract §8 laat dit toe tot de nieuwe plaat er is; §9.2 noemt die uitzondering niet — open punt, zie RELEASE-CHECKLIST §2)');
+    t(crop.length === 0, f.naam + ': horizontale crop <= 30% (portret uitgezonderd; hergeneratie-kandidaten apart gemeld)' + (crop.length ? ' — ' + crop.join(', ') : ''));
     t(page.__f.length === 0, f.naam + ': geen paginafouten' + (page.__f.length ? ' — ' + page.__f[0] : ''));
     await ctx.close();
   }
@@ -239,6 +247,114 @@ async function meetPlaat(page, pad, grond) {
       (x.zicht && (Math.abs(x.vsB - Math.round(x.breed * 0.7)) > 1 || Math.abs(x.ovaalY - x.voet) > 3)));
     t(mis.length === 0, f.naam + ': elke figuur heeft zijn ovaal op de voetlijn, op maat' + (mis.length ? ' — ' + mis.map(x => x.naam).join(', ') : ''));
     t(r.filter === 'none', f.naam + ': de contactschaduw is drop-shadow-vrij');
+    await ctx.close();
+  }
+
+
+  /* ---- §9.5b — de wegen waarop de suite eerder BLIND was ----
+     (1) de arena-crossfade van Het Proces MIDDEN in de fade: beide lagen moeten op
+         dezelfde grondlijn staan, niet pas na afloop (de oude meting keek 1800 ms
+         later en alleen naar laag 1, en zag de sprong van 9,9% vh op 800x360 dus niet);
+     (2) een figuur die MIDDEN in het gevecht bijkomt (splijtende Slijmkoning,
+         dicktatorRoep/het hof, het Drops-de-Witte-moment): bouwGevechtDom vervangt de
+         hele rij, dus alle contactschaduwen moeten daarna opnieuw op maat staan;
+     (3) de 3D-knop in de instellingen tijdens een gevecht (staat letterlijk in het
+         testrecept): plaat en schaduwen moeten meeschakelen zonder resize. */
+  kop('§9.5b crossfade tijdens de fade, nieuwkomers en de 3D-knop');
+  for (const f of [
+    { naam: 'laptop 1440x900 d3 uit', w: 1440, h: 900, dpr: 1, mobiel: false, d3: false },
+    { naam: 'telefoon 800x360', w: 800, h: 360, dpr: 3, mobiel: true },
+    { naam: 'telefoon 412x915', w: 412, h: 915, dpr: 3, mobiel: true }
+  ]) {
+    const { ctx, page } = await open(browser, f);
+    await naarGevecht(page); await slaap(300);
+    await page.evaluate(async () => {
+      try { devMetgezel('drops'); } catch (e) {}
+      S.act = 3; startGevecht(['de_dicktator'], 'baas');
+      await new Promise(r => setTimeout(r, 2000));
+    });
+    /* (1) crossfade, gemeten op vier momenten TIJDENS de fade */
+    const xf = await page.evaluate(async () => {
+      const bg = document.getElementById('gevecht-achtergrond');
+      const url = ACHTERGRONDEN.basis + ACHTERGRONDEN.act3.finaleFasen.verschuiving;
+      const im = new Image(); im.src = url; try { await im.decode(); } catch (e) {}
+      const vloerY = el => {
+        if (!el) return null;
+        const cs = getComputedStyle(el), r = el.getBoundingClientRect();
+        let W, H;
+        if (/cover/.test(cs.backgroundSize)) { const s = Math.max(r.width / im.naturalWidth, r.height / im.naturalHeight); W = im.naturalWidth * s; H = im.naturalHeight * s; }
+        else { const p = cs.backgroundSize.split(' '); W = parseFloat(p[0]); H = parseFloat(p[1]); }
+        const bp = cs.backgroundPosition.split(' ');
+        const off = (v, e, i) => /%/.test(v) ? (e - i) * parseFloat(v) / 100 : parseFloat(v);
+        return r.top + off(bp[1], r.height, H) + grondVan(url).grond * H;
+      };
+      const voet = document.querySelector('.speler-figuur').getBoundingClientRect().bottom;
+      const ys = [];
+      toonArenaWissel(url);
+      for (const wacht of [60, 250, 400, 400, 700]) {
+        await new Promise(r => setTimeout(r, wacht));
+        const l2 = document.getElementById('gevecht-achtergrond-2');
+        const y = vloerY(l2 || bg);
+        if (y !== null) ys.push(+y.toFixed(1));
+      }
+      return { ys, voet: +voet.toFixed(1), vh: innerHeight };
+    });
+    const sprong = Math.max(...xf.ys) - Math.min(...xf.ys);
+    const afw = Math.max(...xf.ys.map(y => Math.abs(y - xf.voet)));
+    t(sprong / xf.vh * 100 <= 1 && afw / xf.vh * 100 <= 2,
+      f.naam + ': de arena-crossfade springt niet (sprong ' + sprong.toFixed(1) + 'px = ' + (sprong / xf.vh * 100).toFixed(2) + '% vh, max afwijking van de voetlijn ' + afw.toFixed(1) + 'px)');
+    /* (2) nieuwkomers midden in het gevecht */
+    const nieuw = await page.evaluate(async () => {
+      voegVijandToe('de_griffier'); voegVijandToe('de_deurwaarder');
+      await new Promise(r => setTimeout(r, 900));
+      const uit = [];
+      const kijk = (naam, fig, sch) => {
+        if (!fig || !sch) return;
+        const kl = parseFloat(getComputedStyle(fig).scale);
+        const breed = Math.round(fig.offsetWidth * (isFinite(kl) && kl > 0 ? kl : 1));
+        const cs = getComputedStyle(sch);
+        if (cs.display === 'none') return;
+        uit.push({ naam, breed, vsB: cs.getPropertyValue('--vs-b').trim(), dy: Math.round(sch.getBoundingClientRect().top - fig.getBoundingClientRect().bottom) });
+      };
+      kijk('held', document.querySelector('#speler-zone .speler-figuur'), document.querySelector('#speler-zone .voetschaduw'));
+      const mz = document.getElementById('metgezel-zone');
+      if (mz && !mz.hidden) kijk('metgezel', mz.querySelector('.metgezel-art'), mz.querySelector('.voetschaduw'));
+      document.querySelectorAll('#vijanden-rij .vijand').forEach((v, i) => kijk('vijand' + i, v.querySelector('.vijand-art'), v.querySelector('.voetschaduw')));
+      return uit;
+    });
+    const stuk = nieuw.filter(x => !x.vsB || Math.abs(parseFloat(x.vsB) - Math.round(x.breed * 0.7)) > 1 || Math.abs(x.dy) > 3);
+    t(nieuw.length > 0 && stuk.length === 0,
+      f.naam + ': na voegVijandToe staat elke contactschaduw nog op maat en op de voetlijn (' + nieuw.length + ' figuren)' +
+      (stuk.length ? ' — ' + stuk.map(x => x.naam + ' vs-b=' + x.vsB + ' dy=' + x.dy).join(', ') : ''));
+    /* (3) de 3D-knop tijdens het gevecht */
+    const knop = await page.evaluate(async () => {
+      const zet = async d => {
+        const cb = document.getElementById('inst-d3'); if (cb) cb.checked = d;
+        INST.d3 = d; instWijzig();
+        await new Promise(r => setTimeout(r, 800));
+        const bg = document.getElementById('gevecht-achtergrond');
+        const sch = document.querySelector('#speler-zone .voetschaduw');
+        const fig = document.querySelector('#speler-zone .speler-figuur');
+        return {
+          d3: document.getElementById('scherm-gevecht').classList.contains('d3-actief'),
+          cover: /cover/.test(getComputedStyle(bg).backgroundSize),
+          ovaal: sch && getComputedStyle(sch).display !== 'none' ? Math.round(parseFloat(getComputedStyle(sch, '::after').width) || 0) : null,
+          breed: fig ? Math.round(fig.offsetWidth) : 0
+        };
+      };
+      return { aan: await zet(true), uit: await zet(false) };
+    });
+    /* op het mobiele spoor is 3D per definitie uit (d3Gewenst() weigert window.mobiel):
+       daar hoort de knop NIETS te veranderen aan plaat of schaduw. */
+    if (f.mobiel) {
+      t(knop.aan.d3 === false && knop.aan.cover === false && knop.aan.ovaal > 0,
+        f.naam + ': 3D AAN laat het mobiele spoor ongemoeid (blijft 2D, plaat op haar grondlijn, ovaal ' + knop.aan.ovaal + 'px)');
+    } else {
+      t(knop.aan.d3 === true && knop.aan.cover === true, f.naam + ': 3D AAN in het gevecht geeft de plaat terug aan Vista (cover)');
+    }
+    t(knop.uit.d3 === false && knop.uit.cover === false && knop.uit.ovaal > 0 && Math.abs(knop.uit.ovaal - Math.round(knop.uit.breed * 0.7)) <= 2,
+      f.naam + ': 3D UIT in het gevecht zet de plaat terug op haar grondlijn EN de contactschaduw op maat (ovaal ' + knop.uit.ovaal + 'px van ' + Math.round(knop.uit.breed * 0.7) + 'px)');
+    t(page.__f.length === 0, f.naam + ': geen paginafouten' + (page.__f.length ? ' — ' + page.__f[0] : ''));
     await ctx.close();
   }
 
