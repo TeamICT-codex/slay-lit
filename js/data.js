@@ -1326,12 +1326,12 @@ const VIJANDEN = {
      Erfprins-roof 'per gevecht') + de vloeken-as (zijn Karaktermoord schaalt op
      de laster die zijn hof over je uitstortte). Brein: dicktatorKies (game.js). */
   de_dicktator: {
-    /* v109 HET PROCES: 240 → de waarde van DICK.hp — het hof (optioneel te doden) en vorm 2
-       (HET MANDAAT) voegen de druk toe die de kale HP-muur vroeger moest leveren (contract
-       §6). LET OP: dit getal hieronder is alleen de startwaarde; game.js overschrijft het
-       meteen met DICK.hp (data.js laadt eerder). DICK in game.js is de bron van waarheid —
-       balanceer daar, niet hier. */
-    naam: 'de DICKtator', art: '👑', hp: [200, 200], baas: true,
+    /* v109 HET PROCES: het hof (optioneel te doden) en vorm 2 (HET MANDAAT) voegen de druk
+       toe die de kale HP-muur vroeger moest leveren (contract §6). LET OP: het getal hieronder
+       is alleen de startwaarde en staat hier gelijk aan DICK.hp, zodat de twee bestanden
+       hetzelfde zeggen; game.js overschrijft het meteen met DICK.hp (data.js laadt eerder).
+       DICK in game.js is de bron van waarheid — balanceer daar, niet hier. */
+    naam: 'de DICKtator', art: '👑', hp: [240, 240], baas: true,
     titel: 'Heerser van het Slachtblok',
     kies: (v, beurt) => dicktatorKies(v, beurt)
   },
