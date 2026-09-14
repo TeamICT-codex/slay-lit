@@ -1560,7 +1560,13 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
    geen animatie — daardoor is lite/reduced-motion vanzelf identiek. */
 .voetschaduw {
   position: relative;
-  top: var(--vs-dy, 0px);   /* de kolom-gap wegrekenen (zetVoetschaduwen meet hem) */
+  /* de kolom-gap wegwerken (zetVoetschaduwen meet hem). v114-fix: als NEGATIEVE
+     margin, niet als relatieve `top` — een 0px-hoge div telt namelijk nog altijd mee
+     als flex-item en kostte de kolom dus één extra gap (held 6px, vijanden en
+     metgezel 5px hoger dan in main, waardoor de vloerlijn — die op de HELD gemeten
+     wordt — een paar px naast de vijanden liep). Zo is het broertje écht
+     layout-neutraal, in beide sporen en bij elke gap. */
+  margin-top: calc(-1 * var(--vs-gap, 0px));
   width: 100%; height: 0;
   pointer-events: none;
 }

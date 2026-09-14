@@ -3628,6 +3628,22 @@ window.zetToneelSchaal = zetToneelSchaal;
    twee maatsystemen uit elkaar kunnen lopen. Geen animatie — dus in lite en
    onder reduced-motion vanzelf identiek. Geen filter: drop-shadow (kost fps).
    Aangeroepen na bouwGevechtDom en bij elke resize/draai. */
+/* de LAYOUT-onderkant van een figuur in viewport-px. NIET getBoundingClientRect():
+   die telt de lopende 'adem'-animatie mee (translateY(-2px) scale(1.012)), waardoor
+   elke aanroep 1-3px anders uitkomt en de plaat per meting een tikje verspringt.
+   offsetTop/offsetHeight zijn transform-vrij; de ouder-rect levert het viewport-anker
+   (en verrekent dus wél een eventuele transform hoger in de boom). */
+function _layoutOnder(el) {
+  if (!el) return null;
+  const p = el.offsetParent;
+  if (p) {
+    const pr = p.getBoundingClientRect();
+    const bt = parseFloat(getComputedStyle(p).borderTopWidth) || 0;
+    return pr.top + bt + el.offsetTop + el.offsetHeight;
+  }
+  return el.getBoundingClientRect().bottom;
+}
+
 function _voetschaduwPaar(f, s) {
   if (!f || !s) return;
   /* BREEDTE: offsetWidth (layout, dus zonder de 'adem'-animatie die via transform
@@ -3639,21 +3655,31 @@ function _voetschaduwPaar(f, s) {
      mag hier GEEN `--vs-b: 0px` achterlaten — dat schakelt de CSS-terugval
      var(--vs-b, 76px) permanent uit en er komt dan nooit meer een ovaal, ook niet als
      de figuur zichtbaar terugkomt. Dan liever de property weghalen. */
-  if (!(breed > 0)) { s.style.removeProperty('--vs-b'); s.style.removeProperty('--vs-dy'); return; }
+  if (!(breed > 0)) { s.style.removeProperty('--vs-b'); s.style.removeProperty('--vs-gap'); return; }
   s.style.setProperty('--vs-b', Math.round(breed * 0.7) + 'px');
-  /* HOOGTE: het schaduw-broertje staat de kolom-gap (5-8px, per spoor anders) onder
-     de voet van de figuur. Eerst terugzetten, dan meten, dan het verschil als
-     relatieve top — zo ligt de ovaal op elk spoor exact op de voetlijn zonder dat
-     de layout meeschuift (het element is 0 px hoog en position: relative). */
-  s.style.setProperty('--vs-dy', '0px');
-  const dy = f.getBoundingClientRect().bottom - s.getBoundingClientRect().top;
-  s.style.setProperty('--vs-dy', Math.round(dy) + 'px');
+  /* HOOGTE: het schaduw-broertje staat de kolom-gap (5-6px, per zone anders) onder de
+     voet van de figuur. v114-fix: dat wegwerken met een relatieve `top` verschoof wel
+     de ovaal, maar de 0px-hoge div TELT als flex-item en kostte de kolom dus nog altijd
+     één extra gap — de held stond daardoor 6px hoger dan in main en de vijanden 5px, en
+     de vloerlijn (die op de HELD gemeten wordt) liep een paar px naast de vijanden.
+     Een NEGATIEVE margin-top haalt de gap er echt uit: de ovaal ligt op de voetlijn én
+     de kolom is weer even hoog als zonder schaduw-broertje.
+     De gap wordt in LAYOUT-coördinaten gemeten (offsetTop, dus zonder de adem-animatie)
+     en eerst op 0 gezet, anders meten we onze eigen vorige correctie mee. */
+  s.style.setProperty('--vs-gap', '0px');
+  const gap = (s.offsetParent && s.offsetParent === f.offsetParent)
+    ? s.offsetTop - (f.offsetTop + f.offsetHeight)
+    : s.getBoundingClientRect().top - _layoutOnder(f);
+  s.style.setProperty('--vs-gap', Math.max(0, Math.round(gap)) + 'px');
 }
 function zetVoetschaduwen() {
   _voetschaduwPaar($('#speler-zone .speler-figuur'), $('#speler-zone .voetschaduw'));
   _voetschaduwPaar($('#metgezel-zone .metgezel-art'), $('#metgezel-zone .voetschaduw'));
   $$('#vijanden-rij .vijand').forEach(v =>
     _voetschaduwPaar(v.querySelector('.vijand-art'), v.querySelector('.voetschaduw')));
+  /* de negatieve marges maken de kolommen korter; omdat ze flex-end uitgelijnd staan
+     zakt de voetlijn daardoor mee — de plaat moet er dus opnieuw op geankerd worden. */
+  if (typeof plaatsGevechtsplaat === 'function') plaatsGevechtsplaat();
 }
 window.zetVoetschaduwen = zetVoetschaduwen;
 
@@ -3694,9 +3720,11 @@ const _plaatBezig = new Set();       /* url -> Image loopt, geen dubbele laders 
    op de onderrand van de wrapper). Terugval: #strijdveld minus zijn padding. */
 function _voetlijnVan(rTop) {
   const fig = $('.speler-figuur') || $('#vijanden-rij .vijand-art');
-  if (fig) {
-    const fr = fig.getBoundingClientRect();
-    if (fr.height > 0) return fr.bottom - rTop;
+  if (fig && fig.offsetHeight > 0) {
+    /* v114-fix: via de LAYOUT-onderkant, niet via de rect — die ademt mee (zie
+       _layoutOnder) en liet de plaat per aanroep 1-3px verspringen. */
+    const y = _layoutOnder(fig);
+    if (y !== null && isFinite(y)) return y - rTop;
   }
   const sv = $('#strijdveld');
   if (sv) {
