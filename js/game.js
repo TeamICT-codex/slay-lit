@@ -5804,7 +5804,7 @@ function bijwerkKaartEl(el, c, klikbaar) {
   const nm = knaam(c);
   naamEl.textContent = nm;
   /* lange samengestelde namen iets verkleinen zodat ze netjes in 2 regels passen i.p.v. lelijk
-     af te kappen (bv. "Paddenstoelenstoofpot") — tunebaar via de drempels/klassen in style.css */
+     af te kappen (bv. "Originele Handtekening") — tunebaar via de drempels/klassen in style.css */
   naamEl.classList.toggle('lange-naam', nm.length >= 15 && nm.length < 19);
   naamEl.classList.toggle('xl-naam', nm.length >= 19);
   el.querySelector('.kaart-tekst').innerHTML = def.tekst(c);

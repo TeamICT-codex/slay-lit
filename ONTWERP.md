@@ -157,7 +157,7 @@ verbrand-kaarten + relikwieën die dat verzachten) en de enige met
 | stoofgeur | Stoofgeur | vaardigheid | ongewoon | 1 | ALLE vijanden 2 Zwak (3) |
 | wurgwortels | Wurgwortels | aanval | ongewoon | 2 | 11 schade + 2 Kwetsbaar (14 + 2) |
 | kolengloed | Kolengloed | vaardigheid | ongewoon | 1 | verbrand 3 licht; +2 Kracht (verbrand 2) |
-| paddenstoelenstoofpot | Paddenstoelenstoofpot | vaardigheid | ongewoon | 2 | genees 5 (7) |
+| paddenstoelenstoofpot | Pad Tho | vaardigheid | ongewoon | 2 | genees 5 (7) |
 | asadem | Asadem | aanval | ongewoon | 1 | verbrand 2 licht; 5 schade aan ALLE vijanden (7) |
 | eikenhuid | Eikenhuid | vaardigheid | ongewoon | 2 | 12 Blok (16) |
 | doornmantel | Doornmantel | kracht | zeldzaam | 1 | 3 Doornen (5) |

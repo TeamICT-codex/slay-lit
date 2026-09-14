@@ -510,9 +510,9 @@ const KAARTEN = {
     speel: c => { verbrandLicht(kval(c, 'licht')); geefStatus(sp(), 'kracht', kval(c, 'kr')); }
   },
   paddenstoelenstoofpot: {
-    naam: 'Paddenstoelenstoofpot', type: 'vaardigheid', zeld: 'ongewoon', kost: 2, icoon: '🥘',
+    naam: 'Pad Tho', type: 'vaardigheid'   /* was 'Paddenstoelenstoofpot' (brak overal af); knipoog naar Thoverk én Pad Thai; id/art ongewijzigd */, zeld: 'ongewoon', kost: 2, icoon: '🥘',
     heel: 5, up: { heel: 7 },
-    tekst: c => `De legendarische stoofpot van Maxenzele: genees ${pv(c, 'heel')} HP.`,
+    tekst: c => `Thoverks legendarische paddenstoelenstoofpot uit Maxenzele: genees ${pv(c, 'heel')} HP.`,
     speel: c => { geneesHp(kval(c, 'heel')); }
   },
   asadem: {
