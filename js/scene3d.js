@@ -8,7 +8,15 @@
 
 const Vista = (() => {
   let renderer = null, scene = null, camera = null;
-  let kijkY = 1.8;              /* camerablik: hoger bij eigen platen = figuren lager in beeld */
+  /* camerablik. v116: ÉÉN vaste waarde, ook bij een eigen achtergrondplaat.
+     Tot v115 keek de camera bij een plaat hoger (2.35) om de figuren grof naar de
+     geschilderde vloer te duwen — een compensatie die per plaat niet kon kloppen
+     (de vloerrand ligt tussen 57% en 75%, zie GROND in js/art.js). Nu schuift de
+     PLAAT naar de figuren (plaatsGevechtsplaat + voetlijnY), dus mag de camera
+     stilstaan. 1.8 is bovendien de waarde van de procedurele zaal: één constante,
+     en gevechten zónder plaat zien er exact uit als in v115. */
+  const KIJK_Y = 1.8;
+  let kijkY = KIJK_Y;
   let klaar = false, actief = false;
   let acteurs = new Map();      /* actor-object -> sprite-info */
   let fakkels = [], vlammen = [], stof = null;
@@ -370,9 +378,9 @@ const Vista = (() => {
     zaalGroep.visible = !eigenAchtergrond;
     if (stof) stof.visible = !eigenAchtergrond;   /* stof hoort bij de procedurele zaal; achter een geschilderde plaat weg (+ spaart de per-frame update-lus) */
     renderer.setClearColor(0x0d0a12, eigenAchtergrond ? 0 : 1);
-    /* bij een geschilderde plaat kijkt de camera hoger, zodat de figuren
-       lager in beeld staan — op de vloer van de plaat, niet zwevend erboven */
-    kijkY = eigenAchtergrond ? 2.35 : 1.8;
+    /* v116: de camera staat vast (KIJK_Y). De plaat komt naar de figuren toe —
+       plaatsGevechtsplaat() zet haar vloerrand op Vista.voetlijnY(). */
+    kijkY = KIJK_Y;
     maakActeur(g.speler, g.heldArt || 'speler', { teken: '🤺', spiegel: true }, -3.7, 0.4, 2.5);
     /* enkel LEVENDE vijanden als sprite opbouwen: dode blijven in g.vijanden staan (v.dood=true,
        voor de sterft-fade), maar een herbouw (voegVijandToe — Doorslag-kopie / Mal-gietsel) mag een
@@ -676,6 +684,60 @@ const Vista = (() => {
     return { x: voet.x, topY: top.y, voetY: voet.y };
   }
 
+  /* ---------- DE VOETLIJN VAN HET 3D-TONEEL (v116) ----------
+     Op het 2D-toneel is de voetlijn de onderkant van de figuur-wrapper; in 3D
+     bestaat die DOM-figuur niet (Vista tekent sprites). De voetlijn is hier de
+     SCHERMPROJECTIE van de sprite-voeten: elke acteur staat met zijn voeten op
+     wereld-y VOET_WERELD_Y (= basisY - schaal/2 uit maakActeur), elk op zijn
+     eigen diepte z. Perspectief maakt daar onvermijdelijk een BAND van: de
+     achterste rij (z -0.4) landt hoger in beeld dan de voorste (z +0.4, waar de
+     held staat). We geven het MIDDEN van die band terug — zo staat elke figuur
+     even ver van de geschilderde vloerrand (de halve spreiding, ~1,4% vh op
+     1440x900) i.p.v. één rij perfect en de andere er dubbel naast.
+
+     Twee bewuste keuzes:
+     - DODE acteurs tellen mee voor de diepte-band: hun z verandert niet, en zo
+       verspringt de plaat niet op het moment dat een vijand valt.
+     - Gemeten met de RUSTcamera (zonder de trage zwaai en de klap-kick), anders
+       beeft de plaat elk frame mee. De camerabeweging zit al in de parallax die
+       gevechtTik op de hele laag zet. */
+  const VOET_WERELD_Y = 0.05;              /* voetzool van elke sprite (basisY - schaal/2) */
+  const VOET_Z_SPELER = 0.4, VOET_Z_VIJAND = -0.4;   /* terugval vóór gevechtStart */
+  function _voetY(z) { return projecteer(0, VOET_WERELD_Y, z).y; }
+  function voetlijnInfo() {
+    if (!klaar || !camera) return null;
+    let zLaag = null, zHoog = null, zSpeler = null, zVLaag = null, zVHoog = null;
+    for (const [actor, a] of acteurs) {
+      const z = a.sprite.position.z;
+      if (zLaag === null || z < zLaag) zLaag = z;
+      if (zHoog === null || z > zHoog) zHoog = z;
+      if (actor && actor.isSpeler) zSpeler = z;
+      else {
+        if (zVLaag === null || z < zVLaag) zVLaag = z;
+        if (zVHoog === null || z > zVHoog) zVHoog = z;
+      }
+    }
+    if (zLaag === null) { zLaag = VOET_Z_VIJAND; zHoog = VOET_Z_SPELER; }
+    const px = camera.position.x, py = camera.position.y, pz = camera.position.z;
+    camera.position.set(0, 2.6, 8.8);
+    camera.lookAt(0, kijkY, 0);
+    camera.updateMatrixWorld(true);      /* Camera zet hier ook matrixWorldInverse — project() leest die */
+    const yLaag = _voetY(zLaag), yHoog = _voetY(zHoog);
+    const info = {
+      y: (yLaag + yHoog) / 2,
+      spreiding: yHoog - yLaag,
+      speler: zSpeler === null ? null : _voetY(zSpeler),
+      vijanden: zVLaag === null ? null : (_voetY(zVLaag) + _voetY(zVHoog)) / 2
+    };
+    camera.position.set(px, py, pz);
+    camera.lookAt(0, kijkY, 0);
+    camera.updateMatrixWorld(true);
+    return info;
+  }
+  /* de publieke haak voor plaatsGevechtsplaat(): de voetlijn in CSS-px vanaf de
+     bovenkant van het venster (null zolang het toneel niet klaar is). */
+  function voetlijnY() { const i = voetlijnInfo(); return i ? i.y : null; }
+
   /* fakkelniveau van het spel (1 = helder, 0.16 = gedoofd) */
   function zetLicht(f) { lichtDoel = Math.max(0.05, Math.min(1, f)); }
 
@@ -687,6 +749,7 @@ const Vista = (() => {
 
   return {
     beschikbaar, start, gevechtStart, gevechtEind, raak, aanval, sterf, pose, tik, schermPos, resize, zwaai, zetLicht,
+    voetlijnY, voetlijnInfo,
     get actief() { return actief; },
     get klaar() { return klaar; }
   };
