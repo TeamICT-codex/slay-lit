@@ -2286,6 +2286,10 @@ Accent: één deuk in de perfecte parade-glans — en het rode onderlicht vlamt 
 
 
 #################### DE SLACHTER — TRAVERSAL (De Afdaling, 7 sep 2026) ####################
+ALGEMENE LES (14 sep): een generator met een referentiebeeld herhaalt de pose van dat beeld. Beschrijf per frame dus
+WAT ER ANDERS MOET ZIJN in zichtbare termen (benen bij elkaar/gespreid, voet los van de grond, zwaard voor/achter,
+mantel neer/wapperend), voeg het vorige frame als bijlage toe en zeg letterlijk 'must look CLEARLY DIFFERENT from ...'.
+Anatomische aanwijzingen zoals 'het verre been voor' leest hij niet.
 Zes losse bewegingsframes voor de verkenbare afdaling (spike "De Richels"). Het spel
 gebruikt ze als HUID over de CSS-marionet: walk_a/walk_b wisselen af tijdens het lopen,
 jump/land/roll/climb bij de gebaren; ontbreekt een frame, dan valt die toestand terug
@@ -2308,11 +2312,15 @@ FRAME CONSISTENCY: keep the figure at the SAME scale and the SAME position as in
 Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge.
 
 =================== speler_walk_b.png ===================
-Use the attached reference images (speler.png AND speler_walk_a.png): the EXACT same character, same design, colors, outfit, proportions and painterly style. This is one standalone image — NOT a sprite sheet, NOT a grid, no second copy, no variations, one frame only.
+!! LES UIT DE EERSTE POGING (14 sep): met "het andere been voor" kwam er twee keer dezelfde pose uit. Frame B is daarom het
+   PASSEERMOMENT van de stap (benen bij elkaar, één voet los van de grond), niet een gespiegelde contactstap. Voeg
+   speler_walk_a.png toe als bijlage en zeg erbij dat dit frame er ANDERS moet uitzien dan die bijlage.
+Use the attached reference images (speler.png for the character design AND speler_walk_a.png as the PREVIOUS frame): the EXACT same character, same design, colors, outfit, proportions and painterly style. This is one standalone image — NOT a sprite sheet, NOT a grid, no second copy, no variations, one frame only. IMPORTANT: this frame must look CLEARLY DIFFERENT from speler_walk_a.png — do NOT repeat its pose.
 Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render. Single full-body character, centered, three-quarter side view, facing RIGHT. Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon.
 Character: the grim hooded swordsman hero in dark indigo robes with ember-orange trim, glowing amber eyes barely visible under the hood, a gleaming silver longsword, a tattered flowing cape, a leather belt with a golden buckle.
-Pose (WALK CYCLE frame B, the OPPOSITE contact stride of frame A): now the far (left) leg is planted forward with the heel down and the near (right) leg trails behind on the toes, torso leaning slightly forward exactly like frame A, the sword still held LOW in the right hand but swung slightly forward beside the hip, the left arm swung back, the cape at its lowest point. Same calm heavy walk as speler_walk_a, one half-step later.
-FRAME CONSISTENCY: keep the figure at the SAME scale and the SAME position as in speler_walk_a.png — top of the hood and the feet at the same heights on the canvas. Change ONLY the legs, arms and cape; head, hood, torso and colours stay identical. No motion blur, no speed lines, no dust, no second figure.
+Pose (WALK CYCLE frame B — the PASSING position, the moment between two steps): both feet CLOSE TOGETHER beneath the body, NOT spread apart. The left boot is flat on the ground directly under the hips and carries all the weight; the right leg swings past it with a BENT KNEE, the right boot lifted a hand's width off the ground, toes pointing down. The body stands a fraction taller than in the reference (the up-beat of the step). The sword arm is swung FORWARD: the blade points diagonally DOWN and FORWARD in FRONT of the body, tip near the ground ahead of the feet. The left arm is swung BACK, the gloved hand behind the hip. The cape hangs almost straight DOWN, close to the legs, its torn tips just above the ground — it is NOT flying out behind him.
+REQUIRED DIFFERENCES from speler_walk_a.png: legs together instead of spread · one boot off the ground · sword in front instead of behind · cape hanging down instead of streaming back. Same calm, heavy walk, one half-step later.
+FRAME CONSISTENCY: keep the figure at the SAME scale and the SAME position as in speler_walk_a.png — top of the hood and the standing foot at the same heights on the canvas. Head, hood, torso, belt and colours stay identical; only legs, arms and cape change. No motion blur, no speed lines, no dust, no second figure.
 Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no frame, no UI, no background elements. The character fills about 85% of a square 1024x1024 canvas, feet near the bottom edge.
 
 =================== speler_jump.png ===================
