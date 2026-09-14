@@ -5916,6 +5916,38 @@ function kaartAangezegd(c) {
   return { naam: d.naam, teller: Math.max(0, ((g.gespeeld && g.gespeeld[c.id]) || 0) - (d.start || 0)) };
 }
 
+/* v114 (HET TONEEL, §7) — de trede-klasse voor een kaarttitel. Op het LANGSTE WOORD,
+   niet op de totale lengte: alleen dat woord bepaalt of de browser überhaupt ergens
+   zou moeten breken. "Originele Handtekening" (22 tekens) heeft een langste woord van
+   12 en past prima; "De Schaduwboekhouding" (21) heeft er een van 18 — dat is de
+   echte boosdoener, en die viel met een drempel op de totale lengte in dezelfde bak. */
+function naamKlassen(nm) {
+  const w = String(nm || '').replace(/<[^>]*>/g, ' ').split(/[\s'’-]+/).reduce((m, x) => Math.max(m, x.length), 0);
+  if (w >= 16) return 'xxl-naam';
+  if (w >= 13) return 'xl-naam';
+  if (w >= 10) return 'lange-naam';
+  return '';
+}
+
+/* v114 (HET TONEEL, §7) — KRIMP-TOT-HET-PAST voor de kaarttitel.
+   De CSS breekt woorden niet meer open (overflow-wrap/word-break: normal), dus een
+   te lang woord zou buíten de kaart bleeden. Chrome hyfeneert alleen als er een
+   nl-woordenlijst beschikbaar is — daar mogen we niet op rekenen. Vandaar deze
+   laatste stap: zolang het breedste woord niet past, de letter een tikje kleiner.
+   Tot 6 stappen van 8% (samen ~39%) met een ondergrens van 7px; daaronder wint de
+   ellipsis van de line-clamp. Eerst de CSS-trede laten gelden (style.style.fontSize
+   leegmaken), zodat een korte naam nooit een gekrompen maat van een vorige kaart erft. */
+function pasKaartNaamAan(naamEl) {
+  if (!naamEl) return;
+  naamEl.style.fontSize = '';
+  for (let i = 0; i < 6; i++) {
+    if (naamEl.scrollWidth <= naamEl.clientWidth + 0.5) return;
+    const fs = parseFloat(getComputedStyle(naamEl).fontSize) || 16;
+    if (fs <= 7) return;
+    naamEl.style.fontSize = Math.max(7, fs * 0.92).toFixed(2) + 'px';
+  }
+}
+
 function maakKaartEl(c) {
   const def = kdef(c);
   const el = document.createElement('div');
@@ -5994,8 +6026,16 @@ function bijwerkKaartEl(el, c, klikbaar) {
   naamEl.textContent = nm;
   /* lange samengestelde namen iets verkleinen zodat ze netjes in 2 regels passen i.p.v. lelijk
      af te kappen (bv. "Originele Handtekening") — tunebaar via de drempels/klassen in style.css */
-  naamEl.classList.toggle('lange-naam', nm.length >= 15 && nm.length < 19);
-  naamEl.classList.toggle('xl-naam', nm.length >= 19);
+  /* v114 (HET TONEEL, §7): de treden staan op het LANGSTE WOORD, niet op de totale
+     lengte — dat woord moet op één regel passen, want alleen dan hoeft de browser
+     nergens middenin te breken. "Originele Handtekening" (22 tekens) heeft een
+     langste woord van 12; "De Schaduwboekhouding" (21) een van 18, en die is dus
+     het echte probleem. */
+  const kl = naamKlassen(nm);
+  naamEl.classList.toggle('lange-naam', kl === 'lange-naam');
+  naamEl.classList.toggle('xl-naam', kl === 'xl-naam');
+  naamEl.classList.toggle('xxl-naam', kl === 'xxl-naam');
+  pasKaartNaamAan(naamEl);
   el.querySelector('.kaart-tekst').innerHTML = def.tekst(c);
 }
 
@@ -8020,7 +8060,7 @@ function kaartHtml(c, klikbaar) {
     ${c.vonk ? `<div class="kaart-vonk ${c.vonk > 0 ? 'vonk-helder' : 'vonk-duister'}" data-tip="${c.vonk > 0 ? 'Heldering: +' + vonkBedrag(c) + ' fakkellicht telkens je deze kaart speelt' : 'Verduistering: verbrandt ' + vonkBedrag(c) + ' fakkellicht bij het spelen, maar geeft je evenveel Blok'}">${c.vonk > 0 ? '🔥' : '🜂'}${vonkBedrag(c)}</div>` : ''}
     ${c.aangetast ? `<div class="kaart-aangetast" data-tip="Aangetast: door de Erfprins gecorrumpeerd — +1 Energie en uitputtend (eenmalig speelbaar)">🩸</div>` : ''}
     ${(() => { const az = kaartAangezegd(c); return az ? `<div class="kaart-zegel" data-tip="AANGEZEGD: deze kaart staat op de shortlist van de DICKtator (${az.teller}× gespeeld sinds de aanzegging) — de minst gespeelde van de twee wordt afgeschreven.">📜<b>${az.teller}</b></div>` : ''; })()}
-    <div class="kaart-naam">${knaam(c)}</div>
+    <div class="kaart-naam ${naamKlassen(knaam(c))}">${knaam(c)}</div>
     <div class="kaart-icoon" data-kicoon="${c.id}">${def.icoon}</div>
     <div class="kaart-tekst">${def.tekst(c)}</div>
     <div class="kaart-type">${def.type}</div>
