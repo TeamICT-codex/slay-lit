@@ -5022,7 +5022,7 @@ function intentTekst(v) {
     const toeslag = Math.min(DICK.FACTUUR.hofCap, posten * hovN);
     const basis = it.basis != null ? it.basis : DICK.FACTUUR.basis;
     const tarief = it.tarief != null ? it.tarief : DICK.FACTUUR.tarief;
-    const vrijTip = vrij > 0 ? ` De eerste ${vrij} posten zijn vrijgesteld (standaardprocedure): van uw ${rauw} posten ${posten === 0 ? 'is er nog geen belast' : 'zijn er ' + posten + ' belast'}.` : '';
+    const vrijTip = vrij > 0 ? ` De eerste ${vrij} posten zijn vrijgesteld (standaardprocedure): van uw ${rauw} post${rauw === 1 ? '' : 'en'} ${posten === 0 ? 'is er nog geen belast' : (posten === 1 ? 'is er 1 belast' : 'zijn er ' + posten + ' belast')}.` : '';
     /* laptop: de hele rekensom; mobiel alleen het bedrag (een tik op de pil is daar een
        doelwitklik, dus de formule staat in de eenmalige melding en in de Codex - v105) */
     const som = window.mobiel ? `🧾 ${bed}` : `🧾 ${basis} + ${tarief}×${posten}${toeslag ? ' +' + toeslag : ''} = ${bed}`;
