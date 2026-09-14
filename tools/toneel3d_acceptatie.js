@@ -130,9 +130,12 @@ async function meetPlaat(page, pad, grond) {
     const grondY = box.top + top + grond / 100 * H;
     const figuren = [];
     if (d3) {
-      const ps = Vista.schermPos(S.gevecht.speler);
-      if (ps) figuren.push({ wie: 'speler', y: ps.voetY });
-      S.gevecht.vijanden.forEach((v, i) => { const p = Vista.schermPos(v); if (p) figuren.push({ wie: 'vijand' + i, y: p.voetY }); });
+      /* v117: de GETEKENDE voet uit Vista.voetMeting() (quad + voetmarge, mee-ademend),
+         niet schermPos().voetY - dat is per definitie de aangenomen vloerlijn en zou
+         zichzelf bewijzen. Dode acteurs vallen/vervagen en tellen niet mee. */
+      (Vista.voetMeting ? Vista.voetMeting() : []).forEach((m, i) => {
+        if (!m.dood && m.zichtbaar !== false) figuren.push({ wie: m.wie + '#' + i, y: m.y, quadY: m.quadY, marge: m.marge });
+      });
     } else {
       const f = document.querySelector('.speler-figuur');
       if (f) figuren.push({ wie: 'speler', y: f.getBoundingClientRect().bottom });
@@ -144,7 +147,8 @@ async function meetPlaat(page, pad, grond) {
       spreiding: info ? +info.spreiding.toFixed(1) : null,
       spelerVoet: info && info.speler !== null ? +info.speler.toFixed(1) : null,
       vijandVoet: info && info.vijanden !== null ? +info.vijanden.toFixed(1) : null,
-      perFiguur: figuren.map(f => ({ wie: f.wie, d: +(((f.y - grondY) / innerHeight) * 100).toFixed(2) })),
+      perFiguur: figuren.map(f => ({ wie: f.wie, d: +(((f.y - grondY) / innerHeight) * 100).toFixed(2),
+        quadD: f.quadY === undefined ? null : +(((f.quadY - grondY) / innerHeight) * 100).toFixed(2) })),
       cropX: +(((W - box.width) / W) * 100).toFixed(1),
       cropY: +(((H - box.height) / H) * 100).toFixed(1),
       gat: (left > 0.5) || (top > 0.5) || (left + W < box.width - 0.5) || (top + H < box.height - 0.5)
@@ -166,9 +170,10 @@ async function lijnOverlay(page, grondY, aan) {
       d.style.cssText = `position:fixed;left:${x - 8}px;top:${y - 8}px;width:16px;height:16px;border:2px solid ${kleur};border-radius:50%;z-index:99999;pointer-events:none`;
       document.body.appendChild(d);
     };
-    const ps = Vista.schermPos(S.gevecht.speler);
-    if (ps) stip(ps.x, ps.voetY, 'rgba(90,255,120,.95)');
-    S.gevecht.vijanden.forEach(v => { const p = Vista.schermPos(v); if (p) stip(p.x, p.voetY, 'rgba(90,200,255,.95)'); });
+    (Vista.voetMeting ? Vista.voetMeting() : []).forEach(m => {
+      if (m.dood) return;
+      stip(m.x, m.y, m.wie === 'speler' ? 'rgba(90,255,120,.95)' : 'rgba(90,200,255,.95)');
+    });
   }, [grondY, aan]);
 }
 
@@ -188,8 +193,7 @@ async function huidigeAfwijking(page) {
     const grondY = box.top + top + g * H;
     const ys = [];
     if (d3) {
-      const ps = Vista.schermPos(S.gevecht.speler); if (ps) ys.push(ps.voetY);
-      S.gevecht.vijanden.forEach(v => { const p = Vista.schermPos(v); if (p) ys.push(p.voetY); });
+      (Vista.voetMeting ? Vista.voetMeting() : []).forEach(m => { if (!m.dood && m.zichtbaar !== false) ys.push(m.y); });
     } else {
       const f = document.querySelector('.speler-figuur'); if (f) ys.push(f.getBoundingClientRect().bottom);
     }
