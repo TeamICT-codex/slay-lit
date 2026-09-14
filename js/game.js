@@ -5986,23 +5986,102 @@ function naamKlassen(nm) {
   return '';
 }
 
+/* past de titel in zijn (2 regels hoge) clamp-box? De marge van 1,5px vangt de
+   afrondingsrest van de -webkit-box op, niet een echte derde regel. */
+function _naamPast(el) {
+  return el.scrollWidth <= el.clientWidth + 0.5 && el.scrollHeight <= el.clientHeight + 1.5;
+}
+
 /* v114 (HET TONEEL, §7) — KRIMP-TOT-HET-PAST voor de kaarttitel.
    De CSS breekt woorden niet meer open (overflow-wrap/word-break: normal), dus een
    te lang woord zou buíten de kaart bleeden. Chrome hyfeneert alleen als er een
    nl-woordenlijst beschikbaar is — daar mogen we niet op rekenen. Vandaar deze
-   laatste stap: zolang het breedste woord niet past, de letter een tikje kleiner.
+   laatste stap: zolang de titel niet past, de letter een tikje kleiner.
    Tot 6 stappen van 8% (samen ~39%) met een ondergrens van 7px; daaronder wint de
-   ellipsis van de line-clamp. Eerst de CSS-trede laten gelden (style.style.fontSize
-   leegmaken), zodat een korte naam nooit een gekrompen maat van een vorige kaart erft. */
+   ellipsis van de line-clamp. Zet de maat NIET zelf terug — zetKaartNaam() doet dat,
+   die meet eerst of er überhaupt gekrompen moet worden. */
 function pasKaartNaamAan(naamEl) {
   if (!naamEl) return;
-  naamEl.style.fontSize = '';
   for (let i = 0; i < 6; i++) {
-    if (naamEl.scrollWidth <= naamEl.clientWidth + 0.5) return;
+    if (_naamPast(naamEl)) return;
     const fs = parseFloat(getComputedStyle(naamEl).fontSize) || 16;
     if (fs <= 7) return;
     naamEl.style.fontSize = Math.max(7, fs * 0.92).toFixed(2) + 'px';
   }
+}
+
+/* v114-fix (§7) — EERST METEN, DAN PAS KRIMPEN.
+   De trede-klasse werd blind op het langste woord gezet, ongeacht of de naam bij de
+   grotere letter al paste — en sinds v114 óók op de grote kaarten (dek, altaar,
+   winkel, smid), waar ruimte zat is. Gemeten over alle 125 kaarten op 1440x900:
+   63 grote kaarten krompen van 16 naar 13,44px terwijl ze op één regel pasten;
+   'Schuldverschuiving' zelfs naar 10,24px. Zonder trede blijkt maar ÉÉN titel op de
+   grote kaart echt te klein te zijn ('De Schaduwboekhouding'). Vandaar: klasse en
+   krimp eerst weghalen, meten, en alleen krimpen als het echt niet past. De trede
+   blijft daarbij het startpunt (één CSS-stap), de JS-krimp het sluitstuk. */
+/* klemt de REGELTEKST van deze kaart? De naam is de identiteit (v95), maar een
+   grotere titel mag geen regeltekst opeten: .kaart-tekst vangt de krimp op en kapt
+   dus af zodra de titel een regel hoger wordt. */
+function _tekstKlemt(naamEl) {
+  const k = naamEl.closest && naamEl.closest('.kaart');
+  const t = k && k.querySelector('.kaart-tekst');
+  return !!(t && t.scrollHeight > t.clientHeight + 1);
+}
+
+function zetKaartNaam(naamEl, nm) {
+  if (!naamEl) return;
+  if (nm !== undefined && nm !== null) naamEl.textContent = nm;
+  const kl = naamKlassen(naamEl.textContent || '');
+  const kaal = () => { naamEl.classList.remove('lange-naam', 'xl-naam', 'xxl-naam'); naamEl.style.fontSize = ''; };
+  /* korte naam: nooit iets doen — en vooral niets SCHRIJVEN, want een schrijfactie
+     gevolgd door een meting verderop kost een layout-pas per kaart (het dek toont er
+     125 in een keer). Alleen opruimen als er iets op te ruimen valt. */
+  if (!kl) {
+    if (naamEl.style.fontSize || naamEl.classList.contains('lange-naam') ||
+      naamEl.classList.contains('xl-naam') || naamEl.classList.contains('xxl-naam')) kaal();
+    return;
+  }
+  kaal();
+  /* clientWidth 0 = nog niet in de DOM: dan de oude, blinde weg (beter iets te klein
+     dan een naam die buiten de kaart loopt); de sweep hieronder corrigeert hem zodra
+     hij wél gelayout is. */
+  if (naamEl.clientWidth <= 0) { naamEl.classList.add(kl); return; }
+  const past = _naamPast(naamEl);
+  if (past && !_tekstKlemt(naamEl)) return;         /* past én kost geen regeltekst */
+  naamEl.classList.add(kl);
+  pasKaartNaamAan(naamEl);
+  /* redde de kleinere letter de regeltekst niet, en paste de naam op volle maat
+     gewoon? Dan de volle maat terugnemen — krimpen zonder winst is precies de bug. */
+  if (past && _tekstKlemt(naamEl)) {
+    naamEl.classList.remove('lange-naam', 'xl-naam', 'xxl-naam');
+    naamEl.style.fontSize = '';
+  }
+}
+
+/* kaartHtml() levert een STRING op; de grote kaarten kunnen dus pas gemeten worden
+   nadat de aanroeper ze in de DOM heeft gezet. Eén gebundelde sweep per frame (en
+   nog een late, voor de onthul-animaties die pas na een tel invoegen) doet dat voor
+   alle aanroepers tegelijk — dek, altaren, winkel, smid, beloning en de zoomkaart.
+   De handkaarten lopen mee: bij de eerste render is hun flex-layout nog niet
+   uitgerekend, waardoor de directe meting in bijwerkKaartEl de regeltekst nog niet
+   ziet klemmen. Idempotent: de sweep haalt klasse en maat eerst weg en meet opnieuw. */
+let _kaartNaamSweep = 0;
+function _sweepKaartNamen(sel) {
+  document.querySelectorAll(sel).forEach(el => zetKaartNaam(el));
+}
+function _plandeKaartNamen() {
+  if (_kaartNaamSweep) return;
+  _kaartNaamSweep = requestAnimationFrame(() => requestAnimationFrame(() => {
+    _kaartNaamSweep = 0;
+    /* DUBBELE rAF: de handzone krijgt haar definitieve flex-layout pas na de eerste
+       frame van renderGevecht, en in die ene frame ziet de directe meting de
+       regeltekst nog niet klemmen. Twee frames later staat alles; dat is ~32ms en
+       dus onzichtbaar. */
+    _sweepKaartNamen('.kaart.groot .kaart-naam, #hand .kaart .kaart-naam');
+    /* de late pas is alleen voor de onthul-animaties die pas na een tel invoegen
+       (booster/beloning); handkaarten blijven eruit, daar zou hij zichtbaar zijn. */
+    setTimeout(() => _sweepKaartNamen('.kaart.groot .kaart-naam'), 400);
+  }));
 }
 
 function maakKaartEl(c) {
@@ -6080,20 +6159,19 @@ function bijwerkKaartEl(el, c, klikbaar) {
   }
   const naamEl = el.querySelector('.kaart-naam');
   const nm = knaam(c);
-  naamEl.textContent = nm;
   /* lange samengestelde namen iets verkleinen zodat ze netjes in 2 regels passen i.p.v. lelijk
      af te kappen (bv. "Originele Handtekening") — tunebaar via de drempels/klassen in style.css */
   /* v114 (HET TONEEL, §7): de treden staan op het LANGSTE WOORD, niet op de totale
      lengte — dat woord moet op één regel passen, want alleen dan hoeft de browser
      nergens middenin te breken. "Originele Handtekening" (22 tekens) heeft een
      langste woord van 12; "De Schaduwboekhouding" (21) een van 18, en die is dus
-     het echte probleem. */
-  const kl = naamKlassen(nm);
-  naamEl.classList.toggle('lange-naam', kl === 'lange-naam');
-  naamEl.classList.toggle('xl-naam', kl === 'xl-naam');
-  naamEl.classList.toggle('xxl-naam', kl === 'xxl-naam');
-  pasKaartNaamAan(naamEl);
+     het echte probleem. v114-fix: zetKaartNaam meet eerst of het bij de volle maat
+     al past — krimpen is de uitzondering, niet de regel. De regeltekst gaat er wél
+     vóór (zetKaartNaam kijkt of de titel geen regeltekst opeet). */
+  naamEl.textContent = nm;
   el.querySelector('.kaart-tekst').innerHTML = def.tekst(c);
+  zetKaartNaam(naamEl, nm);
+  _plandeKaartNamen();   /* en nog eens nadat de handlayout is uitgerekend */
 }
 
 function renderHand() {
@@ -8128,13 +8206,14 @@ function toonKaartBeloning() {
 /* ---------- kaartkeuze-overlay ---------- */
 function kaartHtml(c, klikbaar) {
   const def = kdef(c);
+  _plandeKaartNamen();   /* v114-fix: de titels pas MÉTEN als de aanroeper ze heeft ingevoegd */
   return `<div class="kaart groot ktype-${def.type} zeld-${def.zeld} ${def.licht || def.vuur ? 'kaart-licht' : ''} ${c.aangetast ? 'kaart-aangetast-art' : ''} ${klikbaar ? 'klikbaar' : ''}" data-uid="${c.uid}">
     <div class="kaart-kost">${kkost(c) === null ? '✕' : kkost(c)}</div>
     ${def.licht ? `<div class="kaart-lichtkost" data-tip="Verbrandt fakkellicht bij het spelen">🔥${kval(c, 'licht')}</div>` : ''}
     ${c.vonk ? `<div class="kaart-vonk ${c.vonk > 0 ? 'vonk-helder' : 'vonk-duister'}" data-tip="${c.vonk > 0 ? 'Heldering: +' + vonkBedrag(c) + ' fakkellicht telkens je deze kaart speelt' : 'Verduistering: verbrandt ' + vonkBedrag(c) + ' fakkellicht bij het spelen, maar geeft je evenveel Blok'}">${c.vonk > 0 ? '🔥' : '🜂'}${vonkBedrag(c)}</div>` : ''}
     ${c.aangetast ? `<div class="kaart-aangetast" data-tip="Aangetast: door de Erfprins gecorrumpeerd — +1 Energie en uitputtend (eenmalig speelbaar)">🩸</div>` : ''}
     ${(() => { const az = kaartAangezegd(c); return az ? `<div class="kaart-zegel" data-tip="AANGEZEGD: deze kaart staat op de shortlist van de DICKtator (${az.teller}× gespeeld sinds de aanzegging) — de minst gespeelde van de twee wordt afgeschreven.">📜<b>${az.teller}</b></div>` : ''; })()}
-    <div class="kaart-naam ${naamKlassen(knaam(c))}">${knaam(c)}</div>
+    <div class="kaart-naam">${knaam(c)}</div>
     <div class="kaart-icoon" data-kicoon="${c.id}">${def.icoon}</div>
     <div class="kaart-tekst">${def.tekst(c)}</div>
     <div class="kaart-type">${def.type}</div>

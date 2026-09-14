@@ -432,6 +432,55 @@ async function meetPlaat(page, pad, grond) {
     await ctx.close();
   }
 
+
+  /* ---- §9.7b — krimpen is de UITZONDERING ----
+     De trede-klasse werd blind op het langste woord gezet, ook op de grote kaarten
+     waar ruimte zat is: 63 van de 125 titels kromp daar van 16 naar 13,44px terwijl
+     ze op één regel pasten, en 59 titels liepen 1px over hun clamp-box (onderrand van
+     de Pirata-letters afgesneden). Deze toets bewaakt de nieuwe regel: een titel die
+     op VOLLE maat past én geen regeltekst opeet, mag niet gekrompen zijn. */
+  kop('§9.7b geen titel krimpt zonder reden (laptop 1440x900)');
+  {
+    const { ctx, page } = await open(browser, { w: 1440, h: 900, dpr: 1, mobiel: false, d3: false });
+    await naarGevecht(page); await slaap(300);
+    const r = await page.evaluate(async () => {
+      const alle = Object.keys(KAARTEN);
+      const lees = el => {
+        const kl = ['lange-naam', 'xl-naam', 'xxl-naam'].filter(k => el.classList.contains(k))[0] || null;
+        const k = el.closest('.kaart'), tk = k && k.querySelector('.kaart-tekst');
+        /* even kaal meten: paste hij op volle maat? en kostte dat regeltekst? */
+        const bewaar = { kl, fs: el.style.fontSize };
+        el.classList.remove('lange-naam', 'xl-naam', 'xxl-naam'); el.style.fontSize = '';
+        const paste = el.scrollWidth <= el.clientWidth + 0.5 && el.scrollHeight <= el.clientHeight + 1.5;
+        const kostte = !!(tk && tk.scrollHeight > tk.clientHeight + 1);
+        if (bewaar.kl) el.classList.add(bewaar.kl);
+        el.style.fontSize = bewaar.fs;
+        return { naam: el.textContent, kl: bewaar.kl, paste, kostte, over: el.scrollHeight - el.clientHeight };
+      };
+      const onnodig = [], over = [];
+      const keur = el => {
+        const x = lees(el);
+        if (x.kl && x.paste && !x.kostte) onnodig.push(x.naam);
+        if (x.over > 0.5) over.push(x.naam);
+      };
+      for (let i = 0; i < alle.length; i += 8) {
+        S.gevecht.hand = alle.slice(i, i + 8).map(id => nieuweKaart(id));
+        GDOM.hand = new Map(); document.getElementById('hand').innerHTML = '';
+        renderGevecht();
+        await new Promise(r => setTimeout(r, 220));
+        document.querySelectorAll('#hand .kaart-naam').forEach(keur);
+      }
+      toonKaartKeuze(alle.map(id => nieuweKaart(id)), 'hertest', () => {}, null, {});
+      await new Promise(r => setTimeout(r, 900));
+      document.querySelectorAll('#kies-kaarten .kaart-naam').forEach(keur);
+      return { onnodig, over };
+    });
+    t(r.onnodig.length === 0, '1440x900: geen titel krimpt terwijl hij op volle maat past' + (r.onnodig.length ? ' — ' + r.onnodig.length + ', bv. ' + r.onnodig.slice(0, 4).join(', ') : ''));
+    t(r.over.length === 0, '1440x900: geen titel loopt over zijn clamp-box (afgesneden letterstaarten)' + (r.over.length ? ' — ' + r.over.length + ', bv. ' + r.over.slice(0, 4).join(', ') : ''));
+    t(page.__f.length === 0, '1440x900: geen paginafouten' + (page.__f.length ? ' — ' + page.__f[0] : ''));
+    await ctx.close();
+  }
+
   /* ---- §9.8 — regressie: Het Proces, de klassieke kaart, de andere bazen ---- */
   kop('§9.8 regressie');
   {

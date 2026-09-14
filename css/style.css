@@ -2809,6 +2809,11 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
      De hand-only regel in mobiel.css deed dit sinds v104 al; hij geldt nu overal
      (dek, altaren, winkel, smid). */
   overflow-wrap: normal; word-break: normal; hyphens: auto; -webkit-hyphens: auto;
+  /* v114-fix: 1px boven én onder. De shorthand hierboven overschreef sinds v97 de
+     losse `padding-top: 1px` (dezelfde regel, later in de declaratie) — de Pirata-
+     stokletters stonden dus alsnog tegen de rand van de clamp-box. En de -webkit-box
+     rondt zijn twee regels net iets hoger af dan de clientHeight, waardoor gekrompen
+     titels 1px overliepen en hun onderrand werd afgesneden; die 1px zit er nu in. */
   padding: 0 3px; max-width: 100%; box-sizing: border-box;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 /* lange namen op de (kleine) hand-/dekkaarten trapsgewijs verkleinen → passen netjes in 2 regels
@@ -2816,6 +2821,12 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
    v114: drie treden, en ze staan op het LANGSTE WOORD (>=10 / >=13 / >=16 tekens) i.p.v.
    op de totale titellengte — alleen dat woord bepaalt of er ergens gebroken moet worden.
    Gelden ook op de grote kaarten (dek, altaren, winkel, smid), niet op de zoomkaart. */
+/* v114-fix: alleen de GEKROMPEN titels krijgen er 1px onder bij. De -webkit-box rondt
+   zijn regelhoogte net iets hoger af dan de clientHeight, waardoor precies die titels
+   1px overliepen en de staarten van de Pirata-letters werden afgesneden (gemeten: 59
+   van de 125 titels op 1440x900). Op een titel die NIET krimpt zou die px regeltekst
+   kosten (.kaart-tekst vangt de krimp op), dus die blijft zoals hij was. */
+.kaart-naam.lange-naam, .kaart-naam.xl-naam, .kaart-naam.xxl-naam { padding-bottom: 1px; }
 .kaart:not(.kaart-focus) .kaart-naam.lange-naam { font-size: .84rem; }
 .kaart:not(.kaart-focus) .kaart-naam.xl-naam { font-size: .72rem; letter-spacing: -.01em; }
 .kaart:not(.kaart-focus) .kaart-naam.xxl-naam { font-size: .64rem; letter-spacing: -.015em; }
