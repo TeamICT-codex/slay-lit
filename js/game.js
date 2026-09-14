@@ -3618,6 +3618,41 @@ function zetToneelSchaal() {
 window.zetToneelSchaal = zetToneelSchaal;
 
 /* ============================================================
+   HET TONEEL (v114) — zetVoetschaduwen()
+   ------------------------------------------------------------
+   De contactschaduw (één zachte ovaal op de voetlijn + een bredere sokkel die
+   naar beneden over naam/hp/chips uitloopt) staat als eigen, ONgefilterd
+   broertje naast elke figuur. De maat komt uit de GEMETEN figuurbreedte i.p.v.
+   uit een tweede set CSS-maten: zo volgt ze automatisch --toneel-k, de mobiele
+   vh-clamps, de :has-krimpregels én de klein/groot-scale, zonder dat er ooit
+   twee maatsystemen uit elkaar kunnen lopen. Geen animatie — dus in lite en
+   onder reduced-motion vanzelf identiek. Geen filter: drop-shadow (kost fps).
+   Aangeroepen na bouwGevechtDom en bij elke resize/draai. */
+function _voetschaduwPaar(f, s) {
+  if (!f || !s) return;
+  /* BREEDTE: offsetWidth (layout, dus zonder de 'adem'-animatie die via transform
+     1,2% op en neer schaalt) maal de losse `scale:`-prop — dat is precies de
+     klein/groot-maat van de vijand en niets anders. */
+  const kl = parseFloat(getComputedStyle(f).scale);
+  const breed = f.offsetWidth * (isFinite(kl) && kl > 0 ? kl : 1);
+  s.style.setProperty('--vs-b', Math.round(breed * 0.7) + 'px');
+  /* HOOGTE: het schaduw-broertje staat de kolom-gap (5-8px, per spoor anders) onder
+     de voet van de figuur. Eerst terugzetten, dan meten, dan het verschil als
+     relatieve top — zo ligt de ovaal op elk spoor exact op de voetlijn zonder dat
+     de layout meeschuift (het element is 0 px hoog en position: relative). */
+  s.style.setProperty('--vs-dy', '0px');
+  const dy = f.getBoundingClientRect().bottom - s.getBoundingClientRect().top;
+  s.style.setProperty('--vs-dy', Math.round(dy) + 'px');
+}
+function zetVoetschaduwen() {
+  _voetschaduwPaar($('#speler-zone .speler-figuur'), $('#speler-zone .voetschaduw'));
+  _voetschaduwPaar($('#metgezel-zone .metgezel-art'), $('#metgezel-zone .voetschaduw'));
+  $$('#vijanden-rij .vijand').forEach(v =>
+    _voetschaduwPaar(v.querySelector('.vijand-art'), v.querySelector('.voetschaduw')));
+}
+window.zetVoetschaduwen = zetVoetschaduwen;
+
+/* ============================================================
    HET TONEEL (v114) — plaatsGevechtsplaat()
    ------------------------------------------------------------
    Vervangt `background-size: cover` + `background-position` voor de
@@ -4385,7 +4420,7 @@ function opSchermDraai() {
      meteen (niet gedebounced) zodat er geen frame met een verschoven vloer staat.
      De figuurschaal hangt aan dezelfde hoogte, dus die eerst (hij verzet de voetlijn). */
   zetToneelSchaal();
-  if (document.body.dataset.scherm === 'gevecht') plaatsGevechtsplaat();
+  if (document.body.dataset.scherm === 'gevecht') { plaatsGevechtsplaat(); zetVoetschaduwen(); }
   /* afdaalkaart herschalen bij draaien: de zoom hangt aan de schermbreedte, en
      zonder hertekenen blijft 'ie stale → te klein (na portret→liggend) of
      overlopend/afgeknipt (liggend→portret). Licht gedebounced tegen resize-burst. */
@@ -4479,6 +4514,7 @@ function startGevecht(samenstelling, soort, rij) {
   g.heldArt = huidigeHeld().art;
 
   bouwGevechtDom(g);
+  requestAnimationFrame(zetVoetschaduwen);   /* contactschaduw op maat van de verse figuren (v114) */
   /* poses warm vóór de eerste klap (v89) — maar pas ná ~1,2 s (v95): de plaat en de
      handkaart-art krijgen eerst de lijn; de eerste vijandelijke klap komt toch pas
      na jouw beurt. Gespreid en alleen bestaande poses (zie preloadPoses2D). */
@@ -4919,6 +4955,7 @@ function bouwGevechtDom(g) {
     wrap.innerHTML = `
       <div class="intent-rij"></div>
       <div class="vijand-art">${art}</div>
+      <div class="voetschaduw" aria-hidden="true"></div>
       <div class="sprite-ruimte"></div>
       <div class="vijand-naam">${v.naam}</div>
       <div class="hp-balk"><div class="hp-vulling"></div><span class="hp-tekst"></span><span class="blok-schild" data-tip="Blok: vangt aanvalsschade op, verdwijnt aan het begin van de eigen beurt"><svg viewBox="0 0 24 28" aria-hidden="true"><path fill="url(#blokgrad)" stroke="#0c1c2e" stroke-width="1.6" d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg><b></b></span></div>
@@ -4954,6 +4991,7 @@ function bouwGevechtDom(g) {
   ).join('');
   zone.innerHTML = `
     <div id="speler-figuur" class="speler-figuur"${(window.VOETMARGE && VOETMARGE[heldDef.art]) ? ` style="--voetc:${VOETMARGE[heldDef.art]}%"` : ''}>${spelerArt}</div>
+    <div class="voetschaduw" aria-hidden="true"></div>
     <div class="sprite-ruimte"><div id="held-fx">
       <div class="hfx hfx-schild"></div>
       <div class="hfx hfx-cast"><span class="cast-ring"></span><span class="cast-ring" style="--delay:.8s"></span><span class="cast-ring" style="--delay:1.6s"></span></div>
@@ -5002,6 +5040,7 @@ function bouwGevechtDom(g) {
         ${synBadge}
         <div class="metgezel-intent"></div>
         <div class="metgezel-art" data-tip="${md.naam} — ${md.fluister || '…'}"${(window.VOETMARGE && VOETMARGE[g.metgezel.id]) ? ` style="--voetc:${VOETMARGE[g.metgezel.id]}%"` : ''}>${md.icoon}</div>
+        <div class="voetschaduw" aria-hidden="true"></div>
         <div class="metgezel-naam">${md.naam}</div>
         <div class="hp-balk metgezel-hp"><div class="hp-vulling"></div><span class="hp-tekst"></span><span class="blok-schild" data-tip="Blok: vangt aanvalsschade op"><svg viewBox="0 0 24 28" aria-hidden="true"><path fill="url(#blokgrad)" stroke="#0c1c2e" stroke-width="1.6" d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg><b></b></span></div>
         <div class="blok-status"></div>

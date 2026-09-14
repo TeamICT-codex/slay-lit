@@ -1549,6 +1549,46 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
 /* episch (bv. Het Origineel) = imposant, duidelijk GROTER dan de held (108→158px), tussen elite en baas */
 .is-episch .vijand-art { font-size: calc(5.9rem * var(--toneel-k, 1)); width: calc(158px * var(--toneel-k, 1)); height: calc(158px * var(--toneel-k, 1)); }
 
+/* ---------- CONTACTSCHADUW (v114 — HET TONEEL) ----------
+   Elke figuur (held, metgezel, vijand, hoveling) krijgt een zachte ovaal op zijn
+   voetlijn, plus een bredere, veel zachtere sokkel die naar beneden uitloopt en
+   tegelijk het contrast achter naam/hp/chips draagt (plaat-onafhankelijk: op de
+   drukke Act 2-platen waren de chips anders nauwelijks leesbaar).
+   Het element is 0 px hoog en dus layout-neutraal; de breedte (--vs-b = 70% van de
+   gemeten figuurbreedte) zet zetVoetschaduwen() in JS, zodat één maatsysteem
+   volstaat. Bewust GEEN filter: drop-shadow (kost fps, zie wereld-fix 7) en bewust
+   geen animatie — daardoor is lite/reduced-motion vanzelf identiek. */
+.voetschaduw {
+  position: relative;
+  top: var(--vs-dy, 0px);   /* de kolom-gap wegrekenen (zetVoetschaduwen meet hem) */
+  width: 100%; height: 0;
+  pointer-events: none;
+}
+/* de sokkel: breed en zacht, hangt grotendeels ONDER de voetlijn (achter de labels) */
+.voetschaduw::before {
+  content: ''; position: absolute; left: 50%; top: 0;
+  width: calc(var(--vs-b, 76px) * 1.85);
+  height: calc(var(--vs-b, 76px) * 1.15);
+  transform: translate(-50%, -26%);
+  background: radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, .34) 0%, rgba(0, 0, 0, .16) 52%, rgba(0, 0, 0, 0) 78%);
+  pointer-events: none;
+}
+/* de contactovaal zelf: 70% breed, ~12% van de figuurhoogte, op de voetlijn */
+.voetschaduw::after {
+  content: ''; position: absolute; left: 50%; top: 0;
+  width: var(--vs-b, 76px);
+  height: calc(var(--vs-b, 76px) * .17);
+  transform: translate(-50%, -50%);
+  background: radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, .55) 0%, rgba(0, 0, 0, .3) 54%, rgba(0, 0, 0, 0) 78%);
+  pointer-events: none;
+}
+/* de figuur staat BÓVEN zijn eigen schaduw (DOM-volgorde zou hem eronder zetten) */
+.vijand-art, .speler-figuur, .metgezel-art { z-index: 1; }
+.speler-figuur, .metgezel-art { position: relative; }
+/* 3D-toneel: Vista tekent held en vijanden (én hun schaduw) zelf — alleen de
+   metgezel blijft 2D en houdt dus wél zijn ovaal. */
+.d3-actief #vijanden-rij .voetschaduw, .d3-actief #speler-zone .voetschaduw { display: none; }
+
 /* ---------- zichtbare kaart-steel (de Erfprins grist/kaatst een kaart) ---------- */
 .steel-vlieger {
   position: fixed; z-index: 660; pointer-events: none;
