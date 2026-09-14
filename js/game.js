@@ -5013,15 +5013,20 @@ function intentTekst(v) {
     if ((v.status.zwak || 0) > 0) bed = Math.floor(bed * 0.75);
     if ((sp().status.kwetsbaar || 0) > 0) bed = Math.floor(bed * 1.5);
     bed = glasDmg(bed);
-    const posten = (gF && gF.posten) || 0;
+    /* v109: de pil rekent met de BELASTE posten (rauwe teller min de vrijstelling), exact
+       zoals dicktatorFactuurBedrag - anders liegt de rekensom zodra vrij > 0. */
+    const rauw = (gF && gF.posten) || 0;
+    const posten = dicktatorBelastePosten(gF);
+    const vrij = (DICK.FACTUUR && DICK.FACTUUR.vrij) || 0;
     const hovN = gF ? gF.vijanden.filter(x => x.hof && !x.dood).length : 0;
     const toeslag = Math.min(DICK.FACTUUR.hofCap, posten * hovN);
     const basis = it.basis != null ? it.basis : DICK.FACTUUR.basis;
     const tarief = it.tarief != null ? it.tarief : DICK.FACTUUR.tarief;
+    const vrijTip = vrij > 0 ? ` De eerste ${vrij} posten zijn vrijgesteld (standaardprocedure): van uw ${rauw} posten ${posten === 0 ? 'is er nog geen belast' : 'zijn er ' + posten + ' belast'}.` : '';
     /* laptop: de hele rekensom; mobiel alleen het bedrag (een tik op de pil is daar een
        doelwitklik, dus de formule staat in de eenmalige melding en in de Codex - v105) */
     const som = window.mobiel ? `🧾 ${bed}` : `🧾 ${basis} + ${tarief}×${posten}${toeslag ? ' +' + toeslag : ''} = ${bed}`;
-    return `<span class="intent intent-factuur" data-tip="${it.naam}: ${basis} basis + ${tarief} per post × ${posten} posten${toeslag ? ' + ' + toeslag + ' hoftoeslag' : ''} = ${bed} schade. Elke gespeelde kaart is een post: gratis = 2, 1 energie = 1, 2+ = aftrekbaar.">${som}</span>`;
+    return `<span class="intent intent-factuur" data-tip="${it.naam}: ${basis} basis + ${tarief} per post × ${posten} post${posten === 1 ? '' : 'en'}${toeslag ? ' + ' + toeslag + ' hoftoeslag' : ''} = ${bed} schade. Elke gespeelde kaart is een post: gratis = ${DICK.POSTEN.gratis}, 1 energie = ${DICK.POSTEN.een}, 2+ = aftrekbaar.${vrijTip}">${som}</span>`;
   }
   /* HET HOF (v109): een zet zonder schade die wel iets doet (delegeren, laten innen, de
      zitting, de betekening, de peiling). Nooit in de default-tak - die zegt 'verzwakt jou'. */
@@ -6424,7 +6429,27 @@ const DICK = {
   KM_VLOEK_CAP: 0,        /* 0 = geen cap: de vloeken-as is de formule uit §6, zoals het contract hem geeft */
   /* basis 6 = de contractwaarde uit §4; tarief 3/4, hofCap 4, ONTSLAG 18 en hp 240 zitten
      binnen de bereiken van §8 stap 14 (knop 1, 3, 2 en 4). */
-  FACTUUR: { basis: 6, tarief: 3, basis3: 7, tarief3: 4, index: 2, hofCap: 4 },
+  /* vrij = DE VRIJSTELLING (balansknop 6, v109): de eerste N posten van een beurt zijn
+     gratis ("de eerste twee handelingen zijn een standaardprocedure"). Alleen de posten
+     BOVEN de vrijstelling betalen tarief en hoftoeslag; zie dicktatorBelastePosten.
+     STANDAARD 0 = UIT, en dat is een gemeten beslissing, geen luiheid. 12 seeds per cel,
+     vijf builds, drie beleidsregels (vrij 0 reproduceert dick_sim_fixb_C.json veld voor
+     veld, dus de knop is op 0 een echte no-op):
+       vrij 1: gif_matig 0/0/0, mens 0/0/0 (geen winst erbij), gif_opt 9->11/11/12,
+               en het "bewijs van keuze" bij de Gifmagier zakt van 10,1 naar 7,2 HP.
+       vrij 2: gif_matig NOG ALTIJD 0/0/0, mens 1/0/6, maar gif_opt 12/12/12 en
+               gif_opt_kristal 12/12/12 - het plafond van 11 uit paragraaf 9 is weg.
+       vrij 3: gif_matig 1/0/1, mens 3/0/6, gif_opt 12/12/12, en bij kristal zakt het
+               bewijs van keuze naar 2,4 HP (de Factuur is dan geen keuze meer).
+     WAAROM de knop de verkeerde kant op werkt: de Factuur is 76-88% van alles wat de
+     GEOPTIMALISEERDE gifbuild binnenkrijgt en maar 55-63% bij de matige. Een vlakke
+     vrijstelling schenkt dus procentueel het meest aan het dek dat al wint. De matige
+     build sterft niet aan de rekening maar aan haar eigen output (verhouding 1,9-2,2:1
+     tegen 4-5:1); vrij > 0 rekt haar gevechten alleen op (mediaan 10 -> 15-18 rondes,
+     buiten de 9-15 van paragraaf 9) zonder dat ze wint. Zet hem dus alleen aan als de
+     architect het mens-equivalent (gif_matig_mens factuurbewust 6/12 bij vrij 2) zwaarder
+     weegt dan het gif_opt-plafond. */
+  FACTUUR: { basis: 6, tarief: 3, basis3: 7, tarief3: 4, index: 2, hofCap: 4, vrij: 0 },
   POSTEN: { gratis: 2, een: 1 },   /* gewicht per gespeelde kaart: 0 energie = 2 posten, 1 = 1, 2+ = 0 */
   decreetCap: 3,          /* harde grens: nooit meer dan 3 kaarten per gevecht */
   speelbaarGuard: 6,      /* bestaande guard: onder 7 speelbare kaarten geen decreet meer */
@@ -6451,11 +6476,19 @@ function dicktatorTarief(b) {
   if ((b.fase || 1) >= 3) return { basis: F.basis3 + F.index * (b.facturen3 || 0), tarief: F.tarief3 };
   return { basis: F.basis, tarief: F.tarief };
 }
+/* DE VRIJSTELLING (v109): g.posten is de RAUWE teller van deze beurt; alles wat een bedrag
+   rekent moet door deze functie. De eerste DICK.FACTUUR.vrij posten zijn een standaard-
+   procedure en kosten niets - ook de hoftoeslag rekent op dit getal, niet op de rauwe
+   teller. vrij = 0 zet de knop uit en geeft exact het oude gedrag terug. */
+function dicktatorBelastePosten(g) {
+  const vrij = (DICK.FACTUUR && DICK.FACTUUR.vrij) || 0;
+  return Math.max(0, ((g && g.posten) || 0) - vrij);
+}
 /* EEN BRON VAN WAARHEID voor de pil en de klap (les van de Glazen-Zielen-fix):
-   FACTUUR = basis + tarief x posten + min(6, posten x levende hovelingen). */
+   FACTUUR = basis + tarief x belaste posten + min(hofCap, belaste posten x levende hovelingen). */
 function dicktatorFactuurBedrag(g, it) {
   if (!g || !it) return 0;
-  const posten = g.posten || 0;
+  const posten = dicktatorBelastePosten(g);
   const hovelingen = g.vijanden.filter(x => x.hof && !x.dood).length;
   const basis = it.basis != null ? it.basis : DICK.FACTUUR.basis;
   const tarief = it.tarief != null ? it.tarief : DICK.FACTUUR.tarief;
@@ -6479,6 +6512,9 @@ function dicktatorKassaTik(g, voor, posten) {
   const na = dicktatorFactuurBedrag(g, v.intent);
   if (na > voor) { fxNummer(el, '+' + (na - voor), 'fx-debuff'); Klank.sfx('goud'); }
   else if (posten === 0) fxNummer(el, '+0 aftrekbaar', 'fx-blok');
+  /* v109: posten die nog binnen DE VRIJSTELLING vallen bewegen het bedrag niet - zeg dat,
+     anders lijkt de kassa stuk ("ik speelde een gratis kaart en er gebeurde niets"). */
+  else fxNummer(el, '+0 vrijgesteld', 'fx-blok');
 }
 
 function vloekenInGevecht(g) {
@@ -7149,7 +7185,10 @@ function dicktatorBalk(b) {
   const delen = [];
   /* de getallen komen uit DICK, nooit hardgecodeerd: anders liegt de strook na een balansronde
      (de tooltip beloofde 'max +6' terwijl de hoftoeslag-cap al op 4 stond). */
-  let tip = 'DE FACTUUR: ' + tar.basis + ' basis + ' + tar.tarief + ' per post. Elke gespeelde kaart is een post: gratis = ' + DICK.POSTEN.gratis + ', 1 energie = ' + DICK.POSTEN.een + ', 2+ = aftrekbaar. Elke levende hoveling int mee (+1 per post, max +' + DICK.FACTUUR.hofCap + ').';
+  const vrij = (DICK.FACTUUR && DICK.FACTUUR.vrij) || 0;
+  let tip = 'DE FACTUUR: ' + tar.basis + ' basis + ' + tar.tarief + ' per post. Elke gespeelde kaart is een post: gratis = ' + DICK.POSTEN.gratis + ', 1 energie = ' + DICK.POSTEN.een + ', 2+ = aftrekbaar.'
+    + (vrij > 0 ? ' DE VRIJSTELLING: de eerste ' + vrij + ' posten per beurt zijn een standaardprocedure en kosten niets.' : '')
+    + ' Elke levende hoveling int mee (+1 per belaste post, max +' + DICK.FACTUUR.hofCap + ').';
   if (b.vorm2) {
     const klok = dicktatorKlok(b);
     delen.push('⏳ ' + (klok === 0 ? 'ONTSLAG NU' : 'ONTSLAG over ' + klok));
@@ -7377,7 +7416,10 @@ function beginSpelerBeurt() {
      (een tik is daar een doelwitklik), dus de regel staat hier en in de Codex. */
   if (!g._factuurUitleg && typeof dicktatorFactuurBron === 'function' && dicktatorFactuurBron(g)) {
     g._factuurUitleg = true;
-    melding('🧾 DE FACTUUR: elke kaart die je speelt is een post — gratis = ' + DICK.POSTEN.gratis + ', 1 energie = ' + DICK.POSTEN.een + ', 2+ is aftrekbaar. Elke levende hoveling int mee. Speel dus GROOT, of speel weinig.');
+    const _vrij = (DICK.FACTUUR && DICK.FACTUUR.vrij) || 0;
+    melding('🧾 DE FACTUUR: elke kaart die je speelt is een post — gratis = ' + DICK.POSTEN.gratis + ', 1 energie = ' + DICK.POSTEN.een + ', 2+ is aftrekbaar.'
+      + (_vrij > 0 ? ' De eerste ' + _vrij + ' posten per beurt zijn vrijgesteld (standaardprocedure).' : '')
+      + ' Elke levende hoveling int mee. Speel dus GROOT, of speel weinig.');
   }
   g.ceremonie = false;                    /* v109: een nieuwe spelersbeurt geeft de invoer altijd vrij */
   g.herrijzenisNu = false;
