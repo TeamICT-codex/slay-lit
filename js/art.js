@@ -750,13 +750,13 @@ const GROND = {
   'Act 1 achtergronden/GevechtstijlEPISCHGEVECHTACT1.webp': { grond: 65 },         /* plint tot 67% aan de heldkant */
   'Act 1 achtergronden/GevechtstijlEPISCHGEVECHT2ACT1.webp': { grond: 65, midden: 59 },
   /* --- Act 2 — Het Archief --- */
-  'Act 2 achtergronden/Gevechtstijl1act2.webp': { grond: 71, midden: 62 },         /* rekken tot 73% — hergeneratie-kandidaat */
+  'Act 2 achtergronden/Gevechtstijl1act2.webp': { grond: 61 },                     /* v116: hergenereerd op de toneelstandaard (vloerrand 56%) */
   'Act 2 achtergronden/Gevechtstijl2act2.webp': { grond: 68, midden: 57 },
   'Act 2 achtergronden/Gevechtstijl3act2.webp': { grond: 69, midden: 57 },         /* kastenwand tot 72% */
   'Act 2 achtergronden/Gevechtstijl4act2.webp': { grond: 67, midden: 57 },         /* boek links-vooraan achter de held */
   'Act 2 achtergronden/Gevechtstijl5act2.webp': { grond: 61, midden: 56 },         /* toneelstandaard: vloerrand 56% */
-  'Act 2 achtergronden/Gevechtstijl act2 EPISCH 1.webp': { grond: 69, midden: 62 },/* drukste textuur — hergeneratie-kandidaat */
-  'Act 2 achtergronden/Gevechtstijl act2 EPISCH 2.webp': { grond: 69, midden: 68 },/* dossiertoren met trap — hergeneratie-kandidaat */
+  'Act 2 achtergronden/Gevechtstijl act2 EPISCH 1.webp': { grond: 61 },            /* v116: hergenereerd op de toneelstandaard */
+  'Act 2 achtergronden/Gevechtstijl act2 EPISCH 2.webp': { grond: 61 },            /* v116: hergenereerd op de toneelstandaard */
   'Act 2 achtergronden/Gevechtstijl act2 EPISCH 3.webp': { grond: 64 },
   /* --- Act 3 — Het Slachtblok --- */
   'Act 3 achtergronden/Gevechtstijl Act 3 stijl 1.webp': { grond: 61, midden: 56 },
