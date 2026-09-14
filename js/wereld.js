@@ -335,27 +335,38 @@ const Wereld = (() => {
     gloedSprite = mk(128, [[0, 'rgba(255,255,255,1)'], [0.35, 'rgba(255,255,255,.5)'], [1, 'rgba(255,255,255,0)']]);
   }
 
-  /* ---------- DE ASSET-HAAK voor de vier stukken die nog CSS-terugval zijn ----------
-     Bordes, kettingladder, valgat en rustnis bestaan nu als CSS; hun prompts staan al in
-     assets/achtergronden/PROMPTS.txt en wijzen naar dezelfde dropmap als de twaalf platen
-     die er wél zijn: assets/achtergronden/Afdaling/ (= KUNST). converteer_webp.py zet die
-     submap onder de sleutel 'achtergronden/Afdaling' in het manifest, dus zodra
-     afdaling_aN_<naam>.webp binnenkomt en het script gedraaid heeft, zet deze haak de plaat
+  /* ---------- DE ASSET-HAAK voor de stukken die anders CSS-terugval zijn ----------
+     Bordes, kettingladder, valgat, rustnis, affiche en kist bestaan ook als CSS; hun
+     prompts staan in assets/achtergronden/PROMPTS.txt en wijzen naar dezelfde dropmap als
+     de platen die er wél zijn: assets/achtergronden/Afdaling/ (= KUNST). converteer_webp.py
+     zet die submap onder de sleutel 'achtergronden/Afdaling' in het manifest, dus zodra
+     afdaling_*.webp binnenkomt en het script gedraaid heeft, zet deze haak de plaat
      automatisch in — zonder één 404-probe, want artBestaat leest het manifest. Ontbreekt een
-     plaat, dan blijft de CSS-terugval staan (var(--w-x, ...)).
-     LET OP: een url() in een custom property die via element.style wordt gezet, wordt
-     opgelost tegen de DOCUMENT-basis (index.html in de wortel) — vandaar geen '../'. */
+     plaat, dan blijft de CSS-terugval staan (var(--w-x, ...) + géén heeft-<naam>-klasse).
+     Naast de variabele zetten we per plaat een klasse heeft-<naam> op #scherm-wereld: de
+     CSS gebruikt die om haar eigen terugval-decoratie (boog, box-shadows, gradient-sporten,
+     papierkleur, randen) uit te zetten zodra de echte plaat er is.
+     LET OP (gemeten, Chromium): een url() in een custom property wordt NIET tegen de
+     document-basis opgelost maar tegen de stylesheet waarin de var gebruikt wordt — een pad
+     'assets/...' werd daar 'css/assets/...' en dus een stille 404. Vandaar absUrl(): we
+     zetten de volledig opgeloste URL, dan klopt hij vanuit elke basis. */
   const BIOOM_MAP = 'achtergronden/Afdaling';
-  const BIOOM_HAAK = [['bordes', '--w-bordes'], ['ladder', '--w-ladder'], ['valgat', '--w-valgat'], ['nis_rust', '--w-nis']];
+  const BIOOM_HAAK = [['bordes', '--w-bordes', 'bordes'], ['ladder', '--w-ladder', 'ladder'],
+    ['valgat', '--w-valgat', 'valgat'], ['nis_rust', '--w-nis', 'nis']];
+  /* platen zónder act in hun naam: één bord en één kist voor alle drie de acts */
+  const BIOOM_VAST = [['afdaling_affiche', '--w-affiche', 'affiche'], ['afdaling_kist', '--w-kist', 'kist']];
+  function absUrl(pad) { try { return new URL(pad, document.baseURI).href; } catch (e) { return pad; } }
   function haakBioom() {
     const act = huidigeAct();
     const heeftMap = !!(window.ART_MANIFEST && window.ART_MANIFEST[BIOOM_MAP]);
-    for (const [naam, prop] of BIOOM_HAAK) {
-      const id = 'afdaling_a' + act + '_' + naam;
+    const zet = (id, prop, vlag) => {
       const heeft = heeftMap && (typeof artBestaat === 'function') && artBestaat(BIOOM_MAP, id);
-      if (heeft) els.scherm.style.setProperty(prop, "url('" + KUNST + id + ".webp')");
+      if (heeft) els.scherm.style.setProperty(prop, "url('" + absUrl(KUNST + id + '.webp') + "')");
       else els.scherm.style.removeProperty(prop);
-    }
+      els.scherm.classList.toggle('heeft-' + vlag, !!heeft);
+    };
+    for (const [naam, prop, vlag] of BIOOM_HAAK) zet('afdaling_a' + act + '_' + naam, prop, vlag);
+    for (const [id, prop, vlag] of BIOOM_VAST) zet(id, prop, vlag);
   }
 
   /* ---------- opbouw van de lagen ----------
@@ -487,9 +498,17 @@ const Wereld = (() => {
     if (sj.nis && isActief) {
       const op = nisGepakt(sj.r);
       const v = VONDST[sj.nis.soort] || VONDST.olie;
+      /* met de kistplaat staat de vondst als gesloten kist in de nis en wordt het
+         vondsticoon een badge op het deksel; zonder plaat blijft het losse icoon staan.
+         In beide gevallen heet het buitenste element .w-nis-vondst, zodat de .weg-
+         animatie bij het pakken (pakNis) dezelfde haak houdt. */
+      const kist = els.scherm.classList.contains('heeft-kist');
+      const vondst = kist
+        ? `<span class="w-nis-vondst kist"><img class="w-nis-badge" src="${v.icoon}" alt="" draggable="false"></span>`
+        : `<img class="w-nis-vondst" src="${v.icoon}" alt="" draggable="false">`;
       h += `<div class="w-nis${op ? ' leeg' : ''}" style="left:${sj.nis.x}px;top:${sj.nis.y - NIS_H}px;width:${NIS_W}px;height:${NIS_H}px">`
         + `<span class="w-nis-holte"></span>`
-        + (op ? '<i class="w-nis-op">leeg</i>' : `<img class="w-nis-vondst" src="${v.icoon}" alt="" draggable="false"><span class="w-nis-gloed"></span>`)
+        + (op ? '<i class="w-nis-op">leeg</i>' : `${vondst}<span class="w-nis-gloed"></span>`)
         + `</div>`;
     }
     h += '</div>';

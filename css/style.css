@@ -5067,6 +5067,120 @@ body:has(#dagwet-proc) #scherm-nudge { display: none; }
 }
 .w-affiche span { font: 17px/1.15 'Special Elite', 'Courier New', monospace; letter-spacing: .06em; color: #2a2118; }
 
+/* ============================================================
+   DE ACT 1-PLATEN, tweede reeks: bordes, ladder, valgat, rustnis, affiche, kist
+   haakBioom() (js/wereld.js) zet per gevonden plaat --w-<naam> én de klasse
+   heeft-<naam> op #scherm-wereld. De klasse zet de CSS-terugval hierboven uit; zonder
+   plaat (Act 2/3, of een drop die er nog niet is) verandert er niets en blijft de
+   geschilderde terugval staan. Alles in wereldeenheden: #wereld-vlak schaalt met k,
+   dus deze maten kloppen op 800x360 net zo goed als op 1920x1080.
+   GEEN drop-shadow op deze elementen — ze staan in #wereld-vlak, dat élk frame
+   transformeert (zie de noot bij .w-prop). Alleen transforms en statische verven.
+   ============================================================ */
+
+/* ---- 1. HET BORDES: 9-slice, zodat de eindkappen met beugel hun maat houden ----
+   Bron 2172x724. De loopbare BOVENKANT van de plaat ligt op y=172 (23,8%), het puin
+   hangt tot y=621. De eindkappen (links 520, rechts 420 bronpixels) blijven op schaal,
+   het rustige midden rekt mee met de bordesbreedte (230-320 wu).
+   Bij plaathoogte 94 wu ligt die bovenkant 22 wu onder de plaatbovenkant, dus
+   top = GROND_LIJN(231) − 22 = 209: precies de vloerlijn van het botsingsvak. Het puin
+   hangt daar 59 wu onder — over de rand heen, zoals het hoort. */
+#scherm-wereld.heeft-bordes .w-vloer-bordes.bio {
+  background: none; box-shadow: none;
+  -webkit-mask-image: none; mask-image: none;
+}
+#scherm-wereld.heeft-bordes .w-vloer-bordes.bio::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 209px; height: 94px;
+  border: 0 solid transparent; border-width: 0 55px 0 68px;
+  border-image-source: var(--w-bordes);
+  border-image-slice: 0 420 0 520 fill;
+  border-image-repeat: stretch;
+}
+
+/* ---- 2. DE KETTINGLADDER: beugel boven, laatste sport onder, sporten ertussen ----
+   Bron 1024x1536: beugel + hangende ketting = y 0-200, de laatste sport = y 1405-1536.
+   Met border-image + fill blijven die twee op schaal en rekt alleen het middenstuk mee,
+   dus komt er nooit een tweede beugel. De ladder is altijd 170 wu lang (galerij → baan).
+   Het element gaat van 46 naar 150 wu breed zodat de sporten leesbaar blijven (op 180
+   werden de sporten zichtbaar plat: de bron heeft 9 sporten over 170 wu, dus hoe breder
+   het element, hoe platter ze uitvallen — 150 is het punt waar ze nog kloppen); de
+   zijkanten van de plaat zijn transparant en klimmen/botsing kijkt alleen naar
+   ladder.x (|st.x − l.x| < 26 in wereld-terrein.js), dus de breedte is puur decor. */
+#scherm-wereld.heeft-ladder .w-ladder {
+  /* z-index 4 liet de ladder achter de galerijstrook (z 5) verdwijnen: de ladder hangt
+     langs de VOORKANT van het balkon naar beneden, dus hoort hij ervoor. Gelijk aan de
+     vloeren, maar hij staat later in de DOM en wint daarmee. */
+  width: 150px; background: none; z-index: 5;
+  border: 0 solid transparent; border-width: 29px 0 19px;
+  border-image-source: var(--w-ladder);
+  border-image-slice: 200 0 131 0 fill;
+  border-image-repeat: stretch;
+}
+
+/* ---- 3. HET VALGAT: de plaat vervangt de twee richelranden róndom het gat ----
+   Bron 1774x887, met een volledig transparant gat in het midden. De vloerlijn van de
+   plaat ligt op y=286 (32,25%). Bij plaatbreedte 300 wu (= VALGAT_B 84 + 2x108 stomp)
+   is de plaat 150 hoog en ligt haar vloerlijn 48 wu onder de plaatbovenkant, dus
+   bottom: −102 zet die lijn exact op de vloerlijn van de richel (de onderrand van
+   .w-valgat). Het gat in de plaat staat 4 wu rechts van het midden: vandaar de
+   correctie in left. De schacht blijft de CSS-gradient, maar hangt ónder de vloerlijn
+   (top: 100%) — daar waar het gat hoort — en klapt met dezelfde height-overgang open.
+   (.w-valgat staat op bottom:0 in een richel van hoogte 0, dus de doos zélf ligt BOVEN
+   de vloerlijn; de schacht tekende daardoor omhoog. Hier alleen rechtgezet waar de plaat
+   is; Act 2/3 houdt zijn oude terugval tot die platen er ook zijn.)
+   De stompen liggen mét z-index 4 over de grond-strook (z 1) aan weerszijden. */
+#scherm-wereld.heeft-valgat .w-valgat { z-index: 4; }
+#scherm-wereld.heeft-valgat .w-valgat::before {
+  content: ''; position: absolute; left: calc(50% - 4px); bottom: -102px; z-index: 2;
+  width: 300px; height: 150px; translate: -50% 0;
+  background: var(--w-valgat) center top / 100% 100% no-repeat;
+}
+#scherm-wereld.heeft-valgat .w-valgat-schacht {
+  top: 100%; left: -10%; right: -10%; z-index: 1;
+  background: linear-gradient(180deg, rgba(255, 156, 63, .2), rgba(6, 3, 10, .92) 40px, #05030a);
+}
+
+/* ---- 4. DE RUSTNIS: de plaat als holte, de CSS-boog en haar randlicht uit ----
+   De plaat is vierkant en vult ~85% van haar doek met de vloer op de onderrand, dus ze
+   mag ruimer staan dan het 160x150-tikvak: onderaan gecentreerd zodat de nisvloer op de
+   richelvloer valt. De gloed blijft — die is het spelsignaal dat er iets te halen is. */
+#scherm-wereld.heeft-nis .w-nis-holte {
+  inset: auto auto 0 50%; width: 232px; height: 218px; translate: -50% 0;
+  border-radius: 0; box-shadow: none;
+  background: var(--w-nis) center bottom / contain no-repeat;
+}
+
+/* ---- 5. DE KIST: de vondst staat als gesloten kist in de nis ----
+   Het vondsticoon wordt een badge rechtsboven op het deksel (32% van de kistbreedte).
+   .w-nis-vondst blijft de buitenste haak, dus de .weg-animatie bij het pakken werkt
+   ongewijzigd — kist én badge vliegen samen weg. */
+#scherm-wereld.heeft-kist .w-nis-vondst.kist {
+  position: absolute; left: 50%; bottom: 2%; width: 60%; aspect-ratio: 1;
+  translate: -50% 0; display: block; filter: none;
+  background: var(--w-kist) center bottom / contain no-repeat;
+}
+#scherm-wereld.heeft-kist .w-nis-vondst.kist .w-nis-badge {
+  position: absolute; right: -4%; top: 0; width: 32%; display: block;
+  -webkit-user-drag: none;
+}
+
+/* ---- 6. HET AFFICHE: het houten bord als plaat, de slogan als LIVE tekst ----
+   Bron 1122x1402; het perkament beslaat x 10-91%, y 12-90%. Het tekstvak staat ABSOLUUT
+   binnen het bord — percentages op left/right/top/bottom rekenen tegen het bord zelf,
+   terwijl percentage-padding tegen de RICHELbreedte (1700 wu) zou rekenen en het affiche
+   tot een reus zou blazen. De ondergrens houdt de tekst boven de rode lakzegel. */
+#scherm-wereld.heeft-affiche .w-affiche {
+  width: 176px; height: auto; aspect-ratio: 1122 / 1402; padding: 0;
+  background: var(--w-affiche) center / 100% 100% no-repeat;
+  border: 0; box-shadow: none;
+}
+#scherm-wereld.heeft-affiche .w-affiche span {
+  position: absolute; left: 14%; right: 14%; top: 16%; bottom: 22%;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font: 13px/1.3 'Special Elite', 'Courier New', monospace; letter-spacing: 0; color: #33260f;
+  overflow-wrap: anywhere;   /* vangnet: PERSONEELSUITGANG past nét, langere woorden breken */
+}
+
 /* ---- het verdiepingsbord ---- */
 .w-bord {
   position: absolute; translate: -50% 0; rotate: -2deg; z-index: 5; pointer-events: none; white-space: nowrap; text-align: center;
