@@ -350,7 +350,10 @@ async function meetPlaat(page, pad, grond) {
       t(knop.aan.d3 === false && knop.aan.cover === false && knop.aan.ovaal > 0,
         f.naam + ': 3D AAN laat het mobiele spoor ongemoeid (blijft 2D, plaat op haar grondlijn, ovaal ' + knop.aan.ovaal + 'px)');
     } else {
-      t(knop.aan.d3 === true && knop.aan.cover === true, f.naam + ': 3D AAN in het gevecht geeft de plaat terug aan Vista (cover)');
+      /* v116: het 3D-toneel laat de plaat NIET meer op cover staan — ze wordt daar op de
+         schermprojectie van de sprite-voeten gezet (Vista.voetlijnY). Zie de eigen suite
+         tools/toneel3d_acceptatie.js voor de voetlijn-meting per plaat. */
+      t(knop.aan.d3 === true && knop.aan.cover === false, f.naam + ': 3D AAN in het gevecht zet de plaat op de sprite-voetlijn (geen cover)');
     }
     t(knop.uit.d3 === false && knop.uit.cover === false && knop.uit.ovaal > 0 && Math.abs(knop.uit.ovaal - Math.round(knop.uit.breed * 0.7)) <= 2,
       f.naam + ': 3D UIT in het gevecht zet de plaat terug op haar grondlijn EN de contactschaduw op maat (ovaal ' + knop.uit.ovaal + 'px van ' + Math.round(knop.uit.breed * 0.7) + 'px)');
