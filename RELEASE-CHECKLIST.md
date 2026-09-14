@@ -15,6 +15,9 @@
 | Logo-klik (Act 2-sprong · Alt = Erfprins-test · Shift = Drops-cyclus) | `index.html:23` | `onclick="devLogo(event)"` + `title`-attribuut + de `<!-- DEV-SHORTCUT -->`-comment weghalen; `style="cursor:pointer"` mee weg |
 | `devLogo` / `devSprongAct2` / `devErfprinsTest` / `_DEV_DROPS`-cyclus / `devDropsWis` | `js/game.js` ~5140–5262 (één blok) | Volledige regio wissen — alle functies + `_devDropsStap` |
 | `devMobiel` + Ctrl+Shift+M-listener (+ de enige `console.info`) | `js/game.js` ~100–115 | Blok wissen. NB: de CSS-comments die devMobiel noemen (style.css/mobiel.css) zijn documentatie — mogen blijven of meegeschoond |
+| `DEV_BUILDS` + `devDicktator(profiel, opties)` + `devSprongAct3(profiel)` — HET PROCES (v109) | `js/game.js`, zoek `DEV_BUILDS` | Het hele blok wissen: de vaste playtest-builds (mediaan-Slachter, gif_opt, gif_opt_kristal, gif_matig, choreo) en de sprongen hof/tirade/vorm2/staart. Ze zetten HP, dek, relikwieën en metgezel rechtstreeks — in handen van een speler is dat een cheat-menu |
+| DEV-menu-groep 'Bazen' (vier PROCES-knoppen + vier sprongen) | `js/game.js`, `const groepen = [` | Verdwijnt samen met het DEV-menu; controleer dat er geen losse verwijzing naar `devDicktator` achterblijft |
+| `DICK.tempo` (ceremonieschaal voor het meetharnas) | `js/game.js`, `const DICK` | Mag blijven staan (hij is 1 in het spel), maar zet hem niet in een instellingenmenu |
 
 **Waarom kritisch:** alles staat op `window`, dus elke speler kan via de console
 `devSprongAct2()` aanroepen of — erger — de logo-klik per ongeluk raken. De Drops-reset
@@ -41,6 +44,28 @@
 | Heal-na-elk-gevecht te mild? (tot +17 HP/gevecht) | de heal-hook in `gevechtGewonnen` (opties: <50%-HP-gate / halveren / enkel na elite+) |
 | Slijmkoning-intro-pacing | `STAP` (nu 3900 ms per stadium) |
 | Gifmagiër (co-)sterkste held | pas ná playtest; zo ja: tempo-hefboom (gifflits 0→1), niet de gif-getallen |
+| HET PROCES: is de matige gifbuild te hard gestraft? (bot-meting: 0/12 winst, ook mét heeldrank en metgezel) | **GEEN dial helpt** — gemeten, 12 seeds per cel: hp 200 / 160 / 120 → 0-1/12, tarief 2/3 → 0/12, hofcap 2 → 0/12, 0-kostgewicht 1 → 0/12, claqueur vanaf II → 0/12, factuur bijna uit (2 + 1/post, cap 2) → 1/12. Pas met de Factuur VOLLEDIG uit wint hij 8-10/12. Ook **DE VRIJSTELLING** `DICK.FACTUUR.vrij` (v109, standaard 0 = uit, eerste N posten per beurt gratis) helpt niet: vrij 1 → gif_matig 0/12 én mens 0/12, vrij 2 → gif_matig 0/12 (mens 6/12 factuurbewust) maar gif_opt én kristal naar 12/12/12, vrij 3 → gif_matig 1/12. Dit is een ontwerpkeuze, geen knop: zie de drie ontwerpvragen onderaan §6 van `.claude/notities/eindbaas_contract.md` |
+| HET PROCES: valt de mediaan-Slachter te makkelijk? (bot: 12/10/12 over drie beleidsregels, eindigt op ±25% HP) | `DICK.EXECUTIE` (18 → 22) **of** `DICK.FACTUUR.basis3` (7 → 10), niet allebei: samen zakt hij naar 8/12 agressief. `DICK.ONTSLAG` (18/22/26) is nog ongebruikt |
+| HET PROCES: te veel lege rondes? | `DICK.claqueurVanaf` (3 → 2) is gemeten en **werkt niet**: nulschade blijft 32-48% (de vaste cyclus van drie zet zelf al één schadeloze decreetronde per drie = 33% bodem) en de mediaan-Slachter zakt naar 8/12 factuurbewust. Eerst de definitie vastleggen (§6, ontwerpvraag 2) |
+| HET PROCES: dagwet GLAZEN ZIELEN × de Factuur | bewust brutaal gelaten (de speler kiest die dag zelf); de dagwettekst noemt het nu expliciet. Clampen kan in één regel: `glasDmg` overslaan voor `opts.vast` in `vijandAanval` |
+
+---
+
+### 2b. Bekende beperkingen van HET PROCES (v109) — bewust, geen blokkers
+
+- **Herlaad midden in het baasgevecht**: het gevecht begint opnieuw, maar je HP, licht,
+  dek en dranken worden hersteld uit het checkpoint dat bij de gevechtsstart gezet is
+  (`S.checkpoint`, v108). Een herstart is dus gratis — dat was de baas-HP-reset altijd al.
+- **Vista-pariteit (3D)**: de arena-crossfade tussen de drie Raadzaal-platen speelt alleen
+  in 2D. In 3D tekent Vista de achtergrond zelf; daar is het een harde wissel. Idem in
+  `body.lite` en bij `prefers-reduced-motion`.
+- **Art**: de drie hovelingen spelen op terugvalplaten (Omroeper / Aanklager / Klapvee) tot
+  hun eigen platen gedropt zijn; `artIdVan` schakelt per pose vanzelf om. Vóór een echte
+  release zijn minstens `de_griffier(+_death)` en `de_deurwaarder(+_death)` gewenst —
+  anders staat er een Omroeper onder een andere naam.
+- **De metgezel slaat door de ceremonie heen**: valt DE HERVERKIEZING tijdens jouw beurt,
+  dan kan je metgezel de verse vorm 2 nog één keer raken. Dat is een eigen actor, geen
+  vervolgslag van jouw reeks (die wordt wél afgeknipt) — bewust zo gelaten.
 
 ---
 

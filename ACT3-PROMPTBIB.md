@@ -12,6 +12,9 @@ volledig NU gegenereerd worden; het spel haakt pas in zodra Act 3 gebouwd wordt
 |---|---|---|
 | Vijanden | **12** (8 gewoon/zwaar · 2 elite · 1 episch · 1 baas) + poses | `assets/karakters/<id>.webp` |
 | Baas-extra's | intro-plaat + signature "het Decreet" | `assets/karakters/de_dicktator_intro/-_decreet.webp` |
+| Het hof (v109) | de_griffier, de_deurwaarder, de_claqueur — 8 platen, NIET blokkerend (terugvalplaten via `artIdVan`) | `assets/karakters/de_griffier*.webp`, `de_deurwaarder*.webp`, `de_claqueur.webp` |
+| Baas-extra's (v109) | `_factuur` (hij int zelf) + `_herkozen` (de vastgehouden standbeeldpose van vorm 2) | `assets/karakters/de_dicktator_factuur/-_herkozen.webp` |
+| UI (v109) | factuur_zegel + ontslag_zandloper (emoji-terugval 🧾 / ⏳) | `assets/ui/*.webp` |
 | Achtergronden (ontbrekende slots) | **6** (event · rust · schat · beloning · overwinning · nederlaag) | `assets/achtergronden/Act 3 achtergronden/` |
 | Kaarten | **16** (15 speelbaar + 1 vloek) | `assets/kaarten/<id>.webp` |
 | Relikwieën | **10** (3 gewoon · 4 ongewoon · 2 zeldzaam · 1 episch) | `assets/relikwieen/<id>.webp` |

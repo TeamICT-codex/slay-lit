@@ -1326,9 +1326,33 @@ const VIJANDEN = {
      Erfprins-roof 'per gevecht') + de vloeken-as (zijn Karaktermoord schaalt op
      de laster die zijn hof over je uitstortte). Brein: dicktatorKies (game.js). */
   de_dicktator: {
-    naam: 'de DICKtator', art: '👑', hp: [240, 240], baas: true,   /* playtest: 210 was te makkelijk; hij herrijst nu ook éénmalig (DE HERVERKIEZING) */
+    /* v109 HET PROCES: het hof (optioneel te doden) en vorm 2 (HET MANDAAT) voegen de druk
+       toe die de kale HP-muur vroeger moest leveren (contract §6). LET OP: het getal hieronder
+       is alleen de startwaarde en staat hier gelijk aan DICK.hp, zodat de twee bestanden
+       hetzelfde zeggen; game.js overschrijft het meteen met DICK.hp (data.js laadt eerder).
+       DICK in game.js is de bron van waarheid — balanceer daar, niet hier. */
+    naam: 'de DICKtator', art: '👑', hp: [240, 240], baas: true,
     titel: 'Heerser van het Slachtblok',
     kies: (v, beurt) => dicktatorKies(v, beurt)
+  },
+  /* ---- HET HOF VAN HET PROCES (v109) — alleen gespawnd door de DICKtator (zoals mal_gietsel door
+     De Mal); nooit in de Act 3-rotatie. hof:true = "hoveling" (kiezer bij de herverkiezing, telt
+     mee op de Factuur). artId = TERUGVALPLAAT tot de eigen art gedropt is (art.js artIdVan).
+     Hun brein (hofKies) staat naast dicktatorKies in game.js; de defs zijn volledig (naam/art/hp)
+     zodat élke VIJANDEN[x.id].naam/art-lookup en het Bestiarium gewoon werken. */
+  de_griffier: {
+    naam: 'De Griffier', art: '🖋️', artId: 'de_omroeper', hp: [21, 24], hof: true,   /* → 34-39 in Act 3 */
+    kies: (v, beurt) => hofIntent(v, beurt),
+    bijDood: () => dicktatorHersync(true)   /* zonder griffier geen zitting: de decreet-pil slaat om naar GESLOTEN */
+  },
+  de_deurwaarder: {
+    naam: 'De Deurwaarder', art: '🧾', artId: 'de_aanklager', hp: [24, 28], hof: true,   /* → 39-45 in Act 3; vorm 2 handmatig 30 */
+    kies: (v, beurt) => hofIntent(v, beurt),
+    bijDood: () => dicktatorHersync(true)   /* de baas moet zelf innen / het Ontslag wordt een Donderrede */
+  },
+  de_claqueur: {
+    naam: 'De Claqueur', art: '👏', artId: 'het_klapvee', hp: [16, 16], hof: true,   /* handmatig 16 via dicktatorRoep (geen schaling) */
+    kies: (v, beurt) => hofIntent(v, beurt)
   },
   /* DE DREMPELWACHTER — Balrog-stijl poortwachter; ontwaakt bij een FOUT scherf-trio op de Drempel
      (zie toonDrempel). Alleen via dat event gespawnd, niet in ONTMOETINGEN. Zwaar maar verslaanbaar. */
@@ -1731,6 +1755,10 @@ const UITSPRAKEN = {
   doorslag_kopie: { start: ['...ook ik... ben nooit genoeg...'], dood: ['...welke laag... was ik...?'] },
   de_drempelwachter: { start: ['VERKEERD. ANTWOORD.', 'Wie de drempel met leugens voedt, voedt MIJ.'], dood: ['De drempel... staat... open...'] },
   /* Act 3 — het Slachtblok */
+  /* het hof van HET PROCES (v109) — B.A.A.S.-toon */
+  de_griffier:       { start: ['Het dossier is compleet. Het is altijd compleet.', 'Twee namen. Eén stempel.'], dood: ['...het dossier... blijft... open...'] },
+  de_deurwaarder:    { start: ['Ik kom de rekening brengen. Ik kom altijd.', 'Contant, graag. In HP.'], dood: ['...oninbaar...'] },
+  de_claqueur:       { start: ['*klapt op factuur*', '*klapt, kijkt of iemand kijkt*'], dood: ['...was dat... betaald...?'] },
   de_omroeper:       { start: ['HOORT! De heerser spreekt door mij!', 'STILTE voor de afkondiging!'], dood: ['...wie roept er... nu om...'] },
   het_klapvee:       { start: ['*klapt omdat de rest klapt*', '*klapt harder*'], dood: ['...mag ik... stoppen...?'] },
   de_zondebok:       { start: ['Ik heb het niet gedaan. Ik doe het nooit.', 'Sla maar. Dat doet iedereen.'], dood: ['...eindelijk... niet mijn schuld...'] },
@@ -1762,7 +1790,26 @@ const UITSPRAKEN = {
     fase3: '„IK BEN HET SLACHTBLOK. IK BEN DE LADDER. IK BEN ALLES."',
     herrijzenis: '„Herverkozen. Unaniem. Wie zou er ook ANDERS zijn?"',
     dood:  '„Maar... zonder mij... zijn jullie... niets...?"',
-    decreet: ['„AFGESCHREVEN."', '„Voorziening getroffen."', '„Dat had u niet meer nodig."']
+    decreet: ['„AFGESCHREVEN."', '„Voorziening getroffen."', '„Dat had u niet meer nodig."'],
+    /* HET PROCES (v109) — het tribunaal in vijf bedrijven (contract §3) */
+    delegatie: '„Ik maak mijn handen niet vuil. Daar heb ik MENSEN voor."',
+    aanzegging: '„Uw ‚{A}\'. Meest gespeeld. Uw ‚{B}\'. De duurste post. Eén van beide is overbodig. U mag zelf aantonen welke."',
+    laatInnen: '„De deurwaarder komt langs. Ik hoef daar niet bij te zijn."',
+    factuur: ['„Gefactureerd."', '„Uurtarief. Plus BTW."', '„Elke handeling is een post."', '„Gratis bestaat niet in dit huis. Administratiekost."'],
+    aftrek: '„Een investering. Aftrekbaar."',
+    vasteKosten: '„Geen prestaties? Er zijn vaste kosten."',
+    zelf: '„Moet ik dan ALLES zelf doen?!"',
+    griffie: '„De griffie is gesloten. Het dossier blijft OPEN."',
+    decreetKeuze: '„Het is niet mijn beslissing. Het is uw gebruik."',
+    geindexeerd: '„Geïndexeerd."',
+    griffierOntslag: ['„U bent ONTSLAGEN."', '„Ik heb die man nooit gekend."'],
+    executie: '„Geen dossiers meer? Dan doe ik het ZELF."',
+    rede: '„HET VOLK heeft gesproken. HET VOLK: ben ik."',
+    kiezers: '„De kiezers zijn opgebruikt. Bedankt voor uw stem."',
+    peiling: '„Hoort u dat? Dat is DRAAGVLAK."',
+    opzegtermijn: '„Uw opzegtermijn loopt."',
+    ontslag: '„U bent per direct vrijgesteld van verdere dienst."',
+    zonderBetekening: '„Zonder betekening geen ontslag. Dan TIER ik."'
   },
   /* De Erfprins = THE COPYCAT: nepo-baby die nooit iets zelf maakte. Eerst pappies
      geld, nu steelt hij jóuw kaarten. Hij verafschuwt Drops — trouw kan hij niet kopiëren. */
@@ -1896,7 +1943,12 @@ const BESTIARIUM = {
   de_rechter: { act: 3, soort: 'Elite', lore: 'Een rechter-beul in wijnrode toga, de blinddoek omhóóg geschoven op het voorhoofd — hij ziet precies wat hij wil zien. De gouden duim drukt de weegschaal al eeuwen dezelfde kant op.', notitie: 'Elke derde beurt valt het VONNIS: 8 + 4 per Zwak/Kwetsbaar-stapel op jou. Ontsmet jezelf, of blok op de maat.' },
   de_hofnar: { act: 3, soort: 'Elite', lore: 'Belletjes vervangen door grijnzende schedeltjes, één broekspijp vol doorgehaalde namen, en een geschilderde glimlach over een mond die niet lacht. Zijn grappen zijn vloeken — en ze gaan over jou.', notitie: 'Zingt Laster je trekstapel in en lacht (+Blok) telkens jij een vloek trekt. Verbrand zijn leugens snel.' },
   het_spreekgestoelte: { act: 3, soort: 'Episch', lore: 'Een verguld spreekgestoelte dat decennia toespraken opzoog tot het zélf ging spreken — monden vol slogans over het hele gouden front. En de stem... de stem is niet de zijne.', notitie: 'Slogans verzwakken je en sterken hem. Wie goed luistert, herkent de stem van wat boven het Slachtblok wacht.' },
-  de_dicktator: { act: 3, soort: 'Baas', lore: 'De vergulde demagoog-koning op de top van de ladder: zelfbenoemde lauwerkrans, zelfgeslagen medailles, opvallend kleine handen in véél te grote gouden handschoenen. Zijn woord is een pen — wat hij afschrijft, bestaat niet meer. Ook jouw kaarten. Ook jouw dromen.', notitie: 'HET DECREET schrijft élke derde beurt een kaart PERMANENT af. Verbrand zijn laster, hou je dek lean, en maak het kort — tijd is zijn wapen.' }
+  de_dicktator: { act: 3, soort: 'Baas', lore: 'De vergulde demagoog-koning op de top van de ladder: zelfbenoemde lauwerkrans, zelfgeslagen medailles, opvallend kleine handen in véél te grote gouden handschoenen. Zijn woord is een pen — wat hij afschrijft, bestaat niet meer. Ook jouw kaarten. Ook jouw dromen.', notitie: 'Hij noemt twee kaarten, jij bepaalt met je spel welke valt (max 3 per gevecht). Elke kaart is een post op zijn Factuur: gratis = 2, 1 energie = 1, 2+ = aftrekbaar. Dood zijn hof of betaal de commissie; ruim de zaal vóór hij valt, want wie blijft staan stemt op hem — en hou blok over voor HET ONTSLAG.' },
+  /* het hof van HET PROCES (v109) */
+  de_griffier: { act: 3, soort: 'Hofhouding', lore: 'De pen van den tamzak. Hij tekent, de griffier zoekt het dossier, stempelt en voert de zitting uit — zonder klerk kan de grote man niets afschrijven, en hij haat het om dat toe te geven.', notitie: 'Zonder griffier geen decreet. Dood hem in de opzegtermijn en de zitting schuift drie beurten op — maar de baas wordt driester (+1 Kracht, blijvend).' },
+  de_deurwaarder: { act: 3, soort: 'Hofhouding', lore: 'De heerser raakt geen geld aan. Hij boekt, de deurwaarder komt langs met de rekening — en in het laatste bedrijf met het ontslagbriefje.', notitie: 'Int de Factuur van de baas (+1 per post zolang hij leeft). Zonder deurwaarder int de baas zelf: kaler, maar driester. In vorm 2: zonder deurwaarder geen ONTSLAG.' },
+  /* de 4 hieronder is DICK.APPLAUS (game.js); draait de balansronde aan die knop, dan ook deze regel. */
+  de_claqueur: { act: 3, soort: 'Hofhouding', lore: 'Betaald applaus met een prijskaartje aan elke pols. Het klapt op factuur — en bij de herverkiezing wordt het stemvee.', notitie: '4 schade per beurt, telt mee op de Factuur en stemt op hem als je hem laat staan. Eén AoE-tik.' }
 };
 
 /* ---------- RELIKWIEËN ---------- */

@@ -1665,6 +1665,11 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
 /* ---------- HET DECREET-MOMENT: stempel + verbranding ---------- */
 .decreet-overlay { background: radial-gradient(ellipse at center, rgba(70, 14, 8, .88), rgba(10, 4, 4, .97)); }
 .decreet-overlay .vloek-reveal-kop { color: #ffd7a0; text-shadow: 0 2px 16px rgba(245, 197, 66, .8); }
+/* v109: welke twee stonden op de shortlist, en hoe vaak speelde je ze? */
+.decreet-shortlist {
+  font-family: 'Alegreya', serif; font-size: .84rem; letter-spacing: .06em;
+  color: #e0b78a; text-transform: uppercase; margin: -4px 0 6px; text-align: center;
+}
 .decreet-kaartwrap { position: relative; transition: filter .5s ease, transform .5s ease, opacity .6s ease; }
 .decreet-stempel {
   position: absolute; top: 38%; left: 50%;
@@ -2406,6 +2411,20 @@ body.lite .pb-skelet, body.lite .pb-lijst .pb-rij.pb-skelet:nth-child(odd) { bac
 @keyframes decreetPuls { 0%, 100% { box-shadow: 0 0 0 0 rgba(200, 56, 90, .0); } 50% { box-shadow: 0 0 10px 2px rgba(200, 56, 90, .55); } }
 body.lite .intent-decreet { animation: none; }
 .intent-duister { color: #8a8494; border-color: rgba(120, 120, 140, .4); }
+/* v109 (HET PROCES) — DE FACTUUR: goud, want dit is geld en geen vuistslag. Het bedrag
+   loopt live op terwijl je speelt, dus de pil mag opvallen zonder te schreeuwen. */
+.intent-factuur {
+  color: #ffdf9a; border-color: rgba(214, 168, 74, .8);
+  background: rgba(48, 34, 8, .74);
+  font-weight: 700; letter-spacing: .02em; white-space: nowrap;
+}
+/* HET HOF: een zet zonder schade die wel iets doet (delegeren, laten innen, de zitting,
+   de betekening, de peiling) — violet, de kleur van het regime-onweer. */
+.intent-hof {
+  color: #cfc0f2; border-color: rgba(150, 120, 220, .55);
+  background: rgba(28, 20, 46, .68);
+  white-space: nowrap;
+}
 
 /* hp-balken */
 .hp-balk {
@@ -2660,6 +2679,35 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
   box-shadow: 0 2px 8px rgba(0, 0, 0, .6), 0 0 12px rgba(150, 110, 230, .55);
 }
 .kaart-focus .kaart-vonk { font-size: 1.15rem; bottom: -14px; right: -14px; }
+
+/* v109 — HET ZEGEL VAN DE SHORTLIST: deze kaart is AANGEZEGD. De teller telt hoe vaak
+   je haar sinds de aanzegging speelde; de minst gespeelde van de twee wordt afgeschreven.
+   BOVENRAND, direct RECHTS VAN DE KOSTBOL. Twee gemeten redenen om niet linksonder te
+   hangen zoals de vonk- en aangetast-badges (die vallen zelf ook buiten beeld):
+   (1) de handkaarten rusten bewust ~1/5 ONDER de schermrand (#hand met negatieve bottom),
+       dus alles aan de ONDERrand van een handkaart is onzichtbaar op 375, 800x360,
+       915x412 en 1440x900;
+   (2) de waaier overlapt: van elke handkaart is alleen de LINKER ~65% vrij (gemeten
+       70-76px vrij van 105-113px op mobiel), dus rechtsboven verdwijnt onder de kostbol
+       van de buurkaart.
+   Links van x=24px zit de kostbol zelf, rechts van ~70px de buurkaart → daartussen.
+   Juist dit zegel draagt op mobiel de namen en tellers (de pil toont daar alleen
+   'over n'), dus het moet leesbaar zijn. Buiten de lichtkost (rechtsboven) blijft het zo. */
+.kaart-zegel {
+  position: absolute; top: -17px; left: 26px;
+  padding: 2px 7px;
+  border-radius: 14px;
+  font-family: 'Pirata One', serif;
+  font-size: .85rem;
+  color: #ffe2b0;
+  background: radial-gradient(circle at 35% 30%, #b6303f, #5c0d18);
+  border: 2px solid #2c0710;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .6), 0 0 12px rgba(200, 56, 90, .55);
+  cursor: help;
+  z-index: 4;
+}
+.kaart-zegel b { font-family: 'Alegreya', serif; font-size: .78rem; margin-left: 2px; }
+.kaart-focus .kaart-zegel { font-size: 1.1rem; top: -22px; left: 38px; }
 
 /* VERDUISTERD: de Redacteur heeft je hand doorgehaald — verberg de face, toon een
    inkt-rug. De kaart blijft klikbaar (je speelt blind). */
@@ -3722,6 +3770,18 @@ body.lite .kies-slot.leeg, body.lite .kies-actiebalk .kies-bevestig:not(:disable
   will-change: transform;
 }
 #gevecht-achtergrond.zichtbaar { display: block; }
+/* v109 (HET PROCES): de tweede arena-laag voor de crossfade tussen de drie
+   Raadzaal-platen (zitting -> verschuiving -> herverkiezing). Zelfde geometrie als
+   de laag eronder, toonArenaWissel ruimt haar zelf op. */
+#gevecht-achtergrond-2 {
+  position: fixed; inset: -28px;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;   /* zelfde laag, maar later in de DOM = eroverheen */
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  pointer-events: none;
+}
 
 #vista-canvas {
   display: none;
@@ -4061,6 +4121,35 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
   background: rgba(0, 0, 0, .5);
 }
 .bb-pip.aan { background: var(--ember); box-shadow: 0 0 8px rgba(255, 156, 63, .8); }
+/* v109 — HET MANDAAT (vorm 2 van de DICKtator): de balk verguldt en er komt een
+   VIERDE pip bij, de kroon. Ze is alleen zichtbaar zodra hij herkozen is. */
+.bb-pip.kroon { display: none; border-radius: 3px; transform: rotate(45deg); }
+#baas-balk[data-vorm="2"] .bb-pip.kroon { display: inline-block; }
+#baas-balk[data-vorm="2"] .bb-pip.kroon.aan { background: #ffd24a; box-shadow: 0 0 12px rgba(255, 210, 74, .95); border-color: rgba(255, 226, 150, .9); }
+#baas-balk[data-vorm="2"] .bb-vul { background: linear-gradient(180deg, #ffe79a, #c8901b); }
+#baas-balk[data-vorm="2"] .bb-balk.bb-woede .bb-vul { background: linear-gradient(180deg, #ffd24a, #b8501b); }
+#baas-balk[data-vorm="2"] .bb-balk.bb-woede { border-color: rgba(255, 200, 90, .9); }
+/* de beleidsstrook van HET PROCES: zelfde pil-vorm als de Copycat-arsenaalpil */
+.bb-proces { color: #ffdf9a; border-color: rgba(214, 168, 74, .5); }
+
+/* DE HERVERKIEZING: de gouden flits over het hele slagveld op het moment dat het
+   volk (zijn eigen hof) op hem stemt. */
+#scherm-gevecht.goud-flits::after {
+  content: ''; position: fixed; inset: 0; z-index: 58; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(255, 226, 150, .95), rgba(255, 180, 60, .5) 45%, transparent 72%);
+  animation: goudFlits .9s ease-out forwards;
+}
+@keyframes goudFlits { 0% { opacity: 0; } 18% { opacity: 1; } 100% { opacity: 0; } }
+/* de kiezers lichten goud op vóór ze hun stem afgeven en van het toneel vluchten */
+.vijand.kiezer .vijand-art { outline: 3px solid rgba(255, 210, 90, .95); outline-offset: 3px; filter: drop-shadow(0 0 14px rgba(255, 200, 70, .85)); }
+.vijand.vlucht { animation: hofVlucht 1s ease-in forwards; }
+@keyframes hofVlucht { 0% { opacity: 1; } 100% { opacity: 0; transform: translateY(14px) scale(.86); } }
+/* de herkozen tiran staat een maat groter en brandt van binnenuit (terugval zolang
+   de plaat de_dicktator_herkozen nog niet bestaat) */
+.vijand.herverkozen .vijand-art { transform: scale(1.12); filter: saturate(1.4) drop-shadow(0 0 18px rgba(255, 190, 60, .7)); }
+/* HET ONTSLAG: een halve tel slow-motion op de klap */
+#scherm-gevecht.slowmo { animation: slowmoPuls .32s ease-out; }
+@keyframes slowmoPuls { 0% { filter: brightness(1.55) saturate(.5); } 100% { filter: none; } }
 
 /* bazenintro: titelkaart over het slagveld */
 #baas-intro {
@@ -4577,6 +4666,10 @@ body.lite .intent,
 body.lite .knoop.kan { animation: none; }
 body.lite .overlay { backdrop-filter: none; }
 body.lite #hand .kaart::after { display: none; }
+/* v109: geen puls, geen flits, geen crossfade in lite */
+body.lite .intent-factuur, body.lite .intent-hof { animation: none; }
+body.lite #scherm-gevecht.goud-flits::after, body.lite .vijand.vlucht, body.lite #scherm-gevecht.slowmo { animation: none; }
+body.lite #gevecht-achtergrond-2 { transition: none; }
 body.lite #licht-vignet.flikker::after { animation: none; }
 /* eindscherm-/daily-paneel + knoppenrij meteen tonen in lite (geen reveal-vertraging) */
 body.lite .einde-onthul > div, body.lite .einde-titel, body.lite .einde-regel,
@@ -4592,6 +4685,8 @@ body.lite .einde-doel, body.lite .daily-paneel, body.lite .einde-knoppen {
   }
   .sintel { display: none; }
   .titel-groot, .intent, .knoop.kan, #energie-orb { animation: none !important; }
+  #scherm-gevecht.goud-flits::after, .vijand.vlucht, #scherm-gevecht.slowmo { animation: none !important; }
+  #gevecht-achtergrond-2 { transition: none !important; }
 }
 /* titelscherm liggend op korte telefoon → mobiel.css */
 
