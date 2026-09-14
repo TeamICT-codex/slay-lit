@@ -3623,7 +3623,8 @@ function zetToneelSchaal() {
      of beter"), en houdt mobiel één maatsysteem i.p.v. twee. */
   const k = (document.body.dataset.modus === 'mobiel')
     ? 1
-    : Math.min(1.35, Math.max(0.75, (window.innerHeight || 900) / 900));
+    : Math.min(1.35, Math.max(1, (window.innerHeight || 900) / 900));   /* architect (naverificatie v114, bevinding 8): ondergrens 1 —
+       de figuren worden op een kort venster (1280x620) nooit KLEINER dan vóór v114; k groeit alleen op hoge schermen (Chromebook 1080p → 1,2). */
   el.style.setProperty('--toneel-k', k.toFixed(3));
   /* de metgezel-art schaalt mee (zie style.css) → de in 3D gecachete voetmaat
      klopt na een maatwissel niet meer; laten hermeten. */
