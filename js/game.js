@@ -6404,13 +6404,27 @@ const DICK = {
                                                10. §9 wijst HP ook expliciet aan als de LENGTE-knop
                                                ("nooit schade omhoog"). Deze regel is de bron van waarheid:
                                                game.js schrijft haar bij het laden in VIJANDEN.de_dicktator. */
-  vorm2Pct: 0.40,                           /* DE HERVERKIEZING: terug op 40% = 88 HP */
+  vorm2Pct: 0.40,                           /* DE HERVERKIEZING: 40% van DICK.hp = 96 HP bij 240 */
   fase2: 0.66, fase3: 0.33,
   AANZEGGING: 8, KARAKTERMOORD: 8, KM_PER_VLOEK: 3,
+  /* TWEE afwijkingen buiten de knoppen van §8 stap 14 zijn blijven staan; beide zijn opnieuw
+     gemeten op de huidige stand (hp 240, 12 seeds per cel, drie beleidsregels):
+       - EXECUTIE 18 i.p.v. 22. Met 22 erbij zakt de mediaan-Slachter naar 10/12 gebalanceerd
+         en 8/12 factuurbewust — onder de ondergrens van §9 (>= 10/12). Alleen 22, met basis
+         5/7, kan wél (12/12 en 10/12); samen met basis3 10 niet.
+       - FACTUUR.basis3 7 i.p.v. 10. Met 10 zakt de mediaan-Slachter AGRESSIEF van 10/12 naar
+         8/12 — ook onder de ondergrens. Alleen de vroege basis kon wél terug naar de
+         contractwaarde: die staat hieronder weer op 6 (gemeten: alles gelijk, Slachter
+         12/10/12, gif_opt 9/9/12).
+     APPLAUS 4, index 2 en de opgeheven vloeken-cap kostten niets en staan weer op de
+     contractwaarde. De architect moet deze twee nog goedkeuren; §4 en §6 van het contract
+     dragen sinds deze ronde de gebouwde getallen plus deze twee vlaggen. */
   EXECUTIE: 18, DONDERREDE: 11, ONTSLAG: 18,
-  APPLAUS: 3,
-  KM_VLOEK_CAP: 3,        /* de vloeken-as houdt tanden, maar geen 23-schade-spike */
-  FACTUUR: { basis: 5, tarief: 3, basis3: 7, tarief3: 4, index: 1, hofCap: 4 },
+  APPLAUS: 4,
+  KM_VLOEK_CAP: 0,        /* 0 = geen cap: de vloeken-as is de formule uit §6, zoals het contract hem geeft */
+  /* basis 6 = de contractwaarde uit §4; tarief 3/4, hofCap 4, ONTSLAG 18 en hp 240 zitten
+     binnen de bereiken van §8 stap 14 (knop 1, 3, 2 en 4). */
+  FACTUUR: { basis: 6, tarief: 3, basis3: 7, tarief3: 4, index: 2, hofCap: 4 },
   POSTEN: { gratis: 2, een: 1 },   /* gewicht per gespeelde kaart: 0 energie = 2 posten, 1 = 1, 2+ = 0 */
   decreetCap: 3,          /* harde grens: nooit meer dan 3 kaarten per gevecht */
   speelbaarGuard: 6,      /* bestaande guard: onder 7 speelbare kaarten geen decreet meer */
@@ -6925,7 +6939,8 @@ function dicktatorKies(v, beurt) {
   /* slot 1 — DE KLAP */
   const rider = vv => dicktatorAanzeg(vv, g, fase);
   if (fase <= 1) return { naam: 'DE AANZEGGING', type: 'aanval', dmg: DICK.AANZEGGING, doe: rider };
-  const vloeken = Math.min(DICK.KM_VLOEK_CAP, vloekenInGevecht(g));
+  /* KM_VLOEK_CAP 0 = GEEN cap: de vloeken-as is dan de ongeknipte formule uit §6. */
+  const vloeken = Math.min(DICK.KM_VLOEK_CAP || Infinity, vloekenInGevecht(g));
   return { naam: 'KARAKTERMOORD', type: 'aanval', dmg: DICK.KARAKTERMOORD + DICK.KM_PER_VLOEK * vloeken, doe: rider };
 }
 
@@ -7132,7 +7147,9 @@ function dicktatorBalk(b) {
   const mob = !!window.mobiel;
   const tar = dicktatorTarief(b);
   const delen = [];
-  let tip = 'DE FACTUUR: ' + tar.basis + ' basis + ' + tar.tarief + ' per post. Elke gespeelde kaart is een post: gratis = 2, 1 energie = 1, 2+ = aftrekbaar. Elke levende hoveling int mee (+1 per post, max +6).';
+  /* de getallen komen uit DICK, nooit hardgecodeerd: anders liegt de strook na een balansronde
+     (de tooltip beloofde 'max +6' terwijl de hoftoeslag-cap al op 4 stond). */
+  let tip = 'DE FACTUUR: ' + tar.basis + ' basis + ' + tar.tarief + ' per post. Elke gespeelde kaart is een post: gratis = ' + DICK.POSTEN.gratis + ', 1 energie = ' + DICK.POSTEN.een + ', 2+ = aftrekbaar. Elke levende hoveling int mee (+1 per post, max +' + DICK.FACTUUR.hofCap + ').';
   if (b.vorm2) {
     const klok = dicktatorKlok(b);
     delen.push('⏳ ' + (klok === 0 ? 'ONTSLAG NU' : 'ONTSLAG over ' + klok));
@@ -7360,7 +7377,7 @@ function beginSpelerBeurt() {
      (een tik is daar een doelwitklik), dus de regel staat hier en in de Codex. */
   if (!g._factuurUitleg && typeof dicktatorFactuurBron === 'function' && dicktatorFactuurBron(g)) {
     g._factuurUitleg = true;
-    melding('🧾 DE FACTUUR: elke kaart die je speelt is een post — gratis = 2, 1 energie = 1, 2+ is aftrekbaar. Elke levende hoveling int mee. Speel dus GROOT, of speel weinig.');
+    melding('🧾 DE FACTUUR: elke kaart die je speelt is een post — gratis = ' + DICK.POSTEN.gratis + ', 1 energie = ' + DICK.POSTEN.een + ', 2+ is aftrekbaar. Elke levende hoveling int mee. Speel dus GROOT, of speel weinig.');
   }
   g.ceremonie = false;                    /* v109: een nieuwe spelersbeurt geeft de invoer altijd vrij */
   g.herrijzenisNu = false;

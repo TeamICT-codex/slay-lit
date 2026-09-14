@@ -1947,7 +1947,8 @@ const BESTIARIUM = {
   /* het hof van HET PROCES (v109) */
   de_griffier: { act: 3, soort: 'Hofhouding', lore: 'De pen van den tamzak. Hij tekent, de griffier zoekt het dossier, stempelt en voert de zitting uit — zonder klerk kan de grote man niets afschrijven, en hij haat het om dat toe te geven.', notitie: 'Zonder griffier geen decreet. Dood hem in de opzegtermijn en de zitting schuift drie beurten op — maar de baas wordt driester (+1 Kracht, blijvend).' },
   de_deurwaarder: { act: 3, soort: 'Hofhouding', lore: 'De heerser raakt geen geld aan. Hij boekt, de deurwaarder komt langs met de rekening — en in het laatste bedrijf met het ontslagbriefje.', notitie: 'Int de Factuur van de baas (+1 per post zolang hij leeft). Zonder deurwaarder int de baas zelf: kaler, maar driester. In vorm 2: zonder deurwaarder geen ONTSLAG.' },
-  de_claqueur: { act: 3, soort: 'Hofhouding', lore: 'Betaald applaus met een prijskaartje aan elke pols. Het klapt op factuur — en bij de herverkiezing wordt het stemvee.', notitie: '5 schade per beurt, telt mee op de Factuur en stemt op hem als je hem laat staan. Eén AoE-tik.' }
+  /* de 4 hieronder is DICK.APPLAUS (game.js); draait de balansronde aan die knop, dan ook deze regel. */
+  de_claqueur: { act: 3, soort: 'Hofhouding', lore: 'Betaald applaus met een prijskaartje aan elke pols. Het klapt op factuur — en bij de herverkiezing wordt het stemvee.', notitie: '4 schade per beurt, telt mee op de Factuur en stemt op hem als je hem laat staan. Eén AoE-tik.' }
 };
 
 /* ---------- RELIKWIEËN ---------- */
