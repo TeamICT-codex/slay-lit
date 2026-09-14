@@ -380,12 +380,14 @@ body[data-modus="mobiel"] #scherm-gevecht .metgezel-naam { display: none; }
    verschillende voet-hoogtes (klein lager, groot hoger) → exact uitlijnen met álle maten kan niet;
    16px is het symmetrische compromis (klein ↔ normaal). */
 body[data-modus="mobiel"] #scherm-gevecht #speler-zone { margin-bottom: 2px; }   /* held-voet op gelijke hoogte met de vijanden (de naam ligt nu óp de balk → geen extra naam-rij meer te compenseren) */
-/* klein-vijanden (slijm/rat…) zakken ~8px door hun scale .82 (origin bottom-center) → til ze terug
-   naar de grondlijn zodat held + normale + grote + kleine vijanden allemaal op één voetlijn staan
-   (ook de slijm-adds in een baasgevecht). Maat + lift via de losse `scale:`/`translate:`-props
-   i.p.v. `transform`, zodat de entree-animatie (transform: translateX) ermee COMPONEERT en de
-   klein-maat er meteen staat — geen 'grote rat die daarna naar beneden schaalt' meer. */
-body[data-modus="mobiel"] #scherm-gevecht .vijand.vijand-klein { scale: .82; translate: 0 -10px; transform-origin: bottom center; }
+/* v114 (HET TONEEL): de scale verhuisde naar .vijand-art (zie style.css) — daar is de
+   onderrand précies de voetlijn, dus de oude `translate: 0 -10px`-pleister (die de 8px
+   zakking van een scale op de hele KOLOM terugtilde) is niet meer nodig én zou de kleine
+   vijanden nu 10px boven de grond hangen. Maat via de losse `scale:`-prop i.p.v. `transform`,
+   zodat de entree-animatie (transform: translateX) ermee COMPONEERT en de klein-maat er
+   meteen staat — geen 'grote rat die daarna naar beneden schaalt' meer. */
+body[data-modus="mobiel"] #scherm-gevecht .vijand.vijand-klein { scale: none; translate: none; }
+body[data-modus="mobiel"] #scherm-gevecht .vijand.vijand-klein .vijand-art { scale: .82; transform-origin: bottom center; }
 /* VIJAND-NAAM OP DE HP-BALK i.p.v. een losse regel eronder (scheelt een rij in de stapel →
    strakker + beter uitgelijnd, en niet meer los onder het character). De naam ligt als compacte
    caption met schaduw over de balk; de negatieve margin trekt de hp-balk eronder omhoog. Het
@@ -1428,13 +1430,13 @@ body[data-modus="mobiel"].inzage #baas-balk { opacity: .3; }
 body[data-modus="mobiel"].top-doorzicht[data-scherm="gevecht"] #topbalk { --tb-a: .45; }
 body[data-modus="mobiel"].top-doorzicht[data-scherm="gevecht"] #tb-relikwieen { opacity: .6; }
 body[data-modus="mobiel"][data-scherm="gevecht"].inzage #topbalk { --tb-a: .25; }   /* hp/fakkel/goud-chips zelf blijven opacity 1 */
-/* CHIPS: dicht dekvlak + schaduw op het getal (contrast over drukke art: van ≈2,3:1 naar ≥7:1) en niet mee-krimpen
-   met .vijand-klein (scale .82). Blijft binnen de vaste 24px-chiprij (overflow visible) → figuren schuiven niet. */
+/* CHIPS: dicht dekvlak + schaduw op het getal (contrast over drukke art: van ≈2,3:1 naar ≥7:1).
+   v114: de tegenschaling is weg — sinds .vijand-klein enkel nog de FIGUUR schaalt, krimpen
+   naam/hp/chips sowieso niet meer mee. */
 body[data-modus="mobiel"] #scherm-gevecht .status { background: rgba(16, 10, 20, .86); }
 body[data-modus="mobiel"] #scherm-gevecht .status.s-goed { background: rgba(72, 54, 14, .9); }
 body[data-modus="mobiel"] #scherm-gevecht .status.s-slecht { background: rgba(78, 20, 38, .9); }
 body[data-modus="mobiel"] #scherm-gevecht .status b { text-shadow: 0 1px 2px #000; }
-body[data-modus="mobiel"] #scherm-gevecht .vijand.vijand-klein .blok-status { scale: 1.2; transform-origin: top center; }
 
 /* ---------- G. DE AFDALING (js/wereld.js + js/wereld-terrein.js, DEV-vlag body.wereld) ----------
    Touch-maten en de twee oriëntaties. Het scherm erft `top: calc(var(--tbh,40px) + var(--sat))`

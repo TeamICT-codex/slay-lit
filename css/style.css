@@ -1285,8 +1285,11 @@ body.lite .lb-daily-cta { animation: none; }
   min-width: 170px;
 }
 .speler-figuur {
-  font-size: 5.5rem;
-  width: 124px; height: 124px;
+  /* v114 (HET TONEEL): schermrelatief via --toneel-k (zetToneelSchaal, JS) i.p.v.
+     vaste px — anders is de held op een 1920x1080-Chromebook half zo groot als op
+     een 1440x900-laptop met OS-schaling. Terugval 1 = exact de oude maat. */
+  font-size: calc(5.5rem * var(--toneel-k, 1));
+  width: calc(124px * var(--toneel-k, 1)); height: calc(124px * var(--toneel-k, 1));
   display: flex; align-items: flex-end; justify-content: center;
   /* tightere, donkere voet-schaduw → de figuur 'staat' op de grond i.p.v. te zweven */
   filter: drop-shadow(0 9px 5px rgba(0, 0, 0, .6)) drop-shadow(0 2px 3px rgba(0, 0, 0, .55));
@@ -1526,8 +1529,10 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
   position: relative;
 }
 .vijand-art {
-  font-size: 4.2rem;
-  width: 108px; height: 108px;
+  /* v114 (HET TONEEL): zie .speler-figuur — één factor voor alle 2D-figuren, zodat
+     de verhouding vijand/elite/episch/baas/held exact blijft. */
+  font-size: calc(4.2rem * var(--toneel-k, 1));
+  width: calc(108px * var(--toneel-k, 1)); height: calc(108px * var(--toneel-k, 1));
   display: flex; align-items: flex-end; justify-content: center;
   position: relative;
   /* tightere voet-schaduw → 'op de grond' i.p.v. zwevend */
@@ -1539,10 +1544,10 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
   width: 100%; height: 100%;
   object-fit: contain;
 }
-.is-elite .vijand-art { font-size: 5.2rem; width: 136px; height: 136px; }
-.is-baas .vijand-art { font-size: 6.4rem; width: 176px; height: 176px; }
+.is-elite .vijand-art { font-size: calc(5.2rem * var(--toneel-k, 1)); width: calc(136px * var(--toneel-k, 1)); height: calc(136px * var(--toneel-k, 1)); }
+.is-baas .vijand-art { font-size: calc(6.4rem * var(--toneel-k, 1)); width: calc(176px * var(--toneel-k, 1)); height: calc(176px * var(--toneel-k, 1)); }
 /* episch (bv. Het Origineel) = imposant, duidelijk GROTER dan de held (108→158px), tussen elite en baas */
-.is-episch .vijand-art { font-size: 5.9rem; width: 158px; height: 158px; }
+.is-episch .vijand-art { font-size: calc(5.9rem * var(--toneel-k, 1)); width: calc(158px * var(--toneel-k, 1)); height: calc(158px * var(--toneel-k, 1)); }
 
 /* ---------- zichtbare kaart-steel (de Erfprins grist/kaatst een kaart) ---------- */
 .steel-vlieger {
@@ -2350,8 +2355,13 @@ body.lite .pb-skelet, body.lite .pb-lijst .pb-rij.pb-skelet:nth-child(odd) { bac
    naar z'n klein/groot-maat ('eerst een grote rat, dan schaalt ie naar beneden'); nu
    staat de maat er meteen, ook tijdens de binnenkomst. transform-origin geldt ook voor
    `scale:`/`translate:` → voeten blijven op de grondlijn. */
-.vijand.vijand-klein { scale: .82; transform-origin: bottom center; }
-.vijand.vijand-groot { scale: 1.18; transform-origin: bottom center; }
+/* v114 (HET TONEEL): de scale zit op de FIGUUR, niet meer op de hele kolom. Op de
+   kolom (origin bottom center = onder de hp-balk) verschoof hij de voeten 8-19px per
+   vijand — klein stond te laag, groot te hoog, en de mobiele -10px-lift was daar de
+   pleister op. Op .vijand-art is de onderrand précies de voetlijn, dus de maat
+   verandert wel en de grondlijn niet. Naam/hp/chips krimpen niet meer mee. */
+.vijand.vijand-klein .vijand-art { scale: .82; transform-origin: bottom center; }
+.vijand.vijand-groot .vijand-art { scale: 1.18; transform-origin: bottom center; }
 .kroon {
   position: absolute; top: -26px; left: 50%; transform: translateX(-50%) rotate(-8deg);
   font-size: 2.2rem;

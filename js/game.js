@@ -105,13 +105,16 @@ const mobiel =
   /Android|iPhone|iPad|iPod|Mobile|Silk/i.test(navigator.userAgent || '');
 window.mobiel = mobiel;
 
-/* lite = zwakke hardware of OS-reduced-motion. Op MOBIEL is de RAM/cores-drempel
-   te streng: Chrome clampt navigator.deviceMemory grof (talloze capabele telefoons
-   melden gewoon 4) -> daar enkel bij écht zwak (<=1 GB / <=2 cores) of expliciete
-   reduced-motion naar lite. Op laptop ongewijzigd (<=4). */
+/* lite = zwakke hardware of OS-reduced-motion. De RAM/cores-drempel is op BEIDE
+   sporen te streng gebleken: Chrome clampt navigator.deviceMemory grof (op 4 of 8),
+   dus een doodgewone Chromebook meldt 4 kernen / 4 GB en belandde met de oude
+   laptop-drempel (<=4) in lite -> 3D uit -> het 2D-toneel met zijn VASTE px-maten,
+   waar de figuren op een 1920x1080-Chromebook piepklein ogen (v114, HET TONEEL).
+   Nu op beide sporen enkel bij écht zwak (<=2 kernen / <=2 GB) of expliciete
+   reduced-motion. De lite-knop in de instellingen blijft gewoon werken. */
 const standaardLite =
-  (navigator.hardwareConcurrency || 8) <= (mobiel ? 2 : 4) ||
-  (navigator.deviceMemory || 8) <= (mobiel ? 1 : 4) ||
+  (navigator.hardwareConcurrency || 8) <= 2 ||
+  (navigator.deviceMemory || 8) <= (mobiel ? 1 : 2) ||
   (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 /* het presentatiespoor: laptop (gedeelde basis) of mobiel (css/mobiel.css).
@@ -3597,6 +3600,24 @@ function herpasSchermAchtergronden() {
 }
 
 /* ============================================================
+   HET TONEEL (v114) — zetToneelSchaal()
+   ------------------------------------------------------------
+   Op het 2D-toneel stonden de figuren in VASTE pixels (vijand 108, elite 136,
+   episch 158, baas 176, held 124). Op een Windows-laptop met 125-150% OS-schaling
+   oogt dat normaal; op een Chromebook zonder schaling (1920x1080 CSS-px) is het
+   piepklein. Eén schermrelatieve factor voor alle 2D-figuurmaten, zodat de
+   VERHOUDING tussen held/vijand/elite/episch/baas exact blijft en alleen de maat
+   meegroeit met de schermhoogte. 900 px hoogte = de ijklaptop (k = 1).
+   Mobiel heeft zijn eigen vh-clamps in mobiel.css en blijft daar ongemoeid. */
+function zetToneelSchaal() {
+  const el = $('#scherm-gevecht');
+  if (!el) return;
+  const k = Math.min(1.35, Math.max(0.75, (window.innerHeight || 900) / 900));
+  el.style.setProperty('--toneel-k', k.toFixed(3));
+}
+window.zetToneelSchaal = zetToneelSchaal;
+
+/* ============================================================
    HET TONEEL (v114) — plaatsGevechtsplaat()
    ------------------------------------------------------------
    Vervangt `background-size: cover` + `background-position` voor de
@@ -4361,7 +4382,9 @@ function opSchermDraai() {
   evalueerDraaiBlok();
   /* HET TONEEL (v114): de grondlijn hangt aan de venstermaat én aan de voetlijn
      (portret-topbalk 76px, liggend 40) — bij elke resize/draai opnieuw rekenen,
-     meteen (niet gedebounced) zodat er geen frame met een verschoven vloer staat. */
+     meteen (niet gedebounced) zodat er geen frame met een verschoven vloer staat.
+     De figuurschaal hangt aan dezelfde hoogte, dus die eerst (hij verzet de voetlijn). */
+  zetToneelSchaal();
   if (document.body.dataset.scherm === 'gevecht') plaatsGevechtsplaat();
   /* afdaalkaart herschalen bij draaien: de zoom hangt aan de schermbreedte, en
      zonder hertekenen blijft 'ie stale → te klein (na portret→liggend) of
@@ -4375,6 +4398,7 @@ function opSchermDraai() {
 }
 window.addEventListener('orientationchange', opSchermDraai);
 window.addEventListener('resize', opSchermDraai);
+zetToneelSchaal();   /* meteen bij het laden, vóór het eerste gevecht (v114) */
 
 function startGevecht(samenstelling, soort, rij) {
   const g = {
