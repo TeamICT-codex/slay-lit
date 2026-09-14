@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v116'; // v116: drie Act 2-gevechtsplaten hergenereerd op de toneelstandaard (schedelgang, papierkathedraal, dossiertoren) — grond 61, crop van 32% naar 17%
+const CACHE = 'slayit-v117'; // v117: eigen art voor het hof van HET PROCES (griffier, deurwaarder, claqueur: 11 platen) + de baasposes factuur en herkozen
 const BESTANDEN = [
   '.',
   'css/style.css',
