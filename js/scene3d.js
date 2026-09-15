@@ -8,7 +8,20 @@
 
 const Vista = (() => {
   let renderer = null, scene = null, camera = null;
-  let kijkY = 1.8;              /* camerablik: hoger bij eigen platen = figuren lager in beeld */
+  /* camerablik. v116: ÉÉN vaste waarde, ook bij een eigen achtergrondplaat.
+     Tot v115 keek de camera bij een plaat hoger (2.35) om de figuren grof naar de
+     geschilderde vloer te duwen — een compensatie die per plaat niet kon kloppen
+     (de vloerrand ligt tussen 57% en 75%, zie GROND in js/art.js). Nu schuift de
+     PLAAT naar de figuren (plaatsGevechtsplaat + voetlijnY), dus mag de camera
+     stilstaan. 1.8 is bovendien de waarde van de procedurele zaal: één constante,
+     en gevechten zónder plaat zien er exact uit als in v115. */
+  const KIJK_Y = 1.8;
+  let kijkY = KIJK_Y;
+  /* De vloer van het toneel: elke acteur staat met zijn GETEKENDE voeten op deze
+     wereldhoogte (zie voetmarge() en maakActeur). Dat is meteen de bron van
+     voetlijnY() — de lijn waar plaatsGevechtsplaat() de geschilderde vloerrand
+     op legt. */
+  const VOET_WERELD_Y = 0.05;
   let klaar = false, actief = false;
   let acteurs = new Map();      /* actor-object -> sprite-info */
   let fakkels = [], vlammen = [], stof = null;
@@ -271,12 +284,52 @@ const Vista = (() => {
     img.src = url;
   }
 
+  /* ---------- de voetmarge van de karakter-art (v117) ----------
+     De karakter-platen dragen 1-11% TRANSPARANTE marge onder de geschilderde
+     voeten (playtest 'zwevende figuren', aug 2026 — de tabel window.VOETMARGE in
+     js/art.js). Op het 2D-toneel drukt CSS die marge weg via --voetc; in 3D is de
+     onderkant van de sprite-QUAD de voetlijn, dus moet de sprite zelf net zoveel
+     ZAKKEN. Zonder deze correctie hangt elke figuur een eigen beetje boven de
+     vloer (gemeten na v116: grotrat 3,0%, de_inktvlek 3,0%, groene_slijm 2,8% vh)
+     terwijl de plaat wél perfect ligt — precies de restklacht van 14 sep.
+     Terugval 0 voor onbekende ids: dit is een OBJ[sleutel]-lookup op een tabel die
+     bewust niet compleet is (figuren onder 1% staan er niet in), dus nooit een
+     harde aanname. artTerugval: hovelingen zonder eigen plaat (griffier/
+     deurwaarder/claqueur) erven de marge van de plaat die ze écht tonen. */
+  function _marge(volledigId) {
+    const vm = window.VOETMARGE;
+    if (!vm || !volledigId) return null;
+    const sleutel = window.artTerugval ? artTerugval(volledigId) : volledigId;
+    let v = vm[sleutel];
+    if (v == null) v = vm[volledigId];
+    return (typeof v === 'number' && isFinite(v)) ? v / 100 : null;
+  }
+  function voetmarge(artId) { const m = _marge(artId); return m === null ? 0 : m; }
+  /* de marge van een pose; bestaat er geen pose-eigen meting, dan blijft de
+     basismarge gelden (exact wat pose2D in 2D doet: --voetc onaangeroerd laten). */
+  function poseMarge(a, st) {
+    if (!st || st === 'idle') return a.margeBasis;
+    const m = _marge(a.artId + '_' + st);
+    return m === null ? a.margeBasis : m;
+  }
+  /* het anker verzetten: de sprite zakt marge*schaal, zodat de GETEKENDE voeten op
+     VOET_WERELD_Y blijven staan — ook als een pose een andere marge heeft (anders
+     springt een figuur bij zijn aanvalspose: speler_attack 12,2%, slijmkoning_attack
+     11,4%). Wat je ziet blijft dus staan; alleen de onzichtbare quad schuift. */
+  function zetVoetAnker(a, marge) {
+    if (a.marge === marge) return;
+    a.marge = marge;
+    a.basisY = VOET_WERELD_Y + a.schaal / 2 - marge * a.schaal;
+  }
+
   /* ---------- acteurs ---------- */
   function maakActeur(sleutel, artId, valTerug, x, z, schaal) {
     const mat = new THREE.SpriteMaterial({ map: leegTextuur(), transparent: true });
     const sprite = new THREE.Sprite(mat);
+    const margeBasis = voetmarge(artId);          /* transparante marge onder de getekende voeten */
+    const rustY = VOET_WERELD_Y + schaal / 2 - margeBasis * schaal;
     sprite.scale.set(schaal, schaal, 1);
-    sprite.position.set(x, schaal / 2 + 0.05, z);
+    sprite.position.set(x, rustY, z);
     scene.add(sprite);
 
     /* zachte grondschaduw zodat de figuren echt 'staan' */
@@ -290,8 +343,12 @@ const Vista = (() => {
     scene.add(schaduw);
 
     const a = {
-      sprite, mat, schaal, schaduw, schaduwMat,
-      basisX: x, basisY: schaal / 2 + 0.05, fase: Math.random() * 6.28,
+      sprite, mat, schaal, schaduw, schaduwMat, artId,
+      /* margeBasis = de marge van de RUSTplaat; marge = die van de pose die nu
+         te zien is. rustY is het anker van de rustplaat: schermPos() hangt de
+         DOM-overlay (naam/hp) daaraan op, zodat die niet meedanst met de poses. */
+      margeBasis, marge: margeBasis, rustY,
+      basisX: x, basisY: rustY, fase: Math.random() * 6.28,
       flits: 0, dood: false, weg: 0,
       frames: null, knipperTot: 0, volgendeKnipper: tijd + 1.5 + Math.random() * 3,
       uitval: null,
@@ -370,9 +427,9 @@ const Vista = (() => {
     zaalGroep.visible = !eigenAchtergrond;
     if (stof) stof.visible = !eigenAchtergrond;   /* stof hoort bij de procedurele zaal; achter een geschilderde plaat weg (+ spaart de per-frame update-lus) */
     renderer.setClearColor(0x0d0a12, eigenAchtergrond ? 0 : 1);
-    /* bij een geschilderde plaat kijkt de camera hoger, zodat de figuren
-       lager in beeld staan — op de vloer van de plaat, niet zwevend erboven */
-    kijkY = eigenAchtergrond ? 2.35 : 1.8;
+    /* v116: de camera staat vast (KIJK_Y). De plaat komt naar de figuren toe —
+       plaatsGevechtsplaat() zet haar vloerrand op Vista.voetlijnY(). */
+    kijkY = KIJK_Y;
     maakActeur(g.speler, g.heldArt || 'speler', { teken: '🤺', spiegel: true }, -3.7, 0.4, 2.5);
     /* enkel LEVENDE vijanden als sprite opbouwen: dode blijven in g.vijanden staan (v.dood=true,
        voor de sterft-fade), maar een herbouw (voegVijandToe — Doorslag-kopie / Mal-gietsel) mag een
@@ -504,6 +561,9 @@ const Vista = (() => {
       if (a.dood) {
         /* dood: stofwolk, omvallen, wegzakken en vervagen */
         if (a.stateTex.death && a.mat.map !== a.stateTex.death) a.mat.map = a.stateTex.death;
+        /* de death-plaat heeft haar eigen voetmarge (een liggend lijf vult zijn kader
+           anders): mee verzetten, anders zakt het lijk door de vloer of zweeft het */
+        zetVoetAnker(a, a.stateTex.death ? poseMarge(a, 'death') : a.margeBasis);
         if (!a.poefGedaan) {
           a.poefGedaan = true;
           spawnPoef(a.sprite.position.x, a.basisY, a.sprite.position.z);
@@ -549,6 +609,12 @@ const Vista = (() => {
       else if (a.poseTot && tijd < a.poseTot && a.pose) st = a.pose;
       else if (actor.status && (actor.status.gif || 0) > 0) st = 'poison';
       else if (actor.isSpeler && window.S && S.maxHp && S.hp / S.maxHp < 0.3) st = 'wounded';
+
+      /* de voetmarge volgt de plaat die NU te zien is (idem pose2D in 2D): een
+         pose zonder eigen meting houdt de basismarge. Alleen een pose waarvan de
+         art ook echt geladen is telt — anders zou de quad schuiven zonder dat het
+         beeld verandert. */
+      zetVoetAnker(a, (st !== 'idle' && a.stateTex[st]) ? poseMarge(a, st) : a.margeBasis);
 
       if (st !== 'idle' && a.stateTex[st]) {
         if (a.mat.map !== a.stateTex[st]) a.mat.map = a.stateTex[st];
@@ -615,8 +681,13 @@ const Vista = (() => {
 
       a.sprite.scale.set(a.schaal * sx, a.schaal * sy, 1);
       a.mat.rotation = rot;
-      /* voeten blijven geplant: bij samenpersen zakt het middelpunt mee */
-      a.sprite.position.y = a.basisY + Math.sin(tijd * 2 + a.fase) * 0.06 - (1 - sy) * a.schaal / 2;
+      /* voeten blijven geplant: bij samenpersen zakt het middelpunt mee.
+         De idle-adem tilt het hele lijf op en neer, maar de grondschaduw blijft
+         liggen — een te grote uitslag leest dus letterlijk als zweven. 0.06 was
+         ±0,75% vh (±6,7px op 1440x900) en at de hele foutmarge van de voetlijn op;
+         0.02 (±0,25% vh) komt overeen met de 2px van het 2D-toneel ('subtieler ->
+         minder zwevend', style.css @keyframes beef). */
+      a.sprite.position.y = a.basisY + Math.sin(tijd * 2 + a.fase) * 0.02 - (1 - sy) * a.schaal / 2;
       a.sprite.position.x = a.basisX + offX;
       a.schaduw.position.x = a.basisX + offX;
       a.schaduw.scale.set(a.schaal * 0.85 * sx, a.schaal * 0.4, 1);
@@ -671,9 +742,109 @@ const Vista = (() => {
     const a = acteurs.get(actor);
     if (!a || !klaar) return null;
     const p = a.sprite.position;
-    const top = projecteer(p.x, a.basisY + a.schaal / 2, p.z);
-    const voet = projecteer(p.x, a.basisY - a.schaal / 2, p.z);
+    /* v117: de voetlijn is de GETEKENDE voet (VOET_WERELD_Y), niet de onderkant van
+       de quad — die ligt sinds de voetmarge-correctie marge*schaal lager. Zo blijft
+       voetY exact dezelfde lijn als vóór v117 (de metgezel-DOM en de spacer hangen
+       eraan) en klopt hij nu ook echt met wat je ziet. De bovenkant hangt aan het
+       RUSTanker: poses met een eigen marge mogen de naam/hp-balk niet doen dansen. */
+    const top = projecteer(p.x, a.rustY + a.schaal / 2, p.z);
+    const voet = projecteer(p.x, VOET_WERELD_Y, p.z);
     return { x: voet.x, topY: top.y, voetY: voet.y };
+  }
+
+  /* ---------- DE VOETLIJN VAN HET 3D-TONEEL (v116, verfijnd in v117) ----------
+     Op het 2D-toneel is de voetlijn de onderkant van de figuur-wrapper; in 3D
+     bestaat die DOM-figuur niet (Vista tekent sprites). De voetlijn is hier de
+     SCHERMPROJECTIE van de GETEKENDE voeten: elke acteur staat met zijn voeten op
+     wereld-y VOET_WERELD_Y (sinds v117 dankzij de voetmarge-correctie ook echt de
+     geschilderde voet, niet de onderkant van de quad).
+
+     Perspectief maakt daar onvermijdelijk een BAND van, en die heeft TWEE termen:
+     - DIEPTE: de achterste rij (z -0.4) landt hoger in beeld dan de voorste
+       (z +0.4, waar de held staat) — 2,71% vh op 1440x900.
+     - ZIJKANT (v117): een voet op x -3.7 projecteert niet op dezelfde hoogte als
+       een voet op x +3.1 bij gelijke z; gemeten ~0,43% vh. In v116 werd alles op
+       x=0 geprojecteerd en verdween die term in de restafwijking van de speler.
+     Daarom projecteren we nu per acteur op zijn EIGEN x en z, en geven we het
+     MIDDEN van de werkelijke band terug: zo staat elke figuur even ver van de
+     geschilderde vloerrand (de halve spreiding) i.p.v. één rij perfect en de
+     andere er dubbel naast.
+
+     Twee bewuste keuzes blijven:
+     - DODE acteurs tellen mee voor de band: hun plek verandert niet, en zo
+       verspringt de plaat niet op het moment dat een vijand valt.
+     - Gemeten met de RUSTcamera (zonder de trage zwaai en de klap-kick) en op de
+       RUSTpositie van elke acteur (basisX, niet de uitval), anders beeft de plaat
+       elk frame mee. De camerabeweging zit al in de parallax die gevechtTik op de
+       hele laag zet. */
+  const VOET_Z_SPELER = 0.4, VOET_Z_VIJAND = -0.4;   /* terugval vóór gevechtStart */
+  const VOET_X_SPELER = -3.7, VOET_X_VIJAND = 3.1;
+  function _voetY(x, z) { return projecteer(x, VOET_WERELD_Y, z).y; }
+  function voetlijnInfo() {
+    if (!klaar || !camera) return null;
+    /* eerst alle (x,z)-paren verzamelen, dan pas projecteren: de projectie moet op
+       de rustcamera gebeuren en die zetten we maar één keer. */
+    const punten = [];
+    for (const [actor, a] of acteurs) {
+      punten.push({ x: a.basisX, z: a.sprite.position.z, speler: !!(actor && actor.isSpeler) });
+    }
+    if (!punten.length) {
+      punten.push({ x: VOET_X_SPELER, z: VOET_Z_SPELER, speler: true });
+      punten.push({ x: VOET_X_VIJAND, z: VOET_Z_VIJAND, speler: false });
+    }
+    const px = camera.position.x, py = camera.position.y, pz = camera.position.z;
+    camera.position.set(0, 2.6, 8.8);
+    camera.lookAt(0, kijkY, 0);
+    camera.updateMatrixWorld(true);      /* Camera zet hier ook matrixWorldInverse — project() leest die */
+    let laag = null, hoog = null, speler = null, vLaag = null, vHoog = null;
+    for (const p of punten) {
+      const y = _voetY(p.x, p.z);
+      if (laag === null || y < laag) laag = y;
+      if (hoog === null || y > hoog) hoog = y;
+      if (p.speler) speler = y;
+      else {
+        if (vLaag === null || y < vLaag) vLaag = y;
+        if (vHoog === null || y > vHoog) vHoog = y;
+      }
+    }
+    const info = {
+      y: (laag + hoog) / 2,
+      spreiding: hoog - laag,
+      speler,
+      vijanden: vLaag === null ? null : (vLaag + vHoog) / 2
+    };
+    camera.position.set(px, py, pz);
+    camera.lookAt(0, kijkY, 0);
+    camera.updateMatrixWorld(true);
+    return info;
+  }
+  /* de publieke haak voor plaatsGevechtsplaat(): de voetlijn in CSS-px vanaf de
+     bovenkant van het venster (null zolang het toneel niet klaar is). */
+  function voetlijnY() { const i = voetlijnInfo(); return i ? i.y : null; }
+
+  /* ---------- MEETHAAK (v117) ----------
+     voetlijnInfo() en schermPos() rekenen bewust op de RUSTstand: de plaat en de
+     DOM-overlay mogen niet meebeven met de adem, de uitval of de camerazwaai.
+     Voor de acceptatie moeten we juist weten wat er op DIT frame echt te zien is —
+     de getekende voet van elke acteur, mét adem, squash, uitval en de camera waar
+     ze nu staat. Vandaar deze aparte haak (gebruikt door
+     tools/toneel3d_acceptatie.js; het spel zelf roept haar niet aan).
+     quadY = de onderkant van de sprite-quad, y = de GETEKENDE voet erboven. */
+  function voetMeting() {
+    if (!klaar) return [];
+    const uit = [];
+    for (const [actor, a] of acteurs) {
+      const p = a.sprite.position;
+      const onder = p.y - a.sprite.scale.y / 2;
+      const voet = onder + a.marge * a.sprite.scale.y;
+      const pv = projecteer(p.x, voet, p.z);
+      uit.push({
+        wie: (actor && actor.isSpeler) ? 'speler' : ((actor && actor.id) || '?'),
+        artId: a.artId, marge: a.marge, dood: !!a.dood, zichtbaar: !!a.sprite.visible,
+        x: pv.x, y: pv.y, quadY: projecteer(p.x, onder, p.z).y
+      });
+    }
+    return uit;
   }
 
   /* fakkelniveau van het spel (1 = helder, 0.16 = gedoofd) */
@@ -692,6 +863,7 @@ const Vista = (() => {
 
   return {
     beschikbaar, start, gevechtStart, gevechtEind, raak, aanval, sterf, pose, tik, schermPos, resize, zwaai, zetLicht, schud,
+    voetlijnY, voetlijnInfo, voetMeting,
     get actief() { return actief; },
     get klaar() { return klaar; }
   };

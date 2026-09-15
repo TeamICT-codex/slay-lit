@@ -3901,14 +3901,34 @@ function _voetlijnVan(rTop) {
   return null;
 }
 
-/* zet één laag (de plaat zelf of de crossfade-laag van Het Proces) op zijn grond */
-function _plaatsLaag(el, url) {
+/* De LAYOUT-box van een achtergrondlaag (transformvrij). Op het 3D-toneel zet
+   gevechtTik elk frame een parallax-translate op #gevecht-achtergrond; die zit wél
+   in getBoundingClientRect() (tot ~5px zwabber bij een klap) en zou de plaat per
+   meting doen verspringen. `inset: -28px` + offsetWidth/offsetHeight zijn wél
+   transformvrij. Alleen de d3-tak gebruikt dit; het 2D-spoor blijft op de rect. */
+function _plaatLayoutBox(el) {
+  const r = el.getBoundingClientRect();
+  const cs = getComputedStyle(el);
+  const top = parseFloat(cs.top), left = parseFloat(cs.left);
+  return {
+    top: isFinite(top) ? top : r.top,
+    left: isFinite(left) ? left : r.left,
+    width: el.offsetWidth || r.width,
+    height: el.offsetHeight || r.height
+  };
+}
+
+/* zet één laag (de plaat zelf of de crossfade-laag van Het Proces) op zijn grond.
+   d3Voet (v116): op het 3D-toneel de voetlijn in viewport-px (Vista.voetlijnY()).
+   Zonder dat argument loopt alles exact als in v115 — het 2D-spoor ongemoeid. */
+function _plaatsLaag(el, url, d3Voet) {
   if (!el || !url) return;
   const ratio = _plaatRatio.get(url);
   if (!ratio) { _laadPlaatRatio(url); el.style.backgroundSize = ''; el.style.backgroundPosition = ''; return; }
-  const r = el.getBoundingClientRect();
+  const d3 = (typeof d3Voet === 'number' && isFinite(d3Voet));
+  const r = d3 ? _plaatLayoutBox(el) : el.getBoundingClientRect();
   if (!r.width || !r.height) return;
-  const voetY = _voetlijnVan(r.top);
+  const voetY = d3 ? (d3Voet - r.top) : _voetlijnVan(r.top);
   const g = (window.grondVan ? grondVan(url) : { grond: 0.62, midden: 0.5 });
   const grond = Math.min(0.95, Math.max(0.05, g.grond));
   if (voetY === null || !isFinite(voetY)) { el.style.backgroundSize = ''; el.style.backgroundPosition = ''; return; }
@@ -3940,24 +3960,35 @@ function _laadPlaatRatio(url) {
 }
 
 /* de publieke haak: bij startGevecht, bij resize/draai (opSchermDraai), bij de
-   arena-crossfade van Het Proces en eenmalig zodra de plaat geladen is. */
+   arena-crossfade van Het Proces, bij het aan/uit zetten van het 3D-toneel en
+   eenmalig zodra de plaat geladen is.
+   v116 — HET TONEEL IN 3D: dezelfde rekenregel (§3 van het contract), alleen een
+   andere voetlijn-bron. In 2D is dat de onderkant van de figuur-wrapper, in 3D de
+   schermprojectie van de sprite-voeten (Vista.voetlijnY()). Tot v115 liet deze
+   functie de plaat in 3D op `cover` staan en compenseerde Vista met een vaste
+   camerahoogte — dat kon per plaat nooit kloppen (vloerrand 57-75%). */
 function plaatsGevechtsplaat() {
   const bg = $('#gevecht-achtergrond');
   const laag2 = document.getElementById('gevecht-achtergrond-2');
   const url = (typeof S !== 'undefined' && S && S.gevecht && S.gevecht.achtergrond) || null;
   if (!bg) return;
-  /* 3D-toneel: Vista zet de plaat als achterwand — niets aanraken (en een eerder
-     gezette px-maat weer vrijgeven zodat de CSS-cover terug geldt). */
-  if (d3Actief() || !bg.classList.contains('zichtbaar') || !url) {
+  const vrij = () => {
     bg.style.backgroundSize = ''; bg.style.backgroundPosition = '';
     if (laag2) { laag2.style.backgroundSize = ''; laag2.style.backgroundPosition = ''; }
-    return;
+  };
+  if (!bg.classList.contains('zichtbaar') || !url) { vrij(); return; }
+  let d3Voet;
+  if (d3Actief()) {
+    d3Voet = (window.Vista && Vista.voetlijnY) ? Vista.voetlijnY() : null;
+    /* Vista nog niet klaar (of een oude Vista zonder voetlijnY): px-maat vrijgeven
+       en de CSS-cover laten gelden, precies zoals vóór v116. */
+    if (typeof d3Voet !== 'number' || !isFinite(d3Voet)) { vrij(); return; }
   }
   /* tijdens een arena-crossfade toont de ONDERSTE laag nog de oude plaat (toonArenaWissel
      parkeert die url in dataset.plaat); S.gevecht.achtergrond is dan al de nieuwe. */
-  _plaatsLaag(bg, bg.dataset.plaat || url);
+  _plaatsLaag(bg, bg.dataset.plaat || url, d3Voet);
   /* de crossfade-laag toont de NIEUWE plaat; die staat in haar eigen data-plaat */
-  if (laag2) _plaatsLaag(laag2, laag2.dataset.plaat || url);
+  if (laag2) _plaatsLaag(laag2, laag2.dataset.plaat || url, d3Voet);
 }
 window.plaatsGevechtsplaat = plaatsGevechtsplaat;
 
@@ -4755,6 +4786,11 @@ function startGevecht(samenstelling, soort, rij) {
   if (d3Gewenst() && Vista.start($('#vista-canvas'))) {
     scherm.classList.add('d3-actief');
     Vista.gevechtStart(g, soort, !!g.achtergrond);
+    /* v116: pas NU staat het 3D-toneel (camera + acteursdieptes), dus pas nu kent
+       Vista zijn voetlijn — de plaat opnieuw op die lijn zetten. De rAF vangt het
+       geval waarin de plaatverhouding nog gemeten werd toen de eerste aanroep liep. */
+    plaatsGevechtsplaat();
+    requestAnimationFrame(plaatsGevechtsplaat);
   } else {
     scherm.classList.remove('d3-actief');
   }
@@ -7833,6 +7869,7 @@ function voegVijandToe(id) {
   preloadPoses2D(g);   /* de nieuwkomer meteen warmen (idempotent voor de rest — v95) */
   if (d3Actief() && window.Vista) {
     Vista.gevechtStart(g, g.soort, !!g.achtergrond);
+    plaatsGevechtsplaat();   /* v116: een nieuwkomer kan de diepte-band van het toneel verzetten → voetlijn hermeten */
   } else {
     /* in 2D komt alleen de nieuwkomer het toneel op (eigen entree-variant indien gezet) */
     const wraps = document.querySelectorAll('#vijanden-rij .vijand');
@@ -10872,9 +10909,77 @@ function toonInstellingen() {
     const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
     ib.style.display = (!appGeinstalleerd() && (_installPrompt || (window.mobiel && ios))) ? '' : 'none';
   }
+  vraagShellVersie();              /* v116: klein versielabel onderaan */
   $('#overlay-instellingen').classList.add('open');
 }
 function sluitInstellingen() { $('#overlay-instellingen').classList.remove('open'); }
+
+/* ============================================================
+   HET VERSIELABEL (v116)
+   ------------------------------------------------------------
+   Thomas moet kunnen ZIEN welke shell zijn browser draait: de service worker kan
+   (na een hapering of zonder cache-bump) de oude build blijven serveren, en dan
+   lijkt een deploy niets gedaan te hebben. Bron van de waarheid is de CACHE-naam
+   van de service worker zelf — GEEN tweede hardgecodeerde versieconstante hier,
+   die zou vroeg of laat uit de pas lopen met sw.js.
+   Drie wegen naar diezelfde naam:
+     1. de SW stuurt hem bij 'activate' naar al zijn clients (postMessage);
+     2. de pagina vraagt hem aan de actieve SW (voor een tab die later opent);
+     3. terugval zonder SW (file://, dev, geblokkeerde SW): sw.js ophalen met
+        cache:'no-store' en de CACHE-regel lezen.
+   De SW-bronnen winnen van de terugval: die laatste haalt sw.js van het NET en
+   kan dus een nieuwere versie tonen dan de shell die hier echt draait — precies
+   het verschil dat we zichtbaar willen maken.
+   ============================================================ */
+let _shellVersie = null;
+function toonShellVersie(naam, vanSw) {
+  if (!naam) return;
+  if (_shellVersie && !vanSw) return;      /* een SW-antwoord overschrijft de terugval, niet omgekeerd */
+  _shellVersie = String(naam);
+  const el = $('#inst-versie');
+  if (!el) return;
+  const m = /v(\d+)/i.exec(_shellVersie);
+  el.textContent = m ? ('v' + m[1]) : _shellVersie;
+  el.setAttribute('title', _shellVersie);
+}
+function vraagShellVersie() {
+  if (_shellVersie) { toonShellVersie(_shellVersie, true); return; }
+  let sw = null;
+  try { sw = navigator.serviceWorker || null; } catch (e) { sw = null; }
+  if (sw && sw.controller) {
+    try { sw.controller.postMessage({ type: 'versie?' }); } catch (e) {}
+    /* geen antwoord binnen 1,2s (oude SW zonder message-handler)? dan de terugval */
+    setTimeout(() => { if (!_shellVersie) _versieUitBestand(); }, 1200);
+    return;
+  }
+  _versieUitBestand();
+}
+/* TERUGVAL — en meteen de grens ervan: deze fetch loopt door de fetch-handler van
+   de (mogelijk oude) service worker, die voor code network-first is. Wat hier
+   terugkomt is dus de versie op de SERVER, niet met zekerheid de shell die deze
+   browser draait — precies het verschil dat het label zichtbaar moet maken. Alleen
+   de twee SW-bronnen (het activate-bericht en het antwoord op 'versie?') zijn daar
+   hard bewijs van; daarom overschrijft een SW-antwoord deze waarde altijd. */
+function _versieUitBestand() {
+  fetch('sw.js', { cache: 'no-store' })
+    .then(r => (r.ok ? r.text() : ''))
+    .then(tekst => {
+      const m = /CACHE\s*=\s*['"]([^'"]+)['"]/.exec(tekst || '');
+      if (m) toonShellVersie(m[1], false);
+    })
+    .catch(() => { /* offline zonder SW: dan geen label, geen drama */ });
+}
+/* het bericht van de service worker (bij 'activate' naar alle clients, en als
+   antwoord op 'versie?'). Ook bruikbaar in een test: dispatch een MessageEvent
+   op navigator.serviceWorker met {type:'versie', cache:'slayit-vNN'}. */
+try {
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.addEventListener('message', e => {
+      const d = e && e.data;
+      if (d && d.type === 'versie' && d.cache) toonShellVersie(d.cache, true);
+    });
+  }
+} catch (e) { /* geen SW-API: de terugval doet het werk */ }
 
 /* volledig scherm aan/uit (statusbalk/klok weg). Werkt betrouwbaar omdat de
    speler de schakelaar zelf aantikt = direct gebruikersgebaar. */
@@ -10999,9 +11104,11 @@ function instWijzig() {
     if (d3Gewenst() && Vista.start($('#vista-canvas'))) {
       scherm.classList.add('d3-actief');
       Vista.gevechtStart(S.gevecht, S.gevecht.soort, !!S.gevecht.achtergrond);
-      /* v114-fix: op het 3D-toneel is de plaat de achterwand van Vista — de px-maat
-         van plaatsGevechtsplaat() weer vrijgeven, zodat de CSS-cover terug geldt. */
+      /* v116: 3D AAN mid-gevecht — de plaat verhuist van de 2D-voetlijn (figuur-
+         wrapper) naar de 3D-voetlijn (sprite-projectie). Beide richtingen van deze
+         knop herplaatsen dus; de rAF omdat #vista-canvas net zichtbaar werd. */
       plaatsGevechtsplaat();
+      requestAnimationFrame(plaatsGevechtsplaat);
     } else {
       if (window.Vista) Vista.gevechtEind();
       scherm.classList.remove('d3-actief');

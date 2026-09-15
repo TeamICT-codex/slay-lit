@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v118'; // v118: de_claqueur_death - het hof van HET PROCES is compleet (12 platen + 2 baasposes)
+const CACHE = 'slayit-v119'; // v119: HET TONEEL IN 3D - de gevechtsplaat op de sprite-voetlijn (voetmarge-correctie, rustigere idle-adem, voetlijn per acteur) + zichtbaar versielabel in de instellingen
 const BESTANDEN = [
   '.',
   'css/style.css',
@@ -96,7 +96,20 @@ self.addEventListener('activate', e => {
     caches.keys()
       .then(sleutels => Promise.all(sleutels.filter(s => s !== CACHE).map(s => caches.delete(s))))
       .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: 'window' }).then(cs => cs.forEach(meldVersie)))
   );
+});
+
+/* v116: welke shell draait deze browser? De pagina toont de CACHE-naam klein in
+   de instellingen. Bij 'activate' duwen we hem naar alle clients; een tab die
+   later opent vraagt hem met {type:'versie?'} gewoon opnieuw op. Zo is er maar
+   EEN versieconstante in het project: de regel bovenaan dit bestand. */
+function meldVersie(client) {
+  try { client.postMessage({ type: 'versie', cache: CACHE }); } catch (e) { /* client weg */ }
+}
+self.addEventListener('message', e => {
+  const d = e && e.data;
+  if (d && d.type === 'versie?' && e.source) meldVersie(e.source);
 });
 
 self.addEventListener('fetch', e => {
