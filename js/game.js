@@ -2260,6 +2260,139 @@ function schudScherm() {
   el.classList.remove('beef'); void el.offsetWidth; el.classList.add('beef');
 }
 
+/* ============================================================
+   HET PROCES - de regieprimitieven (v119)
+   Fundament voor de bedrijfsovergangen van de DICKtator: een klap moet GEWICHT
+   krijgen. Huisregels die hier hard in zitten:
+   - elke duur loopt door dtempo(), zodat het balansharnas (DICK.tempo = 0.02)
+     de hele ceremonie kan overslaan zonder dat er een beat blijft hangen;
+   - NOOIT een transform/filter op #scherm-gevecht zelf: dat is .scherm met
+     position:fixed + overflow:hidden, dus zodra daar een animatie op draait wordt
+     het containing block voor al zijn fixed kinderen (baas-flits z55, spraak z56,
+     goud-flits z58, doodflits z70) - die springen dan 52px omlaag en worden
+     geklipt. De schok gaat daarom op #strijdveld, het doek is een body-kind;
+   - plaat-animaties draaien om --grondY (de GEMETEN voetlijn uit _plaatsLaag),
+     nooit om 61% van de elementhoogte - dat is de vloer niet.
+   ============================================================ */
+let _hitstopTot = 0, _hitstopT = null, _schokT = null;
+function _hitstopActief() { return performance.now() < _hitstopTot; }
+/* HITSTOP: het beeld bevriest een fractie op het moment van de klap - die halve
+   tiende seconde stilstand IS het gewicht. De overlays (tik-flits, vonnis, doek,
+   beef) lopen bewust door; zie .hitstop in css/style.css. setTimeout-beats lopen
+   ook door, zodat de tijdlijn klopt ook als de hitstop faalt of uitstaat.
+   NOOIT de Tikker globaal bevriezen: slaap() hangt eraan, en daarmee de hele
+   vijandbeurt en elke await in eindBeurt = een gegarandeerde deadlock.
+   De opruimtimer is met opzet NIET geguard: een blijvende .hitstop zou het scherm
+   na het gevecht bevroren laten staan. */
+function hitstop(ms) {
+  const sc = $('#scherm-gevecht'); if (!sc) return;
+  const d = dtempo(ms || 140);
+  _hitstopTot = performance.now() + d;
+  sc.classList.add('hitstop');
+  clearTimeout(_hitstopT);
+  _hitstopT = setTimeout(() => { sc.classList.remove('hitstop'); _hitstopTot = 0; }, d);
+}
+/* de zware schok op de FIGURENLAAG. k = sterkte (1.0 licht ... 2.6 de doodsklap). */
+function schokToneel(k, ms) {
+  const sv = $('#strijdveld'); if (!sv) return;
+  const d = dtempo(ms || 420);
+  sv.style.setProperty('--schok', (k || 1));
+  sv.style.setProperty('--schok-t', d + 'ms');
+  sv.classList.remove('toneelschok'); void sv.offsetWidth; sv.classList.add('toneelschok');
+  clearTimeout(_schokT);
+  _schokT = setTimeout(() => sv.classList.remove('toneelschok'), d + 60);
+}
+/* een stoot op de ZAALPLAAT, verankerd op de geschilderde vloerrand zodat de figuren
+   niet zweven. .plaat-inzoom en .plaat-instort houden hun eindstand (forwards). */
+const _PLAAT_BLIJFT = { 'plaat-inzoom': 1 };   /* alleen de blijvende 6%-inzoom van bedrijf III houdt zijn eindstand */
+function plaatKick(variant, ms, el) {
+  const v = variant || 'plaat-dreun';
+  const d = dtempo(ms || 520);
+  const lagen = el ? [el] : [$('#gevecht-achtergrond'), $('#gevecht-achtergrond-2')];
+  lagen.forEach(l => {
+    if (!l) return;
+    l.style.setProperty('--plaat-t', d + 'ms');
+    l.classList.remove('plaat-beweeg', v); void l.offsetWidth;
+    l.classList.add('plaat-beweeg', v);
+    clearTimeout(l._plaatT);
+    if (_PLAAT_BLIJFT[v]) return;
+    l._plaatT = setTimeout(() => l.classList.remove('plaat-beweeg', v), d + 60);
+  });
+}
+/* DE TIK: de baas deinst achteruit met de hand aan zijn krans en wordt zichtbaar
+   teruggeslagen. zwaarte 1/2/3 = bedrijf II / III / IV; de kleur van de flits
+   escaleert mee (wit-rood -> rood-as -> goud). */
+const _TIK = [
+  { amp: 26, rot: 4, stop: 140, pose: 1.0, kleur: 'rgba(255, 236, 214, .85)' },
+  { amp: 38, rot: 6, stop: 190, pose: 1.2, kleur: 'rgba(255, 122, 86, .8)' },
+  { amp: 52, rot: 8, stop: 220, pose: 1.4, kleur: 'rgba(255, 226, 150, .9)' }
+];
+function baasTik(b, zwaarte) {
+  const t = _TIK[Math.max(0, Math.min(2, (zwaarte || 1) - 1))];
+  const el = actorEl(b);
+  if (el) {
+    el.style.setProperty('--tikx', t.amp + 'px');
+    el.style.setProperty('--tikr', t.rot + 'deg');
+    el.classList.remove('baas-tik'); void el.offsetWidth; el.classList.add('baas-tik');
+    clearTimeout(el._tikT);
+    el._tikT = setTimeout(() => el.classList.remove('baas-tik'), dtempo(620));
+  }
+  pose2D(b, 'hit', t.pose);
+  if (window.Vista && Vista.raak) Vista.raak(b, true);
+  const sc = $('#scherm-gevecht');
+  if (sc) {
+    const f = document.createElement('div');
+    f.className = 'tik-flits';
+    f.style.setProperty('--tik-kleur', t.kleur);
+    sc.appendChild(f);
+    setTimeout(() => f.remove(), dtempo(420));
+  }
+  hitstop(t.stop);
+}
+/* het hof deinst terug - een GOLF, geen sprong: 90ms per hoveling. */
+function hofDeinst(g, stap) {
+  const hof = dicktatorHof(g); if (!hof.length) return;
+  hof.forEach((x, i) => setTimeout(() => {
+    if (S.gevecht !== g || g.voorbij || x.dood) return;
+    const el = actorEl(x); if (el) {
+      el.classList.remove('deinst'); void el.offsetWidth; el.classList.add('deinst');
+      clearTimeout(el._deinstT);
+      el._deinstT = setTimeout(() => el.classList.remove('deinst'), dtempo(520));
+    }
+    pose2D(x, 'hit', 0.6);
+  }, dtempo((stap || 90) * i)));
+}
+/* HET DOEK: het beeld dooft en trekt weer op. diepte 0 (of niets) = doek open.
+   Klasse + transition, geen keyframe - in lite/reduced-motion valt de transition
+   weg en wordt het een harde knip, precies wat daar de arenawissel afdekt. */
+function toneelDoek(diepte, ms) {
+  const d = $('#toneel-doek'); if (!d) return;
+  if (ms != null) d.style.setProperty('--doek-t', dtempo(ms) + 'ms');
+  if (!diepte) { d.classList.remove('aan'); return; }
+  d.style.setProperty('--doek', diepte);
+  d.classList.add('aan');
+}
+/* HET VONNIS: de bedrijfstitel als stempel, met duiding eronder. Komt bewust NAAST
+   baasFaseMoment - die heeft 21 aanroepers (slijmkoning, Erfprins, Drops-poorten,
+   DE ROOF, DE GRIFFIE IS GESLOTEN...) en blijft letterlijk staan; een verkeerde
+   default hier zou vier andere bazen stil van gedrag laten veranderen.
+   opts: { duur, kleur:'goud', klein, schok:false|sterkte, sfx:false|naam, doek }. */
+function vonnisSlam(titel, sub, opts) {
+  const o = opts || {};
+  const sc = $('#scherm-gevecht'); if (!sc) return null;
+  const duur = dtempo(o.duur || 2400);
+  if (o.schok !== false) { schudScherm(); schokToneel(typeof o.schok === 'number' ? o.schok : 1.2, 420); }
+  if (o.sfx !== false) Klank.sfx(typeof o.sfx === 'string' ? o.sfx : 'hamer');
+  if (typeof o.doek === 'number') toneelDoek(o.doek);
+  const el = document.createElement('div');
+  el.className = 'vonnis' + (o.kleur === 'goud' ? ' goud' : '') + (o.klein ? ' klein' : '');
+  el.style.setProperty('--vonnis-duur', duur + 'ms');
+  el.innerHTML = `<h2>${titel}</h2>` + (sub ? `<span>${sub}</span>` : '');
+  sc.appendChild(el);
+  setTimeout(() => el.remove(), duur);
+  return el;
+}
+
 function actorEl(actor) {
   if (!S.gevecht) return null;
   if (actor.isSpeler) return $('#speler-zone');
@@ -2389,14 +2522,32 @@ function spreek(actor, pool, kans) {
   setTimeout(() => s.remove(), 3600);
 }
 
-/* de koninklijke uitroep: groot, gecentreerd, alleen voor de baas */
-function baasSpreekt(tekst) {
+/* de koninklijke uitroep: groot, gecentreerd, alleen voor de baas.
+   v119: DUUR-PARAMETER + FIFO-WACHTRIJ. Hij had geen enkele overlap-guard (die 2800ms
+   zit alleen in spreek()), en twee aanroepen in dezelfde tick stapelden twee platen op
+   exact dezelfde vaste positie - dat gebeurde LIVE bij II->III en bij de herrijzenis.
+   De remove-timer loopt nu ook door dtempo, en --spraak-duur voedt de CSS-animatie,
+   anders lopen JS en CSS bij DICK.tempo != 1 uit elkaar. */
+let _spraakRij = [], _spraakBezig = false, _spraakT = null;
+function baasSpreekt(tekst, duurMs) {
   if (INST.spraak === false || !tekst) return;
+  _spraakRij.push({ tekst, duur: duurMs || 3200 });
+  _spraakVolgende();
+}
+function _spraakVolgende() {
+  if (_spraakBezig || !_spraakRij.length) return;
+  const sc = $('#scherm-gevecht');
+  if (!sc || !S.gevecht || S.gevecht.voorbij) { _spraakRij.length = 0; return; }
+  const item = _spraakRij.shift();
+  const d = dtempo(item.duur);
+  _spraakBezig = true;
   const el = document.createElement('div');
   el.className = 'baas-spraak';
-  el.innerHTML = `<span>${tekst}</span>`;
-  $('#scherm-gevecht').appendChild(el);
-  setTimeout(() => el.remove(), 3200);
+  el.style.setProperty('--spraak-duur', d + 'ms');
+  el.innerHTML = `<span>${item.tekst}</span>`;
+  sc.appendChild(el);
+  clearTimeout(_spraakT);
+  _spraakT = setTimeout(() => { el.remove(); _spraakBezig = false; _spraakVolgende(); }, d);
 }
 /* het juiste baas-script (per baas een eigen stem) */
 function baasUitspraken(id) {
@@ -3769,6 +3920,7 @@ function _plaatsLaag(el, url) {
   el.style.backgroundSize = Math.round(W) + 'px ' + Math.round(H) + 'px';
   el.style.backgroundPosition = Math.round(left) + 'px ' + Math.round(top) + 'px';
   el.style.backgroundRepeat = 'no-repeat';
+  el.style.setProperty('--grondY', Math.round(v) + 'px');   /* v119: de GEMETEN voetlijn in px — transform-origin voor elke plaat-animatie; 61% van de ELEMENThoogte is de vloer niet (H > r.height, top vaak negatief) */
 }
 
 /* verhouding eenmalig meten; daarna de plaat opnieuw zetten (tot dan: cover) */
@@ -4908,7 +5060,7 @@ function toonBaasIntro(g) {
 function gevechtTik(dt) {
   if (!S || !S.gevecht) return;
   if (!d3Actief() || !window.Vista) return;
-  Vista.tik(dt);
+  Vista.tik(_hitstopActief() ? 0 : dt);   /* v119: tijdens een hitstop staat ook het 3D-toneel stil */
   /* camerazwaai doorvertalen naar parallax op de achtergrondplaat */
   if (S.gevecht.achtergrond && GDOM.bg) {
     const zw = Vista.zwaai();
@@ -5363,14 +5515,22 @@ function renderGevecht() {
           </div>
           <div class="bb-extra"></div>`;
       }
-      const pct = Math.max(0, b.hp / b.maxHp * 100);
+      /* v119 (HET PROCES, het drama): de bazenbalk BEVRIEST tijdens een ceremonie.
+         b._bbToon is de waarde die getoond moet blijven tot de regie hem vrijgeeft
+         (b._bbToon = null). Alle DRIE de uitgangen moeten mee: --hp voedt het mobiele
+         HART (mobiel.css, waar .bb-vul display:none is), .bb-vul de laptopbalk en
+         .bb-tekst het cijfer - een vries op alleen .bb-vul lekt de herrijzenis op
+         mobiel gewoon door. De pip-toggle staat om dezelfde reden stil: hij verklapte
+         de volgende fase 2,2s voordat de banner viel. */
+      const bbHp = (b._bbToon != null ? b._bbToon : b.hp);
+      const pct = Math.max(0, bbHp / b.maxHp * 100);
       const balkEl = bb.querySelector('.bb-balk');
       balkEl.classList.toggle('bb-woede', (b.fase || 1) >= 3);
       balkEl.style.setProperty('--hp', Math.round(pct));
       bb.querySelector('.bb-vul').style.width = pct + '%';
-      bb.querySelector('.bb-tekst').textContent = `${b.hp}/${b.maxHp}`;
+      bb.querySelector('.bb-tekst').textContent = `${bbHp}/${b.maxHp}`;
       /* de vierde pip is de KROON van vorm 2: de bestaande fase-toggle zet 'm nooit aan */
-      bb.querySelectorAll('.bb-pip').forEach((p, i) => p.classList.toggle('aan', i === 3 ? bb.dataset.vorm === '2' : (b.fase || 1) >= i + 1));
+      if (b._bbToon == null) bb.querySelectorAll('.bb-pip').forEach((p, i) => p.classList.toggle('aan', i === 3 ? bb.dataset.vorm === '2' : (b.fase || 1) >= i + 1));
       /* de arsenaal-/copycat-strook alleen herbouwen als de inhoud écht wijzigde */
       const extra = VIJANDEN[b.id].copycat ? copycatBalk(b) : (b.id === 'de_dicktator' ? dicktatorBalk(b) : '');
       if (extra !== _bbExtraSig) { _bbExtraSig = extra; bb.querySelector('.bb-extra').innerHTML = extra; }
@@ -5405,12 +5565,29 @@ function renderGevecht() {
        sterf-animatie intact blijft; bij een herrijzenis (v.dood weer false) valt de
        kolom vanzelf terug. Indexen in GDOM.vijanden blijven ongemoeid: het element
        blijft in de DOM staan, het neemt alleen geen ruimte meer. */
+    /* v119 (het drama): zolang een CEREMONIE loopt en de wrap een exit-klasse draagt,
+       speelt de REGIE de afgang uit - renderGevecht mag er dan niet overheen. Zonder
+       deze uitzondering zette .sterft (opacity:0, geen transition = harde knip) in
+       dezelfde tick de val van de griffier, de gouden kiezerrand en de hofVlucht
+       onzichtbaar, en haalde .lijk-weg (display:none) ze 750ms later helemaal weg. */
+    const exitBezig = !!g.ceremonie && (d.wrap.classList.contains('exit') || d.wrap.classList.contains('geveld')
+      || d.wrap.classList.contains('vlucht') || d.wrap.classList.contains('kiezer'));
     const wasDood = d.wrap.classList.contains('sterft');
-    d.wrap.classList.toggle('sterft', v.dood);
+    if (!exitBezig) d.wrap.classList.toggle('sterft', v.dood);
     if (!v.dood) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); }
+    else if (exitBezig) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); }
     else if (!wasDood) {
       clearTimeout(d._lijkT);
       d._lijkT = setTimeout(() => { if (v.dood) d.wrap.classList.add('lijk-weg'); }, dtempo(750));
+    }
+    /* v119: de fase-klassen van de DICKtator worden AFGEDWONGEN, net als .sterft.
+       bouwGevechtDom() doet rij.innerHTML = '' en wist elke handmatig gezette klasse -
+       de claqueur-oproep in bedrijf III sloopte zo in hetzelfde frame de woede-gloed en
+       de herkozen stand. Alleen voor hem: de slijmkoning en de Erfprins zetten .woede
+       zelf en een kale toggle zou die bij de eerstvolgende render weer weghalen. */
+    if (v.id === 'de_dicktator') {
+      d.wrap.classList.toggle('woede', (v.fase || 1) >= 3 || !!v.vorm2);
+      d.wrap.classList.toggle('herverkozen', !!v.herrezen);
     }
     d.wrap.classList.toggle('doelbaar', doelbaar);
     d.intent.innerHTML = v.dood ? '' : intentTekst(v);
@@ -6918,10 +7095,16 @@ function dicktatorFase(v) {
 /* de arena wisselt van plaat zonder harde knip: een tweede laag komt eroverheen
    en neemt het beeld over. In lite/reduced-motion en in 3D (Vista tekent daar zelf
    de achtergrond) is het een harde wissel — bekende Vista-pariteitsbeperking. */
-function toonArenaWissel(url) {
+/* v119: geeft een PROMISE terug die resolvet zodra hard() gedraaid heeft (ook in de
+   lite-/3D-tak, die meteen hard wisselt), zodat een regie op de landing kan wachten.
+   opts.stijl legt een plaat-animatie op de UITGAANDE laag - dat is #gevecht-achtergrond:
+   die toont tijdens de fade nog de OUDE plaat (zie dataset.plaat hieronder), terwijl
+   #gevecht-achtergrond-2 de nieuwe eroverheen brengt. hard() ruimt de stijl weer op. */
+function toonArenaWissel(url, opts) {
+  const o = opts || {};
   const g = S.gevecht;
   const bgEl = $('#gevecht-achtergrond');
-  if (!bgEl || !url) return;
+  if (!bgEl || !url) return Promise.resolve(false);
   const beeld = `linear-gradient(rgba(13,10,18,.32), rgba(13,10,18,.5)), url("${url}")`;
   /* GRONDANKER (v114): beide lagen krijgen dezelfde grondlijn via
      plaatsGevechtsplaat(), zodat de vloer tijdens de crossfade niet verspringt.
@@ -6939,6 +7122,8 @@ function toonArenaWissel(url) {
   if (g) g.achtergrond = url;
   const hard = () => {
     delete bgEl.dataset.plaat;
+    clearTimeout(bgEl._plaatT);
+    bgEl.classList.remove('plaat-beweeg', 'plaat-kantel', 'plaat-dreun', 'plaat-instort');   /* de uitgaande stijl hoort niet op de binnengekomen plaat */
     bgEl.style.backgroundImage = beeld;
     bgEl.style.backgroundPosition = '';
     bgEl.style.backgroundSize = '';
@@ -6946,7 +7131,7 @@ function toonArenaWissel(url) {
     plaatsGevechtsplaat();
   };
   const rustig = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (document.body.classList.contains('lite') || rustig || d3Actief()) { hard(); return; }
+  if (document.body.classList.contains('lite') || rustig || d3Actief()) { hard(); return Promise.resolve(true); }
   const oud = document.getElementById('gevecht-achtergrond-2');
   if (oud) oud.remove();
   if (oudePlaat) bgEl.dataset.plaat = oudePlaat; else delete bgEl.dataset.plaat;
@@ -6963,8 +7148,11 @@ function toonArenaWissel(url) {
     if (!laag.isConnected) return;
     laag.style.opacity = '1';
     plaatsGevechtsplaat();                  /* nu is de laag gelayout: de maat klopt zeker */
+    if (o.stijl) plaatKick(o.stijl, o.stijlMs || 1300, bgEl);   /* de oude zaal kantelt weg terwijl de nieuwe recht binnenkomt */
   });
-  setTimeout(() => { hard(); if (laag.isConnected) laag.remove(); }, dtempo(1300));
+  return new Promise(klaar => {
+    setTimeout(() => { hard(); if (laag.isConnected) laag.remove(); klaar(true); }, dtempo(1300));
+  });
 }
 
 /* v108 (Het Proces, stap 1a): de fase-overgang van de DICKtator loopt via checkBaasFase
@@ -7811,6 +7999,12 @@ async function eindBeurt() {
 function beginSpelerBeurt() {
   const g = S.gevecht;
   if (!g || g.voorbij) return;
+  /* v119: EERST vrijgeven, DAN checken. Stond de vrijgave zestien regels lager (bij de
+     rest van de beurt-reset), dan hief deze functie een ceremonie die checkBaasFase hier
+     net startte in dezelfde tick weer op - precies wat er gebeurt als gif- of doorn-
+     schade tijdens de vijandbeurt een fasegrens breekt. */
+  g.ceremonie = false;                    /* v109: een nieuwe spelersbeurt geeft de invoer altijd vrij */
+  g.herrijzenisNu = false;
   checkBaasFase(); /* gif-schade in de vijandbeurt kan een fasegrens passeren */
   g.beurt++;
   const s = g.speler;
@@ -7827,8 +8021,6 @@ function beginSpelerBeurt() {
       + (_vrij > 0 ? ' De eerste ' + _vrij + ' posten per beurt zijn vrijgesteld (standaardprocedure).' : '')
       + ' Elke levende hoveling int mee. Speel dus GROOT, of speel weinig.');
   }
-  g.ceremonie = false;                    /* v109: een nieuwe spelersbeurt geeft de invoer altijd vrij */
-  g.herrijzenisNu = false;
   g._epidemieGespreid = false;   /* Epidemie mag deze beurt weer 1× verspreiden */
   g._hakblokGebruikt = false;    /* Het Hakblok slijpt elke beurt een verse eerste snede */
   s.status.doorslag = 0;   /* Doorslag vervalt per beurt — geen carry-over (de kaart zegt "deze beurt") */

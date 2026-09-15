@@ -4116,7 +4116,7 @@ body.lite .kv-geest { animation: none; opacity: .45; }
   width: max-content; max-width: min(88vw, 860px);
   text-align: center;
   pointer-events: none;
-  animation: spraakKoning 3.2s ease forwards;
+  animation: spraakKoning var(--spraak-duur, 3.2s) ease forwards;   /* v119: JS voedt de duur uit dtempo, anders lopen JS en CSS bij DICK.tempo != 1 uit elkaar */
 }
 .baas-spraak span {
   font-family: 'Pirata One', serif;
@@ -4231,12 +4231,247 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
 .vijand.kiezer .vijand-art { outline: 3px solid rgba(255, 210, 90, .95); outline-offset: 3px; filter: drop-shadow(0 0 14px rgba(255, 200, 70, .85)); }
 .vijand.vlucht { animation: hofVlucht 1s ease-in forwards; }
 @keyframes hofVlucht { 0% { opacity: 1; } 100% { opacity: 0; transform: translateY(14px) scale(.86); } }
-/* de herkozen tiran staat een maat groter en brandt van binnenuit (terugval zolang
-   de plaat de_dicktator_herkozen nog niet bestaat) */
-.vijand.herverkozen .vijand-art { transform: scale(1.12); filter: saturate(1.4) drop-shadow(0 0 18px rgba(255, 190, 60, .7)); }
+/* de herkozen tiran staat een maat groter en brandt van binnenuit.
+   v119: de scale is naar de WRAP verhuisd (zie het drama-blok verderop) - hier blijft
+   alleen de rust-filter staan, die de woedeGloeiGoud-animatie overneemt zodra .woede erbij komt. */
+.vijand.herverkozen .vijand-art { filter: saturate(1.4) drop-shadow(0 0 18px rgba(255, 190, 60, .7)); }
 /* HET ONTSLAG: een halve tel slow-motion op de klap */
 #scherm-gevecht.slowmo { animation: slowmoPuls .32s ease-out; }
 @keyframes slowmoPuls { 0% { filter: brightness(1.55) saturate(.5); } 100% { filter: none; } }
+
+/* ============================================================
+   HET PROCES - het drama van de bedrijfsovergangen (v119, stap A)
+   Fundamentlaag: alleen de bouwstenen, nog geen regie. Huisregels:
+   - NOOIT transform/filter/backdrop-filter op #scherm-gevecht zelf. Dat element is
+     .scherm (position:fixed, z-index:1, overflow:hidden); zodra daar een animatie op
+     draait wordt het containing block voor al zijn position:fixed-kinderen
+     (.baas-flits z55, .baas-spraak z56, .goud-flits z58, .baas-doodflits z70) - die
+     springen dan 52px omlaag en worden geklipt. .beef en .slowmo doen dit al en zijn
+     bestaand/geaccepteerd; alles nieuws gaat op #strijdveld of op een eigen laag.
+   - plaat-animaties draaien om --grondY (px, gemeten in _plaatsLaag), NOOIT om 61%:
+     dat is de vloerrand in PLAATcoordinaten, niet in elementcoordinaten.
+   - figuren bewegen op de LOSSE translate:/scale:/rotate:-properties, nooit op
+     transform: - dat zou de scale van .vijand-klein/-groot overschrijven. En --voetc
+     moet in ELKE keyframe op .vijand-art img mee, anders springt de voetlijn.
+   Lite- en reduced-motion-terugval staat in stap C (css r4743+ / r4768+).
+   ============================================================ */
+
+/* HET DOEK: het beeld dooft en trekt weer op. Body-kind (zie index.html), z45 =
+   boven het fakkelvignet (40) en onder de topbalk (50), zodat HP en energie
+   leesbaar blijven. Klasse + transition, bewust GEEN keyframe: in lite valt de
+   transition weg en wordt het een harde knip die de arenawissel juist afdekt. */
+#toneel-doek {
+  position: fixed; inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  background: #0b0509;
+  opacity: 0;
+  transition: opacity var(--doek-t, .4s) ease;
+}
+#toneel-doek.aan { opacity: var(--doek, .6); }
+
+/* DE KLEUR VAN HET BEDRIJF: een schermlaag boven plaat en canvas (div NA
+   <canvas id="vista-canvas">), dus werkt in 2D en in 3D. Bewust geen filter op
+   #gevecht-achtergrond: plaatsGevechtsplaat() bailt in 3D uit en zetLichtVisueel()
+   overschrijft die filter bij elke fakkelwijziging INLINE. */
+#arena-tint {
+  position: fixed; inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+#scherm-gevecht[data-bedrijf="2"] #arena-tint {   /* II: het goud loopt - amberschifting */
+  opacity: 1;
+  background: linear-gradient(0deg, rgba(255, 168, 60, .18), transparent 62%);
+}
+#scherm-gevecht[data-bedrijf="3"] #arena-tint {   /* III: het voetlicht slaat door en BLIJFT doorslaan */
+  opacity: 1;
+  background: linear-gradient(0deg, rgba(255, 62, 30, .34), rgba(120, 16, 20, .12) 46%, transparent 74%);
+}
+#scherm-gevecht[data-bedrijf="4"] #arena-tint {   /* IV: goudrood mandaatlicht */
+  opacity: 1;
+  background:
+    linear-gradient(0deg, rgba(255, 142, 40, .30), rgba(255, 206, 110, .10) 50%, transparent 78%),
+    radial-gradient(ellipse 70% 50% at 50% 88%, rgba(255, 190, 70, .20), transparent 70%);
+}
+/* DE TIRADE knijpt het fakkelvignet dicht. !important is hier nodig: zetLichtVisueel()
+   schrijft de opacity van #licht-vignet INLINE bij elke fakkelwijziging. */
+body.tirade #licht-vignet { opacity: .82 !important; transition: opacity .5s ease; }
+
+/* DE TIK-FLITS: model .baas-doodflits (z70), maar kort (0,35s) en met een kleur die
+   per bedrijf escaleert: wit-rood -> rood-as -> goud (JS zet --tik-kleur). */
+.tik-flits {
+  position: fixed; inset: 0;
+  z-index: 70;
+  pointer-events: none;
+  background: radial-gradient(circle at center, var(--tik-kleur, rgba(255, 236, 214, .85)), transparent 72%);
+  animation: tikFlits .35s ease-out forwards;
+}
+@keyframes tikFlits { 0% { opacity: 0; } 12% { opacity: 1; } 100% { opacity: 0; } }
+
+/* HITSTOP: het beeld bevriest een fractie op de klap. Alleen de SPELERSLAGEN staan
+   stil; de overlays (.tik-flits, .vonnis, #toneel-doek, .beef) lopen bewust door,
+   en de Tikker wordt NOOIT bevroren (slaap() hangt eraan = deadlock). */
+#scherm-gevecht.hitstop .vijand-art,
+#scherm-gevecht.hitstop .vijand-art img,
+#scherm-gevecht.hitstop .speler-figuur,
+#scherm-gevecht.hitstop .metgezel-art,
+#scherm-gevecht.hitstop .intent,
+#scherm-gevecht.hitstop #gevecht-achtergrond,
+#scherm-gevecht.hitstop #gevecht-achtergrond-2 { animation-play-state: paused; }
+#scherm-gevecht.hitstop #strijdveld { filter: brightness(.78); }
+
+/* DE SCHOK op de FIGURENLAAG - op #strijdveld, nooit op #scherm-gevecht.
+   Amplitude via --schok (1.0 licht ... 2.6 de doodsklap), duur via --schok-t. */
+#strijdveld.toneelschok { animation: toneelBeef var(--schok-t, 420ms) cubic-bezier(.36, .07, .19, .97); }
+@keyframes toneelBeef {
+  0%, 100% { translate: 0 0; }
+  25% { translate: calc(var(--schok, 1) * -9px) calc(var(--schok, 1) * 3px); }
+  50% { translate: calc(var(--schok, 1) * 7px) calc(var(--schok, 1) * -4px); }
+  75% { translate: calc(var(--schok, 1) * -4px) calc(var(--schok, 1) * 2px); }
+}
+
+/* DE PLAAT KRIJGT EEN DUW - om de GEMETEN vloerrand, zodat de figuren niet zweven.
+   Losse scale:/rotate:/translate: i.p.v. transform:, want gevechtTik() schrijft in 3D
+   elke frame een parallax-transform op dezelfde laag. */
+.plaat-beweeg { transform-origin: 50% var(--grondY, 61%); }
+@keyframes plaatStoot {
+  0%, 100% { scale: 1; rotate: 0deg; translate: 0 0; }
+  35% { scale: var(--plaat-schaal, 1.02); rotate: var(--plaat-rot, 0deg); translate: 0 var(--plaat-y, 0px); }
+}
+@keyframes plaatBlijft {
+  0% { scale: 1; rotate: 0deg; translate: 0 0; }
+  100% { scale: var(--plaat-schaal, 1.06); rotate: var(--plaat-rot, 0deg); translate: 0 var(--plaat-y, 0px); }
+}
+.plaat-dreun { --plaat-schaal: 1.02; animation: plaatStoot var(--plaat-t, 520ms) cubic-bezier(.2, .9, .3, 1); }
+.plaat-dreun.zwaar { --plaat-schaal: 1.03; }
+.plaat-kantel { --plaat-schaal: 1.02; --plaat-rot: 1.2deg; animation: plaatStoot var(--plaat-t, 1300ms) ease-in-out; }
+.plaat-instort { --plaat-schaal: 1.05; --plaat-rot: -.8deg; --plaat-y: 6px; animation: plaatStoot var(--plaat-t, 900ms) cubic-bezier(.2, .9, .3, 1); }
+.plaat-inzoom { --plaat-schaal: 1.06; animation: plaatBlijft var(--plaat-t, 1200ms) ease-out forwards; }
+
+/* DE TIK: de baas wordt zichtbaar teruggeslagen. --voetc MOET in elke keyframe mee -
+   de img draagt hem al (translate: 0 var(--voetc)), anders springt de voetlijn. */
+.vijand.baas-tik .vijand-art img {
+  transform-origin: bottom center;
+  animation: baasTerugstoot var(--tik-t, 620ms) cubic-bezier(.15, .85, .35, 1);
+}
+@keyframes baasTerugstoot {
+  0% { translate: var(--tikx, 26px) var(--voetc, 0%); rotate: var(--tikr, 4deg); }
+  60% { translate: calc(var(--tikx, 26px) * -.12) var(--voetc, 0%); rotate: calc(var(--tikr, 4deg) * -.15); }
+  100% { translate: 0 var(--voetc, 0%); rotate: 0deg; }
+}
+
+/* HET HOF DEINST - 12px opzij en terug. Vijanden kijken naar LINKS, dus achteruit = rechts. */
+.vijand.deinst { animation: hofDeinstBeweeg .42s ease-out; }
+@keyframes hofDeinstBeweeg {
+  0%, 100% { translate: 0 0; }
+  40% { translate: 12px 0; }
+}
+
+/* DE KNIEVAL: een statische stand, geen animatie - dus lite-neutraal. */
+.vijand.knielt .vijand-art { translate: 0 10px; transition: translate .4s ease; }
+
+/* HIJ RICHT ZICH OP: overshoot op de LOSSE scale: van de wrap (nooit transform:).
+   .oprijzen-groot landt op 1.12 = exact de maat die .herverkozen vasthoudt. */
+.vijand.oprijzen, .vijand.oprijzen-groot { transform-origin: bottom center; }
+.vijand.oprijzen { animation: oprijzen .6s cubic-bezier(.2, 1.4, .4, 1); }
+@keyframes oprijzen { 0% { scale: 1; } 45% { scale: 1.07; } 100% { scale: 1; } }
+.vijand.oprijzen-groot { animation: oprijzenGroot .9s cubic-bezier(.2, 1.3, .4, 1) forwards; }
+@keyframes oprijzenGroot { 0% { scale: .90; } 55% { scale: 1.22; } 100% { scale: 1.12; } }
+
+/* DE EXECUTIE: hij kantelt weg, zakt en dooft - i.p.v. het kale .sterft (opacity:0
+   zonder transition = harde knip). Model: hofVlucht. */
+.vijand.exit.geveld { animation: hofGeveld .9s ease-in forwards; }
+@keyframes hofGeveld {
+  0% { opacity: 1; rotate: 0deg; translate: 0 0; }
+  100% { opacity: 0; rotate: 10deg; translate: 0 20px; }
+}
+
+/* DE STEMMING: elke hoveling pulseert goud op vóór hij zijn stem afgeeft. */
+.vijand.stemt { transform-origin: bottom center; animation: kiezerStem .4s ease-out; }
+@keyframes kiezerStem { 0%, 100% { scale: 1; } 45% { scale: 1.08; } }
+.vijand.stemt .vijand-art { animation: kiezerGloed .4s ease-out; }
+@keyframes kiezerGloed {
+  0%, 100% { filter: drop-shadow(0 8px 5px rgba(0, 0, 0, .6)); }
+  45% { filter: drop-shadow(0 0 24px rgba(255, 220, 120, 1)) brightness(1.25); }
+}
+
+/* DE PIP KNAPT AAN - pas op het moment dat de banner valt, niet 2,2s ervoor.
+   De KROON-pip staat op rotate(45deg) en heeft daarom zijn eigen keyframe. */
+.bb-pip.knapt { animation: pipSlag .42s cubic-bezier(.2, 1.5, .4, 1); }
+@keyframes pipSlag {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(255, 245, 220, 0); }
+  40% { transform: scale(2.2); box-shadow: 0 0 18px 6px rgba(255, 245, 220, .9); }
+  100% { transform: scale(1); box-shadow: 0 0 8px rgba(255, 156, 63, .8); }
+}
+.bb-pip.kroon.knapt { animation-name: pipSlagKroon; }
+@keyframes pipSlagKroon {
+  0% { transform: rotate(45deg) scale(1); box-shadow: 0 0 0 rgba(255, 245, 220, 0); }
+  40% { transform: rotate(45deg) scale(2.2); box-shadow: 0 0 18px 6px rgba(255, 245, 220, .9); }
+  100% { transform: rotate(45deg) scale(1); box-shadow: 0 0 12px rgba(255, 210, 74, .95); }
+}
+
+/* HET VONNIS: de bedrijfstitel als stempel, met duiding eronder. Bewust LICHTER dan
+   .baas-flits (die zit op .7) zodat de arenawissel er doorheen blijft spelen. */
+.vonnis {
+  position: fixed; inset: 0;
+  z-index: 55;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(60, 10, 20, .18), rgba(10, 6, 14, .42));
+  animation: introVervaag var(--vonnis-duur, 2400ms) ease forwards;
+}
+.vonnis h2 {
+  font-family: 'Pirata One', serif;
+  font-size: clamp(2.2rem, 6.4vw, 4.2rem);
+  margin: 0;
+  color: #ff7a6b;
+  letter-spacing: 4px;
+  text-shadow: 0 0 26px rgba(232, 93, 117, .8), 0 4px 14px #000;
+  animation: vonnisSlag .3s cubic-bezier(.2, 1.6, .4, 1) both;   /* model: .decreet-stempel */
+}
+@keyframes vonnisSlag {
+  0% { opacity: 0; transform: rotate(-3deg) scale(5); }
+  100% { opacity: 1; transform: rotate(-1.5deg) scale(1); }
+}
+.vonnis span {
+  font-family: 'Alegreya', serif; font-style: italic;
+  color: var(--perkament);
+  font-size: clamp(.85rem, 2.2vw, 1.06rem);
+  max-width: min(82vw, 720px); text-align: center; line-height: 1.35;
+  text-shadow: 0 2px 8px #000;
+  animation: vonnisSub .5s ease .3s both;   /* de duiding komt 300ms ná de stempel */
+}
+@keyframes vonnisSub { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: none; } }
+.vonnis.goud h2 { color: #ffdf9a; text-shadow: 0 0 26px rgba(255, 210, 90, .85), 0 4px 14px #000; }
+/* V · HET MANDAAT: een klein goud kaartje, zonder doek en zonder klap */
+.vonnis.klein { background: radial-gradient(ellipse at center, rgba(60, 42, 10, .10), rgba(10, 6, 14, .20)); }
+.vonnis.klein h2 { font-size: clamp(1.4rem, 3.6vw, 2.3rem); letter-spacing: 3px; }
+
+/* DE HERKOZEN TIRAN. FILTER-FIX: filter is EEN property en .vijand.woede animeert hem
+   (r4442) - een animatie wint altijd van een declaratie, dus de gouden gloed van
+   .herverkozen was vandaag al dood bij aankomst. Daarom een eigen woede-keyframe in
+   goud, en de scale verhuisd naar de wrap zodat .vijand-art alleen de filter draagt. */
+.vijand.herverkozen { scale: 1.12; transform-origin: bottom center; }
+.vijand.herverkozen.woede .vijand-art { animation: woedeGloeiGoud 1.3s ease-in-out infinite; }
+@keyframes woedeGloeiGoud {
+  0%, 100% { filter: saturate(1.35) drop-shadow(0 0 14px rgba(255, 198, 74, .6)); }
+  50% { filter: saturate(1.5) drop-shadow(0 0 30px rgba(255, 214, 110, .95)) brightness(1.12); }
+}
+
+/* Act 3-regel: tijdens een ceremonie is de fakkel van de HELD het enige zachte licht. */
+body.ceremonie #speler-zone::before {
+  content: '';
+  position: absolute; z-index: -1;
+  left: 50%; bottom: -8px;
+  width: 250px; height: 155px;
+  translate: -50% 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 72%, rgba(255, 186, 96, .22), transparent 68%);
+}
+
 
 /* bazenintro: titelkaart over het slagveld */
 #baas-intro {

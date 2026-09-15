@@ -679,6 +679,11 @@ const Vista = (() => {
   /* fakkelniveau van het spel (1 = helder, 0.16 = gedoofd) */
   function zetLicht(f) { lichtDoel = Math.max(0.05, Math.min(1, f)); }
 
+  /* v119 (HET PROCES, het drama): een camerakick op het TONEEL i.p.v. op een acteur -
+     puur additief op dezelfde kick-teller die raak()/aanval() al voeden, zodat 3D de
+     schok van de bedrijfsovergangen meekrijgt zonder eigen tijdbron. */
+  function schud(k) { kick = Math.min(2.4, kick + (k || 0.6) * 1.5); }
+
   /* camerazwaai t.o.v. de rustpositie — voor parallax op de achtergrondplaat */
   function zwaai() {
     if (!camera) return { x: 0, y: 0 };
@@ -686,7 +691,7 @@ const Vista = (() => {
   }
 
   return {
-    beschikbaar, start, gevechtStart, gevechtEind, raak, aanval, sterf, pose, tik, schermPos, resize, zwaai, zetLicht,
+    beschikbaar, start, gevechtStart, gevechtEind, raak, aanval, sterf, pose, tik, schermPos, resize, zwaai, zetLicht, schud,
     get actief() { return actief; },
     get klaar() { return klaar; }
   };
