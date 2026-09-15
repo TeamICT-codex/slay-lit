@@ -31,13 +31,13 @@ const GRONDTABEL = [
   ['act1.gevecht[2]', 'Act 1 achtergronden/Gevechtstijl3act1.webp', 61],
   ['act1.episch[0]', 'Act 1 achtergronden/GevechtstijlEPISCHGEVECHTACT1.webp', 65],
   ['act1.episch[1]', 'Act 1 achtergronden/GevechtstijlEPISCHGEVECHT2ACT1.webp', 65],
-  ['act2.gevecht[0]', 'Act 2 achtergronden/Gevechtstijl1act2.webp', 71],
+  ['act2.gevecht[0]', 'Act 2 achtergronden/Gevechtstijl1act2.webp', 61],
   ['act2.gevecht[1]', 'Act 2 achtergronden/Gevechtstijl2act2.webp', 68],
   ['act2.gevecht[2]', 'Act 2 achtergronden/Gevechtstijl3act2.webp', 69],
   ['act2.gevecht[3]', 'Act 2 achtergronden/Gevechtstijl4act2.webp', 67],
   ['act2.gevecht[4]', 'Act 2 achtergronden/Gevechtstijl5act2.webp', 61],
-  ['act2.episch[0]', 'Act 2 achtergronden/Gevechtstijl act2 EPISCH 1.webp', 69],
-  ['act2.episch[1]', 'Act 2 achtergronden/Gevechtstijl act2 EPISCH 2.webp', 69],
+  ['act2.episch[0]', 'Act 2 achtergronden/Gevechtstijl act2 EPISCH 1.webp', 61],
+  ['act2.episch[1]', 'Act 2 achtergronden/Gevechtstijl act2 EPISCH 2.webp', 61],
   ['act2.episch[2]', 'Act 2 achtergronden/Gevechtstijl act2 EPISCH 3.webp', 64],
   ['act3.gevecht[0]', 'Act 3 achtergronden/Gevechtstijl Act 3 stijl 1.webp', 61],
   ['act3.gevecht[1]', 'Act 3 achtergronden/Gevechtstijl Act 3 stijl 2.webp', 63],
@@ -122,7 +122,12 @@ async function meetPlaat(page, pad, grond) {
     const left = off(bp[0], r.width, W), top = off(bp[1], r.height, H);
     const fig = document.querySelector('.speler-figuur');
     const voetY = fig ? fig.getBoundingClientRect().bottom : null;
-    const grondY = r.top + top + grond / 100 * H;
+    /* v119: vloerrand uit de GROND-tabel van het spel (grondVan, fractie); de suite-tabel is terugval.
+       Anders veroudert de meting zodra een plaat hergenereerd wordt (v116: drie Act 2-platen -> 61). */
+    const gTab = (typeof grondVan === 'function') ? grondVan(pad) : null;
+    const gRuw = (gTab && typeof gTab === 'object') ? gTab.grond : gTab;
+    const gEcht = (typeof gRuw === 'number' && gRuw > 0) ? (gRuw <= 1 ? gRuw * 100 : gRuw) : grond;
+    const grondY = r.top + top + gEcht / 100 * H;
     return {
       deltaPctVh: +(((voetY - grondY) / innerHeight) * 100).toFixed(2),
       cropX: +(((W - r.width) / W) * 100).toFixed(1),
