@@ -60,7 +60,7 @@ const ZWAAR = [
   'assets/proloog/kantoor-overzicht.webp',
   'assets/proloog/de-oprichter.webp',
   'assets/proloog/foto-kind.webp',
-  'assets/proloog/glenn2.webp',
+  'assets/proloog/bart_blinker2.webp',
   'assets/proloog/junior.webp',
   'assets/proloog/baas-terminal.webp',
   'assets/proloog/kaart-glimlach.webp',

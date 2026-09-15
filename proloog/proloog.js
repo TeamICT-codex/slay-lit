@@ -345,7 +345,7 @@
       av.appendChild(lid.src ? art(lid.src, lid.emoji, 'av-houder') : el('span', 'av-emoji', lid.emoji));
       rij.appendChild(av);
       const txt = el('div', 'txt');
-      const naamEl = el('b', '', lid.id === 'glenn' ? (P.choices.glennBijnaam || lid.naam) : lid.naam);
+      const naamEl = el('b', '', lid.id === 'bart' ? bijnaamVan(lid) : lid.naam);
       if (lid.toon === 'kiss') {
         const pen = knop('bijnaam-pen', '✎', () => bijnaamEdit(lid, naamEl));
         pen.title = 'geef hem een bijnaam';
@@ -390,14 +390,17 @@
     }
     zetMeter(meter);
 
+    /* de bijnaam van de pluimstrijker; 'glennBijnaam' is de sleutel van vóór de omdoop
+       (sep 2026: Glenn -> Bart Blinker) en blijft leesbaar voor bestaande opslag. */
+    function bijnaamVan(lid) { return P.choices.bartBijnaam || P.choices.glennBijnaam || lid.naam; }
     function bijnaamEdit(lid, naamEl) {
-      const oud = P.choices.glennBijnaam || lid.naam;
+      const oud = bijnaamVan(lid);
       const inp = document.createElement('input');
       inp.className = 'bijnaam-invoer'; inp.maxLength = 18;
       inp.value = oud === lid.naam ? '' : oud;
       const bewaarNaam = () => {
         const v = (inp.value || '').trim() || lid.naam;
-        zetKeuze('glennBijnaam', v);
+        zetKeuze('bartBijnaam', v);
         naamEl.textContent = v;
         const pen = knop('bijnaam-pen', '✎', () => bijnaamEdit(lid, naamEl));
         pen.title = 'geef hem een bijnaam';
@@ -435,7 +438,7 @@
       } else if (beat.type === 'collega') {
         const lid = (railData.team || []).find(m => m.id === beat.who);
         if (lid && lid.portret) {
-          const naam = lid.id === 'glenn' ? (P.choices.glennBijnaam || lid.naam) : lid.naam;
+          const naam = lid.id === 'bart' ? bijnaamVan(lid) : lid.naam;
           const kaart = el('div', 'spreker-kaart');
           const portret = el('div', 'sk-portret');
           portret.appendChild(art(lid.portret, lid.emoji, 'sk-img'));

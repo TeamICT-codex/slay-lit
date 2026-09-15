@@ -4357,7 +4357,7 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
   z-index: 6;
 }
 
-/* ============ DE SLIJMKONING — metamorfose-intro (Glenn → Slijmkoning) ============ */
+/* ============ DE SLIJMKONING — metamorfose-intro (Bart Blinker → Slijmkoning) ============ */
 #baas-intro.baas-intro-morf {
   position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;
   background: radial-gradient(ellipse at center, rgba(20, 30, 14, .92), rgba(4, 6, 4, .985));
