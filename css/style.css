@@ -734,6 +734,10 @@ body.lite .gs-boodschap { animation: none; }
 /* reset-knop in ⚙️ Instellingen + de daily-CTA in het leaderboard */
 .inst-reset { display: block; margin: 14px auto 0; opacity: .55; border-color: rgba(226, 93, 93, .5); color: #f0a8a8; }
 .inst-reset:hover { opacity: 1; }
+/* v116: welke shell draait deze browser? Klein en dof onderaan de instellingen —
+   de service worker kan een oude build blijven serveren en dan lijkt een deploy
+   niets gedaan te hebben. De waarde komt van de SW zelf (zie game.js). */
+.inst-versie { display: block; margin: 12px auto 0; font-size: .7rem; letter-spacing: .08em; color: var(--perkament-dof); opacity: .6; text-align: center; }
 .lb-daily-cta { display: block; margin: 0 auto 16px; animation: dwpPuls 2.4s ease-in-out 1s infinite; }
 body.lite .lb-daily-cta { animation: none; }
 .codex-slot { position: relative; }
