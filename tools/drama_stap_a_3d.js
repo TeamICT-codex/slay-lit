@@ -116,6 +116,28 @@ const t = (goed, tekst) => { if (goed) { okN++; console.log('   ok   ' + tekst);
   await slaap(600);
   await page.screenshot({ path: path.join(UIT, '3d-3-terug.png') });
 
+  console.log('\n== REVIEWFIX · #strijdveld mag in 3D GEEN containing block worden ==');
+  const cb = await page.evaluate(async () => {
+    const kols = () => [
+      ['speler-zone', document.getElementById('speler-zone')],
+      ['metgezel-zone', document.getElementById('metgezel-zone')],
+      ...[...document.querySelectorAll('#vijanden-rij .vijand')].map((e, i) => ['vijand' + i, e])
+    ].filter(x => x[1] && getComputedStyle(x[1]).position === 'fixed')
+     .map(([n, e]) => { const r = e.getBoundingClientRect(); return { n, top: Math.round(r.top), left: Math.round(r.left) }; });
+    const rust = kols();
+    hitstop(400); schokToneel(1.8, 600);
+    await new Promise(r => setTimeout(r, 80));
+    const sv = document.getElementById('strijdveld');
+    const cs = getComputedStyle(sv);
+    const tijdens = kols();
+    const stijl = { filter: cs.filter, anim: cs.animationName, translate: cs.translate, hitstopKlasse: document.getElementById('scherm-gevecht').classList.contains('hitstop') };
+    await new Promise(r => setTimeout(r, 900));
+    return { rust, tijdens, stijl, na: kols() };
+  });
+  const sprong = Math.max(...cb.rust.map((r, i) => cb.tijdens[i] ? Math.max(Math.abs(cb.tijdens[i].top - r.top), Math.abs(cb.tijdens[i].left - r.left)) : 0));
+  t(cb.stijl.hitstopKlasse === true && cb.stijl.filter === 'none' && cb.stijl.anim === 'none', `in 3D landt de hitstop-dip noch de schok op #strijdveld: filter "${cb.stijl.filter}", animation "${cb.stijl.anim}" (.hitstop staat wel aan: ${cb.stijl.hitstopKlasse})`);
+  t(cb.rust.length >= 3 && sprong <= 3, `de ${cb.rust.length} fixed figuurkolommen blijven staan tijdens hitstop+schok: grootste sprong ${sprong}px (rust ${cb.rust.map(r => r.n + ' ' + r.left + ',' + r.top).join(' | ')})`);
+
   t(fouten.length === 0, fouten.length ? 'PAGINAFOUTEN: ' + fouten.slice(0, 4).join(' | ') : 'geen paginafouten in de hele ronde');
   t(mist.length === 0, mist.length ? '404: ' + [...new Set(mist)].slice(0, 6).join(', ') : 'geen 404');
   console.log(`\n============================================\nSTAP A 3D: ${okN} ok, ${foutN} FOUT\n============================================`);

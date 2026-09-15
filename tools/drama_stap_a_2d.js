@@ -211,17 +211,23 @@ const t = (goed, tekst) => { if (goed) { okN++; console.log('   ok   ' + tekst);
     baasTik(b, 2);
     await new Promise(r => setTimeout(r, 60));
     const img = bw.querySelector('.vijand-art img');
-    const st = { klasse: bw.classList.contains('baas-tik'), tikx: bw.style.getPropertyValue('--tikx'), tikr: bw.style.getPropertyValue('--tikr'), tikT: bw.style.getPropertyValue('--tik-t'), imgTranslate: img ? getComputedStyle(img).translate : null, imgRotate: img ? getComputedStyle(img).rotate : null, voetc: img ? getComputedStyle(img).getPropertyValue('--voetc').trim() : null, src: img ? (img.currentSrc || img.src).split('/').pop() : null, flits: !!document.querySelector('.tik-flits'), flitsZ: document.querySelector('.tik-flits') ? getComputedStyle(document.querySelector('.tik-flits')).zIndex : null, hitstop: document.getElementById('scherm-gevecht').classList.contains('hitstop') };
-    await new Promise(r => setTimeout(r, 700));
+    const st = { klasse: bw.classList.contains('baas-tik'), tikx: bw.style.getPropertyValue('--tikx'), tikr: bw.style.getPropertyValue('--tikr'), tikT: bw.style.getPropertyValue('--tik-t'), imgTranslate: img ? getComputedStyle(img).translate : null, imgRotate: img ? getComputedStyle(img).rotate : null, voetc: img ? getComputedStyle(img).getPropertyValue('--voetc').trim() : null, src: img ? (img.currentSrc || img.src).split('/').pop() : null, flits: !!document.querySelector('.tik-flits'), flitsZ: document.querySelector('.tik-flits') ? getComputedStyle(document.querySelector('.tik-flits')).zIndex : null, flitsOuder: document.querySelector('.tik-flits') ? document.querySelector('.tik-flits').parentElement.tagName : null, hitstop: document.getElementById('scherm-gevecht').classList.contains('hitstop') };
+    await new Promise(r => setTimeout(r, 640));   // t=700ms: hier knipte de OUDE opruimtimer (kale 620ms) de terugstoot af
+    const mid = { klasse: bw.classList.contains('baas-tik'), imgTranslate: img ? getComputedStyle(img).translate : null };
+    await new Promise(r => setTimeout(r, 180));   // t=880ms: animatie (620ms) + hitstop-pauze (190ms) zijn op
+    const eind = { imgTranslate: img ? getComputedStyle(img).translate : null, imgRotate: img ? getComputedStyle(img).rotate : null };
+    await new Promise(r => setTimeout(r, 300));   // t=1180ms
     const na = { klasse: bw.classList.contains('baas-tik'), flits: !!document.querySelector('.tik-flits'), imgTranslate: img ? getComputedStyle(img).translate : null };
-    return { st, na };
+    return { st, mid, eind, na };
   });
   t(a7c.st.klasse && a7c.st.tikx === '38px' && a7c.st.tikr === '6deg', `baasTik(b,2): .baas-tik met --tikx ${a7c.st.tikx}, --tikr ${a7c.st.tikr}, --tik-t ${a7c.st.tikT}`);
   t(/_hit\./.test(a7c.st.src || ''), `de baas draagt zijn hit-plaat: ${a7c.st.src}`);
   t(a7c.st.hitstop === true, `de tik zet meteen een hitstop (${a7c.st.hitstop})`);
-  t(a7c.st.flits && a7c.st.flitsZ === '70', `.tik-flits ligt op z-index ${a7c.st.flitsZ}`);
+  t(a7c.st.flits && a7c.st.flitsZ === '48' && a7c.st.flitsOuder === 'BODY', `.tik-flits is een body-kind (${a7c.st.flitsOuder}) op z-index ${a7c.st.flitsZ} — boven het doek (45), onder de topbalk (50)`);
   t(a7c.st.imgTranslate !== null && a7c.st.imgTranslate !== 'none', `de img beweegt op de LOSSE translate: "${a7c.st.imgTranslate}" (rotate "${a7c.st.imgRotate}", --voetc "${a7c.st.voetc}")`);
-  t(a7c.na.klasse === false && a7c.na.flits === false, `na 760ms opgeruimd: .baas-tik=${a7c.na.klasse}, .tik-flits=${a7c.na.flits}, eindtranslate "${a7c.na.imgTranslate}"`);
+  t(a7c.mid.klasse === true, `de terugstoot overleeft de hitstop: op t=700ms nog .baas-tik=${a7c.mid.klasse} (translate "${a7c.mid.imgTranslate}") — de 190ms pauze telt mee in de opruimtimer`);
+  t(Math.abs(parseFloat(a7c.eind.imgTranslate)) < 1.5, `hij dempt UIT i.p.v. terug te snappen: op t=880ms translate "${a7c.eind.imgTranslate}", rotate "${a7c.eind.imgRotate}" (< 1,5px)`);
+  t(a7c.na.klasse === false && a7c.na.flits === false, `na 1180ms opgeruimd: .baas-tik=${a7c.na.klasse}, .tik-flits=${a7c.na.flits}, eindtranslate "${a7c.na.imgTranslate}"`);
 
   const a7d = await page.evaluate(async () => {
     const g = S.gevecht;
@@ -270,7 +276,7 @@ const t = (goed, tekst) => { if (goed) { okN++; console.log('   ok   ' + tekst);
     const cs = getComputedStyle(el);
     const alphas = (cs.backgroundImage.match(/rgba?\([^)]*\)/g) || []).map(s => { const p = s.replace(/rgba?\(|\)/g, '').split(','); return p.length === 4 ? parseFloat(p[3]) : 1; });
     const h2 = el.querySelector('h2'), sp = el.querySelector('span');
-    const r = { bfHtml, bronLen: bron.length, bronHeeftOpts: /opts|arguments\[2\]/.test(bron), vonnisZ: cs.zIndex, vonnisPE: cs.pointerEvents, alphas, duur: cs.animationDuration, h2Anim: getComputedStyle(h2).animationName, spAnim: getComputedStyle(sp).animationName, subTekst: sp.textContent };
+    const r = { bfHtml, bronLen: bron.length, bronHeeftOpts: /opts|arguments\[2\]/.test(bron), vonnisZ: cs.zIndex, vonnisPE: cs.pointerEvents, vonnisOuder: el.parentElement.tagName, alphas, duur: cs.animationDuration, h2Anim: getComputedStyle(h2).animationName, spAnim: getComputedStyle(sp).animationName, subTekst: sp.textContent };
     await new Promise(r2 => setTimeout(r2, 1000));
     r.opgeruimd = !document.querySelector('.vonnis');
     return r;
@@ -278,7 +284,7 @@ const t = (goed, tekst) => { if (goed) { okN++; console.log('   ok   ' + tekst);
   t(a9.bfHtml === '<div class="baas-flits"><h2>II · HET PROCES</h2><span>de duiding</span></div>', `baasFaseMoment produceert onveranderde DOM: ${a9.bfHtml}`);
   t(a9.bronHeeftOpts === false, `baasFaseMoment heeft geen opts-parameter gekregen (bron ${a9.bronLen} tekens, 21 aanroepers ongemoeid)`);
   t(Math.max(...a9.alphas) < 0.45, `.vonnis achtergrond-alpha max ${Math.max(...a9.alphas)} (< 0.45): ${a9.alphas.join(', ')}`);
-  t(a9.vonnisZ === '55' && a9.vonnisPE === 'none', `.vonnis: z-index ${a9.vonnisZ}, pointer-events ${a9.vonnisPE}`);
+  t(a9.vonnisZ === '47' && a9.vonnisPE === 'none' && a9.vonnisOuder === 'BODY', `.vonnis is een body-kind (${a9.vonnisOuder}) op z-index ${a9.vonnisZ}, pointer-events ${a9.vonnisPE} — boven het doek (45), onder de topbalk (50)`);
   t(a9.duur === '0.9s', `--vonnis-duur voedt de CSS: animation-duration ${a9.duur} bij duur 900`);
   t(a9.h2Anim === 'vonnisSlag' && a9.spAnim === 'vonnisSub', `stempel + duiding animeren: h2 "${a9.h2Anim}", span "${a9.spAnim}" ("${a9.subTekst}")`);
   t(a9.opgeruimd, `de vonnisplaat ruimt zichzelf op na de duur (${a9.opgeruimd})`);
@@ -326,13 +332,150 @@ const t = (goed, tekst) => { if (goed) { okN++; console.log('   ok   ' + tekst);
     const g = S.gevecht, b = g.vijanden.find(v => v.id === 'de_dicktator');
     const bw = [...document.querySelectorAll('#vijanden-rij .vijand')][g.vijanden.indexOf(b)];
     const art = bw.querySelector('.vijand-art');
-    return { wrapScale: getComputedStyle(bw).scale, artAnim: getComputedStyle(art).animationName, tint: getComputedStyle(document.getElementById('arena-tint')).opacity, vignet: getComputedStyle(document.getElementById('licht-vignet')).opacity, ring: getComputedStyle(document.getElementById('speler-zone'), '::before').backgroundImage.slice(0, 40), iso: getComputedStyle(document.getElementById('speler-zone')).isolation };
+    const hp = bw.querySelector('.hp-balk'), naam = bw.querySelector('.vijand-naam');
+    const meet = () => ({ voet: art.getBoundingClientRect().bottom, hp: hp ? hp.getBoundingClientRect().width : 0, naam: naam ? naam.getBoundingClientRect().width : 0 });
+    bw.classList.remove('herverkozen'); void bw.offsetWidth; const zonder = meet();
+    bw.classList.add('herverkozen'); void bw.offsetWidth; const met = meet();
+    return { wrapScale: getComputedStyle(bw).scale, artScale: getComputedStyle(art).scale, zonder, met, artAnim: getComputedStyle(art).animationName, tint: getComputedStyle(document.getElementById('arena-tint')).opacity, vignet: getComputedStyle(document.getElementById('licht-vignet')).opacity, ring: getComputedStyle(document.getElementById('speler-zone'), '::before').backgroundImage.slice(0, 40), iso: getComputedStyle(document.getElementById('speler-zone')).isolation };
   });
-  t(a13.wrapScale === '1.12', `de herkozen tiran schaalt op de WRAP: scale ${a13.wrapScale}`);
+  t(a13.wrapScale === 'none' && /^1\.12/.test(a13.artScale || ''), `de herkozen tiran schaalt op de FIGUUR: .vijand-art scale ${a13.artScale}, kolom scale ${a13.wrapScale}`);
+  t(Math.abs(a13.met.voet - a13.zonder.voet) < 9, `zijn voeten blijven op de vloer: ${a13.zonder.voet.toFixed(2)}px -> ${a13.met.voet.toFixed(2)}px = ${Math.abs(a13.met.voet - a13.zonder.voet).toFixed(2)}px (${(Math.abs(a13.met.voet - a13.zonder.voet) / 900 * 100).toFixed(2)}% vh, < 1%)`);
+  t(Math.abs(a13.met.hp - a13.zonder.hp) < 0.6 && Math.abs(a13.met.naam - a13.zonder.naam) < 0.6, `naam en hp-balk schalen NIET mee: hp ${a13.zonder.hp.toFixed(1)} -> ${a13.met.hp.toFixed(1)}, naam ${a13.zonder.naam.toFixed(1)} -> ${a13.met.naam.toFixed(1)}`);
   t(a13.artAnim === 'woedeGloeiGoud', `de gouden gloed wint van .woede: animation-name "${a13.artAnim}"`);
   t(parseFloat(a13.tint) === 1, `#arena-tint staat aan in bedrijf 4: opacity ${a13.tint}`);
   t(Math.abs(parseFloat(a13.vignet) - 0.82) < 0.01, `body.tirade knijpt het vignet dicht: opacity ${a13.vignet}`);
   t(a13.iso === 'isolate' && /gradient/.test(a13.ring), `de ceremoniekring zit in een eigen stapelcontext (isolation: ${a13.iso}, ::before ${a13.ring}...)`);
+
+  console.log('\n== REVIEWFIXES · plaatKick, hard(), hermeting, bazenbalk-vries, hitstop ==');
+
+  // R1 — plaatKick stapelt geen varianten meer op de laag
+  const r1 = await page.evaluate(async () => {
+    const bg = document.getElementById('gevecht-achtergrond');
+    plaatKick('plaat-dreun', 400);
+    await new Promise(r => setTimeout(r, 120));
+    plaatKick('plaat-kantel', 1300);
+    await new Promise(r => setTimeout(r, 120));
+    const tijdens = { klasse: bg.className, anim: getComputedStyle(bg).animationName, duur: getComputedStyle(bg).animationDuration };
+    await new Promise(r => setTimeout(r, 1500));
+    const na = { klasse: bg.className, scale: getComputedStyle(bg).scale };
+    return { tijdens, na };
+  });
+  t(!/plaat-dreun/.test(r1.tijdens.klasse) && /plaat-kantel/.test(r1.tijdens.klasse), `een kick wist eerst ALLE varianten: klasse "${r1.tijdens.klasse}" (anim ${r1.tijdens.anim}, ${r1.tijdens.duur})`);
+  t(!/plaat-(beweeg|dreun|kantel|inzoom|instort|vast)/.test(r1.na.klasse), `2,7s later is alles opgeruimd: klasse "${r1.na.klasse}", scale "${r1.na.scale}"`);
+
+  // R2 — de blijvende inzoom is een animatieloze eindstand, en overschaduwt geen latere kick
+  const r2 = await page.evaluate(async () => {
+    const bg = document.getElementById('gevecht-achtergrond');
+    plaatKick('plaat-inzoom', 600);
+    await new Promise(r => setTimeout(r, 900));
+    const vast = { klasse: bg.className, anim: getComputedStyle(bg).animationName, scale: getComputedStyle(bg).scale, origin: getComputedStyle(bg).transformOrigin, grondY: getComputedStyle(bg).getPropertyValue('--grondY').trim() };
+    plaatKick('plaat-instort', 600);
+    await new Promise(r => setTimeout(r, 200));
+    const stoot = { anim: getComputedStyle(bg).animationName, klasse: bg.className, animaties: bg.getAnimations().map(a => (a.animationName || '') + ':' + a.playState) };
+    await new Promise(r => setTimeout(r, 800));
+    const na = { klasse: bg.className, scale: getComputedStyle(bg).scale };
+    return { vast, stoot, na };
+  });
+  t(/plaat-vast/.test(r2.vast.klasse) && r2.vast.anim === 'none' && /^1\.06/.test(r2.vast.scale), `de blijvende inzoom landt op .plaat-vast ZONDER animatie: klasse "${r2.vast.klasse}", anim "${r2.vast.anim}", scale "${r2.vast.scale}"`);
+  const originY2 = parseFloat((r2.vast.origin.split(' ')[1] || '0'));
+  t(Math.abs(originY2 - parseFloat(r2.vast.grondY)) <= 1, `.plaat-vast houdt dezelfde transform-origin als de animatie: "${r2.vast.origin}" vs --grondY ${r2.vast.grondY} — geen sprong bij de overgang`);
+  t(r2.stoot.anim === 'plaatStoot', `een latere kick SPEELT ook echt bovenop de inzoom: animation-name "${r2.stoot.anim}" (${r2.stoot.animaties.join(', ')})`);
+  t(!/plaat-vast/.test(r2.na.klasse), `de niet-blijvende kick neemt de camerakruip terug: klasse "${r2.na.klasse}", scale "${r2.na.scale}"`);
+
+  // R3 — hard() in toonArenaWissel ruimt OOK de blijvende inzoom op
+  const r3 = await page.evaluate(async () => {
+    const bg = document.getElementById('gevecht-achtergrond');
+    plaatKick('plaat-inzoom', 400);
+    await new Promise(r => setTimeout(r, 700));
+    const voor = bg.className;
+    await toonArenaWissel(ACHTERGRONDEN.basis + ACHTERGRONDEN.act3.finaleFasen.herverkiezing, { stijl: 'plaat-kantel' });
+    await new Promise(r => setTimeout(r, 200));
+    return { voor, na: bg.className, scale: getComputedStyle(bg).scale };
+  });
+  t(/plaat-vast/.test(r3.voor) && !/plaat-(vast|inzoom)/.test(r3.na), `hard() laat de nieuwe zaal NIET op scale 1.06 binnenkomen: "${r3.voor}" -> "${r3.na}" (scale "${r3.scale}")`);
+
+  // R4 — een hermeting midden in een plaat-animatie bakt de geschaalde box niet in
+  const r4 = await page.evaluate(async () => {
+    plaatsGevechtsplaat();
+    const bg = document.getElementById('gevecht-achtergrond');
+    const lees = () => ({ grondY: parseFloat(getComputedStyle(bg).getPropertyValue('--grondY')), size: bg.style.backgroundSize, gat: _layoutOnder(document.querySelector('.speler-figuur')) });
+    const voor = lees();
+    plaatKick('plaat-dreun', 520);
+    await new Promise(r => setTimeout(r, 160));
+    plaatsGevechtsplaat();                       // de echte weg: bouwGevechtDom -> zetVoetschaduwen, of een resize
+    const tijdens = lees();
+    await new Promise(r => setTimeout(r, 700));
+    const na = lees();
+    return { voor, tijdens, na, scale: getComputedStyle(bg).scale };
+  });
+  t(Math.abs(r4.tijdens.grondY - r4.voor.grondY) <= 1, `hermeting MIDDEN in een dreun blijft op de voetlijn: --grondY ${r4.voor.grondY} -> ${r4.tijdens.grondY} (${Math.abs(r4.tijdens.grondY - r4.voor.grondY).toFixed(2)}px = ${(Math.abs(r4.tijdens.grondY - r4.voor.grondY) / 900 * 100).toFixed(2)}% vh)`);
+  t(r4.na.size === r4.voor.size, `en de maat is niet permanent verschoven: background-size "${r4.voor.size}" -> "${r4.na.size}"`);
+
+  // R5 — de bazenbalk-vries dekt OOK de woede-toggle en de extra-strook
+  const r5 = await page.evaluate(async () => {
+    const g = S.gevecht, b = g.vijanden.find(v => v.id === 'de_dicktator');
+    b.fase = 1; b.hp = 240; b._bbToon = null; renderGevecht();
+    const balk = () => document.querySelector('#baas-balk .bb-balk');
+    const extra = () => document.querySelector('#baas-balk .bb-extra').textContent.trim();
+    const voor = { woede: balk().classList.contains('bb-woede'), extra: extra(), hp: balk().style.getPropertyValue('--hp'), tekst: document.querySelector('#baas-balk .bb-tekst').textContent };
+    b._bbToon = b.hp;                                   // de vries van de regie
+    b.hp = 96; b.fase = 3; renderGevecht();
+    await new Promise(r => setTimeout(r, 800));
+    const bevroren = { woede: balk().classList.contains('bb-woede'), extra: extra(), hp: balk().style.getPropertyValue('--hp'), tekst: document.querySelector('#baas-balk .bb-tekst').textContent, pips: [...document.querySelectorAll('#baas-balk .bb-pip')].map(p => p.classList.contains('aan') ? 1 : 0).join('') };
+    b._bbToon = null; renderGevecht();
+    await new Promise(r => setTimeout(r, 100));
+    const vrij = { woede: balk().classList.contains('bb-woede'), extra: extra(), hp: balk().style.getPropertyValue('--hp') };
+    return { voor, bevroren, vrij };
+  });
+  t(r5.bevroren.woede === false && r5.vrij.woede === true, `.bb-woede verklapt de fase niet meer: voor ${r5.voor.woede}, bevroren ${r5.bevroren.woede}, na de vrijgave ${r5.vrij.woede}`);
+  t(r5.bevroren.extra === r5.voor.extra && r5.vrij.extra !== r5.voor.extra, `de extra-strook staat stil tijdens de vries: "${r5.bevroren.extra}" == "${r5.voor.extra}", en springt pas bij de vrijgave naar "${r5.vrij.extra}"`);
+  t(r5.bevroren.hp === r5.voor.hp && r5.bevroren.pips === '1000', `--hp (${r5.bevroren.hp}), de tekst (${r5.bevroren.tekst}) en de pips (${r5.bevroren.pips}) blijven ook staan`);
+
+  // R6 — hitstop: de LANGSTE wint, niet de laatste
+  const r6 = await page.evaluate(async () => {
+    const sc = document.getElementById('scherm-gevecht');
+    hitstop(400);
+    await new Promise(r => setTimeout(r, 60));
+    hitstop(120);
+    await new Promise(r => setTimeout(r, 160));   // t=220ms: de korte zou al weg zijn
+    const t220 = sc.classList.contains('hitstop');
+    await new Promise(r => setTimeout(r, 300));   // t=520ms: ná de lange
+    return { t220, t520: sc.classList.contains('hitstop') };
+  });
+  t(r6.t220 === true && r6.t520 === false, `hitstop(400) + hitstop(120) houdt de LANGSTE aan: .hitstop op t=220ms ${r6.t220}, op t=520ms ${r6.t520}`);
+
+  // R7 — het doek dimt de vonnistitel niet meer weg
+  const r7 = await page.evaluate(async () => {
+    toneelDoek(0.70, 100);
+    await new Promise(r => setTimeout(r, 200));
+    const el = vonnisSlam('II · HET PROCES', 'De griffie loopt.', { duur: 2400, schok: false, sfx: false });
+    await new Promise(r => setTimeout(r, 400));
+    const h2 = el.querySelector('h2'); const r = h2.getBoundingClientRect();
+    /* elementsFromPoint SLAAT pointer-events:none over, en doek/vignet/vonnis hebben dat
+       alle drie - dus voor de meting even aan, daarna terug. De paint-volgorde verandert
+       daar niet van. */
+    const uit = [document.getElementById('toneel-doek'), document.getElementById('licht-vignet'), el, h2];
+    uit.forEach(e => { if (e) e.style.pointerEvents = 'auto'; });
+    const stapel = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2)
+      .map(e => (e.id ? '#' + e.id : (e.className && typeof e.className === 'string' ? '.' + e.className.split(' ')[0] : e.tagName)));
+    uit.forEach(e => { if (e) e.style.pointerEvents = ''; });
+    const doekIdx = stapel.findIndex(x => x === '#toneel-doek'), h2Idx = stapel.findIndex(x => x === 'H2');
+    el.remove(); toneelDoek(0);
+    await new Promise(r2 => setTimeout(r2, 200));
+    return { stapel, doekIdx, h2Idx };
+  });
+  t(r7.h2Idx >= 0 && r7.doekIdx > r7.h2Idx, `het doek (.70) ligt ONDER de vonnistitel: stapel van boven naar beneden ${r7.stapel.slice(0, 5).join(' > ')}`);
+
+  // R8 — de stempel en de duiding lopen mee met dtempo (het balansharnas zet tempo op 0.02)
+  const r8 = await page.evaluate(async () => {
+    const oud = DICK.tempo; DICK.tempo = 0.5;
+    const el = vonnisSlam('TEST', 'duiding', { duur: 2400, schok: false, sfx: false });
+    const cs = getComputedStyle(el), h2 = getComputedStyle(el.querySelector('h2')), sp = getComputedStyle(el.querySelector('span'));
+    const r = { plaat: cs.animationDuration, stempel: h2.animationDuration, sub: sp.animationDuration, subDelay: sp.animationDelay };
+    el.remove(); DICK.tempo = oud;
+    return r;
+  });
+  t(r8.plaat === '1.2s' && r8.stempel === '0.15s' && r8.subDelay === '0.15s', `bij DICK.tempo 0.5 lopen plaat (${r8.plaat}), stempel (${r8.stempel}) en duiding (${r8.sub}, delay ${r8.subDelay}) alle drie mee — de stempel stond vroeger hard op .3s`);
 
   console.log('\n== opruim ==');
   t(fouten.length === 0, fouten.length ? 'PAGINAFOUTEN: ' + fouten.slice(0, 4).join(' | ') : 'geen paginafouten in de hele ronde');

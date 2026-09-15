@@ -2287,8 +2287,13 @@ function _hitstopActief() { return performance.now() < _hitstopTot; }
 function hitstop(ms) {
   const sc = $('#scherm-gevecht'); if (!sc) return;
   const d = dtempo(ms || 140);
-  _hitstopTot = performance.now() + d;
+  const eind = performance.now() + d;
   sc.classList.add('hitstop');
+  /* v120-fix: de LANGSTE wint, niet de laatste. Een korte hitstop die binnen een
+     lopende langere viel kortte die vroeger af (hij overschreef _hitstopTot én de
+     opruimtimer) - hitstop(400) gevolgd door hitstop(120) was na 110ms al weg. */
+  if (eind <= _hitstopTot) return;
+  _hitstopTot = eind;
   clearTimeout(_hitstopT);
   _hitstopT = setTimeout(() => { sc.classList.remove('hitstop'); _hitstopTot = 0; }, d);
 }
@@ -2303,8 +2308,19 @@ function schokToneel(k, ms) {
   _schokT = setTimeout(() => sv.classList.remove('toneelschok'), d + 60);
 }
 /* een stoot op de ZAALPLAAT, verankerd op de geschilderde vloerrand zodat de figuren
-   niet zweven. .plaat-inzoom en .plaat-instort houden hun eindstand (forwards). */
-const _PLAAT_BLIJFT = { 'plaat-inzoom': 1 };   /* alleen de blijvende 6%-inzoom van bedrijf III houdt zijn eindstand */
+   niet zweven. Alleen .plaat-inzoom blijft staan - de 6%-camerakruip van bedrijf III.
+   v120-fix, twee dingen die als paar moeten:
+   1) ALLE varianten gaan eraf vóór de nieuwe erop komt. Vroeger verdween enkel de
+      NIEUWE klasse en werd tegelijk de opruimtimer van de vorige weggegooid, dus de
+      varianten stapelden op de laag ('zichtbaar plaat-inzoom plaat-beweeg plaat-dreun').
+   2) De blijvende inzoom houdt zijn eindstand via de ANIMATIELOZE .plaat-vast, niet
+      via een forwards-animatie. Een blijvende plaatBlijft staat later in de stylesheet
+      dan plaatStoot en won daarna elke animation-shorthand: de instort-stoot van
+      bedrijf IV ('DE ZAAL STORT IN') speelde dan simpelweg nooit.
+   Een nieuwe, niet-blijvende kick neemt de camerakruip terug - dat is precies wat je
+   wilt: die kick hoort bij een nieuwe zaal. */
+const _PLAAT_VARIANTEN = ['plaat-dreun', 'plaat-kantel', 'plaat-inzoom', 'plaat-instort'];
+const _PLAAT_BLIJFT = { 'plaat-inzoom': 'plaat-vast' };
 function plaatKick(variant, ms, el) {
   const v = variant || 'plaat-dreun';
   const d = dtempo(ms || 520);
@@ -2312,11 +2328,14 @@ function plaatKick(variant, ms, el) {
   lagen.forEach(l => {
     if (!l) return;
     l.style.setProperty('--plaat-t', d + 'ms');
-    l.classList.remove('plaat-beweeg', v); void l.offsetWidth;
-    l.classList.add('plaat-beweeg', v);
     clearTimeout(l._plaatT);
-    if (_PLAAT_BLIJFT[v]) return;
-    l._plaatT = setTimeout(() => l.classList.remove('plaat-beweeg', v), d + 60);
+    l.classList.remove('plaat-beweeg', 'plaat-vast', ..._PLAAT_VARIANTEN);
+    void l.offsetWidth;
+    l.classList.add('plaat-beweeg', v);
+    l._plaatT = setTimeout(() => {
+      l.classList.remove('plaat-beweeg', v);
+      if (_PLAAT_BLIJFT[v]) l.classList.add(_PLAAT_BLIJFT[v]);   /* .plaat-vast draagt dezelfde transform-origin, dus geen sprong bij de overgang */
+    }, d + 60);
   });
 }
 /* DE TIK: de baas deinst achteruit met de hand aan zijn krans en wordt zichtbaar
@@ -2337,7 +2356,24 @@ function baasTik(b, zwaarte) {
     el.style.setProperty('--tik-t', tikD + 'ms');   /* de CSS-duur loopt mee met dtempo; anders knipt de opruimtimer bij tempo != 1 de animatie halverwege af */
     el.classList.remove('baas-tik'); void el.offsetWidth; el.classList.add('baas-tik');
     clearTimeout(el._tikT);
-    el._tikT = setTimeout(() => el.classList.remove('baas-tik'), tikD);
+    if (el._tikKlaar) el.removeEventListener('animationend', el._tikKlaar);
+    /* v120-fix: de opruiming moet de HITSTOP meetellen. baasTik vuurt zelf
+       hitstop(t.stop), en #scherm-gevecht.hitstop zet animation-play-state:paused op
+       .vijand-art img - de CSS-animatie staat dus 140/190/220ms stil terwijl de
+       wandklok doorloopt. Op de kale tikD-timer ging de klasse er af terwijl de
+       terugstoot nog een kwart te gaan had: de baas SNAPTE terug (gemeten 5,4px +
+       1,1 graden in een frame) i.p.v. uit te dempen. animationend is de nette
+       uitgang, de opgehoogde timer het vangnet. */
+    const klaar = e => {
+      if (e && e.animationName !== 'baasTerugstoot') return;
+      clearTimeout(el._tikT);
+      el.removeEventListener('animationend', klaar);
+      el._tikKlaar = null;
+      el.classList.remove('baas-tik');
+    };
+    el._tikKlaar = klaar;
+    el.addEventListener('animationend', klaar);
+    el._tikT = setTimeout(klaar, tikD + dtempo(t.stop) + 80);
   }
   pose2D(b, 'hit', t.pose);
   if (window.Vista && Vista.raak) Vista.raak(b, true);
@@ -2346,7 +2382,10 @@ function baasTik(b, zwaarte) {
     const f = document.createElement('div');
     f.className = 'tik-flits';
     f.style.setProperty('--tik-kleur', t.kleur);
-    sc.appendChild(f);
+    /* BODY-kind, niet in #scherm-gevecht: dat is .scherm (position:fixed, z-index:1,
+       overflow:hidden) en dus een stapelcontext op z1 - het toneeldoek (body-kind, z45)
+       verfde er gewoon overheen, en tijdens .beef sprong de flits 52px omlaag. */
+    document.body.appendChild(f);
     setTimeout(() => f.remove(), dtempo(420));
   }
   hitstop(t.stop);
@@ -2357,6 +2396,7 @@ function hofDeinst(g, stap) {
   hof.forEach((x, i) => setTimeout(() => {
     if (S.gevecht !== g || g.voorbij || x.dood) return;
     const el = actorEl(x); if (el) {
+      el.style.setProperty('--deinst-t', dtempo(420) + 'ms');   /* v120-fix: de CSS-duur loopt mee met dtempo, net als --tik-t; een vaste .42s tegen een dtempo-timer knipt bij tempo != 1 */
       el.classList.remove('deinst'); void el.offsetWidth; el.classList.add('deinst');
       clearTimeout(el._deinstT);
       el._deinstT = setTimeout(() => el.classList.remove('deinst'), dtempo(520));
@@ -2390,7 +2430,13 @@ function vonnisSlam(titel, sub, opts) {
   el.className = 'vonnis' + (o.kleur === 'goud' ? ' goud' : '') + (o.klein ? ' klein' : '');
   el.style.setProperty('--vonnis-duur', duur + 'ms');
   el.innerHTML = `<h2>${titel}</h2>` + (sub ? `<span>${sub}</span>` : '');
-  sc.appendChild(el);
+  /* BODY-kind, niet in #scherm-gevecht. Dat is .scherm (position:fixed, z-index:1,
+     overflow:hidden) = een stapelcontext op z1, dus de z55 van .vonnis was LOKAAL en
+     het toneeldoek (body-kind, z45) dimde de titel weg op precies het moment dat hij
+     moest landen (gemeten -45% tot -78% helderheid). Als body-kind op z47 zit hij
+     boven doek (45) en vignet (40) en onder de topbalk (50), en springt hij niet meer
+     52px omlaag tijdens de schudScherm() die vonnisSlam zelf start. */
+  document.body.appendChild(el);
   setTimeout(() => el.remove(), duur);
   return el;
 }
@@ -3907,17 +3953,48 @@ function _voetlijnVan(rTop) {
    gevechtTik elk frame een parallax-translate op #gevecht-achtergrond; die zit wél
    in getBoundingClientRect() (tot ~5px zwabber bij een klap) en zou de plaat per
    meting doen verspringen. `inset: -28px` + offsetWidth/offsetHeight zijn wél
-   transformvrij. Alleen de d3-tak gebruikt dit; het 2D-spoor blijft op de rect. */
+   transformvrij.
+   v120: nu ook het 2D-spoor. Sinds de plaat-kicks bestaat daar dezelfde besmetting -
+   een hermeting midden in een .plaat-dreun (bouwGevechtDom -> zetVoetschaduwen ->
+   plaatsGevechtsplaat, of een resize) bakte de geschaalde box PERMANENT in
+   background-size/position: gemeten 11,5px = 1,28% vh drift die niet vanzelf herstelt.
+   Beide lagen zijn position:fixed met een expliciete inset, dus het containing block
+   is de viewport en computed top/left zijn de layoutpositie - precies wat de d3-tak
+   al aannam. */
 function _plaatLayoutBox(el) {
   const r = el.getBoundingClientRect();
   const cs = getComputedStyle(el);
   const top = parseFloat(cs.top), left = parseFloat(cs.left);
+  /* cs.top/cs.left zijn relatief aan het CONTAINING BLOCK, en dat is voor een
+     position:fixed element niet altijd de viewport: zodra een voorouder een
+     transform/filter/perspective/contain draagt wordt DIE het containing block.
+     #scherm-gevecht doet dat elke keer dat .beef of .slowmo draait, en dan is de
+     kale cs.top 52px mis - terwijl _voetlijnVan() via _layoutOnder() wél in de
+     geschudde frame meet. De oorsprong van het containing block moet er dus bij. */
+  const o = _cbOorsprong(el);
   return {
-    top: isFinite(top) ? top : r.top,
-    left: isFinite(left) ? left : r.left,
+    top: isFinite(top) ? o.top + top : r.top,
+    left: isFinite(left) ? o.left + left : r.left,
     width: el.offsetWidth || r.width,
     height: el.offsetHeight || r.height
   };
+}
+/* de linkerbovenhoek van het containing block van een position:fixed element, in
+   dezelfde frame als getBoundingClientRect(): de viewport (0,0), tenzij een voorouder
+   er zelf een opspant. Max drie lagen diep in dit spel. */
+function _cbOorsprong(el) {
+  for (let p = el.parentElement; p && p !== document.documentElement; p = p.parentElement) {
+    const c = getComputedStyle(p);
+    const wc = c.willChange || '';
+    if (c.transform !== 'none' || c.perspective !== 'none' || c.filter !== 'none'
+      || (c.backdropFilter && c.backdropFilter !== 'none')
+      || /paint|layout|strict|content/.test(c.contain || '')
+      || /transform|filter|perspective/.test(wc)) {
+      const pr = p.getBoundingClientRect();
+      return { top: pr.top + (parseFloat(c.borderTopWidth) || 0), left: pr.left + (parseFloat(c.borderLeftWidth) || 0) };
+    }
+  }
+  return { top: 0, left: 0 };
 }
 
 /* zet één laag (de plaat zelf of de crossfade-laag van Het Proces) op zijn grond.
@@ -3928,7 +4005,7 @@ function _plaatsLaag(el, url, d3Voet) {
   const ratio = _plaatRatio.get(url);
   if (!ratio) { _laadPlaatRatio(url); el.style.backgroundSize = ''; el.style.backgroundPosition = ''; el.style.removeProperty('--grondY'); return; }
   const d3 = (typeof d3Voet === 'number' && isFinite(d3Voet));
-  const r = d3 ? _plaatLayoutBox(el) : el.getBoundingClientRect();
+  const r = _plaatLayoutBox(el);   /* v120: transformvrij in BEIDE sporen - zie _plaatLayoutBox */
   if (!r.width || !r.height) return;
   const voetY = d3 ? (d3Voet - r.top) : _voetlijnVan(r.top);
   const g = (window.grondVan ? grondVan(url) : { grond: 0.62, midden: 0.5 });
@@ -5565,15 +5642,23 @@ function renderGevecht() {
       const bbHp = (b._bbToon != null ? b._bbToon : b.hp);
       const pct = Math.max(0, bbHp / b.maxHp * 100);
       const balkEl = bb.querySelector('.bb-balk');
-      balkEl.classList.toggle('bb-woede', (b.fase || 1) >= 3);
       balkEl.style.setProperty('--hp', Math.round(pct));
       bb.querySelector('.bb-vul').style.width = pct + '%';
       bb.querySelector('.bb-tekst').textContent = `${bbHp}/${b.maxHp}`;
-      /* de vierde pip is de KROON van vorm 2: de bestaande fase-toggle zet 'm nooit aan */
-      if (b._bbToon == null) bb.querySelectorAll('.bb-pip').forEach((p, i) => p.classList.toggle('aan', i === 3 ? bb.dataset.vorm === '2' : (b.fase || 1) >= i + 1));
-      /* de arsenaal-/copycat-strook alleen herbouwen als de inhoud écht wijzigde */
-      const extra = VIJANDEN[b.id].copycat ? copycatBalk(b) : (b.id === 'de_dicktator' ? dicktatorBalk(b) : '');
-      if (extra !== _bbExtraSig) { _bbExtraSig = extra; bb.querySelector('.bb-extra').innerHTML = extra; }
+      /* v120-fix: ALLES wat de fase verklapt staat onder dezelfde vries, niet alleen de
+         cijfers. .bb-woede is allesbehalve subtiel (rode rand + oneindige puls + een
+         oranjerode vulling) en de extra-strook springt van '6+3/post' naar
+         '7+4/post · kiezers 2' - allebei op t=0, precies het lek waarvoor de vries
+         bestaat. _bbExtraSig blijft tijdens de vries op de oude waarde staan, zodat de
+         strook bij de vrijgave vanzelf één keer herbouwt. */
+      if (b._bbToon == null) {
+        balkEl.classList.toggle('bb-woede', (b.fase || 1) >= 3);
+        /* de vierde pip is de KROON van vorm 2: de bestaande fase-toggle zet 'm nooit aan */
+        bb.querySelectorAll('.bb-pip').forEach((p, i) => p.classList.toggle('aan', i === 3 ? bb.dataset.vorm === '2' : (b.fase || 1) >= i + 1));
+        /* de arsenaal-/copycat-strook alleen herbouwen als de inhoud écht wijzigde */
+        const extra = VIJANDEN[b.id].copycat ? copycatBalk(b) : (b.id === 'de_dicktator' ? dicktatorBalk(b) : '');
+        if (extra !== _bbExtraSig) { _bbExtraSig = extra; bb.querySelector('.bb-extra').innerHTML = extra; }
+      }
     } else {
       bb.style.display = 'none';
       bb.dataset.baas = '';
@@ -7163,7 +7248,7 @@ function toonArenaWissel(url, opts) {
   const hard = () => {
     delete bgEl.dataset.plaat;
     clearTimeout(bgEl._plaatT);
-    bgEl.classList.remove('plaat-beweeg', 'plaat-kantel', 'plaat-dreun', 'plaat-instort');   /* de uitgaande stijl hoort niet op de binnengekomen plaat */
+    bgEl.classList.remove('plaat-beweeg', 'plaat-vast', ..._PLAAT_VARIANTEN);   /* de uitgaande stijl hoort niet op de binnengekomen plaat - v120-fix: ook de BLIJVENDE inzoom van bedrijf III, anders komt de nieuwe zaal binnen op scale 1.06 */
     bgEl.style.backgroundImage = beeld;
     bgEl.style.backgroundPosition = '';
     bgEl.style.backgroundSize = '';
