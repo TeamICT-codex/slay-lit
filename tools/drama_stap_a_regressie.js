@@ -62,7 +62,10 @@ const t = (goed, tekst) => { if (goed) { okN++; console.log('   ok   ' + tekst);
     const vroeg = { n: kiezers.length, opacity: kiezers.map(w => getComputedStyle(w).opacity), lijk: kiezers.filter(w => w.classList.contains('lijk-weg')).length, ceremonie: !!g.ceremonie, bbToonBestaat: b._bbToon !== undefined };
     await new Promise(r => setTimeout(r, 1400));
     const laat = { lijk: kiezers.filter(w => w.classList.contains('lijk-weg')).length, opacity: kiezers.map(w => getComputedStyle(w).opacity) };
-    await new Promise(r => setTimeout(r, 3200));
+    /* v120 stap B: DE HERVERKIEZING duurt nu 7200ms (invoer vrij op 5600, het gouden
+       V-kaartje op 6800 + 1400ms). De oude 600+1400+3200 = 5200ms landde midden in de
+       ceremonie en las die terecht als 'blijft hangen'. */
+    await new Promise(r => setTimeout(r, 6800));
     const na = { hp: b.hp, herrezen: !!b.herrezen, vorm2: !!b.vorm2, dood: !!b.dood, fase: b.fase, ceremonie: !!g.ceremonie, herverkozen: wraps[idx].classList.contains('herverkozen'), woede: wraps[idx].classList.contains('woede'), src: (wraps[idx].querySelector('img') || {}).src, vonnis: !!document.querySelector('.vonnis'), doek: document.getElementById('toneel-doek').classList.contains('aan'), hitstop: document.getElementById('scherm-gevecht').classList.contains('hitstop') };
     return { levend, vroeg, laat, na };
   });
