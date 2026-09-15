@@ -39,13 +39,13 @@ const GRONDTABEL = [
   ['act1.gevecht[2]', 'Act 1 achtergronden/Gevechtstijl3act1.webp', 61],
   ['act1.episch[0]', 'Act 1 achtergronden/GevechtstijlEPISCHGEVECHTACT1.webp', 65],
   ['act1.episch[1]', 'Act 1 achtergronden/GevechtstijlEPISCHGEVECHT2ACT1.webp', 65],
-  ['act2.gevecht[0]', 'Act 2 achtergronden/Gevechtstijl1act2.webp', 71],
+  ['act2.gevecht[0]', 'Act 2 achtergronden/Gevechtstijl1act2.webp', 61],
   ['act2.gevecht[1]', 'Act 2 achtergronden/Gevechtstijl2act2.webp', 68],
   ['act2.gevecht[2]', 'Act 2 achtergronden/Gevechtstijl3act2.webp', 69],
   ['act2.gevecht[3]', 'Act 2 achtergronden/Gevechtstijl4act2.webp', 67],
   ['act2.gevecht[4]', 'Act 2 achtergronden/Gevechtstijl5act2.webp', 61],
-  ['act2.episch[0]', 'Act 2 achtergronden/Gevechtstijl act2 EPISCH 1.webp', 69],
-  ['act2.episch[1]', 'Act 2 achtergronden/Gevechtstijl act2 EPISCH 2.webp', 69],
+  ['act2.episch[0]', 'Act 2 achtergronden/Gevechtstijl act2 EPISCH 1.webp', 61],
+  ['act2.episch[1]', 'Act 2 achtergronden/Gevechtstijl act2 EPISCH 2.webp', 61],
   ['act2.episch[2]', 'Act 2 achtergronden/Gevechtstijl act2 EPISCH 3.webp', 64],
   ['act3.gevecht[0]', 'Act 3 achtergronden/Gevechtstijl Act 3 stijl 1.webp', 61],
   ['act3.gevecht[1]', 'Act 3 achtergronden/Gevechtstijl Act 3 stijl 2.webp', 63],
@@ -127,7 +127,13 @@ async function meetPlaat(page, pad, grond) {
     const bp = cs.backgroundPosition.split(' ');
     const off = (v, e, i) => /%/.test(v) ? (e - i) * parseFloat(v) / 100 : parseFloat(v);
     const left = off(bp[0], box.width, W), top = off(bp[1], box.height, H);
-    const grondY = box.top + top + grond / 100 * H;
+    /* v119: de vloerrand komt uit de GROND-tabel van het spel zelf (grondVan) — de tabel in
+       deze suite is alleen nog terugval. Anders meet je tegen een verouderde waarde zodra een
+       plaat hergenereerd wordt (v116: drie Act 2-platen van 69-71 naar 61). */
+    const gTab = (typeof grondVan === 'function') ? grondVan(pad) : null;
+    const gRuw = (gTab && typeof gTab === 'object') ? gTab.grond : gTab;
+    const gEcht = (typeof gRuw === 'number' && gRuw > 0) ? (gRuw <= 1 ? gRuw * 100 : gRuw) : grond;   /* grondVan geeft een fractie (0.61) */
+    const grondY = box.top + top + gEcht / 100 * H;
     const figuren = [];
     if (d3) {
       /* v117: de GETEKENDE voet uit Vista.voetMeting() (quad + voetmarge, mee-ademend),
@@ -325,7 +331,8 @@ async function huidigeAfwijking(page) {
     t(page.__f.length === 0, 'geen paginafouten' + (page.__f.length ? ' — ' + page.__f[0] : ''));
     await ctx.close();
   }
-  t(/const CACHE = 'slayit-v117'/.test(fs.readFileSync(path.join(WORKTREE, 'sw.js'), 'utf8')), "sw.js staat op slayit-v117");
+  /* v119: geen vast versienummer meer in de suite (dat veroudert bij elke bump); alleen de vorm. */
+  t(/const CACHE = 'slayit-v\d+'/.test(fs.readFileSync(path.join(WORKTREE, 'sw.js'), 'utf8')), "sw.js heeft een geldige CACHE-regel (slayit-vNN)");
 
   await browser.close();
   console.log('\nSAMENVATTING ok ' + ok + ' fout ' + fout + '   (screenshots: ' + SHOTS + ')');

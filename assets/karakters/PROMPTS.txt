@@ -877,3 +877,97 @@ Stylized painterly digital illustration for a dark fantasy card game, hand-paint
 Character: DE CLAQUEUR — the same haystack of clapping hands and identical grinning faces as de_claqueur.png. Pose (SEPARATE image): DE LAATSTE HAND — the whole mass has collapsed into a low heap of limp hands and faces sliding apart, the grins finally slack, price tags scattered on top of the pile, the pennants fallen, the gold coin rolled off and lying at the edge of the heap, and ONE last hand rising out of the middle, still trying to clap against nothing. Low, wide and spent; the heap stays within the lower half of the canvas.
 Palette of black basalt and black iron, molten ember-red light glowing UP from below (harsh hellish footlight), storm-violet lightning accents, arrogant polished GOLD for everything the regime touches. Accent: pale flesh-grey mass + parchment price tags + one gold coin.
 Painted illustration style only. Isolated on a fully transparent background. No ground, no shadow, no text, no letters on the tags, no frame, no UI, no background elements. The heap fills about 80% of the width of a square 1024x1024 canvas, lowest point near the bottom edge. One figure, one image — no sprite sheet.
+
+==========================================================
+DE SLIJMKONING — METAMORFOSE-INTRO: BART BLINKER (rework, sep 2026)
+==========================================================
+De Act 1-baasintro (toonSlijmkoningIntro, game.js) toont vier stadia: collega →
+Senior Instemmer (de hand op de schouder) → verslijmd → de gekroonde Slijmkoning.
+De Slijmkoning zelf (slijmkoning*.png) blijft ONGEWIJZIGD; alleen de mens erachter
+verandert: GLENN wordt BART BLINKER. Drie beelden, de proloog hergebruikt het tweede
+als spreker-portret (assets/proloog/bart_blinker2 = kopie van bart_blinker_instemmer).
+
+Dit is NIET de kaartspel-stijl: het register is de 198X-kantoorproloog — een warme,
+sepia-getinte, licht vergeelde 'bedrijfsfoto' met filmkorrel en CRT-gloed (referentie:
+de bestaande glenn.png / glenn_instemmer.png / glenn_slijm.png in assets-bron/). Genereer
+de drie in DEZELFDE sessie, telkens met het vorige stadium als bijlage, zodat het
+dezelfde man blijft.
+
+KARAKTERBIJBEL BART BLINKER (in elk blok herhalen): a man in his mid-forties, FULL head
+of hair — thick, neatly side-parted, salt-and-pepper grey (more pepper than salt at the
+back, silver at the temples), NOT bald, no receding hairline; a short, neatly trimmed
+salt-and-pepper beard (a few weeks' growth, not a long beard); lean-average build, long
+face, friendly crow's-feet; beige short-sleeved 1980s office shirt with a brown striped
+tie and a brass name badge. His trademark: the ENCOURAGING WINK — one eye squeezed shut
+in a permanent, slightly too-eager wink, the other eye wide and gleaming, plus an
+approving thumbs-up. He is the man who agrees before you finish your sentence.
+
+========================= bart_blinker.png =========================
+Vintage 1980s corporate portrait photograph look, warm sepia-toned, slightly faded and
+yellowed, soft film grain, gentle vignette, cinematic painterly realism (a painted
+photograph, not a comic, not a 3D render). Portrait format 4:5 (1024x1280), upper body,
+centered, looking straight at the viewer.
+Character: BART BLINKER, Senior colleague at a 198X open-plan office — a man in his
+mid-forties, FULL head of thick, neatly side-parted salt-and-pepper hair (silver at the
+temples, NOT bald, no receding hairline), a short neatly trimmed salt-and-pepper beard,
+lean-average build, long friendly face with crow's-feet. Beige short-sleeved office
+shirt, brown striped tie, a brass name badge on the chest pocket, one pen in the pocket.
+Expression: his trademark ENCOURAGING WINK — one eye squeezed shut, the other wide and
+gleaming, a broad agreeable smile, and a thumbs-up held next to his chest. Utterly
+agreeable, a little too eager, the man who nods before you finish talking.
+Setting: a cramped 1980s office behind him — a glowing amber CRT monitor, a desk lamp,
+grey filing cabinets, pinned memos on a cork wall, a sad potted plant, one small red
+indicator light glowing in the dark. Warm tungsten light from the left, deep brown
+shadows.
+No text, no letters on the badge or the memos (blank plates), no logos, no frame, no UI.
+One person only.
+
+========================= bart_blinker_instemmer.png =========================
+Use the attached reference image (bart_blinker.png): the EXACT same man, same face, same
+salt-and-pepper hair and beard, same shirt and tie. Only the framing, the badge and the
+mood change.
+Vintage 1980s corporate portrait photograph look, warm sepia-toned, faded and yellowed,
+soft film grain, heavy dark vignette, cinematic painterly realism (a painted photograph,
+not a comic, not a 3D render). SQUARE format 1024x1024, head-and-shoulders, centered,
+looking straight at the viewer, a thin dark rounded photo-border like an old company
+ID picture.
+Character: BART BLINKER, freshly promoted to Senior Yes-man — the same man in his
+mid-forties with a FULL head of side-parted salt-and-pepper hair and a short trimmed
+salt-and-pepper beard. The ENCOURAGING WINK is now frozen a little too wide: one eye
+squeezed shut, the other gleaming and slightly bloodshot, the smile stretched to show
+all his teeth, a sheen of sweat on the temples. A polished brass name badge on the
+chest pocket, a gold tie clip catching a glint. From the darkness behind his right
+shoulder, a large BLACK SILHOUETTED HAND rests firmly on his shoulder — the hand of the
+system, only a flat black shape against the warm background, no arm detail, no face.
+Background: plain warm brown-gold studio backdrop falling into darkness at the edges,
+a faint second shadow looming behind him.
+No text, no letters on the badge (blank brass plate), no logos, no UI. One person only,
+plus the black hand.
+
+========================= bart_blinker_slijm.png =========================
+Use the attached reference images (bart_blinker.png and bart_blinker_instemmer.png):
+the same man, half-dissolved. Keep the salt-and-pepper hair and beard RECOGNIZABLE in
+the slime.
+Vintage 1980s corporate photograph look, warm sepia-toned, faded, soft film grain, dark
+vignette, cinematic painterly realism (a painted photograph, not a comic, not a 3D
+render). Portrait format 4:5 (1024x1280), seated at his desk, centered, upper body.
+Character: BART BLINKER melting into slime at his own desk — the man who never said no
+has lost his shape. His body has become a sagging, glossy GREEN, semi-translucent mound
+of ooze in the outline of a seated office worker: the beige shirt collar and the brown
+striped tie are still there but sinking into the jelly, sticky notes and memos are
+suspended inside the slime, thick drips run over the desk edge. The head is still
+half-human: the thick side-parted SALT-AND-PEPPER HAIR and the short GREY-AND-BLACK
+BEARD are clearly recognizable but slick and dripping, the long face softened into
+jelly, the mouth still smiling — and the trademark WINK still there, one eye squeezed
+shut, the other a wet green gleam. One slimy hand still gives a drooping thumbs-up.
+The brass name badge slides down the ooze. On the desk: a beige rotary telephone, a
+stack of folders, an ashtray, a desk lamp, all starting to glisten with slime.
+Background: the dark 1980s office, filing cabinets, a dead CRT. Warm tungsten key
+light, the green ooze catching the light.
+No text, no letters, no logos, no UI. One figure only.
+
+Gebruik: assets/karakters/bart_blinker{,_instemmer,_slijm}.png → art-drop-pipeline
+(dambord-script slaat deze volvlak-platen over: 'geen dambordkleuren' is correct) →
+ids in toonSlijmkoningIntro (game.js) van glenn* naar bart_blinker*, en assets/proloog/
+bart_blinker2.webp = dezelfde plaat als bart_blinker_instemmer (proloog/data.js team +
+sw.js-precache). De oude glenn*-platen blijven in assets-bron/ als archief.
