@@ -850,7 +850,7 @@ const Vista = (() => {
   /* fakkelniveau van het spel (1 = helder, 0.16 = gedoofd) */
   function zetLicht(f) { lichtDoel = Math.max(0.05, Math.min(1, f)); }
 
-  /* v119 (HET PROCES, het drama): een camerakick op het TONEEL i.p.v. op een acteur -
+  /* v120 (HET PROCES, het drama): een camerakick op het TONEEL i.p.v. op een acteur -
      puur additief op dezelfde kick-teller die raak()/aanval() al voeden, zodat 3D de
      schok van de bedrijfsovergangen meekrijgt zonder eigen tijdbron. */
   function schud(k) { kick = Math.min(2.4, kick + (k || 0.6) * 1.5); }

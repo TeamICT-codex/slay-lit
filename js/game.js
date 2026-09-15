@@ -2261,7 +2261,7 @@ function schudScherm() {
 }
 
 /* ============================================================
-   HET PROCES - de regieprimitieven (v119)
+   HET PROCES - de regieprimitieven (v120)
    Fundament voor de bedrijfsovergangen van de DICKtator: een klap moet GEWICHT
    krijgen. Huisregels die hier hard in zitten:
    - elke duur loopt door dtempo(), zodat het balansharnas (DICK.tempo = 0.02)
@@ -2331,11 +2331,13 @@ function baasTik(b, zwaarte) {
   const t = _TIK[Math.max(0, Math.min(2, (zwaarte || 1) - 1))];
   const el = actorEl(b);
   if (el) {
+    const tikD = dtempo(620);
     el.style.setProperty('--tikx', t.amp + 'px');
     el.style.setProperty('--tikr', t.rot + 'deg');
+    el.style.setProperty('--tik-t', tikD + 'ms');   /* de CSS-duur loopt mee met dtempo; anders knipt de opruimtimer bij tempo != 1 de animatie halverwege af */
     el.classList.remove('baas-tik'); void el.offsetWidth; el.classList.add('baas-tik');
     clearTimeout(el._tikT);
-    el._tikT = setTimeout(() => el.classList.remove('baas-tik'), dtempo(620));
+    el._tikT = setTimeout(() => el.classList.remove('baas-tik'), tikD);
   }
   pose2D(b, 'hit', t.pose);
   if (window.Vista && Vista.raak) Vista.raak(b, true);
@@ -2523,7 +2525,7 @@ function spreek(actor, pool, kans) {
 }
 
 /* de koninklijke uitroep: groot, gecentreerd, alleen voor de baas.
-   v119: DUUR-PARAMETER + FIFO-WACHTRIJ. Hij had geen enkele overlap-guard (die 2800ms
+   v120: DUUR-PARAMETER + FIFO-WACHTRIJ. Hij had geen enkele overlap-guard (die 2800ms
    zit alleen in spreek()), en twee aanroepen in dezelfde tick stapelden twee platen op
    exact dezelfde vaste positie - dat gebeurde LIVE bij II->III en bij de herrijzenis.
    De remove-timer loopt nu ook door dtempo, en --spraak-duur voedt de CSS-animatie,
@@ -3924,14 +3926,14 @@ function _plaatLayoutBox(el) {
 function _plaatsLaag(el, url, d3Voet) {
   if (!el || !url) return;
   const ratio = _plaatRatio.get(url);
-  if (!ratio) { _laadPlaatRatio(url); el.style.backgroundSize = ''; el.style.backgroundPosition = ''; return; }
+  if (!ratio) { _laadPlaatRatio(url); el.style.backgroundSize = ''; el.style.backgroundPosition = ''; el.style.removeProperty('--grondY'); return; }
   const d3 = (typeof d3Voet === 'number' && isFinite(d3Voet));
   const r = d3 ? _plaatLayoutBox(el) : el.getBoundingClientRect();
   if (!r.width || !r.height) return;
   const voetY = d3 ? (d3Voet - r.top) : _voetlijnVan(r.top);
   const g = (window.grondVan ? grondVan(url) : { grond: 0.62, midden: 0.5 });
   const grond = Math.min(0.95, Math.max(0.05, g.grond));
-  if (voetY === null || !isFinite(voetY)) { el.style.backgroundSize = ''; el.style.backgroundPosition = ''; return; }
+  if (voetY === null || !isFinite(voetY)) { el.style.backgroundSize = ''; el.style.backgroundPosition = ''; el.style.removeProperty('--grondY'); return; }
   const v = Math.min(r.height, Math.max(0, voetY));
   const H = Math.max(r.height, r.width / ratio, v / grond, (r.height - v) / (1 - grond));
   const W = H * ratio;
@@ -3940,7 +3942,7 @@ function _plaatsLaag(el, url, d3Voet) {
   el.style.backgroundSize = Math.round(W) + 'px ' + Math.round(H) + 'px';
   el.style.backgroundPosition = Math.round(left) + 'px ' + Math.round(top) + 'px';
   el.style.backgroundRepeat = 'no-repeat';
-  el.style.setProperty('--grondY', Math.round(v) + 'px');   /* v119: de GEMETEN voetlijn in px — transform-origin voor elke plaat-animatie; 61% van de ELEMENThoogte is de vloer niet (H > r.height, top vaak negatief) */
+  el.style.setProperty('--grondY', Math.round(v) + 'px');   /* v120: de GEMETEN voetlijn in px — transform-origin voor elke plaat-animatie; 61% van de ELEMENThoogte is de vloer niet (H > r.height, top vaak negatief) */
 }
 
 /* verhouding eenmalig meten; daarna de plaat opnieuw zetten (tot dan: cover) */
@@ -3973,8 +3975,10 @@ function plaatsGevechtsplaat() {
   const url = (typeof S !== 'undefined' && S && S.gevecht && S.gevecht.achtergrond) || null;
   if (!bg) return;
   const vrij = () => {
-    bg.style.backgroundSize = ''; bg.style.backgroundPosition = '';
-    if (laag2) { laag2.style.backgroundSize = ''; laag2.style.backgroundPosition = ''; }
+    /* v120: --grondY gaat MEE weg. Een plaat die op CSS-cover terugvalt is niet
+       gemeten; een plaat-animatie die dan nog om de oude voetlijn draait, verspringt. */
+    bg.style.backgroundSize = ''; bg.style.backgroundPosition = ''; bg.style.removeProperty('--grondY');
+    if (laag2) { laag2.style.backgroundSize = ''; laag2.style.backgroundPosition = ''; laag2.style.removeProperty('--grondY'); }
   };
   if (!bg.classList.contains('zichtbaar') || !url) { vrij(); return; }
   let d3Voet;
@@ -5096,7 +5100,7 @@ function toonBaasIntro(g) {
 function gevechtTik(dt) {
   if (!S || !S.gevecht) return;
   if (!d3Actief() || !window.Vista) return;
-  Vista.tik(_hitstopActief() ? 0 : dt);   /* v119: tijdens een hitstop staat ook het 3D-toneel stil */
+  Vista.tik(_hitstopActief() ? 0 : dt);   /* v120: tijdens een hitstop staat ook het 3D-toneel stil */
   /* camerazwaai doorvertalen naar parallax op de achtergrondplaat */
   if (S.gevecht.achtergrond && GDOM.bg) {
     const zw = Vista.zwaai();
@@ -5551,7 +5555,7 @@ function renderGevecht() {
           </div>
           <div class="bb-extra"></div>`;
       }
-      /* v119 (HET PROCES, het drama): de bazenbalk BEVRIEST tijdens een ceremonie.
+      /* v120 (HET PROCES, het drama): de bazenbalk BEVRIEST tijdens een ceremonie.
          b._bbToon is de waarde die getoond moet blijven tot de regie hem vrijgeeft
          (b._bbToon = null). Alle DRIE de uitgangen moeten mee: --hp voedt het mobiele
          HART (mobiel.css, waar .bb-vul display:none is), .bb-vul de laptopbalk en
@@ -5601,7 +5605,7 @@ function renderGevecht() {
        sterf-animatie intact blijft; bij een herrijzenis (v.dood weer false) valt de
        kolom vanzelf terug. Indexen in GDOM.vijanden blijven ongemoeid: het element
        blijft in de DOM staan, het neemt alleen geen ruimte meer. */
-    /* v119 (het drama): zolang een CEREMONIE loopt en de wrap een exit-klasse draagt,
+    /* v120 (het drama): zolang een CEREMONIE loopt en de wrap een exit-klasse draagt,
        speelt de REGIE de afgang uit - renderGevecht mag er dan niet overheen. Zonder
        deze uitzondering zette .sterft (opacity:0, geen transition = harde knip) in
        dezelfde tick de val van de griffier, de gouden kiezerrand en de hofVlucht
@@ -5616,7 +5620,7 @@ function renderGevecht() {
       clearTimeout(d._lijkT);
       d._lijkT = setTimeout(() => { if (v.dood) d.wrap.classList.add('lijk-weg'); }, dtempo(750));
     }
-    /* v119: de fase-klassen van de DICKtator worden AFGEDWONGEN, net als .sterft.
+    /* v120: de fase-klassen van de DICKtator worden AFGEDWONGEN, net als .sterft.
        bouwGevechtDom() doet rij.innerHTML = '' en wist elke handmatig gezette klasse -
        de claqueur-oproep in bedrijf III sloopte zo in hetzelfde frame de woede-gloed en
        de herkozen stand. Alleen voor hem: de slijmkoning en de Erfprins zetten .woede
@@ -7131,7 +7135,7 @@ function dicktatorFase(v) {
 /* de arena wisselt van plaat zonder harde knip: een tweede laag komt eroverheen
    en neemt het beeld over. In lite/reduced-motion en in 3D (Vista tekent daar zelf
    de achtergrond) is het een harde wissel — bekende Vista-pariteitsbeperking. */
-/* v119: geeft een PROMISE terug die resolvet zodra hard() gedraaid heeft (ook in de
+/* v120: geeft een PROMISE terug die resolvet zodra hard() gedraaid heeft (ook in de
    lite-/3D-tak, die meteen hard wisselt), zodat een regie op de landing kan wachten.
    opts.stijl legt een plaat-animatie op de UITGAANDE laag - dat is #gevecht-achtergrond:
    die toont tijdens de fade nog de OUDE plaat (zie dataset.plaat hieronder), terwijl
@@ -8036,7 +8040,7 @@ async function eindBeurt() {
 function beginSpelerBeurt() {
   const g = S.gevecht;
   if (!g || g.voorbij) return;
-  /* v119: EERST vrijgeven, DAN checken. Stond de vrijgave zestien regels lager (bij de
+  /* v120: EERST vrijgeven, DAN checken. Stond de vrijgave zestien regels lager (bij de
      rest van de beurt-reset), dan hief deze functie een ceremonie die checkBaasFase hier
      net startte in dezelfde tick weer op - precies wat er gebeurt als gif- of doorn-
      schade tijdens de vijandbeurt een fasegrens breekt. */

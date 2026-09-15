@@ -4120,7 +4120,7 @@ body.lite .kv-geest { animation: none; opacity: .45; }
   width: max-content; max-width: min(88vw, 860px);
   text-align: center;
   pointer-events: none;
-  animation: spraakKoning var(--spraak-duur, 3.2s) ease forwards;   /* v119: JS voedt de duur uit dtempo, anders lopen JS en CSS bij DICK.tempo != 1 uit elkaar */
+  animation: spraakKoning var(--spraak-duur, 3.2s) ease forwards;   /* v120: JS voedt de duur uit dtempo, anders lopen JS en CSS bij DICK.tempo != 1 uit elkaar */
 }
 .baas-spraak span {
   font-family: 'Pirata One', serif;
@@ -4236,7 +4236,7 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
 .vijand.vlucht { animation: hofVlucht 1s ease-in forwards; }
 @keyframes hofVlucht { 0% { opacity: 1; } 100% { opacity: 0; transform: translateY(14px) scale(.86); } }
 /* de herkozen tiran staat een maat groter en brandt van binnenuit.
-   v119: de scale is naar de WRAP verhuisd (zie het drama-blok verderop) - hier blijft
+   v120: de scale is naar de WRAP verhuisd (zie het drama-blok verderop) - hier blijft
    alleen de rust-filter staan, die de woedeGloeiGoud-animatie overneemt zodra .woede erbij komt. */
 .vijand.herverkozen .vijand-art { filter: saturate(1.4) drop-shadow(0 0 18px rgba(255, 190, 60, .7)); }
 /* HET ONTSLAG: een halve tel slow-motion op de klap */
@@ -4244,7 +4244,7 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
 @keyframes slowmoPuls { 0% { filter: brightness(1.55) saturate(.5); } 100% { filter: none; } }
 
 /* ============================================================
-   HET PROCES - het drama van de bedrijfsovergangen (v119, stap A)
+   HET PROCES - het drama van de bedrijfsovergangen (v120, stap A)
    Fundamentlaag: alleen de bouwstenen, nog geen regie. Huisregels:
    - NOOIT transform/filter/backdrop-filter op #scherm-gevecht zelf. Dat element is
      .scherm (position:fixed, z-index:1, overflow:hidden); zodra daar een animatie op
@@ -4279,7 +4279,11 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
    #gevecht-achtergrond: plaatsGevechtsplaat() bailt in 3D uit en zetLichtVisueel()
    overschrijft die filter bij elke fakkelwijziging INLINE. */
 #arena-tint {
-  position: fixed; inset: 0;
+  /* ABSOLUUT, niet fixed: een fixed kind van #scherm-gevecht springt tijdens .beef en
+     .slowmo (die animeren het scherm zelf) 52px omlaag en wordt door de overflow:hidden
+     onderaan weggeklipt - precies waar de tint het zwaarst is. Absoluut dekt exact
+     dezelfde doos en schudt netjes mee. */
+  position: absolute; inset: 0;
   z-index: 0;
   pointer-events: none;
   opacity: 0;
@@ -4465,7 +4469,12 @@ body.tirade #licht-vignet { opacity: .82 !important; transition: opacity .5s eas
   50% { filter: saturate(1.5) drop-shadow(0 0 30px rgba(255, 214, 110, .95)) brightness(1.12); }
 }
 
-/* Act 3-regel: tijdens een ceremonie is de fakkel van de HELD het enige zachte licht. */
+/* Act 3-regel: tijdens een ceremonie is de fakkel van de HELD het enige zachte licht.
+   isolation:isolate is hier NIET cosmetisch: #speler-zone is wel position:relative
+   (r4087) maar geen stapelcontext, dus een ::before op z-index:-1 zakt door tot onder
+   #gevecht-achtergrond (z0) en is gewoon onzichtbaar. Met een eigen stapelcontext
+   blijft de -1 BINNEN de zone: achter de held, boven de zaalplaat. */
+body.ceremonie #speler-zone { isolation: isolate; }
 body.ceremonie #speler-zone::before {
   content: '';
   position: absolute; z-index: -1;
