@@ -4406,12 +4406,18 @@ body.tirade #licht-vignet { opacity: .82 !important; transition: opacity .5s eas
    'bottom center' op de kolom tilt de voeten van de geschilderde vloer. Op .vijand-art
    is de onderrand précies de voetlijn. Dat een animatie op .vijand-art de scale van
    .vijand-klein/-groot overschrijft is hier geen risico: de DICKtator staat in geen van
-   beide sets. .oprijzen-groot landt op 1.12 = exact de maat die .herverkozen vasthoudt. */
+   beide sets. .oprijzen-groot landt op 1.12 = exact de maat die .herverkozen vasthoudt.
+   v120-fix: de overshoot zelf staat NIET meer in een @keyframes maar in een inline
+   scale-TRANSITION (js: _oprijzen). Reden is dezelfde botsing als §10.3, maar dan op
+   animation i.p.v. filter: animation is ÉÉN property, en .vijand.woede .vijand-art (de
+   gloed, verderop in deze stylesheet, gelijke specificiteit) won dus altijd van
+   .vijand.oprijzen - en .vijand.herverkozen.woede (0,3,1) won sowieso van .oprijzen-groot.
+   Gemeten: bij I->II speelde de keyframe wél (daar draagt hij nog geen .woede), bij DE
+   TIRADE en DE HERRIJZENIS NOOIT. De twee zwaarste figuurbeats van het stuk speelden niet;
+   in bedrijf IV verscheen hij in één frame op zijn eindmaat 1.12 - een POP i.p.v. een
+   herrijzenis. Een transition botst met geen enkele animatie, dus de gloed pulseert door.
+   De klassen blijven staan als markering (en voor de transform-origin hieronder). */
 .vijand.oprijzen .vijand-art, .vijand.oprijzen-groot .vijand-art { transform-origin: bottom center; }
-.vijand.oprijzen .vijand-art { animation: oprijzen .6s cubic-bezier(.2, 1.4, .4, 1); }
-@keyframes oprijzen { 0% { scale: 1; } 45% { scale: 1.07; } 100% { scale: 1; } }
-.vijand.oprijzen-groot .vijand-art { animation: oprijzenGroot .9s cubic-bezier(.2, 1.3, .4, 1) forwards; }
-@keyframes oprijzenGroot { 0% { scale: .90; } 55% { scale: 1.22; } 100% { scale: 1.12; } }
 
 /* DE EXECUTIE: hij kantelt weg, zakt en dooft - i.p.v. het kale .sterft (opacity:0
    zonder transition = harde knip). Model: hofVlucht. */
@@ -4454,7 +4460,15 @@ body.tirade #licht-vignet { opacity: .82 !important; transition: opacity .5s eas
      stapelcontext op z1 en dimde het doek de titel 45-78% weg, precies op het moment
      dat hij moest landen. */
   z-index: 47;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  /* BOVEN de vijandenrij, niet er middenop. v120-fix: gecentreerd landde de h2 op exact de
+     hoogte van de figuren (gemeten laptop 1440x900: titel y 386-483, baas-art y 403-579 =
+     45-55% van de figuurdoos afgedekt) en bleef daar met duur 2400 van t~1015 tot t~3415
+     staan - dwars over de uithaal (1700), het contactmoment (1820), "U bent ONTSLAGEN"
+     (2100), het voetlicht (2600) en het driester-cijfer (2900). Precies de beats waarop hij
+     moet ACTEREN. §4.1 hield alleen rekening met de arenawissel erachter, niet met de
+     figuur. De vijandenrij begint rond y 390; met deze padding staat de titel erboven. */
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  padding: clamp(40px, 11vh, 132px) 16px 0;
   gap: 8px;
   pointer-events: none;
   background: radial-gradient(ellipse at center, rgba(60, 10, 20, .18), rgba(10, 6, 14, .42));
