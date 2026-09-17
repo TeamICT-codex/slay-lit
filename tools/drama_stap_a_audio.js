@@ -1,4 +1,4 @@
-// STAP A (v120) - A11: de drie nieuwe SFX (hamer / dreun / inzakken) meten op een analyser
+// STAP A (v121) - A11: de drie nieuwe SFX (hamer / dreun / inzakken) meten op een analyser
 // die achter de compressor hangt. Een onbekende naam MOET stil zijn, geen fout (audio.js sfx()).
 const { chromium } = require('playwright');
 const path = require('path'); const fs = require('fs');

@@ -624,7 +624,7 @@ window.VOETMARGE = {
   speler_death: 5.5, speler_hit: 4.3, spiegelwachter_gif: 3.0, steengolem_attack: 5.5, steengolem_death: 5.6,
   stempelaar_attack: 11.6, stempelaar_block: 7.2, stempelaar_cast: 6.1, stempelaar_hit: 1.3, thoverk_block: 6.1,
   thoverk_death: 4.5, thoverk_hit: 3.4, vlamwachter_death: 3.5,
-  /* v120 (HET PROCES, stap C4): de scan hierboven is van v101 en kende de zes baasposes
+  /* v121 (HET PROCES, stap C4): de scan hierboven is van v101 en kende de zes baasposes
      en de twaalf hof-platen van v117/v118 niet. HET PROCES houdt poses 2,6-3,4s in beeld
      i.p.v. 0,45s, dus een zweving die vroeger wegviel staat straks stil op het zwaarste
      moment van het spel. Alfa-scan (drempel 10/255, zelfde methode; ijking reproduceerde

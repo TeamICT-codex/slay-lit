@@ -1,4 +1,4 @@
-// STAP A (v120) - acceptatietests A1..A10 + A13 in 2D, laptop 1440x900, DICK.tempo = 1.
+// STAP A (v121) - acceptatietests A1..A10 + A13 in 2D, laptop 1440x900, DICK.tempo = 1.
 // Meet letterlijke waarden; elke regel begint met ok/FOUT + de gemeten getallen.
 const { chromium } = require('playwright');
 const path = require('path'); const fs = require('fs');

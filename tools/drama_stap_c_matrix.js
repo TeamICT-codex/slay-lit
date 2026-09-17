@@ -1,4 +1,4 @@
-// STAP C3 (v120) - de PLAYTEST-MATRIX: elf scenario's, elk met de volledige regie van HET
+// STAP C3 (v121) - de PLAYTEST-MATRIX: elf scenario's, elk met de volledige regie van HET
 // PROCES, en per scenario geteld wat er NA afloop nog aan het scherm hangt: .vonnis,
 // .tik-flits, #toneel-doek.aan, .hitstop, .slowmo, .goud-flits, .toneelschok,
 // body.ceremonie, g.ceremonie, g._regieBezig, de zes regieklassen op een LEVEND figuur,
@@ -138,7 +138,7 @@ window.__oogst = function () {
   const v = window.__vista || {};
   return { doekMax: Math.round(z.doekMax * 1000) / 1000, doekStanden: Object.keys(z.doekStanden).sort(), klassen: Object.keys(z.klassen).sort(), poses: Object.keys(z.poses).sort(),
     vista: Object.keys(v).sort().map(k => k + '=' + v[k]),
-    /* v120-fix (fixronde stap C): de Vista-TELLING loopt in 2D net zo hard, want de C3-fix
+    /* v121-fix (fixronde stap C): de Vista-TELLING loopt in 2D net zo hard, want de C3-fix
        roept Vista.pose ongeguard aan (zonder d3Actief-check). Dat de teller vult bewijst dus
        niets over het 3D-spoor. Daarom hier hard vastleggen DAT er in 3D gemeten is; scenario
        4 hangt zijn oordeel daaraan op. Een echte BEELDsonde - meten welke sprite-state
@@ -358,7 +358,7 @@ async function draai(browser, s) {
      alleen zichtbaar als Vista-aanroepen. §4.3 belooft raak/pose/sterf/schud/zetLicht. */
   const d3 = alles['4 · 3D / Vista'].stappen.filter(s => s.rest);
   const d3v = d3.map(s => s.rest.gezien.vista.join('+') || '(NIETS)');
-  /* v120-fix (fixronde stap C): éérst vastpinnen dat dit scenario ECHT in 3D draaide. De
+  /* v121-fix (fixronde stap C): éérst vastpinnen dat dit scenario ECHT in 3D draaide. De
      Vista-telling alleen bewees dat niet - ze loopt in 2D identiek vol omdat Vista.pose
      ongeguard wordt aangeroepen, dus zonder deze regel steunt het oordeel over de 3D-tak
      op een meting die in 2D dezelfde uitslag geeft. */
@@ -386,7 +386,7 @@ async function draai(browser, s) {
     try {
       uit = execFileSync(process.execPath, [path.join(WT, 'tools', suite)], {
         cwd: __dirname, encoding: 'utf8', maxBuffer: 40 * 1024 * 1024,
-        /* v120-fix (fixronde stap C): NEEM de NODE_PATH van de aanroeper over. tools/ heeft
+        /* v121-fix (fixronde stap C): NEEM de NODE_PATH van de aanroeper over. tools/ heeft
            geen eigen node_modules - playwright staat in de map van waaruit deze matrix zelf
            gestart wordt - dus met het harde pad hierheen vielen beide subsuites om op
            MODULE_NOT_FOUND en telde dat als twee FOUTen die niets over het spel zeggen. */

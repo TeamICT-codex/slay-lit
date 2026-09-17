@@ -1,4 +1,4 @@
-// STAP B (v120) - de randen: DICK.tempo (het balansharnas), twee fasegrenzen vlak na
+// STAP B (v121) - de randen: DICK.tempo (het balansharnas), twee fasegrenzen vlak na
 // elkaar (het regie-token), een leeg hof en een fasegrens tijdens de vijandbeurt.
 // Geen enkele beat mag blijven hangen en geen enkele regie mag de invoer van een
 // LATERE regie vrijgeven.

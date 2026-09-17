@@ -1,4 +1,4 @@
-// STAP B (v120) - 3D-tak: draaien de drie regies ook op het Vista-toneel, zonder crash,
+// STAP B (v121) - 3D-tak: draaien de drie regies ook op het Vista-toneel, zonder crash,
 // met de schermlaag-effecten (doek, arena-tint, vonnis, tik-flits, bazenbalk, hitstop) en
 // de camerabeats (Vista.raak/schud/pose/sterf/zetLicht)? Plaat-effecten zijn daar bewust
 // hard: Vista tekent de achterwand zelf en gevechtTik overschrijft de laag elke frame.

@@ -127,7 +127,7 @@ const Klank = (() => {
     stap()      { toon(330, 0.06, 'triangle', 0.05); },
     flip()      { ruis(0.13, 'bandpass', 900, 2800, 0.12); toon(620, 0.07, 'triangle', 0.05); },
     schitter()  { [880, 1175, 1568, 2093].forEach((f, i) => toon(f, 0.16, 'sine', 0.06, null, ctx && ctx.currentTime + i * 0.07)); },
-    /* HET PROCES (v120): de hamer is het MOTIEF van de rechtszitting - dezelfde tik bij
+    /* HET PROCES (v121): de hamer is het MOTIEF van de rechtszitting - dezelfde tik bij
        de klap en bij de stempel maakt van de drie bedrijfsovergangen een zitting in
        plaats van drie losse effectenshows. dreun = de sub-bass-inslag met lange staart,
        inzakken = iets zwaars dat in elkaar zakt (dient ook als 'scheur').

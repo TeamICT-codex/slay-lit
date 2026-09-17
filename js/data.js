@@ -1810,7 +1810,7 @@ const UITSPRAKEN = {
     opzegtermijn: '„Uw opzegtermijn loopt."',
     ontslag: '„U bent per direct vrijgesteld van verdere dienst."',
     zonderBetekening: '„Zonder betekening geen ontslag. Dan TIER ik."',
-    /* v120 (het drama van de bedrijfsovergangen): de enige regel in het hele stuk die iets
+    /* v121 (het drama van de bedrijfsovergangen): de enige regel in het hele stuk die iets
        AANKONDIGT in plaats van erop te reageren — hij valt terwijl de stemmen geteld worden. */
     stemming: '„De stemmen worden geteld. De uitslag stond al vast."',
     /* de duiding ONDER elke bedrijfstitel (vonnisSlam). Zonder deze regels is de onderregel

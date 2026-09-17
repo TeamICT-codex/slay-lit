@@ -1,4 +1,4 @@
-// Controlepas na de reviewronde (v120): de maat-gevoelige wijzigingen op het MOBIELE spoor.
+// Controlepas na de reviewronde (v121): de maat-gevoelige wijzigingen op het MOBIELE spoor.
 // Staand 390x844 en liggend 800x360: de herkozen tiran mag niet zweven, naam/hp-balk mogen
 // niet meeschalen, en de blijvende plaat-inzoom mag geen kale ondergrond tonen.
 const { chromium } = require('playwright');

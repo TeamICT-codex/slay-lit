@@ -4120,7 +4120,7 @@ body.lite .kv-geest { animation: none; opacity: .45; }
   width: max-content; max-width: min(88vw, 860px);
   text-align: center;
   pointer-events: none;
-  animation: spraakKoning var(--spraak-duur, 3.2s) ease forwards;   /* v120: JS voedt de duur uit dtempo, anders lopen JS en CSS bij DICK.tempo != 1 uit elkaar */
+  animation: spraakKoning var(--spraak-duur, 3.2s) ease forwards;   /* v121: JS voedt de duur uit dtempo, anders lopen JS en CSS bij DICK.tempo != 1 uit elkaar */
 }
 .baas-spraak span {
   font-family: 'Pirata One', serif;
@@ -4236,7 +4236,7 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
 .vijand.vlucht { animation: hofVlucht 1s ease-in forwards; }
 @keyframes hofVlucht { 0% { opacity: 1; } 100% { opacity: 0; transform: translateY(14px) scale(.86); } }
 /* de herkozen tiran staat een maat groter en brandt van binnenuit.
-   v120: de scale is naar de WRAP verhuisd (zie het drama-blok verderop) - hier blijft
+   v121: de scale is naar de WRAP verhuisd (zie het drama-blok verderop) - hier blijft
    alleen de rust-filter staan, die de woedeGloeiGoud-animatie overneemt zodra .woede erbij komt. */
 .vijand.herverkozen .vijand-art { filter: saturate(1.4) drop-shadow(0 0 18px rgba(255, 190, 60, .7)); }
 /* HET ONTSLAG: een halve tel slow-motion op de klap */
@@ -4244,7 +4244,7 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
 @keyframes slowmoPuls { 0% { filter: brightness(1.55) saturate(.5); } 100% { filter: none; } }
 
 /* ============================================================
-   HET PROCES - het drama van de bedrijfsovergangen (v120, stap A)
+   HET PROCES - het drama van de bedrijfsovergangen (v121, stap A)
    Fundamentlaag: alleen de bouwstenen, nog geen regie. Huisregels:
    - NOOIT transform/filter/backdrop-filter op #scherm-gevecht zelf. Dat element is
      .scherm (position:fixed, z-index:1, overflow:hidden); zodra daar een animatie op
@@ -4413,7 +4413,7 @@ body.tirade #licht-vignet { opacity: .82 !important; transition: opacity .5s eas
    is de onderrand précies de voetlijn. Dat een animatie op .vijand-art de scale van
    .vijand-klein/-groot overschrijft is hier geen risico: de DICKtator staat in geen van
    beide sets. .oprijzen-groot landt op 1.12 = exact de maat die .herverkozen vasthoudt.
-   v120-fix: de overshoot zelf staat NIET meer in een @keyframes maar in een inline
+   v121-fix: de overshoot zelf staat NIET meer in een @keyframes maar in een inline
    scale-TRANSITION (js: _oprijzen). Reden is dezelfde botsing als §10.3, maar dan op
    animation i.p.v. filter: animation is ÉÉN property, en .vijand.woede .vijand-art (de
    gloed, verderop in deze stylesheet, gelijke specificiteit) won dus altijd van
@@ -4466,7 +4466,7 @@ body.tirade #licht-vignet { opacity: .82 !important; transition: opacity .5s eas
      stapelcontext op z1 en dimde het doek de titel 45-78% weg, precies op het moment
      dat hij moest landen. */
   z-index: 47;
-  /* BOVEN de vijandenrij, niet er middenop. v120-fix: gecentreerd landde de h2 op exact de
+  /* BOVEN de vijandenrij, niet er middenop. v121-fix: gecentreerd landde de h2 op exact de
      hoogte van de figuren (gemeten laptop 1440x900: titel y 386-483, baas-art y 403-579 =
      45-55% van de figuurdoos afgedekt) en bleef daar met duur 2400 van t~1015 tot t~3415
      staan - dwars over de uithaal (1700), het contactmoment (1820), "U bent ONTSLAGEN"
@@ -5060,7 +5060,7 @@ body.lite .overlay { backdrop-filter: none; }
 body.lite #hand .kaart::after { display: none; }
 /* v109: geen puls, geen flits, geen crossfade in lite */
 body.lite .intent-factuur, body.lite .intent-hof { animation: none; }
-/* v120-fix (het gaatje uit §4.3, al bestaand vóór deze ronde): zonder de eindstand liet
+/* v121-fix (het gaatje uit §4.3, al bestaand vóór deze ronde): zonder de eindstand liet
    `animation: none` het pseudo-element 900ms op zijn DECLARATIEVE opacity 1 staan - in
    lite was de herrijzenisflits dus geen flits maar een keiharde goudwas over het hele
    scherm. .vijand.vlucht heeft hetzelfde nodig (hofVlucht eindigt op opacity 0, anders
@@ -5071,7 +5071,7 @@ body.lite .vijand.vlucht { opacity: 0; }
 body.lite #gevecht-achtergrond-2 { transition: none; }
 body.lite #licht-vignet.flikker::after { animation: none; }
 
-/* ---------- HET PROCES - terugval van het drama (v120, stap C1) ----------
+/* ---------- HET PROCES - terugval van het drama (v121, stap C1) ----------
    Lite en OS-reduced-motion zijn NIET gekoppeld: standaardLite zet lite aan bij
    reduced-motion, maar de speler kan lite daarna handmatig uitzetten. Dus twee volledige
    regelsets, de tweede met !important (zie de media-query verderop).
@@ -5130,10 +5130,10 @@ body.lite .einde-doel, body.lite .daily-paneel, body.lite .einde-knoppen {
   .sintel { display: none; }
   .titel-groot, .intent, .knoop.kan, #energie-orb { animation: none !important; }
   #scherm-gevecht.goud-flits::after, .vijand.vlucht, #scherm-gevecht.slowmo { animation: none !important; }
-  #scherm-gevecht.goud-flits::after { opacity: 0 !important; }   /* v120: hetzelfde gaatje als in lite - zonder eindstand 900ms volle goudwas */
+  #scherm-gevecht.goud-flits::after { opacity: 0 !important; }   /* v121: hetzelfde gaatje als in lite - zonder eindstand 900ms volle goudwas */
   .vijand.vlucht { opacity: 0 !important; }
   #gevecht-achtergrond-2 { transition: none !important; }
-  /* HET PROCES - terugval van het drama (v120, stap C1). Dezelfde set als body.lite
+  /* HET PROCES - terugval van het drama (v121, stap C1). Dezelfde set als body.lite
      hierboven, want de twee zijn niet gekoppeld: elk effect uit, elk met zijn eindstand. */
   #toneel-doek, #arena-tint, .vijand.knielt .vijand-art { transition: none !important; }
   .tik-flits { animation: none !important; opacity: 0 !important; }

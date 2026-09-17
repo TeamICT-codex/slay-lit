@@ -1,4 +1,4 @@
-// STAP A (v120) - controlepas: de BESTAANDE DICKtator-beats (fase-overgang II/III en de
+// STAP A (v121) - controlepas: de BESTAANDE DICKtator-beats (fase-overgang II/III en de
 // herrijzenis) moeten nog draaien, en de vier bugfixes van stap A moeten er ZICHTBAAR in
 // landen: kiezers blijven staan, de woede-gloed overleeft de claqueur-oproep.
 const { chromium } = require('playwright');
@@ -62,7 +62,7 @@ const t = (goed, tekst) => { if (goed) { okN++; console.log('   ok   ' + tekst);
     const vroeg = { n: kiezers.length, opacity: kiezers.map(w => getComputedStyle(w).opacity), lijk: kiezers.filter(w => w.classList.contains('lijk-weg')).length, ceremonie: !!g.ceremonie, bbToonBestaat: b._bbToon !== undefined };
     await new Promise(r => setTimeout(r, 1400));
     const laat = { lijk: kiezers.filter(w => w.classList.contains('lijk-weg')).length, opacity: kiezers.map(w => getComputedStyle(w).opacity) };
-    /* v120 stap B: DE HERVERKIEZING duurt nu 7200ms (invoer vrij op 5600, het gouden
+    /* v121 stap B: DE HERVERKIEZING duurt nu 7200ms (invoer vrij op 5600, het gouden
        V-kaartje op 6800 + 1400ms). De oude 600+1400+3200 = 5200ms landde midden in de
        ceremonie en las die terecht als 'blijft hangen'. */
     await new Promise(r => setTimeout(r, 6800));

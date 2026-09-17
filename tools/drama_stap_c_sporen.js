@@ -1,4 +1,4 @@
-// STAP C (v120) - acceptatietests C1 (lite + OS-reduced-motion) en C2 (css/mobiel.css).
+// STAP C (v121) - acceptatietests C1 (lite + OS-reduced-motion) en C2 (css/mobiel.css).
 // Meet GECOMPUTEERDE waarden op de ECHTE elementen in een echt baasgevecht: de regie-
 // helpers worden aangeroepen (vonnisSlam, tikFlits, plaatKick, baasTik, schokToneel,
 // _pipKnapt, toneelDoek) en daarna leest het script getComputedStyle. Elke regel toont de
@@ -203,7 +203,7 @@ async function meet(browser, spoor) {
     { n: 'reduced-lite-uit', w: 1440, h: 900, reduced: true, lite: false },
     { n: 'mobiel-staand', w: 390, h: 844, mobiel: true },
     { n: 'mobiel-liggend', w: 800, h: 360, mobiel: true },
-    /* v120 (fixronde stap C): lite KRUIST met het landscape-blok, en de suite draaide die
+    /* v121 (fixronde stap C): lite KRUIST met het landscape-blok, en de suite draaide die
        kruising nergens. Daar zat bevinding 3: `body.lite #toneel-doek { transition: none }`
        (style.css) en `body[data-modus="mobiel"] #toneel-doek` (mobiel.css, landscape) hebben
        allebei specificiteit (1,1,1), en mobiel.css laadt later - dus in lite BLEEF het doek
@@ -303,7 +303,7 @@ async function meet(browser, spoor) {
   const Lg = R['mobiel-liggend'];
   t(parseFloat(Lg.schok.factor) === 0.5, `--schok-f liggend: ${Lg.schok.factor} (eis .5; --schok zelf blijft ${Lg.schok.schok})`);
   t(parseFloat(Lg.flits.tikMax) === 0.55, `--tik-max liggend: ${Lg.flits.tikMax} (eis .55); gemeten flits-opacity ${Lg.flits.opacity}`);
-  /* v120 (fixronde stap C): de eis is niet meer "exact 0,3s" maar "een stap korter DAN
+  /* v121 (fixronde stap C): de eis is niet meer "exact 0,3s" maar "een stap korter DAN
      STAAND, en meelopend met --doek-t". Het harde getal negeerde de inline --doek-t die JS
      uit dtempo voedt (§3.2/§10.11): liggend stond de doekduur daardoor vast, ook bij
      DICK.tempo != 1. De meting hierboven roept toneelDoek(0.92, 350) aan, dus staand 350ms
@@ -317,7 +317,7 @@ async function meet(browser, spoor) {
   t(Lg.inzageCeremonie === 'none', `#inzage-knop tijdens de ceremonie: "${Lg.inzageCeremonie}"`);
   t(Lg.plaat.bgPosTop <= 0.5, `plaat-positie liggend: "${Lg.plaat.bgPos}" (verticaal ${Lg.plaat.bgPosTop})`);
 
-  /* v120 (fixronde stap C): C1 x C2 - de terugval moet OOK op de krapste context staan.
+  /* v121 (fixronde stap C): C1 x C2 - de terugval moet OOK op de krapste context staan.
      Precies deze kruising ontbrak, en daar zat de specificiteitsval van het doek. */
   console.log('\n======== C1 x C2 · mobiel liggend MET lite ========');
   const Ll = R['mobiel-liggend-lite'];

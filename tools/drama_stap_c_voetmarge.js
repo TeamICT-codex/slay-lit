@@ -1,4 +1,4 @@
-// STAP C4 (v120) - de VOETMARGE-scan als acceptatietest: wijkt de GRONDLIJN bij een
+// STAP C4 (v121) - de VOETMARGE-scan als acceptatietest: wijkt de GRONDLIJN bij een
 // pose-wissel minder dan 1% van de viewporthoogte af, in 2D EN in 3D?
 //
 // Methode (dezelfde in beide sporen, en volledig onafhankelijk van de tabel):
@@ -55,7 +55,7 @@ window.__url = function (id, st) {
   return 'assets/karakters/' + echt + '.webp';
 };`;
 
-/* v120 (fixronde stap C): het 2D-spoor draait niet meer alleen op 1440x900. Juist daar is de
+/* v121 (fixronde stap C): het 2D-spoor draait niet meer alleen op 1440x900. Juist daar is de
    speling het grootst — op mobiel liggend vult de baas 34% van de beeldhoogte i.p.v. ~25%, dus
    dezelfde pose-wissel is er ruim twee keer zo groot. In 3D bestaat dit gat niet: d3Gewenst
    (game.js r2230) geeft false zodra window.mobiel, dus Vista draait daar sowieso niet. */
@@ -163,7 +163,7 @@ async function opzet(browser, d3, spoor) {
       RAP[fig.id].fouten = fouten.slice();
     }
 
-    /* ---- DE KETEN (v120, fixronde stap C) ----
+    /* ---- DE KETEN (v121, fixronde stap C) ----
        De metingen hierboven zetten via naarBasis() vóór ELKE pose de --voetc terug naar de
        basiswaarde. Het spel doet dat nergens: 'herkozen' is een VASTGEHOUDEN stand (game.js
        r2755, geen auto-revert) die --voetc op zijn eigen tabelwaarde laat staan, en pose2D

@@ -2255,7 +2255,7 @@ function fxNummer(doelEl, tekst, klasse) {
   setTimeout(() => el.remove(), 950);
 }
 
-/* v120-fix: .beef gaat er ook weer AF. Hij bleef na de eerste schok van een gevecht
+/* v121-fix: .beef gaat er ook weer AF. Hij bleef na de eerste schok van een gevecht
    permanent op #scherm-gevecht staan (de animatie is dan wel klaar, de klasse niet), en
    animation is ÉÉN property: zolang .slowmo erbij staat (r4243, later in de stylesheet)
    wint slowmoPuls, en zodra de regie .slowmo er 320ms later weer af haalt, HERSTART de
@@ -2270,7 +2270,7 @@ function schudScherm() {
 }
 
 /* ============================================================
-   HET PROCES - de regieprimitieven (v120)
+   HET PROCES - de regieprimitieven (v121)
    Fundament voor de bedrijfsovergangen van de DICKtator: een klap moet GEWICHT
    krijgen. Huisregels die hier hard in zitten:
    - elke duur loopt door dtempo(), zodat het balansharnas (DICK.tempo = 0.02)
@@ -2298,7 +2298,7 @@ function hitstop(ms) {
   const d = dtempo(ms || 140);
   const eind = performance.now() + d;
   sc.classList.add('hitstop');
-  /* v120-fix: de LANGSTE wint, niet de laatste. Een korte hitstop die binnen een
+  /* v121-fix: de LANGSTE wint, niet de laatste. Een korte hitstop die binnen een
      lopende langere viel kortte die vroeger af (hij overschreef _hitstopTot én de
      opruimtimer) - hitstop(400) gevolgd door hitstop(120) was na 110ms al weg. */
   if (eind <= _hitstopTot) return;
@@ -2318,7 +2318,7 @@ function schokToneel(k, ms) {
 }
 /* een stoot op de ZAALPLAAT, verankerd op de geschilderde vloerrand zodat de figuren
    niet zweven. Alleen .plaat-inzoom blijft staan - de 6%-camerakruip van bedrijf III.
-   v120-fix, twee dingen die als paar moeten:
+   v121-fix, twee dingen die als paar moeten:
    1) ALLE varianten gaan eraf vóór de nieuwe erop komt. Vroeger verdween enkel de
       NIEUWE klasse en werd tegelijk de opruimtimer van de vorige weggegooid, dus de
       varianten stapelden op de laag ('zichtbaar plaat-inzoom plaat-beweeg plaat-dreun').
@@ -2370,7 +2370,7 @@ function baasTik(b, zwaarte) {
     el.classList.remove('baas-tik'); void el.offsetWidth; el.classList.add('baas-tik');
     clearTimeout(el._tikT);
     if (el._tikKlaar) el.removeEventListener('animationend', el._tikKlaar);
-    /* v120-fix: de opruiming moet de HITSTOP meetellen. baasTik vuurt zelf
+    /* v121-fix: de opruiming moet de HITSTOP meetellen. baasTik vuurt zelf
        hitstop(t.stop), en #scherm-gevecht.hitstop zet animation-play-state:paused op
        .vijand-art img - de CSS-animatie staat dus 140/190/220ms stil terwijl de
        wandklok doorloopt. Op de kale tikD-timer ging de klasse er af terwijl de
@@ -2388,7 +2388,7 @@ function baasTik(b, zwaarte) {
     el.addEventListener('animationend', klaar);
     el._tikT = setTimeout(klaar, tikD + dtempo(t.stop) + 80);
   }
-  /* v120-fix (stap C3, gemeten in de matrix): pose2D BAILT UIT in 3D (r2719: `d3Actief() &&
+  /* v121-fix (stap C3, gemeten in de matrix): pose2D BAILT UIT in 3D (r2719: `d3Actief() &&
      !actor.isMetgezel` -> return), en Vista.raak zet alleen een flits + camerakick, geen
      pose. Zonder de tweede regel deinsde de tiran in 3D dus nergens zichtbaar terug. Het
      huispatroon staat in dicktatorDelegatie: Vista.pose EN pose2D, met dezelfde duur. */
@@ -2416,7 +2416,7 @@ function hofDeinst(g, stap) {
   hof.forEach((x, i) => setTimeout(() => {
     if (S.gevecht !== g || g.voorbij || x.dood) return;
     const el = actorEl(x); if (el) {
-      el.style.setProperty('--deinst-t', dtempo(420) + 'ms');   /* v120-fix: de CSS-duur loopt mee met dtempo, net als --tik-t; een vaste .42s tegen een dtempo-timer knipt bij tempo != 1 */
+      el.style.setProperty('--deinst-t', dtempo(420) + 'ms');   /* v121-fix: de CSS-duur loopt mee met dtempo, net als --tik-t; een vaste .42s tegen een dtempo-timer knipt bij tempo != 1 */
       _entreeAf(el);                                            /* een net opgeroepen hoveling draagt .entree nog: die zou ná de deinst opnieuw binnenglijden (zie _entreeAf) */
       el.classList.remove('deinst'); void el.offsetWidth; el.classList.add('deinst');
       clearTimeout(el._deinstT);
@@ -2445,7 +2445,7 @@ function vonnisSlam(titel, sub, opts) {
   const o = opts || {};
   const sc = $('#scherm-gevecht'); if (!sc) return null;
   const duur = dtempo(o.duur || 2400);
-  /* v120-fix: GEEN schudScherm() meer hier. .beef animeert transform op #scherm-gevecht
+  /* v121-fix: GEEN schudScherm() meer hier. .beef animeert transform op #scherm-gevecht
      ZELF en maakt dat element daarmee containing block voor zijn position:fixed-kind
      #gevecht-achtergrond (inset:-28px): de hele geschilderde zaal zakte 52px weg van de
      figuren (gemeten vloerrand-tot-voet 0,8px -> 53,1px, met een zwarte strook onderaan)
@@ -2599,7 +2599,7 @@ function spreek(actor, pool, kans) {
 }
 
 /* de koninklijke uitroep: groot, gecentreerd, alleen voor de baas.
-   v120: DUUR-PARAMETER + FIFO-WACHTRIJ. Hij had geen enkele overlap-guard (die 2800ms
+   v121: DUUR-PARAMETER + FIFO-WACHTRIJ. Hij had geen enkele overlap-guard (die 2800ms
    zit alleen in spreek()), en twee aanroepen in dezelfde tick stapelden twee platen op
    exact dezelfde vaste positie - dat gebeurde LIVE bij II->III en bij de herrijzenis.
    De remove-timer loopt nu ook door dtempo, en --spraak-duur voedt de CSS-animatie,
@@ -2610,7 +2610,7 @@ function baasSpreekt(tekst, duurMs) {
   _spraakRij.push({ tekst, duur: duurMs || 3200 });
   _spraakVolgende();
 }
-/* HET TONEEL NEEMT HET OVER. v120-fix: de wachtrij houdt netjes één plaat tegelijk, maar
+/* HET TONEEL NEEMT HET OVER. v121-fix: de wachtrij houdt netjes één plaat tegelijk, maar
    een GEWONE baasregel die net vóór de fasegrens viel (standaardduur 3200ms) kon de eerste
    regieregel tot 3,2s van zijn beat wegduwen. Elke regie wist daarom eerst het bord: de
    duren van de regie zijn op het rooster van §2 afgestemd en moeten hun beat halen. */
@@ -2748,7 +2748,7 @@ function pose2D(actor, state, duur) {
     const vm = window.VOETMARGE || {};
     const vmSleutel = window.artTerugval ? artTerugval(basis + '_' + state) : basis + '_' + state;
     const vmBasis = window.artTerugval ? artTerugval(basis) : basis;
-    /* v120-fix (fixronde stap C): ÓÓK een terugval als deze pose geen eigen tabelregel
+    /* v121-fix (fixronde stap C): ÓÓK een terugval als deze pose geen eigen tabelregel
        heeft — exact dezelfde drietrap als de revert-tak hieronder. Zonder de else-takken
        bleef --voetc staan op wat de VÓRIGE pose had gezet, en dat is precies wat er na DE
        HERRIJZENIS gebeurt: 'herkozen' is een vastgehouden stand (geen auto-revert, r2755)
@@ -2829,7 +2829,7 @@ function preloadPoses2D(g) {
 }
 
 /* ---------- statussen, schade, blok ---------- */
-/* stil = de status valt WEL, maar zonder cijfer en zonder klank. v120 (het drama): de
+/* stil = de status valt WEL, maar zonder cijfer en zonder klank. v121 (het drama): de
    regie van HET PROCES bepaalt zelf wanneer een buff te ZIEN is. Twee plekken hebben dat
    nodig, allebei presentatie - de statuswaarde blijft op exact hetzelfde moment exact
    hetzelfde, dus het contract blijft heel:
@@ -3293,7 +3293,7 @@ function verliesHp(doel, n, bron) {
     renderTopbalk();
     if (S.hp <= 0 && inGevecht()) nederlaag();
   } else {
-    doel._hpVoorKlap = doel.hp;   /* v120 (het drama): de stand van VÓÓR deze klap. De bazenbalk van de DICKtator bevriest daarop tot de banner valt (§2.1 t=900) - op b.hp bevroor hij op de nieuwe stand en was de balk al verschoven vóór de stempel. */
+    doel._hpVoorKlap = doel.hp;   /* v121 (het drama): de stand van VÓÓR deze klap. De bazenbalk van de DICKtator bevriest daarop tot de banner valt (§2.1 t=900) - op b.hp bevroor hij op de nieuwe stand en was de balk al verschoven vóór de stempel. */
     doel.hp = Math.max(0, doel.hp - n);
     /* Het Galgentouw (Act 3): vijanden (geen bazen) onder 10% HP sterven meteen — de executie */
     if (doel.hp > 0 && heeftRelikwie('galgentouw') && VIJANDEN[doel.id] && !VIJANDEN[doel.id].baas
@@ -3357,7 +3357,7 @@ function verliesHp(doel, n, bron) {
        NOOIT g.bezig aanraken: verliesHp kan binnen eindBeurt vuren (waar bezig al true is)
        of binnen speelKaart, waarvan drie finally-blokken hem onvoorwaardelijk op false
        zetten. Daarom een eigen vlag: g.ceremonie.
-       v120: mechaniek én regie staan nu samen in dicktatorHerverkiezing() bij de twee andere
+       v121: mechaniek én regie staan nu samen in dicktatorHerverkiezing() bij de twee andere
        bedrijfsovergangen — verliesHp hoort de dramaturgie van één baas niet te dragen. */
     if (doel.hp <= 0 && !doel.dood && doel.id === 'de_dicktator' && !doel.herrezen) {
       dicktatorHerverkiezing(S.gevecht, doel);
@@ -3960,7 +3960,7 @@ function _voetlijnVan(rTop) {
    in getBoundingClientRect() (tot ~5px zwabber bij een klap) en zou de plaat per
    meting doen verspringen. `inset: -28px` + offsetWidth/offsetHeight zijn wél
    transformvrij.
-   v120: nu ook het 2D-spoor. Sinds de plaat-kicks bestaat daar dezelfde besmetting -
+   v121: nu ook het 2D-spoor. Sinds de plaat-kicks bestaat daar dezelfde besmetting -
    een hermeting midden in een .plaat-dreun (bouwGevechtDom -> zetVoetschaduwen ->
    plaatsGevechtsplaat, of een resize) bakte de geschaalde box PERMANENT in
    background-size/position: gemeten 11,5px = 1,28% vh drift die niet vanzelf herstelt.
@@ -4011,7 +4011,7 @@ function _plaatsLaag(el, url, d3Voet) {
   const ratio = _plaatRatio.get(url);
   if (!ratio) { _laadPlaatRatio(url); el.style.backgroundSize = ''; el.style.backgroundPosition = ''; el.style.removeProperty('--grondY'); return; }
   const d3 = (typeof d3Voet === 'number' && isFinite(d3Voet));
-  const r = _plaatLayoutBox(el);   /* v120: transformvrij in BEIDE sporen - zie _plaatLayoutBox */
+  const r = _plaatLayoutBox(el);   /* v121: transformvrij in BEIDE sporen - zie _plaatLayoutBox */
   if (!r.width || !r.height) return;
   const voetY = d3 ? (d3Voet - r.top) : _voetlijnVan(r.top);
   const g = (window.grondVan ? grondVan(url) : { grond: 0.62, midden: 0.5 });
@@ -4025,7 +4025,7 @@ function _plaatsLaag(el, url, d3Voet) {
   el.style.backgroundSize = Math.round(W) + 'px ' + Math.round(H) + 'px';
   el.style.backgroundPosition = Math.round(left) + 'px ' + Math.round(top) + 'px';
   el.style.backgroundRepeat = 'no-repeat';
-  el.style.setProperty('--grondY', Math.round(v) + 'px');   /* v120: de GEMETEN voetlijn in px — transform-origin voor elke plaat-animatie; 61% van de ELEMENThoogte is de vloer niet (H > r.height, top vaak negatief) */
+  el.style.setProperty('--grondY', Math.round(v) + 'px');   /* v121: de GEMETEN voetlijn in px — transform-origin voor elke plaat-animatie; 61% van de ELEMENThoogte is de vloer niet (H > r.height, top vaak negatief) */
 }
 
 /* verhouding eenmalig meten; daarna de plaat opnieuw zetten (tot dan: cover) */
@@ -4058,7 +4058,7 @@ function plaatsGevechtsplaat() {
   const url = (typeof S !== 'undefined' && S && S.gevecht && S.gevecht.achtergrond) || null;
   if (!bg) return;
   const vrij = () => {
-    /* v120: --grondY gaat MEE weg. Een plaat die op CSS-cover terugvalt is niet
+    /* v121: --grondY gaat MEE weg. Een plaat die op CSS-cover terugvalt is niet
        gemeten; een plaat-animatie die dan nog om de oude voetlijn draait, verspringt. */
     bg.style.backgroundSize = ''; bg.style.backgroundPosition = ''; bg.style.removeProperty('--grondY');
     if (laag2) { laag2.style.backgroundSize = ''; laag2.style.backgroundPosition = ''; laag2.style.removeProperty('--grondY'); }
@@ -4776,7 +4776,7 @@ function startGevecht(samenstelling, soort, rij) {
     gespeeld: {}, posten: 0, kaartenDezeBeurt: 0, aangezegd: new Map()
   };
   S.gevecht = g;
-  regieOpruimAlles();   /* v120-fix: elk gevecht begint schoon. Een DEV-herstart komt hier binnen zonder ooit door stopGevechtLus te gaan (zie daar) - anders speelt bedrijf I in het rode voetlicht van bedrijf III, met .plaat-vast nog op de zaal. */
+  regieOpruimAlles();   /* v121-fix: elk gevecht begint schoon. Een DEV-herstart komt hier binnen zonder ooit door stopGevechtLus te gaan (zie daar) - anders speelt bedrijf I in het rode voetlicht van bedrijf III, met .plaat-vast nog op de zaal. */
   /* v108: CHECKPOINT voor het baasgevecht — een tab die op een telefoon sneuvelt midden in een
      gevecht van 10-15 rondes kostte anders HP, licht en gedecreteerde kaarten terwijl de baas
      vers herstartte. laadSpel zet dit terug; gevechtGewonnen/nederlaag wissen het. */
@@ -5185,7 +5185,7 @@ function toonBaasIntro(g) {
 function gevechtTik(dt) {
   if (!S || !S.gevecht) return;
   if (!d3Actief() || !window.Vista) return;
-  Vista.tik(_hitstopActief() ? 0 : dt);   /* v120: tijdens een hitstop staat ook het 3D-toneel stil */
+  Vista.tik(_hitstopActief() ? 0 : dt);   /* v121: tijdens een hitstop staat ook het 3D-toneel stil */
   /* camerazwaai doorvertalen naar parallax op de achtergrondplaat */
   if (S.gevecht.achtergrond && GDOM.bg) {
     const zw = Vista.zwaai();
@@ -5240,10 +5240,10 @@ function stopGevechtLus() {
   regieOpruimAlles();
 }
 
-/* v120 (het drama): de regielagen van HET PROCES horen bij ÉÉN gevecht. body.tirade en
+/* v121 (het drama): de regielagen van HET PROCES horen bij ÉÉN gevecht. body.tirade en
    data-bedrijf zijn met opzet blijvend BINNEN de baas, dus zonder deze opruiming droeg het
    volgende gevecht het dichtgeknepen vignet en de rode voetlichttint gewoon mee.
-   v120-fix, twee gaten:
+   v121-fix, twee gaten:
    1) De opruiming stond in stopGevechtLus, maar devDicktator() roept nieuwSpel() aan VÓÓR
       zijn eigen `if (inGevecht()) stopGevechtLus()` - daarna is inGevecht() false en werd
       er dus niets opgeruimd. Een DEV-herstart midden in bedrijf III begon het volgende
@@ -5302,7 +5302,7 @@ function triggerEntree(el, delaySec) {
   if (delaySec) el.style.animationDelay = delaySec + 's';
   setTimeout(() => { el.classList.remove('entree'); el.style.animationDelay = ''; }, 2000 + (delaySec || 0) * 1000);
 }
-/* v120-fix (fixronde stap C): haal een uitgespeelde .entree van de WRAP vóór een regieklasse
+/* v121-fix (fixronde stap C): haal een uitgespeelde .entree van de WRAP vóór een regieklasse
    die diezelfde wrap animeert. Zelfde bugklasse als §10.3, nu op animation i.p.v. filter:
    animation is ÉÉN property, en .deinst (css r4400), .stemt (r4437) en .exit.geveld (r4430)
    staan LATER in de stylesheet dan .vijand.entree (r3886). Zolang de regieklasse erop staat
@@ -5697,7 +5697,7 @@ function renderGevecht() {
           </div>
           <div class="bb-extra"></div>`;
       }
-      /* v120 (HET PROCES, het drama): de bazenbalk BEVRIEST tijdens een ceremonie.
+      /* v121 (HET PROCES, het drama): de bazenbalk BEVRIEST tijdens een ceremonie.
          b._bbToon is de waarde die getoond moet blijven tot de regie hem vrijgeeft
          (b._bbToon = null). Alle DRIE de uitgangen moeten mee: --hp voedt het mobiele
          HART (mobiel.css, waar .bb-vul display:none is), .bb-vul de laptopbalk en
@@ -5710,7 +5710,7 @@ function renderGevecht() {
       balkEl.style.setProperty('--hp', Math.round(pct));
       bb.querySelector('.bb-vul').style.width = pct + '%';
       bb.querySelector('.bb-tekst').textContent = `${bbHp}/${b.maxHp}`;
-      /* v120-fix: ALLES wat de fase verklapt staat onder dezelfde vries, niet alleen de
+      /* v121-fix: ALLES wat de fase verklapt staat onder dezelfde vries, niet alleen de
          cijfers. .bb-woede is allesbehalve subtiel (rode rand + oneindige puls + een
          oranjerode vulling) en de extra-strook springt van '6+3/post' naar
          '7+4/post · kiezers 2' - allebei op t=0, precies het lek waarvoor de vries
@@ -5755,12 +5755,12 @@ function renderGevecht() {
        sterf-animatie intact blijft; bij een herrijzenis (v.dood weer false) valt de
        kolom vanzelf terug. Indexen in GDOM.vijanden blijven ongemoeid: het element
        blijft in de DOM staan, het neemt alleen geen ruimte meer. */
-    /* v120 (het drama): zolang een CEREMONIE loopt en de wrap een exit-klasse draagt,
+    /* v121 (het drama): zolang een CEREMONIE loopt en de wrap een exit-klasse draagt,
        speelt de REGIE de afgang uit - renderGevecht mag er dan niet overheen. Zonder
        deze uitzondering zette .sterft (opacity:0, geen transition = harde knip) in
        dezelfde tick de val van de griffier, de gouden kiezerrand en de hofVlucht
        onzichtbaar, en haalde .lijk-weg (display:none) ze 750ms later helemaal weg. */
-    /* v120-fix: DE KIEZERS overleven een DOM-herbouw. De uitzondering hierboven leest de
+    /* v121-fix: DE KIEZERS overleven een DOM-herbouw. De uitzondering hierboven leest de
        klasse van de WRAP, en bouwGevechtDom (rij.innerHTML='') wist die - inclusief het
        'sterft lijk-weg' dat hij voor elke dode vijand meteen zelf in de opmaak zet. Valt de
        herrijzenis via gif of doornen midden in de vijandbeurt, dan roept een hoveling nog
@@ -5782,14 +5782,14 @@ function renderGevecht() {
       clearTimeout(d._lijkT);
       d._lijkT = setTimeout(() => { if (v.dood) d.wrap.classList.add('lijk-weg'); }, dtempo(750));
     }
-    /* v120: de fase-klassen van de DICKtator worden AFGEDWONGEN, net als .sterft.
+    /* v121: de fase-klassen van de DICKtator worden AFGEDWONGEN, net als .sterft.
        bouwGevechtDom() doet rij.innerHTML = '' en wist elke handmatig gezette klasse -
        de claqueur-oproep in bedrijf III sloopte zo in hetzelfde frame de woede-gloed en
        de herkozen stand. Alleen voor hem: de slijmkoning en de Erfprins zetten .woede
        zelf en een kale toggle zou die bij de eerstvolgende render weer weghalen. */
     if (v.id === 'de_dicktator') {
       d.wrap.classList.toggle('woede', (v.fase || 1) >= 3 || !!v.vorm2);
-      /* v120 (stap B): .herverkozen hangt aan een PRESENTATIE-poort, niet rechtstreeks aan
+      /* v121 (stap B): .herverkozen hangt aan een PRESENTATIE-poort, niet rechtstreeks aan
          de mechaniek. doel.herrezen staat al op t=0 van DE HERVERKIEZING - die klasse zet
          scale 1.12 + een gouden gloed, dus de tiran werd groot en goud op precies het
          moment dat hij dóód op zijn knieën hoort te liggen, 3,2s vóór hij opstaat.
@@ -7304,7 +7304,7 @@ function dicktatorFase(v) {
 /* de arena wisselt van plaat zonder harde knip: een tweede laag komt eroverheen
    en neemt het beeld over. In lite/reduced-motion en in 3D (Vista tekent daar zelf
    de achtergrond) is het een harde wissel — bekende Vista-pariteitsbeperking. */
-/* v120: geeft een PROMISE terug die resolvet zodra hard() gedraaid heeft (ook in de
+/* v121: geeft een PROMISE terug die resolvet zodra hard() gedraaid heeft (ook in de
    lite-/3D-tak, die meteen hard wisselt), zodat een regie op de landing kan wachten.
    opts.stijl legt een plaat-animatie op de UITGAANDE laag - dat is #gevecht-achtergrond:
    die toont tijdens de fade nog de OUDE plaat (zie dataset.plaat hieronder), terwijl
@@ -7332,7 +7332,7 @@ function toonArenaWissel(url, opts) {
   const hard = () => {
     delete bgEl.dataset.plaat;
     clearTimeout(bgEl._plaatT);
-    bgEl.classList.remove('plaat-beweeg', 'plaat-vast', ..._PLAAT_VARIANTEN);   /* de uitgaande stijl hoort niet op de binnengekomen plaat - v120-fix: ook de BLIJVENDE inzoom van bedrijf III, anders komt de nieuwe zaal binnen op scale 1.06 */
+    bgEl.classList.remove('plaat-beweeg', 'plaat-vast', ..._PLAAT_VARIANTEN);   /* de uitgaande stijl hoort niet op de binnengekomen plaat - v121-fix: ook de BLIJVENDE inzoom van bedrijf III, anders komt de nieuwe zaal binnen op scale 1.06 */
     bgEl.style.backgroundImage = beeld;
     bgEl.style.backgroundPosition = '';
     bgEl.style.backgroundSize = '';
@@ -7369,7 +7369,7 @@ function toonArenaWissel(url, opts) {
 }
 
 /* ============================================================
-   HET PROCES - DE DRIE REGIES (v120, stap B)
+   HET PROCES - DE DRIE REGIES (v121, stap B)
    De bedrijfswissels van de DICKtator als TONEEL. Wat hier verandert is uitsluitend
    VOLGORDE-IN-DE-TIJD en presentatie; geen enkele regel uit eindbaas_contract.md wordt
    aangeraakt (fase-drempels, kiezerstelling, statuswis, decreten, intent-hersync).
@@ -7388,7 +7388,7 @@ function toonArenaWissel(url, opts) {
 function _regieKlok(g) {
   g._regieId = (g._regieId || 0) + 1;
   const mijn = g._regieId;
-  /* v120-fix: dezelfde token dient als LOOPT-ER-EEN-REGIE-vlag. beginSpelerBeurt hief de
+  /* v121-fix: dezelfde token dient als LOOPT-ER-EEN-REGIE-vlag. beginSpelerBeurt hief de
      ceremonie onvoorwaardelijk op - ook een regie die nog 6 seconden liep. Valt de
      herrijzenis via gif of doornen midden in de vijandbeurt, dan gaf hij de invoer al na
      ~1,2s vrij ONDER een doek van 92%, met de bazenbalk bevroren op 0% terwijl de baas 96
@@ -7423,7 +7423,7 @@ function _pipKnapt(i) {
     p.classList.remove('knapt'); void p.offsetWidth; p.classList.add('knapt');
     setTimeout(() => p.classList.remove('knapt'), dtempo(600));
   }
-  /* v120 (stap C2): op mobiel IS de bazenbalk het hart (.bb-balk::before, mobiel.css) en
+  /* v121 (stap C2): op mobiel IS de bazenbalk het hart (.bb-balk::before, mobiel.css) en
      zijn de pips 8px klein - de breuk hoort daar dus op het hart te vallen. Op laptop
      bestaat .hart-knapt niet in CSS, dus deze klasse is daar een no-op: één haak, twee
      sporen, geen modus-test in JS. */
@@ -7451,7 +7451,7 @@ function _regieOpruim(actor) {
 }
 /* HIJ RIJST OP - de schaal-overshoot van de twee zwaarste figuurbeats van het stuk
    (de uithaal uit de knieval in III, DE HERRIJZENIS in IV).
-   v120-fix, en het is dezelfde botsing als §10.3 maar dan op ANIMATION i.p.v. filter:
+   v121-fix, en het is dezelfde botsing als §10.3 maar dan op ANIMATION i.p.v. filter:
    animation is ÉÉN property, en .vijand.woede .vijand-art (de gloed) staat later in de
    stylesheet met dezelfde specificiteit - die won dus altijd van .vijand.oprijzen, en
    .vijand.herverkozen.woede (0,3,1) won sowieso van .oprijzen-groot. Gemeten: bij I->II
@@ -7492,7 +7492,7 @@ function dicktatorOvergang(b, g, nieuw, oud) {
   const op = _regieKlok(g);
   const U = UITSPRAKEN._dicktator, D = U.duiding || {};
   /* de bazenbalk bevriest: pips, woede-rand en de beleidsstrook verklappen het bedrijf niet
-     meer vóór de banner valt. v120-fix: op de stand van VÓÓR de klap (verliesHp legt hem
+     meer vóór de banner valt. v121-fix: op de stand van VÓÓR de klap (verliesHp legt hem
      vast), niet op b.hp - renderGevecht had de balk dan op t=0 al naar de nieuwe stand
      laten lopen en op de stempel (t=900) versprong er niets meer. */
   b._bbToon = (b._hpVoorKlap != null ? Math.max(b.hp, b._hpVoorKlap) : b.hp);
@@ -7525,7 +7525,7 @@ function dicktatorRegieProces(b, g, op, U, D) {
 
   /* t=140 - de hitstop breekt: de figurenlaag schiet los en de plaat krijgt een duw om
      --grondY (de gemeten vloerrand, niet 61% van de elementhoogte).
-     v120-fix: GEEN schudScherm() meer op deze beat. .beef animeert transform op
+     v121-fix: GEEN schudScherm() meer op deze beat. .beef animeert transform op
      #scherm-gevecht zelf en maakt dat element containing block voor zijn position:fixed-
      kind #gevecht-achtergrond (inset:-28px): de geschilderde zaal zakte 52px weg van de
      figuren (gemeten vloerrand-tot-voet 0,8px -> 53,1px, met een zwarte strook onderaan)
@@ -7548,7 +7548,7 @@ function dicktatorRegieProces(b, g, op, U, D) {
      terwijl de nieuwe recht binnenkomt, en het doek trekt daar dwars doorheen op. */
   op(1500, () => {
     pose2D(b, 'cast', 1.4);
-    if (window.Vista && Vista.pose) Vista.pose(b, 'cast', 1.4);   /* v120-fix (C3): zonder deze regel richtte hij zich in 3D nergens op - pose2D is daar een no-op */
+    if (window.Vista && Vista.pose) Vista.pose(b, 'cast', 1.4);   /* v121-fix (C3): zonder deze regel richtte hij zich in 3D nergens op - pose2D is daar een no-op */
     _regieKlasse(b, 'oprijzen', 700);
     _oprijzen(b, null, 1.07, 300);              /* de overshoot zelf loopt via de LOSSE scale:-transition, niet via een keyframe - zie _oprijzen */
     schokToneel(1.8, 520);
@@ -7561,7 +7561,7 @@ function dicktatorRegieProces(b, g, op, U, D) {
   });
 
   op(1820, () => _oprijzen(b, null, null, 320));  /* en hij zakt terug op zijn eigen maat */
-  /* de duur past in het GAT naar de volgende tekstbeat (2200 -> 4000 = 1800). v120-fix: de
+  /* de duur past in het GAT naar de volgende tekstbeat (2200 -> 4000 = 1800). v121-fix: de
      FIFO-wachtrij kapt niets af, dus een te lange regel schuift de volgende van zijn beat. */
   op(2200, () => baasSpreekt(U.fase2, 1700));
   op(2900, () => Klank.muziek('baas'));           /* de muziek komt terug, voller dan ervoor - de crossfade is dan net geland */
@@ -7595,7 +7595,7 @@ function dicktatorRegieTirade(b, g, op, U, D) {
   Klank.muziek('stil');
   baasTik(b, 2);                                   /* hitstop 190 + rood-as flits */
 
-  /* v120-fix: geen schudScherm() - de plaat sprong 52px weg van de figuren op precies de
+  /* v121-fix: geen schudScherm() - de plaat sprong 52px weg van de figuren op precies de
      beat waarop de plaatstoot om --grondY verankerd hoort te zijn (zie I->II t=140). */
   op(190, () => {
     schokToneel(1.6, 520);
@@ -7609,7 +7609,7 @@ function dicktatorRegieTirade(b, g, op, U, D) {
      body.tirade: het fakkelvignet knijpt dicht en blijft dicht. */
   op(450, () => {
     pose2D(b, 'death', 1.4);
-    if (window.Vista && Vista.pose) Vista.pose(b, 'death', 1.4);   /* v120-fix (C3): de knieval bestond in 3D niet. Vista.pose, NIET Vista.sterf - hij gaat hier niet neer, hij wankelt */
+    if (window.Vista && Vista.pose) Vista.pose(b, 'death', 1.4);   /* v121-fix (C3): de knieval bestond in 3D niet. Vista.pose, NIET Vista.sterf - hij gaat hier niet neer, hij wankelt */
     _regieKlasse(b, 'knielt', 0);
     toneelDoek(0.70, 500);
     document.body.classList.add('tirade');
@@ -7629,7 +7629,7 @@ function dicktatorRegieTirade(b, g, op, U, D) {
     _regieKlasse(b, 'oprijzen', 900);
     _oprijzen(b, null, 1.07, 300);              /* LOSSE scale:-transition: de keyframe verloor hier altijd van de woede-gloed (zie _oprijzen) */
     pose2D(b, 'attack', 1.1);
-    if (window.Vista && Vista.pose) Vista.pose(b, 'attack', 1.1);   /* v120-fix (C3): de uithaal uit de knieval - in 3D was dit een onbewogen sprite */
+    if (window.Vista && Vista.pose) Vista.pose(b, 'attack', 1.1);   /* v121-fix (C3): de uithaal uit de knieval - in 3D was dit een onbewogen sprite */
     const sc = $('#scherm-gevecht');
     if (sc && !document.body.classList.contains('lite')) {
       sc.classList.add('slowmo');
@@ -7659,7 +7659,7 @@ function dicktatorRegieTirade(b, g, op, U, D) {
   op(2020, () => _oprijzen(b, null, null, 320));             /* terug op zijn eigen maat na de uithaal */
   /* kort, hard, ná het beeld. De duur past in het GAT naar fase3 (2100 -> 3400 = 1300):
      de FIFO-wachtrij kapt niets af, en met 1700 begon fase3 pas op 3842 en griffier-
-     Ontslag[1] op 6444 - ruim 0,8s voorbij hun beat (v120-fix). */
+     Ontslag[1] op 6444 - ruim 0,8s voorbij hun beat (v121-fix). */
   op(2100, () => baasSpreekt(U.griffierOntslag[0], 1200));
 
   /* t=2600 - HET VOETLICHT SLAAT DOOR. Bedrijf III krijgt zijn eigen wereld zonder vierde
@@ -7670,7 +7670,7 @@ function dicktatorRegieTirade(b, g, op, U, D) {
     _bedrijf(3);
     plaatKick('plaat-inzoom', 1200);
     const el = actorEl(b); if (el) el.classList.add('woede');
-    /* v120-fix: DE MUZIEK KOMT TERUG (§5, terugkeer @2600). Deze regie zette Klank.muziek
+    /* v121-fix: DE MUZIEK KOMT TERUG (§5, terugkeer @2600). Deze regie zette Klank.muziek
        ('stil') op t=0 maar nergens iets terug - SCENES.stil heeft droneVol 0 en geen bpm,
        dus het hele derde bedrijf en alle beurten daarna werden in volstrekte stilte
        gespeeld. Tegenover main was dat ook een regressie: daar dempte een fasewissel
@@ -7721,7 +7721,7 @@ function dicktatorHerverkiezing(g, doel) {
   });
   doel.status = {};                       /* de wederopstanding wist je opgebouwde gif/zwak — vers bloed, oude leugens */
   const kracht = doel._kiezers + Math.min(DICK.krachtVastCap, doel.krachtVast || 0);
-  /* NA de wis, anders sneeuwt ze onder. STIL (v120-fix): de waarde valt op exact hetzelfde
+  /* NA de wis, anders sneeuwt ze onder. STIL (v121-fix): de waarde valt op exact hetzelfde
      moment als vroeger, alleen het cijfer niet - dat verklapte de volledige stemuitslag
      ('💪 +3 Kracht') bij de doodsklap, 900ms vóór DE STEMMING zelf, terwijl die beat de
      enige is die de kernmechaniek zichtbaar maakt (§1 punt 9). */
@@ -7745,7 +7745,7 @@ function dicktatorHerverkiezing(g, doel) {
   _ceremonieAan(g);
 
   /* t=0 - de doodsklap krijgt zijn eigen inslag: zwaarste terugstoot, goudflits, hitstop 220.
-     v120-fix: de schudScherm()-na-echo uit main is eruit. Op #scherm-gevecht zelf maakt hij
+     v121-fix: de schudScherm()-na-echo uit main is eruit. Op #scherm-gevecht zelf maakt hij
      de plaat 52px los van de figuren (zie I->II t=140); schokToneel(2.6) op #strijdveld is
      de zwaarste schok van het stuk en doet het werk. */
   _spraakStop();                                   /* het toneel neemt het over (zie I->II) */
@@ -7757,7 +7757,7 @@ function dicktatorHerverkiezing(g, doel) {
 
   /* t=260 - DE VAL: hij zakt op zijn knieën en BLIJFT liggen. 3,4s i.p.v. 1,2s - vroeger
      stond hij op t=1200 alweer rechtop, één seconde vóór zijn eigen herrijzenisbanner. */
-  /* v120-fix (C3): ook hier Vista.pose i.p.v. niets. Géén Vista.sterf - die laat de sprite
+  /* v121-fix (C3): ook hier Vista.pose i.p.v. niets. Géén Vista.sterf - die laat de sprite
      omvallen én blijvend dood staan, en hij staat op t=3200 juist weer op. */
   op(260, () => { pose2D(doel, 'death', 3.4); if (window.Vista && Vista.pose) Vista.pose(doel, 'death', 3.4); _regieKlasse(doel, 'knielt', 0); toneelDoek(0.80, 600); });
 
@@ -7772,7 +7772,7 @@ function dicktatorHerverkiezing(g, doel) {
 
   /* de enige vooruitwijzende regel in het hele stuk - en de duur is 1100, niet 2200:
      §2.3 belooft op t=2600 ECHT ZWART (92%) met 600ms niets, en op een verder zwart scherm
-     was deze tekstplaat tot t=3631 het enige leesbare element in beeld (v120-fix). */
+     was deze tekstplaat tot t=3631 het enige leesbare element in beeld (v121-fix). */
   if (kiezers.length) op(1400, () => baasSpreekt(U.stemming, 1100));
 
   /* t=2000 - ze vluchten van het toneel onder betaald applaus. .exit erbij zodat
@@ -7862,7 +7862,7 @@ function dicktatorHerverkiezing(g, doel) {
    schreef v.fase nooit, zodat de bazenbalk-pips en de woede-gloed nooit brandden. Alleen
    omhoog: na de herverkiezing (fase 3 gezet) komt er geen tweede fase-flits.
    v109: elk bedrijf krijgt zijn eigen banner, arena en personeelsbesluit.
-   v120: de banner is een volledige REGIE geworden (dicktatorOvergang) - deze functie houdt
+   v121: de banner is een volledige REGIE geworden (dicktatorOvergang) - deze functie houdt
    alleen nog de guard en de fase-schrijving, zodat de drempels één plek blijven. */
 function checkDicktatorFase(b, g) {
   const nieuw = dicktatorFase(b);
@@ -8026,12 +8026,12 @@ function dicktatorHersync(ookBaas) {
 
 /* Kracht die de statuswis van DE HERVERKIEZING overleeft: uit gemiste zittingen,
    zelf-inningen en de executie van zijn eigen griffier. Cap 3. */
-/* v120 (het drama): fxUit houdt alleen de PRESENTATIE tegen (het '💪 driester'-cijfer),
+/* v121 (het drama): fxUit houdt alleen de PRESENTATIE tegen (het '💪 driester'-cijfer),
    nooit de mechaniek - de +1 Kracht valt op exact hetzelfde moment als vroeger. De regie
    van DE TIRADE trekt het cijfer uit de executieklap (t=1700) en toont het op t=2900,
    anders is het ruis bovenop een dode griffier. Geeft terug OF er werkelijk een punt bij
    kwam, zodat de regie geen cijfer toont dat de cap al tegenhield.
-   v120-fix: fxUit onderdrukte alleen het driester-cijfer, maar geefStatus vuurde er één
+   v121-fix: fxUit onderdrukte alleen het driester-cijfer, maar geefStatus vuurde er één
    regel hoger ONVOORWAARDELIJK zijn eigen '💪 +1 Kracht' + buff-toon af. Netto zag je twee
    cijfers voor één punt - het eerste pal over de vonnistitel, meer ruis dan vóór de ronde.
    Daarom loopt de toekenning nu stil (zie de stil-parameter van geefStatus). */
@@ -8677,11 +8677,11 @@ async function eindBeurt() {
 function beginSpelerBeurt() {
   const g = S.gevecht;
   if (!g || g.voorbij) return;
-  /* v120: EERST vrijgeven, DAN checken. Stond de vrijgave zestien regels lager (bij de
+  /* v121: EERST vrijgeven, DAN checken. Stond de vrijgave zestien regels lager (bij de
      rest van de beurt-reset), dan hief deze functie een ceremonie die checkBaasFase hier
      net startte in dezelfde tick weer op - precies wat er gebeurt als gif- of doorn-
      schade tijdens de vijandbeurt een fasegrens breekt. */
-  /* v120-fix: alleen als er GEEN regie meer loopt. Een fasegrens of de herrijzenis die via
+  /* v121-fix: alleen als er GEEN regie meer loopt. Een fasegrens of de herrijzenis die via
      gif of doornen midden in de vijandbeurt valt, speelt zijn 4,2-7,2s tijdlijn gewoon uit;
      deze regels gaven de invoer dan al na ~1,2s vrij - onder een volle black-out, met een
      bevroren bazenbalk en met DE STEMMING op onzichtbare figuren. De regie geeft zelf vrij
@@ -8690,7 +8690,7 @@ function beginSpelerBeurt() {
      twee regels lager START wordt nog steeds niet in dezelfde tick opgeheven. */
   if (!g._regieBezig) {
     g.ceremonie = false;                    /* v109: een nieuwe spelersbeurt geeft de invoer altijd vrij */
-    document.body.classList.remove('ceremonie');   /* v120: en de amberkring om de held gaat mee uit - anders blijft hij branden tot het einde van het gevecht */
+    document.body.classList.remove('ceremonie');   /* v121: en de amberkring om de held gaat mee uit - anders blijft hij branden tot het einde van het gevecht */
     g.herrijzenisNu = false;
   }
   checkBaasFase(); /* gif-schade in de vijandbeurt kan een fasegrens passeren */

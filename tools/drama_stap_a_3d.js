@@ -1,4 +1,4 @@
-// STAP A (v120) - 3D-tak: A1 (--grondY op de sprite-voetlijn), A7 (Vista.tik krijgt dt === 0
+// STAP A (v121) - 3D-tak: A1 (--grondY op de sprite-voetlijn), A7 (Vista.tik krijgt dt === 0
 // tijdens de hitstop) en A12 (Vista.schud). Vista tekent de achterwand zelf; plaat-effecten
 // zijn daar bewust hard - het doek en de schermlagen dragen de dramaturgie.
 const { chromium } = require('playwright');

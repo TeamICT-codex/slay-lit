@@ -1,4 +1,4 @@
-// STAP B (v120) - acceptatietests B1..B5 in 2D, laptop 1440x900, DICK.tempo = 1.
+// STAP B (v121) - acceptatietests B1..B5 in 2D, laptop 1440x900, DICK.tempo = 1.
 // Meet met een in-page sampler (40ms) vanaf het frame waarin de ceremonie start, zodat de
 // gemeten tijden niet door Playwright-roundtrips vervuild raken. Elke regel toont de
 // GEMETEN waarde, nooit "werkt".
