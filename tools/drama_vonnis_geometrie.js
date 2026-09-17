@@ -84,8 +84,9 @@ window.__scene = function () {
   [...document.querySelectorAll('.vijand .vijand-art')].forEach((e, i) => { const r = R(e, 'figuur ' + i); if (r) uit.push(r); });
   return uit;
 };
-// DE INKT van de titel, niet zijn regeldoos. Pirata One draagt ~9px loodwit boven de
-// kapitalen: de rechthoek van de h2 begint dus merkbaar hoger dan de eerste glyph. De
+// DE INKT van de titel, niet zijn regeldoos. Pirata One draagt loodwit boven de kapitalen
+// (gemeten 13-14px op laptop, ~7px op mobiel - het schaalt met de font-size): de rechthoek
+// van de h2 begint dus merkbaar hoger dan de eerste glyph. De
 // fase-rij (.bb-fases) hangt 5px onder de HP-balk en dooft bewust NIET mee met de
 // ceremonie (de pip-breuk is zelf een beat), dus in DOOS-maten overlapt de titel haar
 // altijd een paar px. Verankeren op de pips i.p.v. op de balk kost ~16px extra kop en

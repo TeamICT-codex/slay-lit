@@ -4165,7 +4165,14 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
    vinger te bereiken en viel stil uit het stuk. De auto gaat op de PIL (.bb-aegis) en
    niet op de hele 620px brede .bb-extra: daarbuiten blijft de band doorlaatbaar naar
    wat eronder ligt. Geldt voor beide sporen; de andere bazen (Copycat-arsenaal, DE
-   FACTUUR) winnen hun tip hiermee ook terug. */
+   FACTUUR) winnen hun tip hiermee ook terug.
+   DE PRIJS, gemeten: een pil die pointer-events vangt, geeft ze niet door aan de figuur
+   eronder. In de gewone gevechtsstand is de pil smal ("🧾 6+3") en overlapt ze op geen
+   enkel formaat iets - 9/9 peilpunten van elke vijandfiguur blijven raakbaar. Alleen met
+   het breedste label (⚖ V · HET MANDAAT · ⏳ ONTSLAG · 🧾) op de krapste liggende telefoon
+   (800x360) dekt ze een hoek van 18x22px van de bazendoos af: 8/9 peilpunten en het
+   midden blijven staan. Dat is de bekende prijs van .bb-fases hierboven, en de tip zelf
+   is de reden dat P1 geen kaartje meer nodig heeft. */
 #baas-balk .bb-aegis { pointer-events: auto; cursor: help; }
 .bb-naam {
   font-family: 'Pirata One', serif;
