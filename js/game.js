@@ -2429,7 +2429,13 @@ function vonnisSlam(titel, sub, opts) {
   const o = opts || {};
   const sc = $('#scherm-gevecht'); if (!sc) return null;
   const duur = dtempo(o.duur || 2400);
-  if (o.schok !== false) { schudScherm(); schokToneel(typeof o.schok === 'number' ? o.schok : 1.2, 420); }
+  /* v120-fix: GEEN schudScherm() meer hier. .beef animeert transform op #scherm-gevecht
+     ZELF en maakt dat element daarmee containing block voor zijn position:fixed-kind
+     #gevecht-achtergrond (inset:-28px): de hele geschilderde zaal zakte 52px weg van de
+     figuren (gemeten vloerrand-tot-voet 0,8px -> 53,1px, met een zwarte strook onderaan)
+     precies op de beat waarop de plaatstoot om --grondY verankerd hoort te zijn. De schok
+     gaat op #strijdveld - dat is wat het regieblad in §10.1 zelf voorschrijft. */
+  if (o.schok !== false) schokToneel(typeof o.schok === 'number' ? o.schok : 1.2, 420);
   if (o.sfx !== false) Klank.sfx(typeof o.sfx === 'string' ? o.sfx : 'hamer');
   if (typeof o.doek === 'number') toneelDoek(o.doek);
   const el = document.createElement('div');
@@ -7314,6 +7320,42 @@ const _REGIE_KLASSEN = ['baas-tik', 'oprijzen', 'oprijzen-groot', 'knielt', 'dei
 function _regieOpruim(actor) {
   const el = actorEl(actor); if (!el) return;
   _REGIE_KLASSEN.forEach(k => el.classList.remove(k));
+  _oprijzenAf(el);
+}
+/* HIJ RIJST OP - de schaal-overshoot van de twee zwaarste figuurbeats van het stuk
+   (de uithaal uit de knieval in III, DE HERRIJZENIS in IV).
+   v120-fix, en het is dezelfde botsing als §10.3 maar dan op ANIMATION i.p.v. filter:
+   animation is ÉÉN property, en .vijand.woede .vijand-art (de gloed) staat later in de
+   stylesheet met dezelfde specificiteit - die won dus altijd van .vijand.oprijzen, en
+   .vijand.herverkozen.woede (0,3,1) won sowieso van .oprijzen-groot. Gemeten: bij I->II
+   speelde de keyframe wél (daar draagt hij nog geen .woede), bij DE TIRADE en DE
+   HERRIJZENIS NOOIT - animationName bleef 'woedeGloei'/'woedeGloeiGoud' en hij verscheen
+   in één frame op zijn eindmaat 1.12: een POP i.p.v. een herrijzenis.
+   Daarom de LOSSE scale:-property met een transition (huisregel: nooit transform:, dat
+   zou .vijand-klein/-groot overschrijven). Een transition botst met geen enkele animatie,
+   dus de gloed blijft gewoon doorpulseren. De scale staat op .vijand-art, niet op de
+   wrap: dáár is de onderrand précies de voetlijn (v114-les).
+   van != null = eerst hard naar die stand springen (de .90 waar de herrijzenis uit komt). */
+function _rustigeBeweging() {
+  return document.body.classList.contains('lite')
+    || !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+function _oprijzen(actor, van, naar, ms) {
+  const el = actorEl(actor); if (!el) return;
+  const art = el.querySelector('.vijand-art'); if (!art) return;
+  /* lite én reduced-motion apart, allebei met een EXPLICIETE eindstand: hier is dat de
+     basismaat (of de 1.12 die .herverkozen zelf vasthoudt), dus de inline scale gaat weg. */
+  if (_rustigeBeweging()) { _oprijzenAf(el); return; }
+  art.style.transformOrigin = 'bottom center';
+  if (van != null) { art.style.transition = 'none'; art.style.scale = van; void art.offsetWidth; }
+  art.style.transition = 'scale ' + dtempo(ms || 300) + 'ms cubic-bezier(.2, 1.3, .4, 1)';
+  art.style.scale = naar;
+}
+function _oprijzenAf(el) {
+  const art = el && el.querySelector('.vijand-art'); if (!art) return;
+  art.style.transition = '';
+  art.style.scale = '';
+  art.style.transformOrigin = '';
 }
 
 /* B1/B2 - de bedrijfswissel. checkDicktatorFase houdt zijn monotonie-guard en zet b.fase;
