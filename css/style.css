@@ -4474,7 +4474,10 @@ body.tirade #licht-vignet { opacity: .82 !important; transition: opacity .5s eas
      moet ACTEREN. §4.1 hield alleen rekening met de arenawissel erachter, niet met de
      figuur. De vijandenrij begint rond y 390; met deze padding staat de titel erboven. */
   display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-  padding: clamp(40px, 11vh, 132px) 16px 0;
+  /* v121 (P2): de kop komt uit vonnisSlam/_vonnisKop en is de GEMETEN onderkant van de
+     bazenbalk + 8px + de hoek die de -1,5deg-stempel erbovenuit steekt. De clamp blijft
+     als terugval staan voor elk gevecht zonder bazenbalk. */
+  padding: var(--vonnis-kop, clamp(40px, 11vh, 132px)) 16px 0;
   gap: 8px;
   pointer-events: none;
   background: radial-gradient(ellipse at center, rgba(60, 10, 20, .18), rgba(10, 6, 14, .42));
@@ -4510,6 +4513,18 @@ body.tirade #licht-vignet { opacity: .82 !important; transition: opacity .5s eas
    komt niet meer als kaartje maar als puls op de strook hieronder (architectbesluit P1). */
 .vonnis.klein { background: radial-gradient(ellipse at center, rgba(60, 42, 10, .10), rgba(10, 6, 14, .20)); }
 .vonnis.klein h2 { font-size: clamp(1.4rem, 3.6vw, 2.3rem); letter-spacing: 3px; }
+/* KORTE LAPTOPSCHERMEN (1366x662 en lager, spoor 1). Daar staat de bazenbalk op dezelfde
+   px-hoogte als op 1440x900 (gemeten: .bb-balk 98..118 op alle drie de laptopmaten) maar
+   beginnen de figuren al op y≈199 i.p.v. y≈362. Met de volle titelmaat duwt de
+   kop-verankering van P2 de duiding dan op de vijanden. Dus: compacter lockup, en de
+   titel krijgt een vh-term zoals mobiel er al een heeft. Mobiel raakt dit niet - liggend
+   (≤600px hoog) zet mobiel.css zijn eigen padding en maten met hogere specificiteit, en
+   staand is nooit korter dan 760px. */
+@media (max-height: 760px) and (min-width: 1000px) {
+  .vonnis { gap: 2px; }
+  .vonnis h2 { font-size: clamp(1.7rem, 4.8vh, 2.6rem); letter-spacing: 3px; }
+  .vonnis span { font-size: clamp(.72rem, 1.4vh, .9rem); }
+}
 
 /* V · HET MANDAAT KOMT AAN (v121, P1) - op de beleidsstrook zelf, niet op een kaartje
    dat dezelfde woorden nog eens over de bazenbalk legt. Twee animaties, twee elementen:
@@ -4557,6 +4572,27 @@ body.lite .bb-extra.mandaat-aan .bb-aegis { animation: none; text-shadow: 0 1px 
   0%, 100% { filter: saturate(1.35) drop-shadow(0 0 14px rgba(255, 198, 74, .6)); }
   50% { filter: saturate(1.5) drop-shadow(0 0 30px rgba(255, 214, 110, .95)) brightness(1.12); }
 }
+
+/* VRIJE RUIMTE VOOR DE VONNISSEN (v121, architectbesluit P2). Zolang de ceremonie loopt,
+   dooft alles wat de titelband met de vonnisplaat deelt: de intent-badges van ALLE
+   vijanden en de beleidsstrook onder de bazenbalk. Drie keuzes:
+   - OPACITY, nooit display of visibility: de intent-rij draagt de hoogte van de
+     vijandkolom (.intent-rij heeft min-height 30px) en de strook duwt de bazenbalk;
+     een wissel daar zou de hele kop laten verspringen op precies de beat waarop de
+     figuren stil moeten staan;
+   - de HP-balk zelf (.bb-balk met zijn pips) BLIJFT staan - zijn bevriezen op de oude
+     stand en zijn losknappen op t=3400 is een beat van het stuk, geen decoratie;
+   - de haak is body.ceremonie en verder niets. Daardoor komt alles vanzelf terug bij
+     élke uitgang: _ceremonieUit, de fase-skip, DICK.tempo=0.02 (waar de hele regie in
+     ~150ms voorbij is), een fasegrens midden in de vijandbeurt én regieOpruimAlles /
+     stopGevechtLus - die halen alle drie diezelfde klasse van de body.
+   Dit is bewust een BASIS-regel (spoor 1) en geen laptop-regel: op beide sporen staan
+   dezelfde badges in dezelfde band, en mobiel.css hoeft er niets aan te corrigeren. */
+.intent, #baas-balk .bb-extra { transition: opacity .25s ease; }
+body.ceremonie .intent,
+body.ceremonie #baas-balk .bb-extra { opacity: 0; pointer-events: none; }
+/* terugval, twee losse sporen: dezelfde standen, alleen zonder de overgang */
+body.lite .intent, body.lite #baas-balk .bb-extra { transition: none; }
 
 /* Act 3-regel: tijdens een ceremonie is de fakkel van de HELD het enige zachte licht.
    isolation:isolate is hier NIET cosmetisch: #speler-zone is wel position:relative
@@ -5168,6 +5204,9 @@ body.lite .einde-doel, body.lite .daily-paneel, body.lite .einde-knoppen {
   /* HET PROCES - terugval van het drama (v121, stap C1). Dezelfde set als body.lite
      hierboven, want de twee zijn niet gekoppeld: elk effect uit, elk met zijn eindstand. */
   #toneel-doek, #arena-tint, .vijand.knielt .vijand-art { transition: none !important; }
+  /* P2: de badges en de strook doven ook hier, maar zonder overgang - de standen zelf
+     (opacity 0 tijdens de ceremonie, terug erna) blijven expliciet staan. */
+  .intent, #baas-balk .bb-extra { transition: none !important; }
   .tik-flits { animation: none !important; opacity: 0 !important; }
   .vonnis { animation: none !important; opacity: 1 !important; }
   .vonnis h2 { animation: none !important; opacity: 1 !important; transform: rotate(-1.5deg) !important; }

@@ -12,7 +12,9 @@
 //
 // De twee eisen die ze hard toetst (architectbesluit P2):
 //   laptop — .vonnis h2 begint volledig ONDER de bazenbalk: h2.top >= .bb-balk.onderkant + 8px
-//   mobiel — .vonnis h2 raakt GEEN ENKEL zichtbaar element
+//            én de duiding blijft boven de figuren
+//   mobiel — .vonnis h2 raakt geen zichtbaar UI-element (topbalk, hart/bazenbalk, strook,
+//            zichtbare intents, spraakplaat); de figuren tellen niet mee, zie lager
 //
 // DRAAIEN (Git Bash, vanuit de scratchpad met node_modules/playwright):
 //   NODE_PATH="$PWD/node_modules" SLAYIT_WORKTREE="...\SLAY-IT-drama" \
@@ -107,7 +109,10 @@ window.__mandaat = function () {
 };`;
 
 const OVERGANGEN = [
-  { sleutel: 'II', naam: 'II · HET PROCES', wacht: 1000,
+  // wachttijden: ná de stempel. De titel animeert van scale(5) naar 1 over duur*0,125
+  // (= 300ms bij duur 2400), dus een meting op de beat zelf meet de INSLAG en niet de
+  // stand. II valt op t=900, III op t=1000, IV op t=3600.
+  { sleutel: 'II', naam: 'II · HET PROCES', wacht: 1400,
     trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.hp = Math.floor(b.maxHp * 0.50); checkBaasFase(); } },
   { sleutel: 'III', naam: 'III · DE TIRADE', wacht: 1400,
     trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 2; b.hp = Math.floor(b.maxHp * 0.30); checkBaasFase(); } },
@@ -160,7 +165,12 @@ async function draaiViewport(browser, vp) {
         + ' op=' + String(el.op).padEnd(5) + ' "' + el.tekst + '"'
         + (o ? '   << OVERLAP ' + o.x + 'x' + o.y + 'px' : '');
       console.log(regel);
-      if (o && el.op > 0.01) raken.push(el.naam + ' ' + o.x + 'x' + o.y + 'px (op=' + el.op + ')');
+      // de FIGUREN tellen niet mee als botsing: de vonnisplaat hoort over het toneel te
+      // liggen, en op 360px hoog bestaat er geen band tussen topbalk en figuren die een
+      // titel van 35px kan dragen. De eis gaat over de UI-chroom (topbalk, hart/bazenbalk,
+      // strook, zichtbare intents, spraakplaat). De overlap met een figuur wordt wel
+      // gerapporteerd, zodat je ziet hoeveel het is.
+      if (o && el.op > 0.01 && !/^figuur/.test(el.naam)) raken.push(el.naam + ' ' + o.x + 'x' + o.y + 'px (op=' + el.op + ')');
     }
     // eis 1 (laptop): de titel begint volledig onder de bazenbalk
     if (!vp.mobiel) {
@@ -169,7 +179,7 @@ async function draaiViewport(browser, vp) {
       const fig = r.scene.filter(e => /^figuur/.test(e.naam) && e.op > 0.01).map(e => e.y).sort((a, b) => a - b)[0];
       t(!r.sub || fig == null || r.sub.y + r.sub.h <= fig, ov.sleutel + ' · sub eindigt op ' + (r.sub ? r.sub.y + r.sub.h : '-') + ', hoogste figuur begint op ' + (fig == null ? '-' : fig) + ' (sub blijft erboven)');
     } else {
-      t(raken.length === 0, ov.sleutel + ' · h2 raakt geen zichtbaar element' + (raken.length ? ': ' + raken.join(', ') : ''));
+      t(raken.length === 0, ov.sleutel + ' · h2 raakt geen zichtbaar UI-element' + (raken.length ? ': ' + raken.join(', ') : ' (topbalk, hart/bazenbalk, strook, intents, spraakplaat)'));
     }
   }
 

@@ -2465,8 +2465,37 @@ function vonnisSlam(titel, sub, opts) {
      boven doek (45) en vignet (40) en onder de topbalk (50), en springt hij niet meer
      52px omlaag tijdens de schudScherm() die vonnisSlam zelf start. */
   document.body.appendChild(el);
+  _vonnisKop(el);
   setTimeout(() => el.remove(), duur);
   return el;
+}
+/* DE KOP VAN DE PLAAT (v121, architectbesluit P2) - de titel begint ONDER de bazenbalk.
+   De HP-balk blijft tijdens de ceremonie staan (zijn vries en zijn losknappen zijn zelf
+   beats), dus de plaat moet eronder beginnen in plaats van eroverheen: gemeten 1440x900
+   liep de h2 van II/III/IV 369-614px breed en 20px hoog dwars door de bazenbalk, en
+   34px hoog door de beleidsstrook.
+   De kop wordt GEMETEN, niet geraden. offsetWidth/offsetHeight zijn de LAYOUT-maten en
+   tellen de transform niet mee; de gestempelde titel staat op rotate(-1.5deg), dus zijn
+   bounding box steekt er (b*sin + h*cos - h)/2 bovenuit. Dat is precies het verschil dat
+   de contactvellen toonden: 8px bij 'IV · DE HERVERKIEZING' (577px breed), 5px bij
+   'III · DE TIRADE' (369px). Zonder die correctie haalt een brede titel de 8px marge net
+   niet, en een smalle krijgt er 8 te veel.
+   Staat er geen bazenbalk in beeld (elk ander gevecht), dan blijft de CSS-clamp staan.
+   Mobiel LIGGEND doet bewust NIET mee: daar is de band tussen topbalk en figuren de enige
+   vrije strook en zou 'onder de balk' de titel juist OP de figuren zetten - mobiel.css
+   zet daar zijn eigen padding-shorthand en overschrijft deze var (§4.1). */
+const _VONNIS_HOEK = 1.5 * Math.PI / 180;   /* = de eindrotatie van @keyframes vonnisSlag */
+function _vonnisKop(el) {
+  const bb = $('#baas-balk'), balk = $('#baas-balk .bb-balk'), h2 = el.querySelector('h2');
+  if (!bb || !balk || !h2 || bb.style.display === 'none') return;
+  const onder = balk.getBoundingClientRect().bottom;
+  if (!(onder > 0)) return;
+  const b = h2.offsetWidth, h = h2.offsetHeight;
+  const steek = (b * Math.sin(_VONNIS_HOEK) + h * Math.cos(_VONNIS_HOEK) - h) / 2;
+  /* 8px marge + 1px afrondingsspeling: beide randen liggen op subpixels (gemeten
+     bazenbalk-onderkant 117,6 en titel-bovenkant 125,4), en een meetronde die naar
+     hele pixels afrondt maakt daar 118 en 125 van = 7px op het contactvel. */
+  el.style.setProperty('--vonnis-kop', Math.ceil(onder + steek) + 9 + 'px');
 }
 
 function actorEl(actor) {

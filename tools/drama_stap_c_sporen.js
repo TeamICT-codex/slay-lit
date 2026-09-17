@@ -137,7 +137,20 @@ const METING = `(async function () {
   uit.inzageCeremonie = inz ? cs(inz, 'display') : '(geen knop)';
   if (uit.draaiBlok && db) db.classList.add('toon');
   uit.amberkring = cs(document.getElementById('speler-zone'), 'isolation');
+  /* v121 (P2) - DE VRIJE TITELBAND. Tijdens body.ceremonie doven de intent-badges en de
+     beleidsstrook naar opacity 0; de HP-balk blijft staan. In lite en OS-reduced-motion
+     dezelfde STANDEN, alleen zonder de overgang van .25s. De 420ms zijn bewust: met een
+     transition erop meet je anders het midden van de fade i.p.v. de stand. */
+  const intCer = document.querySelector('.intent'), extCer = document.querySelector('#baas-balk .bb-extra');
+  await wacht(420);
+  uit.bandTijdens = {
+    intentOp: intCer ? +cs(intCer, 'opacity') : null, intentTrans: intCer ? cs(intCer, 'transition-duration') : null,
+    strookOp: extCer ? +cs(extCer, 'opacity') : null, strookTrans: extCer ? cs(extCer, 'transition-duration') : null,
+    balkOp: +cs(balk, 'opacity'), intentPointer: intCer ? cs(intCer, 'pointer-events') : null
+  };
   document.body.classList.remove('ceremonie');
+  await wacht(420);
+  uit.bandNa = { intentOp: intCer ? +cs(intCer, 'opacity') : null, strookOp: extCer ? +cs(extCer, 'opacity') : null, balkOp: +cs(balk, 'opacity') };
 
   // --- de bazenbalk-VRIES op --hp (mobiel rijdt volledig op --hp) ---
   b._bbToon = 0; renderGevecht(); await wacht(60);
@@ -232,6 +245,9 @@ async function meet(browser, spoor) {
     console.log('   pip      anim=' + u.pip.anim + ' transform=' + u.pip.transform + ' | hart-knapt=' + u.pip.hartKlasse + ' ::before anim=' + u.pip.hartAnim);
     console.log('   kroon    anim=' + u.kroon.anim + ' transform=' + u.kroon.transform + ' | hart ::before anim=' + u.kroon.hartAnim);
     console.log('   inzage   rust=' + u.inzageRust + ' -> ceremonie=' + u.inzageCeremonie + ' | speler-zone isolation=' + u.amberkring);
+    console.log('   band     tijdens: intent ' + u.bandTijdens.intentOp + ' (trans ' + u.bandTijdens.intentTrans + ', pointer ' + u.bandTijdens.intentPointer + ')'
+      + ' strook ' + u.bandTijdens.strookOp + ' (trans ' + u.bandTijdens.strookTrans + ') HP-balk ' + u.bandTijdens.balkOp
+      + ' | erna: intent ' + u.bandNa.intentOp + ' strook ' + u.bandNa.strookOp + ' HP-balk ' + u.bandNa.balkOp);
     console.log('   vries    --hp voor=' + u.vries.voor + ' na 1000ms schade=' + u.vries.na + ' (hp ' + u.vries.hp + '/' + u.vries.maxHp + ') bb-vul ' + u.vries.bbVulVoor + ' -> ' + u.vries.bbVulNa);
     console.log('   plaat    rect=' + JSON.stringify(u.plaat.rect) + ' inset=' + u.plaat.inset + ' bgPos=' + u.plaat.bgPos + ' bgSize=' + u.plaat.bgSize);
     if (r.fouten.length) console.log('   PAGEERRORS: ' + r.fouten.slice(0, 4).join(' | '));
@@ -328,6 +344,24 @@ async function meet(browser, spoor) {
   t(Ll.flits.opacity === 0 && Ll.flits.anim === 'none', `.tik-flits: opacity ${Ll.flits.opacity}, animation "${Ll.flits.anim}"`);
   t(Ll.schok.anim === 'none', `#strijdveld.toneelschok animation: "${Ll.schok.anim}" (de spoorfactor --schok-f ${Ll.schok.factor} doet er in lite niet meer toe)`);
   t(parseFloat(Ll.vonnis.padTop) >= 40, `de vonnistitel begint ook hier ONDER de topbalk: padding-top ${Ll.vonnis.padTop}`);
+
+  /* v121 (architectbesluit P2): de titelband wordt op ELK spoor vrijgemaakt zolang de
+     ceremonie loopt - intent-badges en beleidsstrook op opacity 0, HP-balk blijft staan -
+     en komt erna vanzelf terug, want de haak is body.ceremonie en verder niets. In lite en
+     OS-reduced-motion dezelfde standen zonder overgang. */
+  console.log('\n======== P2 · de vrije titelband op elk spoor ========');
+  Object.keys(R).forEach(n => {
+    const u = R[n], b = u.bandTijdens, na = u.bandNa;
+    t(b.intentOp === 0 && b.strookOp === 0 && b.balkOp === 1 && na.intentOp === 1 && na.strookOp === 1 && na.balkOp === 1,
+      `${n}: tijdens de ceremonie intent ${b.intentOp} / strook ${b.strookOp} / HP-balk ${b.balkOp} (pointer-events ${b.intentPointer}), erna intent ${na.intentOp} / strook ${na.strookOp} / HP-balk ${na.balkOp}`);
+    if (/lite|reduced/.test(n)) {
+      t(parseFloat(b.intentTrans) === 0 && parseFloat(b.strookTrans) === 0,
+        `${n}: geen overgang maar wel dezelfde eindstand - transition-duration intent ${b.intentTrans}, strook ${b.strookTrans}`);
+    } else {
+      t(parseFloat(b.intentTrans) > 0 && parseFloat(b.strookTrans) > 0,
+        `${n}: met overgang - transition-duration intent ${b.intentTrans}, strook ${b.strookTrans}`);
+    }
+  });
 
   const alleFouten = Object.keys(R).reduce((a, k) => a.concat((R[k].__fouten || []).map(x => k + ': ' + x)), []);
   console.log('\n======== paginafouten ========');

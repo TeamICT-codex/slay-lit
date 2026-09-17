@@ -76,6 +76,14 @@ const REST = `window.__rest = function () {
     bedrijf: sc.dataset.bedrijf || '', tirade: document.body.classList.contains('tirade'),
     plaatVast: vast,
     fase: b ? b.fase : null, hp: b ? b.hp : null, herrezen: b ? !!b.herrezen : null,
+    /* v121 (P2): de intent-badges en de beleidsstrook doven tijdens body.ceremonie. Ze
+       moeten NA elke uitgang terug zijn - ook na een fase-skip, bij DICK.tempo 0.02, bij
+       een fasegrens midden in de vijandbeurt en na stopGevechtLus/regieOpruimAlles. De
+       haak is body.ceremonie, dus dit meet in één keer of die haak overal losgelaten is.
+       De HP-balk moet ALTIJD op 1 staan: die hoort nooit mee te doven. */
+    intentOp: [...document.querySelectorAll('.intent')].map(e => +getComputedStyle(e).opacity),
+    bbExtraOp: document.querySelector('#baas-balk .bb-extra') ? +getComputedStyle(document.querySelector('#baas-balk .bb-extra')).opacity : null,
+    bbBalkOp: document.querySelector('#baas-balk .bb-balk') ? +getComputedStyle(document.querySelector('#baas-balk .bb-balk')).opacity : null,
     levend: g ? g.vijanden.filter(v => !v.dood).map(v => v.id).join(',') : ''
   };
 };
@@ -105,6 +113,10 @@ window.__kijkStart = function () {
     const g = S.gevecht; if (!sc || !g) return;
     if (document.querySelector('.vonnis')) zet('.vonnis');
     if (document.querySelector('.vonnis.goud')) zet('.vonnis.goud');
+    /* v121 (P2): is de titelband ONDERWEG echt vrijgemaakt? Niet alleen of alles erna
+       terugkomt - zonder deze twee zou een regel die nooit vuurt ook 'schoon' meten. */
+    if ([...document.querySelectorAll('.intent')].some(e => +getComputedStyle(e).opacity < 0.1)) zet('.intent gedoofd');
+    if (document.querySelector('#baas-balk .bb-extra') && +getComputedStyle(document.querySelector('#baas-balk .bb-extra')).opacity < 0.1) zet('.bb-extra gedoofd');
     if (document.querySelector('.tik-flits')) zet('.tik-flits');
     if (document.querySelector('.baas-spraak')) zet('.baas-spraak');
     if (doek && doek.classList.contains('aan')) {
@@ -318,10 +330,15 @@ async function draai(browser, s) {
       if (x.plaatKlassen.length) rest.push(s + ': plaatklassen ' + x.plaatKlassen.join(','));
       /* de spraak mag nog lopen, maar niet zijn eigen duur overleven */
       if (x.spraakNa) rest.push(s + ': ' + x.spraakNa + 'x .baas-spraak OVERLEEFT zijn --spraak-duur van ' + x.spraakDuur + 'ms');
+      /* v121 (P2): de gedoofde badges en strook moeten terug zijn zodra de ceremonie uit is */
+      if ((x.intentOp || []).some(o => o < 0.99)) rest.push(s + ': intent-badges blijven gedoofd (opacity ' + x.intentOp.join(', ') + ')');
+      if (x.bbExtraOp !== null && x.bbExtraOp !== undefined && x.bbExtraOp < 0.99) rest.push(s + ': de beleidsstrook blijft gedoofd (opacity ' + x.bbExtraOp + ')');
+      if (x.bbBalkOp !== null && x.bbBalkOp !== undefined && x.bbBalkOp < 0.99) rest.push(s + ': de HP-balk is MEE gedoofd (opacity ' + x.bbBalkOp + ') - die hoort te blijven staan');
     });
     const spraakInfo = metRest.map(st => st.rest.spraak + '@' + st.rest.spraakDuur + 'ms->' + st.rest.spraakNa).join(' , ');
+    const badgeInfo = metRest.map(st => 'intents [' + (st.rest.intentOp || []).join(',') + '] strook ' + st.rest.bbExtraOp + ' balk ' + st.rest.bbBalkOp).join(' , ');
     t(rest.length === 0, n + ' - niets blijft hangen na afloop' + (rest.length ? ':\n        ' + rest.join('\n        ')
-      : ' (' + metRest.length + ' overgang(en) gemeten; lopende .baas-spraak ' + spraakInfo + ')'));
+      : ' (' + metRest.length + ' overgang(en) gemeten; lopende .baas-spraak ' + spraakInfo + '; na de ceremonie ' + badgeInfo + ')'));
     t(r.fouten.length === 0, n + ' - console-/paginafouten: ' + (r.fouten.length ? r.fouten.slice(0, 3).join(' | ') : 'geen'));
   });
 
@@ -330,7 +347,8 @@ async function draai(browser, s) {
      (tempo 0.02) valt er bewust buiten: de hele overgang duurt daar ~140ms en een sampler
      van 80ms mist dan beats; dat scenario wordt op zijn EINDstand beoordeeld. */
   console.log('\n======== C3 · speelde de regie ook echt? (sampler 80 ms) ========');
-  const MOET = ['g.ceremonie', 'body.ceremonie', '#toneel-doek.aan', '.vonnis', '.tik-flits', '.vijand.baas-tik', '#strijdveld.toneelschok'];
+  const MOET = ['g.ceremonie', 'body.ceremonie', '#toneel-doek.aan', '.vonnis', '.tik-flits', '.vijand.baas-tik', '#strijdveld.toneelschok',
+    '.intent gedoofd', '.bb-extra gedoofd'];   /* v121 (P2): de titelband wordt ook echt vrijgemaakt */
   Object.keys(alles).forEach(n => {
     if (/tempo = 0.02/.test(n)) return;
     const metRest = alles[n].stappen.filter(y => y.rest);
