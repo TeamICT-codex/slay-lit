@@ -7432,6 +7432,25 @@ function _pipKnapt(i) {
   balk.classList.remove('hart-knapt'); void balk.offsetWidth; balk.classList.add('hart-knapt');
   setTimeout(() => balk.classList.remove('hart-knapt'), dtempo(600));
 }
+/* DE AANKOMST VAN HET MANDAAT (v121, P1) - de gouden puls op de bazenbalkstrook zelf,
+   in de plaats van het vijfde vonnis-kaartje. Drie keuzes die ertoe doen:
+   - de klasse gaat op .bb-extra, NIET op de pil erin: renderGevecht bouwt de binnenkant
+     van die strook in datzelfde frame opnieuw op (_bbExtraSig wijzigt zodra het label
+     erbij komt), dus een klasse op het kind was meteen weer weg;
+   - de puls animeert de LOSSE scale-property en text-shadow, nooit transform of een
+     maat: geen layoutsprong, en geen botsing met de aegisGloei die al op de pil staat;
+   - de opruimtimer is bewust ongeguard (zelfde keuze als _pipKnapt): een blijvende
+     klasse zou de strook na het gevecht op een halve schaal laten hangen.
+   Lite en reduced-motion doven de animatie in CSS, elk met hun eigen eindstand: daar
+   staat het label er gewoon, zonder puls. Mobiel draagt dezelfde strook, dus dezelfde
+   puls valt daar vanzelf op de plek waar het label staat. */
+function _mandaatPuls() {
+  const ex = $('#baas-balk .bb-extra'); if (!ex) return;
+  const ms = dtempo(1400);
+  ex.style.setProperty('--mandaat-t', ms + 'ms');
+  ex.classList.remove('mandaat-aan'); void ex.offsetWidth; ex.classList.add('mandaat-aan');
+  setTimeout(() => ex.classList.remove('mandaat-aan'), ms);
+}
 /* een regieklasse op de FIGUUR. actorEl wordt bij elke beat opnieuw opgezocht: de DOM
    wordt tijdens de regie herbouwd (bouwGevechtDom bij de claqueur-oproep), dus een
    element dat je op t=0 vastpakt is op t=4200 een weesnode. ms = 0 -> blijft staan. */
@@ -7844,13 +7863,20 @@ function dicktatorHerverkiezing(g, doel) {
   op(5600, () => _ceremonieUit(g));              /* invoer vrij - ná de crossfade en ná de stempel, niet ervoor */
   if (doel._kiezers > 0) op(6400, () => baasSpreekt(U.kiezers, 2600));
 
-  /* t=6800 - V · HET MANDAAT: een klein goud kaartje ZONDER doek en ZONDER klap, ná de
-     vrijgave (het verwatert de climax niet), plus een permanent label in de bazenbalkstrook.
-     De intro belooft vijf bedrijven; er hadden er maar vier een moment. */
+  /* t=6800 - V · HET MANDAAT. GEEN eigen vonnis-kaartje meer (v121, architectbesluit P1).
+     Het kleine goud kaartje botste op laptop met drie dingen tegelijk - gemeten 1440x900:
+     overlap h2 x #topbalk 1262x52px, h2 x bazenbalk 620x20px en h2 x het STROOKLABEL
+     620x34px, dat letterlijk dezelfde woorden draagt ("⚖ V · HET MANDAAT") - en liggend
+     viel het onder de spraakplaat. Twee keer dezelfde titel op 34px van elkaar is geen
+     vijfde bedrijf, dat is een dubbeldruk.
+     In de plaats komt het permanente label zelf AAN: een gouden aankomstpuls op de strook
+     (1400ms via dtempo) plus één hamertik. Geen doek, geen schok - de beat blijft precies
+     even luid als §2.3 hem bedoelde, alleen op het element dat toch al blijft staan. */
   op(6800, () => {
-    vonnisSlam('V · HET MANDAAT', D.mandaat, { duur: 1400, kleur: 'goud', klein: true, schok: false });
     doel._mandaat = true;
-    renderGevecht();
+    renderGevecht();          /* zet '⚖ V · HET MANDAAT' in de strook (dicktatorBalk) */
+    _mandaatPuls();           /* ...en laat hem AANKOMEN */
+    Klank.sfx('hamer');
   });
 
   op(7200, () => _regieOpruim(doel));
@@ -8464,7 +8490,12 @@ function dicktatorBalk(b) {
     const klok = dicktatorKlok(b);
     delen.push('⏳ ' + (klok === 0 ? 'ONTSLAG NU' : 'ONTSLAG over ' + klok));
     delen.push('🧾 ' + tar.basis + '+' + tar.tarief + (mob ? '' : '/post'));
-    tip = 'HET MANDAAT: de klok loopt naar HET ONTSLAG (alleen met een levende deurwaarder — dood hem en het wordt een Donderrede). ' + tip;
+    /* v121 (P1): het vijfde bedrijf heeft geen eigen kaartje meer, dus de duiding die
+       daarop stond ("Hij int nu zelf. De opzegtermijn loopt.") verhuist naar de tooltip
+       van hetzelfde label - anders verdwijnt die regel stilletjes uit het stuk. */
+    const duidingMandaat = ((UITSPRAKEN._dicktator || {}).duiding || {}).mandaat;
+    tip = 'HET MANDAAT: de klok loopt naar HET ONTSLAG (alleen met een levende deurwaarder — dood hem en het wordt een Donderrede). '
+      + (b._mandaat && duidingMandaat ? duidingMandaat + ' ' : '') + tip;
   } else {
     delen.push('🧾 ' + tar.basis + '+' + tar.tarief + (mob ? '' : '/post · +1/post per hoveling'));
     const dossier = [...(g.aangezegd ? g.aangezegd.values() : [])];

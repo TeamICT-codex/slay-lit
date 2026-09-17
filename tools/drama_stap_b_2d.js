@@ -15,6 +15,7 @@ const t = (goed, tekst) => { if (goed) { okN++; console.log('   ok   ' + tekst);
 // de in-page sampler: draait als string in de pagina
 const sampler = trigger => `(function(){
   window.__log = [];
+  window.__sfx = [];
   const g = S.gevecht;
   const b = g.vijanden.find(v => v.id === 'de_dicktator');
   const wrapVan = a => { const i = g.vijanden.indexOf(a); const d = GDOM.vijanden[i]; return d ? d.wrap : null; };
@@ -39,6 +40,11 @@ const sampler = trigger => `(function(){
       hpVar: balk ? getComputedStyle(balk).getPropertyValue('--hp').trim() : null,
       bbVul: document.querySelector('#baas-balk .bb-vul') ? document.querySelector('#baas-balk .bb-vul').style.width : null,
       bbExtra: document.querySelector('#baas-balk .bb-extra') ? document.querySelector('#baas-balk .bb-extra').textContent : '',
+      bbExtraPuls: !!(document.querySelector('#baas-balk .bb-extra') && document.querySelector('#baas-balk .bb-extra').classList.contains('mandaat-aan')),
+      bbExtraAnim: document.querySelector('#baas-balk .bb-extra') ? getComputedStyle(document.querySelector('#baas-balk .bb-extra')).animationName : '-',
+      bbExtraOp: document.querySelector('#baas-balk .bb-extra') ? +getComputedStyle(document.querySelector('#baas-balk .bb-extra')).opacity : null,
+      intentOp: [...document.querySelectorAll('.intent')].map(e => +getComputedStyle(e).opacity),
+      bbBalkOp: document.querySelector('#baas-balk .bb-balk') ? +getComputedStyle(document.querySelector('#baas-balk .bb-balk')).opacity : null,
       doekAan: doek.classList.contains('aan'),
       doekOp: +getComputedStyle(doek).opacity,
       vonnis: von ? (von.querySelector('h2') || {}).textContent : null,
@@ -59,7 +65,10 @@ const sampler = trigger => `(function(){
       hp: b.hp, fase: b.fase, vorm2: !!b.vorm2, herrezen: !!b.herrezen
     });
   };
-  window.__stop = () => clearInterval(window.__int);
+  // klankspion: welke sfx valt op welke beat (v121, voor de hamertik van HET MANDAAT)
+  const _sfx = Klank.sfx;
+  Klank.sfx = function (n) { window.__sfx.push({ t: Math.round(performance.now() - t0), n: n }); return _sfx.apply(Klank, arguments); };
+  window.__stop = () => { clearInterval(window.__int); Klank.sfx = _sfx; };
   window.__int = setInterval(tik, 40);
   ${trigger}
   tik();
@@ -180,6 +189,7 @@ const tussen = (log, a, b2) => log.filter(r => r.t >= a && r.t <= b2);
   await slaap(8200);
   await page.evaluate(() => window.__stop());
   const L3 = await page.evaluate(() => window.__log);
+  const SFX = await page.evaluate(() => window.__sfx);
   fs.writeFileSync(path.join(UIT, 'b3-log.json'), JSON.stringify(L3, null, 1));
 
   const b3_0 = L3[0];   // de eerste tik draait NA de trigger: dit is het frame van de klap zelf
@@ -207,10 +217,20 @@ const tussen = (log, a, b2) => log.filter(r => r.t >= a && r.t <= b2);
   t(stilte.length > 0 && stilte.every(r => r.doekOp >= 0.90), `de 600ms-stilte ligt in het zwart: doek ${Math.min(...stilte.map(r => r.doekOp)).toFixed(2)}-${Math.max(...stilte.map(r => r.doekOp)).toFixed(2)} over ${stilte.length} samples tussen t=2980-3180ms`);
   const von4 = L3.find(r => r.vonnis && /HERVERKIEZING/.test(r.vonnis));
   t(!!von4 && von4.t >= 3550 && (von4.vonnisSub || '').length > 20, `vonnis "${von4 ? von4.vonnis : '-'}" op t=${von4 ? von4.t : '-'}ms met duiding "${von4 ? (von4.vonnisSub || '').slice(0, 56) : '-'}..."`);
+  /* v121 (P1): V · HET MANDAAT heeft GEEN eigen kaartje meer - het strooklabel komt zelf
+     aan met een gouden puls + hamertik. Deze drie regels meten dat nieuwe gedrag. */
   const von5 = L3.find(r => r.vonnis && /MANDAAT/.test(r.vonnis));
-  t(!!von5 && von5.t >= 6750 && von5.vonnisKlein, `V · HET MANDAAT op t=${von5 ? von5.t : 'nooit'}ms, klein kaartje=${von5 ? von5.vonnisKlein : '-'}, doek op dat moment ${von5 ? von5.doekOp.toFixed(2) : '-'} (geen doek, geen klap)`);
+  t(!von5, `geen vijfde vonnis-kaartje meer${von5 ? `: "${von5.vonnis}" op t=${von5.t}ms` : ' (0 samples met een MANDAAT-kaartje)'}`);
   const mandaatLabel = L3.find(r => /MANDAAT/.test(r.bbExtra));
   t(!!mandaatLabel && mandaatLabel.t >= 6750, `permanent strooklabel in de bazenbalk vanaf t=${mandaatLabel ? mandaatLabel.t : 'nooit'}ms: "${mandaatLabel ? mandaatLabel.bbExtra.slice(0, 70) : '-'}"`);
+  const puls = L3.filter(r => r.bbExtraPuls);
+  const pulsAnim = L3.find(r => r.bbExtraPuls && r.bbExtraAnim !== 'none');
+  t(puls.length > 0 && puls[0].t >= 6750 && !!pulsAnim,
+    `de gouden aankomstpuls op de strook: klasse .mandaat-aan van t=${puls.length ? puls[0].t : '-'} tot t=${puls.length ? puls[puls.length - 1].t : '-'}ms (${puls.length} samples), animation-name "${pulsAnim ? pulsAnim.bbExtraAnim : '-'}"`);
+  const hamer5 = (SFX || []).filter(s => s.n === 'hamer' && s.t >= 6700 && s.t <= 7100);
+  t(hamer5.length === 1, `één hamertik bij het mandaat: ${hamer5.length}x op t=[${hamer5.map(s => s.t).join(', ')}]ms`);
+  const doek5 = bij(L3, 6900);
+  t(doek5.doekOp < 0.05 && !doek5.bodyCeremonie, `geen doek en geen ceremonie op t=${doek5.t}ms: doek=${doek5.doekOp.toFixed(2)}, body.ceremonie=${doek5.bodyCeremonie}`);
   const kroon = L3.find(r => r.pipAan[3]);
   t(!!kroon && kroon.t >= 3350, `de KROON-pip knapt aan op t=${kroon ? kroon.t : 'nooit'}ms (beat 3400)`);
   const b3_eind = L3[L3.length - 1];

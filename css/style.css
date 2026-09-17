@@ -4506,9 +4506,41 @@ body.tirade #licht-vignet { opacity: .82 !important; transition: opacity .5s eas
 }
 @keyframes vonnisSub { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: none; } }
 .vonnis.goud h2 { color: #ffdf9a; text-shadow: 0 0 26px rgba(255, 210, 90, .85), 0 4px 14px #000; }
-/* V · HET MANDAAT: een klein goud kaartje, zonder doek en zonder klap */
+/* .klein bleef staan als vorm, maar heeft sinds v121 geen aanroeper meer: V · HET MANDAAT
+   komt niet meer als kaartje maar als puls op de strook hieronder (architectbesluit P1). */
 .vonnis.klein { background: radial-gradient(ellipse at center, rgba(60, 42, 10, .10), rgba(10, 6, 14, .20)); }
 .vonnis.klein h2 { font-size: clamp(1.4rem, 3.6vw, 2.3rem); letter-spacing: 3px; }
+
+/* V · HET MANDAAT KOMT AAN (v121, P1) - op de beleidsstrook zelf, niet op een kaartje
+   dat dezelfde woorden nog eens over de bazenbalk legt. Twee animaties, twee elementen:
+   de PULS (scale) op .bb-extra, want die blijft staan terwijl renderGevecht de pil erin
+   herbouwt; het GOUD (text-shadow) op de pil, want .bb-aegis zet zijn eigen text-shadow
+   en erft de geanimeerde waarde van de ouder dus niet. aegisGloei blijft ernaast staan
+   (andere property: box-shadow), anders valt de rustpuls van de strook 1,4s stil.
+   `scale:` is bewust de losse property, nooit transform: - huisregel, en layout-neutraal. */
+.bb-extra.mandaat-aan { animation: mandaatAan var(--mandaat-t, 1400ms) cubic-bezier(.2, 1.2, .4, 1) both; }
+@keyframes mandaatAan {
+  0% { scale: 1; }
+  18% { scale: 1.09; }
+  46% { scale: .99; }
+  100% { scale: 1; }
+}
+.bb-extra.mandaat-aan .bb-aegis {
+  animation: aegisGloei 2.2s ease-in-out infinite, mandaatGoud var(--mandaat-t, 1400ms) ease-out both;
+}
+@keyframes mandaatGoud {
+  0% { text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
+  18% { text-shadow: 0 0 22px rgba(255, 226, 150, 1), 0 0 8px rgba(255, 214, 110, .95), 0 1px 3px rgba(0, 0, 0, .6); }
+  100% { text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
+}
+/* terugval, twee losse sporen met een EXPLICIETE eindstand: geen puls, het label staat
+   er gewoon (de rustschaal en de eigen text-shadow van .bb-aegis). */
+body.lite .bb-extra.mandaat-aan { animation: none; scale: 1; }
+body.lite .bb-extra.mandaat-aan .bb-aegis { animation: none; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
+@media (prefers-reduced-motion: reduce) {
+  .bb-extra.mandaat-aan { animation: none !important; scale: 1 !important; }
+  .bb-extra.mandaat-aan .bb-aegis { animation: none !important; text-shadow: 0 1px 3px rgba(0, 0, 0, .6) !important; }
+}
 
 /* DE HERKOZEN TIRAN. FILTER-FIX: filter is EEN property en .vijand.woede animeert hem
    - een animatie wint altijd van een declaratie, dus de gouden gloed van .herverkozen
