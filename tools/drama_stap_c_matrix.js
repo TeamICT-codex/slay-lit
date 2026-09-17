@@ -137,7 +137,13 @@ window.__oogst = function () {
   const z = window.__gezien || { doekMax: 0, klassen: {}, poses: {}, doekStanden: {} };
   const v = window.__vista || {};
   return { doekMax: Math.round(z.doekMax * 1000) / 1000, doekStanden: Object.keys(z.doekStanden).sort(), klassen: Object.keys(z.klassen).sort(), poses: Object.keys(z.poses).sort(),
-    vista: Object.keys(v).sort().map(k => k + '=' + v[k]) };
+    vista: Object.keys(v).sort().map(k => k + '=' + v[k]),
+    /* v120-fix (fixronde stap C): de Vista-TELLING loopt in 2D net zo hard, want de C3-fix
+       roept Vista.pose ongeguard aan (zonder d3Actief-check). Dat de teller vult bewijst dus
+       niets over het 3D-spoor. Daarom hier hard vastleggen DAT er in 3D gemeten is; scenario
+       4 hangt zijn oordeel daaraan op. Een echte BEELDsonde - meten welke sprite-state
+       getekend wordt via de poseMarge op het voetanker - is een eigen ronde waard. */
+    d3: !!(window.d3Actief && d3Actief() && window.Vista && Vista.klaar) };
 };`;
 
 const SCENARIOS = [
@@ -352,6 +358,12 @@ async function draai(browser, s) {
      alleen zichtbaar als Vista-aanroepen. §4.3 belooft raak/pose/sterf/schud/zetLicht. */
   const d3 = alles['4 · 3D / Vista'].stappen.filter(s => s.rest);
   const d3v = d3.map(s => s.rest.gezien.vista.join('+') || '(NIETS)');
+  /* v120-fix (fixronde stap C): éérst vastpinnen dat dit scenario ECHT in 3D draaide. De
+     Vista-telling alleen bewees dat niet - ze loopt in 2D identiek vol omdat Vista.pose
+     ongeguard wordt aangeroepen, dus zonder deze regel steunt het oordeel over de 3D-tak
+     op een meting die in 2D dezelfde uitslag geeft. */
+  t(d3.length === 3 && d3.every(s => s.rest.gezien.d3 === true),
+    `4 · 3D draaide ook echt in 3D: d3Actief() && Vista.klaar per overgang ${d3.map(s => s.rest.gezien.d3).join(' / ')}`);
   t(d3.length === 3 && d3.every(s => ['pose=', 'raak=', 'schud='].every(m => s.rest.gezien.vista.some(x => x.startsWith(m)))),
     `4 · 3D: ${d3.length} overgangen, bedrijven ${d3.map(s => '"' + s.rest.bedrijf + '"').join(' ')}; Vista-aanroepen per overgang: ${d3v.join('  |  ')}`);
 
@@ -374,7 +386,11 @@ async function draai(browser, s) {
     try {
       uit = execFileSync(process.execPath, [path.join(WT, 'tools', suite)], {
         cwd: __dirname, encoding: 'utf8', maxBuffer: 40 * 1024 * 1024,
-        env: Object.assign({}, process.env, { NODE_PATH: path.join(__dirname, 'node_modules'), SLAYIT_WORKTREE: WT, SLAYIT_SHOTS: path.join(UIT, suite.replace('.js', '')) })
+        /* v120-fix (fixronde stap C): NEEM de NODE_PATH van de aanroeper over. tools/ heeft
+           geen eigen node_modules - playwright staat in de map van waaruit deze matrix zelf
+           gestart wordt - dus met het harde pad hierheen vielen beide subsuites om op
+           MODULE_NOT_FOUND en telde dat als twee FOUTen die niets over het spel zeggen. */
+        env: Object.assign({}, process.env, { NODE_PATH: process.env.NODE_PATH || path.join(__dirname, 'node_modules'), SLAYIT_WORKTREE: WT, SLAYIT_SHOTS: path.join(UIT, suite.replace('.js', '')) })
       });
     } catch (e) { uit = (e.stdout || '') + (e.stderr || ''); code = e.status === undefined ? -1 : e.status; }
     const staart = uit.trim().split('\n').slice(-4).join('\n        ');

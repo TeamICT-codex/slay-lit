@@ -202,7 +202,13 @@ async function meet(browser, spoor) {
     { n: 'lite', w: 1440, h: 900, lite: true },
     { n: 'reduced-lite-uit', w: 1440, h: 900, reduced: true, lite: false },
     { n: 'mobiel-staand', w: 390, h: 844, mobiel: true },
-    { n: 'mobiel-liggend', w: 800, h: 360, mobiel: true }
+    { n: 'mobiel-liggend', w: 800, h: 360, mobiel: true },
+    /* v120 (fixronde stap C): lite KRUIST met het landscape-blok, en de suite draaide die
+       kruising nergens. Daar zat bevinding 3: `body.lite #toneel-doek { transition: none }`
+       (style.css) en `body[data-modus="mobiel"] #toneel-doek` (mobiel.css, landscape) hebben
+       allebei specificiteit (1,1,1), en mobiel.css laadt later - dus in lite BLEEF het doek
+       daar faden i.p.v. de harde knip van §4.3 te maken. */
+    { n: 'mobiel-liggend-lite', w: 800, h: 360, mobiel: true, lite: true }
   ];
   const R = {};
   for (const s of SPOREN) {
@@ -297,13 +303,31 @@ async function meet(browser, spoor) {
   const Lg = R['mobiel-liggend'];
   t(parseFloat(Lg.schok.factor) === 0.5, `--schok-f liggend: ${Lg.schok.factor} (eis .5; --schok zelf blijft ${Lg.schok.schok})`);
   t(parseFloat(Lg.flits.tikMax) === 0.55, `--tik-max liggend: ${Lg.flits.tikMax} (eis .55); gemeten flits-opacity ${Lg.flits.opacity}`);
-  t(Lg.doek.transDuur === '0.3s', `doekduur liggend: ${Lg.doek.transDuur} (staand ${M.doek.transDuur})`);
+  /* v120 (fixronde stap C): de eis is niet meer "exact 0,3s" maar "een stap korter DAN
+     STAAND, en meelopend met --doek-t". Het harde getal negeerde de inline --doek-t die JS
+     uit dtempo voedt (§3.2/§10.11): liggend stond de doekduur daardoor vast, ook bij
+     DICK.tempo != 1. De meting hierboven roept toneelDoek(0.92, 350) aan, dus staand 350ms
+     en liggend de 70%-calc daarvan. */
+  const dLg = parseFloat(Lg.doek.transDuur), dM = parseFloat(M.doek.transDuur);
+  t(dLg < dM && Math.abs(dLg - dM * 0.7) < 0.01, `doekduur liggend: ${Lg.doek.transDuur} = 70% van staand ${M.doek.transDuur} - dus een stap korter EN gevoed door --doek-t, niet door een hard getal`);
   t(parseFloat(Lg.vonnis.h2Font) < parseFloat(M.vonnis.h2Font), `vonnis-typografie een stap kleiner: h2 ${Lg.vonnis.h2Font} tegen ${M.vonnis.h2Font} staand`);
   t(parseFloat(Lg.vonnis.spFont) <= parseFloat(M.vonnis.spFont), `duiding: ${Lg.vonnis.spFont} tegen ${M.vonnis.spFont} staand`);
   t(parseFloat(Lg.vonnis.padTop) < parseFloat(M.vonnis.padTop), `vonnis-padding boven: ${Lg.vonnis.padTop} tegen ${M.vonnis.padTop} staand`);
   t(Math.abs(Lg.doek.opacity - 0.80) < 0.005, `doek IV ook liggend afgetopt: ${Lg.doek.opacity}`);
   t(Lg.inzageCeremonie === 'none', `#inzage-knop tijdens de ceremonie: "${Lg.inzageCeremonie}"`);
   t(Lg.plaat.bgPosTop <= 0.5, `plaat-positie liggend: "${Lg.plaat.bgPos}" (verticaal ${Lg.plaat.bgPosTop})`);
+
+  /* v120 (fixronde stap C): C1 x C2 - de terugval moet OOK op de krapste context staan.
+     Precies deze kruising ontbrak, en daar zat de specificiteitsval van het doek. */
+  console.log('\n======== C1 x C2 · mobiel liggend MET lite ========');
+  const Ll = R['mobiel-liggend-lite'];
+  t(Ll.lite === true && Ll.modus === 'mobiel', `spoor staat goed: body.lite=${Ll.lite}, modus=${Ll.modus}, viewport liggend <=600px`);
+  t(Ll.doek.transDuur === '0s', `#toneel-doek transition-duration: ${Ll.doek.transDuur} (harde KNIP - de landscape-regel heeft een ID en won vóór deze fix van body.lite in style.css)`);
+  t(Ll.doek.opacity > 0.5, `het doek dekt daar wel degelijk: opacity ${Ll.doek.opacity} (--doek ${Ll.doek.doekVar}) - de knip dekt in lite juist de harde arenawissel af (§4.3)`);
+  t(Ll.vonnis.h2Opacity === 1 && Ll.vonnis.h2Anim === 'none', `.vonnis h2: opacity ${Ll.vonnis.h2Opacity}, animation "${Ll.vonnis.h2Anim}"`);
+  t(Ll.flits.opacity === 0 && Ll.flits.anim === 'none', `.tik-flits: opacity ${Ll.flits.opacity}, animation "${Ll.flits.anim}"`);
+  t(Ll.schok.anim === 'none', `#strijdveld.toneelschok animation: "${Ll.schok.anim}" (de spoorfactor --schok-f ${Ll.schok.factor} doet er in lite niet meer toe)`);
+  t(parseFloat(Ll.vonnis.padTop) >= 40, `de vonnistitel begint ook hier ONDER de topbalk: padding-top ${Ll.vonnis.padTop}`);
 
   const alleFouten = Object.keys(R).reduce((a, k) => a.concat((R[k].__fouten || []).map(x => k + ': ' + x)), []);
   console.log('\n======== paginafouten ========');
