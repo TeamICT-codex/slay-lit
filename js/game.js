@@ -2388,7 +2388,12 @@ function baasTik(b, zwaarte) {
     el.addEventListener('animationend', klaar);
     el._tikT = setTimeout(klaar, tikD + dtempo(t.stop) + 80);
   }
+  /* v120-fix (stap C3, gemeten in de matrix): pose2D BAILT UIT in 3D (r2719: `d3Actief() &&
+     !actor.isMetgezel` -> return), en Vista.raak zet alleen een flits + camerakick, geen
+     pose. Zonder de tweede regel deinsde de tiran in 3D dus nergens zichtbaar terug. Het
+     huispatroon staat in dicktatorDelegatie: Vista.pose EN pose2D, met dezelfde duur. */
   pose2D(b, 'hit', t.pose);
+  if (window.Vista && Vista.pose) Vista.pose(b, 'hit', t.pose);
   if (window.Vista && Vista.raak) Vista.raak(b, true);
   tikFlits(t.kleur);
   hitstop(t.stop);
@@ -2417,6 +2422,7 @@ function hofDeinst(g, stap) {
       el._deinstT = setTimeout(() => el.classList.remove('deinst'), dtempo(520));
     }
     pose2D(x, 'hit', 0.6);
+    if (window.Vista && Vista.pose) Vista.pose(x, 'hit', 0.6);   /* idem: in 3D is pose2D een no-op, de golf liep daar op onbewogen sprites */
   }, dtempo((stap || 90) * i)));
 }
 /* HET DOEK: het beeld dooft en trekt weer op. diepte 0 (of niets) = doek open.
@@ -7512,6 +7518,7 @@ function dicktatorRegieProces(b, g, op, U, D) {
      terwijl de nieuwe recht binnenkomt, en het doek trekt daar dwars doorheen op. */
   op(1500, () => {
     pose2D(b, 'cast', 1.4);
+    if (window.Vista && Vista.pose) Vista.pose(b, 'cast', 1.4);   /* v120-fix (C3): zonder deze regel richtte hij zich in 3D nergens op - pose2D is daar een no-op */
     _regieKlasse(b, 'oprijzen', 700);
     _oprijzen(b, null, 1.07, 300);              /* de overshoot zelf loopt via de LOSSE scale:-transition, niet via een keyframe - zie _oprijzen */
     schokToneel(1.8, 520);
@@ -7572,6 +7579,7 @@ function dicktatorRegieTirade(b, g, op, U, D) {
      body.tirade: het fakkelvignet knijpt dicht en blijft dicht. */
   op(450, () => {
     pose2D(b, 'death', 1.4);
+    if (window.Vista && Vista.pose) Vista.pose(b, 'death', 1.4);   /* v120-fix (C3): de knieval bestond in 3D niet. Vista.pose, NIET Vista.sterf - hij gaat hier niet neer, hij wankelt */
     _regieKlasse(b, 'knielt', 0);
     toneelDoek(0.70, 500);
     document.body.classList.add('tirade');
@@ -7591,6 +7599,7 @@ function dicktatorRegieTirade(b, g, op, U, D) {
     _regieKlasse(b, 'oprijzen', 900);
     _oprijzen(b, null, 1.07, 300);              /* LOSSE scale:-transition: de keyframe verloor hier altijd van de woede-gloed (zie _oprijzen) */
     pose2D(b, 'attack', 1.1);
+    if (window.Vista && Vista.pose) Vista.pose(b, 'attack', 1.1);   /* v120-fix (C3): de uithaal uit de knieval - in 3D was dit een onbewogen sprite */
     const sc = $('#scherm-gevecht');
     if (sc && !document.body.classList.contains('lite')) {
       sc.classList.add('slowmo');
@@ -7718,7 +7727,9 @@ function dicktatorHerverkiezing(g, doel) {
 
   /* t=260 - DE VAL: hij zakt op zijn knieën en BLIJFT liggen. 3,4s i.p.v. 1,2s - vroeger
      stond hij op t=1200 alweer rechtop, één seconde vóór zijn eigen herrijzenisbanner. */
-  op(260, () => { pose2D(doel, 'death', 3.4); _regieKlasse(doel, 'knielt', 0); toneelDoek(0.80, 600); });
+  /* v120-fix (C3): ook hier Vista.pose i.p.v. niets. Géén Vista.sterf - die laat de sprite
+     omvallen én blijvend dood staan, en hij staat op t=3200 juist weer op. */
+  op(260, () => { pose2D(doel, 'death', 3.4); if (window.Vista && Vista.pose) Vista.pose(doel, 'death', 3.4); _regieKlasse(doel, 'knielt', 0); toneelDoek(0.80, 600); });
 
   /* t=900 - DE STEMMING, hoveling per hoveling (260ms uit elkaar). De enige beat die de
      kernmechaniek ZICHTBAAR maakt; vroeger speelde hij op onzichtbare figuren. */
