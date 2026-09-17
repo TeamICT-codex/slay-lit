@@ -4319,7 +4319,9 @@ body.tirade #licht-vignet { opacity: .82 !important; transition: opacity .5s eas
   background: radial-gradient(circle at center, var(--tik-kleur, rgba(255, 236, 214, .85)), transparent 72%);
   animation: tikFlits .35s ease-out forwards;
 }
-@keyframes tikFlits { 0% { opacity: 0; } 12% { opacity: 1; } 100% { opacity: 0; } }
+/* --tik-max is het PLAFOND van de flits: 1 op laptop, .55 op een krappe liggende telefoon
+   (mobiel.css), waar een fullscreen wit-rode was het halve speelveld dekt. */
+@keyframes tikFlits { 0% { opacity: 0; } 12% { opacity: var(--tik-max, 1); } 100% { opacity: 0; } }
 
 /* HITSTOP: het beeld bevriest een fractie op de klap. Alleen de SPELERSLAGEN staan
    stil; de overlays (.tik-flits, .vonnis, #toneel-doek, .beef) lopen bewust door,
@@ -4344,12 +4346,16 @@ body.tirade #licht-vignet { opacity: .82 !important; transition: opacity .5s eas
 /* DE SCHOK op de FIGURENLAAG - op #strijdveld, nooit op #scherm-gevecht (en in 3D op
    niets: zie de hitstop-dip hierboven).
    Amplitude via --schok (1.0 licht ... 2.6 de doodsklap), duur via --schok-t. */
+/* --schok komt van de REGIE (schokToneel zet hem inline); --schok-f is de SPOORFACTOR die
+   css/mobiel.css op een krappe liggende telefoon op .5 zet. Twee properties omdat een
+   stylesheet een inline custom property alleen met !important kan overschrijven - en dan
+   zou de mobiele regel de hele escalatieladder 1.0/1.6/2.6 platslaan tot één waarde. */
 #scherm-gevecht:not(.d3-actief) #strijdveld.toneelschok { animation: toneelBeef var(--schok-t, 420ms) cubic-bezier(.36, .07, .19, .97); }
 @keyframes toneelBeef {
   0%, 100% { translate: 0 0; }
-  25% { translate: calc(var(--schok, 1) * -9px) calc(var(--schok, 1) * 3px); }
-  50% { translate: calc(var(--schok, 1) * 7px) calc(var(--schok, 1) * -4px); }
-  75% { translate: calc(var(--schok, 1) * -4px) calc(var(--schok, 1) * 2px); }
+  25% { translate: calc(var(--schok, 1) * var(--schok-f, 1) * -9px) calc(var(--schok, 1) * var(--schok-f, 1) * 3px); }
+  50% { translate: calc(var(--schok, 1) * var(--schok-f, 1) * 7px) calc(var(--schok, 1) * var(--schok-f, 1) * -4px); }
+  75% { translate: calc(var(--schok, 1) * var(--schok-f, 1) * -4px) calc(var(--schok, 1) * var(--schok-f, 1) * 2px); }
 }
 
 /* DE PLAAT KRIJGT EEN DUW - om de GEMETEN vloerrand, zodat de figuren niet zweven.
@@ -5054,9 +5060,52 @@ body.lite .overlay { backdrop-filter: none; }
 body.lite #hand .kaart::after { display: none; }
 /* v109: geen puls, geen flits, geen crossfade in lite */
 body.lite .intent-factuur, body.lite .intent-hof { animation: none; }
+/* v120-fix (het gaatje uit §4.3, al bestaand vóór deze ronde): zonder de eindstand liet
+   `animation: none` het pseudo-element 900ms op zijn DECLARATIEVE opacity 1 staan - in
+   lite was de herrijzenisflits dus geen flits maar een keiharde goudwas over het hele
+   scherm. .vijand.vlucht heeft hetzelfde nodig (hofVlucht eindigt op opacity 0, anders
+   blijft de gevluchte hoveling gewoon staan tot renderGevecht hem opruimt). */
 body.lite #scherm-gevecht.goud-flits::after, body.lite .vijand.vlucht, body.lite #scherm-gevecht.slowmo { animation: none; }
+body.lite #scherm-gevecht.goud-flits::after { opacity: 0; }
+body.lite .vijand.vlucht { opacity: 0; }
 body.lite #gevecht-achtergrond-2 { transition: none; }
 body.lite #licht-vignet.flikker::after { animation: none; }
+
+/* ---------- HET PROCES - terugval van het drama (v120, stap C1) ----------
+   Lite en OS-reduced-motion zijn NIET gekoppeld: standaardLite zet lite aan bij
+   reduced-motion, maar de speler kan lite daarna handmatig uitzetten. Dus twee volledige
+   regelsets, de tweede met !important (zie de media-query verderop).
+   Conventie van het huis (model: body.lite .decreet-stempel): `animation: none` MET de
+   eindstand EXPLICIET neergezet, nooit display:none. Zonder eindstand staat de
+   vonnistitel onzichtbaar op scale 5 en blijft de tik-flits op volle opacity hangen.
+   Wat BEWUST BLIJFT: #toneel-doek (als harde knip dekt hij in lite juist de harde
+   arenawissel af), #arena-tint, body.tirade #licht-vignet, .vijand.knielt en de
+   amberkring om de held - allemaal statische standen, geen beweging. */
+body.lite #toneel-doek { transition: none; }               /* het doek blijft, maar knipt */
+body.lite #arena-tint { transition: none; }                /* de bedrijfskleur blijft, maar knipt */
+body.lite .vijand.knielt .vijand-art { transition: none; }  /* de knieval is een stand, geen beweging */
+body.lite .tik-flits { animation: none; opacity: 0; }
+body.lite .vonnis { animation: none; opacity: 1; }          /* introVervaag vervalt; JS ruimt de plaat op zijn eigen beat op */
+body.lite .vonnis h2 { animation: none; opacity: 1; transform: rotate(-1.5deg); }   /* = de eindstand van vonnisSlag, zonder de scale-5-inslag */
+body.lite .vonnis span { animation: none; opacity: 1; transform: none; }
+body.lite #scherm-gevecht.hitstop #strijdveld { filter: none; }   /* de hitstop is hier de facto afwezig: geen dip */
+body.lite #strijdveld.toneelschok { animation: none; translate: 0 0; }
+body.lite .plaat-dreun, body.lite .plaat-kantel, body.lite .plaat-instort { animation: none; scale: 1; rotate: 0deg; translate: 0 0; }
+body.lite .plaat-inzoom { animation: none; scale: 1.06; }   /* de camerakruip van bedrijf III is een STAND: die hoort ook in lite te staan */
+/* --voetc MOET in de eindstand mee, anders springt de voetlijn zodra .baas-tik erop komt */
+body.lite .vijand.baas-tik .vijand-art img { animation: none; translate: 0 var(--voetc, 0%); rotate: 0deg; }
+body.lite .vijand.deinst { animation: none; translate: 0 0; }
+/* de overshoot van _oprijzen is een INLINE scale-transition (js/game.js); _rustigeBeweging()
+   slaat hem daar al over, dit is het vangnet als lite midden in een regie aangaat. */
+body.lite .vijand.oprijzen .vijand-art, body.lite .vijand.oprijzen-groot .vijand-art { transition: none; }
+body.lite .vijand.exit.geveld { animation: none; opacity: 0; }   /* de griffier valt niet, maar hij verdwijnt wél */
+body.lite .vijand.stemt { animation: none; scale: 1; }
+body.lite .vijand.stemt .vijand-art { animation: none; }
+body.lite .bb-pip.knapt { animation: none; transform: scale(1); }
+body.lite .bb-pip.kroon.knapt { animation: none; transform: rotate(45deg) scale(1); }
+/* de gouden gloed van de herkozen tiran BLIJFT - alleen de puls eruit. animation:none op
+   (0,4,1) wint van .vijand.woede .vijand-art, dus er komt ook geen rode woedeGloei voor terug. */
+body.lite .vijand.herverkozen.woede .vijand-art { animation: none; filter: saturate(1.4) drop-shadow(0 0 18px rgba(255, 190, 60, .7)); }
 /* eindscherm-/daily-paneel + knoppenrij meteen tonen in lite (geen reveal-vertraging) */
 body.lite .einde-onthul > div, body.lite .einde-titel, body.lite .einde-regel,
 body.lite .einde-troost, body.lite .einde-seed, body.lite .einde-loopbaan,
@@ -5072,7 +5121,29 @@ body.lite .einde-doel, body.lite .daily-paneel, body.lite .einde-knoppen {
   .sintel { display: none; }
   .titel-groot, .intent, .knoop.kan, #energie-orb { animation: none !important; }
   #scherm-gevecht.goud-flits::after, .vijand.vlucht, #scherm-gevecht.slowmo { animation: none !important; }
+  #scherm-gevecht.goud-flits::after { opacity: 0 !important; }   /* v120: hetzelfde gaatje als in lite - zonder eindstand 900ms volle goudwas */
+  .vijand.vlucht { opacity: 0 !important; }
   #gevecht-achtergrond-2 { transition: none !important; }
+  /* HET PROCES - terugval van het drama (v120, stap C1). Dezelfde set als body.lite
+     hierboven, want de twee zijn niet gekoppeld: elk effect uit, elk met zijn eindstand. */
+  #toneel-doek, #arena-tint, .vijand.knielt .vijand-art { transition: none !important; }
+  .tik-flits { animation: none !important; opacity: 0 !important; }
+  .vonnis { animation: none !important; opacity: 1 !important; }
+  .vonnis h2 { animation: none !important; opacity: 1 !important; transform: rotate(-1.5deg) !important; }
+  .vonnis span { animation: none !important; opacity: 1 !important; transform: none !important; }
+  #scherm-gevecht.hitstop #strijdveld { filter: none !important; }
+  #strijdveld.toneelschok { animation: none !important; translate: 0 0 !important; }
+  .plaat-dreun, .plaat-kantel, .plaat-instort { animation: none !important; scale: 1 !important; rotate: 0deg !important; translate: 0 0 !important; }
+  .plaat-inzoom { animation: none !important; scale: 1.06 !important; }
+  .vijand.baas-tik .vijand-art img { animation: none !important; translate: 0 var(--voetc, 0%) !important; rotate: 0deg !important; }
+  .vijand.deinst { animation: none !important; translate: 0 0 !important; }
+  .vijand.oprijzen .vijand-art, .vijand.oprijzen-groot .vijand-art { transition: none !important; }
+  .vijand.exit.geveld { animation: none !important; opacity: 0 !important; }
+  .vijand.stemt { animation: none !important; scale: 1 !important; }
+  .vijand.stemt .vijand-art { animation: none !important; }
+  .bb-pip.knapt { animation: none !important; transform: scale(1) !important; }
+  .bb-pip.kroon.knapt { animation: none !important; transform: rotate(45deg) scale(1) !important; }
+  .vijand.herverkozen.woede .vijand-art { animation: none !important; filter: saturate(1.4) drop-shadow(0 0 18px rgba(255, 190, 60, .7)) !important; }
 }
 /* titelscherm liggend op korte telefoon → mobiel.css */
 

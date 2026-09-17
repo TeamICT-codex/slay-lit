@@ -624,6 +624,27 @@ window.VOETMARGE = {
   speler_death: 5.5, speler_hit: 4.3, spiegelwachter_gif: 3.0, steengolem_attack: 5.5, steengolem_death: 5.6,
   stempelaar_attack: 11.6, stempelaar_block: 7.2, stempelaar_cast: 6.1, stempelaar_hit: 1.3, thoverk_block: 6.1,
   thoverk_death: 4.5, thoverk_hit: 3.4, vlamwachter_death: 3.5,
+  /* v120 (HET PROCES, stap C4): de scan hierboven is van v101 en kende de zes baasposes
+     en de twaalf hof-platen van v117/v118 niet. HET PROCES houdt poses 2,6-3,4s in beeld
+     i.p.v. 0,45s, dus een zweving die vroeger wegviel staat straks stil op het zwaarste
+     moment van het spel. Alfa-scan (drempel 10/255, zelfde methode; ijking reproduceerde
+     de_dicktator 2,95 -> tabel 3,0 / het_klapvee 3,91 -> 3,9 / slijmkoning 2,07 -> 2,1).
+     Gemeten, in % van de beeldhoogte, met de afwijking t.o.v. de eigen basisplaat:
+       de_dicktator      2,95 (basis)   hit 2,47 (-0,5)  death 3,83 (+0,9)  cast 3,11 (+0,2)
+                                        attack 1,83 (-1,1)  factuur 1,56 (-1,4)  block 2,15 (-0,8)
+                                        decreet 1,52 (-1,4)  herkozen 0,88 (-2,1) <
+       de_griffier       0,49 (basis)   cast 1,56 (+1,1)  hit 0,68 (+0,2)  death 2,64 (+2,2) <
+       de_deurwaarder    0,88 (basis)   attack 0,10 (-0,8)  hit 2,34 (+1,5)  death 0,00 (-0,9)
+       de_claqueur       0,49 (basis)   attack 0,59 (+0,1)  hit 0,10 (-0,4)  death 3,52 (+3,0) <
+     Alleen de drie met < krijgen een eigen regel (drempel 1,5%, net als v101). De drie
+     basisplaten van het hof staan bewust NIET in de tabel: 0,49/0,88/0,49% is ruis (<1%).
+     de_deurwaarder_hit (+1,46%) valt nét onder de drempel en is gemeten op 1,7px = 0,19% vh
+     - onder de 1%-eis, dus geen regel. de_dicktator_intro (marge 0,00%, 1122x1402) hoort er
+     NIET in: 'intro' zit niet in POSE_STATES, hij loopt nooit door pose2D en de baasintro
+     tekent hem in zijn eigen kader - een regel hier zou dode last zijn. */
+  de_dicktator_herkozen: 0.9,   /* de herkozen gedaante staat 2,1% LAGER in zijn kader; 3s vastgehouden */
+  de_griffier_death: 2.6,       /* DE EXECUTIE: 900ms uitspelen + blijvend lijk */
+  de_claqueur_death: 3.5,       /* de ineenzakkende hoop (v118-plaat), 3s bij DE STEMMING */
 };
 window.laadDrankAfbeelding = maakArtLader('assets/dranken/');
 window.laadIcoonAfbeelding = maakArtLader('assets/iconen/');   /* UI-iconen (rust-opties enz.) */

@@ -7384,9 +7384,18 @@ function _bedrijf(n) { const sc = $('#scherm-gevecht'); if (sc) sc.dataset.bedri
    blijvende .knapt zou de pip op scale 1 laten hangen na het gevecht. */
 function _pipKnapt(i) {
   const p = document.querySelectorAll('#baas-balk .bb-pip')[i];
-  if (!p) return;
-  p.classList.remove('knapt'); void p.offsetWidth; p.classList.add('knapt');
-  setTimeout(() => p.classList.remove('knapt'), dtempo(600));
+  if (p) {
+    p.classList.remove('knapt'); void p.offsetWidth; p.classList.add('knapt');
+    setTimeout(() => p.classList.remove('knapt'), dtempo(600));
+  }
+  /* v120 (stap C2): op mobiel IS de bazenbalk het hart (.bb-balk::before, mobiel.css) en
+     zijn de pips 8px klein - de breuk hoort daar dus op het hart te vallen. Op laptop
+     bestaat .hart-knapt niet in CSS, dus deze klasse is daar een no-op: één haak, twee
+     sporen, geen modus-test in JS. */
+  const balk = $('#baas-balk .bb-balk');
+  if (!balk) return;
+  balk.classList.remove('hart-knapt'); void balk.offsetWidth; balk.classList.add('hart-knapt');
+  setTimeout(() => balk.classList.remove('hart-knapt'), dtempo(600));
 }
 /* een regieklasse op de FIGUUR. actorEl wordt bij elke beat opnieuw opgezocht: de DOM
    wordt tijdens de regie herbouwd (bouwGevechtDom bij de claqueur-oproep), dus een
