@@ -1598,6 +1598,12 @@ body[data-modus="mobiel"] #baas-balk .bb-balk.hart-knapt::before { animation: ha
    mag groter zijn, net zoals .bb-pip.kroon.knapt op laptop zijn eigen keyframe heeft. */
 body[data-modus="mobiel"] #baas-balk[data-vorm="2"] .bb-balk.hart-knapt::before { animation-name: hartKnaptKroon; }
 @keyframes hartKnaptKroon { 0%, 100% { scale: 1; } 40% { scale: 1.45; } }
+/* terugval, zelfde conventie als het drama-blok in style.css: animation uit MET de
+   eindstand erbij. Lite en OS-reduced-motion staan los van elkaar, dus twee regelsets. */
+body.lite[data-modus="mobiel"] #baas-balk .bb-balk.hart-knapt::before { animation: none; scale: 1; }
+@media (prefers-reduced-motion: reduce) {
+  body[data-modus="mobiel"] #baas-balk .bb-balk.hart-knapt::before { animation: none !important; scale: 1 !important; }
+}
 
 /* 4. GEEN BLEED OP MOBIEL, DUS ALLEEN INZOOMEN. #gevecht-achtergrond heeft hier
    `inset: 0 0 env(safe-area-inset-bottom) 0` i.p.v. de laptop-bleed van −28px (zie
