@@ -4156,6 +4156,17 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
   pointer-events: none;
 }
 #baas-balk .bb-fases { pointer-events: auto; display: flex; gap: 7px; justify-content: center; margin-top: 5px; cursor: help; }
+/* DE BELEIDSPIL IS AANRAAKBAAR (v121-fix bij P1). #baas-balk staat op pointer-events:none
+   en dat ERFT door: .bb-fases zet het één regel hoger terug op auto, de beleidspil deed
+   dat niet - en juist die pil draagt sinds P1 de duiding van HET MANDAAT ("Hij int nu
+   zelf. De opzegtermijn loopt.") in haar data-tip. De tooltip-haken zijn
+   document.mouseover/pointerdown met e.target.closest('[data-tip]'): op een element met
+   pointer-events:none wordt die target nooit gehaald, dus de regel was met muis noch
+   vinger te bereiken en viel stil uit het stuk. De auto gaat op de PIL (.bb-aegis) en
+   niet op de hele 620px brede .bb-extra: daarbuiten blijft de band doorlaatbaar naar
+   wat eronder ligt. Geldt voor beide sporen; de andere bazen (Copycat-arsenaal, DE
+   FACTUUR) winnen hun tip hiermee ook terug. */
+#baas-balk .bb-aegis { pointer-events: auto; cursor: help; }
 .bb-naam {
   font-family: 'Pirata One', serif;
   font-size: 1.35rem;
@@ -4575,24 +4586,36 @@ body.lite .bb-extra.mandaat-aan .bb-aegis { animation: none; text-shadow: 0 1px 
 
 /* VRIJE RUIMTE VOOR DE VONNISSEN (v121, architectbesluit P2). Zolang de ceremonie loopt,
    dooft alles wat de titelband met de vonnisplaat deelt: de intent-badges van ALLE
-   vijanden en de beleidsstrook onder de bazenbalk. Drie keuzes:
+   vijanden, de beleidsstrook onder de bazenbalk en - sinds de eindpolish - #beurt-label.
+   Dat laatste staat in een baasgevecht op margin-top:102px (r1275) en daarmee sinds de
+   verankering van P2 IN de band van de titel: gemeten 1440x900 en 1366x662 lag "Beurt 1"
+   op y=154..174 dwars tussen de titelglyphen, en bij IV staat het doek op de stempel nog
+   maar op 0,26 - dus het doek verbergt het daar niet. Tijdens een ceremonie zegt het
+   label toch niets. Op mobiel is het in een baasgevecht al display:none (mobiel.css
+   §baasgevecht), dus deze regel raakt daar niets. Drie keuzes:
    - OPACITY, nooit display of visibility: de intent-rij draagt de hoogte van de
      vijandkolom (.intent-rij heeft min-height 30px) en de strook duwt de bazenbalk;
      een wissel daar zou de hele kop laten verspringen op precies de beat waarop de
      figuren stil moeten staan;
    - de HP-balk zelf (.bb-balk met zijn pips) BLIJFT staan - zijn bevriezen op de oude
      stand en zijn losknappen op t=3400 is een beat van het stuk, geen decoratie;
+   - de pil in de strook (.bb-aegis) krijgt de pointer-events:none apart mee: ze zet
+     hierboven (r4159) zelf pointer-events:auto voor haar tooltip, en een `auto` op een
+     kind wint van een `none` op de ouder - zonder deze regel bleef een onzichtbare pil
+     tijdens de ceremonie nog steeds een tip opvangen;
    - de haak is body.ceremonie en verder niets. Daardoor komt alles vanzelf terug bij
      élke uitgang: _ceremonieUit, de fase-skip, DICK.tempo=0.02 (waar de hele regie in
      ~150ms voorbij is), een fasegrens midden in de vijandbeurt én regieOpruimAlles /
      stopGevechtLus - die halen alle drie diezelfde klasse van de body.
    Dit is bewust een BASIS-regel (spoor 1) en geen laptop-regel: op beide sporen staan
    dezelfde badges in dezelfde band, en mobiel.css hoeft er niets aan te corrigeren. */
-.intent, #baas-balk .bb-extra { transition: opacity .25s ease; }
+.intent, #baas-balk .bb-extra, #beurt-label { transition: opacity .25s ease; }
 body.ceremonie .intent,
-body.ceremonie #baas-balk .bb-extra { opacity: 0; pointer-events: none; }
+body.ceremonie #baas-balk .bb-extra,
+body.ceremonie #baas-balk .bb-extra .bb-aegis,
+body.ceremonie #beurt-label { opacity: 0; pointer-events: none; }
 /* terugval, twee losse sporen: dezelfde standen, alleen zonder de overgang */
-body.lite .intent, body.lite #baas-balk .bb-extra { transition: none; }
+body.lite .intent, body.lite #baas-balk .bb-extra, body.lite #beurt-label { transition: none; }
 
 /* Act 3-regel: tijdens een ceremonie is de fakkel van de HELD het enige zachte licht.
    isolation:isolate is hier NIET cosmetisch: #speler-zone is wel position:relative
@@ -5204,9 +5227,9 @@ body.lite .einde-doel, body.lite .daily-paneel, body.lite .einde-knoppen {
   /* HET PROCES - terugval van het drama (v121, stap C1). Dezelfde set als body.lite
      hierboven, want de twee zijn niet gekoppeld: elk effect uit, elk met zijn eindstand. */
   #toneel-doek, #arena-tint, .vijand.knielt .vijand-art { transition: none !important; }
-  /* P2: de badges en de strook doven ook hier, maar zonder overgang - de standen zelf
-     (opacity 0 tijdens de ceremonie, terug erna) blijven expliciet staan. */
-  .intent, #baas-balk .bb-extra { transition: none !important; }
+  /* P2: de badges, de strook en het beurt-label doven ook hier, maar zonder overgang -
+     de standen zelf (opacity 0 tijdens de ceremonie, terug erna) blijven expliciet staan. */
+  .intent, #baas-balk .bb-extra, #beurt-label { transition: none !important; }
   .tik-flits { animation: none !important; opacity: 0 !important; }
   .vonnis { animation: none !important; opacity: 1 !important; }
   .vonnis h2 { animation: none !important; opacity: 1 !important; transform: rotate(-1.5deg) !important; }
