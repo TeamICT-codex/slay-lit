@@ -7874,6 +7874,12 @@ function dicktatorHerverkiezing(g, doel) {
     _pipKnapt(3);
   });
 
+  /* GOUD is hier een BEWUSTE keuze (v121, architectbesluit P3), geen erfenis: IV is het
+     vergulde bedrijf - de gouden stemming, de goudflits van de herrijzenis, de vergulde
+     bazenbalk (data-vorm="2") en het goudrode mandaatlicht dat erna blijft staan. II en III
+     dragen het rood van de griffie; dat IV daarvan afwijkt IS het punt. De verwarring met
+     het vijfde bedrijf - twee gouden platen kort na elkaar - bestaat niet meer: V heeft
+     sinds P1 geen kaartje meer, alleen de puls op de strook. */
   op(3600, () => vonnisSlam('IV · DE HERVERKIEZING', D.herverkiezing, { duur: 2600, kleur: 'goud', schok: 1.6 }));
 
   /* t=4000 - DE ZAAL STORT IN: de omgevallen brandende troon komt op TERWIJL het doek
