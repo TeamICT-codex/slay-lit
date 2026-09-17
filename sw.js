@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v120'; // v120: Glenn wordt Bart Blinker (medewerker 0041) - nieuwe metamorfose-platen voor de Slijmkoning-intro en het proloog-portret
+const CACHE = 'slayit-v121'; // v121: HET PROCES als toneel - de bedrijfsovergangen van de DICKtator met tik, hitstop, doek, vonnis + duiding, zichtbare stemming en een echte herrijzenis
 const BESTANDEN = [
   '.',
   'css/style.css',
