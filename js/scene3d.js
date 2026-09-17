@@ -29,6 +29,7 @@ const Vista = (() => {
   let ambientLicht = null;
   let lichtDoel = 1, lichtNu = 1; /* fakkelniveau van het spel: 1 = helder */
   let kick = 0, tijd = 0;
+  let schok = 0, schokT = 0;    /* v121: de toneelschok van de bedrijfsovergangen (Vista.schud) */
 
   function beschikbaar() {
     if (!window.THREE) return false;
@@ -716,6 +717,13 @@ const Vista = (() => {
     kick *= Math.pow(0.002, dt);
     camera.position.x = Math.sin(tijd * 0.3) * 0.18 + (Math.random() - 0.5) * 0.3 * kick;
     camera.position.y = 2.6 + Math.sin(tijd * 0.22) * 0.08 + (Math.random() - 0.5) * 0.2 * kick;
+    /* v121: de toneelschok bovenop de zwaai — een uitdempende slinger van ~7Hz, zodat een
+       bedrijfsovergang in 3D dezelfde stoot geeft als #strijdveld.toneelschok in 2D. */
+    if (schok > 0.001) {
+      schokT += dt; schok *= Math.pow(0.006, dt);
+      camera.position.x += Math.sin(schokT * 46) * 0.42 * schok;
+      camera.position.y += Math.sin(schokT * 61) * 0.18 * schok;
+    }
     camera.lookAt(0, kijkY, 0);
 
     /* verborgen tab: de Tikker tikt bewust door (slaap()/vijandbeurten lopen af),
@@ -850,6 +858,14 @@ const Vista = (() => {
   /* fakkelniveau van het spel (1 = helder, 0.16 = gedoofd) */
   function zetLicht(f) { lichtDoel = Math.max(0.05, Math.min(1, f)); }
 
+  /* v121 (HET PROCES, het drama): een camerakick op het TONEEL i.p.v. op een acteur.
+     Bewust een EIGEN, gedempte slinger naast de kick-teller van raak()/aanval(): die is
+     pure ruis (een verse Math.random per frame) en levert bij een bedrijfsovergang geen
+     herkenbare STOOT op - hij ratelt alleen. Deze zwaait deterministisch uit en is
+     daardoor ook meetbaar: schud(1) wijkt binnen 35ms ~0,35 wereld-eenheid af en is
+     binnen 500ms terug. raak()/aanval() blijven letterlijk zoals ze waren. */
+  function schud(k) { schok = Math.min(1.4, schok + (k || 0.6)); schokT = 0; }
+
   /* camerazwaai t.o.v. de rustpositie — voor parallax op de achtergrondplaat */
   function zwaai() {
     if (!camera) return { x: 0, y: 0 };
@@ -857,7 +873,7 @@ const Vista = (() => {
   }
 
   return {
-    beschikbaar, start, gevechtStart, gevechtEind, raak, aanval, sterf, pose, tik, schermPos, resize, zwaai, zetLicht,
+    beschikbaar, start, gevechtStart, gevechtEind, raak, aanval, sterf, pose, tik, schermPos, resize, zwaai, zetLicht, schud,
     voetlijnY, voetlijnInfo, voetMeting,
     get actief() { return actief; },
     get klaar() { return klaar; }

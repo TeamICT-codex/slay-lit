@@ -4,6 +4,12 @@
 # distributie-zip (wordt apart gebouwd)
 *.zip
 
+# schoten van de meet-/testsuites in tools/ (drama_shots, geo_shots, drama_c_shots, ...):
+# zonder SLAYIT_SHOTS vallen die suites terug op een map NAAST het script, en rauwe PNG's
+# horen nooit in de werkboom (projectafspraak art-pipeline). Zet SLAYIT_SHOTS naar de
+# scratchpad en er belandt hier sowieso niets.
+tools/*_shots/
+
 # originelen-backups van het dambord-script (groot, niet nodig in het spel)
 assets/*/originelen/
 

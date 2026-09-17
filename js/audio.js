@@ -127,6 +127,15 @@ const Klank = (() => {
     stap()      { toon(330, 0.06, 'triangle', 0.05); },
     flip()      { ruis(0.13, 'bandpass', 900, 2800, 0.12); toon(620, 0.07, 'triangle', 0.05); },
     schitter()  { [880, 1175, 1568, 2093].forEach((f, i) => toon(f, 0.16, 'sine', 0.06, null, ctx && ctx.currentTime + i * 0.07)); },
+    /* HET PROCES (v121): de hamer is het MOTIEF van de rechtszitting - dezelfde tik bij
+       de klap en bij de stempel maakt van de drie bedrijfsovergangen een zitting in
+       plaats van drie losse effectenshows. dreun = de sub-bass-inslag met lange staart,
+       inzakken = iets zwaars dat in elkaar zakt (dient ook als 'scheur').
+       LET OP: een onbekende naam is STIL, geen fout (zie sfx() hieronder) - deze drie
+       moeten HOORBAAR getest worden, en 41 Hz klinkt op een telefoon anders dan hier. */
+    hamer()    { ruis(0.10, 'bandpass', 2600, 900, 0.5); toon(1500, 0.05, 'square', 0.10); SFX.zwareklap(); },
+    dreun()    { ruis(0.95, 'lowpass', 520, 42, 0.55); toon(41, 1.2, 'sine', 0.5, 26); toon(82, 0.45, 'sawtooth', 0.16, 38); duck(0.75, 1.3); },
+    inzakken() { ruis(0.80, 'bandpass', 2600, 300, 0.30); toon(33, 1.1, 'sine', 0.30, 24); },
     /* BETAALD APPLAUS (v109): zes korte ruisstootjes met jitter — handen die klappen
        omdat ze betaald worden, net niet gelijk. */
     applaus()   {

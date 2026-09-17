@@ -1565,3 +1565,80 @@ body[data-modus="mobiel"] #w-spring.in, body[data-modus="mobiel"] #w-rol.in {
   body[data-modus="mobiel"] #w-actie { min-height: 48px; bottom: 8px; padding: 9px 16px; font-size: .98rem; max-width: calc(100% - 140px); }
   body[data-modus="mobiel"] #w-plattegrond { font-size: .78rem; padding: 5px 8px; }
 }
+
+/* ============================================================
+   HET PROCES — het drama van de bedrijfsovergangen op mobiel (v121, stap C2)
+   Tweede spoor bij het drama-blok in css/style.css. Wat daar staat werkt hier gewoon
+   mee (doek, arena-tint, vonnis, tik-flits, hitstop, alle figuurbeats); dit zijn de
+   vijf plekken waar de telefoon een eigen antwoord nodig heeft.
+   ============================================================ */
+
+/* 1. DE INZAGE-KNOP WIJKT. Hij staat op z55 — boven het doek (45) én boven het vonnis
+   (47) — en zou dwars door een black-out van 80% blijven steken. display:none is exact
+   dezelfde behandeling als elke andere cinematic in de lijst hierboven (baas-intro,
+   reveals, dagwet, draai-blok), geen eigen uitzondering. */
+body[data-modus="mobiel"].ceremonie #inzage-knop { display: none; }
+
+/* 2. HET DOEK EEN TREDE ZACHTER (keuze 2 van het regieblad: 92 % laptop, 80 % mobiel).
+   Een PLAFOND via min(), geen vaste waarde: 55 % en 70 % blijven dus gewoon 55 % en
+   70 %, alleen de black-out van bedrijf IV wordt afgetopt. Fullscreen zwart-naar-goud
+   is op een telefoon in het donker hard. */
+body[data-modus="mobiel"] #toneel-doek.aan { opacity: min(var(--doek, .6), .80); }
+
+/* 3. DE PIP-BREUK VERTAALD NAAR HET HART. Op mobiel is de bazenbalk geen balk maar een
+   hart-masker (zie het blok hierboven, .bb-balk::before): de HP-lezing zit daar, niet
+   in de 8px-pips. _pipKnapt zet daarom óók .hart-knapt op .bb-balk.
+   Alleen de LOSSE `scale:` — de ::before draagt een variant-eigen filter (groen /
+   woede-rood / Erfprins-paars / mandaat-goud) en een filter-animatie zou die
+   overschrijven (huisregel §10.3: nooit een tweede filter-animatie), terwijl een
+   box-shadow-flits door het masker toch wordt weggeknipt. */
+body[data-modus="mobiel"] #baas-balk .bb-balk.hart-knapt::before { animation: hartKnapt .42s cubic-bezier(.2, 1.5, .4, 1); }
+@keyframes hartKnapt { 0%, 100% { scale: 1; } 40% { scale: 1.3; } }
+/* V · HET MANDAAT (vorm 2): de vierde pip is de KROON en het hart verguldt — die breuk
+   mag groter zijn, net zoals .bb-pip.kroon.knapt op laptop zijn eigen keyframe heeft. */
+body[data-modus="mobiel"] #baas-balk[data-vorm="2"] .bb-balk.hart-knapt::before { animation-name: hartKnaptKroon; }
+@keyframes hartKnaptKroon { 0%, 100% { scale: 1; } 40% { scale: 1.45; } }
+/* terugval, zelfde conventie als het drama-blok in style.css: animation uit MET de
+   eindstand erbij. Lite en OS-reduced-motion staan los van elkaar, dus twee regelsets. */
+body.lite[data-modus="mobiel"] #baas-balk .bb-balk.hart-knapt::before { animation: none; scale: 1; }
+@media (prefers-reduced-motion: reduce) {
+  body[data-modus="mobiel"] #baas-balk .bb-balk.hart-knapt::before { animation: none !important; scale: 1 !important; }
+}
+
+/* 4. GEEN BLEED OP MOBIEL, DUS ALLEEN INZOOMEN. #gevecht-achtergrond heeft hier
+   `inset: 0 0 env(safe-area-inset-bottom) 0` i.p.v. de laptop-bleed van −28px (zie
+   boven): élke rotatie of verschuiving legt dus kale ondergrond bloot. .plaat-dreun en
+   .plaat-inzoom zijn veilig (scale ≥ 1, geen rotatie); kantel en instort krijgen een
+   kleinere hoek met een compenserende schaal eronder. */
+body[data-modus="mobiel"] .plaat-kantel { --plaat-schaal: 1.04; --plaat-rot: .3deg; }
+body[data-modus="mobiel"] .plaat-instort { --plaat-schaal: 1.05; --plaat-rot: -.3deg; --plaat-y: 4px; }
+
+/* 5. LIGGEND OP EEN KORTE TELEFOON (≤600 px hoog) — daar staan de figuren op vh-clamps
+   en dekt een fullscreen overlay het halve speelveld. Keuze 5 van het regieblad: de
+   schok HALVEREN, niet uitzetten — zonder enige beweging blijft op de krapste context
+   precies de klacht over die deze ronde moest oplossen. */
+@media (orientation: landscape) and (max-height: 600px) {
+  body[data-modus="mobiel"] #strijdveld { --schok-f: .5; }      /* de spoorfactor, niet --schok zelf: die is inline en draagt de escalatieladder 1.0 / 1.6 / 2.2 / 2.6 */
+  body[data-modus="mobiel"] .tik-flits { --tik-max: .55; }      /* alleen het plafond zakt; de curve (0 → piek → 0) blijft */
+  /* een stap korter — maar via een CALC op --doek-t, niet op een hard getal. De vorige
+     300ms negeerde de inline --doek-t die JS uit dtempo voedt (§3.2/§10.11): liggend stond
+     de doekduur daardoor vast, ook bij DICK.tempo ≠ 1. */
+  body[data-modus="mobiel"] #toneel-doek { transition: opacity calc(var(--doek-t, 400ms) * .7) ease; }
+  /* ...en die regel heeft een ID erin, dus hij WON van de C1-terugval `body.lite
+     #toneel-doek { transition: none }` in style.css r5084 (beide (1,1,1), mobiel.css laadt
+     later). In lite bleef het doek hier dus FADEN terwijl §4.3 juist een harde knip vraagt —
+     die knip is wat in lite de harde arenawissel afdekt. Gemeten liggend+lite: 0.3s i.p.v.
+     0s. Zelfde specificiteitsval als bij #strijdveld.toneelschok één regel hoger.
+     De reduced-motion-tegenhanger (style.css r5138) draagt !important en ontsnapte eraan. */
+  body.lite[data-modus="mobiel"] #toneel-doek { transition: none; }
+  /* ONDER de topbalk beginnen. De oude clamp(18px, 6vh, 44px) gaf op 360px hoog 21,6px,
+     terwijl .vonnis op z47 staat en #topbalk op z50 en ~40px hoog is: de titel begon IN de
+     balk en werd door de relikwie-iconen overtekend (gemeten 800x360: 20px = 59% van de
+     titelhoogte, elementFromPoint gaf `relikwie rel-ongewoon`). Bij élk van de drie
+     overgangen. Niet opgelost door .vonnis boven de topbalk te tillen: de HP/energie-chips
+     moeten leesbaar blijven (§4.1). */
+  body[data-modus="mobiel"] .vonnis { padding: calc(var(--tbh, 40px) + var(--sat) + 8px) 14px 0; gap: 4px; }
+  body[data-modus="mobiel"] .vonnis h2 { font-size: clamp(1.5rem, 4.4vh, 2.3rem); letter-spacing: 2px; }
+  body[data-modus="mobiel"] .vonnis span { font-size: clamp(.74rem, 2.2vh, .92rem); max-width: 74vw; }
+  body[data-modus="mobiel"] .vonnis.klein h2 { font-size: clamp(1.05rem, 3.2vh, 1.5rem); }
+}

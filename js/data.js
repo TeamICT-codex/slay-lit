@@ -1809,7 +1809,18 @@ const UITSPRAKEN = {
     peiling: '„Hoort u dat? Dat is DRAAGVLAK."',
     opzegtermijn: '„Uw opzegtermijn loopt."',
     ontslag: '„U bent per direct vrijgesteld van verdere dienst."',
-    zonderBetekening: '„Zonder betekening geen ontslag. Dan TIER ik."'
+    zonderBetekening: '„Zonder betekening geen ontslag. Dan TIER ik."',
+    /* v121 (het drama van de bedrijfsovergangen): de enige regel in het hele stuk die iets
+       AANKONDIGT in plaats van erop te reageren — hij valt terwijl de stemmen geteld worden. */
+    stemming: '„De stemmen worden geteld. De uitslag stond al vast."',
+    /* de duiding ONDER elke bedrijfstitel (vonnisSlam). Zonder deze regels is de onderregel
+       van II en III letterlijk leeg: je ziet de titel wisselen, maar niet WAT er verandert. */
+    duiding: {
+      proces: 'De griffie loopt. Vanaf nu is élke kaart die je speelt een post op zijn Factuur.',
+      tirade: 'Geen griffie meer. Hij tekent, int en slaat voortaan ZELF — en elk decreet maakt hem driester.',
+      herverkiezing: 'Herkozen op 40%. Elke hoveling die nog leefde, stemde op hem — +1 Kracht per stem.',
+      mandaat: 'Hij int nu zelf. De opzegtermijn loopt.'
+    }
   },
   /* De Erfprins = THE COPYCAT: nepo-baby die nooit iets zelf maakte. Eerst pappies
      geld, nu steelt hij jóuw kaarten. Hij verafschuwt Drops — trouw kan hij niet kopiëren. */
