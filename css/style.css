@@ -5089,7 +5089,12 @@ body.lite .vonnis { animation: none; opacity: 1; }          /* introVervaag verv
 body.lite .vonnis h2 { animation: none; opacity: 1; transform: rotate(-1.5deg); }   /* = de eindstand van vonnisSlag, zonder de scale-5-inslag */
 body.lite .vonnis span { animation: none; opacity: 1; transform: none; }
 body.lite #scherm-gevecht.hitstop #strijdveld { filter: none; }   /* de hitstop is hier de facto afwezig: geen dip */
-body.lite #strijdveld.toneelschok { animation: none; translate: 0 0; }
+/* #scherm-gevecht moet hier MEE in de selector: de bronregel is
+   `#scherm-gevecht:not(.d3-actief) #strijdveld.toneelschok` = (2,2,0), en `body.lite
+   #strijdveld.toneelschok` haalt maar (1,2,1). Gemeten: de schok speelde in lite gewoon
+   door (animation-name "toneelBeef", translate -9,0px). De reduced-motion-tegenhanger
+   verderop ontsnapte eraan omdat die !important draagt. */
+body.lite #scherm-gevecht #strijdveld.toneelschok { animation: none; translate: 0 0; }
 body.lite .plaat-dreun, body.lite .plaat-kantel, body.lite .plaat-instort { animation: none; scale: 1; rotate: 0deg; translate: 0 0; }
 body.lite .plaat-inzoom { animation: none; scale: 1.06; }   /* de camerakruip van bedrijf III is een STAND: die hoort ook in lite te staan */
 /* --voetc MOET in de eindstand mee, anders springt de voetlijn zodra .baas-tik erop komt */
@@ -5098,7 +5103,11 @@ body.lite .vijand.deinst { animation: none; translate: 0 0; }
 /* de overshoot van _oprijzen is een INLINE scale-transition (js/game.js); _rustigeBeweging()
    slaat hem daar al over, dit is het vangnet als lite midden in een regie aangaat. */
 body.lite .vijand.oprijzen .vijand-art, body.lite .vijand.oprijzen-groot .vijand-art { transition: none; }
-body.lite .vijand.exit.geveld { animation: none; opacity: 0; }   /* de griffier valt niet, maar hij verdwijnt wél */
+/* transition:none hoort hier bij de eindstand: .vijand draagt `transition: opacity .5s`,
+   dus zonder deze regel FADET de griffier in lite alsnog een halve seconde weg (gemeten
+   opacity 0,78 op t=120). Met `animation: none` alleen is het effect dus niet uit maar
+   verplaatst naar de andere property. */
+body.lite .vijand.exit.geveld { animation: none; transition: none; opacity: 0; }   /* de griffier valt niet, maar hij verdwijnt wél - meteen */
 body.lite .vijand.stemt { animation: none; scale: 1; }
 body.lite .vijand.stemt .vijand-art { animation: none; }
 body.lite .bb-pip.knapt { animation: none; transform: scale(1); }
@@ -5138,7 +5147,7 @@ body.lite .einde-doel, body.lite .daily-paneel, body.lite .einde-knoppen {
   .vijand.baas-tik .vijand-art img { animation: none !important; translate: 0 var(--voetc, 0%) !important; rotate: 0deg !important; }
   .vijand.deinst { animation: none !important; translate: 0 0 !important; }
   .vijand.oprijzen .vijand-art, .vijand.oprijzen-groot .vijand-art { transition: none !important; }
-  .vijand.exit.geveld { animation: none !important; opacity: 0 !important; }
+  .vijand.exit.geveld { animation: none !important; transition: none !important; opacity: 0 !important; }   /* transition mee: .vijand draagt `transition: opacity .5s` */
   .vijand.stemt { animation: none !important; scale: 1 !important; }
   .vijand.stemt .vijand-art { animation: none !important; }
   .bb-pip.knapt { animation: none !important; transform: scale(1) !important; }
