@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v119'; // v119: HET TONEEL IN 3D - de gevechtsplaat op de sprite-voetlijn (voetmarge-correctie, rustigere idle-adem, voetlijn per acteur) + zichtbaar versielabel in de instellingen
+const CACHE = 'slayit-v120'; // v120: Glenn wordt Bart Blinker (medewerker 0041) - nieuwe metamorfose-platen voor de Slijmkoning-intro en het proloog-portret
 const BESTANDEN = [
   '.',
   'css/style.css',
@@ -60,7 +60,7 @@ const ZWAAR = [
   'assets/proloog/kantoor-overzicht.webp',
   'assets/proloog/de-oprichter.webp',
   'assets/proloog/foto-kind.webp',
-  'assets/proloog/glenn2.webp',
+  'assets/proloog/bart_blinker2.webp',
   'assets/proloog/junior.webp',
   'assets/proloog/baas-terminal.webp',
   'assets/proloog/kaart-glimlach.webp',

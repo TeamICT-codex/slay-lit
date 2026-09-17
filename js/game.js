@@ -4946,15 +4946,16 @@ function startGevecht(samenstelling, soort, rij) {
   }
 }
 
-/* DE SLIJMKONING — metamorfose-intro: Glenn (de eeuwige ja-knikker uit de proloog) →
+/* DE SLIJMKONING — metamorfose-intro: Bart Blinker (de eeuwig knipogende ja-knikker uit de proloog,
+   medewerker 0041 — de collega vlak vóór jou op de lijst; jij bent 0042) →
    Senior Instemmer (de hand op zijn schouder) → verslijmd → de gekroonde Slijmkoning.
    De afdaling ÍS de corruptie. Cross-fade per stadium + slijm-drip, klik = overslaan. */
 function toonSlijmkoningIntro(g, b, el) {
   el.classList.add('baas-intro-morf');
   const stadia = [
-    { id: 'glenn',           tekst: 'GLENN · medewerker 0042.<br>Hij knikte. Hij glimlachte. Hij stemde overal mee in.' },
-    { id: 'glenn_instemmer', tekst: 'Bevorderd tot <b>Senior Instemmer</b> — voor zijn enige talent: ja-zeggen.<br>De hand op zijn schouder liet nooit meer los.' },
-    { id: 'glenn_slijm',     tekst: 'Hij boog, en boog… tot zijn ruggengraat oploste.<br>Wie altijd meebuigt, verliest zijn vorm.' },
+    { id: 'bart_blinker',           tekst: 'BART BLINKER · medewerker 0041.<br>Hij knipoogde. Hij knikte. Hij stemde overal mee in.' },
+    { id: 'bart_blinker_instemmer', tekst: 'Bevorderd tot <b>Senior Instemmer</b> — voor zijn enige talent: ja-zeggen.<br>De hand op zijn schouder liet nooit meer los.' },
+    { id: 'bart_blinker_slijm',     tekst: 'Hij boog, en boog… tot zijn ruggengraat oploste.<br>Wie altijd meebuigt, verliest zijn vorm.' },
     { id: 'slijmkoning',     tekst: 'Het systeem dat hem opslokte, kroonde hem koning.<br>Dít blijft er over als je nóóit nee zegt:' },
   ];
   el.innerHTML = `<div class="baas-intro-binnen morf-wrap">

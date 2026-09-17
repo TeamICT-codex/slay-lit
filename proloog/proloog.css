@@ -285,7 +285,7 @@ img { max-width: 100%; display: block; }
 .meter-vul { height: 100%; width: 0; background: linear-gradient(90deg, var(--amber-dof), var(--amber)); transition: width .8s cubic-bezier(.3, .9, .4, 1); }
 .meter-voet { font-family: var(--f-type); font-size: .6rem; color: var(--manila-donker); }
 
-/* grote spreker-kaart (Glenn) */
+/* grote spreker-kaart (Bart Blinker) */
 .spreker-kaart {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom)); z-index: 65;
   display: flex; gap: 12px; align-items: center; width: min(92vw, 520px);

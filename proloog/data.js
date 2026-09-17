@@ -3,7 +3,7 @@
    Vanilla sinds de herbouw (aug 2026): zelfde data, echte repo-paden, geen React.
 
    DE DRIE EINDBAZEN — verhuld in menselijke kantoorvorm (zaaien, niet uitleggen):
-     · Slijmkoning   (Act 1) → GLENN, de altijd ja-knikkende collega.
+     · Slijmkoning   (Act 1) → BART BLINKER (medewerker 0041), de altijd knipogende, ja-knikkende collega.
      · Onterechte L.  (Act 2) → "Junior", manager & zoon-van-de-baas (memo's, handtekening).
      · De DICKtator   (Act 3) → DE OPRICHTER, alomtegenwoordig portret/buste/jingle.
    B.A.A.S. = het systeem/de stem (connective tissue), NIET de eindbaas. */
@@ -34,7 +34,7 @@ window.SLAYLIT_PROLOOG = (function () {
     ] },
     { type: 'sys',  text: 'Glimlach gelogd. +0u06 factureerbaar. \u201cd-ding\u201d.' },
     { type: 'sys',  text: 'Een vies belletje van voldoening. Uw eerste kaart is geslepen.' },
-    { type: 'collega', who: 'glenn', text: 'Mooie glimlach, 0042! Echt vóórbeeldig! Zoals altijd!' },
+    { type: 'collega', who: 'bart', text: 'Mooie glimlach, 0042! Echt vóórbeeldig! Zoals altijd, hè!' },
     { type: 'collega', who: 'marleen', text: 'Hé… gaat het nog, met jou? Echt waar, bedoel ik.' },
     { type: 'baas', text: 'Wenst u nog iets te doen voor de optimalisatieronde begint?' },
     { type: 'actie', verplicht: true, knoppen: [
@@ -54,7 +54,7 @@ window.SLAYLIT_PROLOOG = (function () {
     { type: 'sys',  text: 'Een collega in cubicle 7 verdwijnt midden in een zin. Iedereen glimlacht door.' },
     { type: 'collega', who: 'rudi', text: 'Dat was Karel. Twaalf jaar zat hij daar. Niemand noteert zijn naam.' },
     { type: 'fluister', text: '…een ingehouden zucht gaat door de zaal. Niemand durft te bewegen.' },
-    { type: 'collega', who: 'glenn', text: 'Niks aan de hand! Productiviteit boven alles, hè! Kop op!' },
+    { type: 'collega', who: 'bart', text: 'Niks aan de hand! Productiviteit boven alles, hè! Kop op!' },
     { type: 'collega', who: 'marleen', text: 'Het ligt niet aan jou. Het lag nooit aan ons.' },
     { type: 'baas', text: 'Uw aanwezigheid is vereist bij een Functioneringsgesprek.' },
     { type: 'oproep' },
@@ -102,7 +102,7 @@ window.SLAYLIT_PROLOOG = (function () {
         regels: [
           'Het tl-licht boven úw bureau klikt aan. De rest van de zaal valt weg in het donker.',
           'Honderd hoofden draaien zich weg \u2014 opgelucht dat het uw nummer is, en niet het hunne.',
-          'Glenn knikt u bemoedigend toe. Marleen kan u niet aankijken.',
+          'Bart Blinker knipoogt u bemoedigend toe. Marleen kan u niet aankijken.',
           'Een hand legt zich op uw schouder. \u201cLoop maar mee. Het is maar een gesprek.\u201d',
         ],
         cta: 'Sta op',
@@ -111,7 +111,7 @@ window.SLAYLIT_PROLOOG = (function () {
         oprichter: SLOTS.oprichter,
         foto: SLOTS.foto,
         team: [
-          { id: 'glenn',   naam: 'GLENN',   rol: 'Sr. Instemmer', emoji: '\ud83d\ude03', toon: 'kiss', src: '../assets/proloog/glenn2.webp', portret: '../assets/proloog/glenn2.webp' },
+          { id: 'bart',    naam: 'BART BLINKER', rol: 'Sr. Instemmer', emoji: '\ud83d\ude09', toon: 'kiss', src: '../assets/proloog/bart_blinker2.webp', portret: '../assets/proloog/bart_blinker2.webp' },
           { id: 'marleen', naam: 'MARLEEN', rol: 'cubicle 3',      emoji: '\ud83d\ude42', toon: 'neutraal' },
           { id: 'rudi',    naam: 'RUDI',    rol: 'archief',         emoji: '\ud83d\ude10', toon: 'neutraal' },
         ],
