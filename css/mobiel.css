@@ -1620,8 +1620,24 @@ body[data-modus="mobiel"] .plaat-instort { --plaat-schaal: 1.05; --plaat-rot: -.
 @media (orientation: landscape) and (max-height: 600px) {
   body[data-modus="mobiel"] #strijdveld { --schok-f: .5; }      /* de spoorfactor, niet --schok zelf: die is inline en draagt de escalatieladder 1.0 / 1.6 / 2.2 / 2.6 */
   body[data-modus="mobiel"] .tik-flits { --tik-max: .55; }      /* alleen het plafond zakt; de curve (0 → piek → 0) blijft */
-  body[data-modus="mobiel"] #toneel-doek { transition: opacity 300ms ease; }   /* een stap korter. --doek-t is inline, de transition zelf staat in de stylesheet — dus geen !important nodig */
-  body[data-modus="mobiel"] .vonnis { padding: clamp(18px, 6vh, 44px) 14px 0; gap: 4px; }
+  /* een stap korter — maar via een CALC op --doek-t, niet op een hard getal. De vorige
+     300ms negeerde de inline --doek-t die JS uit dtempo voedt (§3.2/§10.11): liggend stond
+     de doekduur daardoor vast, ook bij DICK.tempo ≠ 1. */
+  body[data-modus="mobiel"] #toneel-doek { transition: opacity calc(var(--doek-t, 400ms) * .7) ease; }
+  /* ...en die regel heeft een ID erin, dus hij WON van de C1-terugval `body.lite
+     #toneel-doek { transition: none }` in style.css r5084 (beide (1,1,1), mobiel.css laadt
+     later). In lite bleef het doek hier dus FADEN terwijl §4.3 juist een harde knip vraagt —
+     die knip is wat in lite de harde arenawissel afdekt. Gemeten liggend+lite: 0.3s i.p.v.
+     0s. Zelfde specificiteitsval als bij #strijdveld.toneelschok één regel hoger.
+     De reduced-motion-tegenhanger (style.css r5138) draagt !important en ontsnapte eraan. */
+  body.lite[data-modus="mobiel"] #toneel-doek { transition: none; }
+  /* ONDER de topbalk beginnen. De oude clamp(18px, 6vh, 44px) gaf op 360px hoog 21,6px,
+     terwijl .vonnis op z47 staat en #topbalk op z50 en ~40px hoog is: de titel begon IN de
+     balk en werd door de relikwie-iconen overtekend (gemeten 800x360: 20px = 59% van de
+     titelhoogte, elementFromPoint gaf `relikwie rel-ongewoon`). Bij élk van de drie
+     overgangen. Niet opgelost door .vonnis boven de topbalk te tillen: de HP/energie-chips
+     moeten leesbaar blijven (§4.1). */
+  body[data-modus="mobiel"] .vonnis { padding: calc(var(--tbh, 40px) + var(--sat) + 8px) 14px 0; gap: 4px; }
   body[data-modus="mobiel"] .vonnis h2 { font-size: clamp(1.5rem, 4.4vh, 2.3rem); letter-spacing: 2px; }
   body[data-modus="mobiel"] .vonnis span { font-size: clamp(.74rem, 2.2vh, .92rem); max-width: 74vw; }
   body[data-modus="mobiel"] .vonnis.klein h2 { font-size: clamp(1.05rem, 3.2vh, 1.5rem); }

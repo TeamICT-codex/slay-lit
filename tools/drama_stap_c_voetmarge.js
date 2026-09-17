@@ -55,8 +55,18 @@ window.__url = function (id, st) {
   return 'assets/karakters/' + echt + '.webp';
 };`;
 
-async function opzet(browser, d3) {
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' });
+/* v120 (fixronde stap C): het 2D-spoor draait niet meer alleen op 1440x900. Juist daar is de
+   speling het grootst — op mobiel liggend vult de baas 34% van de beeldhoogte i.p.v. ~25%, dus
+   dezelfde pose-wissel is er ruim twee keer zo groot. In 3D bestaat dit gat niet: d3Gewenst
+   (game.js r2230) geeft false zodra window.mobiel, dus Vista draait daar sowieso niet. */
+const SPOREN_2D = [
+  { label: '2D', naam: 'laptop 1440x900', w: 1440, h: 900, mobiel: false },
+  { label: '2D-mob-liggend', naam: 'mobiel liggend 800x360', w: 800, h: 360, mobiel: true }
+];
+
+async function opzet(browser, d3, spoor) {
+  const sp = spoor || { w: 1440, h: 900, mobiel: false };
+  const ctx = await browser.newContext({ viewport: { width: sp.w, height: sp.h }, serviceWorkers: 'block', hasTouch: !!sp.mobiel, isMobile: !!sp.mobiel, deviceScaleFactor: sp.mobiel ? 2 : 1 });
   const page = await ctx.newPage(); const fouten = [];
   page.on('pageerror', e => fouten.push(e.message));
   await ctx.route('**/*', route => {
@@ -69,10 +79,12 @@ async function opzet(browser, d3) {
   await page.goto('http://' + HOST + '/', { waitUntil: 'load' });
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('slayit_wipe', '1'); localStorage.setItem('slayit_nudge', 'weg'); localStorage.setItem('slayit_wereld', '0'); });
   await page.reload({ waitUntil: 'load' }); await slaap(600);
+  if (sp.mobiel) await page.evaluate(() => { document.body.dataset.modus = 'mobiel'; window.mobiel = true; });
   await page.evaluate(v => { INST.d3 = v; INST.lite = false; document.body.classList.remove('lite'); try { bewaarInst(); } catch (e) {} try { toonHeldKeuze(); } catch (e) {} }, d3);
   await slaap(300);
   await page.evaluate(() => { const k = document.querySelector('.held-kies'); if (k) k.click(); }); await slaap(300);
   await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => /toch beginnen/i.test(x.textContent)); if (b) b.click(); }); await slaap(800);
+  await page.evaluate(() => { try { speelTochStaand(); } catch (e) {} });   /* liggend ≤600px kan de draai-je-toestel-poort tonen */
   await page.evaluate(() => { devDicktator('slachter_mid'); });
   for (let i = 0; i < 40; i++) { if (await page.evaluate(() => document.body.dataset.scherm === 'gevecht' && !!S.gevecht && !document.querySelector('#baas-intro'))) break; await slaap(400); }
   await slaap(1200);
@@ -84,12 +96,14 @@ async function opzet(browser, d3) {
 
 (async () => {
   const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] });
-  const rapport = { '2D': {}, '3D': {} };
+  const rapport = { '2D': {}, '2D-mob-liggend': {}, '3D': {} };
 
-  /* ============================ 2D ============================ */
-  console.log('\n======== 2D (laptop 1440x900) ========');
+  /* ============================ 2D, per spoor ============================ */
+  for (const spoor of SPOREN_2D) {
+  console.log('\n======== ' + spoor.label + ' (' + spoor.naam + ') ========');
   {
-    const { ctx, page, fouten } = await opzet(browser, false);
+    const { ctx, page, fouten } = await opzet(browser, false, spoor);
+    const RAP = rapport[spoor.label];
     // alle poses voorladen zodat de te-laat-guard van pose2D (r2506) niets wegdrukt
     await page.evaluate(() => { try { preloadPoses2D(S.gevecht); } catch (e) {} });
     await slaap(2500);
@@ -135,7 +149,7 @@ async function opzet(browser, d3) {
         await naarBasis();
         return uit;
       }, [fig.id, fig.poses]);
-      rapport['2D'][fig.id] = r;
+      RAP[fig.id] = r;
       if (r.fout) { console.log('   ' + fig.id + ': ' + r.fout); continue; }
       console.log('   ' + fig.id.padEnd(16) + ' basis "' + r.basis.bestand + '"  alfa ' + r.basis.alfa.toFixed(2) + '%  --voetc ' + r.basis.voetc + '  voetlijn y=' + r.basis.voetY.toFixed(1) + 'px');
       r.poses.forEach(p => {
@@ -146,11 +160,66 @@ async function opzet(browser, d3) {
           + '  voetlijn y=' + p.voetY.toFixed(1) + 'px  afwijking ' + (d >= 0 ? '+' : '') + d.toFixed(2) + 'px = ' + (p.dVh >= 0 ? '+' : '') + p.dVh.toFixed(3) + '% vh'
           + (p.gewisseld ? '' : '   <-- PLAAT NIET GEWISSELD'));
       });
-      rapport['2D'][fig.id].fouten = fouten.slice();
+      RAP[fig.id].fouten = fouten.slice();
     }
-    await page.screenshot({ path: path.join(UIT, 'c4-2d.png') });
-    rapport['2D'].__fouten = fouten;
+
+    /* ---- DE KETEN (v120, fixronde stap C) ----
+       De metingen hierboven zetten via naarBasis() vóór ELKE pose de --voetc terug naar de
+       basiswaarde. Het spel doet dat nergens: 'herkozen' is een VASTGEHOUDEN stand (game.js
+       r2755, geen auto-revert) die --voetc op zijn eigen tabelwaarde laat staan, en pose2D
+       liet --voetc onaangeroerd voor elke pose ZONDER eigen tabelregel. Elke klap en zijn
+       dood in bedrijf IV werden daardoor tegen een vreemde correctie afgerekend. Deze keten
+       draait dus bewust ZONDER reset - precies zoals de laatste minuut van het spel. */
+    const keten = await page.evaluate(async () => {
+      const wacht = ms => new Promise(r2 => setTimeout(r2, ms));
+      const g = S.gevecht;
+      const v = g.vijanden.find(x => x.id === 'de_dicktator');
+      if (!v) return { fout: 'de DICKtator staat niet in het gevecht' };
+      const i = g.vijanden.indexOf(v);
+      const art = GDOM.vijanden[i].wrap.querySelector('.vijand-art');
+      const img = art.querySelector('img');
+      if (!img) return { fout: 'geen <img> (emoji-terugval)' };
+      const vm = window.VOETMARGE || {};
+      const basisSleutel = window.artTerugval ? artTerugval('de_dicktator') : 'de_dicktator';
+      const meet = async pose => {
+        const rc = img.getBoundingClientRect();
+        const url = img.currentSrc || img.src;
+        const a = await window.__alfa(url);
+        return { pose, bestand: url.split('/').pop(), alfa: a, hoogte: rc.height,
+          voetY: a === null ? null : rc.bottom - (a / 100) * rc.height,
+          voetc: getComputedStyle(art).getPropertyValue('--voetc').trim() || '(geen)' };
+      };
+      await new Promise(r2 => laadKarakterAfbeelding('de_dicktator', im => { if (im) img.src = im.src; r2(); }));
+      if (vm[basisSleutel] != null) art.style.setProperty('--voetc', vm[basisSleutel] + '%'); else art.style.removeProperty('--voetc');
+      await wacht(260);
+      const uit = { vh: window.innerHeight, stappen: [] };
+      uit.basis = await meet('(basis)');
+      v.herrezen = true;                        /* zoals na DE HERVERKIEZING: de rustpose is vanaf hier _herkozen */
+      for (const st of ['herkozen', 'hit', 'death']) {
+        pose2D(v, st, 8);
+        await wacht(700);
+        uit.stappen.push(await meet(st));
+      }
+      v.herrezen = false;
+      return uit;
+    });
+    RAP.__keten = keten;
+    if (keten.fout) { console.log('   KETEN: ' + keten.fout); }
+    else {
+      console.log('   KETEN zonder reset (basis -> herkozen -> hit -> death), zoals in bedrijf IV:');
+      console.log('      ' + '(basis)'.padEnd(9) + ' "' + keten.basis.bestand.padEnd(26) + '" --voetc ' + (keten.basis.voetc + '').padEnd(6) + '  voetlijn y=' + keten.basis.voetY.toFixed(1) + 'px');
+      keten.stappen.forEach(p => {
+        p.dVh = (p.voetY - keten.basis.voetY) / keten.vh * 100;
+        console.log('      ' + p.pose.padEnd(9) + ' "' + p.bestand.padEnd(26) + '" alfa ' + (p.alfa === null ? ' n/b ' : p.alfa.toFixed(2) + '%')
+          + '  --voetc ' + (p.voetc + '').padEnd(6) + '  voetlijn y=' + p.voetY.toFixed(1) + 'px  afwijking '
+          + (p.dVh >= 0 ? '+' : '') + p.dVh.toFixed(3) + '% vh');
+      });
+    }
+
+    await page.screenshot({ path: path.join(UIT, 'c4-' + spoor.label + '.png') });
+    RAP.__fouten = fouten;
     await ctx.close();
+  }
   }
 
   /* ============================ 3D ============================ */
@@ -219,13 +288,15 @@ async function opzet(browser, d3) {
 
   /* ============================ oordeel ============================ */
   console.log('\n======== C4 · oordeel: grondlijn-afwijking per pose-wissel < 1 % vh ========');
-  for (const spoor of ['2D', '3D']) {
+  for (const spoor of ['2D', '2D-mob-liggend', '3D']) {
     const R = rapport[spoor];
     const rijen = [];
     Object.keys(R).forEach(id => {
       const f = R[id]; if (!f || !f.poses) return;
-      f.poses.forEach(p => { const d = (spoor === '2D') ? p.dVh : p.dVh; if (d !== null && d !== undefined) rijen.push({ id, pose: p.pose, d }); });
+      f.poses.forEach(p => { const d = p.dVh; if (d !== null && d !== undefined) rijen.push({ id, pose: p.pose, d }); });
     });
+    /* de keten telt gewoon mee in hetzelfde oordeel: het is dezelfde eis, alleen zonder reset */
+    if (R.__keten && R.__keten.stappen) R.__keten.stappen.forEach(p => { if (p.dVh != null) rijen.push({ id: 'de_dicktator (KETEN)', pose: p.pose, d: p.dVh }); });
     if (!rijen.length) { t(false, spoor + ': geen enkele meting gelukt'); continue; }
     const ergste = rijen.reduce((a, r) => Math.abs(r.d) > Math.abs(a.d) ? r : a, rijen[0]);
     t(Math.abs(ergste.d) < 1, `${spoor}: ${rijen.length} pose-wissels gemeten, GROOTSTE grondlijn-afwijking ${ergste.d >= 0 ? '+' : ''}${ergste.d.toFixed(3)} % vh (${ergste.id} -> ${ergste.pose}); eis < 1 %`);
@@ -234,8 +305,8 @@ async function opzet(browser, d3) {
   }
   // werd elke plaat ook echt gewisseld in 2D?
   const nietGewisseld = [];
-  Object.keys(rapport['2D']).forEach(id => { const f = rapport['2D'][id]; if (f && f.poses) f.poses.forEach(p => { if (!p.gewisseld) nietGewisseld.push(id + '_' + p.pose + ' (toonde "' + p.bestand + '")'); }); });
-  t(nietGewisseld.length === 0, nietGewisseld.length ? '2D: deze poses toonden hun eigen plaat NIET: ' + nietGewisseld.join(', ') : '2D: alle 15 poses toonden hun eigen plaat (geen terugval, geen te-laat-guard die wegdrukte)');
+  ['2D', '2D-mob-liggend'].forEach(spoor => Object.keys(rapport[spoor]).forEach(id => { const f = rapport[spoor][id]; if (f && f.poses) f.poses.forEach(p => { if (!p.gewisseld) nietGewisseld.push(spoor + ' ' + id + '_' + p.pose + ' (toonde "' + p.bestand + '")'); }); }));
+  t(nietGewisseld.length === 0, nietGewisseld.length ? '2D: deze poses toonden hun eigen plaat NIET: ' + nietGewisseld.join(', ') : '2D (beide sporen): elke pose toonde zijn eigen plaat (geen terugval, geen te-laat-guard die wegdrukte)');
   // gebruikt 3D de nieuwe tabelregels echt?
   const drie = rapport['3D'];
   const nieuw = [['de_dicktator', 'herkozen', 0.009], ['de_griffier', 'death', 0.026], ['de_claqueur', 'death', 0.035]];
@@ -245,8 +316,8 @@ async function opzet(browser, d3) {
     if (!p.in3d) { console.log('        3D: ' + id + '_' + st + ' heeft geen 3D-textuur (scene3d r376 laadt ' + STATES_3D.join('/') + ') - de sprite houdt de basisplaat, dus de tabelregel is daar per definitie niet in gebruik en er is geen voetlijn-risico'); return; }
     t(Math.abs((p.margeInGebruik || 0) - verwacht) < 0.0005, `3D leest de nieuwe tabelregel ${id}_${st}: marge in gebruik ${p.margeInGebruik} (tabel ${p.tabel}%)`);
   });
-  const alleFouten = (rapport['2D'].__fouten || []).concat(rapport['3D'].__fouten || []);
-  t(alleFouten.length === 0, alleFouten.length ? 'paginafouten: ' + alleFouten.slice(0, 5).join(' | ') : 'geen paginafouten in 2D noch 3D');
+  const alleFouten = (rapport['2D'].__fouten || []).concat(rapport['2D-mob-liggend'].__fouten || [], rapport['3D'].__fouten || []);
+  t(alleFouten.length === 0, alleFouten.length ? 'paginafouten: ' + alleFouten.slice(0, 5).join(' | ') : 'geen paginafouten in geen enkel spoor');
 
   console.log('\n======== TOTAAL ========');
   console.log('   ' + okN + ' ok, ' + foutN + ' FOUT   (json+shots in ' + UIT + ')');

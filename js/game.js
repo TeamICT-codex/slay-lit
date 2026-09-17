@@ -2417,6 +2417,7 @@ function hofDeinst(g, stap) {
     if (S.gevecht !== g || g.voorbij || x.dood) return;
     const el = actorEl(x); if (el) {
       el.style.setProperty('--deinst-t', dtempo(420) + 'ms');   /* v120-fix: de CSS-duur loopt mee met dtempo, net als --tik-t; een vaste .42s tegen een dtempo-timer knipt bij tempo != 1 */
+      _entreeAf(el);                                            /* een net opgeroepen hoveling draagt .entree nog: die zou ná de deinst opnieuw binnenglijden (zie _entreeAf) */
       el.classList.remove('deinst'); void el.offsetWidth; el.classList.add('deinst');
       clearTimeout(el._deinstT);
       el._deinstT = setTimeout(() => el.classList.remove('deinst'), dtempo(520));
@@ -2747,7 +2748,18 @@ function pose2D(actor, state, duur) {
     const vm = window.VOETMARGE || {};
     const vmSleutel = window.artTerugval ? artTerugval(basis + '_' + state) : basis + '_' + state;
     const vmBasis = window.artTerugval ? artTerugval(basis) : basis;
+    /* v120-fix (fixronde stap C): ÓÓK een terugval als deze pose geen eigen tabelregel
+       heeft — exact dezelfde drietrap als de revert-tak hieronder. Zonder de else-takken
+       bleef --voetc staan op wat de VÓRIGE pose had gezet, en dat is precies wat er na DE
+       HERRIJZENIS gebeurt: 'herkozen' is een vastgehouden stand (geen auto-revert, r2755)
+       die --voetc blijvend op 0,9% zet, waarna elke klap (hit, alfa 2,47%) en zijn dood
+       (death, 3,83%) in bedrijf IV tegen die vreemde 0,9% werden afgerekend — gemeten
+       −0,96% en −1,27% vh op mobiel liggend, dus over de C4-eis van 1%, in de laatste
+       minuut van het spel. De 1,5%-drempel van v101 gaat stilzwijgend uit van "de
+       basisplaat is altijd de ijking"; 'herkozen' breekt die aanname. */
     if (vm[vmSleutel] != null) el.style.setProperty('--voetc', vm[vmSleutel] + '%');
+    else if (vm[vmBasis] != null) el.style.setProperty('--voetc', vm[vmBasis] + '%');
+    else el.style.removeProperty('--voetc');
     clearTimeout(pose2DTimers.get(actor));
     /* de blok-pose is een VASTGEHOUDEN verdedigende houding: geen auto-revert.
        Ze blijft staan tot een volgende pose (aanval/cast/treffer) haar vervangt —
@@ -5289,6 +5301,22 @@ function triggerEntree(el, delaySec) {
   if (delaySec) el.style.animationDelay = delaySec + 's';
   setTimeout(() => { el.classList.remove('entree'); el.style.animationDelay = ''; }, 2000 + (delaySec || 0) * 1000);
 }
+/* v120-fix (fixronde stap C): haal een uitgespeelde .entree van de WRAP vóór een regieklasse
+   die diezelfde wrap animeert. Zelfde bugklasse als §10.3, nu op animation i.p.v. filter:
+   animation is ÉÉN property, en .deinst (css r4400), .stemt (r4437) en .exit.geveld (r4430)
+   staan LATER in de stylesheet dan .vijand.entree (r3886). Zolang de regieklasse erop staat
+   wint die; zodra de regie hem eraf haalt valt animation-name terug op vijandEntree en START
+   de binnenkomst OPNIEUW — de hoveling schoot dan 110px naar rechts en gleed midden in het
+   vonnis nog eens het toneel op (gemeten liggend 800x360: art 742..815 = 15px buiten beeld,
+   staand 412x915: 7px buiten beeld). triggerEntree laat de klasse 2000ms staan (hierboven),
+   dus elke hoveling die < ~1,3s vóór de fasegrens is opgeroepen draagt hem nog — en
+   dicktatorDelegatie roept griffier+deurwaarder gewoon op de baasbeurt. De entree zelf is op
+   dat moment sowieso al uitgespeeld (.6s), dus er valt niets af te breken. */
+function _entreeAf(el) {
+  if (!el || !el.classList.contains('entree')) return;
+  el.classList.remove('entree');
+  el.style.animationDelay = '';
+}
 
 /* eenmalige opbouw van de gevechts-DOM */
 function bouwGevechtDom(g) {
@@ -7408,6 +7436,7 @@ function _pipKnapt(i) {
    element dat je op t=0 vastpakt is op t=4200 een weesnode. ms = 0 -> blijft staan. */
 function _regieKlasse(actor, klasse, ms) {
   const el = actorEl(actor); if (!el) return;
+  _entreeAf(el);                                   /* elke regieklasse hier animeert de wrap - net als .deinst botst die met een nog staande .entree */
   el.classList.remove(klasse); void el.offsetWidth; el.classList.add(klasse);
   if (!ms) return;
   clearTimeout(el['_rk' + klasse]);
@@ -7607,7 +7636,7 @@ function dicktatorRegieTirade(b, g, op, U, D) {
     }
     if (gr && !gr.dood) {
       gr.dood = true; gr.hp = 0; gr.blok = 0;
-      const grEl = actorEl(gr); if (grEl) grEl.classList.add('exit', 'geveld');
+      const grEl = actorEl(gr); if (grEl) { _entreeAf(grEl); grEl.classList.add('exit', 'geveld'); }
       if (UITSPRAKEN.de_griffier) spreek(gr, UITSPRAKEN.de_griffier.dood, 0.4);
       pose2D(gr, 'death', 3);
       if (window.Vista) Vista.sterf(gr);
@@ -7735,7 +7764,7 @@ function dicktatorHerverkiezing(g, doel) {
      kernmechaniek ZICHTBAAR maakt; vroeger speelde hij op onzichtbare figuren. */
   kiezers.forEach((x, i) => op(900 + 260 * i, () => {
     const xe = actorEl(x);
-    if (xe) { xe.classList.remove('stemt'); void xe.offsetWidth; xe.classList.add('stemt'); }
+    if (xe) { _entreeAf(xe); xe.classList.remove('stemt'); void xe.offsetWidth; xe.classList.add('stemt'); }
     fxNummer(xe, i < doel._kiezers ? '🗳️ +1 Kracht' : '🗳️ stem genoteerd', 'fx-buff');   /* de cap komt uit DICK.kiezersCap, nooit hardgecodeerd */
     Klank.sfx('goud');
   }));
@@ -7751,7 +7780,7 @@ function dicktatorHerverkiezing(g, doel) {
     kiezers.forEach(x => {
       x._kiezerWeg = true;   /* vanaf hier hoort de vluchtstand er ook ná een DOM-herbouw op te staan */
       const xe = actorEl(x);
-      if (xe) { xe.classList.remove('stemt'); xe.classList.add('exit', 'sterft', 'vlucht'); }
+      if (xe) { _entreeAf(xe); xe.classList.remove('stemt'); xe.classList.add('exit', 'sterft', 'vlucht'); }
       pose2D(x, 'death', 3);
       if (window.Vista) Vista.sterf(x);
     });
