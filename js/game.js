@@ -5725,6 +5725,18 @@ function renderGevecht() {
        deze uitzondering zette .sterft (opacity:0, geen transition = harde knip) in
        dezelfde tick de val van de griffier, de gouden kiezerrand en de hofVlucht
        onzichtbaar, en haalde .lijk-weg (display:none) ze 750ms later helemaal weg. */
+    /* v120-fix: DE KIEZERS overleven een DOM-herbouw. De uitzondering hierboven leest de
+       klasse van de WRAP, en bouwGevechtDom (rij.innerHTML='') wist die - inclusief het
+       'sterft lijk-weg' dat hij voor elke dode vijand meteen zelf in de opmaak zet. Valt de
+       herrijzenis via gif of doornen midden in de vijandbeurt, dan roept een hoveling nog
+       de claqueur op en werden de kiezers in dat frame onzichtbaar (display:none) - precies
+       tijdens DE STEMMING, de enige beat die de kernmechaniek zichtbaar maakt. De vlag
+       staat daarom op de VIJAND, niet op de DOM; zelfde patroon als de fase-klassen hieronder. */
+    if (g.ceremonie && v._kiezer) {
+      d.wrap.classList.add('kiezer');
+      if (v._kiezerWeg) d.wrap.classList.add('exit', 'sterft', 'vlucht');   /* de vlucht is al begonnen: die stand hoort te blijven */
+      else d.wrap.classList.remove('sterft');                               /* hij stemt nog - zichtbaar dus */
+    }
     const exitBezig = !!g.ceremonie && (d.wrap.classList.contains('exit') || d.wrap.classList.contains('geveld')
       || d.wrap.classList.contains('vlucht') || d.wrap.classList.contains('kiezer'));
     const wasDood = d.wrap.classList.contains('sterft');
@@ -7656,6 +7668,7 @@ function dicktatorHerverkiezing(g, doel) {
   doel._kiezers = Math.min(DICK.kiezersCap, kiezers.length);
   kiezers.forEach(x => {
     x.dood = true; x.hp = 0; x.blok = 0; x.status = {};
+    x._kiezer = true;     /* op de VIJAND, zodat renderGevecht de klasse na een DOM-herbouw terugzet (zie daar) */
     const xe = actorEl(x); if (xe) xe.classList.add('kiezer');
   });
   doel.status = {};                       /* de wederopstanding wist je opgebouwde gif/zwak — vers bloed, oude leugens */
@@ -7716,6 +7729,7 @@ function dicktatorHerverkiezing(g, doel) {
      renderGevecht ze laat uitspelen i.p.v. ze in dezelfde tick op opacity 0 te zetten. */
   op(2000, () => {
     kiezers.forEach(x => {
+      x._kiezerWeg = true;   /* vanaf hier hoort de vluchtstand er ook ná een DOM-herbouw op te staan */
       const xe = actorEl(x);
       if (xe) { xe.classList.remove('stemt'); xe.classList.add('exit', 'sterft', 'vlucht'); }
       pose2D(x, 'death', 3);
