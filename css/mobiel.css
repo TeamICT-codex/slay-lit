@@ -419,6 +419,31 @@ body[data-modus="mobiel"] .overlay {
 }
 body[data-modus="mobiel"] #overlay-codex { padding: calc(10px + var(--sat)) calc(14px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left)); }
 
+/* ---------- DEV-SHORTCUT: HET DEV-MENU op het mobiele spoor (weg vóór release).
+   Op mobiel is het logo verborgen (r144), dus het menu komt hier binnen via de lange druk /
+   vijf tikken op het versielabel in ⚙️ Instellingen. Eisen: scrollbaar binnen 100dvh
+   (ook liggend), raakdoelen >= 44px, safe-area, en de sluitknop altijd bereikbaar. ---------- */
+body[data-modus="mobiel"] #dev-menu { padding: 0; }
+body[data-modus="mobiel"] #dev-menu .dev-kaart {
+  width: 100%; max-width: none; border-radius: 0; border-left: none; border-right: none;
+  max-height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: calc(12px + var(--sat)) calc(12px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+}
+body[data-modus="mobiel"] #dev-menu .dev-rij { gap: 8px; }
+body[data-modus="mobiel"] #dev-menu .dev-k,
+body[data-modus="mobiel"] #dev-menu .dev-pil,
+body[data-modus="mobiel"] #dev-menu .dev-kies select {
+  min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
+}
+body[data-modus="mobiel"] #dev-menu .dev-k:hover,
+body[data-modus="mobiel"] #dev-menu .dev-pil:hover { background: rgba(40, 28, 52, .7); }   /* geen hover-staat die op touch blijft plakken */
+/* de sluitknop is al sticky in style.css; mobiel corrigeert alleen de safe-area-marge
+   en het raakdoel (liggend 800x360 staat de lijst anders zo diep dat je eerst helemaal
+   terug moet scrollen om eruit te komen) */
+body[data-modus="mobiel"] #dev-menu .dev-dicht {
+  bottom: calc(-10px - env(safe-area-inset-bottom)); min-height: 44px; margin-top: 14px;
+}
+
 /* ============================================================
    HET PRIKBORD (v103) — MOBIEL SPOOR. Alleen maten, layout en touch; kleuren,
    papieren en lettertypes komen uit style.css (het laptopblok). De wortel is

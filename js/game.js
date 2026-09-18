@@ -590,13 +590,14 @@ const DAGWETTEN = {
 /* de rotatie weegt HET AMALGAAM dubbel: de blend-dag is het pronkstuk */
 const DAGWET_ROTATIE = ['amalgaam', 'glas', 'overname', 'duister', 'stormloop', 'detachering', 'amalgaam', 'goudkoorts', 'besmetting'];
 function wetVanDag() {
-  if (wetVanDag._force && DAGWETTEN[wetVanDag._force]) return wetVanDag._force;   /* dev-haak */
+  if (wetVanDag._force && DAGWETTEN[wetVanDag._force]) return wetVanDag._force;   /* DEV-SHORTCUT: dev-haak */
   return DAGWET_ROTATIE[zaadVanTekst('WET' + vandaagSleutel()) % DAGWET_ROTATIE.length];
 }
 /* geldt wet <id> in de LOPENDE run? (alleen dailies dragen een wet; oude saves
    hebben geen S.dagwet → overal netjes false, zie [[lookup-bugklasse]]) */
 const dagwetActief = id => !!(S && S.daily && S.dagwet === id);
-/* dev: devDagwet('amalgaam') vóór de daily-start forceert een wet (null wist) */
+/* DEV-SHORTCUT: devDagwet('amalgaam') vóór de daily-start forceert een wet (null wist);
+   hoort bij de DAGWETTEN-tabel hierboven en staat daarom niet in het grote dev-blok. */
 function devDagwet(id) { wetVanDag._force = id || null; return id ? DAGWETTEN[id] : 'gewist'; }
 
 /* ---------- DE PROCLAMATIE: de eindbaas vaardigt de dagwet uit ----------
@@ -2037,6 +2038,7 @@ function slaap(ms) {
 let S = null;
 
 function nieuwSpel(heldId, seedTekst, ascensie, daily) {
+  if (typeof regieOpruimAlles === 'function') regieOpruimAlles();   /* v122: een verlaten bedrijf III (body.tirade, data-bedrijf, doek) mag niet in een verse run doorschemeren */
   _tbBezitSig = null;   /* nieuwe run → topbalk-bezit zeker opnieuw opbouwen */
   if (!SPELERS[heldId]) heldId = 'slachter';
   const held = SPELERS[heldId];
@@ -10028,12 +10030,6 @@ function eventKlaar(tekst) {
 
 /* ---------- act-overgang: de verslagen baas levert het licht voor de volgende afdaling ---------- */
 /* ============================================================
-   DEV-SHORTCUT — VOORLOPIG. Verwijderen vóór release.
-   Klik op het logo (linksboven) → spring meteen naar het begin van Act 2,
-   zodat testen geen volledige Act 1-run kost. Zoek 'DEV-SHORTCUT' om alles
-   (deze functie + de onclick op .tb-logo in index.html) in één keer te wissen.
-   ============================================================ */
-/* ============================================================
    HET SLACHTBLOK — je eigen kaart smeden (R3.6, de Inscryption-knipoog).
    Offer 2 kaarten uit je dek — VERNIETIGD voor de rest van de run — en
    smeed uit hun waarde één kaart met een ZELFGEKOZEN NAAM. Twee momenten:
@@ -10347,13 +10343,76 @@ function sluitSlachtblok(gesmeed) {
      anders speelde de hele baasintro achter de reveal-overlay (debug-sweep) */
   if (na) { if (gesmeed) naReveals(na, 900); else setTimeout(na, 250); }
 }
-/* DEV: het Slachtblok direct testen — devSlachtblok() in de console */
+/* ============================================================
+   DEV-SHORTCUT — HET DEV-BLOK. Alles wat DEV is staat hier bij elkaar: de vaste
+   playtest-builds, elke sprong, de regie-sprongen van HET PROCES, de Drops-boog,
+   de schakelaars, en het DEV-menu dat ze toont. Vóór release verdwijnt dit blok in
+   zijn geheel — zie RELEASE-CHECKLIST.md §1.1.
+   DRIE dev-functies staan bewust NIET hier, omdat ze vroeg in de boot moeten draaien
+   of aan de tabel hangen die ze patchen (de checklist noemt ze apart):
+     · devMobiel  (~r127) zet data-modus vóór de eerste paint — hier zou hij te laat zijn;
+     · devWereld  (~r145) leest de URL-sleutel + localStorage tijdens de boot, vóór de
+       eerste renderKaartScherm;
+     · devDagwet  (~r600) is één haak op wetVanDag._force en hoort naast DAGWETTEN.
+   En devOutro leeft in js/outro.js, bij de outro die hij start.
+   Huisregels die hier hard in zitten:
+   - NOOIT data in een onclick-string (bekende bugklasse): elke knop krijgt een listener;
+   - ÉÉN declaratieve tabel (DEV_MENU) is de bron van het menu — geen tweede lijst;
+   - wat je lopende run of je Codex overschrijft zegt dat in zijn tip; wat de (cross-run)
+     Codex RAAKT draagt bovendien een ⚠ in zijn label. Geen bevestigingsdialogen: dev-tempo.
+   ============================================================ */
+
+/* ---------- DEV-instellingen: de keuzes die het menu onthoudt ---------- */
+const DEV_SLEUTEL = 'slayit_dev';
+const DEV_TEMPOS = [1, 0.6, 0.3];
+let _devInst = null;
+/* Lezen is defensief op twee manieren: een corrupte/afwezige sleutel mag niets breken
+   (zie veiligLees), en een OPGESLAGEN waarde die niet meer bestaat valt terug op de
+   standaard — precies de [[lookup-bugklasse]]: 'gif_opt_kristal' of een oud profiel dat
+   uit DEV_BUILDS verdwijnt, mag hier geen undefined-build opleveren. */
+function devInst() {
+  if (_devInst) return _devInst;
+  let rauw = {};
+  try { rauw = JSON.parse(localStorage.getItem(DEV_SLEUTEL) || '{}') || {}; } catch (e) { rauw = {}; }
+  const buildOk = rauw.build === 'choreo' || !!DEV_BUILDS[rauw.build];
+  _devInst = {
+    build: buildOk ? rauw.build : 'slachter_mid',
+    tempo: DEV_TEMPOS.indexOf(+rauw.tempo) >= 0 ? +rauw.tempo : 1
+  };
+  return _devInst;
+}
+function devInstZet(sleutel, waarde) {
+  const d = devInst();
+  d[sleutel] = waarde;
+  /* het TEMPO is bewust een SESSIE-instelling (review-vondst): een 0,3x die een herlaad
+     overleeft is buiten het menu nergens zichtbaar en zou de pacing-beoordeling stil
+     vervalsen. In het geheugen blijft het staan (de pil licht op), in de opslag niet;
+     de build wordt wél bewaard. */
+  const opslag = Object.assign({}, d); delete opslag.tempo;
+  try { localStorage.setItem(DEV_SLEUTEL, JSON.stringify(opslag)); } catch (e) {}
+  /* DE ENIGE plek waar DICK.tempo verandert. nieuwSpel en startGevecht laten hem met rust:
+     een dev die 0,3x koos houdt dat over gevechten heen, tot hij zelf 1x kiest, 'Dev-
+     instellingen wissen' aantikt of de pagina herlaadt. Zonder dit blok is DICK.tempo
+     gewoon 1 — het is geen speler-knop. */
+  if (sleutel === 'tempo') DICK.tempo = waarde;
+}
+function devInstWis() {
+  _devInst = null;
+  try { localStorage.removeItem(DEV_SLEUTEL); } catch (e) {}
+  DICK.tempo = 1;
+  melding('⚡ DEV: dev-instellingen gewist — build terug op de mediaan-Slachter, DICK.tempo = 1.');
+}
+
+/* ---------- de sprongen ---------- */
+/* DEV-SHORTCUT: het Slachtblok direct testen — ook als devSlachtblok() in de console. */
 function devSlachtblok() {
   if (!S) nieuwSpel('slachter');
   if (S.dek.length < 8) { const pool = heldPool(); let v = 0; while (S.dek.length < 12 && v++ < 30) S.dek.push(nieuweKaart(kiesUit(pool))); }
   toonSlachtblok('altaar', null);
 }
 
+/* DEV-SHORTCUT: spring naar het begin van Act 2, zodat testen geen volledige Act 1-run
+   kost. Overschrijft de lopende run (150 HP + volle heeldranken + verse Act 2-kaart). */
 function devSprongAct2() {
   if (!S) nieuwSpel('slachter');
   if (inGevecht()) stopGevechtLus();
@@ -10362,7 +10421,7 @@ function devSprongAct2() {
   S.fakkel = fakkelMax();
   S.pos = null;
   /* DEV-testbuffer: ruime HP + volle heeldrank-slots zodat je Act 2-vijanden grondig kunt
-     bekijken/uittesten zonder meteen te sneuvelen (DEV-SHORTCUT — weg vóór release). */
+     bekijken/uittesten zonder meteen te sneuvelen. */
   S.maxHp = Math.max(S.maxHp || 0, 150);
   S.hp = S.maxHp;
   S.dranken = [];
@@ -10371,17 +10430,17 @@ function devSprongAct2() {
   S.kaart = genereerKaart();   /* act-bewust → de Act 2-ladder */
   /* DEV: leg de drie Drops-scherven in je GEDRAGEN tas zodat je de Erfprins-fluister én het
      Drempel-trio kunt testen — maar NOOIT een verdiende unlock terugdraaien of een gratis
-     trio geven aan wie Drops al wekte (dit hangt aan een gewone logo-klik; review 27 aug). */
+     trio geven aan wie Drops al wekte (review 27 aug). */
   S.metgezel = null;
   const drempelTest = !isOntgrendeld('drops');
   if (drempelTest) (window.MYSTERIES && MYSTERIES.drops.vereist || []).forEach(sid => draagScherf(sid));
   saveSpel();
-  melding(`⚡ DEV: Act 2 — 150 HP + 3 heeldranken${drempelTest ? ' + de 3 Drops-scherven in je tas' : ''}. (Alt+klik = meteen de Erfprins · Shift+klik = Drops-testcyclus)`);
+  melding(`⚡ DEV: Act 2 — 150 HP + 3 heeldranken${drempelTest ? ' + de 3 Drops-scherven in je tas' : ''}.`);
   renderKaartScherm();
 }
-/* DEV: de Drempel direct testen — devDrempel() in de console geeft je desgewenst
-   eerst testscherven mee: devDrempel(['drops_baas','drops_figuur','mosgeest_baas']).
-   (DEV-SHORTCUT — weg vóór release) */
+
+/* DEV-SHORTCUT: de Drempel direct testen — devDrempel(['drops_baas','drops_figuur',…])
+   geeft je desgewenst eerst testscherven mee. */
 function devDrempel(testScherven) {
   if (!S) nieuwSpel('slachter');
   (testScherven || []).forEach(sid => draagScherf(sid));
@@ -10389,10 +10448,10 @@ function devDrempel(testScherven) {
   toonDrempel();
 }
 
-/* DEV-SHORTCUT (Alt+klik op het logo): spring meteen SOLO tegen de Erfprins, zodat je de
-   Roof-rework niet door een hele Act 2-run hoeft te bevechten. Geen metgezel/Drops-mutatie
-   (schone solo-test) + een geloofwaardig Act-2-dek (de Roof grist de helft, dus een kaal
-   startdek van 10 maakt de test onspeelbaar) + ruime HP/heeldranken. Weg vóór release. */
+/* DEV-SHORTCUT: spring meteen SOLO tegen de Erfprins, zodat je de Roof-rework niet door
+   een hele Act 2-run hoeft te bevechten. Geen metgezel/Drops-mutatie (schone solo-test)
+   + een geloofwaardig Act-2-dek (de Roof grist de helft, dus een kaal startdek van 10
+   maakt de test onspeelbaar) + ruime HP/heeldranken. */
 function devErfprins() {
   if (!S) nieuwSpel('slachter');
   if (inGevecht()) stopGevechtLus();
@@ -10409,11 +10468,43 @@ function devErfprins() {
   melding('⚡ DEV: meteen tegen de Erfprins (SOLO, geen metgezel) — 150 HP + 3 heeldranken + opgevuld dek. Test "De Roof".');
 }
 
+/* DEV-SHORTCUT: de Erfprins als EERSTE ontmoeting — reset de Codex-teller zodat de
+   Inventaris-intro (en orakel[0]) opnieuw speelt. */
+function devErfprinsIntro() {
+  Codex.erfprinsOntmoetingen = 0;
+  bewaarCodex();
+  devErfprins();
+}
+
+/* DEV-SHORTCUT: meteen tegen de Slijmkoning (Act 1-baas) — met dezelfde buffer als de
+   andere baas-sprongen. */
+function devSlijmkoning() {
+  if (!S) nieuwSpel('slachter');
+  if (inGevecht()) stopGevechtLus();
+  S.gevecht = null; S.act = 1; S.fakkel = fakkelMax();
+  S.maxHp = Math.max(S.maxHp || 0, 150); S.hp = S.maxHp;
+  S.dranken = []; while (S.dranken.length < drankSlots()) S.dranken.push('heeldrank');
+  if (S.dek.length < 14) { const pool = heldPool(); let v = 0; while (S.dek.length < 16 && v++ < 40) S.dek.push(nieuweKaart(kiesUit(pool))); }
+  saveSpel();
+  startGevecht(['slijmkoning'], 'baas', 13);
+  melding('⚡ DEV: meteen tegen de Slijmkoning — 150 HP + heeldranken + opgevuld dek.');
+}
+
+/* DEV-SHORTCUT: metgezel aan/uit voor tests (synergie, Roddel-vloek, topbalk-chip,
+   victory-poses). In een lopend gevecht stapt hij pas het VOLGENDE gevecht in
+   (g.metgezel wordt bij startGevecht gebouwd — de v70-les). */
+function devMetgezel(id) {
+  if (!S) nieuwSpel('slachter');
+  if (!id) { S.metgezel = null; renderTopbalk(); melding('⚡ DEV: metgezel weggestuurd.'); return; }
+  if (!METGEZELLEN[id]) { melding('⚡ DEV: onbekende metgezel: ' + id); return; }
+  geefMetgezel(id);
+  melding(`⚡ DEV: ${METGEZELLEN[id].naam} stapt in${inGevecht() ? ' — vanaf het volgende gevecht' : ''}.`);
+}
+
 /* ============================================================
-   DEV-SHORTCUT — DROPS-TESTCYCLUS (VOORLOPIG, weg vóór release).
-   Elke klik op het logo schakelt naar het volgende Drops-testscenario, zodat
-   de hele boog (levend → offer/dood → grief → reünie → de Witte) snel te testen
-   is zonder een echte run. Zoek 'DEV-SHORTCUT' om alles in één keer te wissen.
+   DEV-SHORTCUT — DE DROPS-BOOG. Vijf LOSSE scenario's (vroeger één klik-cyclus op een
+   teller: je wist nooit waar je stond). Ze spawnen en SCHRIJVEN bewust in de Codex —
+   dat staat in elke tip, en de reset draagt een ⚠.
    ============================================================ */
 function _devDropsFight(samenstelling, soort) {
   if (!S) nieuwSpel('slachter');
@@ -10429,149 +10520,49 @@ function _devDropsReset() {
   if (S) S.metgezel = null;
   bewaarCodex();
 }
-let _devDropsStap = 0;
-const _DEV_DROPS = [
-  () => devSprongAct2(),                                            /* 0: oud gedrag — Act 2 + mysterie rijp (dark-twist oefenen) */
-  () => {                                                           /* 1: levende Drops vs Erfprins */
-    _devDropsReset(); ontgrendelMetgezel('drops'); geefMetgezel('drops');
-    _devDropsFight(['de_erfprins'], 'baas');
-    melding('⚡ DEV 1/5 — Levende Drops vs Erfprins: test de bijt + de offer-knop (De Laatste Sprong) + de 2-beats-dood (sprong→burst)');
-  },
-  () => {                                                           /* 2: grief — silhouet + pootafdruk */
-    _devDropsReset(); Codex.gevallen = ['drops']; Codex.dropsOfferRun = 0; Codex.runs = 2; bewaarCodex();
-    _devDropsFight(['groene_slijm'], 'gevecht');
-    S.fakkel = 60; zetLichtVisueel(); renderTopbalk();
-    melding('⚡ DEV 2/5 — GRIEF: verbrand licht (een kaart) en kijk in de lege metgezel-zone → as-silhouet + wegdovende pootafdruk');
-  },
-  () => {                                                           /* 3: reünie NU (cinematic + de Witte verschijnt) */
-    _devDropsReset(); Codex.gevallen = ['drops']; Codex.dropsOfferRun = 0; Codex.runs = 2; bewaarCodex();
-    _devDropsFight(['de_erfprins'], 'baas');
-    setTimeout(() => { if (inGevecht() && S.gevecht.vijanden.some(v => v.id === 'de_erfprins' && !v.dood)) revealDropsWit(S.gevecht, 'weigering'); }, 900);
-    melding('⚡ DEV 3/5 — REÜNIE: de Witte keert direct terug (wit-flits + 3 beats + signatuur-sprong)');
-  },
-  () => {                                                           /* 4: Drops de Witte vecht mee */
-    _devDropsReset(); Codex.gevallen = ['drops']; ontgrendelMetgezel('drops'); ontgrendelMetgezel('drops_wit'); bewaarCodex();
-    geefMetgezel('drops_wit');
-    _devDropsFight(['de_erfprins'], 'baas');
-    S.fakkel = 0; zetLichtVisueel(); renderTopbalk();
-    melding('⚡ DEV 4/5 — Drops de Witte vecht mee: test de blok-negerende witklap (gedoofd = ×2) + blind-immuniteit (intent zichtbaar bij fakkel 0)');
-  },
-  () => {                                                           /* 5: reset → schone lei */
-    _devDropsReset();
-    melding('⚡ DEV 5/5 — Drops-Codex GERESET (gevallen/mysterie/Witte/zaadje weg). Volgende klik = Act 2-sprong.');
-  },
-];
-function devDropsTest() {
+/* 1 · levende Drops vs Erfprins */
+function devDropsLevend() {
   if (!S) nieuwSpel('slachter');
-  try { _DEV_DROPS[_devDropsStap % _DEV_DROPS.length](); }
-  catch (e) { melding('DEV-fout: ' + e.message); }
-  _devDropsStap++;
+  _devDropsReset(); ontgrendelMetgezel('drops'); geefMetgezel('drops');
+  _devDropsFight(['de_erfprins'], 'baas');
+  melding('⚡ DEV 1/5 — Levende Drops vs Erfprins: test de bijt + de offer-knop (De Laatste Sprong) + de 2-beats-dood (sprong→burst).');
 }
-/* logo-klik: GEWONE klik = veilige Act 2-sprong (géén Drops spawnen/ontgrendelen, dus je
-   playtest-save blijft schoon). SHIFT+klik = de Drops-testcyclus (die bewust spawnt/schrijft).
-   devDropsWis() in de console reset de (cross-run) Drops-Codex weer naar nul. */
-function devLogo(e) {
-  if (e && e.ctrlKey && e.altKey) { devDicktator(); return; }   /* Ctrl+Alt+klik = meteen de DICKtator */
-  if (e && e.altKey) { devErfprins(); return; }       /* Alt+klik = meteen SOLO tegen de Erfprins (schone Roof-test) */
-  if (e && e.shiftKey) { devDropsTest(); return; }     /* Shift+klik = Drops-testcyclus (spawnt/schrijft) */
-  if (e && e.ctrlKey) { devSprongAct3(); return; }     /* Ctrl+klik = Act 3-sprong (Slachtblok-test) */
-  devMenu();                                           /* gewone klik = het DEV-menu (alles op een rij; een kale klik sprong vroeger meteen naar Act 2 — te gevaarlijk, zie debug-sweep) */
-}
-
-/* DEV-SHORTCUT: metgezel aan/uit voor tests (synergie, Roddel-vloek, topbalk-chip,
-   victory-poses). In een lopend gevecht stapt hij pas het VOLGENDE gevecht in
-   (g.metgezel wordt bij startGevecht gebouwd — de v70-les). Weg vóór release. */
-function devMetgezel(id) {
+/* 2 · grief — silhouet + pootafdruk */
+function devDropsGrief() {
   if (!S) nieuwSpel('slachter');
-  if (!id) { S.metgezel = null; renderTopbalk(); melding('⚡ DEV: metgezel weggestuurd.'); return; }
-  if (!METGEZELLEN[id]) { melding('⚡ DEV: onbekende metgezel: ' + id); return; }
-  geefMetgezel(id);
-  melding(`⚡ DEV: ${METGEZELLEN[id].naam} stapt in${inGevecht() ? ' — vanaf het volgende gevecht' : ''}.`);
+  _devDropsReset(); Codex.gevallen = ['drops']; Codex.dropsOfferRun = 0; Codex.runs = 2; bewaarCodex();
+  _devDropsFight(['groene_slijm'], 'gevecht');
+  S.fakkel = 60; zetLichtVisueel(); renderTopbalk();
+  melding('⚡ DEV 2/5 — GRIEF: verbrand licht (een kaart) en kijk in de lege metgezel-zone → as-silhouet + wegdovende pootafdruk.');
 }
-
-/* DEV-SHORTCUT: meteen tegen de Slijmkoning (Act 1-baas) — met buffer zoals de
-   andere baas-sprongen. Weg vóór release. */
-function devSlijmkoning() {
+/* 3 · reünie NU (cinematic + de Witte verschijnt) */
+function devDropsReunie() {
   if (!S) nieuwSpel('slachter');
-  if (inGevecht()) stopGevechtLus();
-  S.gevecht = null; S.act = 1; S.fakkel = fakkelMax();
-  S.maxHp = Math.max(S.maxHp || 0, 150); S.hp = S.maxHp;
-  S.dranken = []; while (S.dranken.length < drankSlots()) S.dranken.push('heeldrank');
-  if (S.dek.length < 14) { const pool = heldPool(); let v = 0; while (S.dek.length < 16 && v++ < 40) S.dek.push(nieuweKaart(kiesUit(pool))); }
-  saveSpel();
-  startGevecht(['slijmkoning'], 'baas', 13);
-  melding('⚡ DEV: meteen tegen de Slijmkoning — 150 HP + heeldranken + opgevuld dek.');
+  _devDropsReset(); Codex.gevallen = ['drops']; Codex.dropsOfferRun = 0; Codex.runs = 2; bewaarCodex();
+  _devDropsFight(['de_erfprins'], 'baas');
+  setTimeout(() => { if (inGevecht() && S.gevecht.vijanden.some(v => v.id === 'de_erfprins' && !v.dood)) revealDropsWit(S.gevecht, 'weigering'); }, 900);
+  melding('⚡ DEV 3/5 — REÜNIE: de Witte keert direct terug (wit-flits + 3 beats + signatuur-sprong).');
 }
-
-/* DEV-SHORTCUT: de Erfprins als EERSTE ontmoeting — reset de teller zodat de
-   Inventaris-intro (en orakel[0]) opnieuw speelt. Weg vóór release. */
-function devErfprinsIntro() {
-  Codex.erfprinsOntmoetingen = 0;
-  bewaarCodex();
-  devErfprins();
+/* 4 · Drops de Witte vecht mee */
+function devDropsWitVecht() {
+  if (!S) nieuwSpel('slachter');
+  _devDropsReset(); Codex.gevallen = ['drops']; ontgrendelMetgezel('drops'); ontgrendelMetgezel('drops_wit'); bewaarCodex();
+  geefMetgezel('drops_wit');
+  _devDropsFight(['de_erfprins'], 'baas');
+  S.fakkel = 0; zetLichtVisueel(); renderTopbalk();
+  melding('⚡ DEV 4/5 — Drops de Witte vecht mee: test de blok-negerende witklap (gedoofd = ×2) + blind-immuniteit (intent zichtbaar bij fakkel 0).');
 }
-
-/* DEV-SHORTCUT — HET DEV-MENU (logo-klik): alle testsprongen op een rij, zodat de
-   modifier-combinaties niet uit de hand lopen. Knoppen via listeners (nooit data in
-   onclick-strings — bekende bugklasse). Zoek 'DEV-SHORTCUT' om alles te wissen. */
-function devMenu() {
-  const oud = document.getElementById('dev-menu');
-  if (oud) { oud.remove(); return; }   /* tweede klik = toggle dicht */
-  const groepen = [
-    ['Spring', [
-      ['🗺️ Act 2', () => devSprongAct2()],
-      ['🌋 Act 3', () => devSprongAct3()],
-    ]],
-    ['Bazen', [
-      ['🫠 Slijmkoning', () => devSlijmkoning()],
-      ['🤴 Erfprins', () => devErfprins()],
-      ['🃏 Erfprins · 1e ontmoeting (intro)', () => devErfprinsIntro()],
-      ['👑 HET PROCES · mediäan', () => devDicktator('slachter_mid')],
-      ['☠️ HET PROCES · gif_opt', () => devDicktator('gif_opt')],
-      ['🐛 HET PROCES · gif_matig', () => devDicktator('gif_matig')],
-      ['🎭 HET PROCES · choreo', () => devDicktator('choreo')],
-      ['⚖️ sprong · het hof (66%)', () => devDicktator('slachter_mid', { hof: true })],
-      ['🗣️ sprong · de tirade (33%)', () => devDicktator('slachter_mid', { tirade: true })],
-      ['🗳️ sprong · vorm 2', () => devDicktator('gif_opt', { vorm2: true })],
-      ['⏳ sprong · de staart', () => devDicktator('gif_matig', { staart: true })],
-    ]],
-    ['Metgezel (in gevecht: vanaf het volgende)', [
-      ['🐕 Drops', () => devMetgezel('drops')],
-      ['🛡️ Vlamwacht', () => devMetgezel('vlamwachter')],
-      ['🍃 Mosgeest', () => devMetgezel('mosgeest')],
-      ['🤍 De Witte', () => devMetgezel('drops_wit')],
-      ['✕ weg', () => devMetgezel(null)],
-    ]],
-    ['Ritueel & boog', [
-      ['🜂 Drempel + Drops-trio', () => devDrempel(['drops_baas', 'drops_figuur', 'drops_episch'])],
-      ['🪓 Slachtblok', () => devSlachtblok()],
-      ['🐾 Drops-cyclus', () => devDropsTest()],
-      ['🎬 Outro', () => { if (typeof devOutro === 'function') devOutro(); }],
-    ]],
-  ];
-  const ov = document.createElement('div');
-  ov.id = 'dev-menu';
-  ov.className = 'overlay open';
-  ov.innerHTML = `<div class="dev-kaart"><h3>⚡ DEV-menu</h3>
-    ${groepen.map(([kop]) => `<small class="dev-kop">${kop}</small><div class="dev-rij"></div>`).join('')}
-    <button class="knop-stil dev-dicht" type="button">Sluit</button>
-    <small class="dev-voet">modifiers op het logo blijven werken: Alt=Erfprins · Ctrl=Act 3 · Ctrl+Alt=DICKtator · Shift=Drops-cyclus</small>
-  </div>`;
-  document.body.appendChild(ov);
-  const rijen = ov.querySelectorAll('.dev-rij');
-  groepen.forEach(([, knoppen], i) => knoppen.forEach(([label, doe]) => {
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'knop-stil dev-k'; b.textContent = label;
-    b.addEventListener('click', () => { ov.remove(); doe(); });
-    rijen[i].appendChild(b);
-  }));
-  ov.querySelector('.dev-dicht').onclick = () => ov.remove();
-  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+/* 5 · schone lei — ook als devDropsWis() in de console */
+function devDropsWis() {
+  _devDropsReset();
+  melding('⚡ DEV 5/5 — Drops-Codex GERESET (gevallen/mysterie/Witte/zaadje/offer weg).');
 }
 
 /* DEV-SHORTCUT: de vaste PLAYTEST-BUILDS — exact dezelfde als BUILDS in het meetharnas
    (.claude/notities/baas-meting/dick_sim_proces.js), zodat de bot-meting en Thomas' hand-
-   playtest over precies hetzelfde dek en dezelfde relikwieën praten. Weg vóór release. */
+   playtest over precies hetzelfde dek en dezelfde relikwieën praten. gif_opt_kristal staat
+   bewust NIET in het menu (hij is een meetvariant van gif_opt), maar blijft hier staan voor
+   devDicktator('gif_opt_kristal') in de console en voor het harnas. */
 const DEV_BUILDS = {
   slachter_mid: {
     held: 'slachter', hp: 88, label: 'Slachter gemiddeld (de MEDIAAN-speler)',
@@ -10607,11 +10598,84 @@ const DEV_BUILDS = {
   }
 };
 
+/* ============================================================
+   DEV-SHORTCUT — HET PROCES: de regie van v121 op knoppen.
+   De drempels staan in dicktatorFase (fase 2 vanaf hp/maxHp <= 0,66; fase 3 vanaf <= 0,33)
+   en de herrijzenis valt in verliesHp op hp <= 0. DEV_KLAP is de marge die we erboven
+   leggen: precies zoveel schade als de tip belooft speelt de regie af.
+   ============================================================ */
+const DEV_KLAP = 6;
+/* de HP waarop het bedrijf omslaat, in hele punten (de vergelijking in dicktatorFase is
+   <=, dus de laatste HP-stand VÓÓR de omslag is deze drempel + 1). */
+function _devProcesDrempel(v, fase) {
+  if (fase === 2) return Math.floor((v.maxHp || DICK.hp) * 0.66);
+  if (fase === 3) return Math.floor((v.maxHp || DICK.hp) * 0.33);
+  return 0;   /* IV · DE HERVERKIEZING valt op hp <= 0 */
+}
+/* DE LANDING van een bedrijf ZONDER de regie: alleen wat er ná de ceremonie blijft staan
+   (fase, zaal, tint, vignet, personeel). Zo vertrekt de VOLGENDE klap uit een geloofwaardige
+   staat en speelt hij de échte regie. Elke regel hieronder staat letterlijk als blijvende
+   beat in dicktatorRegieProces/dicktatorRegieTirade — er verandert geen mechaniek. */
+function _devBedrijfLanding(b, g, fase) {
+  b.fase = Math.max(b.fase || 1, fase);
+  if (fase >= 2) {
+    if (window.ACHTERGRONDEN && ACHTERGRONDEN.act3 && ACHTERGRONDEN.act3.finaleFasen) {
+      toonArenaWissel(ACHTERGRONDEN.basis + ACHTERGRONDEN.act3.finaleFasen.verschuiving, { hard: true });
+    }
+    _bedrijf(fase);
+  }
+  if (fase >= 3) {
+    document.body.classList.add('tirade');
+    const gr = hofLid(g, 'de_griffier');
+    /* DE EXECUTIE, in de STAAT — contract §2: nooit via verliesHp (dat zou de bijDood-
+       hersync vuren en een Epidemie gratis over het bord verspreiden). */
+    if (gr) { gr.dood = true; gr.hp = 0; gr.blok = 0; }
+    dicktatorKrachtVast(b, true);
+    if (3 >= DICK.claqueurVanaf && !hofLid(g, 'de_claqueur')) dicktatorRoep('de_claqueur', { hp: DICK.claqueurHp });
+  }
+  b.intent = VIJANDEN[b.id].kies(b, b.beurtTeller || 0);
+  dicktatorHersync(false);
+  renderGevecht();   /* zet de fase-klassen (.woede, pips, beleidsstrook) zelf terug */
+}
+/* wacht tot de baasintro weg is en het toneel vrij is, en doe dan fn. De acceptatiesuites
+   wachten op precies dezelfde twee voorwaarden vóór ze hun trigger vuren.
+   De eerste peiling staat bewust op 900 ms: startGevecht laat de metgezel op een vaste
+   setTimeout van 650 ms zijn openingsbeat doen (Drops bijt de baas voor 6-7). Alles wat de
+   baas-HP op een drempel zet moet DAARNA gebeuren — gemeten: met slachter_mid kraakte die
+   beet de drempel zelf en landde 'Net vóór IV' uit zichzelf in V. */
+function _devNaIntro(fn) {
+  let n = 80;
+  const kijk = () => {
+    if (!inGevecht() || S.gevecht.voorbij) return;
+    if (document.getElementById('baas-intro') || S.gevecht.ceremonie) {
+      if (--n <= 0) { melding('⚡ DEV: de baasintro bleef staan — sla zelf.'); return; }
+      setTimeout(kijk, 250); return;
+    }
+    fn();
+  };
+  setTimeout(kijk, 900);
+}
+/* DE KLAP, langs het NORMALE schadepad: verliesHp (zet _hpVoorKlap, en vuurt zelf
+   dicktatorHerverkiezing op hp <= 0) + checkBaasFase, exact wat speelKaart/naActie erna
+   doen. Dat is hetzelfde pad dat tools/drama_stap_b_2d.js gebruikt. */
+function _devKlapNu(n) {
+  const g = S.gevecht; if (!g || g.voorbij) return;
+  const b = g.vijanden.find(x => x.id === 'de_dicktator' && !x.dood); if (!b) return;
+  verliesHp(b, n);
+  checkBaasFase();
+  renderGevecht();
+}
+
 /* DEV-SHORTCUT: meteen tegen HET PROCES, met een REALISTISCHE speler.
    devDicktator(profiel, opties) — profiel: 'slachter_mid' (standaard) | 'gif_opt' |
    'gif_opt_kristal' | 'gif_matig' | 'choreo' (het oude, milde gedrag: alleen om de
-   voorstelling te bekijken). opties: { vorm2, hof, tirade, staart }.
-   Ook als devDicktator('gif_opt', {vorm2:true}) in de console. Weg vóór release. */
+   voorstelling te bekijken).
+   opties (de suites gebruiken {} en {hof:true}; die signatuur blijft ongewijzigd):
+     { vorm2, hof, tirade, staart }  — de oorspronkelijke sprongen;
+     { netVoor: 2|3|4 }              — de staat NET VÓÓR die bedrijfswissel, zodat jouw
+                                       volgende klap (>= DEV_KLAP) de regie speelt;
+     { speelAf: 2|3|4 }              — idem, maar de klap valt meteen zelf.
+   Overschrijft altijd de lopende run (nieuwe held, vast dek, vaste relikwieën). */
 function devDicktator(profiel = 'slachter_mid', opties = {}) {
   const b = DEV_BUILDS[profiel];
   if (b) nieuwSpel(b.held);        /* een vaste build begint altijd van nul */
@@ -10661,12 +10725,39 @@ function devDicktator(profiel = 'slachter_mid', opties = {}) {
     v.intent = VIJANDEN[v.id].kies(v, v.beurtTeller);
     dicktatorHersync(false);
   };
-  if (opties.staart) {
-    /* de plek waar het écht kan gaan slepen: vorm 2, drie decreten gevallen, alles op */
+  const netVoor = opties.netVoor || opties.speelAf || 0;
+  if (netVoor) {
+    roepHof();
+    if (netVoor >= 3) _devBedrijfLanding(v, g, netVoor - 1);   /* III vertrekt uit bedrijf II, IV uit bedrijf III */
+    const doelHp = _devProcesDrempel(v, netVoor) + DEV_KLAP;
+    const naam = netVoor === 2 ? 'I→II · HET PROCES' : (netVoor === 3 ? 'II→III · DE TIRADE' : 'IV · DE HERVERKIEZING');
+    melding(opties.speelAf
+      ? `⚡ DEV: ${naam} speelt zo af — de klap van ${DEV_KLAP} valt zodra de intro weg is.`
+      : `⚡ DEV: NET VÓÓR ${naam} — hij komt op ${doelHp}/${v.maxHp} HP zodra de intro weg is. Eén klap van minstens ${DEV_KLAP} schade speelt de regie.`);
+    /* de drempelstand wordt PAS gezet als de intro weg is (zie _devNaIntro): de metgezel
+       doet op 650 ms zijn openingsbeat en zou de drempel anders zelf kraken. */
+    _devNaIntro(() => {
+      const b2 = S.gevecht && S.gevecht.vijanden.find(x => x.id === 'de_dicktator' && !x.dood);
+      if (!b2) return;
+      b2.hp = doelHp;
+      renderGevecht();
+      if (opties.speelAf) _devKlapNu(DEV_KLAP);
+    });
+  } else if (opties.staart) {
+    /* V · HET MANDAAT — de plek waar het écht kan gaan slepen: vorm 2, 40% HP, drie
+       decreten gevallen, alles op. De herrijzenis valt hier ZELF (één punt langs het normale
+       schadepad), want op v.hp = 1 was dit gemeten twee verschillende sprongen onder één
+       label: met een metgezel (slachter_mid, gif_opt) sloeg Drops hem in zijn openingsbeurt
+       zelf om en stond je in V op 96/240; zonder metgezel (gif_matig) bleef je op 1 HP in
+       bedrijf III hangen. Nu landt de knop voor elke build in V. */
     v.krachtVast = DICK.krachtVastCap;
     for (let i = 0; i < 3 && S.dek.length > 3; i++) { S.dek.pop(); S.dek.push(nieuweKaart('laster')); }
     g.trek = schud([...S.dek]); g.hand = []; g.afleg = []; trekKaarten(5);
     v.hp = 1;
+    _devNaIntro(() => {
+      const b2 = S.gevecht && S.gevecht.vijanden.find(x => x.id === 'de_dicktator');
+      if (b2 && !b2.herrezen) _devKlapNu(1);   /* sloeg de metgezel hem al om, dan niets meer */
+    });
   } else if (opties.vorm2) {
     v.hp = 1;   /* je eerste klap geeft de volledige beat: kiezers, arena, muziek */
   } else if (opties.tirade) {
@@ -10680,7 +10771,7 @@ function devDicktator(profiel = 'slachter_mid', opties = {}) {
 }
 
 /* DEV-SHORTCUT: spring meteen naar Act 3 (het Slachtblok) om het roster te testen
-   zonder Act 1-2 door te spelen. Act 3 is live (ACTS_MAX=3). Weg vóór release. */
+   zonder Act 1-2 door te spelen. Act 3 is live (ACTS_MAX=3). */
 function devSprongAct3(profiel) {
   const b = DEV_BUILDS[profiel];
   if (b) nieuwSpel(b.held);
@@ -10712,11 +10803,299 @@ function devSprongAct3(profiel) {
   saveSpel();
   renderKaartScherm();
 }
-function devDropsWis() {
-  _devDropsReset();
-  _devDropsStap = 0;
-  melding('⚡ DEV: Drops-Codex gewist (gevallen/mysterie/Witte/zaadje/offer weg).');
+
+/* een INST-vlag omzetten via de ECHTE weg: vulInstPaneel() zet alle knoppen van
+   ⚙️ Instellingen op hun werkelijke waarden (zonder dat pakt instWijzig de HTML-
+   standaarden en zet hij stilletjes drie andere instellingen terug), daarna doet
+   instWijzig het volledige werk — 3D mid-gevecht wisselen, lite toepassen, bewaren.
+   Geen tweede kopie van die logica hier. */
+function devInstVlag(id, aan) {
+  vulInstPaneel();
+  const cb = document.getElementById(id);
+  if (!cb) { melding('⚡ DEV: schakelaar ' + id + ' bestaat niet.'); return; }
+  cb.checked = !!aan;
+  instWijzig();
+  melding('⚡ DEV: ' + id.replace('inst-', '') + ' ' + (aan ? 'AAN' : 'uit') + '.');
 }
+
+/* ============================================================
+   DEV_MENU — DE ENIGE BRON van het menu. devMenu() bouwt er de overlay uit op.
+   Itemsoorten:
+     {label, tip, doe}                                — een knop;
+     {soort:'keuze', sleutel, label, opties:[{v,label,tip}]}  — pillen, onthouden in
+       localStorage 'slayit_dev' zodat ze bij een volgende opening nog staan;
+     {soort:'kies', label, tip, opties:[{v,label}], stand, doe} — een <select>;
+     {soort:'schakel', label, tip, stand, doe}        — toggle die zijn stand toont.
+   ============================================================ */
+const DEV_MENU = [
+  {
+    kop: '🧭 Springen',
+    items: [
+      { label: '🗺️ Act 2 · kaart', tip: 'Overschrijft je lopende run: Act 2-kaart, 150 HP, 3 heeldranken (+ de Drops-scherven als Drops nog niet gewekt is).', doe: () => devSprongAct2() },
+      { label: '🌋 Act 3 · kaart', tip: 'Overschrijft je lopende run: de Act 3-ladder (het Slachtblok), 150 HP, volle heeldranken.', doe: () => devSprongAct3() },
+      { label: '🫠 Slijmkoning', tip: 'Overschrijft je lopende run en start meteen het Act 1-baasgevecht met 150 HP + opgevuld dek.', doe: () => devSlijmkoning() },
+      { label: '🤴 Erfprins', tip: 'Overschrijft je lopende run en start het Act 2-baasgevecht SOLO (geen metgezel), 150 HP + dek van 18.', doe: () => devErfprins() },
+      { label: '🃏 Erfprins · eerste ontmoeting', tip: 'Zet de Codex-teller erfprinsOntmoetingen op 0 (raakt je Codex) en springt dan naar de Erfprins, zodat de Inventaris-intro opnieuw speelt.', doe: () => devErfprinsIntro() }
+    ]
+  },
+  {
+    kop: '⚖️ Het Proces · de DICKtator',
+    items: [
+      {
+        soort: 'keuze', sleutel: 'build', label: 'Build',
+        opties: [
+          { v: 'slachter_mid', label: 'Slachter mediaan', tip: 'De MEDIAAN-speler uit het meetharnas: 88 HP, 22 kaarten, 5 relikwieën. De standaard.' },
+          { v: 'gif_opt', label: 'Gifmagiër sterk', tip: 'De sterkste gemeten build: 74 HP, geoptimaliseerd gifdek, 6 relikwieën.' },
+          { v: 'gif_matig', label: 'Gifmagiër matig', tip: 'De build die NIET vermorzeld mag worden: 70 HP, 15 kaarten, 1 relikwie, geen metgezel.' },
+          { v: 'choreo', label: 'Choreo (kijkmodus)', tip: 'Het oude milde gedrag: 150 HP, volle dranken, willekeurig dek. Om de voorstelling te bekijken, niet om te balanceren.' }
+        ]
+      },
+      {
+        soort: 'keuze', sleutel: 'tempo', label: 'Tempo regie',
+        opties: [
+          { v: 1, label: '1×', tip: 'DICK.tempo = 1: de regie op ware snelheid. De standaard; het spel zet hem nergens anders.' },
+          { v: 0.6, label: '0,6×', tip: 'DICK.tempo = 0,6: elke beat van de bedrijfsovergangen loopt in 60% van de tijd.' },
+          { v: 0.3, label: '0,3×', tip: 'DICK.tempo = 0,3: de regie raast voorbij. Blijft staan tot je 1× kiest of de dev-instellingen wist.' }
+        ]
+      },
+      { label: '▶ Vanaf het begin', tip: 'Overschrijft je lopende run: HET PROCES vanaf bedrijf I · DE ZITTING, het hof treedt normaal aan.', doe: () => devDicktator(devInst().build) },
+      { label: '⚡ Net vóór I→II', tip: `Overschrijft je run: hof op het toneel, HP net boven de 66%-drempel. Eén klap van minstens ${DEV_KLAP} schade speelt de regie van I→II.`, doe: () => devDicktator(devInst().build, { netVoor: 2 }) },
+      { label: '⚡ Net vóór II→III', tip: `Overschrijft je run: bedrijf II geland (zaal + tint), HP net boven de 33%-drempel. Eén klap van minstens ${DEV_KLAP} schade speelt DE TIRADE.`, doe: () => devDicktator(devInst().build, { netVoor: 3 }) },
+      { label: '⚡ Net vóór IV', tip: `Overschrijft je run: bedrijf III geland (griffier geveld, claqueur, rood voetlicht), HP net boven 0. Eén klap van minstens ${DEV_KLAP} schade = DE HERVERKIEZING.`, doe: () => devDicktator(devInst().build, { netVoor: 4 }) },
+      { label: '⏳ V · Het Mandaat', tip: 'Overschrijft je run: de staart — hij in vorm 2 op 40% HP met vaste Kracht, jij op 40% zonder dranken en met drie decreten gevallen. De herrijzenis valt zelf zodra de intro weg is. De plek waar het écht kan gaan slepen.', doe: () => devDicktator(devInst().build, { staart: true }) },
+      { label: '▶▶ Speel I→II nu af', tip: 'Overschrijft je run, zet de staat net vóór I→II en dient de klap zelf toe zodra de baasintro weg is. Je hoeft niet te slaan.', doe: () => devDicktator(devInst().build, { speelAf: 2 }) },
+      { label: '▶▶ Speel II→III nu af', tip: 'Overschrijft je run, zet de staat net vóór II→III en dient de klap zelf toe. DE TIRADE speelt vanzelf af.', doe: () => devDicktator(devInst().build, { speelAf: 3 }) },
+      { label: '▶▶ Speel IV nu af', tip: 'Overschrijft je run, zet de staat net vóór IV en dient de doodsklap zelf toe. DE HERVERKIEZING speelt vanzelf af.', doe: () => devDicktator(devInst().build, { speelAf: 4 }) }
+    ]
+  },
+  {
+    kop: '🐾 Metgezel — in gevecht: vanaf het volgende',
+    items: [
+      { label: '🐕 Drops', tip: 'Zet Drops in je lopende run (raakt je save, niet je Codex). In een gevecht stapt hij pas vanaf het volgende mee.', doe: () => devMetgezel('drops') },
+      { label: '🛡️ Vlamwacht', tip: 'Zet de Vlamwacht in je lopende run (raakt je save, niet je Codex).', doe: () => devMetgezel('vlamwachter') },
+      { label: '🍃 Mosgeest', tip: 'Zet de Mosgeest in je lopende run (raakt je save, niet je Codex).', doe: () => devMetgezel('mosgeest') },
+      { label: '🤍 De Witte', tip: 'Zet Drops de Witte in je lopende run. Let op: hij hoort normaal NOOIT in de gewone rotatie — alleen via het grief-moment.', doe: () => devMetgezel('drops_wit') },
+      { label: '✕ weg', tip: 'Stuurt je metgezel weg (raakt je save, niet je Codex).', doe: () => devMetgezel(null) }
+    ]
+  },
+  {
+    kop: '🦴 Drops-boog — schrijft in de Codex',
+    items: [
+      { label: '⚠ 1 · Levend vs Erfprins', tip: '⚠ Reset de Drops-Codex, wekt Drops en start het Erfprins-gevecht: test de bijt, de offer-knop en de 2-beats-dood.', doe: () => devDropsLevend() },
+      { label: '⚠ 2 · Grief', tip: '⚠ Reset de Drops-Codex, zet Drops als gevallen (run 2) en start een slijmgevecht op 60 licht: as-silhouet + pootafdruk in de lege metgezel-zone.', doe: () => devDropsGrief() },
+      { label: '⚠ 3 · Reünie', tip: '⚠ Reset de Drops-Codex en laat de Witte 900 ms na de start van het Erfprins-gevecht terugkeren (wit-flits + 3 beats + signatuur-sprong).', doe: () => devDropsReunie() },
+      { label: '⚠ 4 · De Witte vecht mee', tip: '⚠ Reset de Drops-Codex, ontgrendelt Drops + de Witte en start het Erfprins-gevecht op fakkel 0: blok-negerende witklap (×2) + blind-immuniteit.', doe: () => devDropsWitVecht() },
+      { label: '⚠ 5 · Drops-Codex resetten', tip: '⚠ DESTRUCTIEF: wist gevallen/mysterie/Witte/zaadje/offer uit je (cross-run) Codex. Geen gevecht, alleen de schone lei.', doe: () => devDropsWis() }
+    ]
+  },
+  {
+    kop: '🎭 Scènes',
+    items: [
+      { label: '🜂 Drempel + Drops-trio', tip: 'Legt een kloppend Drops-trio in je gedragen tas (raakt je save) en opent het scherven-ritueel.', doe: () => devDrempel(['drops_baas', 'drops_figuur', 'drops_episch']) },
+      { label: '🪓 Het Slachtblok', tip: 'Vult je dek zo nodig aan tot 12 kaarten (raakt je save) en opent de smeedkamer in altaar-modus.', doe: () => devSlachtblok() },
+      { label: '🎬 De Outro', tip: 'Speelt de outro vanaf hier af, zonder run. Raakt je save niet.', doe: () => { if (typeof devOutro === 'function') devOutro(); else melding('⚡ DEV: devOutro ontbreekt (js/outro.js).'); } },
+      { label: '📼 De Proloog', tip: 'Verlaat het spel en opent proloog/index.html in ditzelfde tabblad. Je save blijft staan.', doe: () => { location.href = 'proloog/index.html'; } }
+    ]
+  },
+  {
+    kop: '🎛️ Schakelaars',
+    items: [
+      { soort: 'schakel', label: 'Mobiel-spoor', tip: 'Wisselt data-modus tussen mobiel en laptop (css/mobiel.css) en hertekent een lopend gevecht. Ook via Ctrl+Shift+M. Raakt je save niet.', stand: () => document.body.dataset.modus === 'mobiel', doe: aan => devMobiel(aan) },
+      /* De Wereld staat er ALTIJD, niet alleen als de dev-sleutel ooit gezet is: dit menu
+         is zelf al dev-only (logo-klik / lange druk op het versielabel), en een schakelaar
+         die pas verschijnt nadat je hem elders aanzette is precies dan onvindbaar wanneer
+         je hem voor het eerst nodig hebt. */
+      { soort: 'schakel', label: 'De Wereld (afdaling)', tip: 'body.wereld aan/uit: de afdaalkaart als beloopbaar terrein i.p.v. de klassieke knopenkaart. Blijft aan over reloads (localStorage). Raakt je save niet.', stand: () => document.body.classList.contains('wereld'), doe: aan => devWereld(aan) },
+      { soort: 'schakel', label: '3D-toneel', tip: 'Zet INST.d3 om via dezelfde weg als ⚙️ Instellingen — ook midden in een gevecht. Op mobiel blijft 3D uit.', stand: () => !!INST.d3, doe: aan => devInstVlag('inst-d3', aan) },
+      { soort: 'schakel', label: 'Lite-modus', tip: 'Zet INST.lite om via dezelfde weg als ⚙️ Instellingen: zware effecten uit (ook de crossfades van de bedrijfsovergangen).', stand: () => !!INST.lite, doe: aan => devInstVlag('inst-lite', aan) },
+      {
+        soort: 'kies', label: 'Dagwet forceren',
+        tip: 'Forceert wetVanDag voor de VOLGENDE daily-start (een lopende run houdt haar eigen wet). Raakt je save niet.',
+        stand: () => wetVanDag._force || '',
+        opties: [{ v: '', label: '— geen —' }].concat(Object.keys(DAGWETTEN).map(id => ({ v: id, label: `${DAGWETTEN[id].icoon} ${DAGWETTEN[id].naam}` }))),
+        doe: v => { devDagwet(v || null); melding(v ? `⚡ DEV: volgende daily draait onder ${DAGWETTEN[v].naam}.` : '⚡ DEV: dagwet-forcering gewist.'); }
+      }
+    ]
+  },
+  {
+    kop: '🧹 Opruimen',
+    items: [
+      { label: '⚠ Drops-Codex wissen', tip: '⚠ DESTRUCTIEF: wist gevallen/mysterie/Witte/zaadje/offer uit je (cross-run) Codex. Zelfde knop als Drops-boog 5.', doe: () => devDropsWis() },
+      { label: 'Dev-instellingen wissen', tip: "Wist localStorage 'slayit_dev' (build + tempo) en zet DICK.tempo terug op 1. Raakt je save en je Codex niet.", doe: () => devInstWis() }
+    ]
+  }
+];
+
+/* ---------- HET DEV-MENU zelf ---------- */
+/* de versie zoals het label onderaan ⚙️ Instellingen hem toont — ÉÉN bron (de CACHE-naam
+   van de service worker), geen tweede constante hier. vraagShellVersie is asynchroon, dus
+   het kopje vult zich zo nodig een paar honderd ms later bij. */
+function devVersie() {
+  try { vraagShellVersie(); } catch (e) {}
+  const el = document.getElementById('inst-versie');
+  const tekst = (el && el.textContent) || (typeof _shellVersie === 'string' ? _shellVersie : '') || '';
+  const m = /v(\d+)/i.exec(tekst);
+  return m ? 'v' + m[1] : (tekst || 'v?');
+}
+
+function devMenu() {
+  const oud = document.getElementById('dev-menu');
+  if (oud) { devMenuSluit(); return; }   /* tweede klik = toggle dicht */
+  const ov = document.createElement('div');
+  ov.id = 'dev-menu';
+  ov.className = 'overlay open';
+  ov.innerHTML = `<div class="dev-kaart" role="dialog" aria-label="DEV-menu">
+    <h3>⚡ DEV-menu · <span class="dev-versie">…</span></h3>
+    <div class="dev-groepen"></div>
+    <button class="knop-stil dev-dicht" type="button">Sluit</button>
+  </div>`;
+  const houder = ov.querySelector('.dev-groepen');
+
+  DEV_MENU.forEach(groep => {
+    const kop = document.createElement('small');
+    kop.className = 'dev-kop';
+    kop.textContent = groep.kop;
+    houder.appendChild(kop);
+    const rij = document.createElement('div');
+    rij.className = 'dev-rij';
+    houder.appendChild(rij);
+    groep.items.forEach(item => rij.appendChild(devMenuItem(item)));
+  });
+
+  document.body.appendChild(ov);
+  ov.querySelector('.dev-dicht').addEventListener('click', devMenuSluit);
+  ov.addEventListener('click', e => { if (e.target === ov) devMenuSluit(); });
+  document.addEventListener('keydown', devMenuEsc, true);
+  /* het versielabel komt van de service worker en dus mogelijk pas ná de eerste paint */
+  const zet = () => { const s = ov.querySelector('.dev-versie'); if (s && ov.isConnected) s.textContent = devVersie(); };
+  zet(); setTimeout(zet, 400); setTimeout(zet, 1500);
+}
+function devMenuSluit() {
+  document.removeEventListener('keydown', devMenuEsc, true);
+  const ov = document.getElementById('dev-menu');
+  if (ov) ov.remove();
+}
+function devMenuEsc(e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); devMenuSluit(); } }
+
+/* één item uit DEV_MENU naar DOM. Alles via listeners en data-attributen — nooit een
+   waarde in een onclick-string (die bugklasse kostte ons al een stille knop). */
+function devMenuItem(item) {
+  if (item.soort === 'keuze') {
+    const wrap = document.createElement('div');
+    wrap.className = 'dev-keuze';
+    const lbl = document.createElement('span');
+    lbl.className = 'dev-keuze-label';
+    lbl.textContent = item.label;
+    wrap.appendChild(lbl);
+    const huidig = () => devInst()[item.sleutel];
+    item.opties.forEach(o => {
+      const p = document.createElement('button');
+      p.type = 'button';
+      p.className = 'dev-pil' + (huidig() === o.v ? ' aan' : '');
+      p.textContent = o.label;
+      if (o.tip) p.dataset.tip = o.tip;   /* data-tip i.p.v. title: die werkt OOK op focus en op touch (één tik toont de uitleg zonder de klik te blokkeren) */
+      p.addEventListener('click', () => {
+        devInstZet(item.sleutel, o.v);
+        wrap.querySelectorAll('.dev-pil').forEach((q, i) => q.classList.toggle('aan', item.opties[i].v === o.v));
+      });
+      wrap.appendChild(p);
+    });
+    return wrap;
+  }
+  if (item.soort === 'kies') {
+    const wrap = document.createElement('label');
+    wrap.className = 'dev-keuze dev-kies';
+    if (item.tip) wrap.dataset.tip = item.tip;
+    const lbl = document.createElement('span');
+    lbl.className = 'dev-keuze-label';
+    lbl.textContent = item.label;
+    wrap.appendChild(lbl);
+    const sel = document.createElement('select');
+    item.opties.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = String(o.v);
+      opt.textContent = o.label;
+      sel.appendChild(opt);
+    });
+    try { sel.value = String(item.stand ? (item.stand() || '') : ''); } catch (e) {}
+    sel.addEventListener('change', () => { try { item.doe(sel.value); } catch (e) { melding('DEV-fout: ' + e.message); } });
+    wrap.appendChild(sel);
+    return wrap;
+  }
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'knop-stil dev-k';
+  if (item.soort === 'schakel') {
+    b.classList.add('dev-schakel');
+    const teken = () => {
+      let aan = false;
+      try { aan = !!item.stand(); } catch (e) {}
+      b.classList.toggle('aan', aan);
+      b.textContent = `${item.label}: ${aan ? 'AAN' : 'uit'}`;
+      if (item.tip) b.dataset.tip = item.tip;
+      return aan;
+    };
+    const nu = teken();
+    b.dataset.aan = nu ? '1' : '0';
+    b.addEventListener('click', () => {
+      try { item.doe(b.dataset.aan !== '1'); } catch (e) { melding('DEV-fout: ' + e.message); }
+      b.dataset.aan = teken() ? '1' : '0';
+    });
+    return b;
+  }
+  b.textContent = item.label;
+  if (/^⚠/.test(item.label)) b.classList.add('dev-warn');   /* destructief: raakt de (cross-run) Codex */
+  if (item.tip) b.dataset.tip = item.tip;
+  b.addEventListener('click', () => {
+    devMenuSluit();
+    try { item.doe(); } catch (e) { melding('DEV-fout: ' + e.message); }
+  });
+  return b;
+}
+
+/* ---------- TOEGANG TOT HET MENU ----------
+   Laptop: een gewone klik op het logo (index.html r23, onclick="devMenu()"). De oude
+   modifier-shortcuts (Alt/Ctrl/Ctrl+Alt/Shift) zijn weg: ze waren onthoudbaar noch
+   zichtbaar, en het menu doet alles wat zij deden.
+   Mobiel ÉN laptop: het versielabel onderaan ⚙️ Instellingen — LANGE DRUK (>= 700 ms) of
+   VIJF snelle tikken binnen 2 s. Op mobiel is het logo verborgen (mobiel.css r144), dus
+   zonder deze haak is het menu daar onbereikbaar. Het label krijgt bewust geen zichtbare
+   hint: een speler die daar toevallig lang op drukt mag dit niet vinden zonder moeite. */
+const DEV_LANGEDRUK_MS = 700;
+const DEV_TIKKEN = 5, DEV_TIKVENSTER = 2000;
+function devVersieHaak() {
+  const el = document.getElementById('inst-versie');
+  if (!el || el._devHaak) return;
+  el._devHaak = true;
+  let langT = null, langUit = false, tikken = [];
+  const open = () => { sluitInstellingen(); devMenu(); };
+  el.addEventListener('pointerdown', () => {
+    langUit = false;
+    clearTimeout(langT);
+    langT = setTimeout(() => { langUit = true; tikken = []; open(); }, DEV_LANGEDRUK_MS);
+  });
+  const stop = gelukt => {
+    clearTimeout(langT);
+    if (langUit || !gelukt) return;   /* de lange druk heeft al geopend: de losklik telt niet mee */
+    const nu = Date.now();
+    tikken = tikken.filter(t => nu - t < DEV_TIKVENSTER);
+    tikken.push(nu);
+    if (tikken.length >= DEV_TIKKEN) { tikken = []; open(); }
+  };
+  el.addEventListener('pointerup', () => stop(true));
+  el.addEventListener('pointercancel', () => stop(false));
+  el.addEventListener('pointerleave', () => stop(false));
+  /* een lange druk op touch opent anders het selectie-/contextmenu van de browser */
+  el.addEventListener('contextmenu', e => e.preventDefault());
+}
+
+/* boot van het dev-blok: de onthouden regie-snelheid terugzetten (DICK.tempo verandert
+   NERGENS anders) en de haak op het versielabel leggen. game.js draait als laatste
+   body-script, dus #inst-versie staat er al; de listener is een terugval voor het geval
+   dit blok ooit eerder geladen wordt. */
+try { DICK.tempo = devInst().tempo; } catch (e) {}
+devVersieHaak();
+if (!document.getElementById('inst-versie')) document.addEventListener('DOMContentLoaded', devVersieHaak);
 
 /* ============================================================
    DE DREMPEL — het scherven-ritueel tussen Act 1 en Act 2.
@@ -11609,7 +11988,12 @@ function doorgaan() {
 function toonHelp() { $('#overlay-help').classList.add('open'); }
 function sluitHelp() { $('#overlay-help').classList.remove('open'); }
 
-function toonInstellingen() {
+/* de knoppen van ⚙️ Instellingen op hun WERKELIJKE waarden zetten. Apart van
+   toonInstellingen(), omdat instWijzig() de stand uit deze knoppen leest: wie hem
+   aanroept terwijl het paneel nog nooit open is geweest, schrijft de HTML-standaarden
+   terug in INST en zet zo stilletjes drie andere instellingen om (het DEV-menu
+   schakelt 3D en lite via diezelfde weg — zie devInstVlag). */
+function vulInstPaneel() {
   $('#inst-geluid').checked = Klank.vol.aan;
   $('#inst-muziek').value = Klank.vol.muziek;
   $('#inst-sfx').value = Klank.vol.sfx;
@@ -11627,6 +12011,9 @@ function toonInstellingen() {
     ib.style.display = (!appGeinstalleerd() && (_installPrompt || (window.mobiel && ios))) ? '' : 'none';
   }
   vraagShellVersie();              /* v116: klein versielabel onderaan */
+}
+function toonInstellingen() {
+  vulInstPaneel();
   $('#overlay-instellingen').classList.add('open');
 }
 function sluitInstellingen() { $('#overlay-instellingen').classList.remove('open'); }
