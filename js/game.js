@@ -590,13 +590,14 @@ const DAGWETTEN = {
 /* de rotatie weegt HET AMALGAAM dubbel: de blend-dag is het pronkstuk */
 const DAGWET_ROTATIE = ['amalgaam', 'glas', 'overname', 'duister', 'stormloop', 'detachering', 'amalgaam', 'goudkoorts', 'besmetting'];
 function wetVanDag() {
-  if (wetVanDag._force && DAGWETTEN[wetVanDag._force]) return wetVanDag._force;   /* dev-haak */
+  if (wetVanDag._force && DAGWETTEN[wetVanDag._force]) return wetVanDag._force;   /* DEV-SHORTCUT: dev-haak */
   return DAGWET_ROTATIE[zaadVanTekst('WET' + vandaagSleutel()) % DAGWET_ROTATIE.length];
 }
 /* geldt wet <id> in de LOPENDE run? (alleen dailies dragen een wet; oude saves
    hebben geen S.dagwet → overal netjes false, zie [[lookup-bugklasse]]) */
 const dagwetActief = id => !!(S && S.daily && S.dagwet === id);
-/* dev: devDagwet('amalgaam') vóór de daily-start forceert een wet (null wist) */
+/* DEV-SHORTCUT: devDagwet('amalgaam') vóór de daily-start forceert een wet (null wist);
+   hoort bij de DAGWETTEN-tabel hierboven en staat daarom niet in het grote dev-blok. */
 function devDagwet(id) { wetVanDag._force = id || null; return id ? DAGWETTEN[id] : 'gewist'; }
 
 /* ---------- DE PROCLAMATIE: de eindbaas vaardigt de dagwet uit ----------
@@ -2037,6 +2038,7 @@ function slaap(ms) {
 let S = null;
 
 function nieuwSpel(heldId, seedTekst, ascensie, daily) {
+  if (typeof regieOpruimAlles === 'function') regieOpruimAlles();   /* v122: een verlaten bedrijf III (body.tirade, data-bedrijf, doek) mag niet in een verse run doorschemeren */
   _tbBezitSig = null;   /* nieuwe run → topbalk-bezit zeker opnieuw opbouwen */
   if (!SPELERS[heldId]) heldId = 'slachter';
   const held = SPELERS[heldId];
@@ -10382,11 +10384,16 @@ function devInst() {
 function devInstZet(sleutel, waarde) {
   const d = devInst();
   d[sleutel] = waarde;
-  try { localStorage.setItem(DEV_SLEUTEL, JSON.stringify(d)); } catch (e) {}
+  /* het TEMPO is bewust een SESSIE-instelling (review-vondst): een 0,3x die een herlaad
+     overleeft is buiten het menu nergens zichtbaar en zou de pacing-beoordeling stil
+     vervalsen. In het geheugen blijft het staan (de pil licht op), in de opslag niet;
+     de build wordt wél bewaard. */
+  const opslag = Object.assign({}, d); delete opslag.tempo;
+  try { localStorage.setItem(DEV_SLEUTEL, JSON.stringify(opslag)); } catch (e) {}
   /* DE ENIGE plek waar DICK.tempo verandert. nieuwSpel en startGevecht laten hem met rust:
-     een dev die 0,3x koos houdt dat over gevechten én reloads heen (de boot-regel onderaan
-     dit blok zet hem terug uit slayit_dev), tot hij zelf 1x kiest of 'Dev-instellingen
-     wissen' aantikt. Zonder dit blok is DICK.tempo gewoon 1 — het is geen speler-knop. */
+     een dev die 0,3x koos houdt dat over gevechten heen, tot hij zelf 1x kiest, 'Dev-
+     instellingen wissen' aantikt of de pagina herlaadt. Zonder dit blok is DICK.tempo
+     gewoon 1 — het is geen speler-knop. */
   if (sleutel === 'tempo') DICK.tempo = waarde;
 }
 function devInstWis() {
@@ -10874,10 +10881,10 @@ const DEV_MENU = [
   {
     kop: '🦴 Drops-boog — schrijft in de Codex',
     items: [
-      { label: '1 · Levend vs Erfprins', tip: '⚠ Reset de Drops-Codex, wekt Drops en start het Erfprins-gevecht: test de bijt, de offer-knop en de 2-beats-dood.', doe: () => devDropsLevend() },
-      { label: '2 · Grief', tip: '⚠ Reset de Drops-Codex, zet Drops als gevallen (run 2) en start een slijmgevecht op 60 licht: as-silhouet + pootafdruk in de lege metgezel-zone.', doe: () => devDropsGrief() },
-      { label: '3 · Reünie', tip: '⚠ Reset de Drops-Codex en laat de Witte 900 ms na de start van het Erfprins-gevecht terugkeren (wit-flits + 3 beats + signatuur-sprong).', doe: () => devDropsReunie() },
-      { label: '4 · De Witte vecht mee', tip: '⚠ Reset de Drops-Codex, ontgrendelt Drops + de Witte en start het Erfprins-gevecht op fakkel 0: blok-negerende witklap (×2) + blind-immuniteit.', doe: () => devDropsWitVecht() },
+      { label: '⚠ 1 · Levend vs Erfprins', tip: '⚠ Reset de Drops-Codex, wekt Drops en start het Erfprins-gevecht: test de bijt, de offer-knop en de 2-beats-dood.', doe: () => devDropsLevend() },
+      { label: '⚠ 2 · Grief', tip: '⚠ Reset de Drops-Codex, zet Drops als gevallen (run 2) en start een slijmgevecht op 60 licht: as-silhouet + pootafdruk in de lege metgezel-zone.', doe: () => devDropsGrief() },
+      { label: '⚠ 3 · Reünie', tip: '⚠ Reset de Drops-Codex en laat de Witte 900 ms na de start van het Erfprins-gevecht terugkeren (wit-flits + 3 beats + signatuur-sprong).', doe: () => devDropsReunie() },
+      { label: '⚠ 4 · De Witte vecht mee', tip: '⚠ Reset de Drops-Codex, ontgrendelt Drops + de Witte en start het Erfprins-gevecht op fakkel 0: blok-negerende witklap (×2) + blind-immuniteit.', doe: () => devDropsWitVecht() },
       { label: '⚠ 5 · Drops-Codex resetten', tip: '⚠ DESTRUCTIEF: wist gevallen/mysterie/Witte/zaadje/offer uit je (cross-run) Codex. Geen gevecht, alleen de schone lei.', doe: () => devDropsWis() }
     ]
   },

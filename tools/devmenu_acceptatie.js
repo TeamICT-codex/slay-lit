@@ -305,7 +305,7 @@ const SONDE = () => {
     await klik(1, 1, { pil: p }); await slaap(150);
     const st = await sonde();
     const wil = +proces.items[1].opties[p].v;
-    t(st.tempo === wil && JSON.parse(st.devOpslag || '{}').tempo === wil, `TEMPO-pil "${proces.items[1].opties[p].label}" \u2192 DICK.tempo = ${st.tempo}, slayit_dev = ${st.devOpslag}`);
+    t(st.tempo === wil && JSON.parse(st.devOpslag || '{}').tempo === undefined, `TEMPO-pil "${proces.items[1].opties[p].label}" \u2192 DICK.tempo = ${st.tempo}, slayit_dev = ${st.devOpslag}`);
   }
   /* terug op de standaard: 1x en de mediaan-Slachter */
   await klik(1, 1, { pil: 0 }); await slaap(120);
@@ -414,7 +414,7 @@ const SONDE = () => {
   t(!s.codex.dropsGevallen && !s.codex.dropsMysterie && !/drops/.test(s.codex.metgezellen), `5 \u00b7 \u26a0 Drops-Codex resetten \u2192 gevallen ${s.codex.dropsGevallen}, mysterie ${s.codex.dropsMysterie}, Codex.metgezellen "${s.codex.metgezellen}" (alleen de drops-sleutels gaan eruit)`);
   await openLogo();
   const warnKlassen = await page.evaluate(() => { const l = []; document.querySelectorAll('#dev-menu .dev-k').forEach(b => { if (/^\u26a0/.test(b.textContent)) l.push(b.textContent.slice(0, 30) + ' \u2192 .dev-warn=' + b.classList.contains('dev-warn')); }); return l; });
-  t(warnKlassen.length === 2 && warnKlassen.every(x => /true$/.test(x)), `de destructieve knoppen dragen \u26a0 \u00e9n .dev-warn: ${warnKlassen.join(' | ')}`);
+  t(warnKlassen.length === 6 && warnKlassen.every(x => /true$/.test(x)), `de destructieve knoppen dragen \u26a0 \u00e9n .dev-warn: ${warnKlassen.join(' | ')}`);
   await dichtMenu();
 
   /* ---------- 3e \u00b7 SC\u00c8NES ---------- */

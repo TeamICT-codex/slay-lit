@@ -5472,6 +5472,9 @@ body:has(#dagwet-proc) #scherm-nudge { display: none; }
 /* ---------- DEV-SHORTCUT: HET DEV-MENU (logo-klik op laptop, lange druk/5 tikken op het
    versielabel op beide sporen). Weg vóór release — samen met de mobiel.css-regels. ---------- */
 #dev-menu { z-index: 1300; }
+/* de data-tips van de menuknoppen liggen anders ONDER de overlay (#tooltip staat op z999) —
+   review-vondst: het hele veiligheidsmechanisme van de tips was in het menu onleesbaar */
+body:has(#dev-menu) #tooltip { z-index: 1400; }
 #dev-menu .dev-kaart {
   width: min(660px, 94vw); max-height: 88dvh; overflow-y: auto;
   padding: 18px 22px 18px; border-radius: 14px; text-align: center;
