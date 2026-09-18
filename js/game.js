@@ -10986,7 +10986,7 @@ function devMenuItem(item) {
       p.type = 'button';
       p.className = 'dev-pil' + (huidig() === o.v ? ' aan' : '');
       p.textContent = o.label;
-      if (o.tip) p.title = o.tip;
+      if (o.tip) p.dataset.tip = o.tip;   /* data-tip i.p.v. title: die werkt OOK op focus en op touch (één tik toont de uitleg zonder de klik te blokkeren) */
       p.addEventListener('click', () => {
         devInstZet(item.sleutel, o.v);
         wrap.querySelectorAll('.dev-pil').forEach((q, i) => q.classList.toggle('aan', item.opties[i].v === o.v));
@@ -10998,7 +10998,7 @@ function devMenuItem(item) {
   if (item.soort === 'kies') {
     const wrap = document.createElement('label');
     wrap.className = 'dev-keuze dev-kies';
-    if (item.tip) wrap.title = item.tip;
+    if (item.tip) wrap.dataset.tip = item.tip;
     const lbl = document.createElement('span');
     lbl.className = 'dev-keuze-label';
     lbl.textContent = item.label;
@@ -11025,7 +11025,7 @@ function devMenuItem(item) {
       try { aan = !!item.stand(); } catch (e) {}
       b.classList.toggle('aan', aan);
       b.textContent = `${item.label}: ${aan ? 'AAN' : 'uit'}`;
-      if (item.tip) b.title = item.tip;
+      if (item.tip) b.dataset.tip = item.tip;
       return aan;
     };
     const nu = teken();
@@ -11038,7 +11038,7 @@ function devMenuItem(item) {
   }
   b.textContent = item.label;
   if (/^⚠/.test(item.label)) b.classList.add('dev-warn');   /* destructief: raakt de (cross-run) Codex */
-  if (item.tip) b.title = item.tip;
+  if (item.tip) b.dataset.tip = item.tip;
   b.addEventListener('click', () => {
     devMenuSluit();
     try { item.doe(); } catch (e) { melding('DEV-fout: ' + e.message); }

@@ -105,6 +105,26 @@ const SONDE = () => {
   t(/^\u26a1 DEV-menu \u00b7 v\d+/.test(kopTekst), `kopje toont de shell-versie: "${kopTekst}"`);
   const koppen = await page.evaluate(() => [...document.querySelectorAll('#dev-menu .dev-kop')].map(e => e.textContent));
   t(koppen.length === 7, `${koppen.length} groepen in het menu: ${koppen.join(' \u00b7 ')}`);
+  /* elke knop/pil draagt een tip die in \u00e9\u00e9n zin zegt wat er gebeurt (data-tip, niet title:
+     die werkt ook op focus en op touch) */
+  const tips = await page.evaluate(() => {
+    const el = [...document.querySelectorAll('#dev-menu .dev-k, #dev-menu .dev-pil, #dev-menu .dev-kies')];
+    return {
+      n: el.length,
+      zonder: el.filter(e => !(e.dataset.tip || '').trim()).map(e => e.textContent.slice(0, 26)),
+      kort: el.filter(e => (e.dataset.tip || '').trim().length < 25).map(e => e.textContent.slice(0, 26)),
+      metTitle: el.filter(e => e.getAttribute('title')).length
+    };
+  });
+  t(tips.zonder.length === 0 && tips.kort.length === 0 && tips.metTitle === 0,
+    `alle ${tips.n} knoppen/pillen dragen een data-tip van >= 25 tekens (zonder tip: ${tips.zonder.length}, te kort: ${JSON.stringify(tips.kort)}, nog met title: ${tips.metTitle})`);
+  /* wat je run of je Codex overschrijft, zegt dat ook */
+  const waarschuwt = await page.evaluate(() => {
+    const rijen = document.querySelectorAll('#dev-menu .dev-rij');
+    const spring = [...rijen[0].children, ...[...rijen[1].children].filter(e => e.classList.contains('dev-k')), ...rijen[3].children];
+    return spring.filter(e => !/overschrijft|raakt|reset|wist|DESTRUCTIEF/i.test(e.dataset.tip || '')).map(e => e.textContent.slice(0, 26));
+  });
+  t(waarschuwt.length === 0, `elke sprong/Drops-knop zegt in zijn tip dat hij je run of Codex overschrijft (stille knoppen: ${JSON.stringify(waarschuwt)})`);
   await page.screenshot({ path: path.join(UIT, 'menu-laptop.png') });
 
   /* tweede logo-klik = toggle dicht */
