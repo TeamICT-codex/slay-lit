@@ -765,8 +765,8 @@ window.ACHTERGRONDEN = ACHTERGRONDEN;
    ============================================================ */
 const GROND = {
   /* --- Act 1 — De Kerker --- */
-  'Act 1 achtergronden/Gevechtstijl1act1.webp': { grond: 68 },                    /* tegelvloer begint pas op 68% */
-  'Act 1 achtergronden/Gevechtsijl2act1.webp': { grond: 64 },                     /* helling 57-72%, tredelijn 64 */
+  'Act 1 achtergronden/Gevechtstijl1act1.webp': { grond: 61 },                    /* v124: hergenereerd op de toneelstandaard (RONDE 3) */
+  'Act 1 achtergronden/Gevechtsijl2act1.webp': { grond: 61 },                     /* v124: hergenereerd op de toneelstandaard (RONDE 3), de trappartij is weg */
   'Act 1 achtergronden/Gevechtstijl3act1.webp': { grond: 61, midden: 59 },
   'Act 1 achtergronden/GevechtstijlEPISCHGEVECHTACT1.webp': { grond: 61 },         /* v123: hergenereerd op de toneelstandaard (RONDE 3) */
   'Act 1 achtergronden/GevechtstijlEPISCHGEVECHT2ACT1.webp': { grond: 61 },        /* v123: hergenereerd op de toneelstandaard (RONDE 3) */
