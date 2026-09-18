@@ -10,21 +10,34 @@
 
 ### 1.1 DEV-shortcuts verwijderen (zoek op `DEV-SHORTCUT` — alles is gemarkeerd)
 
+Sinds v122 staat zo goed als alles in één aaneengesloten blok in js/game.js. Wat er nog
+buiten staat, staat daar met een reden die in de kop van dat blok ook genoemd wordt:
+devMobiel en devWereld draaien vroeg in de boot, devDagwet hoort bij de tabel die hij
+patcht, devOutro bij de outro — plus index.html en de twee CSS-sporen.
+
 | Wat | Waar | Hoe |
 |---|---|---|
-| Logo-klik (Act 2-sprong · Alt = Erfprins-test · Shift = Drops-cyclus) | `index.html:23` | `onclick="devLogo(event)"` + `title`-attribuut + de `<!-- DEV-SHORTCUT -->`-comment weghalen; `style="cursor:pointer"` mee weg |
-| `devLogo` / `devSprongAct2` / `devErfprinsTest` / `_DEV_DROPS`-cyclus / `devDropsWis` | `js/game.js` ~5140–5262 (één blok) | Volledige regio wissen — alle functies + `_devDropsStap` |
-| `devMobiel` + Ctrl+Shift+M-listener (+ de enige `console.info`) | `js/game.js` ~100–115 | Blok wissen. NB: de CSS-comments die devMobiel noemen (style.css/mobiel.css) zijn documentatie — mogen blijven of meegeschoond |
-| `DEV_BUILDS` + `devDicktator(profiel, opties)` + `devSprongAct3(profiel)` — HET PROCES (v109) | `js/game.js`, zoek `DEV_BUILDS` | Het hele blok wissen: de vaste playtest-builds (mediaan-Slachter, gif_opt, gif_opt_kristal, gif_matig, choreo) en de sprongen hof/tirade/vorm2/staart. Ze zetten HP, dek, relikwieën en metgezel rechtstreeks — in handen van een speler is dat een cheat-menu |
-| DEV-menu-groep 'Bazen' (vier PROCES-knoppen + vier sprongen) | `js/game.js`, `const groepen = [` | Verdwijnt samen met het DEV-menu; controleer dat er geen losse verwijzing naar `devDicktator` achterblijft |
-| `DICK.tempo` (ceremonieschaal voor het meetharnas) | `js/game.js`, `const DICK` | Mag blijven staan (hij is 1 in het spel), maar zet hem niet in een instellingenmenu |
+| **HET DEV-BLOK**: `DEV_SLEUTEL`/`devInst`/`devInstZet`/`devInstWis`, `devSlachtblok`, `devSprongAct2`, `devDrempel`, `devErfprins(Intro)`, `devSlijmkoning`, `devMetgezel`, de Drops-boog (`_devDropsFight`, `_devDropsReset`, `devDropsLevend/Grief/Reunie/WitVecht/Wis`), `DEV_BUILDS`, `DEV_KLAP` + `_devProcesDrempel`/`_devBedrijfLanding`/`_devNaIntro`/`_devKlapNu`, `devDicktator`, `devSprongAct3`, `devInstVlag`, `DEV_MENU`, `devVersie`, `devMenu`/`devMenuSluit`/`devMenuEsc`/`devMenuItem`, `devVersieHaak` én de drie bootregels onderaan | `js/game.js` — van de comment `DEV-SHORTCUT — HET DEV-BLOK` tot en met `if (!document.getElementById('inst-versie')) document.addEventListener('DOMContentLoaded', devVersieHaak);` (~r10344–11091) | De hele regio in één keer wissen. Het blok is zo geknipt dat er niets van het spel tussen staat. **NB:** `vulInstPaneel()` (bij `toonInstellingen`) BLIJFT — dat is gewone code die het blok alleen gebruikte |
+| Logo-klik | `index.html:23` | `onclick="devMenu()"` + `title="DEV-menu"` + `style="cursor:pointer"` + de `<!-- DEV-SHORTCUT -->`-comment weghalen |
+| De CSS van het menu | `css/style.css` ~r5470–5516 (`DEV-SHORTCUT: HET DEV-MENU`, t/m `#dev-menu .dev-dicht { … }`) **en** `css/mobiel.css` ~r421–445 (`DEV-SHORTCUT: HET DEV-MENU op het mobiele spoor`) | Beide blokken wissen. Twee sporen, dus twee plekken |
+| `devMobiel` + de Ctrl+Shift+M-listener (+ de enige `console.info`) | `js/game.js` ~r127–143 | Blok wissen. Staat bewust buiten het dev-blok: hij zet `data-modus` vóór de eerste paint. De CSS-comments die devMobiel noemen (style.css/mobiel.css) zijn documentatie — mogen blijven of meegeschoond |
+| `devWereld` + de URL-sleutel (`WERELD_SLEUTEL_HASH`, `wereldParam`, `wereldWens`) | `js/game.js` ~r145–175 | Alleen wissen als DE WERELD zelf niet meegáát; hij leest de sleutel tijdens de boot, vóór de eerste `renderKaartScherm`. Anders enkel de `devWereld`-console-haak laten staan |
+| `devDagwet` | `js/game.js` ~r599–600 | Eén regel (`wetVanDag._force`). Staat naast de DAGWETTEN-tabel die hij patcht; wis hem samen met de `_force`-tak in `wetVanDag()` |
+| `devOutro` | `js/outro.js` ~r2666 | Blok wissen |
+| `DICK.tempo` (ceremonieschaal voor het meetharnas) | `js/game.js`, `const DICK` | Mag blijven staan (hij is 1 in het spel — alleen `devInstZet`/`devInstWis` en de bootregel van het dev-blok raakten hem aan, en die gaan mee weg). Zet hem niet in een instellingenmenu |
+| De haak op het versielabel | zit IN het dev-blok (`devVersieHaak`, `DEV_LANGEDRUK_MS`, `DEV_TIKKEN`, `DEV_TIKVENSTER`) | Verdwijnt vanzelf met het blok. Controleer daarna dat `#inst-versie` in `index.html:229` geen listeners meer krijgt — het label zelf blijft (v116) |
+| De acceptatiesuite van het menu | `tools/devmenu_acceptatie.js` | Mag blijven (tools/ gaat niet mee in de shell), maar hij faalt na het wissen — schrap hem samen met het blok |
 
 **Waarom kritisch:** alles staat op `window`, dus elke speler kan via de console
-`devSprongAct2()` aanroepen of — erger — de logo-klik per ongeluk raken. De Drops-reset
-(`devDropsWis`) wist bovendien persistente Codex-voortgang.
+`devSprongAct2()` aanroepen of — erger — de logo-klik per ongeluk raken. Op mobiel opent
+een **lange druk (≥ 700 ms) of vijf snelle tikken op het versielabel** onderaan ⚙️
+Instellingen hetzelfde menu; dat is bewust zonder zichtbare hint, maar het is wel te
+vínden. Het menu bevat knoppen die de lopende run én de persistente Codex overschrijven
+(`devDropsWis` wist cross-run voortgang).
 
-**Na het wissen:** `grep -ri "dev" js/ index.html` moet enkel nog onschuldige treffers geven
-(bv. `devicePixelRatio`), en `node --check js/game.js` moet slagen.
+**Na het wissen:** `grep -ri "dev" js/ index.html css/` moet enkel nog onschuldige treffers
+geven (bv. `devicePixelRatio`), `node --check js/game.js` moet slagen, en het spel moet
+starten zonder dat er iets aan `#inst-versie` of `.tb-logo` hangt.
 
 ### 1.2 Cache-bump als release-markering
 - `sw.js`: `slayit-v35` → volgende versie bij de release-commit (schone lei op elk toestel;

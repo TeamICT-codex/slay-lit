@@ -437,13 +437,11 @@ body[data-modus="mobiel"] #dev-menu .dev-kies select {
 }
 body[data-modus="mobiel"] #dev-menu .dev-k:hover,
 body[data-modus="mobiel"] #dev-menu .dev-pil:hover { background: rgba(40, 28, 52, .7); }   /* geen hover-staat die op touch blijft plakken */
-/* de sluitknop plakt onderaan: op een liggend scherm van 360px hoog staat de lijst
-   anders zo diep dat je eerst helemaal terug moet scrollen om eruit te komen */
+/* de sluitknop is al sticky in style.css; mobiel corrigeert alleen de safe-area-marge
+   en het raakdoel (liggend 800x360 staat de lijst anders zo diep dat je eerst helemaal
+   terug moet scrollen om eruit te komen) */
 body[data-modus="mobiel"] #dev-menu .dev-dicht {
-  position: sticky; bottom: calc(-10px - env(safe-area-inset-bottom)); z-index: 2;
-  min-height: 44px; width: 100%; margin-top: 14px;
-  background: linear-gradient(180deg, rgba(28, 22, 38, .96), rgba(18, 13, 26, 1));
-  border: 1px solid rgba(255, 200, 120, .3); border-radius: 10px;
+  bottom: calc(-10px - env(safe-area-inset-bottom)); min-height: 44px; margin-top: 14px;
 }
 
 /* ============================================================

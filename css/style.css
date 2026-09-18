@@ -5506,7 +5506,13 @@ body:has(#dagwet-proc) #scherm-nudge { display: none; }
   background: rgba(40, 28, 52, .9); color: var(--perkament); font: inherit; font-size: .84rem;
   border: 1px solid rgba(255, 200, 120, .3); border-radius: 9px; padding: 6px 9px; max-width: 72%;
 }
-#dev-menu .dev-dicht { margin-top: 16px; }
+/* de sluitknop plakt onderaan de scrollende kaart: met zeven groepen valt hij anders
+   onder de vouw (gemeten 1440x900: kaart 830px hoog, max-height 88dvh = 792px) */
+#dev-menu .dev-dicht {
+  position: sticky; bottom: -16px; z-index: 2; margin-top: 16px; width: 100%; padding: 9px 0;
+  background: linear-gradient(180deg, rgba(28, 22, 38, .96), rgba(18, 13, 26, 1));
+  border: 1px solid rgba(255, 200, 120, .3); border-radius: 10px;
+}
 
 /* ============================================================
    DE AFDALING — js/wereld.js + js/wereld-terrein.js, achter de DEV-vlag body.wereld

@@ -10630,8 +10630,12 @@ function _devBedrijfLanding(b, g, fase) {
   dicktatorHersync(false);
   renderGevecht();   /* zet de fase-klassen (.woede, pips, beleidsstrook) zelf terug */
 }
-/* wacht tot de baasintro weg is en het toneel vrij is, en sla dan. De acceptatiesuites
-   wachten op precies dezelfde twee voorwaarden vóór ze hun trigger vuren. */
+/* wacht tot de baasintro weg is en het toneel vrij is, en doe dan fn. De acceptatiesuites
+   wachten op precies dezelfde twee voorwaarden vóór ze hun trigger vuren.
+   De eerste peiling staat bewust op 900 ms: startGevecht laat de metgezel op een vaste
+   setTimeout van 650 ms zijn openingsbeat doen (Drops bijt de baas voor 6-7). Alles wat de
+   baas-HP op een drempel zet moet DAARNA gebeuren — gemeten: met slachter_mid kraakte die
+   beet de drempel zelf en landde 'Net vóór IV' uit zichzelf in V. */
 function _devNaIntro(fn) {
   let n = 80;
   const kijk = () => {
@@ -10642,7 +10646,7 @@ function _devNaIntro(fn) {
     }
     fn();
   };
-  setTimeout(kijk, 400);
+  setTimeout(kijk, 900);
 }
 /* DE KLAP, langs het NORMALE schadepad: verliesHp (zet _hpVoorKlap, en vuurt zelf
    dicktatorHerverkiezing op hp <= 0) + checkBaasFase, exact wat speelKaart/naActie erna
@@ -10718,20 +10722,35 @@ function devDicktator(profiel = 'slachter_mid', opties = {}) {
   if (netVoor) {
     roepHof();
     if (netVoor >= 3) _devBedrijfLanding(v, g, netVoor - 1);   /* III vertrekt uit bedrijf II, IV uit bedrijf III */
-    v.hp = _devProcesDrempel(v, netVoor) + DEV_KLAP;
+    const doelHp = _devProcesDrempel(v, netVoor) + DEV_KLAP;
     const naam = netVoor === 2 ? 'I→II · HET PROCES' : (netVoor === 3 ? 'II→III · DE TIRADE' : 'IV · DE HERVERKIEZING');
-    if (opties.speelAf) {
-      melding(`⚡ DEV: ${naam} speelt zo af — ${v.hp}/${v.maxHp} HP, de klap van ${DEV_KLAP} valt zodra de intro weg is.`);
-      _devNaIntro(() => _devKlapNu(DEV_KLAP));
-    } else {
-      melding(`⚡ DEV: NET VÓÓR ${naam} — ${v.hp}/${v.maxHp} HP. Eén klap van minstens ${DEV_KLAP} schade speelt de regie.`);
-    }
+    melding(opties.speelAf
+      ? `⚡ DEV: ${naam} speelt zo af — de klap van ${DEV_KLAP} valt zodra de intro weg is.`
+      : `⚡ DEV: NET VÓÓR ${naam} — hij komt op ${doelHp}/${v.maxHp} HP zodra de intro weg is. Eén klap van minstens ${DEV_KLAP} schade speelt de regie.`);
+    /* de drempelstand wordt PAS gezet als de intro weg is (zie _devNaIntro): de metgezel
+       doet op 650 ms zijn openingsbeat en zou de drempel anders zelf kraken. */
+    _devNaIntro(() => {
+      const b2 = S.gevecht && S.gevecht.vijanden.find(x => x.id === 'de_dicktator' && !x.dood);
+      if (!b2) return;
+      b2.hp = doelHp;
+      renderGevecht();
+      if (opties.speelAf) _devKlapNu(DEV_KLAP);
+    });
   } else if (opties.staart) {
-    /* de plek waar het écht kan gaan slepen: vorm 2, drie decreten gevallen, alles op */
+    /* V · HET MANDAAT — de plek waar het écht kan gaan slepen: vorm 2, 40% HP, drie
+       decreten gevallen, alles op. De herrijzenis valt hier ZELF (één punt langs het normale
+       schadepad), want op v.hp = 1 was dit gemeten twee verschillende sprongen onder één
+       label: met een metgezel (slachter_mid, gif_opt) sloeg Drops hem in zijn openingsbeurt
+       zelf om en stond je in V op 96/240; zonder metgezel (gif_matig) bleef je op 1 HP in
+       bedrijf III hangen. Nu landt de knop voor elke build in V. */
     v.krachtVast = DICK.krachtVastCap;
     for (let i = 0; i < 3 && S.dek.length > 3; i++) { S.dek.pop(); S.dek.push(nieuweKaart('laster')); }
     g.trek = schud([...S.dek]); g.hand = []; g.afleg = []; trekKaarten(5);
     v.hp = 1;
+    _devNaIntro(() => {
+      const b2 = S.gevecht && S.gevecht.vijanden.find(x => x.id === 'de_dicktator');
+      if (b2 && !b2.herrezen) _devKlapNu(1);   /* sloeg de metgezel hem al om, dan niets meer */
+    });
   } else if (opties.vorm2) {
     v.hp = 1;   /* je eerste klap geeft de volledige beat: kiezers, arena, muziek */
   } else if (opties.tirade) {
@@ -10836,7 +10855,7 @@ const DEV_MENU = [
       { label: '⚡ Net vóór I→II', tip: `Overschrijft je run: hof op het toneel, HP net boven de 66%-drempel. Eén klap van minstens ${DEV_KLAP} schade speelt de regie van I→II.`, doe: () => devDicktator(devInst().build, { netVoor: 2 }) },
       { label: '⚡ Net vóór II→III', tip: `Overschrijft je run: bedrijf II geland (zaal + tint), HP net boven de 33%-drempel. Eén klap van minstens ${DEV_KLAP} schade speelt DE TIRADE.`, doe: () => devDicktator(devInst().build, { netVoor: 3 }) },
       { label: '⚡ Net vóór IV', tip: `Overschrijft je run: bedrijf III geland (griffier geveld, claqueur, rood voetlicht), HP net boven 0. Eén klap van minstens ${DEV_KLAP} schade = DE HERVERKIEZING.`, doe: () => devDicktator(devInst().build, { netVoor: 4 }) },
-      { label: '⏳ V · Het Mandaat', tip: 'Overschrijft je run: de staart — vorm 2, 40% HP, drie decreten gevallen, geen dranken. De plek waar het écht kan gaan slepen.', doe: () => devDicktator(devInst().build, { staart: true }) },
+      { label: '⏳ V · Het Mandaat', tip: 'Overschrijft je run: de staart — hij in vorm 2 op 40% HP met vaste Kracht, jij op 40% zonder dranken en met drie decreten gevallen. De herrijzenis valt zelf zodra de intro weg is. De plek waar het écht kan gaan slepen.', doe: () => devDicktator(devInst().build, { staart: true }) },
       { label: '▶▶ Speel I→II nu af', tip: 'Overschrijft je run, zet de staat net vóór I→II en dient de klap zelf toe zodra de baasintro weg is. Je hoeft niet te slaan.', doe: () => devDicktator(devInst().build, { speelAf: 2 }) },
       { label: '▶▶ Speel II→III nu af', tip: 'Overschrijft je run, zet de staat net vóór II→III en dient de klap zelf toe. DE TIRADE speelt vanzelf af.', doe: () => devDicktator(devInst().build, { speelAf: 3 }) },
       { label: '▶▶ Speel IV nu af', tip: 'Overschrijft je run, zet de staat net vóór IV en dient de doodsklap zelf toe. DE HERVERKIEZING speelt vanzelf af.', doe: () => devDicktator(devInst().build, { speelAf: 4 }) }
