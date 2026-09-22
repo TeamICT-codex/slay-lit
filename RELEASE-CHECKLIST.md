@@ -24,6 +24,7 @@ patcht, devOutro bij de outro — plus index.html en de twee CSS-sporen.
 | `devWereld` + de URL-sleutel (`WERELD_SLEUTEL_HASH`, `wereldParam`, `wereldWens`) | `js/game.js` ~r145–175 | Alleen wissen als DE WERELD zelf niet meegáát; hij leest de sleutel tijdens de boot, vóór de eerste `renderKaartScherm`. Anders enkel de `devWereld`-console-haak laten staan |
 | `devDagwet` | `js/game.js` ~r599–600 | Eén regel (`wetVanDag._force`). Staat naast de DAGWETTEN-tabel die hij patcht; wis hem samen met de `_force`-tak in `wetVanDag()` |
 | `devOutro` | `js/outro.js` ~r2666 | Blok wissen |
+| `devDrempeltafel` + `devDrempeltafelFase` (v128) | `js/drempeltafel.js` — de `DEV-SHORTCUT`-regio; `devDrempel` in `js/game.js` is nog enkel een alias die ze aanroept | Die regio wissen samen met het dev-blok, plus de alias `devDrempel`. Ze zetten allebei `S._devRun` (de taint die `codexSchrijfToegestaan()` leest) — die poort zelf BLIJFT, want de daily-gate hangt er ook aan |
 | `DICK.tempo` (ceremonieschaal voor het meetharnas) | `js/game.js`, `const DICK` | Mag blijven staan (hij is 1 in het spel — alleen `devInstZet`/`devInstWis` en de bootregel van het dev-blok raakten hem aan, en die gaan mee weg). Zet hem niet in een instellingenmenu |
 | De haak op het versielabel | zit IN het dev-blok (`devVersieHaak`, `DEV_LANGEDRUK_MS`, `DEV_TIKKEN`, `DEV_TIKVENSTER`) | Verdwijnt vanzelf met het blok. Controleer daarna dat `#inst-versie` in `index.html:229` geen listeners meer krijgt — het label zelf blijft (v116) |
 | De acceptatiesuite van het menu | `tools/devmenu_acceptatie.js` | Mag blijven (tools/ gaat niet mee in de shell), maar hij faalt na het wissen — schrap hem samen met het blok |
@@ -38,6 +39,17 @@ vínden. Het menu bevat knoppen die de lopende run én de persistente Codex over
 **Na het wissen:** `grep -ri "dev" js/ index.html css/` moet enkel nog onschuldige treffers
 geven (bv. `devicePixelRatio`), `node --check js/game.js` moet slagen, en het spel moet
 starten zonder dat er iets aan `#inst-versie` of `.tb-logo` hangt.
+
+### 1.1b Nieuw in v128 — DE DREMPELTAFEL
+
+Het metgezel-ritueel aan de Drempel (Act 1→2) is vervangen door de goktafel van de
+Drempelwachter: vier sporten, sport III is het Slachtblok, sport IV brandmerkt je gesmede
+kaart. Twee nieuwe bestanden (`js/drempeltafel.js` + `css/drempeltafel.css`, beide in
+`index.html` én in de KERN-lijst van `sw.js`), de uitbetaling van de pot hangt in
+`gevechtGewonnen` achter `g.tafel`, en de metgezellen zijn **geparkeerd**: er is vandaag geen
+vrijspeelweg meer (bestaande Codexen blijven werken). Vóór release: die parkering bewust
+beslissen (Drops/Copycat-breker — zie `.claude/notities/metgezel_impact.md`) en de dode
+`.drempel-*`-regels in `css/style.css` (~r3549–3587) opruimen.
 
 ### 1.2 Cache-bump als release-markering
 - `sw.js`: `slayit-v35` → volgende versie bij de release-commit (schone lei op elk toestel;

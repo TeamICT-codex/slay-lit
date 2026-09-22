@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="assets/fonts/fonts.css">
   <link rel="stylesheet" href="css/style.css"><!-- gedeelde basis (laptop-default) -->
   <link rel="stylesheet" href="css/mobiel.css"><!-- mobiel spoor: body[data-modus="mobiel"] -->
+  <link rel="stylesheet" href="css/drempeltafel.css"><!-- v128: DE DREMPELTAFEL (eigen .dt-*-klassen); het mobiele blok van de tafel staat in css/mobiel.css -->
   <link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
@@ -264,6 +265,7 @@
   <script src="js/outro.js"></script>
   <script src="js/online.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/drempeltafel.js"></script><!-- v128: DE DREMPELTAFEL; NA game.js (ze leest S, Klank, willekeurig, startGevecht — en volgendeAct roept toonDrempeltafel achter een typeof-guard aan) -->
   <script src="js/wereld-terrein.js"></script><!-- DE AFDALING: terrein, fysica, autoroute (DOM-vrij) -->
   <script src="js/wereld.js"></script><!-- DE AFDALING: tekenen + bedienen; NA game.js (de haak in renderKaartScherm checkt window.Wereld) -->
 </body>

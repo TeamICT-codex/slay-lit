@@ -7,6 +7,7 @@ const BESTANDEN = [
   '.',
   'css/style.css',
   'css/mobiel.css',
+  'css/drempeltafel.css',   // v128: DE DREMPELTAFEL
   'js/lib/three.min.js',
   'assets/art-manifest.js',
   'js/art.js',
@@ -16,6 +17,7 @@ const BESTANDEN = [
   'js/outro.js',
   'js/online.js',
   'js/game.js',
+  'js/drempeltafel.js',     // v128: DE DREMPELTAFEL (laadt ná game.js)
   'js/wereld-terrein.js',
   'js/wereld.js',
   'assets/fonts/fonts.css',

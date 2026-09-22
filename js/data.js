@@ -1354,8 +1354,9 @@ const VIJANDEN = {
     naam: 'De Claqueur', art: '👏', artId: 'het_klapvee', hp: [16, 16], hof: true,   /* handmatig 16 via dicktatorRoep (geen schaling) */
     kies: (v, beurt) => hofIntent(v, beurt)
   },
-  /* DE DREMPELWACHTER — Balrog-stijl poortwachter; ontwaakt bij een FOUT scherf-trio op de Drempel
-     (zie toonDrempel). Alleen via dat event gespawnd, niet in ONTMOETINGEN. Zwaar maar verslaanbaar. */
+  /* DE DREMPELWACHTER — Balrog-stijl poortwachter. Sinds v128 is hij de BANKHOUDER van
+     DE DREMPELTAFEL (js/drempeltafel.js) en zit hij in haar encounter-pool; daar krijgt hij
+     vaste HP mee (buiten de act-schaling) via startGevecht-opts. Niet in ONTMOETINGEN. */
   de_drempelwachter: {
     naam: 'De Drempelwachter', art: '🔥', hp: [150, 150], elite: true,
     titel: 'Wachter tussen de werelden',
@@ -1666,9 +1667,13 @@ window.SPELERS = SPELERS;   /* HELDNAAM guardde op window.SPELERS → toonde and
      vereist   : welke scherf-id's nodig zijn (tunebaar; bepaalt de lengte)
      scherven  : per scherf {bron, codexTekst} (de cryptische regel in de Codex)
      eindreveal: de tekst van het ontwaak-moment
-   Unlock = het Drempel-ritueel (game.js drempelVoltrek): drie scherven van één
-   maaksel in de nissen tussen Act 1 en 2 — er zijn géén rites meer. De voortgang
-   (alleen 'voltooid' telt) leeft op de Codex (persistent over runs). Zie ONTWERP.md. */
+   GEPARKEERD SINDS v128 (DE DREMPELTAFEL): het Drempel-ritueel dat een metgezel wekte
+   (game.js drempelVoltrek) is vervallen — drie scherven kopen nu een plaats aan de tafel.
+   Er is dus vandaag géén vrijspeelweg; 'eindreveal' heeft geen lezer meer. Wat WEL blijft
+   gelden: 'vereist' + 'scherven' zijn de vindlogica van de negen scherven (bron + de
+   cryptische Codex-regel), en een Codex waarin al iemand ontwaakt is blijft gewoon werken —
+   die metgezel daalt nog altijd mee. De lore hieronder blijft staan voor als de metgezellen
+   terugkeren; ze is data, geen dode code. Zie ONTWERP.md + .claude/notities/metgezel_impact.md. */
 const MYSTERIES = {
   drops: {
     metgezel: 'drops', baasId: 'de_erfprins',
@@ -1680,7 +1685,7 @@ const MYSTERIES = {
     },
     eindreveal: { titel: 'UIT HET GEDOOFDE LICHT', kreet: 'Je voedde de drempel — en uit het zwart voorbij de poort kroop iets warms naar je toe, en het week niet meer van je zij.' },
   },
-  /* HET TWEEDE mysterie — unlock loopt (zoals alle drie) via het Drempel-trio. */
+  /* HET TWEEDE mysterie — zie de kop: de unlock is geparkeerd, de scherven blijven vindbaar. */
   vlamwachter: {
     metgezel: 'vlamwachter', baasId: 'de_erfprins',
     vereist: ['vlamwachter_baas', 'vlamwachter_figuur', 'vlamwachter_episch'],
@@ -1834,7 +1839,8 @@ const UITSPRAKEN = {
     doodGebroken: '„Trouw... dát stond niet in mijn catalogus... dát kon ik niet kopiëren..."',
     /* ORAKEL: over opeenvolgende ontmoetingen verklapt hij cryptisch het geheim
        (geïndexeerd op Codex.erfprinsOntmoetingen). Twee assen: het kopieer-thema
-       (1, 4) én de scherven/Drempel-weg die een metgezel wekt (2, 3). */
+       (1, 4) én de scherven/Drempel-weg (2, 3) — sinds v128 de weg naar de tafel,
+       niet meer naar een bondgenoot; de regels zelf zijn vaag genoeg om te kloppen. */
     orakel: [
       '„Ik hóéf niks zelf te maken — ik kijk gewoon af."',
       '„Eén ding namaken lukt me niet: wat trouw blíjft zonder loon."',
@@ -1939,7 +1945,7 @@ const BESTIARIUM = {
   de_mal: { act: 2, soort: 'Elite', lore: 'Een kolossale gietpers van zwart ijzer met een gloeiend-oranje matrijs in zijn borst. Hij perst er gezichtsloze blanco gietsels uit, eindeloos, tot je de mal zelf breekt.', notitie: 'Negeer de gietsels niet — maar breek de Mal, anders blijft hij persen.' },
   mal_gietsel: { act: 2, soort: 'Kopieerhel', lore: 'Nog warm uit de matrijs van De Mal: een gezichtsloos gietsel zonder naam, zonder wil, zonder iets van zichzelf — enkel het bevel om te slaan. Het Archief noemt dit trots „verse aanwas".', notitie: 'Het zwijgt, want er is niemand ín. Sla het stuk en het mist zichzelf niet eens.' },
   de_archivaris: { act: 2, soort: 'Elite', lore: 'Een gehulde archivaris-inquisiteur met een geketend grootboek en een mantel van dossiers. Hij vergeet niets, vergeeft niets, en zet elke beurt een nieuwe rode zegel bij — zijn macht stapelt en stapelt.', notitie: 'Hoe langer hij leeft, hoe harder hij slaat. Sla snel toe.' },
-  de_drempelwachter: { act: 2, soort: 'Wachter', lore: 'Niet alles wat je met scherven wekt, is je gunstig gezind. Voed je de drempel met een vals trio, dan krijgt hij een gezicht: as, oude vlam, en de rotsvaste overtuiging dat jíj de leugen bent die moet worden tegengehouden.', notitie: 'De prijs van een fout ritueel: drie scherven verbrand — en dan dít nog. Om de derde beurt komt het Drempelvuur; tel mee en blok op de maat.' },
+  de_drempelwachter: { act: 2, soort: 'Wachter', lore: 'Niet alles wat je met scherven wekt, is je gunstig gezind. Voed je de drempel, dan krijgt hij een gezicht: as, oude vlam, en de rotsvaste overtuiging dat jíj de leugen bent die moet worden tegengehouden. Aan tafel is hij hoffelijk — daarachter niet meer.', notitie: 'De bankhouder int zelf. Om de derde beurt komt het Drempelvuur; tel mee en blok op de maat.' },
   het_origineel: { act: 2, soort: 'Episch', lore: 'Het ene ware origineel waarvan heel het Archief zijn bleke kopieën aftrekt — en het houdt vol dat JIJ de namaak bent. Het straalt warm goud-karmozijn in een wereld van koud grijs, en kaatst je eigen klap terug als een vergeelde echo.', notitie: 'Het weerkaatst je sterkste klap. Verdeel je schade i.p.v. alles in één slag.' },
   de_erfprins: { act: 2, soort: 'Baas', lore: 'De onverdiende erfgenaam van het Archief: een verwend jong dat zelf nooit iets maakte en nu je halve dek rooft om je ermee af te maken. Zonder iets om na te apen is hij niets — mét jouw werk is hij dodelijk.', notitie: 'Hij steelt je beste kaarten. Een trouwe metgezel breekt zijn machine; trouw valt niet te kopiëren. En laat hem níéts overhouden: zolang jouw werk in zijn handen is, weigert hij te vallen.' },
   /* Act 3 — het Slachtblok */

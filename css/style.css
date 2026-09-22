@@ -1757,7 +1757,11 @@ body.lite .decreet-stempel { animation: none; opacity: 1; transform: translate(-
 @media (max-height: 800px) {
   .sb-preview .kaart-focus-houder { transform: scale(.66); margin-bottom: -120px; }
 }
-.slachtblok-overlay .sb-balk { position: sticky; bottom: 0; z-index: 6; padding: 12px 0 10px; background: linear-gradient(0deg, rgba(8, 4, 4, .97) 78%, rgba(8, 4, 4, .72) 94%, transparent); }   /* dichter doek: modulelabels scrolden leesbaar dwars door de balk (meetronde v89) */
+/* v128: DE DREMPELTAFEL deelt deze selector — haar knoppenbalk ('Zet in', 'Stoppen') zou
+   op een telefoon anders honderden pixels onder de vouw liggen. Gedeeld en niet gekopieerd:
+   het Slachtblok merkt er niets van en beide doeken blijven identiek aanvoelen. De
+   safe-area-term zat er nog niet in; op een toestel met gebarenbalk viel de balk erachter. */
+.slachtblok-overlay .sb-balk, .dt-overlay .sb-balk { position: sticky; bottom: 0; z-index: 6; padding: 12px 0 calc(10px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(0deg, rgba(8, 4, 4, .97) 78%, rgba(8, 4, 4, .72) 94%, transparent); }   /* dichter doek: modulelabels scrolden leesbaar dwars door de balk (meetronde v89) */
 .sb-preview.gloeit { filter: drop-shadow(0 0 22px rgba(255, 140, 50, .55)); }
 .sb-preview-label { color: #d9a06b; font-style: italic; font-size: .78rem; }
 .sb-negatief { color: #ff5540 !important; }

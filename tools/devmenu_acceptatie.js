@@ -414,24 +414,55 @@ const SONDE = () => {
   t(!s.codex.dropsGevallen && !s.codex.dropsMysterie && !/drops/.test(s.codex.metgezellen), `5 \u00b7 \u26a0 Drops-Codex resetten \u2192 gevallen ${s.codex.dropsGevallen}, mysterie ${s.codex.dropsMysterie}, Codex.metgezellen "${s.codex.metgezellen}" (alleen de drops-sleutels gaan eruit)`);
   await openLogo();
   const warnKlassen = await page.evaluate(() => { const l = []; document.querySelectorAll('#dev-menu .dev-k').forEach(b => { if (/^\u26a0/.test(b.textContent)) l.push(b.textContent.slice(0, 30) + ' \u2192 .dev-warn=' + b.classList.contains('dev-warn')); }); return l; });
-  t(warnKlassen.length === 6 && warnKlassen.every(x => /true$/.test(x)), `de destructieve knoppen dragen \u26a0 \u00e9n .dev-warn: ${warnKlassen.join(' | ')}`);
+  /* 6 -> 8 sinds v128: de twee Drempeltafel-knoppen dragen \u26a0 omdat ze S._devRun zetten
+     (de run schrijft daarna niets meer naar de Codex of naar een erfstuk). */
+  t(warnKlassen.length === 8 && warnKlassen.every(x => /true$/.test(x)), `de destructieve knoppen dragen \u26a0 \u00e9n .dev-warn: ${warnKlassen.join(' | ')}`);
   await dichtMenu();
 
   /* ---------- 3e \u00b7 SC\u00c8NES ---------- */
   console.log('\n== 3e \u00b7 SC\u00c8NES ==');
-  await klik(4, 0); await slaap(1400); s = await sonde();
-  const nissen = await page.evaluate(() => document.querySelectorAll('.drempel-nis').length);
-  t(s.scherm === 'einde' && nissen === 3, `Drempel + Drops-trio \u2192 scherm "${s.scherm}", ${nissen} nissen`);
-  await klik(4, 1); await slaap(1200); s = await sonde();
-  t(s.slachtblok, `Het Slachtblok \u2192 #overlay-slachtblok aanwezig = ${s.slachtblok}, dek ${s.dek} kaarten`);
+  /* v128: de Sc\u00e8nes-groep telt twee knoppen meer (DE DREMPELTAFEL verving het scherven-
+     ritueel), dus zoeken we op LABEL in plaats van op positie \u2014 deze suite schuift dan niet
+     meer mee met elke nieuwe sc\u00e8ne. */
+  const scenePlek = re => page.evaluate(p => {
+    const rij = document.querySelectorAll('#dev-menu .dev-rij')[4];
+    return [...rij.children].findIndex(el => new RegExp(p).test(el.textContent));
+  }, re.source);
+  const klikScene = async re => {
+    if (!(await sonde()).menuOpen) await openLogo();
+    const i = await scenePlek(re);
+    if (i < 0) return false;
+    await klik(4, i);
+    return true;
+  };
+
+  /* DE DREMPELTAFEL woont in js/drempeltafel.js. Ontbreekt dat bestand (of is het v\u00f3\u00f3r een
+     release gewist), dan valt de knop netjes terug op een melding \u2014 beide uitkomsten zijn
+     goed. De echte tafel-flow hoort in tools/drempeltafel_acceptatie.js, niet hier. */
+  const tafelGeladen = await page.evaluate(() => typeof toonDrempeltafel === 'function');
+  const tafelKnop = await klikScene(/Drempeltafel \(3 scherven\)/);
+  await slaap(1500);
+  const tafelStand = await page.evaluate(() => ({
+    scherm: document.body.dataset.scherm,
+    state: !!(typeof S !== 'undefined' && S && S.drempeltafel)
+  }));
+  t(tafelKnop, `Drempeltafel (3 scherven) \u2192 knop gevonden, js/drempeltafel.js geladen ${tafelGeladen}, scherm "${tafelStand.scherm}", S.drempeltafel ${tafelStand.state} (de flow zelf: tools/drempeltafel_acceptatie.js)`);
+  await boot();
+  t(await klikScene(/Drempeltafel: fase/), 'Drempeltafel: fase \u2026 staat in het menu (sprong naar een fase van de tafel)');
+  await slaap(1200);
+  await boot();
+
+  const sbKnop = await klikScene(/Het Slachtblok/);
+  await slaap(1200); s = await sonde();
+  t(sbKnop && s.slachtblok, `Het Slachtblok \u2192 #overlay-slachtblok aanwezig = ${s.slachtblok}, dek ${s.dek} kaarten`);
   await page.evaluate(() => sluitSlachtblok(false)); await slaap(700);
-  await klik(4, 2); await slaap(2200); s = await sonde();
+  await klikScene(/De Outro/); await slaap(2200); s = await sonde();
   const outro = await page.evaluate(() => !!document.querySelector('#outro, .outro, [id^="outro"]') || document.body.dataset.scherm);
   t(!!outro, `De Outro \u2192 scherm "${s.scherm}", outro-haak: ${JSON.stringify(outro)}`);
   /* de Proloog verlaat de pagina: apart, en daarna opnieuw booten */
   await page.goto('http://' + HOST + '/', { waitUntil: 'load' }); await slaap(700);
   await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => /toch beginnen/i.test(x.textContent)); if (b) b.click(); }); await slaap(600);
-  await klik(4, 3); await slaap(1500);
+  await klikScene(/De Proloog/); await slaap(1500);
   const url = page.url();
   t(/proloog\//.test(url), `De Proloog \u2192 ditzelfde tabblad staat nu op "${url.replace('http://' + HOST, '')}"`);
   await boot();

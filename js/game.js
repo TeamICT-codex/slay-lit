@@ -330,10 +330,11 @@ function ontgrendelMetgezel(mid) { mys(mid).voltooid = true; bewaarCodex(); }
    doet hetzelfde; de uitbetaling van de tafel (P3) vraagt het hier. */
 function codexSchrijfToegestaan() { return !!S && !S.daily && !S._devRun; }
 
-/* ====== SCHERVEN 2.0 — een platte, inzetbare stash (verbruikbaar; geplaatst bij de Drempel) ======
-   De 9 scherven (3 per metgezel) staan al als 'recept' in MYSTERIES[mid].scherven. Hierover een
-   platte bag-laag: Codex.scherven = multiset van scherf-ids die je bezit. Bij de Drempel (Act 1→2)
-   plaats je er 3; een kloppend trio roept de metgezel op, een fout trio wekt de Drempelwachter. */
+/* ====== SCHERVEN 2.0 — een platte, inzetbare stash (verbruikbaar; ingelegd aan de Drempel) ======
+   De 9 scherven staan als 'recept' in MYSTERIES[mid].scherven (dat bleef de vindlogica, ook nu
+   de metgezellen geparkeerd zijn). Hierover een platte bag-laag: Codex.scherven = multiset van
+   scherf-ids die je bezit. Sinds v128 zijn ze je INLEG: aan de Drempel (Act 1→2) leg je er drie
+   in de nissen — van welk maaksel ook — en dat koopt een plaats aan DE DREMPELTAFEL. */
 function scherfDef(sid) {
   const M = window.MYSTERIES; if (!M) return null;
   for (const mid in M) { const s = M[mid].scherven && M[mid].scherven[sid]; if (s) return { sid, mid, bron: s.bron, codexTekst: s.codexTekst, metgezel: M[mid].metgezel }; }
@@ -414,8 +415,13 @@ function registreerRun(gewonnen) {
       Codex.slachtblok = Codex.slachtblok || {};
       /* SPORT IV (v128): een DUBBEL gesmede kaart erft maar ÉÉN lading in plaats van drie —
          twee keer het effect als startkaart is met drie ladingen run-brekend. 'twee keer het
-         effect, één keer de kost' leest ook natuurlijk als één lading. */
-      Codex.slachtblok[h] = Object.assign({}, runSpec, { gebrandmerkt: true, charges: runSpec.dubbel ? 1 : 3 });
+         effect, één keer de kost' leest ook natuurlijk als één lading.
+         DE POORT (P3): het brandmerk mag nooit vanuit een DEV-opgezette of dagelijkse run het
+         ERFSTUK in — anders levert één DEV-sprong naar de tafel een permanent dubbele
+         startkaart op. De run zelf houdt haar dubbele kling gewoon; enkel de cross-run kopie
+         blijft schoon (en valt dan terug op de normale drie ladingen). */
+      const erfDubbel = !!runSpec.dubbel && codexSchrijfToegestaan();
+      Codex.slachtblok[h] = Object.assign({}, runSpec, { gebrandmerkt: true, dubbel: erfDubbel, charges: erfDubbel ? 1 : 3 });
     }
   }
   Codex.bestDiepte = Codex.bestDiepte || {};
@@ -2078,7 +2084,8 @@ function nieuwSpel(heldId, seedTekst, ascensie, daily) {
     uid: 0,
     gevecht: null,
     contractGebruikt: false,   /* Het Verlopen Contract: eenmalig-per-run dood-weigering */
-    scherven: []           /* GEDRAGEN scherven deze run (inzet — kwijt bij dood; geplaatst bij de Drempel) */
+    scherven: [],          /* GEDRAGEN scherven deze run (inzet — kwijt bij dood; ingelegd aan de Drempeltafel) */
+    beeltenissen: []       /* v128: kaart-arts die sport I van de tafel vrijspeelde (het Slachtblok 2.0 kiest eruit) */
   };
   S.kaart = genereerKaart();   /* nu pas: huidigeAct() leest S.act = 1 van DEZE run */
   held.dek.forEach(id => S.dek.push(nieuweKaart(id)));
@@ -6017,8 +6024,9 @@ function meestGevorderdeMysterie() {
   return best;
 }
 /* SCHERVEN-COLLECTIE in de Codex: alle 9 (3 trio's) — gevonden = fragment-art, rest = ❓.
-   Leest de PLATTE stash (Codex.scherven) + de gedragen tas. Spoilt niet WELKE
-   metgezel een trio wekt (geen namen), wél hoeveel je hebt + dat 3-die-passen een bondgenoot roept. */
+   Leest de PLATTE stash (Codex.scherven) + de gedragen tas. Sinds v128 zijn scherven je INLEG
+   aan DE DREMPELTAFEL: elk drietal opent de tafel, van welk maaksel ook. De familie-indeling
+   blijft als verzamelspoor staan (en als geheugen aan de bondgenoten die je ooit wekte). */
 function scherfCodexBlok() {
   const M = window.MYSTERIES; if (!M) return '';
   const heeft = sid => scherfStash().includes(sid) || gedragen().includes(sid);
@@ -6031,16 +6039,16 @@ function scherfCodexBlok() {
     const n = vereist.filter(heeft).length;
     const slots = vereist.map(sid => {
       const d = scherfDef(sid);
-      return (heeft(sid) || ontg)   /* bij een ontwaakte bondgenoot zijn de scherven verbruikt maar het trio is volbracht — toon het vervuld, niet als ❓ */
+      return (heeft(sid) || ontg)   /* wekte je hier ooit een bondgenoot (oudere Codex), dan zijn de scherven verbruikt maar het maaksel volbracht — toon het vervuld, niet als ❓ */
         ? `<div class="scherf-cx-slot vol ${ontg && !heeft(sid) ? 'verbruikt' : ''}" data-shart="${sid}" data-tip="${(d && d.codexTekst) || ''}">${d ? bronIcoon(d.bron) : '🜂'}</div>`
         : `<div class="scherf-cx-slot leeg" data-tip="??? — nog te vinden (${mysterieBronLabel(d && d.bron)})">❓</div>`;
     }).join('');
     const klasse = ontg ? 'ontgrendeld' : (n === vereist.length ? 'compleet' : '');
-    const label = ontg ? '✓ bondgenoot ontwaakt' : (n === vereist.length ? '✦ trio compleet — naar De Drempel' : n + '/' + vereist.length);
+    const label = ontg ? '✓ maaksel doorgrond' : (n === vereist.length ? '✦ maaksel compleet' : n + '/' + vereist.length);
     return `<div class="scherf-cx-trio ${klasse}"><div class="scherf-cx-slots">${slots}</div><small>${label}</small></div>`;
   }).join('');
   return `<h3 class="codex-kop">🜂 Scherven <small>${gevonden} / ${alle.length}</small></h3>
-    <p class="codex-scherf-uitleg">Drie scherven die samenpassen roepen bij De Drempel (Act 1→2) een bondgenoot op. Wat je veilig bankt, blijft over al je afdalingen heen.</p>
+    <p class="codex-scherf-uitleg">Scherven zijn je inleg aan De Drempeltafel (Act 1→2): drie ervan kopen een plaats aan het spel — van welk maaksel ook. Wat je veilig bankt, blijft over al je afdalingen heen.</p>
     <div class="scherf-cx-rooster">${trios}</div>`;
 }
 
@@ -6059,14 +6067,14 @@ function mysterieDuiding(versAantal) {
   const loadout = (S && Array.isArray(S.loadoutScherven)) ? S.loadoutScherven : [];
   const vers = (versAantal !== undefined) ? versAantal : gedragen().filter(sid => !loadout.includes(sid)).length;
   const regel = best.rijp
-    ? 'De scherven passen samen — het antwoord wacht bij de Drempel, als je het dúrft te maken.'
+    ? 'Je hebt een maaksel compleet — drie scherven zijn een inleg, en de tafel aan de Drempel wacht.'
     : vers > 0
       ? (vers === 1
         ? 'Dit was geen einde: je draagt een scherf uit het donker mee — je vondst overleeft je val.'
         : `Dit was geen einde: je draagt ${vers} scherven uit het donker mee — je vondsten overleven je val.`)
       : 'Een onopgelost mysterie wacht in de diepte.';
   return `<p class="einde-mysterie einde-mysterie-tik" onclick="toonCodex()">🜂 ${regel} <b>(${best.aantal}/${totaal})</b>
-    <small>Scherven zijn aanwijzingen — verzamel er ${totaal} om het mysterie bij de Drempel te ontsluieren. Tik voor je Codex.</small></p>`;
+    <small>Scherven zijn je inleg: met drie koop je een plaats aan De Drempeltafel (Act 1→2). Tik voor je Codex.</small></p>`;
 }
 
 function toonCodex() {
@@ -6143,7 +6151,8 @@ function toonCodex() {
       const mgart = wit ? 'drops_wit' : (gevallen ? id + '_geest' : id);
       const tip = wit ? ' · 🤍 keerde terug uit het zwart' : (gevallen ? ' · ✝ offerde zich op' : '');
       return `<div class="codex-slot rel-${d.zeld} ${gevallen && !wit ? 'gevallen' : ''}" data-mgart="${mgart}" data-tip="${d.naam}${tip} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${wit ? '🤍' : d.icoon}${gevallen && !wit ? '<span class="codex-kruis">✝</span>' : ''}</div>`;
-    }).join('') + `</div>` + slachtblokBlok + outroBlok + scherfCodexBlok() + `
+    }).join('') + `</div>
+    <p class="codex-scherf-uitleg">De nissen zijn dichtgelast. De Drempel is een tafel geworden — wie hier al iemand wekte, daalt nog altijd met hem af.</p>` + slachtblokBlok + outroBlok + scherfCodexBlok() + `
     <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt + mgOntdekt === rels.length + dranks.length + mgs.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
     <small>🗝️ = opgeladen: dit relikwie kun je bij een nieuwe run éénmalig meenemen uit het Schrijn.</small></p>`;
   verfraaiItemArt($('#overlay-codex'));   /* incl. het Codex-titelicoon (data-icoon) */
@@ -8931,8 +8940,11 @@ async function gevechtGewonnen() {
   if (g.epischScherf) { const sid = vindScherf('episch'); if (sid) toonScherfReveal(sid, { kop: '🜂 DE EPISCHE VIJAND LAAT IETS NA' }); }
   /* Elite-winst kan een willekeurige scherf opleveren — sinds DE DREMPELTAFEL (v128) ook in
      Act 1 (de act-gate is weg): de tafel staat aan het EINDE van Act 1, dus run 1 moet er
-     scherven voor kunnen vinden. De 50 % blijft. */
-  else if (g.soort === 'elite' && willekeurig() < 0.5) { const sid = vindScherf(); if (sid) toonScherfReveal(sid, { kop: '🜂 TUSSEN DE RESTEN GLINSTERT IETS' }); }
+     scherven voor kunnen vinden. De 50 % blijft.
+     NIET in de tafel-encounter (g.tafel): die start als 'elite' en zou hier een TWEEDE scherf
+     kunnen laten vallen bovenop de gegarandeerde terugbetaling verderop. De afspraak is
+     precies één scherf terug (plan §1), dus die rol blijft hier uit. */
+  else if (g.soort === 'elite' && !g.tafel && willekeurig() < 0.5) { const sid = vindScherf(); if (sid) toonScherfReveal(sid, { kop: '🜂 TUSSEN DE RESTEN GLINSTERT IETS' }); }
   /* metgezel-HP uit dit gevecht meenemen naar de run-state (gaat mee naar het volgende) */
   if (g.metgezel && !g.metgezel.dood && S.metgezel && !S.metgezel.vluchtig) S.metgezel.hp = g.metgezel.hp;
   if (window.Vista) Vista.pose(g.speler, 'victory', 2.5);
@@ -9022,6 +9034,27 @@ async function gevechtGewonnen() {
     return;
   }
 
+  /* DE DREMPELTAFEL (v128) — DE ENCOUNTER BETAALT NIET ALS EEN GEWONE ELITE.
+     De ladder ís de beloning (plan §1): geen goud, geen buit-relikwie, geen drank en geen
+     kaart uit de gewone pool — anders is bewust knallen in ronde 1 met de goedkoopste inzet
+     het optimale spel. Wat de bank wél teruggeeft is één scherf (de volgende inleg) en daarna
+     de pot, in laddervolgorde. Het beloningscherm gaat er meteen onder staan zodat de
+     ceremonies een doek hebben en de speler een uitgang ziet; de Verder-knop blijft op slot
+     tot alles uitbetaald is (anders opent het Slachtblok straks boven de afdaalkaart). */
+  if (g.tafel) {
+    S.gevecht = null;
+    S.beloning = { nalatenschap: null, goud: 0, kaarten: null, relikwie: null, vervloekt: false, drank: null, tafel: true, tafelBezig: true };
+    renderBeloning();
+    const terug = vindScherf();
+    if (terug) toonScherfReveal(terug, { kop: '🜂 DE BANK GEEFT ÉÉN SCHERF TERUG' });
+    else melding('🜂 De bank vindt geen scherf meer die je niet al draagt — de inleg blijft open staan.');
+    keerTafelPotUit(() => {
+      if (S.beloning) S.beloning.tafelBezig = false;
+      renderBeloning();
+    });
+    return;
+  }
+
   /* De Oorkonde van Verzet (Act 3): elke gevallen schrik van het regime zet een handtekening bij */
   if ((g.soort === 'elite' || g.soort === 'episch') && heeftRelikwie('oorkonde_van_verzet')) {
     S.maxHp += 1; S.hp = Math.min(S.maxHp, S.hp + 1); geefGoud(10);
@@ -9079,6 +9112,126 @@ function nederlaag(reden) {
   }, 900);
 }
 
+/* ============================================================
+   DE DREMPELTAFEL (v128) — DE UITBETALING VAN DE POT.
+   De prijzen vallen pas ná de encounter: wie aan tafel wint maar in de gang sneuvelt, krijgt
+   niets (dat is de hele spanningsboog). js/drempeltafel.js (P2) zet de gewonnen sporten vóór
+   het gevecht in S.drempeltafel.uitTeKeren, in laddervolgorde:
+     'beeltenis'  I   — drie beeltenissen vrij + een zeldzame kaartkeuze (1 uit 3)
+     'relikwie'   II  — de Kroon van Sintels
+     'slachtblok' III — het blok, naar voren gehaald (modus 'tafel')
+     'dubbel'     IV  — het brandmerk op het gesmede werk
+   Elke sport wacht op de vorige ceremonie (naReveals) en wordt PER STAP uit de pot geschreven
+   en gesaved: een herlaad middenin betaalt nooit twee keer dezelfde sport uit.
+   ============================================================ */
+
+/* drie ZELDZAME kaarten voor sport I. Is de zeldzame laag te dun (kleine heldpool, act-gates,
+   dagwetten), dan vult episch en daarna ongewoon aan — de bank betaalt altijd iets. */
+function tafelZeldzameKaarten(n) {
+  const pool = heldPool();
+  const uit = [];
+  ['zeldzaam', 'episch', 'ongewoon'].forEach(z => {
+    if (uit.length >= n) return;
+    const laag = schud(pool.filter(id => KAARTEN[id] && KAARTEN[id].zeld === z && !uit.includes(id)));
+    laag.slice(0, n - uit.length).forEach(id => uit.push(id));
+  });
+  return uit.map(id => nieuweKaart(id));
+}
+
+/* keert de hele pot uit en roept 'klaar' als de laatste ceremonie gesloten is */
+function keerTafelPotUit(klaar) {
+  const dt = (S && S.drempeltafel) || null;
+  /* SPORT IV zet zijn intentie VOORAF: toonSlachtblok leest S.drempeltafel.dubbel bij het
+     ÓPENEN, voor de live voorvertoning. Zou hij pas ná sport III vallen, dan liegt de preview
+     (de smeed zelf klopt wel). Guard: 'dubbel' zonder 'slachtblok' kan uit de ladder niet
+     komen, maar als het ooit gebeurt blijft de intentie staan en verzilvert het Act 3-blok hem. */
+  if (dt && Array.isArray(dt.uitTeKeren) && dt.uitTeKeren.includes('dubbel')) dt.dubbel = true;
+  const volgende = () => {
+    const pot = (S && S.drempeltafel && Array.isArray(S.drempeltafel.uitTeKeren)) ? S.drempeltafel.uitTeKeren : [];
+    if (!pot.length) {
+      if (S && S.drempeltafel) {
+        S.drempeltafel.gedaan = true;    /* de tafel is AFGEHANDELD — hervatScherm gaat weer naar de kaart */
+        S.drempeltafel.fase = null;
+        S.drempeltafel.uitTeKeren = [];
+      }
+      saveSpel();
+      if (typeof klaar === 'function') klaar();
+      return;
+    }
+    const sport = pot.shift();
+    /* … en óók uit S.drempeltafel.pot, meteen gesaved. Die twee moeten synchroon blijven:
+       herlaadt de speler middenin de uitbetaling, dan staat de tafel nog op fase 'encounter'
+       en wapent dtHetGevechtIn uitTeKeren opnieuw uit pot (js/drempeltafel.js) — uit een
+       VOLLE pot zou dat de al uitbetaalde sporten een tweede keer uitkeren. Nu vecht hij
+       opnieuw voor precies wat er nog openstaat. */
+    const volledig = (S && S.drempeltafel && Array.isArray(S.drempeltafel.pot)) ? S.drempeltafel.pot : null;
+    if (volledig) { const i = volledig.indexOf(sport); if (i >= 0) volledig.splice(i, 1); }
+    saveSpel();
+    keerTafelSportUit(sport, () => naReveals(volgende, 700));
+  };
+  naReveals(volgende, 900);
+}
+
+/* één sport van de ladder. 'na' valt zodra deze sport helemaal afgehandeld is. */
+function keerTafelSportUit(sport, na) {
+  const klaar = () => { if (typeof na === 'function') na(); };
+  if (sport === 'beeltenis') {
+    if (!Array.isArray(S.beeltenissen)) S.beeltenissen = [];
+    const vrij = SMEED_BEELTENISSEN.filter(id => !S.beeltenissen.includes(id));
+    const nieuw = schud(vrij.slice()).slice(0, 3);
+    nieuw.forEach(id => S.beeltenissen.push(id));
+    /* lookup-terugval: 'gesmeed_kaart' is een art-id zonder KAARTEN-def — toon dan het id,
+       nooit 'undefined' (en een onbekend id uit een latere lijst breekt hier evenmin). */
+    const namen = nieuw.map(id => (KAARTEN[id] && KAARTEN[id].naam) || id);
+    melding(nieuw.length
+      ? `🖼️ SPORT I — drie beeltenissen zijn van jou: ${namen.join(' · ')}. Het blok kiest er later uit.`
+      : '🖼️ SPORT I — je bezit alle beeltenissen al; de bank betaalt enkel in kaarten.');
+    Klank.sfx('schitter');
+    /* …plus de zeldzame kaartkeuze (1 uit 3), zodat stoppen na twee sporten ook zonder het
+       blok iets waard is (beslissing Thomas, 22 sep). */
+    const keuzes = tafelZeldzameKaarten(3);
+    if (!keuzes.length) { klaar(); return; }
+    toonKaartKeuze(keuzes, 'De bank betaalt sport I — kies een kaart',
+      c => { S.dek.push(c); melding(`${knaam(c)} toegevoegd!`); saveSpel(); klaar(); },
+      () => klaar(), { onthul: true });
+    return;
+  }
+  if (sport === 'relikwie') {
+    let rid = 'kroon_van_sintels';
+    if (!RELIKWIEEN[rid] || heeftRelikwie(rid)) {
+      /* de Kroon ligt al in je bezit (of bestaat niet meer): dan betaalt de bank een ander
+         zwaar stuk. Niets uitkeren mag nooit — dit ís de sport. */
+      rid = willekeurigRelikwie({ zeldzaam: 40, episch: 60 });
+    }
+    if (!rid) { melding('👑 SPORT II — de bank heeft niets meer dat je niet al draagt.'); klaar(); return; }
+    geefRelikwie(rid, false, true);      /* stil: we tonen de ceremonie zelf, met de kop van de tafel */
+    toonRelikwieReveal(rid, { kop: '✦ DE BANK BETAALT — SPORT II' });
+    naReveals(klaar, 500);
+    return;
+  }
+  if (sport === 'slachtblok') {
+    /* SPORT III VERPLAATST het blok naar voren, het verdubbelt het niet: de vlag valt hier, dus
+       de Act 3-gate in doeNode slaat zichzelf straks over. Modus 'tafel' heeft zijn eigen
+       proloog- en bestemmingstekst (de wand, niet de troonzaal). */
+    if (typeof toonSlachtblok !== 'function') { klaar(); return; }
+    toonSlachtblok('tafel', () => { S.slachtblokGedaan = true; saveSpel(); klaar(); });
+    return;
+  }
+  if (sport === 'dubbel') {
+    /* de intentie staat al (zie keerTafelPotUit); hier valt enkel het moment. Smeedde de speler
+       net op sport III, dan heeft smeedKaart hem intussen verzilverd én gewist — dan is dit de
+       bevestiging, anders de belofte voor het blok verderop. */
+    const verzilverd = !(S.drempeltafel && S.drempeltafel.dubbel);
+    melding(verzilverd
+      ? '✦ SPORT IV — de wand brandde je naam twee keer in de kling: dubbel effect, één keer de kost.'
+      : '✦ SPORT IV — het brandmerk wacht op je volgende werk op het blok: dubbel effect, één keer de kost.');
+    Klank.sfx('zwareklap');
+    klaar();
+    return;
+  }
+  klaar();   /* onbekende sport-id (oudere save, latere ladder): stil overslaan, nooit blokkeren */
+}
+
 /* kaartenpool van de huidige held: eigen kaarten + neutrale.
    HET AMALGAAM (dagwet): de held-grens valt weg — alle gilden mengen. */
 function heldPool() {
@@ -9114,8 +9267,13 @@ function renderBeloning() {
   toonScherm('beloning');
   schermAchtergrond('beloning', actBg('beloning'), 0.5, 'center bottom');
   const b = S.beloning;
+  /* DE DREMPELTAFEL (v128): na de tafel-encounter staat hier geen buit maar de uitbetaling van
+     de pot. Eigen ondertitel (de lijst is leeg) en de Verder-knop op slot zolang de ceremonies
+     lopen — anders klikt de speler door naar de afdaalkaart en opent het Slachtblok daarboven. */
   let html = `<h2 class="scherm-titel">Overwinning!</h2>
-    <p class="scherm-sub">De buit neem je automatisch mee — alleen de kaartkeuze is aan jou.</p>
+    <p class="scherm-sub">${b.tafel
+      ? 'De tafel is gesloten — de wand keert uit wat je vasthield. Eén scherf gaat mee als volgende inleg.'
+      : 'De buit neem je automatisch mee — alleen de kaartkeuze is aan jou.'}</p>
     <div class="beloning-lijst">`;
   if (b.nalatenschap && KAARTEN[b.nalatenschap.kaart]) {
     const nk = KAARTEN[b.nalatenschap.kaart];
@@ -9130,7 +9288,7 @@ function renderBeloning() {
   }
   if (b.drank) html += `<button class="beloning-item" onclick="pakDrank()"><span class="art-mini" data-dart="${b.drank}">${DRANKEN[b.drank].icoon}</span> ${DRANKEN[b.drank].naam}<small>${DRANKEN[b.drank].tekst}</small></button>`;
   if (b.kaarten) html += `<button class="beloning-item beloning-kaartkeuze" onclick="toonKaartBeloning()">🃏 Kies een kaart <small>${b.kaarten.length} opties — je fakkel bepaalt hoeveel je er ziet</small></button>`;
-  html += `</div><button class="knop-groot" onclick="verderNaBeloning()">Verder ➤</button>`;
+  html += `</div><button class="knop-groot" ${b.tafelBezig ? 'disabled' : ''} onclick="verderNaBeloning()">Verder ➤</button>`;
   $('#scherm-beloning').innerHTML = html;
   verfraaiItemArt($('#scherm-beloning'));
   renderTopbalk();
@@ -10112,6 +10270,15 @@ const SMEED_MODULES = {
   licht:     { naam: 'Licht',       icoon: '🔥', perPunt: 8 }
 };
 const SMEED_ICONEN = ['🗡️', '🪓', '🔥', '☠️', '🌑', '⚡', '🐺', '🌹', '🦴', '👁️', '🕯️', '🖤'];
+/* DE BEELTENISSEN (v128 vrijgespeeld, v129 gebruikt): de zestien kaart-art-ids die het
+   Slachtblok 2.0 als gezicht van je gesmede kaart aanbiedt. Het zijn bestaande ids uit
+   window.ART_MANIFEST.kaarten, dus laadKaartAfbeelding(id, cb) werkt er meteen op.
+   Sport I van DE DREMPELTAFEL speelt er drie van vrij (S.beeltenissen) — zie
+   keerTafelSportUit. SMEED_ICONEN blijft ernaast staan: de emoji is de zegel én de
+   terugval voor élke bestaande Codex-spec (die heeft geen 'beeltenis'-veld). */
+const SMEED_BEELTENISSEN = ['vlammenkling', 'executie', 'klingenstorm', 'brandmerk', 'innerlijk_vuur', 'asregen',
+  'doornenhuid', 'metaalhuid', 'gifvlam', 'schaduwdans', 'martelaarsbloed', 'de_laatste_vonk',
+  'duisterklauw', 'demonenvorm', 'wervelwind', 'gesmeed_kaart'];
 function offerWaarde(c) {
   /* uitputtende tabel (lookup-bugklasse): 'gesmeed' viel op de 1-punt-fallback — een
      erfstuk woog als een Slag (debug-sweep). Nieuwe zeldzaamheden hier meteen wegen. */
@@ -10531,22 +10698,13 @@ function devSprongAct2() {
   renderKaartScherm();
 }
 
-/* DEV-SHORTCUT: de Drempel direct testen — devDrempel(['drops_baas','drops_figuur',…])
-   geeft je desgewenst eerst testscherven mee. */
+/* DEV-SHORTCUT (v128): het scherven-ritueel bestaat niet meer, dus devDrempel is een ALIAS op
+   devDrempeltafel (js/drempeltafel.js) geworden. Hij blijft staan omdat hij in de notities en
+   in de console-gewoonte zit; de tafel zelf zet de scherven, de act én de DEV-taint (S._devRun,
+   zie codexSchrijfToegestaan). */
 function devDrempel(testScherven) {
-  if (!S) nieuwSpel('slachter');
-  S._devRun = true;   /* DEV-TAINT (v128): deze run schrijft niets meer naar de Codex — zie codexSchrijfToegestaan */
-  /* scherven niet meer uit het niets: eerst uit je BANK halen (ze zijn verbruiksgoed sinds
-     v128). Zit er niets in de bank, dan krijg je ze alsnog — maar dan is de run getaint en
-     zegt de melding dat ook. */
-  let uitNiets = 0;
-  (testScherven || []).forEach(sid => {
-    if (neemUitStash(sid)) draagScherf(sid);
-    else if (draagScherf(sid)) uitNiets++;
-  });
-  S.act = 2;
-  if (uitNiets) melding(`⚡ DEV: ${uitNiets} scherf(en) uit het niets — deze run is getaint (geen Codex-schrijfacties).`);
-  toonDrempel();
+  if (typeof devDrempeltafel === 'function') { devDrempeltafel(testScherven); return; }
+  melding('⚡ DEV: devDrempeltafel ontbreekt — js/drempeltafel.js is niet geladen.');
 }
 
 /* DEV-SHORTCUT: spring meteen SOLO tegen de Erfprins, zodat je de Roof-rework niet door
@@ -10992,7 +11150,12 @@ const DEV_MENU = [
   {
     kop: '🎭 Scènes',
     items: [
-      { label: '🜂 Drempel + Drops-trio', tip: 'Legt een kloppend Drops-trio in je gedragen tas (raakt je save) en opent het scherven-ritueel.', doe: () => devDrempel(['drops_baas', 'drops_figuur', 'drops_episch']) },
+      /* v128: het scherven-ritueel is DE DREMPELTAFEL geworden. Beide knoppen wonen in
+         js/drempeltafel.js (bouwer P2) — vandaar de typeof-guard, zodat het menu ook zonder
+         dat bestand blijft werken. ⚠ omdat ze allebei S._devRun zetten: vanaf dan schrijft de
+         run niets meer naar de Codex of naar een erfstuk (codexSchrijfToegestaan). */
+      { label: '⚠ 🜂 Drempeltafel (3 scherven)', tip: '⚠ Legt drie scherven in je gedragen tas (uit je bank als het kan) en opent de Drempeltafel. Taint: deze run schrijft niets meer naar de Codex.', doe: () => { if (typeof devDrempeltafel === 'function') devDrempeltafel(); else melding('⚡ DEV: devDrempeltafel ontbreekt — js/drempeltafel.js is niet geladen.'); } },
+      { label: '⚠ 🜂 Drempeltafel: fase tafel', tip: '⚠ Springt rechtstreeks naar een fase van de tafel i.p.v. de nissen — voor gericht testen van tafel/spel/uitkomst. Taint: deze run schrijft niets meer naar de Codex.', doe: () => { if (typeof devDrempeltafelFase === 'function') devDrempeltafelFase('tafel'); else melding('⚡ DEV: devDrempeltafelFase ontbreekt — js/drempeltafel.js is niet geladen.'); } },
       { label: '🪓 Het Slachtblok', tip: 'Vult je dek zo nodig aan tot 12 kaarten (raakt je save) en opent de smeedkamer in altaar-modus.', doe: () => devSlachtblok() },
       { label: '🎬 De Outro', tip: 'Speelt de outro vanaf hier af, zonder run. Raakt je save niet.', doe: () => { if (typeof devOutro === 'function') devOutro(); else melding('⚡ DEV: devOutro ontbreekt (js/outro.js).'); } },
       { label: '📼 De Proloog', tip: 'Verlaat het spel en opent proloog/index.html in ditzelfde tabblad. Je save blijft staan.', doe: () => { location.href = 'proloog/index.html'; } }
@@ -11199,122 +11362,24 @@ devVersieHaak();
 if (!document.getElementById('inst-versie')) document.addEventListener('DOMContentLoaded', devVersieHaak);
 
 /* ============================================================
-   DE DREMPEL — het scherven-ritueel tussen Act 1 en Act 2.
-   Plaats 3 scherven: een kloppend trio roept een metgezel op, een fout trio wekt de
-   Drempelwachter (de scherven zijn dan verbrand). Altijd over te slaan → direct Act 2.
+   DE DREMPEL — sinds v128 DE DREMPELTAFEL (js/drempeltafel.js).
+   Het scherven-ritueel dat hier stond is VERVALLEN: drie scherven in drie nissen kopen geen
+   bondgenoot meer, maar een plaats aan de goktafel van de Drempelwachter. volgendeAct opent
+   die tafel; toonDrempel/renderDrempel/drempelPlaats/drempelHaalWeg/drempelSlaOver/
+   drempelRoepOp/drempelVoltrek en de module-state drempelGeplaatst zijn daarmee weg (niets
+   riep ze nog aan — de DEV-knop ging mee naar devDrempeltafel).
+   DAT MAAKT DRIE DINGEN STIL, EN DAT IS DE BEDOELING: drempelVoltrek was de ENIGE schrijver
+   van ontgrendelMetgezel() én van ontdek('metgezellen', …). De metgezellen zijn deze release
+   bewust GEPARKEERD — er komt geen nieuwe vrijspeelweg bij. Bestaande saves en Codexen met
+   vrijgespeelde metgezellen blijven volledig werken: kiesRunMetgezel, de act-rotatie, de
+   Drops-boog en de grief-terugkeer van de Witte zijn niet aangeraakt.
+   BLIJFT STAAN: bronIcoon — de scherf-reveal, het Codex-schervenblok en de scherf-loadout
+   op het heldkeuze-scherm lezen 'm alle drie.
+   DODE CSS: .drempel-scene/.drempel-lore/.drempel-nis(sen)/.drempel-scherf/.drempel-pool/
+   .drempel-poollabel/.drempel-leeg/.drempel-kleurhint in css/style.css (±r3549-3587) hebben
+   met deze functies hun laatste lezer verloren.
    ============================================================ */
-let drempelGeplaatst = [];   /* scherf-ids in de 3 nissen (null = leeg) */
 function bronIcoon(bron) { return bron === 'baas' ? '👑' : bron === 'figuur' ? '🪞' : bron === 'episch' ? '🜂' : '❓'; }
-
-function toonDrempel() {
-  drempelGeplaatst = [null, null, null];
-  toonScherm('einde');
-  /* eigen poortscène (de drie nissen + de slapende Wachter) i.p.v. de Act 1-kaartplaat */
-  schermAchtergrond('einde', 'achtergronddrempel.webp', 0.5, 'center');
-  Klank.muziek('stil');
-  renderDrempel();
-}
-function renderDrempel() {
-  /* de pool = wat je DRAAGT (gedragen tas) minus wat al in de nissen ligt */
-  const tel = {};
-  gedragen().forEach(sid => { tel[sid] = (tel[sid] || 0) + 1; });
-  drempelGeplaatst.forEach(sid => { if (sid && tel[sid]) tel[sid]--; });
-  const pool = [];
-  Object.keys(tel).forEach(sid => { for (let i = 0; i < tel[sid]; i++) pool.push(sid); });
-  /* gegroepeerd per maaksel (familie): scherven van één trio staan naast elkaar en delen
-     hun gloedkleur — de eerlijke bescherming tegen de fout-trio-val (playtest) */
-  const famVolgorde = ['drops', 'vlamwachter', 'mosgeest'];
-  const fam = sid => { const d = scherfDef(sid); return Math.max(0, famVolgorde.indexOf(d && d.mid)); };
-  pool.sort((a, b) => fam(a) - fam(b));
-  const famKlasse = sid => { const d = scherfDef(sid); return d ? `fam-${d.mid}` : ''; };
-
-  const nissen = [0, 1, 2].map(i => {
-    const sid = drempelGeplaatst[i];
-    if (sid) { const d = scherfDef(sid); return `<button class="drempel-nis vol ${famKlasse(sid)}" onclick="drempelHaalWeg(${i})"><span class="dn-icoon" data-shart="${sid}">${bronIcoon(d && d.bron)}</span><i>${(d && d.codexTekst) || '…'}</i></button>`; }
-    return `<div class="drempel-nis leeg">◇</div>`;
-  }).join('');
-  /* de teksten kijken naar wat je DRAAGT (tas + nissen), niet naar de restpool — anders
-     verscheen de beginnersuitleg precies wanneer je trio in de nissen lag en verdween de
-     kleurhint op het beslismoment (review 27 aug) */
-  const geplaatstIets = drempelGeplaatst.some(Boolean);
-  const draagtIets = gedragen().length > 0 || geplaatstIets;
-  const nooitIets = !draagtIets && !scherfStash().length
-    && !Object.keys(window.MYSTERIES || {}).some(mid => isOntgrendeld(mid));
-  const poolHtml = pool.length
-    ? pool.map(sid => { const d = scherfDef(sid); return `<button class="drempel-scherf ${famKlasse(sid)}" onclick="drempelPlaats('${sid}')"><span class="ds-icoon" data-shart="${sid}">${bronIcoon(d && d.bron)}</span><i>${(d && d.codexTekst) || '…'}</i></button>`; }).join('')
-    : (geplaatstIets
-      ? `<p class="drempel-leeg">Al je scherven liggen in de nissen.</p>`
-      : nooitIets
-        ? `<p class="drempel-leeg">Je draagt nog geen scherven — maar ze bestáán. Voorbij deze poort liggen ze verscholen: bij wat groots en episch is <small>🜂</small>, bij figuren die je de weg wijzen <small>🪞</small>, en bij de prins die alles kopieert <small>👑</small>. Wat je vindt, overleeft zelfs je dood. Drie scherven van één maaksel, en het zwart antwoordt.</p>`
-        : `<p class="drempel-leeg">Je draagt nog geen scherven. Ze liggen verspreid in de diepte — verzamel er drie, en wáág de drempel.</p>`);
-  const vol = drempelGeplaatst.filter(Boolean).length === 3;
-  $('#scherm-einde').innerHTML = `
-    <div class="drempel-scene">
-      <h2 class="scherm-titel goud-tekst">🜂 De Drempel</h2>
-      <p class="scherm-sub drempel-lore">Voor je gaapt de poort naar de diepte. Drie lege nissen, koud en geduldig. „Voed de drempel met drie scherven," fluistert iets ouds, „en het zwart antwoordt. Maar niet alles dat ontwaakt, is je gunstig gezind — dat besef je pas als het je aankijkt."</p>
-      <div class="drempel-nissen">${nissen}</div>
-      <p class="drempel-poollabel">${(pool.length || geplaatstIets) ? 'Je scherven — plaats er drie. <span class="drempel-kleurhint">Scherven van één maaksel gloeien in dezelfde kleur.</span>' : ''}</p>
-      <div class="drempel-pool">${poolHtml}</div>
-      <div class="einde-knoppen">
-        <button class="knop-groot" ${vol ? '' : 'disabled'} onclick="drempelRoepOp()">🜂 Roep op</button>
-        <button class="knop-stil" onclick="drempelSlaOver()">Sla over → daal af naar Act 2</button>
-      </div>
-    </div>`;
-  verfraaiItemArt($('#scherm-einde'));
-}
-function drempelPlaats(sid) {
-  let slot = drempelGeplaatst.indexOf(null);
-  if (slot < 0) return;                 /* nissen vol */
-  drempelGeplaatst[slot] = sid;
-  Klank.sfx('klik');
-  renderDrempel();
-}
-function drempelHaalWeg(slot) { drempelGeplaatst[slot] = null; Klank.sfx('klik'); renderDrempel(); }
-function drempelSlaOver() { bankGedragen(); saveSpel(); toonActOvergang(S._verslagenBaas); }   /* niet-geplaatste scherven zijn nu veilig (gebankt) + meteen gepersisteerd */
-function drempelRoepOp() {
-  const ids = drempelGeplaatst.filter(Boolean);
-  if (ids.length !== 3) return;
-  const mid = scherfTrio(ids);
-  if (mid && isOntgrendeld(mid)) {
-    /* kloppend trio van een AL ontwaakte bondgenoot → niet bestraffen, niets verbruiken:
-       leg de scherven terug zodat de speler een ander trio kiest of overslaat. */
-    melding('Deze bondgenoot is al ontwaakt — je scherven blijven veilig.');
-    Klank.sfx('klik');
-    drempelGeplaatst = [null, null, null];
-    renderDrempel();
-    return;
-  }
-  if (!mid) {
-    /* fout trio = een gok met echte inzet (3 scherven verbrand + de Wachter) — de kost is
-       transparant VOORAF, de precieze straf blijft ontdekking (ontwerplijn 27 aug) */
-    bevestig('De nissen verzetten zich — deze drie zijn niet van één maaksel. Wat je plaatst en fout gokt, ben je kwíjt… en iets achter de poort roert zich. Toch doorzetten?', () => drempelVoltrek(ids), '🔥 Doorzetten');
-    return;
-  }
-  drempelVoltrek(ids);
-}
-function drempelVoltrek(ids) {
-  const mid = scherfTrio(ids);
-  ids.forEach(sid => neemGedragen(sid));        /* de geplaatste 3 zijn verbruikt — weg uit je tas */
-  drempelGeplaatst = [null, null, null];
-  if (mid) {
-    const def = MYSTERIES[mid];
-    ontgrendelMetgezel(mid);
-    if (typeof ontdek === 'function') ontdek('metgezellen', def.metgezel);
-    geefMetgezel(def.metgezel);                 /* hij daalt nu mee Act 2 in (overschrijft de rotatie) */
-    Klank.sfx('schitter');
-    bankGedragen();                             /* de rest van je tas is nu veilig */
-    saveSpel();                                 /* persisteer act-2-state + lege tas meteen — geen stale Act-1-save → geen scherf-duplicatie */
-    const rev = def.eindreveal || { titel: 'EEN BONDGENOOT ONTWAAKT', kreet: 'Iets koos jou.' };
-    toonActOvergang(S._verslagenBaas, rev);
-  } else {
-    melding('🔥 De verkeerde scherven! De Drempelwachter ontwaakt — je inzet is verbrand.');
-    Klank.sfx('debuff');
-    bankGedragen();                             /* de niet-geplaatste rest blijft veilig */
-    saveSpel();                                 /* idem: leg de gebankte stash + act-2-state vast vóór het gevecht */
-    S.gevecht = null;
-    startGevecht(['de_drempelwachter'], 'elite', 1);   /* win → beloning → Act 2-kaart; rotatie-metgezel kreeg je al */
-  }
-}
 
 function volgendeAct(verslagenBaas) {
   S.act = huidigeAct() + 1;
@@ -11355,8 +11420,8 @@ function volgendeAct(verslagenBaas) {
      staat de tafel uit (ze deelt een plaats aan het Slachtblok en een cross-run brandmerk uit
      — net als Schrijn en Slachtblok hoort dat niet op het dagbord): dan valt de code door naar
      toonActOvergang hieronder, de normale Act 2-overgang. De typeof-guard houdt game.js
-     speelbaar zolang js/drempeltafel.js (bouwer P2) er nog niet is; toonDrempel/renderDrempel/
-     drempelRoepOp/drempelVoltrek blijven voorlopig staan als dode code — P3 ruimt ze op. */
+     speelbaar zolang js/drempeltafel.js er nog niet is; het oude ritueel (toonDrempel c.s.)
+     is met de metgezel-parkering verdwenen — zie het blok DE DREMPEL verderop. */
   if (S.act === 2 && !S.daily && typeof toonDrempeltafel === 'function') { toonDrempeltafel(); return; }
   /* v128: de nieuwe act meteen vastleggen. Vroeger deed drempelSlaOver dat voor de
      Act 1→2-overgang; nu die route door de tafel vervangen is (en de daily er helemaal
@@ -11895,10 +11960,10 @@ function kiesSchrijn(id) {
 function scherfLoadoutHtml() {
   const bezit = scherfStash();
   if (!bezit.length) {
-    return `<small class="schrijn-leeg">🜂 Je hebt nog geen scherven. Vind ze in je afdalingen (elite-winst, de Erfprins, epische vijanden, mysterieuze figuren) en breng er drie die samenpassen naar De Drempel tussen Act 1 en 2 — dat roept een metgezel op.</small>`;
+    return `<small class="schrijn-leeg">🜂 Je hebt nog geen scherven. Vind ze in je afdalingen (de schatkist van Act 1, elite-winst, de bazen, epische vijanden, mysterieuze figuren) en breng er drie naar De Drempeltafel tussen Act 1 en 2 — drie scherven zijn je inleg aan het spel.</small>`;
   }
   return `<div class="schrijn-titel">🜂 Scherven <span class="schrijn-teller">${scherfKeuzes.length}/${SCHERF_LOADOUT_MAX}</span>
-      <small>neem scherven mee voor De Drempel (Act 1→2) — wat je meeneemt staat op het spel: <b>kwijt bij dood</b></small></div>
+      <small>neem scherven mee als inleg voor De Drempeltafel (Act 1→2) — wat je meeneemt staat op het spel: <b>kwijt bij dood</b></small></div>
     <div class="schrijn-rij">` + bezit.map(sid => {
       const d = scherfDef(sid); if (!d) return '';
       return `<button class="schrijn-slot scherf-slot ${scherfKeuzes.includes(sid) ? 'gekozen' : ''}" data-shart="${sid}"

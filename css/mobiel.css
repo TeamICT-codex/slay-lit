@@ -1667,3 +1667,117 @@ body[data-modus="mobiel"] .plaat-instort { --plaat-schaal: 1.05; --plaat-rot: -.
   body[data-modus="mobiel"] .vonnis span { font-size: clamp(.74rem, 2.2vh, .92rem); max-width: 74vw; }
   body[data-modus="mobiel"] .vonnis.klein h2 { font-size: clamp(1.05rem, 3.2vh, 1.5rem); }
 }
+
+/* ============================================================
+   G. DE DREMPELTAFEL (v128) — het gokritueel aan de Drempel (Act 1 → 2)
+   Alles onder body[data-modus="mobiel"]; de basis + het laptop-spoor staan in
+   css/drempeltafel.css. Twee sporen — zie het geheugenbestand mobiel-laptop-sporen.md.
+   De sticky knoppenbalk zelf is gedeeld met het Slachtblok (style.css, .sb-balk).
+   ============================================================ */
+/* de Inzage-knop mag nooit over de tafel liggen. De .roof-overlay-regel hierboven dekt
+   .dt-overlay al (het doek draagt beide klassen) — deze regel staat er expliciet bij zodat
+   een latere klassewissel op het doek de knop niet stilletjes terugbrengt. */
+body[data-modus="mobiel"]:has(#overlay-drempeltafel.open) #inzage-knop { display: none; }
+
+body[data-modus="mobiel"] .dt-doek { padding: 14px 14px 24px; gap: 14px; }
+body[data-modus="mobiel"] .dt-kop { padding-bottom: 10px; }
+
+/* TEKST<11px-protocol: de designlabels staan op .6-.64rem = 9,6-10,2px */
+body[data-modus="mobiel"] .dt-overlay .dt-oogje,
+body[data-modus="mobiel"] .dt-nis small,
+body[data-modus="mobiel"] .dt-gok-nis small,
+body[data-modus="mobiel"] .dt-stat span,
+body[data-modus="mobiel"] .dt-enc-stat span,
+body[data-modus="mobiel"] .dt-sport small,
+body[data-modus="mobiel"] .dt-hl-kaart small,
+body[data-modus="mobiel"] .dt-vijand-rang { font-size: .72rem; letter-spacing: .16em; }
+body[data-modus="mobiel"] .dt-fijn,
+body[data-modus="mobiel"] .dt-ladder-voet,
+body[data-modus="mobiel"] .dt-tafelvoet,
+body[data-modus="mobiel"] .dt-spel small,
+body[data-modus="mobiel"] .dt-keuze-tekst small { font-size: .82rem; }
+
+/* raakdoelen: alles tikbaars minstens 44px, en geen dubbeltik-zoom op de tegels */
+body[data-modus="mobiel"] .dt-scherf,
+body[data-modus="mobiel"] .dt-nis,
+body[data-modus="mobiel"] .dt-tegel,
+body[data-modus="mobiel"] .dt-gok-nis,
+body[data-modus="mobiel"] .dt-keuze,
+body[data-modus="mobiel"] .dt-spel,
+body[data-modus="mobiel"] .dt-tab,
+body[data-modus="mobiel"] .dt-hl-knop,
+body[data-modus="mobiel"] .dt-overlay .knop-groot,
+body[data-modus="mobiel"] .dt-overlay .knop-stil { min-height: 44px; touch-action: manipulation; }
+body[data-modus="mobiel"] .dt-scherf { min-width: 44px; }
+body[data-modus="mobiel"] .dt-scherf:hover { transform: none; }   /* hover-lift plakt na een tik */
+
+/* LIGGEND KORT — Thomas' eigen toestel (~360-420px hoog): hier is HOOGTE de schaarste,
+   niet breedte. Alles wat geen speelveld is, klapt in: de doekkop (de speltitel is tijdens
+   een spel al de kop), de bankhouder (zoals .sb-proloog-blok dat al doet) en de knoppenbalk.
+   Rad, cilinder, tegels en vijand-art krijgen een vh-term, anders is het rad 101% van de
+   viewport en staat de naam van de vijand onder de vouw. */
+@media (orientation: landscape) and (max-height: 600px) {
+  body[data-modus="mobiel"] .dt-doek { padding: 10px 14px 18px; gap: 10px; }
+  body[data-modus="mobiel"] .dt-kop { padding-bottom: 8px; }
+  body[data-modus="mobiel"] .dt-kop h2 { font-size: 1.35rem; }
+  body[data-modus="mobiel"] .dt-kop p { display: none; }
+  body[data-modus="mobiel"] .dt-doek.dt-fase-spel .dt-kop,
+  body[data-modus="mobiel"] .dt-doek.dt-fase-encounter .dt-kop,
+  body[data-modus="mobiel"] .dt-doek.dt-fase-uitkomst .dt-kop { display: none; }
+  /* compacte knoppenbalk: met de lange stoptekst wrapte ze naar twee rijen = een derde scherm */
+  body[data-modus="mobiel"] .dt-overlay .sb-balk { padding: 8px 0 calc(6px + env(safe-area-inset-bottom, 0px)); gap: 8px; }
+  body[data-modus="mobiel"] .dt-stop-lang { display: none; }
+  body[data-modus="mobiel"] .dt-overlay .knop-groot { font-size: 1.05rem; padding: 8px 18px; }
+  body[data-modus="mobiel"] .dt-overlay .knop-stil { font-size: .86rem; padding: 8px 12px; }
+  body[data-modus="mobiel"] .dt-bank { flex: 0 1 200px; min-width: 150px; }
+  body[data-modus="mobiel"] .dt-bank-art { width: clamp(96px, 24vh, 140px); max-width: none; max-height: none; margin: 0 auto; }
+  body[data-modus="mobiel"] .dt-bank-quote { font-size: .86rem; max-width: 24ch; }
+  body[data-modus="mobiel"] .dt-spelscene { gap: 10px; }
+  body[data-modus="mobiel"] .dt-spel-titel { font-size: 1.25rem; }
+  body[data-modus="mobiel"] .dt-rad-veld { width: min(340px, 58vw, 50vh); }
+  body[data-modus="mobiel"] .dt-cil-veld { width: min(320px, 56vw, 48vh); }
+  body[data-modus="mobiel"] .dt-encounter { gap: 9px; }
+  body[data-modus="mobiel"] .dt-vijand { max-height: 26vh; }
+  body[data-modus="mobiel"] .dt-vijand-naam { font-size: 1.5rem; }
+  body[data-modus="mobiel"] .dt-enc-stat { padding: 6px 12px; }
+  body[data-modus="mobiel"] .dt-enc-stat b { font-size: 1.15rem; }
+  body[data-modus="mobiel"] .dt-uitkomst { gap: 10px; padding: 0; }
+  body[data-modus="mobiel"] .dt-prijs { padding: 6px 0; }
+  body[data-modus="mobiel"] .dt-prijs-art { width: min(230px, 34vw, 26vh); }
+  body[data-modus="mobiel"] .dt-verlies { padding: 6px 0; }
+  body[data-modus="mobiel"] .dt-verlies-art { width: min(190px, 30vw, 24vh); }
+  body[data-modus="mobiel"] .dt-hl-kaart { width: 100px; height: min(142px, 40vh); }
+  body[data-modus="mobiel"] .dt-hl-kaart b { font-size: 2rem; }
+  body[data-modus="mobiel"] .dt-gok-nis { width: min(118px, 22vw); }
+  /* liggend: 4 x 2 — de vh-term houdt de twee rijen binnen het scherm */
+  body[data-modus="mobiel"] .dt-paren { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: min(88vw, 420px, 60vh); gap: 8px; }
+}
+
+/* STAAND: 2 x 4 — vier kolommen maken de tegels op 360px smaller dan 44px. De bankhouder
+   gaat naast zijn naam staan i.p.v. erboven: staand vulde hij anders een half scherm. */
+@media (orientation: portrait) {
+  /* 22vh: vier RIJEN moeten samen in beeld passen — bij een geheugenspel is scrollen naar
+     de onderste tegels geen spel meer. Tegel blijft > 44px tot ver onder 667px hoog. */
+  body[data-modus="mobiel"] .dt-paren { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: min(280px, 22vh); }
+  body[data-modus="mobiel"] .dt-doek.dt-fase-spel .dt-kop p { display: none; }
+  body[data-modus="mobiel"] .dt-gok-nis { width: min(118px, 27vw); }
+  body[data-modus="mobiel"] .dt-bank { flex: 1 1 100%; flex-direction: row; align-items: center; gap: 12px; }
+  body[data-modus="mobiel"] .dt-bank-art { width: 108px; max-width: 108px; max-height: none; flex: none; margin: 0; }
+  body[data-modus="mobiel"] .dt-bank-kop { text-align: left; }
+  body[data-modus="mobiel"] .dt-bank-quote { text-align: left; max-width: none; font-size: .88rem; }
+  body[data-modus="mobiel"] .dt-vijand { max-height: 30vh; }
+}
+
+/* SMAL: de inleg in TWEE TABBLADEN. Inzet + spelkeuze onder elkaar is op 360px een
+   scrollreis van twee schermen vóór je bij 'Zet in' komt. */
+@media (max-width: 480px) {
+  body[data-modus="mobiel"] .dt-tabs { display: flex; }
+  body[data-modus="mobiel"] .dt-inleg > .dt-sectie > .dt-oogje { display: none; }   /* de tab IS het label */
+  body[data-modus="mobiel"] .dt-inleg[data-tab="inzet"] .dt-sectie-spel,
+  body[data-modus="mobiel"] .dt-inleg[data-tab="spel"] .dt-sectie-inzet { display: none; }
+  body[data-modus="mobiel"] .dt-keuzes,
+  body[data-modus="mobiel"] .dt-spellen { grid-template-columns: 1fr; }
+  body[data-modus="mobiel"] .dt-enc-stat { min-width: 84px; padding: 8px 10px; }
+  body[data-modus="mobiel"] .dt-nis-kolom, body[data-modus="mobiel"] .dt-scherf-kolom { flex: 1 1 100%; max-width: none; }
+  body[data-modus="mobiel"] .dt-stop-lang { display: none; }   /* de uitleg staat in de tafelvoet */
+}
