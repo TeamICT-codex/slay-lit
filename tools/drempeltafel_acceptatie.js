@@ -248,7 +248,10 @@ async function zetIn(page, gedwongen) {
      ========================================================================== */
   kop('1 · devDrempeltafel opent de tafel op het einde-scherm');
   let { ctx, page } = await open(browser);
-  await page.evaluate(() => { devDrempeltafel(); });
+  /* de bank eerst vullen: dan komen de drie scherven uit je ECHTE stash i.p.v. uit het niets,
+     en bankt 'Loop voorbij' ze straks netjes terug (review F1: uit-het-niets-scherven van DEV
+     mogen de cross-run-bank niet voeden — zie sectie 15). */
+  await page.evaluate(() => { Codex.scherven = ['vlamwachter_baas', 'vlamwachter_figuur', 'vlamwachter_episch']; bewaarCodex(); devDrempeltafel(); });
   await slaap(600);
   const opening = await page.evaluate(() => ({
     scherm: document.body.dataset.scherm,
@@ -258,6 +261,7 @@ async function zetIn(page, gedwongen) {
     fase: [...(document.querySelector('.dt-doek') || { classList: [] }).classList].find(c => c.indexOf('dt-fase-') === 0) || null,
     stateFase: (S.drempeltafel || {}).fase,
     taint: !!S._devRun,
+    uitNiets: ((S._devScherven || []).length),
     scherven: (S.scherven || []).length,
     kop: (document.querySelector('.dt-kop h2') || {}).textContent || ''
   }));
@@ -267,6 +271,7 @@ async function zetIn(page, gedwongen) {
   t(opening.open && opening.fase === 'dt-fase-nissen' && opening.stateFase === null,
     `het doek is open in de nissenfase, S.drempeltafel.fase is nog null (niets te hervatten) — gemeten ${opening.fase}/${opening.stateFase}`);
   t(opening.taint === true, 'devDrempeltafel zet de dev-taint S._devRun');
+  t(opening.uitNiets === 0, `de drie scherven komen uit de ECHTE stash, niet uit het niets (gemeten ${opening.uitNiets} getoverd)`);
   t(opening.scherven === 3 && /DREMPELTAFEL/.test(opening.kop), 'drie scherven in de tas en de kop leest DE DREMPELTAFEL');
   await page.screenshot({ path: path.join(SHOTS, '01-nissen.png') });
 
@@ -307,6 +312,7 @@ async function zetIn(page, gedwongen) {
     gedragen: (S.scherven || []).length,
     stash: (Codex.scherven || []).length,
     fase: (S.drempeltafel || {}).fase,
+    gedaan: !!(S.drempeltafel || {}).gedaan,
     doek: !!document.querySelector('#overlay-drempeltafel.open')
   }));
   t(naVoorbij.scherm === 'einde' && /ACT 2/.test(naVoorbij.html) && !naVoorbij.doek,
@@ -314,6 +320,7 @@ async function zetIn(page, gedwongen) {
   t(naVoorbij.gedragen === 0 && naVoorbij.stash === voorbij.stashVoor + 3,
     `de drie scherven zijn veilig gebankt (stash ${voorbij.stashVoor} -> ${naVoorbij.stash})`);
   t(naVoorbij.fase === null, "S.drempeltafel.fase blijft null — een herlaad hierna gaat naar de kaart, niet terug naar de tafel");
+  t(naVoorbij.gedaan === true, "en 'gedaan' valt (review F1): het nissen-vangnet in hervatScherm vuurt later in Act 2 niet opnieuw");
   t(page.__f.length === 0, 'geen paginafouten in de nissen' + (page.__f.length ? ': ' + page.__f[0] : ''));
   await ctx.close();
 
@@ -708,9 +715,15 @@ async function zetIn(page, gedwongen) {
   t(sb.gedaanVoor === false && /wand/i.test(sb.proloog) && !/troonzaal/i.test(sb.proloog),
     'de proloogtekst is die van de wand, en S.slachtblokGedaan staat nog uit zolang het blok open is');
   await page.screenshot({ path: path.join(SHOTS, '10-slachtblok-tafel.png') });
-  await page.evaluate(() => sluitSlachtblok(false));
-  await slaap(1300);
-  t(await page.evaluate(() => !!S.slachtblokGedaan), 'na het sluiten staat S.slachtblokGedaan aan — Act 3 biedt het blok niet nog eens aan');
+  /* REVIEW F1: de Act 3-gate valt alleen bij een ECHTE smeed. Hier smeden we er één (de spec
+     in S.gesmeed is precies wat smeedKaart achterlaat) en sluiten met gesmeed:true. */
+  await page.evaluate(() => {
+    S.gesmeed = S.gesmeed || {};
+    S.gesmeed.proef_tafelkling = { naam: 'De Proefkling', modules: [{ m: 'schade', p: 2 }], icoon: '🗡️' };
+    sluitSlachtblok(true);
+  });
+  await slaap(1600);
+  t(await page.evaluate(() => !!S.slachtblokGedaan), 'na een ECHTE smeed staat S.slachtblokGedaan aan — Act 3 biedt het blok niet nog eens aan');
 
   await sluitReveals(page, 10);
   const klaar = await wachtOp(page, () => !!(S.drempeltafel && S.drempeltafel.gedaan), null, 15000);
@@ -752,12 +765,12 @@ async function zetIn(page, gedwongen) {
   /* ==========================================================================
      12 — dev-taint op het brandmerk
      ========================================================================== */
-  kop('12 · dev-taint: het dubbel-brandmerk bereikt de Codex niet vanuit een dev-run');
+  kop('12 · dev-taint: een dev-run schrijft HELEMAAL geen erfstuk (review F1)');
   ({ ctx, page } = await open(browser));
   const taint = await page.evaluate(() => {
-    const maak = dev => {
+    const maak = (dev, daily) => {
       Codex.slachtblok = {};
-      S.daily = false; S._devRun = dev;
+      S.daily = !!daily; S._devRun = !!dev;
       S.gesmeed = { proef_kling: { naam: 'De Proef', dubbel: true, punten: { schade: 2 } } };
       S.dek = S.dek.filter(c => c.id !== 'proef_kling');
       S.dek.push({ id: 'proef_kling', uid: 90001 });
@@ -765,15 +778,41 @@ async function zetIn(page, gedwongen) {
       const h = S.held || 'slachter';
       return Codex.slachtblok[h] || null;
     };
-    const metTaint = maak(true);
-    const zonder = maak(false);
-    return { poortDev: (S._devRun = true, codexSchrijfToegestaan()), metTaint, zonder };
+    const metTaint = maak(true, false);
+    const dailyRun = maak(false, true);
+    const zonder = maak(false, false);
+    /* REVIEW F1: de gesplitste poortwachters, elk met hun eigen vraag */
+    S.daily = false; S._devRun = true;
+    const poort = { devIs: isDevRun(), devErf: magErfstukSchrijven() };
+    S.daily = true; S._devRun = false;
+    poort.dailyIs = isDevRun(); poort.dailyErf = magErfstukSchrijven();
+    poort.oud = codexSchrijfToegestaan();
+    S.daily = false;
+    return { poort, metTaint, dailyRun, zonder };
   });
-  t(taint.poortDev === false, 'codexSchrijfToegestaan() is false zodra S._devRun staat');
-  t(!!taint.metTaint && taint.metTaint.dubbel === false && taint.metTaint.charges === 3,
-    `dev-run: het erfstuk erft dubbel:false en de normale 3 ladingen (gemeten dubbel=${taint.metTaint && taint.metTaint.dubbel}, charges=${taint.metTaint && taint.metTaint.charges})`);
+  t(taint.poort.devIs === true && taint.poort.devErf === false,
+    'isDevRun() ziet de taint en magErfstukSchrijven() sluit hem uit');
+  t(taint.poort.dailyIs === false && taint.poort.dailyErf === false && taint.poort.oud === false,
+    'een daily is GEEN dev-run, maar magErfstukSchrijven() (en de oude naam codexSchrijfToegestaan) sluit haar wel uit');
+  t(taint.metTaint === null,
+    `dev-run: er komt HELEMAAL geen erfstuk in Codex.slachtblok (gemeten ${JSON.stringify(taint.metTaint)})`);
+  t(!!taint.dailyRun && taint.dailyRun.dubbel === false && taint.dailyRun.charges === 3,
+    `daily: het gewone erfstuk blijft, maar zonder brandmerk (gemeten dubbel=${taint.dailyRun && taint.dailyRun.dubbel}, charges=${taint.dailyRun && taint.dailyRun.charges})`);
   t(!!taint.zonder && taint.zonder.dubbel === true && taint.zonder.charges === 1,
     `schone run: het brandmerk erft mét dubbel:true en ÉÉN lading (gemeten charges=${taint.zonder && taint.zonder.charges})`);
+  /* REVIEW F1: met twee gesmede kaarten in het dek erft de GEBRANDMERKTE, niet de eerste in dekvolgorde */
+  const tweeSpecs = await page.evaluate(() => {
+    Codex.slachtblok = {};
+    S.daily = false; S._devRun = false;
+    S.gesmeed = { eerste_kling: { naam: 'Eerste', punten: {} }, tweede_kling: { naam: 'Tweede', dubbel: true, punten: {} } };
+    S.dek = S.dek.filter(c => c.id !== 'eerste_kling' && c.id !== 'tweede_kling');
+    S.dek.push({ id: 'eerste_kling', uid: 90002 });
+    S.dek.push({ id: 'tweede_kling', uid: 90003 });
+    registreerRun(true);
+    return Codex.slachtblok[S.held || 'slachter'] || null;
+  });
+  t(!!tweeSpecs && tweeSpecs.naam === 'Tweede' && tweeSpecs.dubbel === true,
+    `twee gesmede kaarten in het dek: het erfstuk pakt de GEBRANDMERKTE spec (gemeten '${tweeSpecs && tweeSpecs.naam}')`);
   t(page.__f.length === 0, 'geen paginafouten bij de taint-proef' + (page.__f.length ? ': ' + page.__f[0] : ''));
   await ctx.close();
 
@@ -820,6 +859,10 @@ async function zetIn(page, gedwongen) {
       };
     });
     t(!!balk && balk.sticky === 'sticky', `${scherm.naam}: de knoppenbalk is sticky`);
+    /* REVIEW F1: de tafelbalk hangt boven de ladder en krijgt daarom haar EIGEN, dichtere doek
+       (tot 92% dekkend) — met het gedeelde verloop las de ladderrij door de knoplabels. */
+    const doek = await page.evaluate(() => { const b = document.querySelector('#overlay-drempeltafel .sb-balk'); return b ? getComputedStyle(b).backgroundImage : ''; });
+    t(/0\.97\)\s*92%/.test(doek), `${scherm.naam}: de tafelbalk heeft haar eigen dichte doek tot 92% (gemeten '${String(doek).slice(0, 80)}')`);
     t(!!balk && balk.bottom <= balk.vh + 1 && balk.top >= 0 && balk.hoogte > 0 && balk.knoppen.every(k => k.onder <= balk.vh + 1 && k.boven >= 0),
       `${scherm.naam}: de knoppenbalk staat volledig in beeld zonder scrollen (balk ${Math.round(balk.top)}-${Math.round(balk.bottom)} in ${balk.vh} px)`);
     t(!!balk && balk.docBreed <= balk.vw + 1 && balk.ovBreed <= balk.vw + 1,
@@ -847,6 +890,142 @@ async function zetIn(page, gedwongen) {
     t(page.__f.length === 0, `${scherm.naam}: geen paginafouten` + (page.__f.length ? ': ' + page.__f[0] : ''));
     await ctx.close();
   }
+
+  /* ==========================================================================
+     15 — DE REVIEW-FIXES (F1). Eén controle per gesloten vondst, zodat ze niet
+     stilletjes terugkomen.
+     ========================================================================== */
+  kop('15 · review-fixes F1');
+  ({ ctx, page } = await open(browser));
+
+  /* (1) GEEN GRATIS GENEZING — een maxHp-relikwie inzetten en winnen geeft exact terug wat
+     de inname kostte. Vroeger nam de bank alleen maxHp af en gaf de winst maxHp ÉN hp terug:
+     +8 HP uit het niets per gewonnen ronde (met het_grootboek +12). */
+  await zetTafel(page, 'rad', 'relikwie', 1, []);
+  const rfGenVoor = await page.evaluate(() => { S.hp = 100; renderDrempeltafel(); return { hp: S.hp, maxHp: S.maxHp, relInzet: S.drempeltafel.relInzet }; });
+  const rfGenIn = await zetIn(page, true);
+  await speelUit(page, 'rad');
+  const rfGenNa = await page.evaluate(() => ({ hp: S.hp, maxHp: S.maxHp, rel: (S.relikwieen || []).slice(), fase: (S.drempeltafel || {}).fase }));
+  t(rfGenVoor.relInzet === 'bloedrobijn' && rfGenVoor.hp === 100 && rfGenVoor.maxHp === 220,
+    `vertrekpunt 100/220 met bloedrobijn op het spel (gemeten ${rfGenVoor.hp}/${rfGenVoor.maxHp}, inzet ${rfGenVoor.relInzet})`);
+  t(rfGenIn.hp === 92 && rfGenIn.maxHp === 212 && rfGenIn.rel.length === 0,
+    `de inname neemt hp ÉN maxHp mee: 100/220 -> ${rfGenIn.hp}/${rfGenIn.maxHp}`);
+  t(rfGenNa.hp === 100 && rfGenNa.maxHp === 220 && rfGenNa.rel.indexOf('bloedrobijn') >= 0,
+    `winst geeft exact terug wat de bank nam: ${rfGenNa.hp}/${rfGenNa.maxHp} — geen HP uit het niets`);
+
+  /* (2) HET NOODLUIK — dek op de vloer, te weinig HP, geen relikwie: 'Zet in' stond aan maar
+     deed niets en 'Stoppen' stond uit. Die save hield zichzelf in stand: run permanent dood. */
+  await zetTafel(page, 'rad', 'kaart', 1, []);
+  const rfSlot = await page.evaluate(() => {
+    S.dek = S.dek.slice(0, 1); S.hp = 12; S.relikwieen = []; S.drempeltafel.relInzet = null;
+    renderDrempeltafel();
+    const zi = document.querySelector('[data-dt="zet-in"]'), st = document.querySelector('[data-dt="stop"]');
+    return {
+      opties: dtInzetOpties().map(o => o.kan),
+      zetInUit: !!(zi && zi.disabled), zetInLabel: (zi || {}).textContent || '',
+      stopUit: !!(st && st.disabled), stopLabel: (st || {}).textContent || ''
+    };
+  });
+  t(rfSlot.opties.every(k => k === false), `dek 1, 12 HP en geen relikwie: geen enkele inzet is mogelijk (gemeten ${rfSlot.opties.join('/')})`);
+  t(rfSlot.zetInUit === true, `'Zet in' staat uit i.p.v. dood te klikken — '${rfSlot.zetInLabel.trim()}'`);
+  t(rfSlot.stopUit === false && /tafel verlaten/i.test(rfSlot.stopLabel), `het noodluik staat aan — '${rfSlot.stopLabel.trim()}'`);
+  await page.evaluate(() => { const b = document.querySelector('[data-dt="stop"]'); if (b) b.click(); });
+  await slaap(350);
+  const rfNood = await page.evaluate(() => ({ fase: (S.drempeltafel || {}).fase, pot: ((S.drempeltafel || {}).pot || []).length }));
+  t(rfNood.fase === 'encounter', `het noodluik brengt de speler naar de encounter i.p.v. een dode tafel (gemeten '${rfNood.fase}')`);
+
+  /* (3) DE RENDER IS IDEMPOTENT — dtRelInzetId rolde vroeger de keuze IN een render en riep
+     saveSpel() aan; elke re-render van de tafelfase raakte localStorage. */
+  await zetTafel(page, 'rad', 'relikwie', 2, ['beeltenis']);
+  const rfIdem = await page.evaluate(() => {
+    S.__f1sentinel = 'F1'; saveSpel(); delete S.__f1sentinel;
+    const voor = S.drempeltafel.relInzet;
+    renderDrempeltafel(); renderDrempeltafel(); renderDrempeltafel();
+    const rauw = localStorage.getItem('slayit_save_v1') || '';
+    return { voor, na: S.drempeltafel.relInzet, ongeschreven: rauw.indexOf('__f1sentinel') >= 0 };
+  });
+  t(!!rfIdem.voor && rfIdem.voor === rfIdem.na, `de relikwie-inzet blijft stabiel over drie renders (${rfIdem.voor})`);
+  t(rfIdem.ongeschreven === true, 'renderDrempeltafel() schrijft niet meer naar localStorage — de render muteert niets');
+
+  /* (4) 'LOOP VOORBIJ' AAN HET TAFEL-BLOK verbrandde sport III én sport IV: de vlag viel ook
+     zonder smeed, dus de Act 3-gate was op en er was niets uitbetaald. */
+  await page.evaluate(() => { const ov = document.getElementById('overlay-drempeltafel'); if (ov) ov.remove(); });
+  await page.evaluate(() => {
+    S.slachtblokGedaan = false; S.gesmeed = {};
+    S.drempeltafel = dtVerseState(); S.drempeltafel.dubbel = true;
+    window.__f1sport = false;
+    keerTafelSportUit('slachtblok', () => { window.__f1sport = true; });
+  });
+  const rfBlokOpen = await wachtOp(page, () => { const ov = document.getElementById('overlay-slachtblok'); return !!(ov && ov.classList.contains('open')); }, null, 9000);
+  await page.evaluate(() => sluitSlachtblok(false));
+  await slaap(900);
+  const rfWandel = await page.evaluate(() => ({ gedaan: !!S.slachtblokGedaan, dubbel: !!(S.drempeltafel && S.drempeltafel.dubbel), klaar: !!window.__f1sport }));
+  t(rfBlokOpen && rfWandel.klaar, "'Loop voorbij' sluit het blok en de uitbetaling loopt gewoon door");
+  t(rfWandel.gedaan === false, 'wegklikken kost de Act 3-gate NIET: S.slachtblokGedaan blijft uit');
+  t(rfWandel.dubbel === true, 'en de sport IV-intentie blijft staan voor het blok verderop in de afdaling');
+
+  /* (5) SPORT I NOEMT DE PLAAT BIJ NAAM — 'gesmeed_kaart' heeft geen KAARTEN-def en stond
+     rauw in de melding (kans 3/16 per uitbetaling). */
+  const rfNaam = await page.evaluate(() => {
+    document.querySelectorAll('#meldingen .toast').forEach(el => el.remove());
+    S.beeltenissen = SMEED_BEELTENISSEN.filter(id => id !== 'gesmeed_kaart');
+    keerTafelSportUit('beeltenis', () => {});
+    return [...document.querySelectorAll('#meldingen .toast')].map(el => el.textContent).join(' | ');
+  });
+  t(/SPORT I/.test(rfNaam) && /Het Gesmede Werk/.test(rfNaam) && !/gesmeed_kaart/.test(rfNaam),
+    `sport I noemt de plaat bij naam i.p.v. haar art-id: '${rfNaam.slice(0, 110)}'`);
+
+  t(page.__f.length === 0, 'geen paginafouten bij de review-fixes (1-5)' + (page.__f.length ? ': ' + page.__f.join(' | ') : ''));
+  await page.screenshot({ path: path.join(SHOTS, '15-review-fixes.png') });
+  await ctx.close();
+
+  /* (6) ECHT HERLADEN MET OPEN NISSEN — de tafel verdwijnt (bewust: anders heropent 'Loop
+     voorbij' + herlaad haar eindeloos), maar de gedragen scherven bleven 'at risk' en waren
+     bij een dood alsnog kwijt. Nu committeert toonDrempeltafel de verse state mee, zodat
+     hervatScherm ze bij de herlaad alsnog bankt. */
+  kop('15b · echte herlaad terwijl de nissen openstaan');
+  ({ ctx, page } = await open(browser));
+  await page.evaluate(() => {
+    Codex.scherven = ['vlamwachter_baas', 'vlamwachter_figuur', 'vlamwachter_episch', 'drops_figuur'];
+    bewaarCodex();
+    devDrempeltafel();   /* haalt er drie uit de BANK, opent de nissen en saved */
+  });
+  await slaap(600);
+  const rfVoor = await page.evaluate(() => ({
+    gedragen: (S.scherven || []).length, stash: (Codex.scherven || []).length,
+    fase: (S.drempeltafel || {}).fase, inSave: (localStorage.getItem('slayit_save_v1') || '').indexOf('drempeltafel') >= 0
+  }));
+  t(rfVoor.gedragen === 3 && rfVoor.stash === 1, `drie scherven uit de bank in de tas (bank ${rfVoor.stash} over)`);
+  t(rfVoor.fase === null && rfVoor.inSave === true,
+    'de verse tafelstate staat MEE in de save terwijl fase nog null is — de nissen zijn dus herkenbaar na een herlaad');
+  await page.reload({ waitUntil: 'load' }); await slaap(800);
+  await spionnen(page, true);
+  await page.evaluate(() => { doorgaan(); });
+  await slaap(700);
+  const rfNa = await page.evaluate(() => ({
+    scherm: document.body.dataset.scherm, doek: !!document.getElementById('overlay-drempeltafel'),
+    gedragen: (S.scherven || []).length, stash: (Codex.scherven || []).length,
+    gedaan: !!(S.drempeltafel || {}).gedaan
+  }));
+  t(rfNa.scherm === 'kaart' && !rfNa.doek, 'na de herlaad staat de speler op de afdaalkaart en is de tafel weg (zoals bedoeld)');
+  t(rfNa.gedragen === 0 && rfNa.stash === 4,
+    `maar de tas is wél veilig gebankt: 3 gedragen -> bank ${rfNa.stash} (was 1)`);
+  t(rfNa.gedaan === true, "de tafel is afgesloten met 'gedaan' — het vangnet vuurt niet nog eens tijdens Act 2");
+
+  /* (7) DE DEV-TAINT LEKT NIET MEER NAAR DE BANK — devDrempeltafel tovert scherven uit het
+     niets als je stash leeg is; 'Loop voorbij' bankte die daarna alsnog in de Codex. */
+  const rfTaintBank = await page.evaluate(() => {
+    Codex.scherven = []; S.scherven = []; S._devScherven = [];
+    devDrempeltafel();
+    const uitNiets = (S._devScherven || []).slice();
+    bankGedragen();
+    return { uitNiets: uitNiets.length, gedragen: (S.scherven || []).length, stash: (Codex.scherven || []).length, taint: !!S._devRun };
+  });
+  t(rfTaintBank.taint === true && rfTaintBank.uitNiets === 3, `devDrempeltafel noteert zijn drie uit-het-niets-scherven (gemeten ${rfTaintBank.uitNiets})`);
+  t(rfTaintBank.stash === 0 && rfTaintBank.gedragen === 0, `bankGedragen laat ze vallen i.p.v. de cross-run-bank te voeden (stash ${rfTaintBank.stash})`);
+  t(page.__f.length === 0, 'geen paginafouten bij de herlaad- en taintproef' + (page.__f.length ? ': ' + page.__f.join(' | ') : ''));
+  await page.screenshot({ path: path.join(SHOTS, '15b-herlaad-nissen.png') });
+  await ctx.close();
 
   console.log('\n============================================');
   console.log(fout ? fout + ' FOUT(EN), ' + ok + ' ok' : 'ALLES GROEN — ' + ok + ' controles');

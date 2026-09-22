@@ -186,10 +186,6 @@ function dtVerfraai(wortel) {
    ============================================================ */
 function toonDrempeltafel(naSluit) {
   if (typeof S === 'undefined' || !S) return;
-  /* PLAN §2.1: saveSpel() als ALLEREERSTE statement. Dit is de enige commit van de
-     tafel-opening: volgendeAct saved vlak vóór toonActOvergang, maar die tak halen we
-     nooit. Zonder deze save spoelt een herlaad hier terug tot vóór de Slijmkoning. */
-  saveSpel();
   if (!S.drempeltafel) S.drempeltafel = dtVerseState();
   const st = S.drempeltafel;
   /* defensief aanvullen: een save van een oudere bouw (of een half object) mag niets breken */
@@ -197,6 +193,17 @@ function toonDrempeltafel(naSluit) {
   if (!st.ronde || st.ronde < 1) st.ronde = 1;
   if (!st.inzet) st.inzet = 'kaart';
   if (typeof st.dekVerlies !== 'number') st.dekVerlies = 0;
+  /* staat er een tafel open zonder relikwie-inzet (save van een oudere bouw, of een stuk dat
+     intussen weg is), dan rolt hij hier één keer — bij het OPENEN, niet tijdens een render. */
+  if (st.fase === 'tafel' && !st.relInzet) dtKiesRelInzet();
+  /* PLAN §2.1: saveSpel() meteen bij de opening. Dit is de enige commit van de tafel-opening:
+     volgendeAct saved vlak vóór toonActOvergang, maar die tak halen we nooit. Zonder deze
+     save spoelt een herlaad hier terug tot vóór de Slijmkoning.
+     REVIEW F1 — de verse state gaat MEE in die save (hij stond er vroeger vóór). fase blijft
+     null, dus een herlaad op het nissenscherm verliest de tafel nog steeds; maar nu wéét
+     hervatScherm dat er een tafel openstond en kan hij de gedragen tas alsnog bankieren in
+     plaats van haar 'at risk' te laten hangen. */
+  saveSpel();
 
   /* de scène: het gevecht-scherm loslaten, de poortplaat eronder, muziek stil */
   toonScherm('einde');
@@ -330,12 +337,15 @@ function dtHaalWegScherf(sid) {
   renderDrempeltafel();
 }
 /* 'Loop voorbij' is GEEN doodlopend einde: de rest van uw tas bankt veilig en de act-overgang
-   speelt zoals altijd. fase blijft null → een herlaad hierna gaat gewoon naar de kaart. */
+   speelt zoals altijd. fase blijft null → een herlaad hierna gaat gewoon naar de kaart.
+   'gedaan' valt hier wél (review F1): de tafel IS afgehandeld. Zonder die vlag zou de
+   nissen-vangnet in hervatScherm bij élke latere herlaad in Act 2 opnieuw vuren en je
+   tijdens de afdaling gevonden scherven ongevraagd bankieren. */
 function dtLoopVoorbij() {
   if (!_dt || dtFase() !== 'nissen' || _dt.bezig) return;
   bankGedragen();
   const st = dtSt();
-  if (st) st.fase = null;
+  if (st) { st.fase = null; st.gedaan = true; }
   saveSpel();
   sluitDrempeltafel();
 }
@@ -348,6 +358,7 @@ function dtVoedDrempel() {
   const st = dtSt();
   st.fase = 'tafel'; st.ronde = 1; st.pot = []; st.spel = null; st.uitslag = null;
   st.inzetData = null; st.relInzet = null; st.dekVerlies = 0;
+  dtKiesRelInzet();   /* de relikwie-inzet rolt bij de RONDESTART, nooit tijdens een render */
   saveSpel();
   _dt.bezig = false;
   Klank.sfx('zwareklap');
@@ -357,19 +368,27 @@ function dtVoedDrempel() {
 /* ============================================================
    FASE 2 — DE TAFEL
    ============================================================ */
-/* welk relikwie staat deze ronde op het spel? Eén keer per ronde gekozen en meteen
+/* welk relikwie staat deze ronde op het spel? Eén keer per RONDESTART gerold en meteen
    gepersisteerd: anders kan de speler door heen en weer te klikken (of te herladen)
-   net zo lang her-rollen tot de bank naar zijn minst geliefde relikwie kijkt. */
+   net zo lang her-rollen tot de bank naar zijn minst geliefde relikwie kijkt.
+   REVIEW F1: die worp zat vroeger IN dtRelInzetId, en die wordt vanuit dtTafelHtml
+   aangeroepen — een pure render die dan muteerde en saveSpel() deed (elke re-render van de
+   tafelfase raakte localStorage, en renderDrempeltafel() was niet idempotent). Rollen
+   gebeurt nu alleen nog bij de rondestart (dtKiesRelInzet); dtRelInzetId LEEST uitsluitend. */
+function dtKiesRelInzet() {
+  const st = dtSt();
+  if (!st || typeof S === 'undefined' || !S) return null;
+  const kandidaten = (S.relikwieen || []).filter(r => { const d = dtRelDef(r); return d && !d.start; });
+  st.relInzet = kandidaten.length ? kiesUit(kandidaten) : null;
+  return st.relInzet;
+}
 function dtRelInzetId() {
   const st = dtSt();
-  if (!st || !S) return null;
-  const kandidaten = (S.relikwieen || []).filter(r => { const d = dtRelDef(r); return d && !d.start; });
-  if (!kandidaten.length) { st.relInzet = null; return null; }
-  if (!st.relInzet || !kandidaten.includes(st.relInzet)) {
-    st.relInzet = kiesUit(kandidaten);
-    saveSpel();   /* meteen vastleggen: een herlaad mag de keuze niet opnieuw rollen */
-  }
-  return st.relInzet;
+  if (!st || typeof S === 'undefined' || !S || !st.relInzet) return null;
+  /* het gekozen stuk moet nog in bezit zijn én nog inzetbaar (een relikwie dat intussen weg
+     is, of een save van een andere bouw) — anders staat er deze ronde niets op het spel. */
+  const d = dtRelDef(st.relInzet);
+  return (d && !d.start && (S.relikwieen || []).indexOf(st.relInzet) >= 0) ? st.relInzet : null;
 }
 function dtMagKaartInzetten() { return !!(S && Array.isArray(S.dek) && S.dek.length > DT_DEKVLOER); }
 function dtInzetOpties() {
@@ -418,10 +437,17 @@ function dtTafelHtml() {
   }
 
   const kanStoppen = st.pot.length >= 2;
+  /* HET NOODLUIK (review F1). Kan de bank NIETS meer innemen — dek op de vloer, te weinig HP
+     en geen af te staan relikwie — dan is 'Zet in' een dode knop, terwijl 'Stoppen' uit stond
+     zolang de pot < 2 was. Die save hield zichzelf in stand (hervatScherm stuurt terug naar
+     deze tafel), dus de run was onherstelbaar dood. Nu sluit de tafel zonder tol. */
+  const geenInzet = !opties.some(o => o.kan);
   const laagste = st.pot.length ? dtLadderDef(st.pot[0]).kort : '';
   /* de lange staart zit in een eigen span: op een smal/kort scherm verbergt mobiel.css 'm,
      want dezelfde uitleg staat dan al in de tafelvoet eronder. */
-  const stopTekst = kanStoppen
+  const stopTekst = geenInzet
+    ? 'De tafel verlaten<span class="dt-stop-lang"> — de bank kan niets meer innemen</span>'
+    : kanStoppen
     ? `Stoppen<span class="dt-stop-lang"> — de wand houdt uw laagste sport (${laagste})</span>`
     : 'Stoppen<span class="dt-stop-lang"> — u hebt nog niets om te houden</span>';
 
@@ -471,8 +497,8 @@ function dtTafelHtml() {
       ${potBlok}
       <p class="dt-tafelvoet">Ronde ${st.ronde}: knalkans ${kans}%. Wint u, dan klimt u een sport; knalt u, dan valt u van de hele ladder. Stoppen kan alleen tussen rondes: u houdt alles behalve uw laagste sport — de wand wil altijd iets.</p>
       <div class="sb-balk">
-        <button class="knop-stil" ${kanStoppen ? '' : 'disabled'} data-dt="stop">${stopTekst}</button>
-        <button class="knop-groot" ${st.spel ? '' : 'disabled'} data-dt="zet-in">🜂 ${st.spel ? 'Zet in — ' + spelNaam : 'Kies een spel'}</button>
+        <button class="knop-stil" ${(kanStoppen || geenInzet) ? '' : 'disabled'} data-dt="stop">${stopTekst}</button>
+        <button class="knop-groot" ${(st.spel && !geenInzet) ? '' : 'disabled'} data-dt="zet-in">🜂 ${geenInzet ? 'De bank vindt niets' : st.spel ? 'Zet in — ' + spelNaam : 'Kies een spel'}</button>
       </div>
     </div>
   </div>`;
@@ -495,10 +521,19 @@ function dtZetTab(id) {
   Klank.sfx('klik');
   renderDrempeltafel();
 }
-/* stoppen kan pas vanaf TWEE sporten: na één winst is stoppen gelijk aan niets houden */
+/* stoppen kan pas vanaf TWEE sporten: na één winst is stoppen gelijk aan niets houden.
+   ÉÉN uitzondering (review F1): kan de bank niets meer innemen, dan is dit het NOODLUIK uit
+   dtTafelHtml. De tafel sluit dan zonder tol — er valt niets meer te spelen, en zonder die
+   uitgang hield de save zichzelf in stand (hervatScherm stuurt terug naar deze tafel). */
 function dtStop() {
   const st = dtSt();
-  if (!_dt || dtFase() !== 'tafel' || _dt.bezig || st.pot.length < 2) return;
+  if (!_dt || dtFase() !== 'tafel' || _dt.bezig) return;
+  if (!dtInzetOpties().some(o => o.kan)) {
+    melding('De bank vindt niets meer om in te nemen. De tafel sluit — de gang erachter niet.');
+    dtNaarEncounter();
+    return;
+  }
+  if (st.pot.length < 2) return;
   const weg = dtLadderDef(st.pot[0]).kort;
   st.pot = st.pot.slice(1);              /* de wand houdt de LAAGSTE sport */
   Klank.sfx('debuff');
@@ -529,22 +564,45 @@ function dtNeemInzet() {
   }
   const rid = dtRelInzetId();
   if (!rid) return null;
-  dtNeemRelikwie(rid);
-  return { soort: 'relikwie', id: rid, naam: ((dtRelDef(rid) || {}).naam || 'Uw relikwie') };
+  const verzet = dtNeemRelikwie(rid);
+  /* de WERKELIJKE verzetting mee in de inzetdata: alleen zo kan winst exact teruggeven wat de
+     inname kostte, ook na een herlaad (zie dtGeefRelikwieTerug). */
+  return { soort: 'relikwie', id: rid, naam: ((dtRelDef(rid) || {}).naam || 'Uw relikwie'),
+    maxDelta: verzet.maxDelta, hpDelta: verzet.hpDelta };
 }
 /* het relikwie uit handen geven. NIET via geefRelikwie/verwijder-helpers: die zouden de
-   reveal-ceremonie, het spaarvarken-goud en de schrijn-lading opnieuw afvuren. */
+   reveal-ceremonie, het spaarvarken-goud en de schrijn-lading opnieuw afvuren.
+   REVIEW F1 — GRATIS GENEZING: de inname verlaagde alleen maxHp (met een clamp), de teruggave
+   verhoogde maxHp ÉN hp. Wie met 100/220 een bloedrobijn inzette en won, stond daarna op
+   108/220: +8 HP uit het niets, per gewonnen ronde. Nu neemt de inname ook de HP terug die het
+   relikwie ooit GAF, en geeft de winst exact die twee getallen weer terug. */
 function dtNeemRelikwie(id) {
   S.relikwieen = (S.relikwieen || []).filter(r => r !== id);
-  const d = dtMaxHpDelta(id);
-  if (d) { S.maxHp = Math.max(1, S.maxHp - d); if (S.hp > S.maxHp) S.hp = S.maxHp; }
+  const d = dtMaxHpDelta(id), voorMax = S.maxHp, voorHp = S.hp;
+  if (d) {
+    S.maxHp = Math.max(1, S.maxHp - d);
+    if (d > 0) S.hp = Math.max(1, S.hp - d);   /* het stuk gaf die HP bij het oppakken */
+    if (S.hp > S.maxHp) S.hp = S.maxHp;
+  }
   renderTopbalk();
+  return { maxDelta: S.maxHp - voorMax, hpDelta: S.hp - voorHp };
 }
-function dtGeefRelikwieTerug(id) {
+function dtGeefRelikwieTerug(id, verzet) {
   if (!S.relikwieen) S.relikwieen = [];
   if (!S.relikwieen.includes(id)) S.relikwieen.push(id);
-  const d = dtMaxHpDelta(id);
-  if (d) { S.maxHp = Math.max(1, S.maxHp + d); if (d > 0) S.hp = Math.min(S.maxHp, S.hp + d); if (S.hp > S.maxHp) S.hp = S.maxHp; }
+  if (verzet && typeof verzet.maxDelta === 'number') {
+    /* exact de boekhouding van de inname terugdraaien (beide delta's zijn negatief bij een
+       +maxHp-relikwie) — nooit een nieuwe berekening, die kan afwijken van wat er werkelijk
+       is afgenomen zodra er een clamp tussen zat. */
+    S.maxHp = Math.max(1, S.maxHp - verzet.maxDelta);
+    S.hp = Math.max(1, S.hp - (verzet.hpDelta || 0));
+    if (S.hp > S.maxHp) S.hp = S.maxHp;
+  } else {
+    /* terugval voor een save van vóór deze fix (inzetData zonder delta's): alleen maxHp terug,
+       nooit gratis HP erbij. */
+    const d = dtMaxHpDelta(id);
+    if (d) { S.maxHp = Math.max(1, S.maxHp + d); if (S.hp > S.maxHp) S.hp = S.maxHp; }
+  }
   renderTopbalk();
 }
 function dtGeefInzetTerug() {
@@ -552,7 +610,7 @@ function dtGeefInzetTerug() {
   if (!d) return;
   if (d.soort === 'kaart' && d.kaart) { S.dek.push(d.kaart); st.dekVerlies = Math.max(0, (st.dekVerlies || 0) - 1); }
   else if (d.soort === 'hp') S.hp = Math.min(S.maxHp, S.hp + (d.n || 0));
-  else if (d.soort === 'relikwie' && d.id) dtGeefRelikwieTerug(d.id);
+  else if (d.soort === 'relikwie' && d.id) dtGeefRelikwieTerug(d.id, d);
   st.inzetData = null;
   renderTopbalk();
 }
@@ -1026,6 +1084,7 @@ function dtVerder() {
   if (st.uitslag && st.ronde < DT_LADDER.length) {
     st.ronde++;
     st.spel = null; st.uitslag = null; st.relInzet = null;
+    dtKiesRelInzet();   /* nieuwe ronde = nieuwe worp voor het relikwie dat op het spel staat */
     st.fase = 'tafel';
     saveSpel();
     Klank.sfx('klik');
@@ -1136,17 +1195,19 @@ function dtKlik(e) {
    DEV
    ============================================================ */
 /* DEV-SHORTCUT: de tafel meteen openen (naast devDrempel/devSlachtblok). Zet S._devRun,
-   zodat codexSchrijfToegestaan() deze run buiten de Codex houdt. Scherven komen eerst uit
-   je BANK; alleen als die leeg is verschijnen ze uit het niets — en dan zegt de melding dat. */
+   zodat isDevRun()/magErfstukSchrijven() deze run buiten de Codex en buiten elk erfstuk
+   houden. Scherven komen eerst uit je BANK; alleen als die leeg is verschijnen ze uit het
+   niets — en die worden apart genoteerd (S._devScherven), zodat bankGedragen ze straks niet
+   alsnog in de cross-run-stash schuift. */
 function devDrempeltafel(testScherven) {
   if (typeof S === 'undefined' || !S) { if (typeof nieuwSpel === 'function') nieuwSpel('slachter'); else return; }
-  S._devRun = true;   /* DEV-TAINT — zie codexSchrijfToegestaan in game.js */
+  S._devRun = true;   /* DEV-TAINT — zie isDevRun in game.js */
   const wens = (testScherven && testScherven.length) ? testScherven : ['vlamwachter_baas', 'vlamwachter_figuur', 'vlamwachter_episch'];
   let uitNiets = 0;
   wens.forEach(sid => {
     if (gedragen().includes(sid)) return;
     if (neemUitStash(sid)) draagScherf(sid);
-    else if (draagScherf(sid)) uitNiets++;
+    else if (draagScherf(sid)) { uitNiets++; (S._devScherven = S._devScherven || []).push(sid); }
   });
   S.act = Math.max(2, S.act || 1);
   S._verslagenBaas = S._verslagenBaas || 'de Slijmkoning';

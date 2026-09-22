@@ -1711,6 +1711,13 @@ body[data-modus="mobiel"] .dt-overlay .knop-stil { min-height: 44px; touch-actio
 body[data-modus="mobiel"] .dt-scherf { min-width: 44px; }
 body[data-modus="mobiel"] .dt-scherf:hover { transform: none; }   /* hover-lift plakt na een tik */
 
+/* EIGEN, DICHTER DOEK ONDER DE TAFELBALK (review F1). De gedeelde regel in style.css loopt
+   pas vanaf 78% naar dekkend en is boven 94% doorzichtig; onder de smeedbalk viel dat niet op,
+   maar de tafelbalk hangt boven de LADDER — op 800x360 en 412x915 las de ladderrij dwars door
+   het label 'Stoppen' (onder de alpha .85-grens van het mobiele meetprotocol). Alleen de
+   Drempeltafel: het Slachtblok blijft ongemoeid. */
+body[data-modus="mobiel"] .dt-overlay .sb-balk { background: linear-gradient(0deg, rgba(8, 4, 4, .97) 92%, transparent); }
+
 /* LIGGEND KORT — Thomas' eigen toestel (~360-420px hoog): hier is HOOGTE de schaarste,
    niet breedte. Alles wat geen speelveld is, klapt in: de doekkop (de speltitel is tijdens
    een spel al de kop), de bankhouder (zoals .sb-proloog-blok dat al doet) en de knoppenbalk.

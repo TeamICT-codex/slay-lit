@@ -323,12 +323,18 @@ function isOntgrendeld(mid) { return !!mys(mid).voltooid; }
 /* (noteerScherf + noteerRite — de oude per-mysterie-voortgang — zijn verwijderd:
    Scherven 2.0 werkt met de platte stash + het Drempel-ritueel hieronder) */
 function ontgrendelMetgezel(mid) { mys(mid).voltooid = true; bewaarCodex(); }
-/* DEV-TAINT + DAILY-GATE (v128, DE DREMPELTAFEL). Eén poortwachter voor álles wat de
-   CROSS-RUN Codex of een erfstuk schrijft: een dagelijkse afdaling schrijft nooit (eerlijk
-   veld voor het leaderboard, net als Schrijn en Slachtblok), en een run die via een
-   DEV-sprong is opgezet (S._devRun) evenmin. devDrempel zet die vlag, devDrempeltafel (P2)
-   doet hetzelfde; de uitbetaling van de tafel (P3) vraagt het hier. */
-function codexSchrijfToegestaan() { return !!S && !S.daily && !S._devRun; }
+/* DEV-TAINT + DAILY-GATE (v128, DE DREMPELTAFEL), GESPLITST NA REVIEW F1 — het waren twee
+   verschillende vragen onder één naam, en daardoor dekte de taint alleen de dubbel-vlag:
+     · isDevRun()            — deze run is via een DEV-sprong opgezet (devDrempel en
+       devDrempeltafel zetten de vlag; hij blijft in de save staan). Zo'n run mag NIETS naar
+       een erfstuk schrijven en zijn uit-het-niets-scherven nooit naar de cross-run-bank.
+     · magErfstukSchrijven() — daarbovenop houdt een dagelijkse afdaling de TAFELPRIJZEN
+       buiten de Codex (eerlijk veld voor het leaderboard, net als Schrijn en Slachtblok). */
+function isDevRun() { return !!(S && S._devRun); }
+function magErfstukSchrijven() { return !!S && !S.daily && !isDevRun(); }
+/* de oude naam, één op één magErfstukSchrijven: blijft bestaan voor de acceptatiesuite en
+   voor wie later nog een cross-run-schrijfactie wil poorten. */
+function codexSchrijfToegestaan() { return magErfstukSchrijven(); }
 
 /* ====== SCHERVEN 2.0 — een platte, inzetbare stash (verbruikbaar; ingelegd aan de Drempel) ======
    De 9 scherven staan als 'recept' in MYSTERIES[mid].scherven (dat bleef de vindlogica, ook nu
@@ -354,8 +360,21 @@ function bankScherf(sid) { if (!scherfDef(sid)) return false; const a = scherfSt
 function draagScherf(sid) { if (!scherfDef(sid)) return false; const a = gedragen(); if (!a.includes(sid)) a.push(sid); return true; }   /* in je gedragen tas (at risk) */
 function neemUitStash(sid) { const a = scherfStash(); const i = a.indexOf(sid); if (i >= 0) { a.splice(i, 1); bewaarCodex(); return true; } return false; }
 function neemGedragen(sid) { const a = gedragen(); const i = a.indexOf(sid); if (i >= 0) { a.splice(i, 1); return true; } return false; }
-/* bank alle gedragen scherven veilig op de stash (bij het verlaten van de Drempel + bij winst) */
-function bankGedragen() { gedragen().slice().forEach(bankScherf); if (S) { S.scherven = []; S.loadoutScherven = []; } }   /* na een veilige bank is niks meer 'inzet' → wis de loadout-markering (anders kapt een later HERvonden scherf met een stale loadout-id ten onrechte weg bij dood) */
+/* bank alle gedragen scherven veilig op de stash (bij het verlaten van de Drempel + bij winst).
+   DEV-TAINT (review F1): scherven die devDrempeltafel uit het NIETS maakte (lege stash) mogen de
+   cross-run-bank niet voeden — plan §2.3. Scherven die wél uit je echte stash kwamen bankt hij
+   gewoon terug, anders eet één DEV-sprong ze permanent op. */
+function bankGedragen() {
+  const vals = (S && Array.isArray(S._devScherven)) ? S._devScherven.slice() : [];
+  gedragen().slice().forEach(sid => {
+    const i = vals.indexOf(sid);
+    if (i >= 0) { vals.splice(i, 1); return; }   /* multiset: één valse scherf houdt één echte niet tegen */
+    bankScherf(sid);
+  });
+  /* na een veilige bank is niks meer 'inzet' → wis de loadout-markering (anders kapt een later
+     HERvonden scherf met een stale loadout-id ten onrechte weg bij dood) */
+  if (S) { S.scherven = []; S.loadoutScherven = []; S._devScherven = []; }
+}
 /* run-start loadout: verplaats gekozen scherven van de stash naar je gedragen tas (nu staan ze op het spel).
    We onthouden WELKE bewust zijn meegebracht (S.loadoutScherven): die zijn de inzet → kwijt bij dood. Wat je
    NADIEN tíjdens de run vindt is GEEN loadout en blijft bij dood behouden (zie toonEinde). */
@@ -408,19 +427,27 @@ function registreerRun(gewonnen) {
   if (gewonnen) Codex.wins = (Codex.wins || 0) + 1;
   /* HET SLACHTBLOK: win je mét een op het altaar gesmede kaart, dan wordt die
      GEBRANDMERKT in de Codex (één slot per held — de diepte onthoudt één naam) */
-  if (gewonnen && S && S.gesmeed) {
-    const runKaart = (S.dek || []).find(c => S.gesmeed[c.id]);
+  /* DE DEV-POORT STAAT OM HET HELE BLOK (review F1): hij zat eerst alleen op de dubbel-vlag,
+     dus een DEV-run schreef nog altijd een erfstuk naar de Codex. Plan §2.3 vraagt 'geen
+     erfstuk-schrijfactie op die vlag' — dus niets, ook geen gewoon brandmerk. */
+  if (gewonnen && S && S.gesmeed && !isDevRun()) {
+    /* een GEBRANDMERKTE spec heeft voorrang op dekvolgorde: vandaag smeedt een run hoogstens
+       één keer, maar zodra dat er twee kunnen worden (v129) mag het erfstuk niet stilletjes
+       op de eerste-de-beste gesmede kaart landen. */
+    const runKaart = (S.dek || []).find(c => S.gesmeed[c.id] && S.gesmeed[c.id].dubbel)
+      || (S.dek || []).find(c => S.gesmeed[c.id]);
     if (runKaart) {
       const runSpec = S.gesmeed[runKaart.id] || {};
       Codex.slachtblok = Codex.slachtblok || {};
       /* SPORT IV (v128): een DUBBEL gesmede kaart erft maar ÉÉN lading in plaats van drie —
          twee keer het effect als startkaart is met drie ladingen run-brekend. 'twee keer het
          effect, één keer de kost' leest ook natuurlijk als één lading.
-         DE POORT (P3): het brandmerk mag nooit vanuit een DEV-opgezette of dagelijkse run het
+         DE POORT: het brandmerk mag nooit vanuit een DEV-opgezette of dagelijkse run het
          ERFSTUK in — anders levert één DEV-sprong naar de tafel een permanent dubbele
          startkaart op. De run zelf houdt haar dubbele kling gewoon; enkel de cross-run kopie
-         blijft schoon (en valt dan terug op de normale drie ladingen). */
-      const erfDubbel = !!runSpec.dubbel && codexSchrijfToegestaan();
+         blijft schoon (en valt dan terug op de normale drie ladingen). De DEV-tak is hierboven
+         al afgevangen; wat hier nog telt is de daily. */
+      const erfDubbel = !!runSpec.dubbel && magErfstukSchrijven();
       Codex.slachtblok[h] = Object.assign({}, runSpec, { gebrandmerkt: true, dubbel: erfDubbel, charges: erfDubbel ? 1 : 3 });
     }
   }
@@ -9180,9 +9207,10 @@ function keerTafelSportUit(sport, na) {
     const vrij = SMEED_BEELTENISSEN.filter(id => !S.beeltenissen.includes(id));
     const nieuw = schud(vrij.slice()).slice(0, 3);
     nieuw.forEach(id => S.beeltenissen.push(id));
-    /* lookup-terugval: 'gesmeed_kaart' is een art-id zonder KAARTEN-def — toon dan het id,
-       nooit 'undefined' (en een onbekend id uit een latere lijst breekt hier evenmin). */
-    const namen = nieuw.map(id => (KAARTEN[id] && KAARTEN[id].naam) || id);
+    /* lookup-terugval in drie trappen: eigen naamtabel (voor art-ids zonder KAARTEN-def, zoals
+       'gesmeed_kaart'), dan de kaartnaam, dan een neutrale NL-zin — nooit 'undefined' en nooit
+       een rauw snake_case-id in de melding (review F1). */
+    const namen = nieuw.map(id => SMEED_BEELTENIS_NAAM[id] || (KAARTEN[id] && KAARTEN[id].naam) || 'een naamloze plaat');
     melding(nieuw.length
       ? `🖼️ SPORT I — drie beeltenissen zijn van jou: ${namen.join(' · ')}. Het blok kiest er later uit.`
       : '🖼️ SPORT I — je bezit alle beeltenissen al; de bank betaalt enkel in kaarten.');
@@ -9214,7 +9242,17 @@ function keerTafelSportUit(sport, na) {
        de Act 3-gate in doeNode slaat zichzelf straks over. Modus 'tafel' heeft zijn eigen
        proloog- en bestemmingstekst (de wand, niet de troonzaal). */
     if (typeof toonSlachtblok !== 'function') { klaar(); return; }
-    toonSlachtblok('tafel', () => { S.slachtblokGedaan = true; saveSpel(); klaar(); });
+    /* …maar alleen wanneer er ECHT gesmeed is (review F1). Klikte de speler in de proloog op
+       'Loop voorbij', dan werd de vlag toch gezet: sport III verdampte én de Act 3-gate was
+       verbruikt, dus wie sport III én IV won kreeg letterlijk niets — nu niet en straks niet.
+       Het aantal specs in S.gesmeed is de enige eerlijke maat: smeedKaart schrijft er één bij. */
+    const gesmeedVoor = Object.keys(S.gesmeed || {}).length;
+    toonSlachtblok('tafel', () => {
+      if (Object.keys(S.gesmeed || {}).length > gesmeedVoor) S.slachtblokGedaan = true;
+      else melding('🪓 Je laat je sport liggen. Het blok wacht dan verderop in de afdaling.');
+      saveSpel();
+      klaar();
+    });
     return;
   }
   if (sport === 'dubbel') {
@@ -10279,6 +10317,10 @@ const SMEED_ICONEN = ['🗡️', '🪓', '🔥', '☠️', '🌑', '⚡', '🐺'
 const SMEED_BEELTENISSEN = ['vlammenkling', 'executie', 'klingenstorm', 'brandmerk', 'innerlijk_vuur', 'asregen',
   'doornenhuid', 'metaalhuid', 'gifvlam', 'schaduwdans', 'martelaarsbloed', 'de_laatste_vonk',
   'duisterklauw', 'demonenvorm', 'wervelwind', 'gesmeed_kaart'];
+/* Vijftien van de zestien ids zijn ook KAARTEN en lenen dus hun kaartnaam. 'gesmeed_kaart' is
+   enkel art (de lege kling) en heeft geen KAARTEN-def, dus die zette zijn RAUWE id in de
+   speler-melding van sport I (review F1). Hier krijgt elke plaat zonder kaartnaam een naam. */
+const SMEED_BEELTENIS_NAAM = { gesmeed_kaart: 'Het Gesmede Werk' };
 function offerWaarde(c) {
   /* uitputtende tabel (lookup-bugklasse): 'gesmeed' viel op de 1-punt-fallback — een
      erfstuk woog als een Slag (debug-sweep). Nieuwe zeldzaamheden hier meteen wegen. */
@@ -10701,7 +10743,7 @@ function devSprongAct2() {
 /* DEV-SHORTCUT (v128): het scherven-ritueel bestaat niet meer, dus devDrempel is een ALIAS op
    devDrempeltafel (js/drempeltafel.js) geworden. Hij blijft staan omdat hij in de notities en
    in de console-gewoonte zit; de tafel zelf zet de scherven, de act én de DEV-taint (S._devRun,
-   zie codexSchrijfToegestaan). */
+   zie isDevRun/magErfstukSchrijven). */
 function devDrempel(testScherven) {
   if (typeof devDrempeltafel === 'function') { devDrempeltafel(testScherven); return; }
   melding('⚡ DEV: devDrempeltafel ontbreekt — js/drempeltafel.js is niet geladen.');
@@ -11153,7 +11195,7 @@ const DEV_MENU = [
       /* v128: het scherven-ritueel is DE DREMPELTAFEL geworden. Beide knoppen wonen in
          js/drempeltafel.js (bouwer P2) — vandaar de typeof-guard, zodat het menu ook zonder
          dat bestand blijft werken. ⚠ omdat ze allebei S._devRun zetten: vanaf dan schrijft de
-         run niets meer naar de Codex of naar een erfstuk (codexSchrijfToegestaan). */
+         run niets meer naar de Codex of naar een erfstuk (isDevRun). */
       { label: '⚠ 🜂 Drempeltafel (3 scherven)', tip: '⚠ Legt drie scherven in je gedragen tas (uit je bank als het kan) en opent de Drempeltafel. Taint: deze run schrijft niets meer naar de Codex.', doe: () => { if (typeof devDrempeltafel === 'function') devDrempeltafel(); else melding('⚡ DEV: devDrempeltafel ontbreekt — js/drempeltafel.js is niet geladen.'); } },
       { label: '⚠ 🜂 Drempeltafel: fase tafel', tip: '⚠ Springt rechtstreeks naar een fase van de tafel i.p.v. de nissen — voor gericht testen van tafel/spel/uitkomst. Taint: deze run schrijft niets meer naar de Codex.', doe: () => { if (typeof devDrempeltafelFase === 'function') devDrempeltafelFase('tafel'); else melding('⚡ DEV: devDrempeltafelFase ontbreekt — js/drempeltafel.js is niet geladen.'); } },
       { label: '🪓 Het Slachtblok', tip: 'Vult je dek zo nodig aan tot 12 kaarten (raakt je save) en opent de smeedkamer in altaar-modus.', doe: () => devSlachtblok() },
@@ -12179,6 +12221,16 @@ function kiesHeldEcht(id) {
    vandaar de typeof-guard, die game.js speelbaar houdt zolang dat bestand er niet is. */
 function hervatScherm() {
   if (S && S.drempeltafel && S.drempeltafel.fase && !S.drempeltafel.gedaan && typeof toonDrempeltafel === 'function') { toonDrempeltafel(); return; }
+  /* Stonden de NISSEN nog open (fase null) toen de speler herlaadde, dan is de tafel weg voor
+     de rest van de run — bewust, anders heropent 'Loop voorbij' + herlaad haar eindeloos. Maar
+     de gedragen scherven mogen daar niet óók nog aan opgaan: die bleven 'at risk' en waren bij
+     een dood alsnog kwijt, terwijl 'Loop voorbij' ze wél bankt (review F1). Bank ze hier dus
+     net zo, en sluit de tafel netjes af. */
+  if (S && S.drempeltafel && !S.drempeltafel.fase && !S.drempeltafel.gedaan) {
+    bankGedragen();
+    S.drempeltafel.gedaan = true;
+    saveSpel();
+  }
   renderKaartScherm();
 }
 function doorgaan() {
