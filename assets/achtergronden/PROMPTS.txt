@@ -871,6 +871,73 @@ Crisp, sharply defined edges; NO white glow, NO bloom. Square canvas (512x512 or
 assets/karakters/STATE-PROMPTS.txt onder "DE SLACHTER — TRAVERSAL", dropmap assets/karakters/.
 Later: per act een bredere baaspoort, Act 2/3-traversalobjecten en de frames van de andere helden.)
 
+------------------------ ACT 2 & 3 — TRAVERSAL-OBJECTEN (22 september 2026) ------------------------
+De P1b-reeks hierboven was alleen voor de Act 1-vertical-slice, maar haakBioom vraagt de
+vier traversalobjecten PER ACT op (js/wereld.js r355-370: 'afdaling_a' + act + '_' + naam).
+Voor Act 2 en Act 3 staat er nog niets, dus valt de wereld daar terug op de kale CSS-vormen.
+Zelfde dropmap als alles hierboven: assets/achtergronden/Afdaling/.
+
+!! DE MATEN ZIJN HARD, NIET VRIJBLIJVEND. De CSS die deze platen snijdt heeft GEEN
+act-qualifier (#scherm-wereld.heeft-ladder / .heeft-valgat in css/style.css), dus zodra
+een a2-/a3-plaat bestaat, wordt ze exact zo gesneden als de Act 1-plaat. De canvasregels
+in de Act 1-blokken hierboven zijn op dat punt VEROUDERD t.o.v. de platen die er liggen;
+hieronder staan de GEMETEN maten van afdaling_a1_ladder.webp en afdaling_a1_valgat.webp,
+en die zijn leidend:
+  - ladder: 1024x1536 (2:3). Beugel + hangende ketting in y 0-200 (de bovenste 13%),
+    de LAATSTE sport in y 1405-1536 (de onderste 8,5%), 9 gelijk verdeelde sporten
+    daartussen. De ladder zelf is maar ~35% van de doekbreedte, gecentreerd; de zijkanten
+    blijven transparant (klimmen kijkt alleen naar ladder.x, de breedte is puur decor).
+    Wijkt een plaat hiervan af, dan rekt of dupliceert de border-image zichtbaar.
+  - valgat: 1774x887 (2:1). Vloerlijn op 32% van boven (NIET 40%), het transparante gat
+    is de middelste ~28% van de breedte en staat een haar (~1%) RECHTS van het midden,
+    de twee stompen elk ~36% aan de buitenranden.
+Nog te doen in deze reeks: afdaling_a2_bordes / a2_nis_rust en afdaling_a3_bordes /
+a3_nis_rust (zelfde lus, zelfde dropmap).
+
+========================= afdaling_a2_ladder.png =========================
+(De KLIMBARE kettingladder van het Archief — NIET de rolbibliotheekladder, dat is het
+aparte decorstuk afdaling_a2_prop_ladder.png.)
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, no second copy, no variations.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A tall hanging CHAIN LADDER of a dead archive seen exactly from the front, isolated: two vertical chains of blackened archive iron hanging straight down from one heavy bracket at the very top of the canvas, joined by exactly NINE evenly spaced rungs of equal size and equal spacing all the way down — each rung a flat, worn black-iron filing-drawer front with its tiny brass pull still on it and a BLANK paper label slipped into the label holder. A few labels have come loose and curl; one rung is slightly bent; the lowest rung hangs a little crooked. Unique silhouette element: the top bracket is a giant black-iron paper clamp biting down on both chains, with a fan of blank yellowed index cards still caught in its jaw. Colour accent: cold blue-grey dust and rust on the chains, one faded regime-gold stamped band around the third rung, and a single warm amber bead of lamplight on the topmost rung (the only warm light in the archive).
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon — tilted COLD for this archive: blue-grey clerical 'system light', paper-yellow as a faint accent.
+
+Crisp, sharply defined edges; NO white glow, NO bloom. Tall portrait canvas 2:3, exactly 1024x1536: the ladder centered and only about 35% of the width, the bracket touching the TOP EDGE with the bracket and the free hanging chain together filling the top 13% of the height, the nine rungs evenly spaced below it, and the LAST rung sitting in the bottom 8.5% of the canvas (nothing below it). No characters, no wall, no shelving, no ground, no shadow, no text, no letters, no numbers, no frame, no UI. Painted illustration style only. Isolated on a fully transparent background, including between and around the chains and on both sides of the ladder.
+
+========================= afdaling_a2_valgat.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, no second copy, no variations.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A COLLAPSED SECTION of an archive gallery walkway seen exactly from the side: on the LEFT a short stub of the gallery edge ending in a jagged broken lip, on the RIGHT the matching stub with its own broken lip, and between them an open GAP where the walkway gave way. Both stubs show the same front face as the archive gallery: stacked black-iron drawer fronts and dark wooden shelf-fronts with BLANK paper labels, a few drawers torn half open at the break with yellowed cards spilling out. A small avalanche of loose blank sheets and index cards is still drifting down into the gap, one snapped wooden shelf-plank tumbling with them. Unique silhouette element: a wax-sealed string of contracts snapped off at the left lip and hanging down into the gap like a cut rope. Colour accent: cold blue-grey dust catching the light on every broken edge, one faint paper-yellow glow of loose cards, and one dull-red wax seal on the hanging string.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon — tilted COLD for this archive: blue-grey clerical 'system light', paper-yellow as a faint accent.
+
+Crisp, sharply defined edges; NO white glow, NO bloom. Landscape canvas 2:1, exactly 1774x887: the walkway line at 32% from the TOP (not lower), the two stubs each about 36% of the width at the outer edges, and the central GAP about 28% of the width sitting a hair (about 1%) RIGHT of the centre. The gap MUST be fully transparent (the shaft is drawn behind it in the game), as must everything above the walkway line and everything below the falling paper. No characters, no text, no letters, no numbers, no frame, no UI, no background. Painted illustration style only. Isolated on a fully transparent background, including the transparent gap.
+
+========================= afdaling_a3_ladder.png =========================
+(Bestandsnaam blijft 'ladder' — de code bouwt de naam uit het woord 'ladder'. Het object
+zelf mag de klimketting met haak van het Slachtblok zijn.)
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, no second copy, no variations.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A tall hanging CLIMBING CHAIN of the slaughter-block seen exactly from the front, isolated: two vertical heavy black-iron chains with gold-plated links hanging straight down from one massive bracket at the very top of the canvas, joined by exactly NINE evenly spaced rungs of equal size and equal spacing all the way down — each rung a short bar of scorched black iron with a gold-plated collar at each end, the gold flaking off to show the black metal underneath. A couple of rungs are warped by heat; the lowest rung hangs slightly crooked; thin smoke curls along the chains. Unique silhouette element: the top bracket is a huge gold-plated regime hook shaped like a crowned meat-hook, biting through both chains, with one short length of torn dark-red ribbon knotted to it. Colour accent: molten ember-red light glowing UP the underside of every rung from far below, storm-violet glints on the upper links, and arrogant polished gold on the hook and the collars.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches.
+
+Crisp, sharply defined edges; NO white glow, NO bloom. Tall portrait canvas 2:3, exactly 1024x1536: the chain ladder centered and only about 35% of the width, the hook bracket touching the TOP EDGE with the bracket and the free hanging chain together filling the top 13% of the height, the nine rungs evenly spaced below it, and the LAST rung sitting in the bottom 8.5% of the canvas (nothing below it). No characters, no wall, no ground, no shadow, no text, no letters, no numbers, no frame, no UI. Painted illustration style only. Isolated on a fully transparent background, including between and around the chains and on both sides of the ladder.
+
+========================= afdaling_a3_valgat.png =========================
+ONE single object, alone in the frame. This is one standalone image — NOT a sheet, NOT a grid, no second copy, no variations.
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+A BROKEN-OPEN SECTION of a scaffold terrace of the slaughter-block seen exactly from the side: on the LEFT a short stub of the terrace edge ending in a jagged broken lip, on the RIGHT the matching stub with its own broken lip, and between them an open GAP where the terrace floor was torn away. Both stubs show the same front face as the terrace ledge: huge cracked black basalt blocks with MOLTEN EMBER-RED SEAMS glowing between them, black-iron reinforcement bands with gold-plated rivets, one band snapped and curling outward at the break. A few basalt shards and a snapped black-iron beam are still tumbling down into the gap; thin smoke and ash rise from the broken lips. Unique silhouette element: a sheared-off gold-plated execution chain bolted to the right lip, its last links hanging free into the gap. Colour accent: one deep red-hot seam running right up to the left lip and glowing fiercely at the break, storm-violet in the smoke, arrogant polished gold on the rivets and the torn chain.
+
+Palette of black basalt and black iron, molten ember-red light glowing UP from cracks and vents BELOW (harsh hellish footlight — the light of the slaughter-block), storm-violet lightning accents in the darkness, and arrogant polished GOLD for everything the regime touches.
+
+Crisp, sharply defined edges; NO white glow, NO bloom. Landscape canvas 2:1, exactly 1774x887: the walkway line at 32% from the TOP (not lower), the two stubs each about 36% of the width at the outer edges, and the central GAP about 28% of the width sitting a hair (about 1%) RIGHT of the centre. The gap MUST be fully transparent (the shaft is drawn behind it in the game), as must everything above the walkway line and everything below the falling debris. No characters, no gore, no text, no letters, no numbers, no frame, no UI, no background. Painted illustration style only. Isolated on a fully transparent background, including the transparent gap.
+
 
 ################################################################################
 ############  GEVECHTSTONEEL — RONDE 3: ALLE RESTERENDE PLATEN OP DE STANDAARD (v122, 18 sep)  ###
