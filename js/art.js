@@ -772,21 +772,21 @@ const GROND = {
   'Act 1 achtergronden/GevechtstijlEPISCHGEVECHT2ACT1.webp': { grond: 61 },        /* v123: hergenereerd op de toneelstandaard (RONDE 3) */
   /* --- Act 2 — Het Archief --- */
   'Act 2 achtergronden/Gevechtstijl1act2.webp': { grond: 61 },                     /* v116: hergenereerd op de toneelstandaard (vloerrand 56%) */
-  'Act 2 achtergronden/Gevechtstijl2act2.webp': { grond: 68, midden: 57 },
+  'Act 2 achtergronden/Gevechtstijl2act2.webp': { grond: 67 },                     /* v127: re-roll RONDE 3; nissen nu alleen bovenaan, kale plint tot 64% */
   'Act 2 achtergronden/Gevechtstijl3act2.webp': { grond: 65 },                     /* v126: hergenereerd (RONDE 3); de stenen vloerlip ligt op 62% i.p.v. 56%, voeten 3% ervoor */
   'Act 2 achtergronden/Gevechtstijl4act2.webp': { grond: 62 },                     /* v126: hergenereerd op de toneelstandaard (RONDE 3), vloerrand 59% */
   'Act 2 achtergronden/Gevechtstijl5act2.webp': { grond: 61, midden: 56 },         /* toneelstandaard: vloerrand 56% */
   'Act 2 achtergronden/Gevechtstijl act2 EPISCH 1.webp': { grond: 61 },            /* v116: hergenereerd op de toneelstandaard */
   'Act 2 achtergronden/Gevechtstijl act2 EPISCH 2.webp': { grond: 61 },            /* v116: hergenereerd op de toneelstandaard */
-  'Act 2 achtergronden/Gevechtstijl act2 EPISCH 3.webp': { grond: 64 },
+  'Act 2 achtergronden/Gevechtstijl act2 EPISCH 3.webp': { grond: 58 },            /* v127: hergenereerd (RONDE 3), plintrand 54% */
   /* --- Act 3 — Het Slachtblok --- */
   'Act 3 achtergronden/Gevechtstijl Act 3 stijl 1.webp': { grond: 61, midden: 56 },
-  'Act 3 achtergronden/Gevechtstijl Act 3 stijl 2.webp': { grond: 63, midden: 55 },/* lavaval links: held op mobiel erin */
+  'Act 3 achtergronden/Gevechtstijl Act 3 stijl 2.webp': { grond: 61 },            /* v127: hergenereerd op de toneelstandaard (RONDE 3), kettinghek 56% */
   'Act 3 achtergronden/Gevechtstijl Act 3 stijl 3.webp': { grond: 61, midden: 56 },
-  'Act 3 achtergronden/Gevechtstijl Act 3 stijl 4.webp': { grond: 66 },            /* vuurschalen onder held/vijand 2 */
-  'Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 1.webp': { grond: 62 },
-  'Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 2.webp': { grond: 66 },     /* smalle brugarm */
-  'Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 3.webp': { grond: 62 },
+  'Act 3 achtergronden/Gevechtstijl Act 3 stijl 4.webp': { grond: 56 },            /* v127: hergenereerd (RONDE 3); stoeprand hoog op 46%, voeten op de rozet ervoor */
+  'Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 1.webp': { grond: 58 },     /* v127: hergenereerd (RONDE 3), stoeprand 54% */
+  'Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 2.webp': { grond: 56 },     /* v127: hergenereerd (RONDE 3), platformrand 51% */
+  'Act 3 achtergronden/Gevechtstijl Act 3 stijl EPISCH 3.webp': { grond: 56 },     /* v127: hergenereerd (RONDE 3), gietvloerrand 52% */
   /* --- het Raadzaal-drieluik (toneelstandaard): alle drie dezelfde grond, anders
          springt de vloer tijdens de arena-crossfade van Het Proces --- */
   'Act 3 achtergronden/Gevechtstijl Act 3 FINALE 1 zitting.webp': { grond: 61, midden: 56 },
