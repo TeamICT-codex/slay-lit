@@ -773,8 +773,8 @@ const GROND = {
   /* --- Act 2 — Het Archief --- */
   'Act 2 achtergronden/Gevechtstijl1act2.webp': { grond: 61 },                     /* v116: hergenereerd op de toneelstandaard (vloerrand 56%) */
   'Act 2 achtergronden/Gevechtstijl2act2.webp': { grond: 68, midden: 57 },
-  'Act 2 achtergronden/Gevechtstijl3act2.webp': { grond: 69, midden: 57 },         /* kastenwand tot 72% */
-  'Act 2 achtergronden/Gevechtstijl4act2.webp': { grond: 67, midden: 57 },         /* boek links-vooraan achter de held */
+  'Act 2 achtergronden/Gevechtstijl3act2.webp': { grond: 65 },                     /* v126: hergenereerd (RONDE 3); de stenen vloerlip ligt op 62% i.p.v. 56%, voeten 3% ervoor */
+  'Act 2 achtergronden/Gevechtstijl4act2.webp': { grond: 62 },                     /* v126: hergenereerd op de toneelstandaard (RONDE 3), vloerrand 59% */
   'Act 2 achtergronden/Gevechtstijl5act2.webp': { grond: 61, midden: 56 },         /* toneelstandaard: vloerrand 56% */
   'Act 2 achtergronden/Gevechtstijl act2 EPISCH 1.webp': { grond: 61 },            /* v116: hergenereerd op de toneelstandaard */
   'Act 2 achtergronden/Gevechtstijl act2 EPISCH 2.webp': { grond: 61 },            /* v116: hergenereerd op de toneelstandaard */
