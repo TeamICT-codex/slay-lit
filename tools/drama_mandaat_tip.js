@@ -86,8 +86,9 @@ async function spoor(browser, sp) {
   console.log('  TIJDENS de ceremonie: body.ceremonie=' + mid.ceremonie + '  pil pointer-events=' + mid.pilPe
     + ' strook-opacity=' + mid.pilOp + '  #beurt-label opacity=' + mid.beurtOp + ' (display ' + mid.beurtDisplay + ')  intent opacity=' + mid.intentOp);
   t(mid.ceremonie, 'de ceremonie loopt op t=1500');
-  t(mid.pilPe === 'none', 'tijdens de ceremonie vangt de onzichtbare pil geen tip (pointer-events=' + mid.pilPe + ')');
-  t(parseFloat(mid.pilOp) < 0.05, 'tijdens de ceremonie is de strook weg (opacity=' + mid.pilOp + ')');
+  /* finale (sep 2026): in scène I zonder open dossier heeft de strook niets te tonen (finale §5) - geen pil is dan ook 'geen tip onder het doek' */
+  t(mid.pilPe === 'none' || mid.pilPe === '(geen pil)', 'tijdens de ceremonie vangt de onzichtbare pil geen tip (pointer-events=' + mid.pilPe + ')');
+  t(mid.pilPe === '(geen pil)' || parseFloat(mid.pilOp) < 0.05, 'tijdens de ceremonie is de strook weg (opacity=' + mid.pilOp + ')');
   t(mid.beurtDisplay === 'none' || parseFloat(mid.beurtOp) < 0.05, '#beurt-label staat niet in de titelband (opacity=' + mid.beurtOp + ', display=' + mid.beurtDisplay + ')');
 
   // --- ná de regie: is de tip bereikbaar? ---

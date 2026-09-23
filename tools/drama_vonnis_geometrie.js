@@ -159,7 +159,7 @@ const OVERGANGEN = [
     trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.hp = Math.floor(b.maxHp * 0.50); checkBaasFase(); } },
   { sleutel: 'III', naam: 'III · DE TIRADE', wacht: 1400,
     trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 2; b.hp = Math.floor(b.maxHp * 0.30); checkBaasFase(); } },
-  { sleutel: 'IV', naam: 'DE HERVERKIEZING', wacht: 3000,
+  { sleutel: 'IV', naam: 'DE HERVERKIEZING', wacht: 3400,
     trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; verliesHp(b, 30); } }
 ];
 

@@ -2536,8 +2536,15 @@ const _VONNIS_HOEK = 1.5 * Math.PI / 180;   /* = de eindrotatie van @keyframes v
 function _vonnisKop(el) {
   const bb = $('#baas-balk'), balk = $('#baas-balk .bb-balk'), h2 = el.querySelector('h2');
   if (!bb || !balk || !h2 || bb.style.display === 'none') return;
-  const onder = balk.getBoundingClientRect().bottom;
+  let onder = balk.getBoundingClientRect().bottom;
   if (!(onder > 0)) return;
+  /* finale (sep 2026): een KORTE titel ('DE HERVERKIEZING', zonder rangnummer) steekt minder
+     uit door de rotatie, en op een lage laptop (1366x662) raakte de inkt dan de fase-rij
+     (1px). Het referentiepunt mag daarom nooit hoger liggen dan 14px boven de onderkant van
+     die rij: met de 9px marge en de loodwitband van de titel (6-14px) blijft de inkt eronder. */
+  const fr = $('#baas-balk .bb-fases');
+  const frOnder = fr ? fr.getBoundingClientRect().bottom : 0;
+  if (frOnder > 0) onder = Math.max(onder, frOnder - 14);
   const b = h2.offsetWidth, h = h2.offsetHeight;
   const steek = (b * Math.sin(_VONNIS_HOEK) + h * Math.cos(_VONNIS_HOEK) - h) / 2;
   /* 8px marge + 1px afrondingsspeling: beide randen liggen op subpixels (gemeten
@@ -7948,7 +7955,7 @@ function dicktatorHerverkiezing(g, doel) {
     renderGevecht();
     _pipKnapt(3);
   });
-  op(2600, () => vonnisSlam('DE HERVERKIEZING', String(D.herverkiezing || '').replace('{K}', DICK.krachtPerKiezer), { duur: 1800, kleur: 'goud', schok: 1.6 }));
+  op(2600, () => vonnisSlam('DE HERVERKIEZING', String(D.herverkiezing || '').replace('{K}', DICK.krachtPerKiezer), { duur: 1400, kleur: 'goud', schok: 1.6 }));
   op(2800, () => _oprijzen(doel, null, 1.12, 400));   /* en hij zakt in op 1.12 = de maat die .herverkozen vasthoudt */
 
   /* t=3000 - DE ZAAL STORT IN, het goudrode mandaatlicht blijft daarna staan */
@@ -7960,8 +7967,9 @@ function dicktatorHerverkiezing(g, doel) {
     }
   });
   op(3100, () => { const el = actorEl(doel); if (el) el.classList.add('woede', 'herverkozen'); });
-  /* de REDE is geen zet meer (finale §3): ze valt hier als baasplaat in de regie */
-  op(3300, () => baasSpreekt(U.rede, 1100));
+  /* de REDE is geen zet meer (finale §3): ze valt als baasplaat NA de titel (2600-4000) - een
+     spraakplaat onder een vonnisplaat botste liggend met de h2 (drama_vonnis_geometrie) */
+  op(4000, () => baasSpreekt(U.rede, 1300));
   op(4000, () => Klank.muziek('finale'));        /* DE TRIOMFMARS: de terugkeer van het geluid ÍS de klap */
   op(4400, () => _ceremonieUit(g));              /* invoer vrij */
 
@@ -7972,7 +7980,7 @@ function dicktatorHerverkiezing(g, doel) {
     _mandaatPuls();
     Klank.sfx('hamer');
   });
-  if (doel._kiezers > 0) op(4800, () => baasSpreekt(U.kiezers, 2200));   /* napraat: je speelt al */
+  if (doel._kiezers > 0) op(5400, () => baasSpreekt(U.kiezers, 2000));   /* napraat na de rede: je speelt al */
   op(5000, () => _regieOpruim(doel));
   renderGevecht();
 }

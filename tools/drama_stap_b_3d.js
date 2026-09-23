@@ -103,7 +103,7 @@ const bij = (log, ms) => log.reduce((a, r) => Math.abs(r.t - ms) < Math.abs(a.t 
   t(L1.some(r => r.flits > 0), `de tik-flits verschijnt (max ${Math.max(...L1.map(r => r.flits))} tegelijk)`);
   t(L1.some(r => r.hitstop), `.hitstop staat aan in 3D (${L1.filter(r => r.hitstop).length} samples)`);
   const von1 = L1.find(r => r.vonnis);
-  t(!!von1 && /HET PROCES/.test(von1.vonnis || ''), `het vonnis landt: "${von1 ? von1.vonnis : '-'}" op t=${von1 ? von1.t : '-'}ms`);
+  t(!!von1 && /DE FACTUUR/.test(von1.vonnis || ''), `het vonnis landt: "${von1 ? von1.vonnis : '-'}" op t=${von1 ? von1.t : '-'}ms`);
   t(bij(L1, 3000).eindDisabled === true && bij(L1, 3800).eindDisabled === false, `invoerknip in 3D: disabled op t=${bij(L1, 3000).t}ms = ${bij(L1, 3000).eindDisabled}, op t=${bij(L1, 3800).t}ms = ${bij(L1, 3800).eindDisabled}`);
   const tintNa = L1[L1.length - 1];
   t(tintNa.bedrijf === '2' && tintNa.tintOp > 0.5, `#arena-tint brandt boven het canvas: data-bedrijf="${tintNa.bedrijf}", opacity ${tintNa.tintOp}`);
