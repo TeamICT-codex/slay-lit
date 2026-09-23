@@ -31,7 +31,7 @@ const slaap = ms => new Promise(r => setTimeout(r, ms));
 // De kernbeats per overgang (§2.1 / §2.2 / §2.3), met het bijschrift dat op het vel komt.
 const OVERGANGEN = [
   {
-    sleutel: 'I-II', naam: 'I->II · HET PROCES', totaal: 4200,
+    sleutel: 'I-II', naam: 'I->II · DE FACTUUR', totaal: 4200,
     trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.hp = Math.floor(b.maxHp * 0.50); checkBaasFase(); },
     beats: [
       [60, 'tik + hitstop 140'], [200, 'schok losbreekt'], [330, 'hof deinst, doek .55'],
@@ -45,18 +45,19 @@ const OVERGANGEN = [
     beats: [
       [90, 'tik zwaar + hitstop 190'], [260, 'schok 1.6'], [520, 'KNIEVAL, doek .70'],
       [1400, 'VONNIS III staat'], [1760, 'omhoog + executie'], [1900, 'contact: hitstop 120'],
-      [2700, 'voetlicht door, doek op'], [4300, 'claqueur treedt aan'], [5700, 'na afloop']
+      [2700, 'voetlicht door, doek op'], [4300, 'claqueur + deurwaarder'], [5700, 'na afloop']
     ]
   },
   {
-    sleutel: 'IV', naam: 'IV · DE HERVERKIEZING', totaal: 7200,
+    /* finale (sep 2026): het scharnier is ingekort tot ~5 s */
+    sleutel: 'IV', naam: 'DE HERVERKIEZING', totaal: 5000,
     trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; verliesHp(b, 30); },
     beats: [
-      [110, 'doodsklap, hitstop 220'], [330, 'DE VAL, doek .80'], [1000, 'DE STEMMING'],
-      [1500, 'aankondiging'], [2700, 'ZWART .92 + stilte'], [3300, 'goud + HERRIJZENIS'],
-      [3950, 'VONNIS IV staat'], [4100, 'zaal stort in'], [5700, 'invoer vrij'],
-      /* v121 (P1): bedrijf V is geen kaartje meer maar de aankomstpuls op de strook */
-      [6900, 'V · puls op de strook'], [7400, 'puls uit, label blijft']
+      [110, 'doodsklap, hitstop 220'], [300, 'DE VAL, doek .80'], [700, 'DE STEMMING'],
+      [1000, 'aankondiging'], [2100, 'ZWART .92 + stilte'], [2400, 'goud + HERRIJZENIS'],
+      [2950, 'VONNIS staat'], [3100, 'zaal stort in'], [4500, 'invoer vrij'],
+      /* IV · HET MANDAAT is geen kaartje maar de aankomstpuls op de strook */
+      [4700, 'IV · puls op de strook'], [6200, 'puls uit, label blijft']
     ]
   }
 ];

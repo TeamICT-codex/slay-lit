@@ -69,7 +69,7 @@ const t = (goed, tekst) => { if (goed) { okN++; console.log('   ok   ' + tekst);
     const na = { hp: b.hp, herrezen: !!b.herrezen, vorm2: !!b.vorm2, dood: !!b.dood, fase: b.fase, ceremonie: !!g.ceremonie, herverkozen: wraps[idx].classList.contains('herverkozen'), woede: wraps[idx].classList.contains('woede'), src: (wraps[idx].querySelector('img') || {}).src, vonnis: !!document.querySelector('.vonnis'), doek: document.getElementById('toneel-doek').classList.contains('aan'), hitstop: document.getElementById('scherm-gevecht').classList.contains('hitstop') };
     return { levend, vroeg, laat, na };
   });
-  t(h.na.herrezen && h.na.hp === 96 && !h.na.dood, `de herrijzenis draait ONGEWIJZIGD: herrezen=${h.na.herrezen}, hp ${h.na.hp}/240 (40%), vorm2=${h.na.vorm2}, fase ${h.na.fase}, dood=${h.na.dood}`);
+  t(h.na.herrezen && h.na.hp === Math.ceil(240 * 0.42) && !h.na.dood, `de herrijzenis draait (finale: vorm2Pct .42): herrezen=${h.na.herrezen}, hp ${h.na.hp}/240, vorm2=${h.na.vorm2}, fase ${h.na.fase}, dood=${h.na.dood}`);
   t(h.vroeg.n > 0 && h.vroeg.opacity.every(o => parseFloat(o) > 0.5), `de KIEZERS blijven zichtbaar tijdens de ceremonie (${h.vroeg.n} kiezers, opacity ${h.vroeg.opacity.join('/')}) - dit is bugfix A4`);
   t(h.laat.lijk === 0, `geen enkele kiezer wordt na 750ms op display:none gezet: .lijk-weg = ${h.laat.lijk} (opacity ${h.laat.opacity.join('/')})`);
   t(h.na.herverkozen && h.na.woede, `de herkozen stand staat afgedwongen op de wrap: .herverkozen=${h.na.herverkozen}, .woede=${h.na.woede}`);

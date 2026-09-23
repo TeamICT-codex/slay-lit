@@ -35,7 +35,7 @@ const SONDE = () => {
     metgezel: (typeof S !== 'undefined' && S && S.metgezel) ? S.metgezel.id : null,
     inGevecht: !!(typeof S !== 'undefined' && S && S.gevecht),
     vijanden: (typeof S !== 'undefined' && S && S.gevecht) ? S.gevecht.vijanden.map(v => v.id + (v.dood ? '\u2020' : '')).join(',') : '',
-    baas: b ? { hp: b.hp, maxHp: b.maxHp, fase: b.fase || 1, vorm2: !!b.vorm2, herrezen: !!b.herrezen, krachtVast: b.krachtVast || 0 } : null,
+    baas: b ? { hp: b.hp, maxHp: b.maxHp, fase: b.fase || 1, vorm2: !!b.vorm2, herrezen: !!b.herrezen, kracht: (b.status && b.status.kracht) || 0 } : null,
     bedrijf: sc ? (sc.dataset.bedrijf || '') : '',
     tirade: document.body.classList.contains('tirade'),
     ceremonie: document.body.classList.contains('ceremonie'),
@@ -330,8 +330,10 @@ const SONDE = () => {
 
   /* \u26a1 net v\u00f3\u00f3r I->II */
   await klik(1, 3); await wachtGevecht(1200); s = await sonde();
-  const grens2 = Math.floor(s.baas.maxHp * 0.66), grens3 = Math.floor(s.baas.maxHp * 0.33);
-  t(s.baas.hp === grens2 + DK && s.baas.fase === 1 && /de_griffier/.test(s.vijanden) && /de_deurwaarder/.test(s.vijanden),
+  /* finale (sep 2026): de scènedrempels komen uit dicktatorDrempel (160/80 bij 240); de
+     deurwaarder treedt pas aan in II, dus net vóór I->II staat alleen de griffier klaar */
+  const grens2 = Math.round(s.baas.maxHp * 2 / 3), grens3 = Math.round(s.baas.maxHp / 3);
+  t(s.baas.hp === grens2 + DK && s.baas.fase === 1 && /de_griffier/.test(s.vijanden) && !/de_deurwaarder/.test(s.vijanden),
     `\u26a1 Net v\u00f3\u00f3r I\u2192II \u2192 baas ${s.baas.hp}/${s.baas.maxHp} (drempel ${grens2} + ${DK}), fase ${s.baas.fase}, hof "${s.vijanden}"`);
   await klapNu(DK); await slaap(500);
   let mid = await sonde();
@@ -362,10 +364,10 @@ const SONDE = () => {
   t(s.baas.fase === 3 && s.bedrijf === '4' && !s.ceremonie && s.eindDisabled === false && s.vonnis === 0 && !s.doek && !s.hitstop,
     `\u2026 en landt in V: data-bedrijf "${s.bedrijf}", herrezen ${s.baas.herrezen}, ${s.baas.hp}/${s.baas.maxHp} HP, invoer vrij ${s.eindDisabled === false}, ${s.vonnis} vonnissen, doek ${s.doek}, hitstop ${s.hitstop}`);
 
-  /* \u23f3 V \u00b7 Het Mandaat (de staart) */
+  /* \u23f3 IV \u00b7 Het Mandaat (de staart): herkozen met twee kiezers = +4 Kracht */
   await klik(1, 6); await wachtGevecht(1200); await slaap(9000); s = await sonde();
-  t(s.baas.herrezen && s.baas.vorm2 && s.bedrijf === '4' && s.baas.krachtVast > 0 && s.hp === Math.round(88 * 0.40) && !s.ceremonie,
-    `\u23f3 V \u00b7 Het Mandaat (de staart) \u2192 jij ${s.hp}/${s.maxHp} HP zonder dranken, baas ${s.baas.hp}/${s.baas.maxHp} herrezen ${s.baas.herrezen} vorm2 ${s.baas.vorm2} krachtVast ${s.baas.krachtVast}, data-bedrijf "${s.bedrijf}", ceremonie ${s.ceremonie}`);
+  t(s.baas.herrezen && s.baas.vorm2 && s.bedrijf === '4' && s.baas.kracht > 0 && s.hp === Math.round(88 * 0.40) && !s.ceremonie,
+    `\u23f3 IV \u00b7 Het Mandaat (de staart) \u2192 jij ${s.hp}/${s.maxHp} HP zonder dranken, baas ${s.baas.hp}/${s.baas.maxHp} herrezen ${s.baas.herrezen} vorm2 ${s.baas.vorm2} kracht ${s.baas.kracht}, data-bedrijf "${s.bedrijf}", ceremonie ${s.ceremonie}`);
 
   /* \u25b6\u25b6 de drie 'speel nu af'-knoppen */
   const speelAf = [

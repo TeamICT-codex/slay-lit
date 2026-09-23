@@ -74,6 +74,8 @@ async function startProces(page, opties) {
     renderGevecht(); renderTopbalk();
   }, opties || {});
   await wachtVrij(page, 30000);
+  /* staand gevecht op mobiel: de draai-prompt wegklikken zoals een speler die 'toch staand' kiest */
+  await page.evaluate(() => { if (document.querySelector('#draai-blok.toon') && typeof speelTochStaand === 'function') speelTochStaand(); });
 }
 async function wachtVrij(page, max = 20000) {
   const t0 = Date.now();
@@ -223,7 +225,7 @@ const sonde = page => page.evaluate(() => {
   let zi = await naarZitting(page);
   t(zi.intent === 'HET DECREET' && zi.A && zi.B, `de zitting staat op de pil: "${zi.intent}" (A ${zi.A && zi.A.id} kost ${zi.A && zi.A.kost}, B ${zi.B && zi.B.id} kost ${zi.B && zi.B.kost})`);
   let zagKeuze = false;
-  await page.evaluate(() => eindBeurt());
+  await page.evaluate(() => { eindBeurt(); });
   for (let k = 0; k < 60; k++) { if (await page.evaluate(() => !!document.querySelector('.decreet-keuze-overlay'))) zagKeuze = true; await slaap(100); }
   await wachtVrij(page);
   let na = await page.evaluate(([a, b]) => ({ a: S.dek.filter(c => c.id === a).length, b: S.dek.filter(c => c.id === b).length, dec: dicktatorBaas(S.gevecht).decreten }), [zi.A.id, zi.B.id]);
@@ -240,7 +242,7 @@ const sonde = page => page.evaluate(() => {
     /* de speler speelde B sinds de aanzegging; hij KIEST A (niet de standaard) */
     await page.evaluate(() => { const g = S.gevecht; const d = [...g.aangezegd.values()]; g.gespeeld[d[1].id] = (g.gespeeld[d[1].id] || 0) + 1; });
     const hpVoor = await page.evaluate(() => S.hp);
-    await page.evaluate(() => eindBeurt());
+    await page.evaluate(() => { eindBeurt(); });
     let ov = null;
     for (let k = 0; k < 80 && !ov; k++) { ov = await page.$('.decreet-keuze-overlay'); if (!ov) await slaap(100); }
     t(!!ov, 'het keuzescherm verschijnt');
@@ -280,7 +282,7 @@ const sonde = page => page.evaluate(() => {
   ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
   zi = await naarZitting(page);
   await page.evaluate(() => { const g = S.gevecht; const d = [...g.aangezegd.values()]; g.gespeeld[d[0].id] = (g.gespeeld[d[0].id] || 0) + 1; });
-  await page.evaluate(() => eindBeurt());
+  await page.evaluate(() => { eindBeurt(); });
   let open1 = false;
   for (let k = 0; k < 80 && !open1; k++) { open1 = await page.evaluate(() => !!document.querySelector('.decreet-keuze-overlay')); if (!open1) await slaap(100); }
   await page.evaluate(() => { S.gevecht.voorbij = true; });

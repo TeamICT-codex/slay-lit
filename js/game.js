@@ -2439,7 +2439,7 @@ function baasTik(b, zwaarte) {
   /* v121-fix (stap C3, gemeten in de matrix): pose2D BAILT UIT in 3D (r2719: `d3Actief() &&
      !actor.isMetgezel` -> return), en Vista.raak zet alleen een flits + camerakick, geen
      pose. Zonder de tweede regel deinsde de tiran in 3D dus nergens zichtbaar terug. Het
-     huispatroon staat in dicktatorDelegatie: Vista.pose EN pose2D, met dezelfde duur. */
+     huispatroon staat in dicktatorAanzeg: Vista.pose EN pose2D, met dezelfde duur. */
   pose2D(b, 'hit', t.pose);
   if (window.Vista && Vista.pose) Vista.pose(b, 'hit', t.pose);
   if (window.Vista && Vista.raak) Vista.raak(b, true);
@@ -5424,7 +5424,7 @@ function triggerEntree(el, delaySec) {
    vonnis nog eens het toneel op (gemeten liggend 800x360: art 742..815 = 15px buiten beeld,
    staand 412x915: 7px buiten beeld). triggerEntree laat de klasse 2000ms staan (hierboven),
    dus elke hoveling die < ~1,3s vóór de fasegrens is opgeroepen draagt hem nog — en
-   dicktatorDelegatie roept griffier+deurwaarder gewoon op de baasbeurt. De entree zelf is op
+   de aanzegging roept de griffier gewoon op de baasbeurt. De entree zelf is op
    dat moment sowieso al uitgespeeld (.6s), dus er valt niets af te breken. */
 function _entreeAf(el) {
   if (!el || !el.classList.contains('entree')) return;
@@ -8091,7 +8091,7 @@ function dicktatorKeuze(g, a, b) {
     const kaartBlok = (c, sleutel) => `
       <div class="decreet-keuze-kaart" data-decreet="${sleutel}">
         ${kaartHtml(c, false)}
-        <button class="knop decreet-kies" data-decreet="${sleutel}">✒️ Schrap ${escSyn(knaam(c))}</button>
+        <button class="knop-groot decreet-kies" data-decreet="${sleutel}">✒️ Schrap ${escSyn(knaam(c))}</button>
       </div>`;
     ov.innerHTML = `
       <div class="decreet-keuze-binnen">
@@ -10986,7 +10986,8 @@ function _devKlapNu(n) {
    'gif_opt_kristal' | 'gif_matig' | 'choreo' (het oude, milde gedrag: alleen om de
    voorstelling te bekijken).
    opties (de suites gebruiken {} en {hof:true}; die signatuur blijft ongewijzigd):
-     { hof }            — de griffier staat klaar, de shortlist is gezet (scène I);
+     { hof }            — het volledige hof van II (griffier + deurwaarder), op de drempel
+                          van scène II, het dossier uit I nog open;
      { tirade }         — geland in scène III (griffier geëxecuteerd, claqueur, deurwaarder);
      { vorm2, staart }  — IV · HET MANDAAT: de herverkiezing valt zodra de intro weg is
                           (staart = jij op 40% zonder dranken);
@@ -11086,7 +11087,11 @@ function devDicktator(profiel = 'slachter_mid', opties = {}) {
     landTot(3);
     v.hp = _devProcesDrempel(v, 3);
   } else if (opties.hof) {
+    /* zoals vroeger: het VOLLEDIGE hof van scène II op het toneel (griffier + deurwaarder),
+       op de drempel van II; het dossier uit I staat nog open */
     roepHof();
+    landTot(2);
+    v.hp = _devProcesDrempel(v, 2);
   }
   renderGevecht();
 }

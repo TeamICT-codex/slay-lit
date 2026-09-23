@@ -1750,6 +1750,9 @@ body.lite .decreet-stempel { animation: none; opacity: 1; transform: translate(-
 /* HET DECREET ALS KEUZE (finale §4): twee kaarten groot naast elkaar, elk met zijn eigen
    knop. Dezelfde visuele taal als de reveal (doek, kop, shortlistregel); de mobiele maten
    staan in mobiel.css (body[data-modus="mobiel"]). */
+/* een DICHT doek (doeken-patroon v89): hier moet je lezen en kiezen, het gevecht mag er niet doorheen schijnen */
+.decreet-overlay.decreet-keuze-overlay { background: radial-gradient(circle at 50% 45%, rgba(120, 24, 14, .42), transparent 62%), linear-gradient(rgba(10, 4, 4, .94), rgba(10, 4, 4, .94)); }
+body:has(.decreet-keuze-overlay) #meldingen { visibility: hidden; }   /* geen toasts over de keuze */
 .decreet-keuze-binnen { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding: 20px; max-width: 96vw; }
 .decreet-keuze-rij { display: flex; gap: 44px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
 .decreet-keuze-kaart { display: flex; flex-direction: column; align-items: center; gap: 14px; cursor: pointer; }
@@ -1758,7 +1761,7 @@ body.lite .decreet-stempel { animation: none; opacity: 1; transform: translate(-
 .decreet-keuze-kaart .kaart.groot .kaart-icoon img { width: 182px; height: 102px; }
 .decreet-keuze-kaart .kaart-tekst { font-size: .98rem; line-height: 1.35; }
 .decreet-keuze-kaart .kaart-kost { width: 38px; height: 38px; font-size: 1.4rem; }
-.decreet-keuze-kaart .decreet-kies { min-width: 180px; max-width: 240px; white-space: normal; }
+.decreet-keuze-kaart .decreet-kies { min-width: 180px; max-width: 240px; white-space: normal; margin-top: 0; font-size: 1.05rem; padding: 10px 18px; }
 body[data-modus="laptop"] .decreet-keuze-kaart:hover .kaart.groot { box-shadow: 0 0 0 3px #e23c2c, 0 0 26px rgba(226, 60, 44, .55); }
 /* de GESCHORST-chip van het scèneslot: dezelfde chip als de statussen, in het rood van de griffie */
 .status.status-geschorst { color: #ffd7a0; border-color: rgba(226, 60, 44, .8); background: rgba(60, 8, 18, .86); letter-spacing: .04em; }
