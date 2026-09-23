@@ -1,9 +1,12 @@
 /* HET PROCES — meetharnas v3 (meetronde 23 sep 2026, cache v127).
    Draait de ECHTE spelcode headless (Playwright) tegen de Act 3-eindbaas de DICKtator, met een
    greedy speler-AI in twee beleidsregels, voor alle drie de helden in drie sterktes, en meet
-   per bedrijf (I Zitting · II Proces · III Tirade · IV Herverkiezing · V Mandaat):
-   rondes, binnengekregen schade per bron, nulschade-rondes, sterfbedrijf, decreten, en de
+   per scène (sinds de finale-herbouw, sep 2026: I Aanklacht · II Factuur · III Tirade ·
+   IV Mandaat; het veld heet om compatibiliteitsredenen nog 'bedrijf'/'bd'):
+   rondes, binnengekregen schade per bron, nulschade-rondes, sterfscène, decreten, en de
    schadeverhouding. Optioneel dezelfde gemiddelde builds tegen de Act 1- en Act 2-baas.
+   HET DECREET ALS KEUZE: window.__dickKeuze(A, B) beslist voor de bot welke van de twee
+   aangezegde kaarten valt; standaard schrapt hij de kaart met de laagste (zeldzaamheid, kost).
 
    - GEEN dev-server en NOOIT :4173 (Thomas' playtest). Een verzonnen host (localhost:4199)
      wordt door Playwright vanaf SCHIJF bediend met route.fulfill (patroon uit
@@ -160,12 +163,20 @@ function installeer() {
     if (!b) return 0;
     if (b.id !== 'de_dicktator') return b.fase || 1;
     if (!b.herrezen) return Math.min(3, b.fase || 1);
-    return b.vorm2Start == null ? 4 : 5;
+    return 4;   /* IV · HET MANDAAT (de herverkiezing is een scharnier zonder eigen beurt) */
+  };
+  /* het bot-beleid voor HET DECREET ALS KEUZE: schrap de kaart met de laagste (zeldzaamheid,
+     kost). Een meting kan dit vervangen door een eigen functie vóór eenGevecht. */
+  const zRang = c => ({ basis: 0, start: 0, gewoon: 1, ongewoon: 2, gesmeed: 2, zeldzaam: 3, episch: 4 })[kdef(c).zeld] ?? 0;
+  window.__dickKeuze = (A, B) => {
+    const ra = [zRang(A), kval(A, 'kost') || 0], rb = [zRang(B), kval(B, 'kost') || 0];
+    const aLager = ra[0] !== rb[0] ? ra[0] < rb[0] : ra[1] <= rb[1];
+    return aLager ? A : B;
   };
   const bronLabel = (v, it) => {
     if (!it) return 'overig-vijand';
     if (v.id === 'de_dicktator') {
-      const m = { 'DE AANZEGGING': 'Aanzegging', 'KARAKTERMOORD': 'Karaktermoord', 'EXECUTIE': 'Executie', 'DE FACTUUR': 'Factuur (baas zelf)', 'DONDERREDE': 'Donderrede', 'HET ONTSLAG': 'Ontslag' };
+      const m = { 'DE AANZEGGING': 'Aanzegging', 'VONNISSLAG': 'Vonnisslag', 'HET VONNIS': 'Vonnis', 'EIGENHANDIG VONNIS': 'Eigenhandig vonnis', 'KARAKTERMOORD': 'Karaktermoord', 'EXECUTIE': 'Executie', 'DE FACTUUR': 'Factuur (baas zelf)', 'DONDERREDE': 'Donderrede', 'HET ONTSLAG': 'Ontslag' };
       return m[it.naam] || ('baas:' + it.naam);
     }
     if (v.id === 'de_deurwaarder') return it.type === 'factuur' ? 'Invordering (deurwaarder)' : 'deurwaarder:' + it.naam;
@@ -231,15 +242,19 @@ function installeer() {
     const T = window.__T; const g = S.gevecht;
     const voor = S.dek.slice();
     const dossier = g && g.aangezegd ? [...g.aangezegd.values()].map(d => ({ id: d.id, naam: d.naam, sinds: Math.max(0, ((g.gespeeld && g.gespeeld[d.id]) || 0) - (d.start || 0)) })) : [];
-    const r = oDec(v);
-    if (T) {
-      const weg = voor.filter(c => !S.dek.includes(c));
-      weg.forEach(c => {
-        const d = kdef(c);
-        T.decreten.push({ id: c.id, naam: d.naam, kost: kval(c, 'kost'), zeld: d.zeld, up: !!c.up, bedrijf: window.__bedrijf(), dossier, bewaarWens: T._bewaar || null });
-      });
-    }
-    return r;
+    const bd = window.__bedrijf();
+    /* sinds de finale is het decreet ASYNC (het wacht op de keuze): pas na de promise is de
+       kaart echt weg */
+    return Promise.resolve(oDec(v)).then(r => {
+      if (T) {
+        const weg = voor.filter(c => !S.dek.includes(c));
+        weg.forEach(c => {
+          const d = kdef(c);
+          T.decreten.push({ id: c.id, naam: d.naam, kost: kval(c, 'kost'), zeld: d.zeld, up: !!c.up, bedrijf: bd, dossier, gekozen: dossier.some(x => x.sinds > 0), bewaarWens: T._bewaar || null });
+        });
+      }
+      return r;
+    });
   };
 }
 
@@ -325,11 +340,13 @@ async function eenGevecht({ build, job }) {
     const sinds = d => Math.max(0, ((g.gespeeld && g.gespeeld[d.id]) || 0) - (d.start || 0));
     const houdA = kaartRang(ca) >= kaartRang(cb);
     const houd = houdA ? a : b, offer = houdA ? b : a;
-    /* wint 'houd' vandaag? minst gespeeld valt; gelijk -> de duurste; gelijk -> B (de tweede naam) valt */
+    /* HET DECREET ALS KEUZE (finale): speelde je er één van beide, dan kies je zelf (de bot
+       schrapt via __dickKeuze de laagste); anders valt de duurste (gelijk -> B). 'veilig' =
+       de kaart die de bot wil houden overleeft de zitting als hij niets meer doet. */
     const sh = sinds(houd), so = sinds(offer);
     const kh = kval(houdA ? ca : cb, 'kost') || 0, ko = kval(houdA ? cb : ca, 'kost') || 0;
     let veilig;
-    if (sh !== so) veilig = sh > so;
+    if (sh + so > 0) veilig = true;
     else if (kh !== ko) veilig = kh < ko;
     else veilig = (offer === b);
     return { houdId: houd.id, offerId: offer.id, veilig, sh, so };
@@ -358,7 +375,7 @@ async function eenGevecht({ build, job }) {
     if (dw && b.vorm2 && !isGif && ((ontslagNabij && dw.hp <= klap * 1.5) || (klok <= 2 && b.hp > 60))) return dw;   /* V: de uitknop van HET ONTSLAG */
     /* het betaald applaus (4 per beurt): alleen ruimen als het in één klap kan, of als er nog
        minstens drie rondes tot de volgende bedrijfsgrens zitten (anders kost de omweg meer dan hij spaart) */
-    const totGrens = b.vorm2 ? b.hp : Math.max(0, b.hp - (b.maxHp || 240) * ((b.fase || 1) >= 3 ? 0 : ((b.fase || 1) >= 2 ? 0.33 : 0.66)));
+    const totGrens = b.vorm2 ? b.hp : Math.max(0, b.hp - ((b.fase || 1) >= 3 ? 0 : (typeof dicktatorDrempel === 'function' ? dicktatorDrempel(b, (b.fase || 1) + 1) : 0)));
     if (cl && !isGif && (cl.hp <= klap || (cl.hp <= klap * 2 && totGrens > 90))) return cl;
     if (!b.vorm2 && (b.fase || 1) >= 3 && b.hp <= 30 && !isGif && h[0].hp <= klap) return h[0];   /* vóór de herverkiezing: geen kiezers laten staan */
     if (dw && !isGif && dw.hp <= klap && factuurBron() === dw) return dw;
@@ -487,11 +504,9 @@ async function eenGevecht({ build, job }) {
       const marge = factuurMarge(c);
       v -= marge * (nodig + marge >= S.hp ? 3 : (hpFrac < 0.4 ? 1.8 : 1.2));
       const plan = shortlistPlan();
-      if (plan && boss() && boss().intent && boss().intent.type === 'decreet') {
-        if (c.id === plan.houdId && !plan.veilig) v += 10;       /* speel de kaart die je wil houden */
-        if (c.id === plan.offerId && (plan.so + 1 >= plan.sh)) v -= 6;  /* en laat de offerkaart liggen */
-      } else if (plan) {
-        if (c.id === plan.houdId && !plan.veilig) v += 4;
+      /* niet veilig = je speelde er nog geen: één van beide spelen koopt je de keuze */
+      if (plan && !plan.veilig && (c.id === plan.houdId || c.id === plan.offerId)) {
+        v += (boss() && boss().intent && boss().intent.type === 'decreet') ? 10 : 4;
       }
     }
     return v;
@@ -579,7 +594,7 @@ async function eenGevecht({ build, job }) {
     bron: T.bron, bronBd: T.bronBd, inBd: T.inBd, uitBd: T.uitBd, uitBaas: T.uitBaas, uitHof: T.uitHof, uitSoort: T.uitSoort,
     rawIn: T.rawIn, geblokt: T.geblokt, metgezelVing: T.metgezelVing, drank: T.drank || 0, offerRonde: T.offer || null,
     decreten: T.decreten, dekVerlies: T.decreten.length, lasters: b ? (b.lasters || 0) : 0,   /* de Laster van DE VACATURE landt in g.trek, niet in S.dek */
-    kiezers: b && b._kiezers != null ? b._kiezers : null, krachtVast: b ? (b.krachtVast || 0) : 0, herrezen: !!(b && b.herrezen),
+    kiezers: b && b._kiezers != null ? b._kiezers : null, kracht: b ? ((b.status && b.status.kracht) || 0) : 0, herrezen: !!(b && b.herrezen),
     log: rondes
   };
   window.__T = null;

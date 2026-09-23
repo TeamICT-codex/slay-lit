@@ -1788,3 +1788,28 @@ body[data-modus="mobiel"] .dt-overlay .sb-balk { background: linear-gradient(0de
   body[data-modus="mobiel"] .dt-nis-kolom, body[data-modus="mobiel"] .dt-scherf-kolom { flex: 1 1 100%; max-width: none; }
   body[data-modus="mobiel"] .dt-stop-lang { display: none; }   /* de uitleg staat in de tafelvoet */
 }
+
+/* ---- HET DECREET ALS KEUZE (finale R2): het keuzescherm op het mobiele spoor ----
+   De laptopmaat (212x292 per kaart) past nergens: liggend (360-440px hoog) moeten kop, twee
+   kaarten en twee knoppen samen op het scherm, staand twee kaarten naast elkaar op 360-412px.
+   Kaarten nooit op een vaste hoogte (tekst mag niet afkappen), geen hover-lift op touch. */
+body[data-modus="mobiel"] .decreet-keuze-binnen { margin: auto; gap: 8px; padding: 8px 10px; }
+body[data-modus="mobiel"] .decreet-keuze-rij { gap: 18px; flex-wrap: nowrap; }
+body[data-modus="mobiel"] .decreet-keuze-kaart { gap: 8px; }
+body[data-modus="mobiel"] .decreet-keuze-kaart .kaart.groot { width: min(44vw, 170px); height: auto; min-height: 0; padding: 7px 8px; }
+body[data-modus="mobiel"] .decreet-keuze-kaart .kaart.groot .kaart-icoon img { width: 100%; height: auto; aspect-ratio: 134 / 74; }
+body[data-modus="mobiel"] .decreet-keuze-kaart .kaart-naam { font-size: .95rem; }
+body[data-modus="mobiel"] .decreet-keuze-kaart .kaart-tekst { font-size: .8rem; line-height: 1.28; }
+body[data-modus="mobiel"] .decreet-keuze-kaart .kaart-kost { width: 30px; height: 30px; font-size: 1.1rem; }
+body[data-modus="mobiel"] .decreet-keuze-kaart .decreet-kies { min-width: 0; width: 100%; min-height: 44px; font-size: .9rem; padding: 8px 10px; }
+@media (orientation: landscape) and (max-height: 600px) {
+  body[data-modus="mobiel"] .decreet-keuze-binnen { gap: 6px; padding: 4px 10px; }
+  body[data-modus="mobiel"] .decreet-keuze-binnen .vloek-reveal-kop { font-size: 1.1rem; }
+  body[data-modus="mobiel"] .decreet-keuze-binnen .decreet-shortlist { display: none; }   /* de kop zegt het al; elke regel telt op 360px */
+  body[data-modus="mobiel"] .decreet-keuze-rij { gap: 28px; }
+  /* liggend: de knop NAAST de kaart (tweekolommer-patroon v94), anders valt hij onder de vouw */
+  body[data-modus="mobiel"] .decreet-keuze-kaart { flex-direction: row; align-items: center; gap: 10px; }
+  body[data-modus="mobiel"] .decreet-keuze-kaart .kaart.groot { width: min(24vw, 42vh, 150px); }
+  body[data-modus="mobiel"] .decreet-keuze-kaart .kaart-tekst { font-size: .74rem; }
+  body[data-modus="mobiel"] .decreet-keuze-kaart .decreet-kies { width: 118px; }
+}

@@ -1747,6 +1747,22 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
 }
 .decreet-kaartwrap.verbrandt { filter: brightness(2.4) saturate(1.7) sepia(.6); transform: scale(.82) rotate(3deg); opacity: 0; }
 body.lite .decreet-stempel { animation: none; opacity: 1; transform: translate(-50%, -50%) rotate(-14deg) scale(1); }
+/* HET DECREET ALS KEUZE (finale §4): twee kaarten groot naast elkaar, elk met zijn eigen
+   knop. Dezelfde visuele taal als de reveal (doek, kop, shortlistregel); de mobiele maten
+   staan in mobiel.css (body[data-modus="mobiel"]). */
+.decreet-keuze-binnen { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding: 20px; max-width: 96vw; }
+.decreet-keuze-rij { display: flex; gap: 44px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+.decreet-keuze-kaart { display: flex; flex-direction: column; align-items: center; gap: 14px; cursor: pointer; }
+.decreet-keuze-kaart .kaart.groot { width: 212px; height: 292px; padding: 10px 12px; }
+.decreet-keuze-kaart .kaart-naam { font-size: 1.3rem; }
+.decreet-keuze-kaart .kaart.groot .kaart-icoon img { width: 182px; height: 102px; }
+.decreet-keuze-kaart .kaart-tekst { font-size: .98rem; line-height: 1.35; }
+.decreet-keuze-kaart .kaart-kost { width: 38px; height: 38px; font-size: 1.4rem; }
+.decreet-keuze-kaart .decreet-kies { min-width: 180px; max-width: 240px; white-space: normal; }
+body[data-modus="laptop"] .decreet-keuze-kaart:hover .kaart.groot { box-shadow: 0 0 0 3px #e23c2c, 0 0 26px rgba(226, 60, 44, .55); }
+/* de GESCHORST-chip van het scèneslot: dezelfde chip als de statussen, in het rood van de griffie */
+.status.status-geschorst { color: #ffd7a0; border-color: rgba(226, 60, 44, .8); background: rgba(60, 8, 18, .86); letter-spacing: .04em; }
+.status.status-geschorst b { font-size: .72em; margin-left: 3px; }
 
 /* ---------- smeedkamer 2.0: werkbank + live preview ---------- */
 .sb-werkbank { display: flex; gap: clamp(12px, 3vw, 30px); align-items: center; justify-content: center; flex-wrap: wrap; max-width: min(96vw, 1120px); }   /* 900px dwong preview+modules ALTIJD onder elkaar → SMEED onder de vouw (debug-sweep) */
