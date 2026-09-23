@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v127'; // v127: RONDE 3 compleet - 2act2 (re-roll), act2 EPISCH 3 en de vijf Act 3-platen hergenereerd op de toneelstandaard; alle 13 gevechtsplaten staan nu op de voetlijn
+const CACHE = 'slayit-v128'; // v128: DE DREMPELTAFEL - de scherven worden ingezet aan de tafel (vijf spellen, uitbetaling, parkering), vervangt De Scherpe Kamer
 const BESTANDEN = [
   '.',
   'css/style.css',
