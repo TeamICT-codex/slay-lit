@@ -33,7 +33,9 @@
                 van de proloog), gepauzeerd(), rustig, lite, bij(naam, arg, laat) }
        gebeurtenissen: 'hek', 'krant' (0|1|2), 'etage' (k = 0..6: DAK, 4, 3, 2, −1, −2, −3),
          'tl', 'verbinding', 'ledUit', 'vloer', 'stilte' (ms, ingekort als je erdoorheen
-         spoelde), 'kooltje', 'slot', 'knop', 'baasDrukt'. laat = hoeveel s te laat het
+         spoelde, maar minstens 120: de lijn valt altijd weg), 'kooltje', 'slot', 'knop', 'baasDrukt'.
+       De houder krijgt data-val-fase (daal|donker|stilte|knop), data-val-layout (liggend|staand)
+       en data-val-lite ('instelling' = body.lite van de game, 'fps' = de fps-bewaker schakelde). laat = hoeveel s te laat het
          moment vuurt (> 0 na doorspoelen: dan liever geen geluid)
      handle = { spoel() (één tik: naar de volgende mijlpaal), hang(el, anker) (DOM boven
        het canvas, anker 'knop'), druk() (de knop is ingedrukt), kooltje() → { x, y, maat }
@@ -828,7 +830,7 @@
         const g = GEB[volgende++], laat = Math.max(0, t - g.t);
         let arg = g.arg;
         if (g.naam === 'bliksem') { if (!rustig && diepte(t) < 0.5) FX.forceerBliksem(); continue; }
-        if (g.naam === 'stilte') { arg = Math.round(TL.stilteMs - laat * 1000); if (arg < 150) continue; }   /* doorgespoeld: de rest van de stilte */
+        if (g.naam === 'stilte') arg = Math.max(120, Math.round(TL.stilteMs - laat * 1000));   /* doorgespoeld: de rest van de stilte, minstens een tel (integrator R2: ook wie doorspoelt, hoort de lijn wegvallen — anders hing de vaste noot door tot de Afgrond) */
         if (g.naam === 'krant') zeg(KRANT[g.arg] || '');
         else if (g.naam === 'verbinding') zeg(VERBINDING);
         else if (g.naam === 'vloer') zeg(VLOER);
@@ -847,7 +849,7 @@
       gem = gem * 0.9 + dt * 0.1;
       if (gem > 0.0205) {
         traag += dt;
-        if (traag > 1.0) { liteNu = true; try { FX.zetLite(true); } catch (e) {} houder.dataset.valLite = '1'; scan.hidden = true; }
+        if (traag > 1.0) { liteNu = true; try { FX.zetLite(true); } catch (e) {} houder.dataset.valLite = 'fps'; scan.hidden = true; }
       } else traag = 0;
     }
     function frame() {
@@ -905,6 +907,7 @@
     t0 = nuMs();
     tekenAlles(0, 0);
     houder.dataset.valFase = 'daal';
+    if (opts.lite) houder.dataset.valLite = 'instelling';   /* body.lite van de game: lite vanaf het eerste beeld (de fps-bewaker zet 'fps') */
     window.addEventListener('resize', opResize);
     /* het vak kan nog groeien (bv. de proloog-css komt binnen terwijl je in de val hervat): herschalen */
     let waarnemer = null;

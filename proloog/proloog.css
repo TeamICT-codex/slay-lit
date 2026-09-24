@@ -63,7 +63,7 @@ img { max-width: 100%; display: block; }
 #crt-vignette { background: radial-gradient(ellipse at center, transparent 52%, rgba(0, 0, 0, .55) 100%); opacity: .9; }
 /* bij de keuze vloeien de CRT-lagen al weg (klaar op 0,9 s): het overnameframe op 1,5 s
    is dan puur #07060a met één kooltje, zoals de sluier van de game (plan §3) */
-.pl-landt .crt-laag { opacity: 0; transition-delay: .4s; }
+.pl-landt .crt-laag { opacity: 0 !important; transition-delay: .4s; }   /* !important: ook de flikkerende gloed en het id-vignet (integrator R2) */
 @keyframes plFlikker { 0%, 100% { opacity: 1; } 48% { opacity: .82; } 52% { opacity: .95; } 71% { opacity: .86; } }
 
 /* ---------- "TIK = DOORSPOELEN": knippert 3 s, zoals in de outro ---------- */
@@ -555,7 +555,10 @@ img { max-width: 100%; display: block; }
    de rest van het vak is het zwart van de afgrond. De CRT-lagen van de proloog wijken:
    het canvas heeft zijn eigen scanlines en vignet (anders moiré op de opgeschaalde pixels). */
 .bs-vak.fase-val { padding: 0; gap: 0; background: var(--afgrond-zwart); overflow: hidden; cursor: pointer; }
-.pl-app[data-fase="val"] .crt-laag { opacity: 0; }
+/* !important (integrator R2): #crt-vignette heeft een eigen id-opacity (.9) en #crt-glow een
+   opacity-animatie (plFlikker) — allebei wonnen ze van een gewone opacity: 0, dus bleven een
+   amber waas en een tweede vignet over het liftcanvas hangen, ook in de stilte */
+.pl-app[data-fase="val"] .crt-laag { opacity: 0 !important; }
 .val-scherm { position: absolute; left: 0; top: 0; image-rendering: crisp-edges; image-rendering: pixelated; }
 /* de scanlines op het opgeschaalde beeld (val.js zet de periode = de schaal): een css-laag,
    geen blit van het hele scherm per beeld */
