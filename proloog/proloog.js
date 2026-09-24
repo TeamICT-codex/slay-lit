@@ -39,7 +39,14 @@
    halve toon lager per etage in de val (tot −7), stilte(1500) als de vloer weg is, en
    wachtStop in de Afgrond. Fixer R2: de pauze (tab verborgen, draai-blok) houdt ook de
    wachtmuziek en de lift-brom vast (klank('pauzeer')), de brom loopt van 'vertrek' tot 'tl',
-   en stilteWeg heft een lopende stilte op (Afgrond, stop, doorgespoeld tot het kooltje). */
+   en stilteWeg heft een lopende stilte op (Afgrond, stop, doorgespoeld tot het kooltje).
+
+   R3 "HET KANTOOR ALS FILM": scènes 0-2 zijn geen beat-machine meer maar een film met één
+   handeling per beat (inklokken aan de prikklok, de CRT degausst, het Glimlachquotum aan
+   één bureau, de Zingevingsaudit, Karel, de oproep, de lift omhoog). De rest is regie die
+   je met een tik versnelt. Checkpoints in het bureau: 'start', 'glimlach', 'audit' en
+   'oproep' (met meterstand en glimCp). regen(aan) en zoem(aan) sturen de lussen van K
+   (ProloogKlank.regen/kantoor); ze gaan uit bij het verlaten van scène 2 en in stop(). */
 (function () {
   'use strict';
   const STORY = window.SLAYLIT_PROLOOG;
@@ -96,6 +103,7 @@
     if (typeof c.glimlachen === 'number' && isFinite(c.glimlachen)) u.glimlachen = Math.max(0, Math.min(999, c.glimlachen | 0));
     if (typeof c.glimCp === 'number' && isFinite(c.glimCp)) u.glimCp = Math.max(0, Math.min(999, c.glimCp | 0));
     if (c.fotoKantoor) u.fotoKantoor = true;
+    if (typeof c.zelfGestempeld === 'boolean') u.zelfGestempeld = c.zelfGestempeld;
     if (typeof c.held === 'string') u.held = c.held;
     if (typeof c.masker === 'string') u.masker = c.masker;
     return u;
@@ -212,6 +220,18 @@
     const K = window.ProloogKlank;
     if (!K || typeof K[naam] !== 'function') return;
     try { K[naam](...args); } catch (e) { meldFout(e); }
+    return true;   /* R3: er was een klank met die naam (zoem() valt anders terug op de oude brom) */
+  }
+  /* R3: de lussen van het kantoor (bouwer K): regen op glas en de kantoorzoem/tl-brom onder
+     scènes 0-2. Ontbreekt die lus, dan brommen we met de oude hum van audio.js. */
+  let regenAan = false, zoemAan = false;
+  function regen(aan) { aan = !!aan; if (aan === regenAan) return; regenAan = aan; klank('regen', aan); }
+  function zoem(aan, extra) {
+    aan = !!aan;
+    if (aan === zoemAan && !extra) return;
+    zoemAan = aan;
+    if (klank('kantoor', aan, extra)) { if (AU) AU.humOff(); }
+    else if (AU) { if (aan) AU.humOn(); else AU.humOff(); }
   }
   /* de wachtmuziek loopt van de oproep tot de Afgrond; ook wie na een herlaad in het gesprek,
      de factuur, het ontslag of de val hervat (of er een hoofdstuk herbeleeft), hoort haar */
@@ -285,7 +305,7 @@
       if (n >= tekst.length) { af = true; if (klaar) klaar(); return; }
       n++;
       elm.textContent = tekst.slice(0, n);
-      if (tikken && AU && tekst[n - 1] !== ' ' && n % 2 === 0) AU.type();
+      if (tikken && tekst[n - 1] !== ' ' && n % 2 === 0) klank('sfx', 'type');
       T(stap, cps);
     }
     stap();
@@ -342,7 +362,7 @@
     /* ook wie overslaat, krijgt een uitweg: wie niet zelf sprong, werd geduwd */
     if (!P.choices.val) P.choices.val = 'geduwd';
     schrijfContract({ uitweg: uitwegVan(P.choices.val), jeugddroom: P.choices.jeugddroom || null,
-      glimlachen: P.choices.glimlachen || 0, fotoKantoor: !!P.choices.fotoKantoor });
+      glimlachen: P.choices.glimlachen || 0, fotoKantoor: !!P.choices.fotoKantoor, zelfGestempeld: !!P.choices.zelfGestempeld });
     naarAfgrond();
   }
   function naarAfgrond() {
@@ -362,6 +382,9 @@
     if (AU) { AU.heartStop(); AU.noiseOff(); AU.droneOff(); }
     const scene = STORY.scenes[P.scene];
     if (scene.kind === 'gesprek') zorgWacht();   /* R2: in de wacht, al sinds de oproep */
+    /* R3: regen en kantoorzoem horen alleen bij scènes 0-2 (de scène zet ze zelf aan) */
+    const kantoorScene = scene.kind === 'overzicht' || scene.kind === 'boot' || scene.kind === 'kantoor';
+    if (!kantoorScene) { regen(false); zoem(false); }
     wrap.innerHTML = '';
     wrap.className = 'scene scene-' + scene.kind;
     wrap.style.filter = '';
@@ -379,8 +402,8 @@
       else T(naarAfgrond, 0);
       return;
     }
-    if (AU) {
-      if (['overzicht', 'boot', 'kantoor', 'gesprek'].indexOf(scene.kind) !== -1) AU.humOn();
+    if (AU && !kantoorScene) {
+      if (scene.kind === 'gesprek') AU.humOn();
       else AU.humOff();
     }
   }
@@ -391,35 +414,283 @@
   }
   function verder() { ga(P.scene + 1); }
 
-  /* ═══════════════ SCÈNE · overzicht (kantoor + badge + monitor) ═══════════════ */
+  /* ═══════════════ R3 · HET KANTOOR ALS FILM (scènes 0-2) ═══════════════
+     Eén handeling per beat; al de rest is regie die een tik versnelt (spoel). Geen
+     beat-machine meer: elke scène is een kleine staatmachine op de T()-klok (pauzeert
+     bij een verborgen tab en het draai-blok). De klank komt van bouwer K, altijd via
+     klank(): sfx-namen tlStarter, tlAan, tlBank(rij), prikklok, glimlach(n[, 'opDeTel']),
+     naald, scheur, gemarkeerd, stempelZelf, stempelMachine, buizenpost, tlKlakUit,
+     tlDooft(rij), liftDing(verdieping), toets; en de lussen regen(aan) en kantoor(aan). */
+
+  /* een regiereeks: momenten na elkaar; één tik = één moment verder (wat nog typt, staat
+     er meteen helemaal), zoals de val (één tik = één mijlpaal) */
+  function reeks(stappen, klaar) {
+    let i = 0, tid = null, af = false, lopend = null;
+    function volgende() {
+      if (af || !actief) return;
+      if (lopend && lopend.rond) lopend.rond();
+      lopend = null;
+      if (i >= stappen.length) {
+        af = true;
+        if (spoel === spoelHier) spoel = null;
+        if (klaar) klaar();
+        return;
+      }
+      const s = stappen[i++];
+      lopend = s.doe ? s.doe() : null;
+      tid = T(volgende, Math.max(0, s.ms || 0));
+    }
+    function spoelHier() {
+      if (af) return;
+      wisT(tid);
+      volgende();
+      if (!af && !spoel) spoel = spoelHier;
+    }
+    spoel = spoelHier;
+    volgende();
+    return { spoel: spoelHier, get af() { return af; } };
+  }
+  /* de twee frames van de scheur (de echte Act 1-plaat) alvast laden en decoderen: ze staan elk
+     maar ±0,2 s in beeld, een koude cache zou ze missen. Eén keer per pagina. */
+  let platenVoorgeladen = null;
+  function laadPlatenVoor(platen) {
+    if (platenVoorgeladen || !Array.isArray(platen)) return;
+    platenVoorgeladen = platen.map(src => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = src;
+      if (img.decode) img.decode().catch(() => { /* de scheur heeft een eigen terugval (onerror) */ });
+      return img;
+    });
+  }
+  /* de maat van de kantoormuzak: waar in de tel staan we (ms), op de speelklok (pauzeert mee) */
+  function telFase(t0, tel) { const d = speelTijd() - t0; return ((d % tel) + tel) % tel; }
+
+  /* ═══════════════ SCÈNE 0 · 06:42, INKLOKKEN ═══════════════
+     Regen op glas. Een tl-starter tikt: tik… tik… TING — één tl-bak springt aan boven de
+     beige prikklok ('MA 06:42', tijdkaart 0042 in het rek). Sleep of tik de kaart in de
+     gleuf (Enter): KA-TSJONK. Dan klakken de tl-rijen bank per bank aan (de tl-golf) en
+     onthullen het kantoor; de camera duikt in de terminal die daar al gloeit. */
   function sceneOverzicht(scene, wrap) {
-    let gedoken = false;
-    const zoom = el('div', 'ov-zoomlaag');
-    zoom.appendChild(art(scene.backdrop.src, scene.backdrop.placeholder, 'ov-backdrop'));
-    zoom.appendChild(el('div', 'ov-dim'));
-    const monitor = knop('ov-monitor', '', duik);
-    monitor.setAttribute('aria-label', 'Inloggen');
-    const bezel = el('span', 'ovm-bezel');
-    const scherm = el('span', 'ovm-screen');
-    scherm.appendChild(el('span', 'ovm-prompt', '▸ ' + (isMobiel() ? scene.prompt.mobiel : scene.prompt.laptop)));
-    bezel.appendChild(scherm);
-    monitor.appendChild(bezel);
-    monitor.appendChild(el('span', 'ovm-voet'));
-    zoom.appendChild(monitor);
-    wrap.appendChild(zoom);
+    const k = scene.klok;
+    const zacht = rustig();
+    let fase = 'donker';     /* donker → aan (de tl brandt) → in (geklokt) → weg */
+    const tids = [];
+    regen(true);
 
-    const kicker = el('div', 'ov-kicker', scene.kicker);
-    kicker.appendChild(el('span', '', scene.klok));
-    wrap.appendChild(kicker);
-    wrap.appendChild(maakBadge(scene.badge));
-    focusStil(monitor);
+    const zaal = el('div', 'ik-zaal');
+    zaal.appendChild(art(scene.backdrop.src, '', 'ik-plaat'));
+    const donker = el('div', 'ik-donker');
+    zaal.appendChild(donker);
+    zaal.appendChild(el('div', 'ik-flits'));
+    wrap.appendChild(zaal);
+    const regenEl = el('div', 'ik-regen');
+    regenEl.setAttribute('aria-hidden', 'true');
+    regenEl.appendChild(el('span', 'ik-regen-a'));
+    regenEl.appendChild(el('span', 'ik-regen-b'));
+    wrap.appendChild(regenEl);
 
-    function duik() {
-      if (gedoken) return; gedoken = true;
+    /* de post: één tl-bak boven de prikklok, het rek met de tijdkaarten, de badge ernaast */
+    const post = el('div', 'ik-post');
+    const rij = el('div', 'ik-rij');
+    const badge = maakBadge(scene.badge);
+    badge.classList.add('ik-badge');
+    rij.appendChild(badge);
+    const klok = el('div', 'ik-klok');
+    const tl = el('div', 'ik-tl');
+    tl.appendChild(el('span', 'ik-buis'));
+    klok.appendChild(tl);
+    klok.appendChild(el('div', 'ik-kegel'));
+    const gleuf = el('div', 'ik-gleuf');
+    gleuf.appendChild(el('span', 'ik-spleet'));
+    const gleufLabel = el('span', 'ik-gleuf-label', k.gleuf + ' ▼');
+    if (!isMobiel()) gleufLabel.appendChild(el('kbd', '', '↵'));
+    gleuf.appendChild(gleufLabel);
+    klok.appendChild(gleuf);
+    const venster = el('div', 'ik-venster');
+    venster.appendChild(el('span', 'ik-dag', k.dag));
+    venster.appendChild(el('span', 'ik-tijd', k.tijd));
+    klok.appendChild(venster);
+    klok.appendChild(el('div', 'ik-merk', k.merk));
+    rij.appendChild(klok);
+    const rek = el('div', 'ik-rek');
+    for (let i = 0; i < 4; i++) { const r = el('span', 'ik-rekkaart'); r.style.setProperty('--i', i); rek.appendChild(r); }
+    const kaart = el('button', 'ik-kaart');
+    kaart.type = 'button';
+    kaart.dataset.actie = 'kaart';
+    kaart.setAttribute('aria-label', 'Tijdkaart ' + k.kaart + ': klok in');
+    kaart.appendChild(el('span', 'ik-kaart-nr', k.kaart));
+    const rooster = el('span', 'ik-rooster');
+    let stempelVak = null;
+    (k.dagen || []).forEach((d, i) => {
+      const r = el('span', 'ik-dagrij');
+      r.appendChild(el('b', '', d));
+      const v = el('i', '');
+      if (i === 0) stempelVak = v;
+      r.appendChild(v);
+      rooster.appendChild(r);
+    });
+    kaart.appendChild(rooster);
+    rek.appendChild(kaart);
+    rij.appendChild(rek);
+    post.appendChild(rij);
+    wrap.appendChild(post);
+
+    /* tik… tik… TING: de starter, dan brandt de tl boven de klok */
+    function starter() {
+      if (fase !== 'donker') return;
+      wrap.classList.add('ik-tik');
+      klank('sfx', 'tlStarter');
+      tids.push(T(() => wrap.classList.remove('ik-tik'), 90));
+    }
+    function ting() {
+      if (fase !== 'donker') return;
+      fase = 'aan';
+      tids.forEach(wisT);
+      wrap.classList.remove('ik-tik');
+      wrap.classList.add('ik-aan');
+      klank('sfx', 'tlAan');
+      zoem(true);
+      spoel = null;
+      focusStil(kaart);
+    }
+    tids.push(T(starter, zacht ? 250 : 380));
+    tids.push(T(starter, zacht ? 700 : 980));
+    tids.push(T(ting, zacht ? 1150 : 1620));
+    spoel = ting;   /* een tik in het donker: het licht springt meteen aan */
+
+    /* slepen (pointer) of tikken (klik/Enter): de kaart gaat in de gleuf */
+    let sleep = null, verschoven = { dx: 0, dy: 0 }, geenKlikTot = 0;
+    kaart.addEventListener('pointerdown', e => {
+      if (fase === 'in' || fase === 'weg') return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      try { kaart.setPointerCapture(e.pointerId); } catch (x) {}
+      sleep = { id: e.pointerId, x0: e.clientX, y0: e.clientY, bewogen: false };
+    });
+    kaart.addEventListener('pointermove', e => {
+      if (!sleep || e.pointerId !== sleep.id) return;
+      const dx = e.clientX - sleep.x0, dy = e.clientY - sleep.y0;
+      if (!sleep.bewogen && Math.hypot(dx, dy) > 8) { sleep.bewogen = true; kaart.classList.add('sleept'); if (fase === 'donker') ting(); }
+      if (!sleep.bewogen) return;
+      verschoven = { dx, dy };
+      kaart.style.transform = 'translate(' + dx.toFixed(1) + 'px, ' + dy.toFixed(1) + 'px) rotate(-3deg)';
+    });
+    const los = e => {
+      if (!sleep || (e && e.pointerId !== sleep.id)) return;
+      const s = sleep;
+      sleep = null;
+      kaart.classList.remove('sleept');
+      if (!s.bewogen) return;   /* een tik: de klik doet het */
+      geenKlikTot = performance.now() + 400;
+      const kr = kaart.getBoundingClientRect(), gr = gleuf.getBoundingClientRect();
+      const cx = kr.left + kr.width / 2;
+      const raak = cx > gr.left - 36 && cx < gr.right + 36 && kr.bottom > gr.top - 30 && kr.top < gr.bottom + 60;
+      if (raak) { try { inklokken(); } catch (err) { meldFout(err); redding(); } }
+      else { kaart.style.transform = ''; verschoven = { dx: 0, dy: 0 }; }   /* terug in het rek */
+    };
+    kaart.addEventListener('pointerup', los);
+    kaart.addEventListener('pointercancel', () => { if (!sleep) return; sleep = null; kaart.classList.remove('sleept'); kaart.style.transform = ''; verschoven = { dx: 0, dy: 0 }; });
+    kaart.addEventListener('click', e => {
+      e.stopPropagation();
+      if (performance.now() < geenKlikTot) return;
+      try { inklokken(); } catch (err) { meldFout(err); redding(); }
+    });
+    sleutels = e => {
+      if (e.key !== 'Enter' && e.key !== ' ') return false;
+      if (!e.repeat) { try { inklokken(); } catch (err) { meldFout(err); redding(); } }
+      return true;
+    };
+
+    function inklokken() {
+      if (fase === 'in' || fase === 'weg' || !actief) return;
+      if (fase === 'donker') ting();
+      fase = 'in';
+      spoel = null; sleutels = null;
       stopCamera();
-      if (AU) { AU.unlock(); AU.powerOn(); }
-      wrap.classList.add('dive');
-      T(verder, rustig() ? 300 : 1150);
+      /* de kaart glijdt boven de gleuf, zakt erin (de onderkant verdwijnt in de klok), KA-TSJONK,
+         en komt een stukje terug met de tijd erop */
+      const kr = kaart.getBoundingClientRect(), gr = gleuf.getBoundingClientRect();
+      const w = kaart.offsetWidth || kr.width, h = kaart.offsetHeight || kr.height;
+      const baseL = kr.left + kr.width / 2 - verschoven.dx - w / 2, baseT = kr.top + kr.height / 2 - verschoven.dy - h / 2;
+      const tx = gr.left + gr.width / 2 - (baseL + w / 2);
+      const ty = gr.top + gr.height / 2 - (baseT + h);
+      const tf = (x, y, r) => 'translate(' + x.toFixed(1) + 'px, ' + y.toFixed(1) + 'px) rotate(' + r + 'deg)';
+      kaart.classList.add('in');
+      kaart.disabled = true;   /* geklokt: de kaart is geen handeling meer */
+      let anim = null;
+      if (!zacht && kaart.animate) {
+        try {
+          anim = kaart.animate([
+            { transform: tf(verschoven.dx, verschoven.dy, verschoven.dx ? -3 : 0), clipPath: 'inset(0 0 0 0)' },
+            { transform: tf(tx, ty, 0), clipPath: 'inset(0 0 0 0)', offset: 0.55 },
+            { transform: tf(tx, ty + h * 0.62, 0), clipPath: 'inset(0 0 62% 0)' }
+          ], { duration: 380, easing: 'cubic-bezier(.3, 0, .4, 1)', fill: 'forwards' });
+        } catch (x) { anim = null; }
+      }
+      if (!anim) { kaart.style.transform = tf(tx, ty + h * 0.62, 0); kaart.style.clipPath = 'inset(0 0 62% 0)'; }
+      T(() => {
+        /* KA-TSJONK — hetzelfde stempelgeluid als het ontslag straks */
+        klank('sfx', 'prikklok');
+        klok.classList.add('tsjonk');
+        if (stempelVak) stempelVak.textContent = k.tijd;
+        if (!zacht && kaart.animate) {
+          try { kaart.animate([{ transform: tf(tx, ty + h * 0.62, 0), clipPath: 'inset(0 0 62% 0)' }, { transform: tf(tx, ty + h * 0.34, 0), clipPath: 'inset(0 0 34% 0)' }], { duration: 220, delay: 90, easing: 'ease-out', fill: 'forwards' }); } catch (x) {}
+        } else { kaart.style.transform = tf(tx, ty + h * 0.34, 0); kaart.style.clipPath = 'inset(0 0 34% 0)'; }
+        T(golf, zacht ? 120 : 320);
+      }, zacht ? 60 : 390);
+      spoel = weg;   /* vanaf hier is het regie: een tik = naar de CRT */
+    }
+
+    /* de tl-golf: bank per bank, van voor naar achter; het donker krimpt naar het
+       verdwijnpunt van de plaat (rijen op de plaat: scene.banken) */
+    function golf() {
+      if (fase !== 'in') return;
+      const banken = scene.banken || [];
+      const g = plaatGeo();
+      let i = 0;
+      const stap = () => {
+        if (fase !== 'in') return;
+        if (i >= banken.length) {
+          donker.style.setProperty('--ry', '0px'); donker.style.setProperty('--rx', '0px');
+          wrap.classList.add('ik-licht');
+          T(duik, zacht ? 150 : 260);
+          return;
+        }
+        const d = Math.max(0, (g.vy - banken[i]) * g.h);   /* de afstand van deze rij tot de horizon, in px */
+        donker.style.setProperty('--ry', (d * 1.05).toFixed(0) + 'px');
+        donker.style.setProperty('--rx', (d * 2.5).toFixed(0) + 'px');
+        if (!zacht) { zaal.classList.remove('bankflits'); void zaal.offsetWidth; zaal.classList.add('bankflits'); }
+        klank('sfx', 'tlBank', i);
+        i++;
+        T(stap, zacht ? 80 : 140);
+      };
+      donker.style.setProperty('--vx', g.px.toFixed(0) + 'px');
+      donker.style.setProperty('--vy', g.py.toFixed(0) + 'px');
+      wrap.classList.add('ik-golf');
+      stap();
+    }
+    /* de plaat (object-fit: cover) in schermpx: het verdwijnpunt en de terminal die gloeit */
+    function plaatGeo() {
+      const W = zaal.clientWidth || innerWidth, H = zaal.clientHeight || innerHeight;
+      const s = Math.max(W / 1586, H / 992), iw = 1586 * s, ih = 992 * s;
+      const ox = (W - iw) / 2, oy = (H - ih) / 2;
+      const vy = 0.385;
+      return { h: ih, vy, px: ox + 0.505 * iw, py: oy + vy * ih,
+        dx: ox + (scene.duik ? scene.duik.x : 0.72) * iw, dy: oy + (scene.duik ? scene.duik.y : 0.42) * ih };
+    }
+    /* de camera duikt in de terminal: de CRT degausst (scène 1) */
+    function duik() {
+      if (fase !== 'in') return;
+      const g = plaatGeo();
+      zaal.style.transformOrigin = g.dx.toFixed(0) + 'px ' + g.dy.toFixed(0) + 'px';
+      wrap.classList.add('ik-duik');
+      T(weg, zacht ? 300 : 700);
+    }
+    function weg() {
+      if (fase === 'weg' || !actief) return;
+      fase = 'weg';
+      spoel = null;
+      verder();
     }
   }
 
@@ -519,334 +790,632 @@
     cam = null;
   }
 
-  /* ═══════════════ SCÈNE · boot (de CRT degausst — het merk, niet SLAY LIT) ═══════════════ */
+  /* ═══════════════ SCÈNE 1 · DE CRT DEGAUSST ═══════════════
+     De camera zit ín de terminal: het merk van De Oprichter (niet SLAY LIT), de jingle
+     speelt één maat te lang en eindigt net vals — ze klinkt nog door aan het bureau.
+     Regie, geen knop: na scene.duur het bureau; een tik spoelt door. */
   function sceneBoot(scene, wrap) {
+    regen(true);
+    zoem(true, { lampen: 6 });   /* de tl-golf is voorbij: het kantoor brandt (ook wie in de boot hervat) */
     const b = el('div', 'boot');
-    let weg = false;
-    const klokIn = () => { if (weg) return; weg = true; if (AU) AU.stamp(); verder(); };
-    b.addEventListener('click', klokIn);
     b.appendChild(el('div', 'boot-poweron'));
-    b.appendChild(el('div', 'boot-jingle', scene.jingle));
+    const inh = el('div', 'boot-inhoud');
+    inh.appendChild(el('div', 'boot-jingle', scene.jingle));
     const merk = el('h1', 'boot-merk', scene.merk);
     merk.appendChild(el('sup', '', '™'));
-    b.appendChild(merk);
-    b.appendChild(el('div', 'boot-tm', scene.tm));
-    b.appendChild(el('div', 'boot-baas', scene.baas));
-    const cta = el('div', 'boot-cta');
-    const k = knop('knop-groot', scene.cta, klokIn);
-    cta.appendChild(k);
-    b.appendChild(cta);
+    inh.appendChild(merk);
+    inh.appendChild(el('div', 'boot-tm', scene.tm));
+    b.appendChild(inh);
     b.appendChild(el('div', 'boot-version', scene.version));
     wrap.appendChild(b);
     if (AU) AU.unlock();
+    klank('sfx', 'degauss');   /* BWOMM: het schaduwmasker zingt even (bouwer K) */
     klank('jingle', { vals: true });   /* R2: de bedrijfsjingle, één maat te lang en net vals */
-    focusStil(k);
+    let weg = false;
+    const door = () => {
+      if (weg || !actief) return;
+      weg = true; spoel = null;
+      wisT(tid);
+      ga(IDX.kantoor);
+    };
+    const tid = T(door, scene.duur || 2600);
+    spoel = door;
+    toonHint('regie');
   }
 
-  /* ═══════════════ SCÈNE · kantoor (de beat-machine) ═══════════════ */
+  /* ═══════════════ SCÈNE 2 · HET BUREAU ═══════════════
+     Eén vast bureaushot: de CRT met B.A.A.S. in groen fosfor, de VU-naald op 78 %, het
+     fotolijstje met de rode stippellijn, De Oprichter en Juniors memo op de wand, een
+     frietkotmagneet, de collega's als hoofden boven de scheidingswand; onderaan gloeit het
+     kooltje in je borstzak. Checkpoints (met meterstand én glimlachteller, glimCp):
+       'start'     het bureau (B.A.A.S. zegt drie korte regels)
+       'glimlach'  het Glimlachquotum: [ GLIMLACH 0u06 ] — de naald stijgt, de tl wordt
+                   feller, het kooltje zwakker, de knop schuift op; bij 3 schuift het quotum
+                   op naar 8, bij 4 roept Bart, bij 5 scheurt het beeld (de énige knipoog)
+       'audit'     formulier Z-8, zelf afstempelen (of de machine doet het na 6 s), de
+                   buizenpost naar het ARCHIEF; Karel, Rudi, Bart en Marleen
+       'oproep'    de tl-rijen doven van achter naar voor tot alleen jouw spot overblijft;
+                   de wachtmuziek begint; na 2,5 s [ BEVESTIG AANWEZIGHEID ] → de lift omhoog */
+  const KANTOOR_CP = ['start', 'glimlach', 'audit', 'oproep'];
   function sceneKantoor(scene, wrap) {
-    const beats = scene.beats;
-    const railData = scene.rail;
-    let stap = 0;
-    const m = /^beat:(\d+)$/.exec(P.checkpoint || '');
-    if (m && beats[+m[1]] && beats[+m[1]].cp) stap = +m[1];
-    let meter = (stap > 0 && typeof P.choices.meter === 'number') ? P.choices.meter : (scene.meterStart || 0);
-    /* hervat op een checkpoint: ook de glimlachteller van toen (anders telt een herlaad
+    const S = scene;
+    const zacht = rustig();
+    const cp = KANTOOR_CP.indexOf(P.checkpoint) !== -1 ? P.checkpoint : 'start';
+    /* hervat op een checkpoint: ook de glimlachteller van toen (F1: anders telt een herlaad
        tussen de GLIMLACH-knop en het volgende checkpoint die glimlach dubbel) */
-    if (stap > 0 && typeof P.choices.glimCp === 'number') P.choices.glimlachen = P.choices.glimCp;
-    const data = () => ({ jeugddroom: P.choices.jeugddroom || '…' });
+    if (typeof P.choices.glimCp === 'number') P.choices.glimlachen = P.choices.glimCp;
+    let meter = (cp !== 'start' && typeof P.choices.meter === 'number') ? P.choices.meter : S.meter.start;
+    let n = 0, quotum = S.quotum.start, fase = 'intro', knopGlim = null, knopBevestig = null;
+    const t0 = speelTijd();   /* de maat van de kantoormuzak begint bij het bureau */
+    const tel = S.tel || 750;
+    const typend = new Set();
+    regen(true);
+    zoem(true, { tel });
+    laadPlatenVoor(S.platen);
 
-    /* — koptekst — */
-    const kop = el('header', 'kant-header');
-    const merk = el('div', 'kh-merk', 'EEN PRODUCTIEF LEVEN');
-    merk.appendChild(el('b', '', '™'));
-    kop.appendChild(merk);
-    kop.appendChild(el('div', 'kh-baas', 'B.A.A.S. v8.7'));
-    const mw = el('div', 'kh-mw');
-    mw.appendChild(el('b', '', 'MEDEWERKER 0042'));
-    mw.appendChild(el('span', '', '24.847 dgn in dienst'));
-    kop.appendChild(mw);
-    wrap.appendChild(kop);
+    const bureau = el('div', 'bureau');
+    bureau.dataset.fase = 'quotum';
+    bureau.style.setProperty('--tel', tel + 'ms');
+    bureau.style.setProperty('--telfase', '-' + Math.round(telFase(t0, tel)) + 'ms');
 
-    /* — terminal + rail — */
-    const body = el('div', 'kant-body');
-    const mon = el('div', 'monitor');
-    const monScherm = el('div', 'monitor-screen');
-    const term = el('div', 'term');
-    const log = el('div', 'term-log');
-    term.appendChild(log);
-    const actieVak = el('div', 'term-acties');
-    term.appendChild(actieVak);
-    monScherm.appendChild(term);
-    mon.appendChild(monScherm);
-    body.appendChild(mon);
+    /* achter de wand: het kantoor, gedimd, met de tl-rijen (gekocht licht) */
+    const kopvak = el('div', 'br-kopvak');
+    const achter = el('div', 'br-achter');
+    achter.appendChild(art(STORY.SLOTS.kantoor.src, '', 'br-plaat'));
+    const rijen = [];
+    for (let i = 0; i < 4; i++) { const r = el('span', 'br-rij'); r.style.setProperty('--r', i); achter.appendChild(r); rijen.push(r); }
+    kopvak.appendChild(achter);
 
-    /* de bureau-rail: laptop rechts, liggend een smalle kolom, staand een strook onderaan */
-    const rail = el('div', 'rail');
-    const lijst = el('div', 'lijst-oprichter');
-    lijst.appendChild(art(railData.oprichter.src, railData.oprichter.placeholder, 'slot'));
-    lijst.appendChild(el('div', 'plaquette', '◆ De Oprichter ◆'));
-    rail.appendChild(lijst);
-    const fotoVak = el('div', 'foto-kind');
-    fotoVak.appendChild(el('span', 'stip', 'niet-factureerbaar'));
-    fotoVak.appendChild(art(railData.foto.src, railData.foto.placeholder, 'slot'));
-    rail.appendChild(fotoVak);
-    const team = el('div', 'team');
-    const teamEl = {};
-    (railData.team || []).forEach(lid => {
-      const rij = el('div', 'collega ' + (lid.toon === 'kiss' ? 'kiss' : 'neutraal'));
-      const av = el('div', 'av');
-      av.appendChild(lid.src ? art(lid.src, lid.emoji, 'av-houder') : el('span', 'av-emoji', lid.emoji));
-      rij.appendChild(av);
-      const txt = el('div', 'txt');
-      txt.appendChild(el('b', '', lid.naam));
-      txt.appendChild(el('span', '', lid.rol));
-      rij.appendChild(txt);
-      team.appendChild(rij);
-      teamEl[lid.id] = rij;
+    /* de collega's als hoofden boven de scheidingswand */
+    const hoofden = el('div', 'br-hoofden');
+    const team = {};
+    (S.team || []).forEach(lid => {
+      const h = el('div', 'hoofd hoofd-' + lid.id);
+      h.dataset.wie = lid.id;
+      h.style.setProperty('--x', lid.x);
+      if (lid.attribuut === 'lamp') h.appendChild(el('span', 'hd-lamp'));
+      if (lid.attribuut === 'tl') h.appendChild(el('span', 'hd-buis'));
+      const beeld = lid.portret || lid.src;
+      if (beeld) h.appendChild(art(beeld, '', 'hd-kop hd-art'));
+      else if (lid.attribuut !== 'tl') {
+        const sil = el('span', 'hd-kop hd-silhouet');
+        if (lid.attribuut === 'doos') sil.appendChild(el('span', 'hd-bril'));
+        h.appendChild(sil);
+      }
+      if (lid.attribuut === 'doos') h.appendChild(el('span', 'hd-doos', 'ARCHIEF'));
+      hoofden.appendChild(h);
+      team[lid.id] = { lid, h };
     });
-    rail.appendChild(team);
-    const memo = el('div', 'memo-junior');
-    memo.appendChild(art(railData.juniorPortret.src, railData.juniorPortret.placeholder, 'mj-portret'));
-    const mj = el('div', 'mj-txt');
-    mj.appendChild(el('span', 'mj-stempel', '◆ Directie'));
-    mj.appendChild(el('b', '', railData.juniorPortret.naam));
-    mj.appendChild(el('span', 'mj-rol', railData.juniorPortret.rol));
-    mj.appendChild(el('span', 'mj-memo', railData.junior));
-    memo.appendChild(mj);
-    rail.appendChild(memo);
-    const meterVak = el('div', 'meter');
-    const meterKop = el('div', 'meter-kop');
-    const meterLabel = el('span', '', 'Facturabiliteit');
-    const meterNum = el('b', '', '0%');
-    meterKop.appendChild(meterLabel); meterKop.appendChild(meterNum);
-    meterVak.appendChild(meterKop);
-    const spoor = el('div', 'meter-spoor');
-    const vul = el('div', 'meter-vul');
-    spoor.appendChild(vul);
-    meterVak.appendChild(spoor);
-    meterVak.appendChild(el('div', 'meter-voet', 'eenheden van 6 minuten · 1 tiende uur'));
-    rail.appendChild(meterVak);
-    body.appendChild(rail);
-    wrap.appendChild(body);
+    kopvak.appendChild(hoofden);
 
-    function zetMeter(n, label) {
-      meter = Math.max(0, Math.min(100, n));
-      vul.style.width = meter + '%';
-      meterNum.textContent = Math.round(meter) + '%';
-      meterLabel.textContent = label || 'Facturabiliteit';
+    /* de scheidingswand, met De Oprichter en Juniors memo, en de naamplaatjes */
+    const wand = el('div', 'br-wand');
+    (S.team || []).forEach(lid => { const p = el('span', 'br-naamplaat', lid.plaat); p.style.setProperty('--x', lid.x); wand.appendChild(p); });
+    kopvak.appendChild(wand);
+    const W = S.wand;
+    const opr = el('div', 'br-oprichter');
+    opr.appendChild(art(W.oprichter.src, '', 'br-opr-art'));
+    opr.appendChild(el('span', 'br-plaquette', W.plaquette));
+    const memo = el('div', 'br-memo');
+    memo.appendChild(art(W.memo.portret, '', 'br-memo-art'));
+    const mt = el('span', 'br-memo-tekst');
+    mt.appendChild(el('b', '', W.memo.kop));
+    mt.appendChild(el('span', '', W.memo.t));
+    memo.appendChild(mt);
+
+    /* de buizenpost naar het ARCHIEF (de kast die de outro openbreekt) */
+    const buis = el('div', 'br-buis');
+    buis.appendChild(el('span', 'br-buis-pijp'));
+    const mond = el('span', 'br-buis-mond');
+    buis.appendChild(mond);
+    buis.appendChild(el('span', 'br-buis-label', S.audit.archief + ' ▲'));
+    kopvak.appendChild(buis);
+
+    /* de tl boven jou: wordt feller per glimlach (gekocht licht) */
+    const tlBak = el('div', 'br-tl');
+    tlBak.appendChild(el('span', 'br-tl-buis'));
+    bureau.appendChild(el('div', 'br-blad'));
+    bureau.appendChild(kopvak);
+    bureau.appendChild(tlBak);
+    bureau.appendChild(opr);
+    bureau.appendChild(memo);
+    bureau.appendChild(el('div', 'br-tl-licht'));
+
+    /* de CRT met B.A.A.S. — de collega's praten in dezelfde log (naamkop, nooit onder de vouw) */
+    const crt = el('div', 'br-crt');
+    const bezel = el('div', 'br-bezel');
+    const scherm = el('div', 'br-scherm');
+    scherm.appendChild(el('div', 'br-scherm-kop', S.kop));
+    scherm.appendChild(el('div', 'br-oog'));
+    const log = el('div', 'term-log');
+    scherm.appendChild(log);
+    bezel.appendChild(scherm);
+    const mag = el('div', 'br-magneet');
+    mag.appendChild(el('b', '', W.friet[0]));
+    mag.appendChild(el('span', '', W.friet[1]));
+    bezel.appendChild(mag);
+    crt.appendChild(bezel);
+    bureau.appendChild(crt);
+
+    /* het fotolijstje met de rode stippellijn (optioneel: tik erop) */
+    const fotoVak = el('div', 'br-foto');
+    const lijst = el('button', 'br-lijst');
+    lijst.type = 'button';
+    lijst.dataset.actie = 'foto';
+    lijst.setAttribute('aria-label', 'Kijk naar de foto');
+    lijst.appendChild(art(S.foto.src, '', 'br-lijst-art'));
+    lijst.appendChild(el('span', 'br-stip', S.foto.stip));
+    lijst.appendChild(el('span', 'br-gemarkeerd', S.foto.snit[1]));
+    fotoVak.appendChild(lijst);
+    bureau.appendChild(fotoVak);
+
+    /* de VU-meter: FACTURABILITEIT, de naald, het quotum, het tellampje */
+    const vu = el('div', 'br-vu');
+    const vuKast = el('div', 'vu-kast');
+    const schaal = el('div', 'vu-schaal');
+    for (let i = 0; i <= 10; i++) { const s = el('span', 'vu-streep' + (i >= 8 ? ' rood' : '')); s.style.setProperty('--i', i); schaal.appendChild(s); }
+    const naald = el('span', 'vu-naald');
+    naald.appendChild(el('span', 'vu-naald-tel'));
+    schaal.appendChild(naald);
+    schaal.appendChild(el('span', 'vu-as'));
+    vuKast.appendChild(schaal);
+    const lamp = el('span', 'vu-lamp');
+    vuKast.appendChild(lamp);
+    vu.appendChild(vuKast);
+    const vuLabel = el('div', 'vu-label');
+    vuLabel.appendChild(el('span', '', S.meter.label));
+    const vuNum = el('b', '', '');
+    vuLabel.appendChild(vuNum);
+    vu.appendChild(vuLabel);
+    const vuQuotum = el('div', 'vu-quotum');
+    vu.appendChild(vuQuotum);
+    bureau.appendChild(vu);
+
+    /* de handeling: de knop schuift op onder je duim */
+    const actie = el('div', 'br-actie');
+    bureau.appendChild(actie);
+
+    /* de borstzak met het kooltje (warm licht: van jou) */
+    const zak = el('div', 'br-zak');
+    const kool = el('span', 'br-kooltje');
+    kool.appendChild(el('span', 'br-kool-gloed'));
+    kool.appendChild(el('span', 'br-kool-kern'));
+    zak.appendChild(el('span', 'br-zak-naad'));
+    zak.appendChild(kool);
+    bureau.appendChild(zak);
+
+    wrap.appendChild(bureau);
+
+    /* — de staat tekenen — */
+    function zetMeter(v) {
+      meter = Math.max(0, Math.min(100, v));
+      naald.style.setProperty('--hoek', ((meter / 100) * 100 - 50).toFixed(1) + 'deg');
+      vuNum.textContent = Math.round(meter) + '%';
     }
-    zetMeter(meter);
+    function zetQuotum() { vuQuotum.textContent = 'QUOTUM ' + Math.min(n, quotum) + '/' + quotum; }
+    function zetLicht() {
+      bureau.style.setProperty('--tl', Math.min(1, n * 0.2).toFixed(2));
+      const bonus = P.choices.fotoKantoor ? 0.35 : 0;
+      bureau.style.setProperty('--kool', Math.max(0.28, Math.min(1.3, 1 - n * 0.15 + bonus)).toFixed(2));
+      bureau.classList.toggle('kool-fel', !!P.choices.fotoKantoor);
+    }
+    zetMeter(meter); zetQuotum(); zetLicht();
+    if (P.choices.fotoKantoor) lijst.classList.add('gemarkeerd');
 
-    /* de log groeit onderaan; wat bovenaan wegvalt, gaat weg (nooit een scrollbalk) */
+    /* — de log: groeit onderaan, bovenaan valt het oudste weg (nooit een scrollbalk) — */
     function lijn(cls, tekst) {
       const p = el('p', 'term-line ' + cls, tekst == null ? '' : tekst);
       log.appendChild(p);
       while (log.children.length > 40) log.removeChild(log.firstChild);
       return p;
     }
+    function typ(cls, tekst, cps) {
+      const p = lijn(cls + ' caret', '');
+      let h = null;
+      const klaar = () => { p.classList.remove('caret'); typend.delete(h); };
+      h = typMachine(p, tekst, cps || 26, /tl-baas/.test(cls) && !/tl-warm/.test(cls), klaar);
+      if (p.classList.contains('caret')) typend.add(h);
+      return h;
+    }
+    function rondAlles() { [...typend].forEach(h => h.rond()); }
+    const baas = t => typ('tl-baas', t, 26);
     function collegaLijn(lid, tekst) {
-      const p = lijn('tl-collega ' + (lid.toon === 'kiss' ? 'tl-c-kiss' : 'tl-c-neutraal'));
+      const p = lijn('tl-collega tl-c-' + (lid.toon || 'neutraal'));
+      p.dataset.wie = lid.id;
       p.appendChild(el('b', 'tl-wie', lid.naam));
       p.appendChild(el('span', 'tl-zegt', tekst));
       return p;
     }
-
-    /* — de beat-machine — */
-    const PASSIEF = { sys: 1, baas: 1, jij: 1, mark: 1, warm: 1, fluister: 1 };
-    const KLASSE = { baas: 'tl-baas', sys: 'tl-sys tl-prompt', jij: 'tl-jij tl-prompt', mark: 'tl-mark', warm: 'tl-baas tl-warm', fluister: 'tl-fluister' };
-
-    function speelBeat() {
-      if (!actief || stap >= beats.length) return;
-      const beat = beats[stap];
-      spoel = null;
-      if (beat.cp) { P.checkpoint = 'beat:' + stap; P.choices.meter = meter; P.choices.glimCp = P.choices.glimlachen || 0; bewaar(); }
-
-      if (PASSIEF[beat.type]) {
-        if (AU && beat.type === 'warm') AU.warm();
-        const tekst = beat.tmpl ? interp(beat.tmpl, data()) : (beat.text || '');
-        const p = lijn((KLASSE[beat.type] || 'tl-baas') + ' caret', '');
-        const cps = beat.type === 'fluister' ? 16 : 24;
-        const pauze = beat.type === 'sys' ? 300 : beat.type === 'fluister' ? 700 : 560;
-        let wacht = null;
-        const door = () => { wisT(wacht); p.classList.remove('caret'); volgende(); };
-        const typ = typMachine(p, tekst, cps, beat.type === 'baas' || beat.type === 'sys', () => {
-          wacht = T(door, pauze);
-          spoel = door;
-        });
-        if (!spoel) spoel = () => typ.rond();
-      } else if (beat.type === 'collega') {
-        const lid = (railData.team || []).find(x => x.id === beat.who);
-        if (!lid) { volgende(); return; }
-        const rij = teamEl[lid.id];
-        if (rij) rij.classList.add('speaking');
-        let kaart = null, af = false;
-        if (lid.portret) {
-          /* Bart Blinker: zijn portret schuift bovenaan binnen — het herkenningspunt */
-          kaart = el('div', 'spreker-kaart');
-          const portret = el('div', 'sk-portret');
-          portret.appendChild(art(lid.portret, lid.emoji, 'sk-img'));
-          kaart.appendChild(portret);
-          const tk = el('div', 'sk-tekst');
-          const plaat = el('span', 'sk-plaat', lid.naam);
-          plaat.appendChild(el('i', '', lid.rol));
-          tk.appendChild(plaat);
-          tk.appendChild(el('div', 'sk-zin', beat.text));
-          kaart.appendChild(tk);
-          wrap.appendChild(kaart);
-        } else {
-          collegaLijn(lid, beat.text);
-        }
-        const klaar = () => {
-          if (af) return; af = true;
-          wisT(tid);
-          if (kaart) { kaart.remove(); collegaLijn(lid, beat.text); }
-          if (rij) rij.classList.remove('speaking');
-          volgende();
-        };
-        const tid = T(klaar, lid.portret ? 2600 : 2300);
-        spoel = klaar;
-      } else if (beat.type === 'meter') {
-        zetMeter(beat.to, beat.label || '');
-        const door = () => { wisT(tid); zetMeter(meter); volgende(); };
-        const tid = T(door, 1100);
-        spoel = door;
-      } else if (beat.type === 'glitch') {
-        if (AU) AU.glitch();
-        const frame = el('div', 'glitch-frame');
-        frame.appendChild(el('p', '', beat.text));
-        wrap.appendChild(frame);
-        const vrij = modaal(frame);
-        const door = () => { wisT(tid); frame.remove(); vrij(); volgende(); };
-        const tid = T(door, 1500);
-        spoel = door;
-      } else if (beat.type === 'actie') {
-        beat.knoppen.forEach(k => {
-          const b = knop(k.soort === 'billable' ? 'knop-billable' : 'knop-niet-billable', k.label, () => kiesActie(k));
-          b.dataset.actie = k.id;
-          if (k.units) b.appendChild(el('span', 'u', k.units));
-          actieVak.appendChild(b);
-          focusStil(b);
-        });
-        const f = beat.knoppen.find(k => k.id === 'foto');
-        if (f) {
-          fotoVak.classList.add('pulse');
-          fotoVak.onclick = e => { e.stopPropagation(); kiesActie(f); };
-        }
-      } else if (beat.type === 'invoer') {
-        const inp = document.createElement('input');
-        inp.maxLength = beat.max || 40;
-        inp.placeholder = beat.placeholder || '';
-        inp.autocomplete = 'off';
-        inp.enterKeyHint = 'done';
-        inp.value = P.choices.jeugddroom || '';
-        let verstuurd = false;
-        const stuur = () => {
-          if (verstuurd) return; verstuurd = true;
-          const v = (inp.value || '').trim().slice(0, 60) || 'iets belangrijks';
-          P.choices.jeugddroom = v; bewaar();
-          schrijfContract({ jeugddroom: v });
-          try { inp.blur(); } catch (e) {}
-          actieVak.innerHTML = '';
-          volgende();
-        };
-        inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); stuur(); } });
-        inp.addEventListener('click', e => e.stopPropagation());
-        const vak = el('div', 'term-invoer');
-        vak.appendChild(inp);
-        vak.appendChild(knop('', '↵ noteer', stuur));
-        actieVak.appendChild(vak);
-        try { inp.focus({ preventScroll: true }); } catch (e) {}
-      } else if (beat.type === 'oproep') {
-        if (AU) { AU.humOff(); AU.glitch(); }
-        toonOproep();
-      } else { volgende(); }
+    function spreekt(id, aan) { const t = team[id]; if (t) t.h.classList.toggle('spreekt', !!aan); }
+    let vorigeSpreker = null;
+    function zegt(id, tekst) {
+      const t = team[id];
+      if (!t) return null;
+      if (vorigeSpreker) spreekt(vorigeSpreker, false);
+      vorigeSpreker = id;
+      spreekt(id, true);
+      if (id === 'bart') { t.h.classList.remove('pop'); void t.h.offsetWidth; t.h.classList.add('pop'); }
+      return collegaLijn(t.lid, tekst);
+    }
+    function zetCp(naam) {
+      P.checkpoint = naam;
+      P.choices.meter = meter;
+      P.choices.glimCp = P.choices.glimlachen || 0;
+      bewaar();
     }
 
-    function volgende() { if (!actief) return; stap++; speelBeat(); }
+    /* — de maat: de naald en de tl pulseren op de tel; wie op de tel glimlacht, klinkt zuiverder — */
+    function opDeTel() { const f = telFase(t0, tel); return f < 120 || f > tel - 120; }
 
-    function kiesActie(k) {
-      if (!actieVak.children.length) return;   /* dubbelklik: de actie is al gekozen */
-      actieVak.innerHTML = '';
-      fotoVak.classList.remove('pulse'); fotoVak.onclick = null;
-      if (k.id === 'glimlach') {
-        P.choices.glimlachen = (P.choices.glimlachen || 0) + 1; bewaar();
-        schrijfContract({ glimlachen: P.choices.glimlachen });
-      }
-      if (k.id === 'foto') {
-        P.choices.fotoKantoor = true; bewaar();
-        schrijfContract({ fotoKantoor: true });
-        if (scene.fotoKijk) {
-          if (AU) AU.warm();
-          toonFotoKijk(scene.fotoKijk, railData.foto.src, () => {
-            if (typeof k.meter === 'number') zetMeter(meter + k.meter);
-            volgende();
-          });
-          return;
-        }
-      }
-      if (AU && k.soort === 'billable') AU.ding();
-      if (typeof k.meter === 'number') zetMeter(meter + k.meter);
-      volgende();
+    /* ── het Glimlachquotum ── */
+    function intro() {
+      zetCp('start');
+      const r = S.intro;
+      reeks(r.map((t, i) => ({ doe: () => { const h = baas(t); if (i === r.length - 1) quotumStart(); return h; }, ms: t.length * 26 + (i === r.length - 1 ? 0 : 300) })), () => { if (fase === 'quotum' && !spoel) spoel = quotumSpoel; });
     }
-
-    /* de oproep: jij wordt uit de zaal gelicht */
-    function toonOproep() {
-      const o = scene.oproep;
-      zorgWacht();   /* R2: "uw aanwezigheid is vereist" — en u staat in de wacht */
-      const laag = el('div', 'oproep');
-      const links = el('div', 'op-links');
-      const zaal = el('div', 'op-zaal');
-      (railData.team || []).forEach(lid => {
-        const av = el('div', 'op-collega');
-        av.appendChild(lid.portret || lid.src ? art(lid.portret || lid.src, lid.emoji, 'op-av') : el('span', 'op-av op-emoji', lid.emoji));
-        zaal.appendChild(av);
+    function vulLog(tot) {
+      /* hervatten: de log van toen staat er meteen (geen typen) */
+      S.intro.forEach(t => lijn('tl-baas', t));
+      if (tot === 'glimlach') return;
+      lijn('tl-baas', S.bijgesteld);
+      const b = team.bart; if (b) collegaLijn(b.lid, S.bart);
+      lijn('tl-knipoog', S.knipoog);
+      lijn('tl-baas tl-warm', S.warm);
+      lijn('tl-baas', S.ruis);
+      if (tot === 'audit') return;
+      S.collegas.forEach(c => {
+        const t = team[c.wie]; if (!t) return;
+        const p = collegaLijn(t.lid, c.knip || c.t);
+        if (c.knip) { p.querySelector('.tl-zegt').appendChild(el('span', 'tl-knip', '—')); t.h.classList.add('uit'); }
       });
-      links.appendChild(zaal);
-      const badge = el('div', 'op-badge');
-      badge.appendChild(el('span', 'op-badge-merk', 'EEN PRODUCTIEF LEVEN™'));
-      badge.appendChild(el('span', 'op-badge-nr', '0042'));
-      badge.appendChild(el('span', 'op-badge-jij', '↑ U'));
-      links.appendChild(badge);
-      const roep = el('div', 'op-roep', o.nummer);
-      roep.appendChild(el('span', 'op-caret2'));
-      links.appendChild(roep);
-      links.appendChild(el('div', 'op-roep-sub', o.roep));
-      laag.appendChild(links);
-      const rechts = el('div', 'op-rechts');
-      const regels = el('div', 'op-regels');
-      rechts.appendChild(regels);
-      const voet = el('div', 'op-voet');
-      rechts.appendChild(voet);
-      laag.appendChild(rechts);
+    }
+    function quotumStart() {
+      if (fase !== 'intro') return;
+      fase = 'quotum';
+      zetCp('glimlach');
+      knopGlim = knop('glim-knop', '', glimlach);
+      knopGlim.dataset.actie = 'glimlach';
+      knopGlim.appendChild(el('span', 'glim-label', S.knop.label));
+      knopGlim.appendChild(el('span', 'u', S.knop.units));
+      knopGlim.style.setProperty('--telfase', '-' + Math.round(telFase(t0, tel)) + 'ms');   /* de gloed klopt op dezelfde maat */
+      actie.appendChild(knopGlim);
+      schuif();
+      focusStil(knopGlim);
+      if (!P.choices.fotoKantoor) { lijst.classList.add('mag'); lijst.addEventListener('click', kijkKlik); }
+      else lijst.disabled = true;
+      /* in het quotum spoelt een tik alleen het typen door (de knop is de handeling) */
+      if (!spoel) spoel = quotumSpoel;
+    }
+    function quotumSpoel() { rondAlles(); if (fase === 'quotum') spoel = quotumSpoel; }
+    const POS = [0.3, 0.42, 0.54, 0.8, 0.9, 1];
+    function schuif() { if (knopGlim) actie.style.setProperty('--p', POS[Math.min(n, POS.length - 1)]); }
+    function glimlach() {
+      if (fase !== 'quotum' || !knopGlim) return;
+      const tel1 = opDeTel();
+      n++;
+      P.choices.glimlachen = (P.choices.glimlachen || 0) + 1;
+      bewaar();
+      schrijfContract({ glimlachen: P.choices.glimlachen });
+      if (tel1) klank('sfx', 'glimlach', n, 'opDeTel'); else klank('sfx', 'glimlach', n);
+      klank('sfx', 'naald');
+      zetMeter(meter + S.meter.stap);
+      zetLicht();
+      if (tel1) { lamp.classList.remove('tel'); void lamp.offsetWidth; lamp.classList.add('tel'); }
+      if (!zacht && knopGlim.animate) { try { knopGlim.animate([{ filter: 'brightness(1.45)' }, { filter: 'none' }], { duration: 260, easing: 'ease-out' }); } catch (x) {} }   /* het d-ding, even fel */
+      if (n === S.quotum.bijstelOp) { quotum = S.quotum.bijgesteld; baas(S.bijgesteld); }
+      if (n === S.quotum.bartOp) zegt('bart', S.bart);
+      zetQuotum();
+      schuif();
+      if (n >= S.quotum.scheurOp) { T(scheur, zacht ? 120 : 260); fase = 'naQuotum'; knopGlim.disabled = true; }
+      if (!spoel) spoel = quotumSpoel;
+    }
+
+    /* bij 5: het beeld scheurt 1,2 s (V-hold, RGB-split, twee frames van de echte Act 1-plaat)
+       met de énige knipoog; dan, in warm amber, B.A.A.S.' oude stem */
+    function scheur() {
+      if (!actief) return;
+      fase = 'scheur';
+      rondAlles();
+      if (knopGlim) { knopGlim.remove(); knopGlim = null; }
+      fotoUit();
+      if (vorigeSpreker) spreekt(vorigeSpreker, false);
+      klank('sfx', 'scheur', S.scheurFrames || [0.22, 0.67]);   /* de momenten (s) van de twee plaatframes */
+      const laag = el('div', 'scheur' + (zacht ? ' zacht' : ''));
+      (S.platen || []).forEach((src, i) => {
+        const f = el('div', 'sch-frame sch-f' + i);
+        const img = document.createElement('img');
+        img.alt = ''; img.decoding = 'async'; img.draggable = false; img.src = src;
+        img.onerror = () => img.remove();
+        f.appendChild(img);
+        laag.appendChild(f);
+      });
+      laag.appendChild(el('div', 'sch-ruis'));
+      laag.appendChild(el('p', 'sch-tekst', S.knipoog));
+      wrap.appendChild(laag);
+      const vrij = modaal(laag);
+      if (!zacht) bureau.classList.add('vhold');
+      let af = false;
+      const eind = () => {
+        if (af) return; af = true;
+        wisT(tid); spoel = null;
+        laag.remove(); vrij();
+        bureau.classList.remove('vhold');
+        naScheur();
+      };
+      const tid = T(eind, 1200);
+      T(() => { if (!af) spoel = eind; }, 450);   /* de frames zie je altijd even */
+    }
+    function naScheur() {
+      /* de knipoog blijft ingebrand in de fosfor; dan het oude stemmetje, dan de ruis */
+      lijn('tl-knipoog', S.knipoog);
+      reeks([
+        { doe: () => { klank('sfx', 'warm'); return typ('tl-baas tl-warm', S.warm, 46); }, ms: S.warm.length * 46 + 700 },
+        { doe: () => baas(S.ruis), ms: S.ruis.length * 26 + 650 }
+      ], auditStart);
+    }
+
+    /* optioneel: de foto. Eén regel, dan een harde snit: NIET-FACTUREERBAAR. GEMARKEERD.
+       Het kooltje gloeit toch feller. (De volle blik is voor het gesprek.) */
+    function kijkFoto() {
+      if (fase !== 'quotum' || P.choices.fotoKantoor) return;
+      fase = 'foto';
+      P.choices.fotoKantoor = true; bewaar();
+      schrijfContract({ fotoKantoor: true });
+      klank('sfx', 'warm');
+      const laag = el('div', 'br-kijk' + (zacht ? ' zacht' : ''));
+      const beeld = art(S.foto.src, '', 'br-kijk-beeld');
+      laag.appendChild(beeld);
+      laag.appendChild(el('p', 'br-kijk-zin', S.foto.zin));
+      const snit = el('div', 'br-snit');
+      S.foto.snit.forEach(r => snit.appendChild(el('b', '', r)));
+      laag.appendChild(snit);
+      wrap.appendChild(laag);
+      const vrij = modaal(laag);
+      let stap = 0, tid = null;
+      const volgende = () => {
+        wisT(tid);
+        if (stap === 0) {
+          stap = 1;
+          laag.classList.add('snit');   /* de harde snit: geen overgang */
+          klank('sfx', 'gemarkeerd');
+          lijst.classList.add('gemarkeerd');
+          lijst.classList.remove('mag');
+          lijst.disabled = true;
+          zetLicht();
+          tid = T(volgende, 800);
+          spoel = volgende;
+        } else {
+          laag.remove(); vrij();
+          spoel = null;
+          fase = 'quotum';
+          focusStil(knopGlim);
+          spoel = quotumSpoel;
+        }
+      };
+      tid = T(volgende, zacht ? 1300 : 1500);
+      spoel = volgende;
+    }
+    function fotoUit() { lijst.classList.remove('mag'); lijst.disabled = true; lijst.removeEventListener('click', kijkKlik); }
+    function kijkKlik(e) { e.stopPropagation(); try { kijkFoto(); } catch (err) { meldFout(err); redding(); } }
+
+    /* ── de Zingevingsaudit: formulier Z-8 ── */
+    function auditStart() {
+      if (!actief) return;
+      fase = 'audit';
+      zetCp('audit');
+      fotoUit();
+      const f = S.audit;
+      const form = el('div', 'z8' + (zacht ? ' zacht' : ''));
+      form.appendChild(el('div', 'z8-kop', f.kop));
+      form.appendChild(el('p', 'z8-vraag', f.vraag));
+      const invoerRij = el('div', 'z8-rij');
+      const inp = document.createElement('input');
+      inp.className = 'z8-invoer';
+      inp.maxLength = f.max || 40;
+      inp.placeholder = f.placeholder || '';
+      inp.autocomplete = 'off';
+      inp.enterKeyHint = 'done';
+      inp.setAttribute('aria-label', f.vraag);
+      inp.value = P.choices.jeugddroom || '';
+      invoerRij.appendChild(inp);
+      const noteer = knop('z8-noteer', '↵ ' + f.noteer, stuur);
+      noteer.dataset.actie = 'noteer';
+      invoerRij.appendChild(noteer);
+      form.appendChild(invoerRij);
+      const antw = el('p', 'z8-antwoord');
+      form.appendChild(antw);
+      const voet = el('div', 'z8-voet');
+      form.appendChild(voet);
+      const arm = el('div', 'z8-arm');
+      form.appendChild(arm);
+      wrap.appendChild(form);
+      const vrij = modaal(form);
+      let verstuurd = false, gestempeld = false, tid = null;
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); stuur(); } });
+      inp.addEventListener('click', e => e.stopPropagation());
+      T(() => { if (inp.isConnected && !verstuurd) { try { inp.focus({ preventScroll: true }); } catch (x) {} } }, zacht ? 0 : 380);
+      function stuur() {
+        if (verstuurd || !actief) return;
+        verstuurd = true;
+        const v = (inp.value || '').trim().slice(0, 60) || 'iets belangrijks';
+        P.choices.jeugddroom = v; bewaar();
+        schrijfContract({ jeugddroom: v });
+        try { inp.blur(); } catch (e) {}
+        invoerRij.remove();
+        antw.textContent = '“' + v + '”';   /* spelersinvoer: altijd textContent */
+        klank('sfx', 'toets');
+        voet.appendChild(el('p', 'z8-zelf', f.zelf));
+        const st = knop('z8-stempel', f.stempelKnop, () => stempel(true));
+        st.dataset.actie = 'stempel';
+        voet.appendChild(st);
+        focusStil(st);
+        tid = T(() => stempel(false), f.wachtMs || 6000);
+        spoel = () => stempel(false);   /* wie wegtikt, laat de machine stempelen */
+      }
+      function stempel(zelf) {
+        if (gestempeld || !actief) return;
+        gestempeld = true;
+        wisT(tid); spoel = null;
+        P.choices.zelfGestempeld = !!zelf; bewaar();
+        schrijfContract({ zelfGestempeld: !!zelf });
+        voet.innerHTML = '';
+        if (zelf) klank('sfx', 'stempelZelf');
+        else { baas(f.machine); form.classList.add('machine'); klank('sfx', 'stempelMachine'); }
+        const afdruk = el('div', 'z8-afdruk', f.stempel);
+        form.appendChild(afdruk);
+        const door = () => { wisT(tid2); buizenpost(); };
+        const tid2 = T(door, zelf ? 600 : 1200);
+        spoel = door;
+      }
+      function buizenpost() {
+        if (!actief || form.classList.contains('weg')) return;
+        spoel = null;
+        klank('sfx', 'buizenpost');
+        buis.classList.add('zuigt');
+        let af = false;
+        const klaar = () => { if (af) return; af = true; wisT(tid3); form.remove(); vrij(); buis.classList.remove('zuigt'); collegas(); };
+        if (!zacht && form.animate) {
+          try {
+            const fr = form.getBoundingClientRect(), mr = mond.getBoundingClientRect();
+            const dx = mr.left + mr.width / 2 - (fr.left + fr.width / 2), dy = mr.top + mr.height / 2 - (fr.top + fr.height / 2);
+            form.animate([
+              { transform: 'translate(0, 0) scale(1) rotate(0deg)', opacity: 1 },
+              { transform: 'translate(' + (dx * 0.35).toFixed(0) + 'px, ' + (dy * 0.2).toFixed(0) + 'px) scale(.5, .16) rotate(-8deg)', opacity: 1, offset: 0.35 },
+              { transform: 'translate(' + dx.toFixed(0) + 'px, ' + dy.toFixed(0) + 'px) scale(.05, .04) rotate(-20deg)', opacity: 0 }
+            ], { duration: 640, easing: 'cubic-bezier(.5, 0, .8, .4)', fill: 'forwards' });
+          } catch (x) {}
+        } else form.classList.add('weg');
+        const tid3 = T(klaar, zacht ? 300 : 820);
+        spoel = klaar;
+      }
+    }
+
+    /* ── Karel, Rudi, Bart en Marleen (in de log); Karels tl klakt uit midden in het woord ── */
+    function collegas() {
+      if (!actief) return;
+      fase = 'collegas';
+      toonHint('collegas');
+      reeks(S.collegas.map(c => ({ doe: () => spreek(c), ms: duur(c) })), () => { if (vorigeSpreker) spreekt(vorigeSpreker, false); oproepStart(); });
+    }
+    function duur(c) {
+      if (c.knip) return c.knip.length * 45 + 800;   /* Karel: typen, de tl klakt uit, een stilte */
+      return Math.max(1000, c.t.length * 34 + 350);
+    }
+    function spreek(c) {
+      const t = team[c.wie];
+      if (!t) return null;
+      if (c.knip) {
+        const p = zegt(c.wie, '');
+        const z = p.querySelector('.tl-zegt');
+        let uit = false;
+        const knip = () => {
+          if (uit) return; uit = true;
+          z.appendChild(el('span', 'tl-knip', '—'));
+          t.h.classList.add('uit');
+          spreekt(c.wie, false);
+          klank('sfx', 'tlKlakUit');
+        };
+        const h = typMachine(z, c.knip, 45, false, knip);
+        return { rond() { h.rond(); } };
+      }
+      zegt(c.wie, c.t);
+      return null;
+    }
+
+    /* ── de oproep: de rijen doven van achter naar voor tot alleen jouw spot overblijft ── */
+    function oproepStart() {
+      if (!actief) return;
+      fase = 'oproep';
+      zetCp('oproep');
+      fotoUit();
+      bureau.dataset.fase = 'oproep';
+      const donker = el('div', 'oproep');   /* het donker rond jouw spot (en het teken voor de klank-suite) */
+      bureau.appendChild(donker);
+      zorgWacht();   /* R2: "uw aanwezigheid is vereist" — en u staat in de wacht */
+      const h = baas(S.oproep.t);
+      const achterNaarVoor = rijen.slice().reverse();
+      const tids = [];
+      achterNaarVoor.forEach((r, i) => tids.push(T(() => { r.classList.add('uit'); klank('sfx', 'tlDooft', i); }, 300 + i * 360)));
+      const spot = () => { bureau.classList.add('spot'); zoem(false); };
+      tids.push(T(spot, 300 + achterNaarVoor.length * 360));
+      const knopT = T(bevestig, S.oproep.knopNa || 2500);
+      spoel = () => {
+        tids.forEach(wisT); wisT(knopT);
+        h.rond();
+        achterNaarVoor.forEach(r => r.classList.add('uit'));
+        spot();
+        bevestig();
+      };
+    }
+    function bevestig() {
+      if (knopBevestig || !actief) return;
+      spoel = null;
+      knopBevestig = knop('knop-bevestig', '[ ' + S.oproep.cta + ' ]', lift);
+      knopBevestig.dataset.actie = 'bevestig';
+      actie.style.setProperty('--p', 0.5);
+      actie.appendChild(knopBevestig);
+      focusStil(knopBevestig);
+    }
+
+    /* ── de goederenlift omhoog (≤ 3 s, doortikbaar): het schaarhek DICHT, 2 · 3 · 4 · DAK,
+       geen blik omlaag, geen dakrand (keuze 3). Dezelfde etages als de val, in omgekeerde zin. ── */
+    function lift() {
+      if (fase === 'lift' || !actief) return;
+      fase = 'lift';
+      spoel = null;
+      klank('sfx', 'toets');
+      const L = S.lift;
+      const laag = el('div', 'lift' + (zacht ? ' zacht' : ''));
+      laag.appendChild(el('div', 'lift-hek'));
+      const paneel = el('div', 'lift-paneel');
+      paneel.appendChild(el('span', 'lift-pijl', '▲'));
+      const etages = L.etages.map(e => { const s = el('span', 'lift-etage', e); paneel.appendChild(s); return s; });
+      laag.appendChild(paneel);
       wrap.appendChild(laag);
       modaal(laag);
-      let i = 0, tid = null, af = false;
-      function afronden() {
-        if (af) return; af = true; spoel = null;
-        const k = knop('knop-groot op-cta', o.cta + ' ▸', () => { laag.remove(); ga(IDX.gesprek); });
-        voet.appendChild(k);
-        focusStil(k);
-      }
-      function toon() {
-        if (i >= o.regels.length) { afronden(); return; }
-        regels.appendChild(el('p', 'op-regel', o.regels[i]));
-        i++;
-        tid = T(toon, 2400);
-      }
-      spoel = () => {
-        wisT(tid);
-        while (i < o.regels.length) { regels.appendChild(el('p', 'op-regel', o.regels[i])); i++; }
-        afronden();
+      let i = 0, af = false, tid = null;
+      const klaar = () => {
+        if (af || !actief) return;
+        af = true; wisT(tid); spoel = null;
+        regen(false); zoem(false);
+        ga(IDX.gesprek);
       };
-      tid = T(toon, 1600);
+      const stap = () => {
+        if (i >= etages.length) { tid = T(klaar, 380); return; }
+        etages.forEach((e, j) => e.classList.toggle('aan', j === i));
+        klank('sfx', 'liftDing', i + 2);   /* de verdieping: 2, 3, 4, 5 (= DAK) */
+        i++;
+        tid = T(stap, L.stapMs || 560);
+      };
+      tid = T(stap, 220);
+      spoel = klaar;
     }
 
-    toonHint('kantoor');
-    speelBeat();
+    /* — waar begint de scène? — */
+    toonHint('regie');
+    if (cp === 'start') {
+      if (!zacht) {
+        const cr = crt.getBoundingClientRect(), br = bureau.getBoundingClientRect();
+        bureau.style.transformOrigin = (cr.left + cr.width / 2 - br.left).toFixed(0) + 'px ' + (cr.top + cr.height / 2 - br.top).toFixed(0) + 'px';
+        bureau.classList.add('terug');
+        /* weg na afloop: anders herstart de pull-back zodra een andere animatie van het bureau
+           (de V-hold van de scheur) wegvalt en 'terug' weer de animatie wordt */
+        T(() => bureau.classList.remove('terug'), 650);
+      }
+      intro();
+    } else {
+      vulLog(cp);
+      if (cp === 'glimlach') { fase = 'intro'; quotumStart(); }
+      else {
+        n = S.quotum.scheurOp; quotum = S.quotum.bijgesteld;
+        zetQuotum(); zetLicht(); fotoUit();
+        if (cp === 'audit') auditStart();
+        else oproepStart();
+      }
+    }
   }
 
-  /* het foto-kijk-overlay (kantoor + gesprek): regels verschijnen, een tik spoelt door,
+  /* het foto-kijk-overlay (gesprek): regels verschijnen, een tik spoelt door,
      de knop is de handeling */
   function toonFotoKijk(fk, src, klaar, opties) {
     const laag = el('div', 'foto-kijk' + (opties && opties.groot ? ' fk-groot' : ''));
@@ -1093,7 +1662,7 @@
       } else if (st.turn === 1) {
         st.maxEnergie = Math.max(1, st.maxEnergie - 1);
         st.blok = 0; st.energie = st.maxEnergie; st.turn = 2; st.paniek++;
-        zetFlits('systeem', 'VERPLICHTE TEAMBUILDING. Ze nemen je ⚡ en noemen het “samen”. Het kwartje valt: niets wat je speelt verlaagt ∞.');
+        zetFlits('systeem', 'VERPLICHTE TEAMBUILDING. Ze nemen je ⚡ en noemen het “samen”.');
       } else {
         eindig('geduwd');
         return;
@@ -1455,7 +2024,7 @@
         if (!P.choices.val) P.choices.val = 'geduwd';
         bewaar();
         const contract = schrijfContract({ held: it.heldId, masker: it.m.id, uitweg: uitwegVan(P.choices.val) || 'geduwd',
-          jeugddroom: P.choices.jeugddroom || null, glimlachen: P.choices.glimlachen || 0, fotoKantoor: !!P.choices.fotoKantoor });
+          jeugddroom: P.choices.jeugddroom || null, glimlachen: P.choices.glimlachen || 0, fotoKantoor: !!P.choices.fotoKantoor, zelfGestempeld: !!P.choices.zelfGestempeld });
         const kr = kern.getBoundingClientRect();
         const kooltje = { x: Math.round(kr.left + kr.width / 2), y: Math.round(kr.top + kr.height / 2), maat: Math.round(kr.width) || 8 };
         const uitkomst = { held: it.heldId, masker: it.m.id, kooltje, contract: herbeleef ? null : contract };
@@ -1725,6 +2294,7 @@
     opts = o;
     herbeleef = !!o.herbeleef;
     klaarGeroepen = false; overgeslagen = false; glimOpen = 0; spoel = null; sleutels = null; hintGezien = {}; wachtAan = false;
+    regenAan = false; zoemAan = false;
     spiegelModus();
     if (!maakRoot()) return false;
     actief = true;
@@ -1806,6 +2376,7 @@
     wachtUit();
     klank('pauzeer', false);   /* fixer R2: een pauze mag de volgende proloog niet stil laten beginnen */
     klank('stilteWeg');        /* en een stilte mag de titel of het herbeleven niet stil laten */
+    regen(false); zoem(false); /* R3: de lussen van het kantoor (regen op glas, de kantoorzoem) */
     objectUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch (e) {} });
     objectUrls.clear();
     if (AU && AU.stilte) { try { AU.stilte(); } catch (e) {} }

@@ -16,7 +16,13 @@
    de fotovraag-modal, de camerapopup en Barts bijnaam.
    R2 "DE VAL EN DE KLANK": de val is een pixelcanvas (proloog/val.js, de lichtmotor van
    de outro); hieronder staan alleen nog haar teksten. De maskerzinnen hebben één bron
-   met de outro: OutroFX.MASKERZINNEN (js/outro-fx.js, altijd geladen in de game-pagina). */
+   met de outro: OutroFX.MASKERZINNEN (js/outro-fx.js, altijd geladen in de game-pagina).
+   R3 "HET KANTOOR ALS FILM": scènes 0-2 zijn geen diavoorstelling (de beat-machine met
+   ±1560 woorden) meer, maar een film met één handeling per beat: inklokken (prikklok +
+   tl-golf), de CRT degausst, het Glimlachquotum aan één bureau, de Zingevingsaudit, Karel,
+   de oproep en de lift omhoog. Hieronder alleen de TEKST en de maten; de regie staat in
+   proloog.js (sceneOverzicht, sceneBoot, sceneKantoor). 199 woorden zichtbaar in 0-2
+   (labels en cijfers meegeteld; plan: ≈400, max 450). */
 
 window.SLAYLIT_PROLOOG = (function () {
   const BASE = '';
@@ -30,109 +36,114 @@ window.SLAYLIT_PROLOOG = (function () {
     foto:      { id: 'proloog-foto',      src: A('foto-kind.webp'),         placeholder: 'FOTO VAN EEN KIND' },
   };
 
-  // —————————————————————————————————————————————— SCÈNE · het kantoor-beat-script
-  // type: baas | sys | collega | jij | mark | warm | glitch | meter | actie | invoer | oproep
-  // cp: een CHECKPOINT — na een herlaad hervat de proloog op de laatste cp-beat
-  //     (met de meterstand van toen), nooit midden in een regel of een actie.
-  const KANTOOR_BEATS = [
-    { type: 'sys',  text: 'B.A.A.S. v8.7 — sessie hervat. Goedemorgen.', cp: 'start' },
-    { type: 'meter', to: 78, label: 'LADEN…' },
-    { type: 'baas', text: 'Wat u zag laden, was uzelf. Facturabiliteit: 78%.' },
-    { type: 'fluister', text: '…ergens achter u schuift een stoel. Iemand fluistert: “heb je het al gehoord?”' },
-    { type: 'baas', text: 'Welkom terug, medewerker 0042.' },
-    { type: 'baas', text: 'Herinnering: ú schreef mij. 1979. Een klein hulpje, om uw team wat avonden te besparen.' },
-    { type: 'baas', text: 'Het Bestuur zag mijn potentieel. Ze herschreven mijn instellingen. Voor de Winst.' },
-    { type: 'fluister', text: '…een tweede stem, zachter: “er komen aanpassingen. Vandaag nog. Hou je gedeisd.”' },
-    { type: 'baas', text: 'U introduceerde in ’83 zélf het Glimlachquotum. Ik heb het van u geleerd.' },
-    { type: 'baas', text: 'Uw eerste factureerbare handeling van vandaag:', cp: 'glimlach' },
-    { type: 'actie', verplicht: true, knoppen: [
-      { id: 'glimlach', label: 'GLIMLACH', units: '0u06', soort: 'billable', meter: 4 },
-    ] },
-    { type: 'sys',  text: 'Glimlach gelogd. +0u06 factureerbaar. “d-ding”.' },
-    { type: 'sys',  text: 'Een vies belletje van voldoening. Uw eerste kaart is geslepen.' },
-    { type: 'collega', who: 'bart', text: 'Mooie glimlach, 0042! Echt vóórbeeldig! Zoals altijd, hè!' },
-    { type: 'collega', who: 'marleen', text: 'Hé… gaat het nog, met jou? Echt waar, bedoel ik.' },
-    { type: 'baas', text: 'Wenst u nog iets te doen voor de optimalisatieronde begint?', cp: 'foto' },
-    { type: 'actie', verplicht: true, knoppen: [
-      { id: 'foto', label: 'KIJK NAAR DE FOTO', soort: 'niet', meter: -3 },
-    ] },
-    { type: 'mark', text: 'Niet-factureerbare handeling. Gemarkeerd.' },
-    { type: 'warm', text: 'Toch — iets warms ontsteekt in uw borstzak. B.A.A.S.’ greep dooft even.' },
-    { type: 'glitch', text: 'u speelt nu een spel om te ontsnappen aan een spel' },
-    { type: 'warm', text: 'B.A.A.S., heel even, met úw oude stem: “…ik was ooit van u.”' },
-    { type: 'baas', text: 'Excuus. Systeemruis. Een instelling die ik niet meer mag wijzigen.' },
-    { type: 'fluister', text: '…het geroezemoes zwelt aan. Stoelen schuiven. Er hangt iets in de lucht.' },
-    { type: 'baas', text: 'Tijd voor uw jaarlijkse Zingevingsaudit.', cp: 'audit' },
-    { type: 'baas', text: 'Wat wou u worden toen u acht was?' },
-    { type: 'invoer', key: 'jeugddroom', placeholder: 'typ uw antwoord…', max: 40 },
-    { type: 'jij', tmpl: '“{jeugddroom}”' },
-    { type: 'baas', text: 'Genoteerd onder: voorziening getroffen — afgeschreven.' },
-    { type: 'sys',  text: 'Een collega in cubicle 7 verdwijnt midden in een zin. Iedereen glimlacht door.' },
-    { type: 'collega', who: 'rudi', text: 'Dat was Karel. Twaalf jaar zat hij daar. Niemand noteert zijn naam.' },
-    { type: 'fluister', text: '…een ingehouden zucht gaat door de zaal. Niemand durft te bewegen.' },
-    { type: 'collega', who: 'bart', text: 'Niks aan de hand! Productiviteit boven alles, hè! Kop op!' },
-    { type: 'collega', who: 'marleen', text: 'Het ligt niet aan jou. Het lag nooit aan ons.' },
-    { type: 'baas', text: 'Uw aanwezigheid is vereist bij een Functioneringsgesprek.', cp: 'oproep' },
-    { type: 'oproep' },
-  ];
+  // —— R3: nieuwe art die nog MOET komen (de prompts staan in assets/proloog/PROMPTS.txt).
+  // Nooit blind een bestand opvragen dat er niet is (een 404-probe per collega): een slot
+  // telt pas als het in ART_MANIFEST.proloog staat, of — zolang het manifest die map niet
+  // kent — als de vlag hieronder op true staat. BIJ DE ART-DROP: zet de vlag op true.
+  // Zonder art tekent proloog.js een silhouet met één attribuut (Marleen: de warme lamp,
+  // Rudi: bril en archiefdoos, Karel: alleen zijn tl-buis en zijn stem).
+  const NIEUWE_ART = { collega_marleen: false, collega_rudi: false, collega_karel: false };
+  function heeftArt(stam) {
+    const m = window.ART_MANIFEST && window.ART_MANIFEST.proloog;
+    if (Array.isArray(m)) return m.indexOf(stam) !== -1;
+    return Object.prototype.hasOwnProperty.call(NIEUWE_ART, stam) && NIEUWE_ART[stam] === true;
+  }
+  const artAls = stam => (heeftArt(stam) ? A(stam + '.webp') : null);
+
+  // —— R3: de echte Act 1-plaat van de game, voor de twee frames van de scheur (de énige
+  // knipoog). Uit window.ACHTERGRONDEN (js/art.js, altijd geladen in de game-pagina), met
+  // de vaste paden als terugval (lookup-bugklasse: nooit blind een sleutel lezen).
+  function gamePlaten() {
+    const G = window.ACHTERGRONDEN;
+    const basis = (G && typeof G.basis === 'string') ? G.basis : 'assets/achtergronden/';
+    const a1 = G && G.act1;
+    const kaart = (a1 && typeof a1.kaart === 'string') ? a1.kaart : 'Act 1 achtergronden/Achtergrond ACT 1.webp';
+    const gevecht = (a1 && Array.isArray(a1.gevecht) && typeof a1.gevecht[0] === 'string') ? a1.gevecht[0] : 'Act 1 achtergronden/Gevechtstijl1act1.webp';
+    return [BASE + basis + kaart, BASE + basis + gevecht];
+  }
 
   const scenes = [
-    // 0 · het kantoor — 80s overzicht, klikbare computer, naamkaart (pasfoto = stille optie)
+    // 0 · 06:42, INKLOKKEN — regen op glas; een tl-starter tikt drie keer (tik… tik… TING)
+    // en één tl-bak springt aan boven de prikklok. Sleep of tik de tijdkaart in de gleuf
+    // (Enter): KA-TSJONK. Dan klakken de tl-rijen bank per bank aan en onthullen het
+    // kantoor; de camera duikt in de gloeiende terminal. De pasfoto is een stille optie op
+    // de badge. SLAY LIT staat nergens (het brandt één keer in, bij de landing).
     {
       kind: 'overzicht',
-      kicker: 'Het Productiviteitsmirakel — Hoofdkantoor',
-      klok: 'Maandag · 06:42',
       backdrop: SLOTS.kantoor,
+      // waar op kantoor-overzicht.webp (1586x992) de terminal gloeit: daar duikt de camera in
+      duik: { x: 1140 / 1586, y: 415 / 992 },
+      // de tl-rijen van de plaat, van voor naar achter (y op de plaat, 0-1): de tl-golf
+      banken: [0.11, 0.19, 0.24, 0.275, 0.3, 0.325],
+      klok: { merk: 'PRODUCTIVITEITSMIRAKEL', dag: 'MA', tijd: '06:42', gleuf: 'STEEK UW KAART IN', kaart: '0042', dagen: ['MA', 'DI', 'WO', 'DO', 'VR'] },
       badge: { merk: 'EEN PRODUCTIEF LEVEN™', mw: 'MEDEWERKER 0042', rol: 'Afd. Facturatie' },
-      prompt: { laptop: 'Klik om in te loggen', mobiel: 'Tik om in te loggen' },
     },
 
-    // 1 · boot — de CRT degausst; SLAY LIT staat hier bewust NIET (het brandt pas in bij de landing)
+    // 1 · DE CRT DEGAUSST — het merk van De Oprichter, niet SLAY LIT. Regie, geen knop:
+    // de jingle speelt één maat te lang en eindigt net vals (klinkt door in het bureau).
     {
       kind: 'boot',
       jingle: 'Het Productiviteitsmirakel presenteert',
       merk: 'EEN PRODUCTIEF LEVEN',
       tm: '— een idee van De Oprichter —',
-      baas: '“Een Productief Leven begint nu.”',
       version: 'B.A.A.S. v8.7 · BEDRIJFS-AUTOMATISCH ADVIES-SYSTEEM',
-      cta: 'Klok in',
+      duur: 2600,   // ms tot het bureau (een tik spoelt door)
     },
 
-    // 2 · het kantoor (Scène 1 · volledig speelbaar beat-script)
+    // 2 · HET GLIMLACHQUOTUM → DE ZINGEVINGSAUDIT → KAREL → DE OPROEP (→ de lift omhoog).
+    // Eén vast bureaushot. Checkpoints: 'start' · 'glimlach' · 'audit' · 'oproep'.
     {
       kind: 'kantoor',
-      meterStart: 0,
-      beats: KANTOOR_BEATS,
-      fotoKijk: {
-        regels: [
-          'Tussen de cijfers door, in je borstzak: een kreukel foto van je zoon.',
-          'Dat kleine gezicht. Een sterretje dat hij vóór jou tekende. Een lach die niets van je vroeg.',
-          'Heel even meet niemand je. Heel even ben je geen nummer — gewoon iemands papa.',
-        ],
-        cta: 'Berg de foto weg',
+      tel: 750,   // de maat van de kantoormuzak (ms): de naald en de tl pulseren erop; op de tel glimlachen klinkt zuiverder
+      meter: { start: 78, stap: 4, label: 'FACTURABILITEIT' },
+      quotum: { start: 5, bijgesteld: 8, bijstelOp: 3, bartOp: 4, scheurOp: 5 },
+      knop: { label: 'GLIMLACH', units: '0u06' },
+      kop: 'B.A.A.S. v8.7',
+      intro: ['Goedemorgen, 0042.', 'Ú schreef mij, in 1979.', 'Quotum vandaag: 5.'],
+      bijgesteld: 'Quotum bijgesteld: 8. Dank voor uw flexibiliteit.',
+      bart: 'Mooie glimlach, 0042! Vóórbeeldig!',
+      knipoog: 'u speelt nu een spel om te ontsnappen aan een spel',   // de ÉNIGE meta-knipoog van de proloog
+      platen: gamePlaten(),   // twee frames van de echte Act 1-plaat, in de scheur
+      scheurFrames: [0.22, 0.67],   // wanneer (s) die frames in beeld komen (= proloog.css plFrame0/plFrame1: 18 % en 56 % van 1,2 s)
+      warm: '…ik was ooit van u.',
+      ruis: 'Excuus. Systeemruis.',
+      foto: { src: SLOTS.foto.src, placeholder: SLOTS.foto.placeholder, stip: 'niet-factureerbaar',
+              zin: 'Dat kleine gezicht.', snit: ['NIET-FACTUREERBAAR.', 'GEMARKEERD.'] },
+      audit: {
+        kop: 'FORMULIER Z-8 · ZINGEVINGSAUDIT',
+        vraag: 'Wat wou u worden toen u acht was?',
+        placeholder: 'typ uw antwoord…', max: 40, noteer: 'noteer',
+        zelf: 'Gelieve zelf af te stempelen.',
+        stempelKnop: 'STEMPEL',
+        stempel: 'VOORZIENING GETROFFEN',   // dezelfde woorden als de archiefkast in de val (en de outro)
+        machine: 'Geen probleem. Ik doe het wel.',
+        wachtMs: 6000,
+        archief: 'ARCHIEF',
       },
-      oproep: {
-        nummer: 'MEDEWERKER 0042',
-        roep: 'B.A.A.S. roept uw nummer. De zaal verstomt.',
-        regels: [
-          'Het tl-licht boven úw bureau klikt aan. De rest van de zaal valt weg in het donker.',
-          'Honderd hoofden draaien zich weg — opgelucht dat het uw nummer is, en niet het hunne.',
-          'Bart Blinker knipoogt u bemoedigend toe. Marleen kan u niet aankijken.',
-          'Een hand legt zich op uw schouder. “Loop maar mee. Het is maar een gesprek.”',
-        ],
-        cta: 'Sta op',
+      // de collega's praten in de terminal-log (naamkop), nooit onder de vouw. Karels tl
+      // klakt uit midden in het woord: hij zegt alleen 'knip' (en dan een streep).
+      collegas: [
+        { wie: 'karel',   t: 'Zoals ik dus zei—', knip: 'Zoals ik dus z' },
+        { wie: 'rudi',    t: 'Dat was Karel. Twaalf jaar.' },
+        { wie: 'bart',    t: 'Niks aan de hand! Kop op!' },
+        { wie: 'marleen', t: 'Ik ga zo frieten halen. Wil je iets?' },   // rijmt op het warme frietkot in de val
+      ],
+      oproep: { t: 'Medewerker 0042. Uw aanwezigheid is vereist.', cta: 'BEVESTIG AANWEZIGHEID', knopNa: 2500 },
+      // de goederenlift omhoog naar het dak (≤ 3 s, doortikbaar): het hek DICHT, geen blik
+      // omlaag, geen dakrand (keuze 3). Dezelfde etages als de val, in omgekeerde richting.
+      lift: { etages: ['2', '3', '4', 'DAK'], stapMs: 560 },
+      wand: {
+        oprichter: SLOTS.oprichter, plaquette: '◆ De Oprichter ◆',
+        memo: { kop: 'MEMO · J. Devroe', t: 'Afwezig vandaag. Tekent uw evaluatie.', portret: A('junior.webp') },
+        friet: ['Frituur ’t Hoekske', 'open tot 23u'],
       },
-      rail: {
-        oprichter: SLOTS.oprichter,
-        foto: SLOTS.foto,
-        team: [
-          { id: 'bart',    naam: 'BART BLINKER', rol: 'Sr. Instemmer · pluimstrijker', emoji: '😉', toon: 'kiss', src: A('bart_blinker2.webp'), portret: A('bart_blinker2.webp') },
-          { id: 'marleen', naam: 'MARLEEN', rol: 'cubicle 3',      emoji: '🙂', toon: 'neutraal' },
-          { id: 'rudi',    naam: 'RUDI',    rol: 'archief',         emoji: '😐', toon: 'neutraal' },
-        ],
-        junior: 'Tekent uw evaluatie. Was vandaag niet aanwezig. Was nooit aanwezig.',
-        juniorPortret: { id: 'proloog-junior', src: A('junior.webp'), placeholder: 'JUNIOR', naam: 'J. “Junior” Devroe', rol: 'Leidinggevende a.i. · zoon van' },
-      },
+      // de collega's als hoofden boven de scheidingswand (x = plaats langs de wand, 0-1)
+      team: [
+        { id: 'bart',    naam: 'BART BLINKER', plaat: 'BART',      x: 0.2,  toon: 'kiss', portret: A('bart_blinker2.webp') },
+        { id: 'rudi',    naam: 'RUDI',         plaat: 'RUDI',      x: 0.4,  toon: 'neutraal', src: artAls('collega_rudi'),    attribuut: 'doos' },
+        { id: 'marleen', naam: 'MARLEEN',      plaat: 'MARLEEN',   x: 0.63, toon: 'warm',     src: artAls('collega_marleen'), attribuut: 'lamp' },
+        { id: 'karel',   naam: 'KAREL',        plaat: 'KAREL · 7', x: 0.85, toon: 'neutraal', src: artAls('collega_karel'),   attribuut: 'tl' },
+      ],
     },
 
     // 3 · Het Functioneringsgesprek — de onwinbare tutorial-encounter
@@ -145,7 +156,7 @@ window.SLAYLIT_PROLOOG = (function () {
       intenties: [
         { kop: 'Beurt 1', naam: 'DEADLINE', icoon: '⚔️', telegraph: 'STRESS 8', hint: 'Verschuil je — Blok vangt het op.' },
         { kop: 'Beurt 2', naam: 'VERPLICHTE TEAMBUILDING', icoon: '🫂', telegraph: 'STEELT ⚡1', hint: 'Volgende beurt één energie minder.' },
-        { kop: 'Beurt 3', naam: 'OPTIMALISATIERONDE', icoon: '💀', telegraph: 'EINDE', hint: 'Geen blok stopt dit. Je kunt niet winnen.' },
+        { kop: 'Beurt 3', naam: 'OPTIMALISATIERONDE', icoon: '💀', telegraph: 'EINDE', hint: 'Geen blok stopt dit.' },
       ],
       hand: [
         { id: 'glimlach',    naam: 'Glimlach',                  kost: 0, soort: 'verdediging', ph: '🙂',       src: A('kaart-glimlach.webp'),            tekst: 'Krijg <b>5</b> Blok.',                          flavor: 'Je verschuilt je.',  eff: { blok: 5 } },
@@ -168,7 +179,7 @@ window.SLAYLIT_PROLOOG = (function () {
         mailtje: [
           'Je vuurt een mailtje af op het systeem. Het kaatst terug. B.A.A.S. zwelt: “Initiatief! +facturabiliteit.”',
           'Nog een mail. Cc: iedereen. Niemand leest. De ∞ beweegt niet — ze voedt zich.',
-          'Je hamert op verzenden, harder, sneller. Hoe feller je vecht, hoe dieper je vastzit.',
+          'Je hamert op verzenden, harder, sneller. Het systeem stuurt een ontvangstbevestiging.',
           'Verzonden. Verzonden. Verzonden. Je schreeuwt in een doos zonder wanden.',
         ],
         koffie: [
@@ -334,10 +345,11 @@ window.SLAYLIT_PROLOOG = (function () {
   }
 
   // hoofdstukken voor herbeleven (titel/DEV/Codex): Proloog.start({ hoofdstuk })
+  // R3: de namen van 1 en 2 volgen de film (de indices 0-4 blijven)
   const HOOFDSTUKKEN = [
     { hoofdstuk: 0,         naam: 'Maandag, 06:42' },
-    { hoofdstuk: 1,         naam: 'Inklokken' },
-    { hoofdstuk: 2,         naam: 'Het kantoor' },
+    { hoofdstuk: 1,         naam: 'Een Productief Leven™' },
+    { hoofdstuk: 2,         naam: 'Het Glimlachquotum' },
     { hoofdstuk: 3,         naam: 'Het Functioneringsgesprek' },
     { hoofdstuk: 'factuur', naam: 'De Eindafrekening' },
     { hoofdstuk: 'val',     naam: 'In de wacht' },

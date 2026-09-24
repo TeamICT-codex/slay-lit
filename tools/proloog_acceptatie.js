@@ -65,6 +65,11 @@
    SLOT R2 (merge-sessie):
   11h          de inkeer na −∞: het licht trekt zich terug in het kooltje (randlicht, foto, knop)
                vóór de snit naar de Afgrond; 0042 verdwijnt niet meer in één beeld.
+   R3 (bouwer S): de route door scènes 0-2 volgt de film: de tijdkaart in de gleuf (scène 0),
+   de CRT degausst (scène 1, een tik spoelt door), het bureau (scène 2: GLIMLACH tot de scheur,
+   optioneel de foto, formulier Z-8 + zelf afstempelen, de collega's in de log, de oproep met
+   [ BEVESTIG AANWEZIGHEID ] en de lift omhoog). Helpers: naarKantoor(), speelKantoor(),
+   wachtOpGlimlach(); de R3-criteria zelf voegt de integrator toe.
    Het script heeft GEEN server nodig: het bedient de worktree rechtstreeks vanaf
    schijf via route.fulfill op http://localhost:4173/** (ook onder /slay-lit/).
    Elke regel toont de GEMETEN waarde. Exit 1 bij minstens één fout.
@@ -219,6 +224,15 @@ const SONDE = () => {
     if (e.scrollHeight > e.clientHeight + 1) res.scroll.push(desc(e) + ' h ' + e.scrollHeight + '>' + e.clientHeight);
     if (e.scrollWidth > e.clientWidth + 1) res.scroll.push(desc(e) + ' w ' + e.scrollWidth + '>' + e.clientWidth);
   });
+  /* R3: wie steekt er uit (niet geknipt door een voorouder met overflow)? — voor de diagnose */
+  if (res.scroll.length) {
+    const sc = R.getElementById('scene');
+    R.querySelectorAll('#scene *').forEach(e => {
+      const b = e.getBoundingClientRect(); if (!b.width || (b.right <= vw + 1 && b.bottom <= vh + 1)) return;
+      for (let x = e.parentElement; x && x !== sc; x = x.parentElement) if (getComputedStyle(x).overflow !== 'visible') return;
+      if (res.scroll.length < 8) res.scroll.push('uitsteker ' + desc(e) + ' [' + [b.left, b.top, b.right, b.bottom].map(Math.round) + '] tf ' + getComputedStyle(e).transform);
+    });
+  }
   R.querySelectorAll('*').forEach(e => {
     const cs = getComputedStyle(e);
     if (cs.display === 'none') return;
@@ -547,46 +561,90 @@ async function naarProloog(page, vp, label) {
   t(doekKleur === 'rgb(7, 6, 10)', `${label}: het doek van de heenweg is puur #07060a (${doekKleur})`);
   return w >= 0;
 }
-/* het kantoor: elke handeling (glimlach, foto, invoer, oproep) + doorspoelen tot het gesprek */
-async function speelKantoor(page, vp, droom, label) {
+/* R3 · scène 0 en 1: de tijdkaart in de gleuf (tik), de CRT degausst (een tik spoelt door) → het bureau.
+   o.sonde: meet onderweg (scène 0 met de kaart, de boot); o.wachtBoot: laat de boot uitspelen */
+async function naarKantoor(page, vp, label, o) {
+  o = o || {};
+  await wachtScene(page, 'overzicht', 4000);
+  if (o.sonde) await sonde(page, `${label} de prikklok`);
+  await tik(page, vp, '.ik-kaart[data-actie="kaart"]');
+  const boot = await wachtScene(page, 'boot', 6000);
+  if (o.boot) await o.boot();
+  if (!o.wachtBoot) {
+    if (vp.m) await page.locator('.boot').first().tap({ position: { x: 20, y: 20 }, force: true }).catch(() => {});
+    else await page.keyboard.press('Space');
+  }
+  const kantoor = await wachtScene(page, 'kantoor', 6000);
+  return boot && kantoor;
+}
+/* R3 · wacht in het bureau tot [ GLIMLACH ] er is (spoel het typen van B.A.A.S. door) */
+async function wachtOpGlimlach(page, vp) {
+  for (let i = 0; i < 60; i++) {
+    if (await sr(page, `const b = R.querySelector('[data-actie="glimlach"]'); return !!b && !b.disabled;`)) return true;
+    if (vp.m) await page.locator('.br-scherm').first().tap({ position: { x: 16, y: 16 }, force: true }).catch(() => {});
+    else await page.keyboard.press('Space');
+    await slaap(160);
+  }
+  return false;
+}
+/* R3 · het bureau: GLIMLACH tot de scheur (optioneel de foto na twee glimlachen), formulier Z-8
+   (typen + zelf afstempelen), de collega's in de log, de oproep, de lift — doorspoelen waar het regie is */
+async function speelKantoor(page, vp, droom, label, o) {
+  o = o || {};
   const gezien = {};
-  let n = 0;
-  for (let i = 0; i < 400; i++) {
+  let n = 0, glim = 0;
+  for (let i = 0; i < 500; i++) {
     const st = await sr(page, `
       const q = s => R.querySelector(s);
-      const a = q('.term-acties button[data-actie]');
-      return { scene: R.host.dataset.plScene, actie: a ? a.dataset.actie : null, invoer: !!q('.term-invoer input'),
-        fk: !!q('.foto-kijk'), fkCta: !!q('.fk-cta'), op: !!q('.oproep'), opCta: !!q('.op-cta'),
-        spreker: !!q('.spreker-kaart'), glitch: !!q('.glitch-frame'), collega: R.querySelectorAll('.tl-collega').length };`);
+      const vrij = s => { const b = q(s); return !!b && !b.disabled && !b.closest('[inert]'); };
+      return { scene: R.host.dataset.plScene, glim: vrij('[data-actie="glimlach"]'), foto: vrij('[data-actie="foto"]'),
+        invoer: vrij('.z8-invoer'), stempel: vrij('[data-actie="stempel"]'), bevestig: vrij('[data-actie="bevestig"]'),
+        kijk: !!q('.br-kijk'), scheur: !!q('.scheur'), lift: !!q('.lift'), oproep: !!q('.oproep'),
+        collega: R.querySelectorAll('.tl-collega').length, bart: !!q('.tl-collega[data-wie="bart"]'), knip: !!q('.tl-knip') };`);
     if (st.scene !== 'kantoor') break;
     const eerste = k => { if (gezien[k]) return false; gezien[k] = 1; return true; };
-    if (eerste('start')) { await slaap(700); await sonde(page, `${label} kantoor`); await shot(page, `${vp.n}-03-kantoor`); }
-    if (st.collega && eerste('collega')) await sonde(page, `${label} kantoor, een collega spreekt in de log`);
-    if (st.spreker && eerste('spreker')) await sonde(page, `${label} kantoor, Barts kaart`);
-    if (st.actie) {
-      await slaap(200);
-      if (eerste('actie-' + st.actie)) { await sonde(page, `${label} kantoor, handeling "${st.actie}"`); await shot(page, `${vp.n}-04-kantoor-${st.actie}`); }
-      await tik(page, vp, '.term-acties button[data-actie]');
+    if (eerste('start')) { await slaap(700); await sonde(page, `${label} het bureau`); await shot(page, `${vp.n}-03-bureau`); }
+    if (st.collega && eerste('collega')) await sonde(page, `${label} het bureau, een collega spreekt in de log`);
+    if (st.bart && eerste('bart')) await sonde(page, `${label} het bureau, Bart roept (in de log, zijn hoofd boven de wand)`);
+    if (st.knip && eerste('karel')) await sonde(page, `${label} het bureau, Karels tl klakt uit`);
+    if (st.scheur && eerste('scheur')) { await sonde(page, `${label} de scheur`); await shot(page, `${vp.n}-04-scheur`); }
+    if (st.lift && eerste('lift')) { await sonde(page, `${label} de lift omhoog`); await shot(page, `${vp.n}-06-lift`); }
+    if (st.foto && o.foto !== false && glim >= 2 && eerste('actie-foto')) {
+      await sonde(page, `${label} het bureau, de foto kan`);
+      await tik(page, vp, '[data-actie="foto"]');
+      await slaap(500);
+      if (await sr(page, `return !!R.querySelector('.br-kijk');`)) { await sonde(page, `${label} de foto (één regel, dan de snit)`); await shot(page, `${vp.n}-04-foto`); }
+      continue;
+    }
+    if (st.glim) {
+      await slaap(120);
+      if (eerste('actie-glimlach')) { await sonde(page, `${label} het bureau, [ GLIMLACH ]`); await shot(page, `${vp.n}-04-glimlach`); }
+      await tik(page, vp, '[data-actie="glimlach"]');
+      glim++;
       await slaap(250); continue;
     }
-    if (st.fkCta) { if (eerste('fk')) await sonde(page, `${label} kantoor, de foto`); await tik(page, vp, '.fk-cta'); await slaap(300); continue; }
     if (st.invoer) {
-      await sonde(page, `${label} kantoor, de jeugddroom-invoer`);
-      await shot(page, `${vp.n}-05-kantoor-invoer`);
-      await page.locator('.term-invoer input').fill(droom);
+      await sonde(page, `${label} formulier Z-8, de jeugddroom-invoer`);
+      await shot(page, `${vp.n}-05-audit`);
+      await page.locator('.z8-invoer').fill(droom);
       await page.keyboard.press('Enter'); await slaap(300); continue;
     }
-    if (st.opCta) { await sonde(page, `${label} kantoor, de oproep`); await shot(page, `${vp.n}-06-oproep`); await tik(page, vp, '.op-cta'); await slaap(500); continue; }
-    /* doorspoelen: laptop met een toets, touch met een tik op de log of de overlay */
+    if (st.stempel) {
+      if (eerste('stempel')) await sonde(page, `${label} formulier Z-8, zelf afstempelen`);
+      if (o.machine) { await slaap(200); }
+      else { await tik(page, vp, '[data-actie="stempel"]'); await slaap(300); continue; }
+    }
+    if (st.bevestig) { await sonde(page, `${label} de oproep, [ BEVESTIG AANWEZIGHEID ]`); await shot(page, `${vp.n}-06-oproep`); await tik(page, vp, '[data-actie="bevestig"]'); await slaap(400); continue; }
+    if (o.machine && st.stempel) continue;   /* de machine laten stempelen: niet doorspoelen */
+    /* doorspoelen: laptop met een toets, touch met een tik (op een overlay of op het scherm van de CRT) */
     n++;
     if (!vp.m) await page.keyboard.press(n % 2 ? 'Space' : 'ArrowRight');
-    else {
-      const doel = st.op ? '.oproep' : st.fk ? '.foto-kijk' : '.term-log';
-      await page.locator(doel).first().tap({ position: { x: 16, y: 16 }, force: true }).catch(() => {});
-    }
+    else await page.locator('.br-scherm').first().tap({ position: { x: 16, y: 16 }, force: true }).catch(() => {});
     await slaap(150);
   }
-  t(!!(gezien.collega && gezien.spreker && gezien['actie-glimlach'] && gezien['actie-foto']), `${label}: kantoor doorlopen (glimlach, foto, collega-regels in de log, Barts kaart: ${Object.keys(gezien).join(',')})`);
+  /* (een spatie op de gefocuste GLIMLACH-knop drukt hem ook in: tel de glimlachen van het spel, niet de tikken) */
+  t(!!(gezien.collega && gezien.bart && gezien.karel && gezien.scheur && gezien['actie-glimlach'] && (o.foto === false || gezien['actie-foto'])),
+    `${label}: het bureau doorlopen (${glim}x GLIMLACH getikt, de scheur, de foto, Z-8, de collega's in de log, Karel, de oproep: ${Object.keys(gezien).join(',')})`);
 }
 async function speelGesprek(page, vp, pad, label) {
   await slaap(700);
@@ -814,8 +872,8 @@ async function kaartPlaat(page, vp) {
     t(inP.tb === 'none' && inP.modus === inP.body, `${L}: topbalk verborgen (${inP.tb}), data-modus gespiegeld op de host (${inP.modus} = body ${inP.body})`);
     await slaap(900);
     t(await vt323(page), `${L}: VT323 staat in het document (fonts.css) en is geladen`);
-    const crt = await sr(page, `const p = R.querySelector('.ovm-prompt'); return p ? getComputedStyle(p).fontFamily : null;`);
-    t(/VT323/.test(crt || ''), `${L}: de CRT-prompt in de shadow root gebruikt VT323 (${crt})`);
+    const crt = await sr(page, `const p = R.querySelector('.ik-tijd'); return p ? getComputedStyle(p).fontFamily : null;`);
+    t(/VT323/.test(crt || ''), `${L}: het venster van de prikklok in de shadow root gebruikt VT323 (${crt})`);
     const lekTijdens = await page.evaluate(LEK);
     t(JSON.stringify(lekTijdens) === JSON.stringify(lekVoor), `${L}: geen CSS-lek terwijl de proloog draait (tokens, body, titelfont, #sheets gelijk)` + (JSON.stringify(lekTijdens) === JSON.stringify(lekVoor) ? '' : ' — voor ' + JSON.stringify(lekVoor) + ' tijdens ' + JSON.stringify(lekTijdens)));
     const klank = await page.evaluate(() => ({ scene: window.Klank ? Klank.huidigeScene : null, gekoppeld: !!(window.SLAYLIT_AUDIO && SLAYLIT_AUDIO.gekoppeld), acN: window.__acN }));
@@ -835,15 +893,15 @@ async function kaartPlaat(page, vp) {
     const k2 = await klankKnop();
     t(k0.er && k0.aan && !k1.aan && !k1.cb && k1.pressed === 'true' && k1.icoon === '🔇' && k2.aan && k2.cb && k2.icoon === '🔊' && k2.scene === 'overzicht',
       `${L}: de klankknop dempt (${k0.aan} → ${k1.aan}, ⚙️ ${k1.cb}, ${k1.icoon}) en ${vp.m ? 'een tweede tik' : 'M'} zet het weer aan (${k2.aan}, ${k2.icoon}); de scène spoelt niet door (${k2.scene})`);
-    await tik(page, vp, '.ov-monitor');
-    t(await wachtScene(page, 'boot', 5000), `${L}: de monitor → de boot`);
-    await slaap(1100);
-    await sonde(page, `${L} boot`);
-    const boot = await sr(page, `return R.querySelector('.boot').textContent;`);
-    t(!/SLAY/.test(boot), `${L}: de boot toont SLAY LIT niet ("${boot.replace(/\s+/g, ' ').slice(0, 40)}…")`);
-    await shot(page, `${vp.n}-02-boot`);
-    await tik(page, vp, '.boot-cta .knop-groot');
-    t(await wachtScene(page, 'kantoor', 5000), `${L}: Klok in → het kantoor`);
+    await shot(page, `${vp.n}-01b-prikklok`);
+    const opKantoor = await naarKantoor(page, vp, L, { sonde: true, wachtBoot: true, boot: async () => {
+      await slaap(1100);
+      await sonde(page, `${L} boot`);
+      const boot = await sr(page, `return R.querySelector('.boot').textContent;`);
+      t(!/SLAY/.test(boot), `${L}: de boot toont SLAY LIT niet ("${boot.replace(/\s+/g, ' ').slice(0, 40)}…")`);
+      await shot(page, `${vp.n}-02-boot`);
+    } });
+    t(opKantoor, `${L}: de tijdkaart in de gleuf → de CRT degausst → het bureau`);
     await speelKantoor(page, vp, vp.droom, L);
     t(await wachtScene(page, 'gesprek', 5000), `${L}: de oproep → het gesprek`);
     await speelGesprek(page, vp, vp.pad, L);
@@ -931,8 +989,7 @@ async function kaartPlaat(page, vp) {
       kop('2a · ' + L + ' · Esc vasthouden, maskerkeuze met het toetsenbord');
       const { ctx, page } = await open(browser, vp);
       await naarProloog(page, vp, L);
-      await tik(page, vp, '.ov-monitor'); await wachtScene(page, 'boot', 5000);
-      await tik(page, vp, '.boot-cta .knop-groot'); await wachtScene(page, 'kantoor', 5000);
+      await naarKantoor(page, vp, L);
       const zicht = await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; const s = R && R.querySelector('.pl-skip.zichtbaar'); return !!s && getComputedStyle(s).opacity > 0.2; }, 6000);
       t(zicht >= 0, `${L}: de skip-ring verschijnt (na ${zicht} ms in het kantoor; plan: 4 s na de start)`);
       await sonde(page, `${L} kantoor met de skip in beeld`);
@@ -992,14 +1049,9 @@ async function kaartPlaat(page, vp) {
       await slaap(600);
       const nudgeTijdens = await page.evaluate(() => !!document.getElementById('scherm-nudge'));
       t(!nudgeTijdens, `${L}: de nudge (op de titel: ${nudgeVoor}) hangt niet over de proloog (${nudgeTijdens})`);
-      await tik(page, vp, '.ov-monitor'); await wachtScene(page, 'boot', 5000);
-      await tik(page, vp, '.boot-cta .knop-groot'); await wachtScene(page, 'kantoor', 5000);
-      for (let i = 0; i < 60; i++) {
-        if (await sr(page, `return !!R.querySelector('.term-acties button[data-actie="glimlach"]');`)) break;
-        await page.locator('.term-log').first().tap({ position: { x: 16, y: 16 }, force: true }).catch(() => {});
-        await slaap(160);
-      }
-      await tik(page, vp, '.term-acties button[data-actie="glimlach"]');
+      await naarKantoor(page, vp, L);
+      await wachtOpGlimlach(page, vp);
+      await tik(page, vp, '[data-actie="glimlach"]');
       await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pl-skip.zichtbaar')); }, 6000);
       await sonde(page, `${L} kantoor met de skip in beeld`);
       await houdSkip(page, vp, 350);
@@ -1068,8 +1120,7 @@ async function kaartPlaat(page, vp) {
     await page.locator('#scherm-titel .knop-stil', { hasText: 'Proloog' }).click();
     const w = await wachtOp(page, () => document.body.dataset.scherm === 'proloog' && !!(window.Proloog && Proloog.actief), 6000);
     t(w >= 0 && (await scene(page)) === 'overzicht', `${L}: titelknop 'Proloog' → herbeleven vanaf scène 0 (${await scene(page)})`);
-    await tik(page, vp, '.ov-monitor'); await wachtScene(page, 'boot', 5000);
-    await tik(page, vp, '.boot-cta .knop-groot'); await wachtScene(page, 'kantoor', 5000);
+    await naarKantoor(page, vp, L);
     await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pl-skip.zichtbaar')); }, 6000);
     await houdSkip(page, vp, 950);
     const terug = await wachtOp(page, () => document.body.dataset.scherm === 'titel' && !proloogBezig(), 5000);
@@ -1119,14 +1170,9 @@ async function kaartPlaat(page, vp) {
     kop('4 · hervatten na een herlaad, dan een WIPE (liggend)');
     const { ctx, page } = await open(browser, vp, { geenNudge: true });
     await naarProloog(page, vp, L);
-    await tik(page, vp, '.ov-monitor'); await wachtScene(page, 'boot', 5000);
-    await tik(page, vp, '.boot-cta .knop-groot'); await wachtScene(page, 'kantoor', 5000);
-    for (let i = 0; i < 60; i++) {
-      if (await sr(page, `return !!R.querySelector('.term-acties button[data-actie="glimlach"]');`)) break;
-      await page.locator('.term-log').first().tap({ position: { x: 16, y: 16 }, force: true }).catch(() => {});
-      await slaap(160);
-    }
-    await tik(page, vp, '.term-acties button[data-actie="glimlach"]');
+    await naarKantoor(page, vp, L);
+    await wachtOpGlimlach(page, vp);
+    await tik(page, vp, '[data-actie="glimlach"]');
     await slaap(400);
     const save1 = JSON.parse((await opslag(page)).slaylit_proloog_v3 || 'null') || {};
     t(save1.scene === 2, `${L}: de proloog-save staat in het kantoor (scène ${save1.scene}, checkpoint ${save1.checkpoint})`);
@@ -1283,16 +1329,13 @@ async function kaartPlaat(page, vp) {
       `${L}: herlaad + één glimlach + einde: contract ${cb.glimlachen}, save ${vb.choices && vb.choices.glimlachen} (2 uit het kantoor + 1; vroeger 4)`);
     /* het kantoor: de save staat op het checkpoint vóór de GLIMLACH-knop, maar de knop was al
        ingedrukt (glimlachen 1). Hervatten moet de teller van het checkpoint terugzetten. */
-    const v3k = { scene: 2, checkpoint: 'beat:9', choices: { glimlachen: 1, glimCp: 0, meter: 78 }, gezien: [0, 1, 2] };
+    const v3k = { scene: 2, checkpoint: 'glimlach', choices: { glimlachen: 1, glimCp: 0, meter: 78 }, gezien: [0, 1, 2] };
     await page.evaluate(v => { localStorage.removeItem('slayit_proloog'); localStorage.setItem('slaylit_proloog_v3', v); }, JSON.stringify(v3k));
     await page.reload({ waitUntil: 'load' }); await slaap(800); await volgSchermen(page);
     await naarProloog(page, vp, L + ' (kantoor)');
     t(await wachtScene(page, 'kantoor', 5000), `${L}: hervat in het kantoor, op het checkpoint 'glimlach'`);
-    for (let i = 0; i < 40; i++) {
-      if (await sr(page, `return !!R.querySelector('.term-acties button[data-actie="glimlach"]');`)) break;
-      await page.keyboard.press('Space'); await slaap(150);
-    }
-    await tik(page, vp, '.term-acties button[data-actie="glimlach"]'); await slaap(400);
+    await wachtOpGlimlach(page, vp);
+    await tik(page, vp, '[data-actie="glimlach"]'); await slaap(400);
     const vk = JSON.parse((await opslag(page)).slaylit_proloog_v3 || 'null') || {};
     t(vk.choices && vk.choices.glimlachen === 1, `${L}: kantoor hervat + GLIMLACH: ${vk.choices && vk.choices.glimlachen} glimlach (niet 2)`);
     t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));

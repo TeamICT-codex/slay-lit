@@ -12,6 +12,10 @@
 > **Stand van de achterstand: 30 items.** Alle dertien RONDE 3-achtergronden zijn met v127
 > geland; wat overblijft zijn gevechtsposes die de code al opvraagt, de traversal-frames van
 > de twee niet-Slachter-helden, één optionele signatuurpose en vier Afdaling-objecten.
+>
+> **Aanvulling 24 september 2026 (proloog R3):** daarbovenop **4 optionele proloog-items**
+> (drie collega-portretten en 0042 als figuur). Ze hebben allemaal een werkende terugval, dus
+> niets blokkeert; zie de sectie 🎬 PROLOOG hieronder.
 
 ## Werkwijze (per drop)
 
@@ -117,6 +121,23 @@
 
 ---
 
+## 🎬 PROLOOG — optioneel, er is een terugval (4 items) → `assets/proloog/`
+
+> De proloog ("Een Productief Leven™") draait volledig zonder deze platen: de collega's vallen
+> terug op een silhouet met één attribuut, 0042 op een SVG-silhouet. Een drop maakt het beeld
+> rijker, niet werkend. **Eigen stijlanker:** de 198X-lock (nicotinegeel, tl-licht, amber CRT,
+> één bloedrood accent), NIET het fantasy-anker. Voeg bij het genereren een referentie toe:
+> `bart_blinker2.webp` voor de collega's (zelfde kader, zelfde vergeelde print), een masker
+> (`masker-woede/-gif/-vlucht`) voor 0042 (dezelfde man). Nieuwe namen bij de drop mee in
+> `ZWAAR` van `sw.js`, zoals de rest van `assets/proloog/`.
+
+- [ ] `collega_marleen.png` · `assets/proloog` · prompt: `assets/proloog/PROMPTS.txt` → kopregel `collega_marleen.png` (r52) · R3, scène 2 (het Glimlachquotum): de enige warme lamp van de kantoortuin, vest, autosleutels aan een rood hangertje ("Ik ga zo frieten halen"). 1024x1024, VOL beeld (geen cut-out) · terugval: silhouet + bureaulamp/vest · **nieuw (optioneel)**
+- [ ] `collega_rudi.png` · `assets/proloog` · prompt: `assets/proloog/PROMPTS.txt` → kopregel `collega_rudi.png` (r61) · R3, scène 2: de archivaris, bril op het voorhoofd, archiefdoos als schild, staalblauw accent ("Dat was Karel. Twaalf jaar."). 1024x1024, VOL beeld · terugval: silhouet + archiefdoos/bril · **nieuw (optioneel)**
+- [ ] `collega_karel.png` · `assets/proloog` · prompt: `assets/proloog/PROMPTS.txt` → kopregel `collega_karel.png` (r70) · R3, scène 2: de stem uit cubicle 7, midden in een zin, half weggevaagd onder zijn flakkerende tl-buis. 1024x1024, VOL beeld · terugval: alleen zijn tl-buis en zijn stem · **nieuw (optioneel)**
+- [ ] `medewerker_0042.png` · `assets/proloog` · prompt: `assets/proloog/PROMPTS.txt` → kopregel `medewerker_0042.png` (r79) · R4, het Functioneringsgesprek: volledige figuur, kijkt naar **RECHTS**, vastgeroeste glimlach, badge aan een rood koord (badge blanco: het spel zet 0042 erop), het kooltje gloeit door de borstzak. 1024x1024, **cut-out** (transparant, `verwijder_dambord.py` + `converteer_webp.py`) · terugval: SVG-silhouet · **nieuw (optioneel)**
+
+---
+
 ## ⏸ Geparkeerd — metgezellen (beslissing 22 september 2026)
 
 De metgezellen worden geparkeerd: er wordt **geen metgezel-art meer gegenereerd**. Ze maken
@@ -209,6 +230,8 @@ prompts schrijven → genereren. **Geen van deze namen is een TODO.**
 - `assets/karakters/PROMPTS.txt` — vijanden, bazen, het hof
 - `assets/karakters/STATE-PROMPTS.txt` — alle poses en states (held én vijand)
 - `assets/achtergronden/PROMPTS.txt` — act-achtergronden + De Afdaling
+- `assets/proloog/PROMPTS.txt` — de proloog vanaf R3 (collega's, 0042), met het 198X-anker;
+  de oudere proloog-art staat in `design_handoff_proloog/intro/ART-PROMPTS.md`
 - `assets/kaarten/` · `relikwieen/` · `dranken/` · `iconen/` · `events/` · `scherven/` ·
   `ui/` · `metgezellen/` — elk een eigen `PROMPTS.txt`
 - `ACT2-PROMPTBIB.md` · `ACT3-PROMPTBIB.md` — act-brede bibliotheken met bouwdata

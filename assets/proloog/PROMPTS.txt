@@ -1,0 +1,86 @@
+PROLOOG "EEN PRODUCTIEF LEVEN™" — PROMPTBIBLIOTHEEK (assets/proloog/)
+=====================================================================
+De bestaande proloog-art (kantoor-overzicht, De Oprichter, foto-kind,
+B.A.A.S.-terminal, de vijf kantoorkaarten, de drie maskers, junior,
+de-afgrond, slijmklerk, bart_blinker2) is geleverd via de design-handoff
+(design_handoff_proloog/intro/ART-PROMPTS.md). Dit bestand bundelt de
+NIEUWE proloog-elementen vanaf ronde 3 (het kantoor als film), in het
+vaste blokformat van het project: één blok = één afbeelding.
+
+STIJLANKER (de 198X-lock, NIET het fantasy-anker van de karakters):
+elke prompt opent en sluit met exact dezelfde zin, vertaald uit de
+gedeelde stijl van ART-PROMPTS.md: schilderachtig-filmische 198X-
+bedrijfsillustratie, nicotinegeel palet, ziekelijk groen-wit tl-licht,
+warme amber CRT-gloed, één bloedrood accent, filmkorrel, GEEN foto,
+GEEN tekst/logo's, GEEN moderne techniek. Pas de twee zinnen nooit
+per blok aan: dat is juist wat de reeks samenhoudt.
+
+Overzicht:
+  bestand               ronde  maat               transparant  waar in het spel                        terugval (werkt nu al)
+  collega_marleen.png   R3     1024x1024 vierkant  NEE (vol)    naamkop/hoofd boven de wand, scène 2     silhouet + warme bureaulamp/vest
+  collega_rudi.png      R3     1024x1024 vierkant  NEE (vol)    naamkop/hoofd boven de wand, scène 2     silhouet + archiefdoos/bril
+  collega_karel.png     R3     1024x1024 vierkant  NEE (vol)    de stem uit cubicle 7, scène 2           alleen zijn tl-buis en zijn stem
+  medewerker_0042.png   R4     1024x1024 vierkant  JA (cut-out) het Functioneringsgesprek (beige toneel) SVG-silhouet
+
+Werkwijze per blok:
+  1. Kopieer het volledige blok (alles tussen twee kopregels).
+  2. Voeg een referentiebeeld toe: voor de drie collega's
+     assets/proloog/bart_blinker2.webp (zelfde kader, zelfde vergeelde
+     print); voor 0042 één van de maskers (masker-woede/-gif/-vlucht:
+     het is dezelfde man).
+  3. Genereer, kies de beste variant, sla op als PNG onder EXACT de
+     bestandsnaam uit de kopregel.
+  4. Drop in assets/proloog/ en zeg "ruim de nieuwe art op" → de
+     /art-drop-skill. De drie portretten zijn VOLLE beelden (geen
+     cut-out): alleen converteer_webp.py. medewerker_0042 is een
+     cut-out: verwijder_dambord.py + converteer_webp.py.
+
+Tips:
+- Genereer de drie collega's in dezelfde sessie: ze moeten naast Bart
+  als één personeelsbord lezen, elk met een eigen silhouet en een eigen
+  kleuraccent (anti-convergentie).
+- Wordt het een gladde, scherpe foto? Re-roll met "hand-painted 198X
+  illustration, painterly film still, not a photograph" vooraan.
+- Wordt het cartoonesk of te kleurig? Voeg "faded Kodachrome, muted,
+  desaturated" toe.
+- De portretten worden KLEIN getoond (±70-84 px): één sterk silhouet-
+  element en één kleuraccent moeten dan nog lezen.
+- 0042 kijkt naar RECHTS (held-conventie: hij staat links, B.A.A.S.
+  rechts). De pijplijn spiegelt nooit.
+
+
+==================== collega_marleen.png =====================
+Painterly, filmic 198X corporate illustration, hand-painted with soft visible brushwork, like a faded Kodachrome film still that has been yellowing in a filing cabinet for years. Muted, desaturated nicotine-yellow palette: manila beige, tobacco-brown wood, sickly green-white fluorescent light that flatters no one, a warm amber CRT glow, and exactly one blood-red accent. Fine film grain, soft focus, deadpan and quietly oppressive. NOT photorealistic, not a clean photograph, no glossy 3D render.
+
+Head-and-shoulders staff portrait framed like a small company ID photo: the face in the upper middle of the frame, shoulders cut off by the bottom edge, the subject slightly off-centre, a dark, warm, out-of-focus office background with a heavy vignette. The whole image looks like an aged photographic print with worn, softly rounded corners and a thin darkened edge, pinned to a cubicle wall for years. Square 1024x1024 canvas, full-bleed background (NOT transparent). It must still read clearly when shown very small: one strong silhouette element and one colour accent.
+
+Subject: Marleen, a kind, slightly worried office clerk in her mid-fifties, the only warm person in the building. Short greying curly hair, reading glasses hanging on a beaded chain, a soft hand-knitted cardigan in faded mustard-ochre over a cream blouse. She sits in the glow of her own small desk lamp with a round brass shade, just visible at the edge of the frame: the ONLY warm tungsten light in the whole office, catching her cheek and her hands in soft amber-orange while the room behind her stays fluorescent green-grey. Friendly but concerned expression, eyebrows slightly raised, as if she has just asked whether you are all right. Unique silhouette element: the round, soft cardigan shoulders and the round lamp shade beside her head. Colour accent: warm tungsten amber, the one warm light. The single blood-red accent: a red plastic keyring with car keys in her hand, because she is about to go out for fries.
+
+Painted 198X illustration style only. No text, no letters, no numbers, no logos, no watermark, no modern technology (no flat screens, no smartphones, no laptops), no cartoon style, no glamour, no bright saturated colours.
+
+====================== collega_rudi.png ======================
+Painterly, filmic 198X corporate illustration, hand-painted with soft visible brushwork, like a faded Kodachrome film still that has been yellowing in a filing cabinet for years. Muted, desaturated nicotine-yellow palette: manila beige, tobacco-brown wood, sickly green-white fluorescent light that flatters no one, a warm amber CRT glow, and exactly one blood-red accent. Fine film grain, soft focus, deadpan and quietly oppressive. NOT photorealistic, not a clean photograph, no glossy 3D render.
+
+Head-and-shoulders staff portrait framed like a small company ID photo: the face in the upper middle of the frame, shoulders cut off by the bottom edge, the subject slightly off-centre, a dark, warm, out-of-focus office background with a heavy vignette. The whole image looks like an aged photographic print with worn, softly rounded corners and a thin darkened edge, pinned to a cubicle wall for years. Square 1024x1024 canvas, full-bleed background (NOT transparent). It must still read clearly when shown very small: one strong silhouette element and one colour accent.
+
+Subject: Rudi, the department's archivist, around sixty, dry and unimpressed, with thirty years of files in his head. Thin grey hair combed straight back, a clipped grey moustache, heavy horn-rimmed glasses pushed up onto his forehead, black satin sleeve protectors over a pale grey-blue shirt and a knitted sleeveless vest. He holds a battered cardboard archive box upright against his chest like a shield, with a small empty metal label holder on its front. Deadpan face, one eyebrow a millimetre higher than the other: nothing in this building surprises him any more. Behind him, out of focus, the steel shelving of a basement archive. Unique silhouette element: the square archive box in front of his chest and the glasses perched on his forehead. Colour accent: cold steel blue-grey, the colour of the basement archive. The single blood-red accent: one red index tab sticking out of the top of the box.
+
+Painted 198X illustration style only. No text, no letters, no numbers, no logos, no watermark, no modern technology (no flat screens, no smartphones, no laptops), no cartoon style, no glamour, no bright saturated colours.
+
+===================== collega_karel.png ======================
+Painterly, filmic 198X corporate illustration, hand-painted with soft visible brushwork, like a faded Kodachrome film still that has been yellowing in a filing cabinet for years. Muted, desaturated nicotine-yellow palette: manila beige, tobacco-brown wood, sickly green-white fluorescent light that flatters no one, a warm amber CRT glow, and exactly one blood-red accent. Fine film grain, soft focus, deadpan and quietly oppressive. NOT photorealistic, not a clean photograph, no glossy 3D render.
+
+Head-and-shoulders staff portrait framed like a small company ID photo: the face in the upper middle of the frame, shoulders cut off by the bottom edge, the subject slightly off-centre, a dark, warm, out-of-focus office background with a heavy vignette. The whole image looks like an aged photographic print with worn, softly rounded corners and a thin darkened edge, pinned to a cubicle wall for years. Square 1024x1024 canvas, full-bleed background (NOT transparent). It must still read clearly when shown very small: one strong silhouette element and one colour accent.
+
+Subject: Karel, who has sat in the same grey cubicle for twelve years, early fifties, balding with a careful comb-over, pale and washed out, in a short-sleeved shirt with a limp tie. He is caught mid-sentence: mouth slightly open, one hand raised with the index finger up, about to make a point he will never finish. Directly above his head the long bar of a fluorescent tube flickers: that side of the picture is overexposed and stuttering, with a faint ghosted double outline, as if the light is about to switch off, or he is. The left third of the portrait dissolves into grain and cold fluorescent haze, as though he is already being erased from the photograph. Unique silhouette element: the long, bright bar of the fluorescent tube across the top of the frame and the raised finger. Colour accent: sickly, flickering green-white. The single blood-red accent: a chipped red coffee mug in his other hand, the only thing about him still at full colour.
+
+Painted 198X illustration style only. No text, no letters, no numbers, no logos, no watermark, no modern technology (no flat screens, no smartphones, no laptops), no cartoon style, no glamour, no bright saturated colours.
+
+==================== medewerker_0042.png =====================
+Painterly, filmic 198X corporate illustration, hand-painted with soft visible brushwork, like a faded Kodachrome film still that has been yellowing in a filing cabinet for years. Muted, desaturated nicotine-yellow palette: manila beige, tobacco-brown wood, sickly green-white fluorescent light that flatters no one, a warm amber CRT glow, and exactly one blood-red accent. Fine film grain, soft focus, deadpan and quietly oppressive. NOT photorealistic, not a clean photograph, no glossy 3D render.
+
+Single full-body character, standing, three-quarter side view, facing RIGHT. Lit from above by flat, beige-green fluorescent office light, with a soft warm rim of amber on the side facing right.
+
+Subject: Employee 0042, an exhausted office worker in his mid-forties who has worked here for twenty-five years: the SAME man as in the three mask portraits of this prologue, with short dark-brown hair neatly side-parted, tired grey-blue eyes and a lean face with deep lines around the mouth. A crumpled manila-beige long-sleeved shirt, a narrow dark-brown tie, grey trousers a little too short, scuffed brown office shoes. A laminated ID badge hangs on a lanyard around his neck (leave the badge itself blank; the game adds the number). His smile has rusted in place: the mouth smiles on quota, the eyes do not. One hand rests protectively over his left breast pocket, and through the fabric a tiny, warm ember-orange glow seeps out: the only warm light on him. Unique silhouette element: the hand guarding the breast pocket and the hanging badge. Colour accent: the faint ember glow in the pocket. The single blood-red accent: the faded red lanyard.
+
+Painted 198X illustration style only. No text, no letters, no numbers, no logos, no watermark, no modern technology (no flat screens, no smartphones, no laptops), no cartoon style, no glamour, no bright saturated colours. Isolated on a fully transparent background with crisp coloured edges, NO white glow, bloom or haze around the figure. No ground, no shadow, no frame, no UI, no background elements. The figure fills about 85% of a square 1024x1024 canvas, feet near the bottom edge.
