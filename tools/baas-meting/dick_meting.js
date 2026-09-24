@@ -8,6 +8,20 @@
    HET DECREET ALS KEUZE: window.__dickKeuze(A, B) beslist voor de bot welke van de twee
    aangezegde kaarten valt; standaard schrapt hij de kaart met de laagste (zeldzaamheid, kost).
 
+   SLACHTBLOK-KAARTEN (R3, 24 sep 2026): een echte speler komt aan met gesmede kaarten, dus
+   de 'gemiddeld'- en 'sterk'-dekken dragen er nu ook (veld `smeed` per build):
+   - gemiddeld: ÉÉN altaarkaart (het Slachtblok vóór de troonzaal, modus 'altaar'): twee
+     kaarten uit het dek geofferd (VERNIETIGD), uit hun offerwaarde (offerWaarde uit game.js:
+     zeldzaamheid + 1 als opgewaardeerd; kost 2 = +2, kost 0 = -3) één kaart met max 2
+     effecten (SMEED_MODULES). Netto: het dek wordt 1 kaart kleiner.
+   - sterk: dezelfde altaarkaart met een iets rijker offer, plus één ERFSTUK uit het Schrijn
+     (gesmeed bij een eerdere dood, 'gesmeed_codex_<held>', vervangt een startkaart).
+   Het budget wordt IN DE PAGINA nagerekend met de echte offerWaarde; een spec die er boven
+   gaat, laat de job falen (geen verzonnen kaarten). De vuurbonus (35% kans) blijft weg:
+   de meting moet deterministisch blijven. De bot waardeert gesmede kaarten per module
+   (de module-som in waarde()). 'matig' blijft zonder Slachtblok (wie zwak aankomt, smeedt zelden goed).
+   Extra uitvoer: `doodsBron` (de bron van de laatste klap) en `haaldeIV`.
+
    - GEEN dev-server en NOOIT :4173 (Thomas' playtest). Een verzonnen host (localhost:4199)
      wordt door Playwright vanaf SCHIJF bediend met route.fulfill (patroon uit
      tools/drama_stap_c_matrix.js / tools/devmenu_acceptatie.js). Service workers geblokkeerd.
@@ -20,6 +34,9 @@
      MEET_HELDEN=slachter,gifmagier,thoverk   MEET_STERKTES=sterk,gemiddeld,matig
      MEET_BELEID=gebalanceerd,bewust          MEET_REF=0 (Act 1/2-referentie overslaan)
      MEET_WERKERS=4 (parallelle pagina's)     SLAYIT_PLAYWRIGHT=<pad naar node_modules/playwright>
+     MEET_DICK='{"hp":300,"FACTUUR":{"tarief2":2}}'  (verkenning: DICK-knoppen in de pagina
+       overschrijven, diep samengevoegd; hp gaat ook naar VIJANDEN.de_dicktator. De eindmeting
+       draait ZONDER deze optie, op de waarden in game.js.)
    Uitvoer: <label>.json naast het script (of MEET_UIT=<pad>) + een samenvatting op de console. */
 const fs = require('fs'), path = require('path');
 function laadPlaywright() {
@@ -113,6 +130,26 @@ const BUILDS = {
             ['vonkenbeet', 0], ['stoofpotje', 0], ['wortelgreep', 0], ['doornzweep', 0], ['bastvel', 0], ['sporenstoot', 0],
             ['asadem', 0], ['stoofgeur', 0], ['perkamentslag', 0], ['tegenvuur', 0], ['schildmuur', 0], ['eikenhuid', 0]]
     }
+  }
+};
+/* ---- de Slachtblok-kaarten per build (zie de kop). offers = kaart-ids uit het dek (het
+   eerste exemplaar met die upgrade-stand valt weg); vervangt = de startkaart die een erfstuk
+   verdringt. modules in PUNTEN (zoals het smeedscherm), niet in effectwaarde. ---- */
+const SMEED = {
+  slachter: {
+    gemiddeld: [{ naam: 'Het Vonnisbijl', kost: 1, icoon: '🪓', offers: [['slag', 1], ['uithaal', 0]], modules: [{ m: 'schade', p: 3 }, { m: 'kwetsbaar', p: 1 }] }],
+    sterk: [{ naam: 'Het Vonnisbijl', kost: 1, icoon: '🪓', offers: [['slag', 1], ['afgekeurd', 1]], modules: [{ m: 'schade', p: 3 }, { m: 'woede', p: 2 }] },
+            { naam: 'Het Erfschild', kost: 1, icoon: '🛡️', erfstuk: true, vervangt: ['verdediging', 0], modules: [{ m: 'schade', p: 2 }, { m: 'blok', p: 3 }] }]
+  },
+  gifmagier: {
+    gemiddeld: [{ naam: 'De Giftige Pen', kost: 1, icoon: '☠️', offers: [['prik', 1], ['naaperij', 0]], modules: [{ m: 'gif', p: 2 }, { m: 'blok', p: 2 }] }],
+    sterk: [{ naam: 'De Giftige Pen', kost: 2, icoon: '☠️', offers: [['prik', 1], ['lastercampagne', 0]], modules: [{ m: 'miasma', p: 3 }, { m: 'gif', p: 3 }] },
+            { naam: 'Het Erfgif', kost: 1, icoon: '🌑', erfstuk: true, vervangt: ['verdediging', 0], modules: [{ m: 'gif', p: 2 }, { m: 'blok', p: 3 }] }]
+  },
+  thoverk: {
+    gemiddeld: [{ naam: 'De Doornentak', kost: 1, icoon: '🌹', offers: [['takkenslag', 1], ['asregen', 0]], modules: [{ m: 'schade', p: 2 }, { m: 'doornen', p: 2 }] }],
+    sterk: [{ naam: 'De Doornentak', kost: 1, icoon: '🌹', offers: [['takkenslag', 1], ['asregen', 1]], modules: [{ m: 'schade', p: 3 }, { m: 'doornen', p: 2 }] },
+            { naam: 'De Erfbast', kost: 1, icoon: '🌱', erfstuk: true, vervangt: ['verdediging', 0], modules: [{ m: 'groei', p: 2 }, { m: 'blok', p: 3 }] }]
   }
 };
 const BAZEN = {
@@ -225,6 +262,7 @@ function installeer() {
         };
         if (br && br.vloekDeel > 0) { const vd = Math.round(echt * br.vloekDeel); add('Karaktermoord', echt - vd); add('Laster/vloeken (via Karaktermoord)', vd); }
         else add(lab, echt);
+        if (echt > 0 && S.hp - n <= 0 && !T.doodsBron) T.doodsBron = lab;   /* de laatste klap */
         T.inBd[bd] = (T.inBd[bd] || 0) + echt;
         if (lab !== 'zelf (eigen kaart)') T.rondeIn += echt;
       } else if (!doel.isMetgezel) {
@@ -277,6 +315,28 @@ async function eenGevecht({ build, job }) {
   for (let i = 0; i < (build.laster || 0); i++) S.dek.push(nieuweKaart('laster'));
   S.metgezel = null;
   if (build.metgezel) { geefMetgezel(build.metgezel); if (S.metgezel) S.metgezel.hp = Math.max(1, Math.round(metgezelMaxHp(build.metgezel) * 0.6)); }
+  /* ---- de Slachtblok-kaarten (zie de kop): budget nagerekend met de echte offerWaarde ---- */
+  window.__smeedSpec = {};
+  S.gesmeed = {};
+  (build.smeed || []).forEach((sm, i) => {
+    const neem = ([id, up]) => {
+      const c = S.dek.find(x => x.id === id && !!x.up === !!up);
+      if (!c) throw new Error('smeed: ' + id + (up ? '+' : '') + ' zit niet in het dek');
+      S.dek = S.dek.filter(x => x !== c);
+      return c;
+    };
+    const offers = (sm.offers || []).map(neem);
+    if (sm.vervangt) neem(sm.vervangt);
+    const budget = sm.erfstuk ? 5 : offers.reduce((t, c) => t + offerWaarde(c), 0) + (sm.kost === 2 ? 2 : 0) - (sm.kost === 0 ? 3 : 0);
+    const besteed = sm.modules.reduce((t, m) => t + m.p, 0);
+    if (besteed > budget || sm.modules.length > 2) throw new Error('smeed: ' + sm.naam + ' kost ' + besteed + ' punten, budget ' + budget);
+    const id = sm.erfstuk ? 'gesmeed_codex_' + build.held : 'gesmeed_run_' + (900 + i);
+    const spec = { naam: sm.naam, icoon: sm.icoon, kost: sm.kost, maker: build.held, modules: sm.modules.map(m => ({ m: m.m, p: m.p })), offers: offers.map(knaam), datum: 'meting' };
+    registreerGesmeed(id, spec);
+    if (!sm.erfstuk) S.gesmeed[id] = spec;
+    window.__smeedSpec[id] = spec;
+    S.dek.push(nieuweKaart(id));
+  });
   S.kaart = genereerKaart();
   const hpStart = S.hp, dekStart = S.dek.length;
   const T = window.__T = { bron: {}, bronBd: {}, inBd: {}, uitBd: {}, uitBaas: 0, uitHof: 0, uitSoort: {}, rawIn: 0, geblokt: 0, metgezelVing: 0, decreten: [], rondeIn: 0, _zelf: false, _bewaar: null };
@@ -423,7 +483,24 @@ async function eenGevecht({ build, job }) {
     const kwV = n => Math.min(n, R) * 3.5;
     const heelV = n => Math.min(n, S.maxHp - S.hp) * (hpFrac < 0.5 ? 1.2 : 0.7);
     let v = 0;
-    switch (c.id) {
+    const smSpec = d.gesmeed ? (window.__smeedSpec || {})[c.id] : null;
+    if (smSpec) {
+      /* een gesmede kaart: de som van haar modules (zelfde waardering als de gewone kaarten) */
+      for (const m of smSpec.modules) {
+        const n = m.p * ((SMEED_MODULES[m.m] || { perPunt: 0 }).perPunt);
+        if (m.m === 'schade') v += opDoel(hit(n));
+        else if (m.m === 'gif') v += gw(n);
+        else if (m.m === 'miasma') v += gwAlle(n);
+        else if (m.m === 'zwak') v += zwakV(n);
+        else if (m.m === 'kwetsbaar') v += kwV(n);
+        else if (m.m === 'blok') v += blokV(n);
+        else if (m.m === 'doornen') v += doornV(n);
+        else if (m.m === 'woede') v += krachtV(n);
+        else if (m.m === 'genees') v += heelV(n);
+        else if (m.m === 'groei') v += heelV(n) + blokV(n);
+        else if (m.m === 'trek') v += n * 4;
+      }
+    } else switch (c.id) {
       /* ---- Gifmagiër ---- */
       case 'nachtschade': { const dm = hit(gifNu * raw('maal'), t, -kr); v = opDoel(dm) - gifWaarde(gifNu, 0, R, isBaas(t)); if (t && dm >= t.hp && isBaas(t)) v = 999; break; }
       case 'katalyse': v = gifNu >= 3 ? gifWaarde(gifNu * (raw('maal') - 1), gifNu, R, isBaas(t)) : -1; break;
@@ -594,6 +671,7 @@ async function eenGevecht({ build, job }) {
     bron: T.bron, bronBd: T.bronBd, inBd: T.inBd, uitBd: T.uitBd, uitBaas: T.uitBaas, uitHof: T.uitHof, uitSoort: T.uitSoort,
     rawIn: T.rawIn, geblokt: T.geblokt, metgezelVing: T.metgezelVing, drank: T.drank || 0, offerRonde: T.offer || null,
     decreten: T.decreten, dekVerlies: T.decreten.length, lasters: b ? (b.lasters || 0) : 0,   /* de Laster van DE VACATURE landt in g.trek, niet in S.dek */
+    doodsBron: dood ? (T.doodsBron || null) : null, haaldeIV: !!(b && b.herrezen), gesmeed: (build.smeed || []).map(x => x.naam),
     kiezers: b && b._kiezers != null ? b._kiezers : null, kracht: b ? ((b.status && b.status.kracht) || 0) : 0, herrezen: !!(b && b.herrezen),
     log: rondes
   };
@@ -627,6 +705,14 @@ async function maakPagina(browser, fouten) {
   await page.waitForFunction(() => typeof startGevecht === 'function' && typeof nieuwSpel === 'function' && typeof KAARTEN !== 'undefined' && typeof DICK === 'object');
   await page.waitForTimeout(500);
   await page.evaluate(installeer);
+  if (process.env.MEET_DICK) await page.evaluate(over => {
+    const meng = (doel, bron) => { for (const k of Object.keys(bron)) {
+      if (bron[k] && typeof bron[k] === 'object' && !Array.isArray(bron[k]) && doel[k] && typeof doel[k] === 'object') meng(doel[k], bron[k]);
+      else doel[k] = bron[k];
+    } };
+    meng(DICK, over);
+    if (VIJANDEN.de_dicktator) VIJANDEN.de_dicktator.hp = [DICK.hp, DICK.hp];
+  }, JSON.parse(process.env.MEET_DICK));
   return page;
 }
 
@@ -640,7 +726,13 @@ async function main() {
   const dev = await paginas[0].evaluate(() => JSON.parse(JSON.stringify(DEV_BUILDS)));
   const versie = (fs.readFileSync(path.join(WORTEL, 'sw.js'), 'utf8').match(/const CACHE = '([^']+)'/) || [])[1] || '?';
   const dick = await paginas[0].evaluate(() => JSON.parse(JSON.stringify(DICK)));
-  const buildVan = (held, st) => { const b = BUILDS[held][st]; return typeof b === 'string' ? Object.assign({ bron: b }, dev[b.slice(4)]) : b; };
+  const buildVan = (held, st) => {
+    const b = BUILDS[held][st];
+    const basis = typeof b === 'string' ? Object.assign({ bron: b }, dev[b.slice(4)]) : Object.assign({}, b);
+    const sm = (SMEED[held] || {})[st];
+    if (sm && sm.length) { basis.smeed = sm; basis.label = (basis.label || '') + ' + ' + sm.length + ' Slachtblok'; }
+    return basis;
+  };
   const jobs = maakJobs();
   console.log(`HET PROCES-meting '${LABEL}' · ${versie} · ${jobs.length} gevechten · ${WERKERS} werkers · ${N} seeds per cel`);
   const resultaten = [];
