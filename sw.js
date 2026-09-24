@@ -18,6 +18,7 @@ const BESTANDEN = [
   'js/outro.js',
   'js/online.js',
   'js/game.js',
+  'js/proloog-brug.js',     // proloog R1: de naad (laadt ná game.js; haalt proloog/*.js lui binnen)
   'js/drempeltafel.js',     // v128: DE DREMPELTAFEL (laadt ná game.js)
   'js/wereld-terrein.js',
   'js/wereld.js',
@@ -41,8 +42,9 @@ const BESTANDEN = [
   'manifest.webmanifest'
 ];
 /* De proloog-CODE is sinds de vanilla-herbouw klein en zit hierboven atomair in
-   BESTANDEN (onder de URL 'proloog/' — waar de gate en de titelknop echt naartoe
-   navigeren; cache.match is exact). Alleen de proloog-ART (±1 MB webp) blijft
+   BESTANDEN. Sinds R1 draait ze in de game-pagina (js/proloog-brug.js laadt
+   proloog/*.js lui); 'proloog/' blijft erin voor de stub die oude links en
+   bladwijzers doorstuurt naar '../?proloog=1' (cache.match is exact). Alleen de proloog-ART (±1 MB webp) blijft
    BEST-EFFORT: een hapering mag de kern-install niet laten mislukken; de
    cache-first /assets/-tak vangt gemiste platen bij het eerste echte bezoek. */
 const ZWAAR = [

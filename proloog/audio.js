@@ -1,25 +1,67 @@
 /* SLAY LIT — Proloog · procedurele sfeer-audio (Web Audio API, geen bestanden).
    Alles gesynthetiseerd: CRT-brom, "d-ding"-belletje, hartslag, ruis, glitch, stempel, warmte.
-   Lazy init op de eerste user-gesture (browservereiste). window.SLAYLIT_AUDIO. */
+
+   R1 "DE NAAD" (sep 2026): een DUNNE LAAG op de ENE AudioContext van het spel.
+   De proloog maakt geen eigen AudioContext meer; ze haakt in op Klank.koppel()
+   (js/audio.js) → { ctx, sfx(naam), muziek(scène) } en optioneel een uitgangsbus.
+   De eigen mute-sleutel ('slaylit_audio_mute') is weg: de game-mute (Klank.vol.aan)
+   en de sfx-schuif gelden. Ontbreekt Klank.koppel, of bestaat de context nog niet
+   (geen gebaar gehad), dan zwijgt alles stil — nooit een fout. window.SLAYLIT_AUDIO. */
 window.SLAYLIT_AUDIO = (function () {
-  let ctx = null, master = null, humNodes = null, noiseNode = null, noiseGain = null;
-  let heartTimer = null, heartRate = 900;
-  let muted = false;
-  try { muted = localStorage.getItem('slaylit_audio_mute') === '1'; } catch (e) {}
+  let ctx = null, master = null, viaBus = false;
+  let humNodes = null, noiseNode = null, noiseGain = null, droneNodes = null;
+  let heartTimer = null, heartRate = 900, heartPauze = false;
+  let volKlok = null;
 
-  function ensure() {
-    if (!ctx) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return null;
-      ctx = new AC();
-      master = ctx.createGain();
-      master.gain.value = muted ? 0 : 0.9;
-      master.connect(ctx.destination);
+  /* ---------- koppeling met het spel ---------- */
+  function koppel() {
+    const K = window.Klank;
+    if (!K || typeof K.koppel !== 'function') return null;
+    let k = null;
+    try { k = K.koppel(); } catch (e) { return null; }
+    const c = k && k.ctx;
+    if (!c || typeof c.createGain !== 'function') return null;
+    if (c !== ctx) {
+      /* nieuwe (of eerste) context: eigen submix erop, alles wat nog van een oude
+         context hing is waardeloos → vergeten */
+      ctx = c; humNodes = null; noiseNode = null; noiseGain = null; droneNodes = null;
+      master = c.createGain();
+      const bus = k.bus || k.uit || k.sfxBus || null;
+      viaBus = false;
+      if (bus && typeof bus.connect === 'function') {
+        try { master.connect(bus); viaBus = true; } catch (e) { viaBus = false; }
+      }
+      if (!viaBus) master.connect(c.destination);
+      master.gain.value = doelVolume();
     }
-    if (ctx.state === 'suspended') ctx.resume();
-    return ctx;
+    return c;
   }
-
+  /* de game-mute en de sfx-schuif: via een bus regelt het spel dat zelf,
+     rechtstreeks naar de luidsprekers lezen we Klank.vol */
+  function doelVolume() {
+    if (viaBus) return 0.9;
+    const v = window.Klank && window.Klank.vol;
+    if (!v) return 0.9;
+    if (v.aan === false) return 0;
+    const sfx = typeof v.sfx === 'number' ? v.sfx : 0.8;
+    return Math.max(0, Math.min(1.2, sfx * 1.1));
+  }
+  function syncVolume() {
+    if (!ctx || !master) return;
+    try { master.gain.setTargetAtTime(doelVolume(), ctx.currentTime, 0.05); } catch (e) {}
+  }
+  /* continue lagen (brom/drone/ruis/hart) volgen een mute-klik binnen ±0,7 s */
+  function volgVolume() {
+    const nodig = !!(humNodes || droneNodes || noiseNode || heartTimer);
+    if (nodig && !volKlok) volKlok = setInterval(syncVolume, 700);
+    else if (!nodig && volKlok) { clearInterval(volKlok); volKlok = null; }
+  }
+  function ensure() {
+    const c = koppel();
+    if (!c) return null;
+    syncVolume();
+    return c;
+  }
   function now() { return ctx.currentTime; }
 
   // —— CRT-brom: lage drone die "het scherm staat aan" suggereert ——
@@ -36,13 +78,15 @@ window.SLAYLIT_AUDIO = (function () {
     o1.start(); o2.start(); lfo.start();
     g.gain.linearRampToValueAtTime(0.03, now() + 1.2);
     humNodes = { g, o1, o2, lfo };
+    volgVolume();
   }
   function humOff() {
-    if (!humNodes) return;
+    if (!humNodes || !ctx) { humNodes = null; return; }
     const { g, o1, o2, lfo } = humNodes; const t = now();
-    g.gain.cancelScheduledValues(t); g.gain.linearRampToValueAtTime(0, t + 0.8);
+    try { g.gain.cancelScheduledValues(t); g.gain.linearRampToValueAtTime(0, t + 0.8); } catch (e) {}
     [o1, o2, lfo].forEach((o) => { try { o.stop(t + 0.9); } catch (e) {} });
     humNodes = null;
+    volgVolume();
   }
 
   // —— "d-ding": vies belletje van voldoening (twee korte tikken) ——
@@ -82,17 +126,22 @@ window.SLAYLIT_AUDIO = (function () {
     o.frequency.setValueAtTime(78, t0); o.frequency.exponentialRampToValueAtTime(38, t0 + 0.2);
     o.connect(g); o.start(t0); o.stop(t0 + 0.26);
   }
-  function beat() { const t = now(); thump(t, 0.5); thump(t + 0.17, 0.32); }
+  function beat() { if (!ensure()) return; const t = now(); thump(t, 0.5); thump(t + 0.17, 0.32); }
   function heartStart(rate) {
-    if (!ensure()) return; heartRate = rate || 900;
-    if (heartTimer) clearInterval(heartTimer);
+    heartRate = rate || 900;
+    if (heartTimer && heartTimer !== -1) clearInterval(heartTimer);
+    heartTimer = null;
+    if (heartPauze) { heartTimer = -1; volgVolume(); return; }   /* -1 = start zodra de pauze voorbij is */
+    if (!ensure()) { volgVolume(); return; }
     beat(); heartTimer = setInterval(beat, heartRate);
+    volgVolume();
   }
   function heartRateSet(rate) {
-    if (!heartTimer) return; heartRate = rate;
+    heartRate = rate || heartRate;
+    if (!heartTimer || heartTimer === -1) return;
     clearInterval(heartTimer); beat(); heartTimer = setInterval(beat, heartRate);
   }
-  function heartStop() { if (heartTimer) { clearInterval(heartTimer); heartTimer = null; } }
+  function heartStop() { if (heartTimer) { if (heartTimer !== -1) clearInterval(heartTimer); heartTimer = null; } volgVolume(); }
 
   // —— aanzwellende ruis (val/blackout) ——
   function noiseOn(level) {
@@ -110,9 +159,14 @@ window.SLAYLIT_AUDIO = (function () {
     }
     noiseGain.gain.cancelScheduledValues(now());
     noiseGain.gain.linearRampToValueAtTime(Math.max(0, Math.min(0.16, level)), now() + 0.6);
+    volgVolume();
   }
   function noiseOff() {
-    if (noiseGain) noiseGain.gain.linearRampToValueAtTime(0, now() + 0.8);
+    if (!noiseNode || !ctx) { noiseNode = null; noiseGain = null; return; }
+    const n = noiseNode, g = noiseGain, t = now();
+    try { g.gain.cancelScheduledValues(t); g.gain.linearRampToValueAtTime(0, t + 0.8); n.stop(t + 0.9); } catch (e) {}
+    noiseNode = null; noiseGain = null;
+    volgVolume();
   }
 
   // —— glitch-zap ——
@@ -138,7 +192,7 @@ window.SLAYLIT_AUDIO = (function () {
     o.connect(g); o.start(t); o.stop(t + 0.32);
     // klik bovenop
     const ng = ctx.createGain(); ng.connect(master); ng.gain.setValueAtTime(0.2, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-    const len = ctx.sampleRate * 0.06; const buf = ctx.createBuffer(1, len, ctx.sampleRate); const d = buf.getChannelData(0);
+    const len = Math.floor(ctx.sampleRate * 0.06); const buf = ctx.createBuffer(1, len, ctx.sampleRate); const d = buf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
     const n = ctx.createBufferSource(); n.buffer = buf; n.connect(ng); n.start(t);
   }
@@ -162,8 +216,7 @@ window.SLAYLIT_AUDIO = (function () {
     o.connect(g); o.start(t); o.stop(t + 0.55);
   }
 
-  // —— diepe ambient-drone (afgrond / afdaling) ——
-  let droneNodes = null;
+  // —— diepe ambient-drone (de afgrond) ——
   function droneOn(baseFreq, vol) {
     if (!ensure()) return; droneOff();
     const g = ctx.createGain(); g.gain.value = 0; g.connect(master);
@@ -177,14 +230,17 @@ window.SLAYLIT_AUDIO = (function () {
     o1.start(); o2.start(); o3.start(); lfo.start();
     g.gain.linearRampToValueAtTime(vol, now() + 1.6);
     droneNodes = { g, os: [o1, o2, o3, lfo] };
+    volgVolume();
   }
   function droneOff() {
-    if (!droneNodes) return; const { g, os } = droneNodes; const t = now();
-    g.gain.cancelScheduledValues(t); g.gain.linearRampToValueAtTime(0, t + 1.0);
+    if (!droneNodes || !ctx) { droneNodes = null; return; }
+    const { g, os } = droneNodes; const t = now();
+    try { g.gain.cancelScheduledValues(t); g.gain.linearRampToValueAtTime(0, t + 1.0); } catch (e) {}
     os.forEach((o) => { try { o.stop(t + 1.1); } catch (e) {} }); droneNodes = null;
+    volgVolume();
   }
 
-  // —— plunge-whoosh: neerwaartse sweep wanneer je kiest hóe je valt ——
+  // —— plunge-whoosh: neerwaartse sweep wanneer je een masker loslaat ——
   function plunge() {
     if (!ensure()) return; const t = now();
     const g = ctx.createGain(); g.connect(master);
@@ -202,13 +258,31 @@ window.SLAYLIT_AUDIO = (function () {
     const n = ctx.createBufferSource(); n.buffer = buf; n.connect(bp); bp.connect(ng); n.start(t);
   }
 
-  function setMute(m) {
-    muted = m; try { localStorage.setItem('slaylit_audio_mute', m ? '1' : '0'); } catch (e) {}
-    if (master) master.gain.linearRampToValueAtTime(m ? 0 : 0.9, now() + 0.1);
+  /* ---------- levenscyclus (aangestuurd door proloog.js) ---------- */
+  /* op een gebruikersgebaar: het spel zijn audio laten starten/hervatten */
+  function unlock() {
+    const K = window.Klank;
+    if (K) {
+      try { if (typeof K.init === 'function') K.init(); } catch (e) {}
+      try { if (typeof K.hervat === 'function') K.hervat(); } catch (e) {}
+    }
+    ensure();
   }
-  function isMuted() { return muted; }
-  function unlock() { ensure(); } // op user-gesture
+  /* pauze (tab verborgen / draai-blok): de hartslag houdt zijn adem in */
+  function pauzeer(aan) {
+    if (aan === heartPauze) return;
+    heartPauze = aan;
+    if (aan) { if (heartTimer) { clearInterval(heartTimer); heartTimer = -1; } }
+    else if (heartTimer === -1) { heartTimer = null; heartStart(heartRate); }
+  }
+  /* alles uit (Proloog.stop) */
+  function stilte() {
+    heartPauze = false;
+    heartStop(); humOff(); noiseOff(); droneOff();
+    if (volKlok) { clearInterval(volKlok); volKlok = null; }
+  }
 
   return { unlock, humOn, humOff, ding, tik, type, heartStart, heartRateSet, heartStop,
-    noiseOn, noiseOff, glitch, stamp, warm, powerOn, droneOn, droneOff, plunge, setMute, isMuted };
+    noiseOn, noiseOff, glitch, stamp, warm, powerOn, droneOn, droneOff, plunge,
+    pauzeer, stilte, get gekoppeld() { return !!koppel(); } };
 })();

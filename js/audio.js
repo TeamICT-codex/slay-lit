@@ -143,7 +143,11 @@ const Klank = (() => {
       for (let i = 0; i < 6; i++) {
         ruis(0.05 + Math.random() * 0.04, 'bandpass', 1400 + Math.random() * 1200, 700, 0.09 + Math.random() * 0.05, t0 + i * 0.055 + Math.random() * 0.03);
       }
-    }
+    },
+    /* DE LANDING NA DE PROLOOG (R1, js/proloog-brug.js): elke letter van SLAY LIT die
+       inbrandt knispert, en de fakkelchip telt met warme tikjes van 0 naar 80. */
+    knisper()  { ruis(0.05 + Math.random() * 0.03, 'highpass', 2600 + Math.random() * 1800, 1500, 0.10); toon(1700 + Math.random() * 900, 0.03, 'triangle', 0.025); },
+    warmtik()  { toon(740 + Math.random() * 60, 0.06, 'sine', 0.05, 690); }
   };
 
   function sfx(naam) { if (klaar && SFX[naam]) SFX[naam](); }
@@ -164,6 +168,9 @@ const Klank = (() => {
      ============================================================ */
   const SCENES = {
     stil:    { droneVol: 0,    root: 55 },
+    /* de landing na de proloog: alleen de drone, laag (40 Hz) — bij 'kaart' glijdt hij in
+       dezelfde context naar 55 Hz (pasScene: setTargetAtTime), geen knip en geen stilte */
+    afgrond: { droneVol: 0.07, root: 40 },
     titel:   { droneVol: 0.10, root: 55, schaal: [0, 3, 5, 7, 10], bpm: 40, padKans: 0.5, plukKans: 0.18, puls: false, spanning: 0 },
     kaart:   { droneVol: 0.10, root: 55, schaal: [0, 3, 5, 7, 10], bpm: 44, padKans: 0.45, plukKans: 0.26, puls: false, spanning: 0.1 },
     rust:    { droneVol: 0.07, root: 65.4, schaal: [0, 4, 7, 9, 14], bpm: 40, padKans: 0.6, plukKans: 0.3, puls: false, spanning: 0 },
@@ -392,9 +399,24 @@ const Klank = (() => {
     drone.filter.frequency.setTargetAtTime(aan ? 115 : 170, t, 1);
   }
 
+  /* ---------- de koppeling voor de proloog (R1) ----------
+     De proloog (proloog/audio.js) maakt geen eigen AudioContext meer: ze bouwt haar
+     klanken op DEZE context en stuurt ze door een eigen bus, zodat de game-mute en de
+     schuiven ook voor haar gelden. Roept init() aan: zonder gebaar ontstaat de context
+     'suspended' en hervat hij bij de eerstvolgende tik (zie Klank.hervat in game.js).
+     Geeft altijd een object terug; ctx/uit zijn null als Web Audio ontbreekt. */
+  let koppelSfx = null, koppelMuz = null;
+  function koppel() {
+    init();
+    if (!klaar) return { ctx: null, uit: null, bus: null, muziekUit: null, sfx, muziek };
+    if (!koppelSfx) { koppelSfx = ctx.createGain(); koppelSfx.connect(sfxGain); }
+    if (!koppelMuz) { koppelMuz = ctx.createGain(); koppelMuz.connect(musGain); }
+    return { ctx, uit: koppelSfx, bus: koppelSfx, muziekUit: koppelMuz, sfx, muziek };
+  }
+
   /* ---------- publiek ---------- */
   return {
-    init, hervat, sfx, muziek, duck, zetDuister, zetChipLagen,
+    init, hervat, sfx, muziek, duck, zetDuister, zetChipLagen, koppel,
     get klaar() { return klaar; },
     get vol() { return vol; },
     zet(sleutel, waarde) { vol[sleutel] = waarde; bewaar(); pasVolumesToe(); },

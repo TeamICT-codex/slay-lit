@@ -459,12 +459,17 @@ const SONDE = () => {
   await klikScene(/De Outro/); await slaap(2200); s = await sonde();
   const outro = await page.evaluate(() => !!document.querySelector('#outro, .outro, [id^="outro"]') || document.body.dataset.scherm);
   t(!!outro, `De Outro \u2192 scherm "${s.scherm}", outro-haak: ${JSON.stringify(outro)}`);
-  /* de Proloog verlaat de pagina: apart, en daarna opnieuw booten */
+  /* de Proloog draait sinds R1 IN de pagina (js/proloog-brug.js): herbeleven, geen navigatie.
+     Laadt proloog/*.js niet (bv. midden in een verbouwing), dan valt de brug terug op een
+     melding en het vorige scherm: ook dan mag de url niet veranderen. Daarna opnieuw booten. */
   await page.goto('http://' + HOST + '/', { waitUntil: 'load' }); await slaap(700);
   await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => /toch beginnen/i.test(x.textContent)); if (b) b.click(); }); await slaap(600);
-  await klikScene(/De Proloog/); await slaap(1500);
+  const urlVoor = page.url();
+  await klikScene(/De Proloog/); await slaap(1800);
   const url = page.url();
-  t(/proloog\//.test(url), `De Proloog \u2192 ditzelfde tabblad staat nu op "${url.replace('http://' + HOST, '')}"`);
+  const pl = await page.evaluate(() => ({ scherm: document.body.dataset.scherm, actief: !!(window.Proloog && window.Proloog.actief), bezig: typeof proloogBezig === 'function' && proloogBezig() }));
+  t(url === urlVoor && (pl.scherm === 'proloog' || !pl.bezig), `De Proloog \u2192 in deze pagina herbeleefd: url "${url.replace('http://' + HOST, '')}" (ongewijzigd: ${url === urlVoor}), scherm "${pl.scherm}", Proloog.actief ${pl.actief}`);
+  await page.evaluate(() => { try { if (window.Proloog && Proloog.stop) Proloog.stop(); } catch (e) {} });
   await boot();
 
   /* ---------- 3f \u00b7 SCHAKELAARS ---------- */

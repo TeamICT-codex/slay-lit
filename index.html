@@ -57,7 +57,7 @@
       <button class="knop-groot" id="knop-doorgaan" onclick="doorgaan()" style="display:none">🗺️ Doorgaan</button>
       <button class="knop-stil" id="knop-daily" onclick="startDaily()">🗓️ Dagelijkse afdaling</button>
       <button class="knop-stil" onclick="toonLeaderboard()">🏆 Leaderboard</button>
-      <button class="knop-stil" onclick="location.href='proloog/'">📜 Proloog</button>
+      <button class="knop-stil" onclick="proloogKnop()">📜 Proloog</button><!-- proloog R1: in deze pagina (js/proloog-brug.js); wie hem nog niet zag speelt hem echt, anders herbeleven -->
       <button class="knop-stil" onclick="toonHelp()">Hoe speel ik?</button>
       <button class="knop-stil" onclick="toonCodex()"><span data-icoon="codex">📖</span> Codex</button>
       <button class="knop-stil" onclick="toonBestiarium()">📕 Bestiarium</button>
@@ -151,6 +151,11 @@
     <button id="outro-skip" class="knop-stil" onclick="Outro.slaOver()" style="display:none">⏭ Overslaan</button>
   </div>
 
+  <!-- de proloog "Een Productief Leven™" (R1, sep 2026): draait IN deze pagina, in een shadow
+       root op dit scherm. proloog/*.js wordt lui geladen door js/proloog-brug.js; de CSS laadt
+       de proloog zelf in haar shadow root (geen lek naar de game, ook niet omgekeerd). -->
+  <div class="scherm" id="scherm-proloog"></div>
+
   <!-- de codex: verzamelboek over alle runs heen -->
   <div class="overlay" id="overlay-codex">
     <h2 class="scherm-titel"><span data-icoon="codex">📖</span> De Codex</h2>
@@ -240,6 +245,9 @@
        z-index:1, overflow:hidden) zou het op z1 blijven hangen en weggeklipt worden.
        z45 = boven het vignet (40), onder de topbalk (50) -> HP en energie blijven leesbaar. -->
   <div id="toneel-doek"></div>
+  <!-- DE PROLOOG-SLUIER (R1): de landing na de Afgrond. Body-kind op z60 = boven de topbalk
+       (50), onder #meldingen (950) en de overlays (800). Gevuld door js/proloog-brug.js. -->
+  <div id="proloog-sluier" aria-hidden="true"></div>
 
   <!-- draai-blok: sommige schermen spelen liggend (gevecht, smederij, kaartkeuze), andere staand
        (events/schat). De tekst wordt per context door evalueerDraaiBlok gezet; dit is enkel de
@@ -266,6 +274,7 @@
   <script src="js/outro.js"></script>
   <script src="js/online.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/proloog-brug.js"></script><!-- proloog R1: laadt proloog/* lui, de landing, de gate en de poorten; NA game.js (leest S, Codex, SPELERS, kiesHeldEcht) -->
   <script src="js/drempeltafel.js"></script><!-- v128: DE DREMPELTAFEL; NA game.js (ze leest S, Klank, willekeurig, startGevecht — en volgendeAct roept toonDrempeltafel achter een typeof-guard aan) -->
   <script src="js/wereld-terrein.js"></script><!-- DE AFDALING: terrein, fysica, autoroute (DOM-vrij) -->
   <script src="js/wereld.js"></script><!-- DE AFDALING: tekenen + bedienen; NA game.js (de haak in renderKaartScherm checkt window.Wereld) -->

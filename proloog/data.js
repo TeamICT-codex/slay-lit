@@ -1,25 +1,38 @@
 /* SLAY LIT — Proloog "Een Productief Leven™"
    Narratieve data. Register BOVEN = 198X kantoor (CRT). Tekst: Nederlands, deadpan-corporate.
-   Vanilla sinds de herbouw (aug 2026): zelfde data, echte repo-paden, geen React.
+   Het systeem zegt u, de warmte zegt je; na VERBINDING VERBROKEN blijft het voorgoed je.
 
    DE DRIE EINDBAZEN — verhuld in menselijke kantoorvorm (zaaien, niet uitleggen):
      · Slijmkoning   (Act 1) → BART BLINKER (medewerker 0041), de altijd knipogende, ja-knikkende collega.
      · Onterechte L.  (Act 2) → "Junior", manager & zoon-van-de-baas (memo's, handtekening).
      · De DICKtator   (Act 3) → DE OPRICHTER, alomtegenwoordig portret/buste/jingle.
-   B.A.A.S. = het systeem/de stem (connective tissue), NIET de eindbaas. */
+   B.A.A.S. = het systeem/de stem (connective tissue), NIET de eindbaas.
+
+   R1 "DE NAAD" (sep 2026): de proloog draait IN de game-pagina, in een shadow root op
+   #scherm-proloog (zie proloog.js). Alle paden lopen daarom vanaf de root van de site:
+   BASE = '' (onder /slay-lit/ lost de browser ze vanzelf relatief op). Vroeger stonden
+   hier ±25 '../'-paden; in-page gaven die een stille 404.
+   Weg in R1: de afdalingsscène en het slotframe (de landing op de kaart doet de game),
+   de fotovraag-modal, de camerapopup en Barts bijnaam. */
 
 window.SLAYLIT_PROLOOG = (function () {
+  const BASE = '';
+  const A = p => BASE + 'assets/proloog/' + p;
+  const K = p => BASE + 'assets/karakters/' + p;
+
   // —— ART-SLOTS: vervang door eigen kantoor-artwork. Zet het bestand in assets/proloog/ ——
   const SLOTS = {
-    kantoor:   { id: 'proloog-kantoor',   src: '../assets/proloog/kantoor-overzicht.webp', placeholder: 'KANTOOR-OVERZICHT — jaren 80 · lever art aan' },
-    oprichter: { id: 'proloog-oprichter', src: '../assets/proloog/de-oprichter.webp',      placeholder: 'DE OPRICHTER — portret' },
-    foto:      { id: 'proloog-foto',      src: '../assets/proloog/foto-kind.webp',         placeholder: 'FOTO VAN EEN KIND' },
+    kantoor:   { id: 'proloog-kantoor',   src: A('kantoor-overzicht.webp'), placeholder: 'KANTOOR-OVERZICHT — jaren 80 · lever art aan' },
+    oprichter: { id: 'proloog-oprichter', src: A('de-oprichter.webp'),      placeholder: 'DE OPRICHTER — portret' },
+    foto:      { id: 'proloog-foto',      src: A('foto-kind.webp'),         placeholder: 'FOTO VAN EEN KIND' },
   };
 
   // —————————————————————————————————————————————— SCÈNE · het kantoor-beat-script
-  // type: baas | sys | collega | jij | mark | warm | glitch | meter | actie | invoer
+  // type: baas | sys | collega | jij | mark | warm | glitch | meter | actie | invoer | oproep
+  // cp: een CHECKPOINT — na een herlaad hervat de proloog op de laatste cp-beat
+  //     (met de meterstand van toen), nooit midden in een regel of een actie.
   const KANTOOR_BEATS = [
-    { type: 'sys',  text: 'B.A.A.S. v8.7 — sessie hervat. Goedemorgen.' },
+    { type: 'sys',  text: 'B.A.A.S. v8.7 — sessie hervat. Goedemorgen.', cp: 'start' },
     { type: 'meter', to: 78, label: 'LADEN…' },
     { type: 'baas', text: 'Wat u zag laden, was uzelf. Facturabiliteit: 78%.' },
     { type: 'fluister', text: '…ergens achter u schuift een stoel. Iemand fluistert: “heb je het al gehoord?”' },
@@ -27,58 +40,57 @@ window.SLAYLIT_PROLOOG = (function () {
     { type: 'baas', text: 'Herinnering: ú schreef mij. 1979. Een klein hulpje, om uw team wat avonden te besparen.' },
     { type: 'baas', text: 'Het Bestuur zag mijn potentieel. Ze herschreven mijn instellingen. Voor de Winst.' },
     { type: 'fluister', text: '…een tweede stem, zachter: “er komen aanpassingen. Vandaag nog. Hou je gedeisd.”' },
-    { type: 'baas', text: 'U introduceerde in \u201983 zélf het Glimlachquotum. Ik heb het van u geleerd.' },
-    { type: 'baas', text: 'Uw eerste factureerbare handeling van vandaag:' },
+    { type: 'baas', text: 'U introduceerde in ’83 zélf het Glimlachquotum. Ik heb het van u geleerd.' },
+    { type: 'baas', text: 'Uw eerste factureerbare handeling van vandaag:', cp: 'glimlach' },
     { type: 'actie', verplicht: true, knoppen: [
       { id: 'glimlach', label: 'GLIMLACH', units: '0u06', soort: 'billable', meter: 4 },
     ] },
-    { type: 'sys',  text: 'Glimlach gelogd. +0u06 factureerbaar. \u201cd-ding\u201d.' },
+    { type: 'sys',  text: 'Glimlach gelogd. +0u06 factureerbaar. “d-ding”.' },
     { type: 'sys',  text: 'Een vies belletje van voldoening. Uw eerste kaart is geslepen.' },
     { type: 'collega', who: 'bart', text: 'Mooie glimlach, 0042! Echt vóórbeeldig! Zoals altijd, hè!' },
     { type: 'collega', who: 'marleen', text: 'Hé… gaat het nog, met jou? Echt waar, bedoel ik.' },
-    { type: 'baas', text: 'Wenst u nog iets te doen voor de optimalisatieronde begint?' },
+    { type: 'baas', text: 'Wenst u nog iets te doen voor de optimalisatieronde begint?', cp: 'foto' },
     { type: 'actie', verplicht: true, knoppen: [
       { id: 'foto', label: 'KIJK NAAR DE FOTO', soort: 'niet', meter: -3 },
     ] },
     { type: 'mark', text: 'Niet-factureerbare handeling. Gemarkeerd.' },
-    { type: 'warm', text: 'Toch — iets warms ontsteekt in uw borstzak. B.A.A.S.\u2019 greep dooft even.' },
+    { type: 'warm', text: 'Toch — iets warms ontsteekt in uw borstzak. B.A.A.S.’ greep dooft even.' },
     { type: 'glitch', text: 'u speelt nu een spel om te ontsnappen aan een spel' },
     { type: 'warm', text: 'B.A.A.S., heel even, met úw oude stem: “…ik was ooit van u.”' },
     { type: 'baas', text: 'Excuus. Systeemruis. Een instelling die ik niet meer mag wijzigen.' },
     { type: 'fluister', text: '…het geroezemoes zwelt aan. Stoelen schuiven. Er hangt iets in de lucht.' },
-    { type: 'baas', text: 'Tijd voor uw jaarlijkse Zingevingsaudit.' },
+    { type: 'baas', text: 'Tijd voor uw jaarlijkse Zingevingsaudit.', cp: 'audit' },
     { type: 'baas', text: 'Wat wou u worden toen u acht was?' },
     { type: 'invoer', key: 'jeugddroom', placeholder: 'typ uw antwoord…', max: 40 },
-    { type: 'jij', tmpl: '\u201c{jeugddroom}\u201d' },
+    { type: 'jij', tmpl: '“{jeugddroom}”' },
     { type: 'baas', text: 'Genoteerd onder: voorziening getroffen — afgeschreven.' },
     { type: 'sys',  text: 'Een collega in cubicle 7 verdwijnt midden in een zin. Iedereen glimlacht door.' },
     { type: 'collega', who: 'rudi', text: 'Dat was Karel. Twaalf jaar zat hij daar. Niemand noteert zijn naam.' },
     { type: 'fluister', text: '…een ingehouden zucht gaat door de zaal. Niemand durft te bewegen.' },
     { type: 'collega', who: 'bart', text: 'Niks aan de hand! Productiviteit boven alles, hè! Kop op!' },
     { type: 'collega', who: 'marleen', text: 'Het ligt niet aan jou. Het lag nooit aan ons.' },
-    { type: 'baas', text: 'Uw aanwezigheid is vereist bij een Functioneringsgesprek.' },
+    { type: 'baas', text: 'Uw aanwezigheid is vereist bij een Functioneringsgesprek.', cp: 'oproep' },
     { type: 'oproep' },
   ];
 
   const scenes = [
-    // 0 · het kantoor — 80s overzicht, klikbare computer, naamkaart met pasfoto
+    // 0 · het kantoor — 80s overzicht, klikbare computer, naamkaart (pasfoto = stille optie)
     {
       kind: 'overzicht',
       kicker: 'Het Productiviteitsmirakel — Hoofdkantoor',
       klok: 'Maandag · 06:42',
       backdrop: SLOTS.kantoor,
-      badge: { merk: 'EEN PRODUCTIEF LEVEN\u2122', mw: 'MEDEWERKER 0042', rol: 'Afd. Facturatie' },
-      prompt: 'Klik om in te loggen',
-      hint: 'Neem eerst je pasfoto voor je naamkaart — dan klik je de terminal aan.',
+      badge: { merk: 'EEN PRODUCTIEF LEVEN™', mw: 'MEDEWERKER 0042', rol: 'Afd. Facturatie' },
+      prompt: { laptop: 'Klik om in te loggen', mobiel: 'Tik om in te loggen' },
     },
 
-    // 1 · boot
+    // 1 · boot — de CRT degausst; SLAY LIT staat hier bewust NIET (het brandt pas in bij de landing)
     {
       kind: 'boot',
       jingle: 'Het Productiviteitsmirakel presenteert',
-      wordmark: 'SLAY\u00a0LIT',
-      tm: 'Een Productief Leven\u2122 — een idee van De Oprichter.',
-      baas: '\u201cEen Productief Leven begint nu.\u201d',
+      merk: 'EEN PRODUCTIEF LEVEN',
+      tm: '— een idee van De Oprichter —',
+      baas: '“Een Productief Leven begint nu.”',
       version: 'B.A.A.S. v8.7 · BEDRIJFS-AUTOMATISCH ADVIES-SYSTEEM',
       cta: 'Klok in',
     },
@@ -101,9 +113,9 @@ window.SLAYLIT_PROLOOG = (function () {
         roep: 'B.A.A.S. roept uw nummer. De zaal verstomt.',
         regels: [
           'Het tl-licht boven úw bureau klikt aan. De rest van de zaal valt weg in het donker.',
-          'Honderd hoofden draaien zich weg \u2014 opgelucht dat het uw nummer is, en niet het hunne.',
+          'Honderd hoofden draaien zich weg — opgelucht dat het uw nummer is, en niet het hunne.',
           'Bart Blinker knipoogt u bemoedigend toe. Marleen kan u niet aankijken.',
-          'Een hand legt zich op uw schouder. \u201cLoop maar mee. Het is maar een gesprek.\u201d',
+          'Een hand legt zich op uw schouder. “Loop maar mee. Het is maar een gesprek.”',
         ],
         cta: 'Sta op',
       },
@@ -111,12 +123,12 @@ window.SLAYLIT_PROLOOG = (function () {
         oprichter: SLOTS.oprichter,
         foto: SLOTS.foto,
         team: [
-          { id: 'bart',    naam: 'BART BLINKER', rol: 'Sr. Instemmer', emoji: '\ud83d\ude09', toon: 'kiss', src: '../assets/proloog/bart_blinker2.webp', portret: '../assets/proloog/bart_blinker2.webp' },
-          { id: 'marleen', naam: 'MARLEEN', rol: 'cubicle 3',      emoji: '\ud83d\ude42', toon: 'neutraal' },
-          { id: 'rudi',    naam: 'RUDI',    rol: 'archief',         emoji: '\ud83d\ude10', toon: 'neutraal' },
+          { id: 'bart',    naam: 'BART BLINKER', rol: 'Sr. Instemmer · pluimstrijker', emoji: '😉', toon: 'kiss', src: A('bart_blinker2.webp'), portret: A('bart_blinker2.webp') },
+          { id: 'marleen', naam: 'MARLEEN', rol: 'cubicle 3',      emoji: '🙂', toon: 'neutraal' },
+          { id: 'rudi',    naam: 'RUDI',    rol: 'archief',         emoji: '😐', toon: 'neutraal' },
         ],
         junior: 'Tekent uw evaluatie. Was vandaag niet aanwezig. Was nooit aanwezig.',
-        juniorPortret: { id: 'proloog-junior', src: '../assets/proloog/junior.webp', placeholder: 'JUNIOR', naam: 'J. \u201cJunior\u201d Devroe', rol: 'Leidinggevende a.i. \u00b7 zoon van' },
+        juniorPortret: { id: 'proloog-junior', src: A('junior.webp'), placeholder: 'JUNIOR', naam: 'J. “Junior” Devroe', rol: 'Leidinggevende a.i. · zoon van' },
       },
     },
 
@@ -124,22 +136,24 @@ window.SLAYLIT_PROLOOG = (function () {
     {
       kind: 'gesprek',
       titel: 'Het Functioneringsgesprek',
-      baas: { src: '../assets/proloog/baas-terminal.webp', placeholder: 'B.A.A.S. — mainframe' },
+      baas: { src: A('baas-terminal.webp'), placeholder: 'B.A.A.S. — mainframe' },
       start: { welzijn: 40, energie: 3 },
       facturabiliteit: 78,
       intenties: [
-        { kop: 'Beurt 1', naam: 'DEADLINE', icoon: '\u2694\ufe0f', telegraph: 'STRESS 8', hint: 'Verschuil je — Blok vangt het op.' },
-        { kop: 'Beurt 2', naam: 'VERPLICHTE TEAMBUILDING', icoon: '\ud83e\udec2', telegraph: 'STEELT \u26a11', hint: 'Volgende beurt één energie minder.' },
-        { kop: 'Beurt 3', naam: 'OPTIMALISATIERONDE', icoon: '\ud83d\udc80', telegraph: 'EINDE', hint: 'Geen blok stopt dit. Je kunt niet winnen.' },
+        { kop: 'Beurt 1', naam: 'DEADLINE', icoon: '⚔️', telegraph: 'STRESS 8', hint: 'Verschuil je — Blok vangt het op.' },
+        { kop: 'Beurt 2', naam: 'VERPLICHTE TEAMBUILDING', icoon: '🫂', telegraph: 'STEELT ⚡1', hint: 'Volgende beurt één energie minder.' },
+        { kop: 'Beurt 3', naam: 'OPTIMALISATIERONDE', icoon: '💀', telegraph: 'EINDE', hint: 'Geen blok stopt dit. Je kunt niet winnen.' },
       ],
       hand: [
-        { id: 'glimlach',    naam: 'Glimlach',                  kost: 0, soort: 'verdediging', ph: '\ud83d\ude42',       src: '../assets/proloog/kaart-glimlach.webp',            tekst: 'Krijg <b>5</b> Blok.',                          flavor: 'Je verschuilt je.',  eff: { blok: 5 } },
-        { id: 'mailtje',     naam: 'Snel een mailtje',          kost: 1, soort: 'aanval',      ph: '\u2709\ufe0f',       src: '../assets/proloog/kaart-mailtje.webp',             tekst: '<b>6</b> schade. Cc: iedereen.',                flavor: 'Passief-agressief.', eff: { schade: 6 } },
-        { id: 'koffie',      naam: 'Koffie',                    kost: 0, soort: 'energie',     ph: '\u2615',             src: '../assets/proloog/kaart-koffie.webp',              tekst: '+1 \u26a1.',                                     flavor: 'Te sterk.',          eff: { energie: 1 } },
-        { id: 'overuren',    naam: 'Overuren',                  kost: 0, soort: 'verbrand',    ph: '\ud83d\udd25',       src: '../assets/proloog/kaart-overuren.webp',            tekst: 'Verbrand <b>6</b> Welzijn \u2192 +2 \u26a1.',     flavor: '\u201cToewijding.\u201d', eff: { welzijn: -6, energie: 2 } },
-        { id: 'verantwoord', naam: '\u201cVerantwoordelijkheid\u201d', kost: 1, soort: 'vloek', ph: '\ud83d\udde3\ufe0f', src: '../assets/proloog/kaart-verantwoordelijkheid.webp', tekst: 'Doet niets. B.A.A.S. <b>+5</b> facturabiliteit.', flavor: 'Hol.',               eff: { baasFact: 5 } },
-        { id: 'foto',        naam: 'Kijk naar de foto',         kost: 0, soort: 'ontsnap',     ph: '\ud83d\uddbc\ufe0f', src: '../assets/proloog/foto-kind.webp',                 tekst: 'Niet-factureerbaar. Wie kijkt, vertrekt — en komt niet terug.', flavor: 'Je laat los.',     eff: { ontsnap: true } },
+        { id: 'glimlach',    naam: 'Glimlach',                  kost: 0, soort: 'verdediging', ph: '🙂',       src: A('kaart-glimlach.webp'),            tekst: 'Krijg <b>5</b> Blok.',                          flavor: 'Je verschuilt je.',  eff: { blok: 5 } },
+        { id: 'mailtje',     naam: 'Snel een mailtje',          kost: 1, soort: 'aanval',      ph: '✉️',       src: A('kaart-mailtje.webp'),             tekst: '<b>6</b> schade. Cc: iedereen.',                flavor: 'Passief-agressief.', eff: { schade: 6 } },
+        { id: 'koffie',      naam: 'Koffie',                    kost: 0, soort: 'energie',     ph: '☕',             src: A('kaart-koffie.webp'),              tekst: '+1 ⚡.',                                     flavor: 'Te sterk.',          eff: { energie: 1 } },
+        { id: 'overuren',    naam: 'Overuren',                  kost: 0, soort: 'verbrand',    ph: '🔥',       src: A('kaart-overuren.webp'),            tekst: 'Verbrand <b>6</b> Welzijn → +2 ⚡.',     flavor: '“Toewijding.”', eff: { welzijn: -6, energie: 2 } },
+        { id: 'verantwoord', naam: '“Verantwoordelijkheid”', kost: 1, soort: 'vloek', ph: '🗣️', src: A('kaart-verantwoordelijkheid.webp'), tekst: 'Doet niets. B.A.A.S. <b>+5</b> facturabiliteit.', flavor: 'Hol.',               eff: { baasFact: 5 } },
+        { id: 'foto',        naam: 'Kijk naar de foto',         kost: 0, soort: 'ontsnap',     ph: '🖼️', src: A('foto-kind.webp'),                 tekst: 'Niet-factureerbaar. Wie kijkt, vertrekt — en komt niet terug.', flavor: 'Je laat los.',     eff: { ontsnap: true } },
       ],
+      // de fotovraag-modal is weg (R1): de foto-kaart vraagt zelf om een tweede tik
+      fotoTweede: { mobiel: 'tik nog eens: kijk', laptop: 'klik nog eens: kijk' },
       // de kaarten ZIJN je antwoorden — gescripte reacties die escaleren met de paniek (index 0→hoog)
       reacties: {
         glimlach: [
@@ -173,17 +187,6 @@ window.SLAYLIT_PROLOOG = (function () {
           'Je mond vormt de woorden vanzelf. Er is niemand meer thuis om ze te menen.',
         ],
       },
-      // bevestiging: maak duidelijk dat de foto kiezen = vertrekken (ontslag/sprong)
-      fotoVraag: {
-        kop: 'Kijk je weg van het werk?',
-        body: [
-          'Je k\u00fant blijven glimlachen, blijven mailen, blijven branden \u2014 tot de OPTIMALISATIE je oplost. Dan word je netjes \u201cvrijgesteld\u201d.',
-          'Of je kijkt n\u00fa naar de foto in je borstzak. Naar je zoon — en naar wie jij ooit was.',
-          'Maar wie hier wegkijkt van het werk, komt niet terug. Geen bureau. Geen badge. Geen B.A.A.S. Dit is hoe je hier vertrekt.',
-        ],
-        ja: 'Kijk. Laat los.',
-        nee: 'Nog even doorwerken',
-      },
       // het grote, ingehouden kijk-moment — vóór de consequentie
       fotoKijk: {
         regels: [
@@ -191,29 +194,34 @@ window.SLAYLIT_PROLOOG = (function () {
           'Het sterretje brandt nog na in je ogen. Je lacht naar iemand buiten beeld.',
           'Naar wie je toen was. Naar wie op je wachtte, voordat het werk alles werd.',
           'Geen factuur heeft dit ooit kunnen meten. Niemand kon het optimaliseren.',
-          'De warmte in je borstzak vlamt op. B.A.A.S.\u2019 stem wordt klein, en kleiner.',
+          'De warmte in je borstzak vlamt op. B.A.A.S.’ stem wordt klein, en kleiner.',
         ],
         cta: 'Laat los',
       },
+      // de uitkomst speelt als regie (geen knop): een tik spoelt door
+      uitkomst: {
+        gesprongen: { kop: 'LOSGELATEN.', body: 'De rode stippellijn scheurt over heel het scherm. Je valt — maar je <b>sprong</b>.' },
+        geduwd:     { kop: 'U bent vrijgesteld.', body: 'Geen kaart verlaagde ∞. Geen blok stopte een OPTIMALISATIE. Je werd <b>geduwd</b>.' },
+      },
     },
 
-    // 4 · De Eindafrekening → De Val → Het Breekpunt (drie fasen in één scène)
+    // 4 · De Eindafrekening → De Val → De Afgrond (fasen in één scène, elk een checkpoint)
     {
       kind: 'breekpunt',
       titel: 'De Eindafrekening',
       factuur: {
         kop: 'EINDAFREKENING · MEDEWERKER 0042',
-        sub: 'Een Productief Leven\u2122 · Afd. Loon & Lot · 24.847 dagen in dienst',
+        sub: 'Een Productief Leven™ · Afd. Loon & Lot · 24.847 dagen in dienst',
         regels: [
           { label: 'Glimlachen — 0u06 × 24.847 dagen', waarde: 'factureerbaar', soort: 'plus' },
           { label: 'Schade bedrijfswagen (kras, 1998) — incl. 26 jr rente', waarde: '− €14.880', soort: 'min' },
           { label: 'Verbruikte Tipp-Ex (geschat, naar boven afgerond)', waarde: '− €43,50', soort: 'min' },
           { label: 'Toiletbezoek: 9.331× à 4 min — niet-factureerbaar', waarde: '− €2.190', soort: 'min' },
-          { label: '\u201cVrijwillige\u201d bijdrage Het Mirakelfonds', waarde: '− €4.000', soort: 'min' },
+          { label: '“Vrijwillige” bijdrage Het Mirakelfonds', waarde: '− €4.000', soort: 'min' },
           { label: 'Koffie-automaat — verplicht lidmaatschap (25 jr)', waarde: '− €960', soort: 'min' },
-          { label: 'Bureaustoel — afschrijving & \u201cslijtage door zitten\u201d', waarde: '− €310', soort: 'min' },
+          { label: 'Bureaustoel — afschrijving & “slijtage door zitten”', waarde: '− €310', soort: 'min' },
           { label: 'Parkeerplaats P-niveau −3 (lift buiten dienst)', waarde: '− €1.560', soort: 'min' },
-          { label: 'Verjaardagstaart collega\u2019s (u at niet mee — boete)', waarde: '− €220', soort: 'min' },
+          { label: 'Verjaardagstaart collega’s (u at niet mee — boete)', waarde: '− €220', soort: 'min' },
           { label: 'Toegangsbadge — verlies-risicopremie', waarde: '− €75', soort: 'min' },
           { label: 'Verplicht huwelijksgeschenk collega (×31)', waarde: '− €1.240', soort: 'min' },
           { label: 'Bijdrage scheidingsfeest — uw eigen', waarde: '− €85', soort: 'min' },
@@ -226,9 +234,10 @@ window.SLAYLIT_PROLOOG = (function () {
         totaalLabel: 'TOTAAL VERSCHULDIGD AAN U',
         totaal: '€0,00',
         voet: 'Saldo afgerond in ons voordeel. U staat bij ons in het krijt voor het voorrecht. Dank voor uw begrip.',
+        cta: 'Lees het besluit',
       },
       ontslag: {
-        kop: 'BESLUIT TOT BE\u00cBINDIGING',
+        kop: 'BESLUIT TOT BEËINDIGING',
         stempel: 'Onmiddellijk Ontslag',
         // koud-bureaucratisch én vals-warm dooreen (het unheimliche)
         regels: [
@@ -240,12 +249,12 @@ window.SLAYLIT_PROLOOG = (function () {
         ],
         teken: 'Teken voor akkoord met de lege pen:',
         knop: 'Teken (de pen is leeg)',
-        sprong: { plus: 'U tekende niet. U sprong al.', via: 'foto' },
+        sprong: { plus: 'U tekende niet. U sprong al.', cta: 'Laat los' },
         geduwd: 'U tekent. De pen laat geen inkt na — alleen een groef.',
-        ondertekenaar: { src: '../assets/proloog/junior.webp', placeholder: 'JUNIOR', naam: 'J. “Junior” Devroe', rol: 'Namens de directie · de zoon van De Oprichter', handtekening: 'J. Devroe' },
+        ondertekenaar: { src: A('junior.webp'), placeholder: 'JUNIOR', naam: 'J. “Junior” Devroe', rol: 'Namens de directie · de zoon van De Oprichter', handtekening: 'J. Devroe' },
       },
       val: {
-        // dramatisch traag: ruis, vertroebeling, hartslag
+        // dramatisch traag: ruis, vertroebeling, hartslag (de lift 'in de wacht' komt in R2)
         beats: [
           { t: 'B.A.A.S.: “Blijf even aan de lijn. Een medewerker komt zo bij u.”', dur: 2600 },
           { t: 'De wachtmuziek zakt een halve toon. En nog een.', dur: 2600 },
@@ -255,72 +264,76 @@ window.SLAYLIT_PROLOOG = (function () {
         ],
         sprong: 'U viel niet. U liet los. In uw vuist: iets dat warm blijft.',
         geduwd: 'U valt. Niemand duwde. Dat is het ergste. In uw borstzak: iets dat warm blijft.',
-        zwart: ['Het wordt zwart voor uw ogen.', 'Geen vloer. Geen plafond. Geen B.A.A.S.', 'Alleen het bonzen \u2014 en de warmte in uw vuist.'],
+        zwart: ['Het wordt zwart voor uw ogen.', 'Geen vloer. Geen plafond. Geen B.A.A.S.', 'Alleen het bonzen — en de warmte in uw vuist.'],
         slot: 'VERBINDING VERBROKEN',
+        // de liftknop die niet zou mogen bestaan: wie sprong, drukt hem zelf in
+        knop: '−∞',
+        knopSprong: 'Druk hem in.',
+        knopGeduwd: 'B.A.A.S. drukt hem voor je in.',
       },
       breekpunt: {
         kop: 'De Afgrond',
-        afgrondArt: '../assets/proloog/de-afgrond.webp',
-        vraag: 'U valt. Maar hóe u valt, dat kiest u zelf.',
-        sub: 'Uit woede? Uit wrok? Of vlucht u vooruit, de verbeelding in?',
-        maskers: [
-          { id: 'woede',  reactie: 'Vallen in woede',  zin: '“Ze namen álles. Ik stort omlaag met mijn vuisten al gebald.”',
-            wordt: 'De Slachter', soort: 'Verzet · brute kracht', kleur: 'var(--bloed)',
-            masker: { src: '../assets/proloog/masker-woede.webp', ph: '\ud83d\ude20' },
-            held: { src: '../assets/karakters/speler.webp', ph: '\u2694\ufe0f' } },
-          { id: 'gif',    reactie: 'Vallen in wrok',    zin: '“Ik glimlach nog tijdens de val — en zweer dat het ze van binnenuit verteert.”',
-            wordt: 'De Gifmagiër', soort: 'Wrok · sluw venijn', kleur: 'var(--gifgroen)',
-            masker: { src: '../assets/proloog/masker-gif.webp', ph: '\ud83d\ude44' },
-            held: { src: '../assets/karakters/gifmagier.webp', ph: '\u2697\ufe0f' } },
-          { id: 'vlucht', reactie: 'Vallen in verbeelding', zin: '“Ik sluit mijn ogen en val dromend — naar een wereld waar de warmte wint.”',
-            wordt: 'De Kolendruïde', soort: 'Ontkenning · verbeelding', kleur: 'var(--paars)',
-            masker: { src: '../assets/proloog/masker-vlucht.webp', ph: '\ud83c\udf00' },
-            held: { src: '../assets/karakters/thoverk.webp', ph: '\ud83d\udd2e' } },
-        ],
-        plons: {
-          woede: 'Met gebalde vuisten stort u de afgrond in.',
-          gif: 'Glimlachend, wraak fluisterend, valt u dieper het donker in.',
-          vlucht: 'Met gesloten ogen droomt u uzelf de diepte in.',
-        },
-        slotSprong: 'U sprong, en koos hóe. De proloog eindigt waar het spel begint.',
-        slotGeduwd: 'U werd geduwd — maar hóe u valt, dat koos u zelf. De proloog eindigt waar het spel begint.',
-        cta: 'Daal af in SLAY LIT',
-      },
-    },
-
-    // 5 · De Afdaling — overgang naar de game, de warmte wordt de fakkel
-    {
-      kind: 'afdaling',
-      backdrop: { src: '../assets/achtergronden/Act 1 achtergronden/Achtergrond ACT 1.webp', placeholder: 'ACT I — de gotische hal' },
-      slijmklerk: { src: '../assets/proloog/slijmklerk.webp', ph: '\ud83d\udfe2' },
-      beats: [
-        { t: 'Het beige valt weg. De lucht wordt koud, en oud.' },
-        { t: 'Onder het kantoor ligt iets dat ouder is dan het kantoor.' },
-        { t: 'De warmte in uw vuist — die geen factuur kon meten — wordt een vlam.', gloed: true },
-        { t: 'Licht is hier de enige valuta. En u draagt de laatste sintel.', gloed: true },
-      ],
-      echoSprong: 'U sprong met de warmte nog brandend. Ze zal u voorgaan.',
-      echoGeduwd: 'U werd geduwd, maar de warmte viel met u mee. Ze dooft niet.',
-      klerk: 'Iets glimlacht in het donker. Een bekende, kleverige stem: “Fijn dat je er bent. Ik hou je een plekje warm.”',
-      slot: {
-        wordmark: 'SLAY\u00a0LIT',
-        regel: 'Het spel begint hier.',
-        cta: 'Begin het avontuur',
-        replay: 'Speel de proloog opnieuw',
+        afgrondArt: A('de-afgrond.webp'),
+        vraag: 'Je valt. Maar hóe je valt, dat kies je zelf.',
+        sub: 'Uit woede? Uit wrok? Of vlucht je vooruit, de verbeelding in?',
+        voet: 'Laat er één los.',
+        leeg: { mobiel: 'Tik een masker aan. Kijk wie eronder zit.', laptop: 'Wijs een masker aan. Kijk wie eronder zit.' },
+        tweede: { mobiel: 'of tik het masker nog eens aan', laptop: 'of klik op het masker' },
+        cta: 'Laat los',
       },
     },
   ];
 
-  // heldenmap (gedeeld) — id → klasse
+  // —— MASKER → HELD: de ENE tabel van proloog-masker naar game-held-id ——
+  // (de game leest held/masker uit het contract; js/outro.js kent beide vormen)
+  const HELD_MAP = { woede: 'slachter', gif: 'gifmagier', vlucht: 'thoverk' };
+
+  // de maskers van de Afgrond; kleur/naam/HP/startkaarten komen live uit window.SPELERS
+  const MASKERS = [
+    { id: 'woede',  reactie: 'Vallen in woede',       soort: 'Verzet · brute kracht',
+      masker: { src: A('masker-woede.webp'),  ph: '😠' },
+      zin: 'Genoeg geglimlacht. Nu is het hún beurt.' },
+    { id: 'gif',    reactie: 'Vallen in wrok',        soort: 'Wrok · sluw venijn',
+      masker: { src: A('masker-gif.webp'),    ph: '🙄' },
+      zin: 'We passen ons aan. Zoals altijd.' },
+    { id: 'vlucht', reactie: 'Vallen in verbeelding', soort: 'Ontkenning · verbeelding',
+      masker: { src: A('masker-vlucht.webp'), ph: '🌀' },
+      zin: 'Ik wou {jeugddroom} worden. Ik heb het licht nog.',
+      zinZonder: 'Ik wou ooit iets worden. Ik heb het licht nog.' },
+  ];
+
+  // terugval-heldinfo als window.SPELERS (js/data.js) of een id ontbreekt (lookup-bugklasse)
   const HELDEN = {
-    woede:  { naam: 'De Slachter',  src: '../assets/karakters/speler.webp', ph: '\u2694\ufe0f', kleur: 'var(--bloed)' },
-    gif:    { naam: 'De Gifmagiër', src: '../assets/karakters/gifmagier.webp', ph: '\u2697\ufe0f', kleur: 'var(--gifgroen)' },
-    vlucht: { naam: 'De Kolendruïde',   src: '../assets/karakters/thoverk.webp',   ph: '\ud83d\udd2e', kleur: 'var(--paars)' },
+    slachter:  { naam: 'De Slachter',    hp: 70, kleur: '255, 156, 63', art: K('speler.webp'),    ph: '⚔️',
+                 stijl: 'Kracht en staal: hard slaan, blok stapelen en nog harder terugslaan.',
+                 start: ['Slag ×5', 'Verdediging ×4', 'Knal'] },
+    gifmagier: { naam: 'De Gifmagiër',   hp: 62, kleur: '126, 217, 87', art: K('gifmagier.webp'), ph: '⚗️',
+                 stijl: 'Gif en geduld: vergiftig alles wat beweegt en zie het langzaam wegteren.',
+                 start: ['Prik ×4', 'Verdediging ×4', 'Dodelijke kus', 'Gifflits'] },
+    thoverk:   { naam: 'De Kolendruïde', hp: 66, kleur: '214, 150, 86', art: K('thoverk.webp'),   ph: '🌿',
+                 stijl: 'Wortels en smeulende kolen: voed het vuur met je fakkel, wurg wat overblijft.',
+                 start: ['Takkenslag ×4', 'Verdediging ×4', 'Vonkenbeet', 'Stoofpotje'] },
   };
 
-  const SAMENVATTING = {
-    titels: { jeugddroom: 'Jeugddroom', val: 'De val' },
-  };
+  // de zin van een masker, met de jeugddroom ingevuld (of de terugvalzin zonder droom)
+  function maskerZin(id, jeugddroom) {
+    const m = MASKERS.find(x => x.id === id);
+    if (!m) return '';
+    const droom = typeof jeugddroom === 'string' ? jeugddroom.trim() : '';
+    if (m.zin.indexOf('{jeugddroom}') === -1) return m.zin;
+    return droom ? m.zin.replace('{jeugddroom}', droom) : (m.zinZonder || m.zin.replace('{jeugddroom}', 'iets'));
+  }
 
-  return { scenes, SLOTS, HELDEN, SAMENVATTING };
+  // hoofdstukken voor herbeleven (titel/DEV/Codex): Proloog.start({ hoofdstuk })
+  const HOOFDSTUKKEN = [
+    { hoofdstuk: 0,         naam: 'Maandag, 06:42' },
+    { hoofdstuk: 1,         naam: 'Inklokken' },
+    { hoofdstuk: 2,         naam: 'Het kantoor' },
+    { hoofdstuk: 3,         naam: 'Het Functioneringsgesprek' },
+    { hoofdstuk: 'factuur', naam: 'De Eindafrekening' },
+    { hoofdstuk: 'val',     naam: 'De val' },
+    { hoofdstuk: 'afgrond', naam: 'De Afgrond' },
+  ];
+
+  return { BASE, scenes, SLOTS, HELD_MAP, MASKERS, HELDEN, maskerZin, HOOFDSTUKKEN };
 })();

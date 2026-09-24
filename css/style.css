@@ -941,7 +941,14 @@ body.lite .lb-daily-cta { animation: none; }
   transition: transform .12s;
 }
 .drank:hover { transform: scale(1.25); }
-.drank-leeg { color: rgba(232, 213, 174, .25); letter-spacing: 4px; }
+/* de lege flesplaatsen (proloog R1): een flesjesomtrek per plaats + data-tip, i.p.v. ◌◌◌ */
+.drank-leeg { display: inline-flex; align-items: center; gap: 5px; padding: 0 2px; cursor: help; }
+.drank-leeg i {
+  display: block; width: 13px; height: 19px; opacity: .42;
+  background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 20'%3E%3Cpath d='M4.6 1.4h4.8M5.6 1.4v5.2L2.3 12.2a4.3 4.3 0 0 0 3.8 6.4h1.8a4.3 4.3 0 0 0 3.8-6.4L8.4 6.6V1.4' fill='none' stroke='%23e8d5ae' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  transition: opacity .15s;
+}
+.drank-leeg:hover i { opacity: .7; }
 .tb-knop { font-size: 1.2rem; opacity: .8; }
 .tb-knop:hover { opacity: 1; }
 
@@ -4996,6 +5003,7 @@ body.ceremonie #speler-zone::before {
 body[data-scherm="titel"] #licht-vignet,
 body[data-scherm="held"] #licht-vignet,
 body[data-scherm="outro"] #licht-vignet,
+body[data-scherm="proloog"] #licht-vignet,
 body[data-scherm="einde"] #licht-vignet { opacity: 0 !important; }
 #scherm-gevecht.d3-actief #vista-canvas { display: block; }
 #scherm-gevecht > #beurt-label,
@@ -6037,4 +6045,176 @@ body.lite .w-fig.t-loopt .w-pose, body.w-lite .w-fig.t-loopt .w-pose { animation
   .w-pose, .w-nis-gloed, .w-plek.w-verlaten.verzegelt .w-zegel, #w-actie, .w-titel { animation: none !important; }
   .w-pose { transition: none; }
   .w-plek.w-verlaten.verzegelt .w-zegel { opacity: 1; }
+}
+
+/* ============================================================
+   DE NAAD (proloog R1, sep 2026) — js/proloog-brug.js
+   #scherm-proloog (de shadow-host), de heenweg vanaf de titel, #proloog-sluier en de
+   landing na de Afgrond (plan par. 3), en de heldkeuze met voorselectie.
+   Alle klassen met pl-prefix; de proloog zelf stijlt ALLEEN binnen haar shadow root.
+   ============================================================ */
+/* de host: schermvullend, ook op mobiel (de #id wint van body[data-modus] .scherm) */
+#scherm-proloog { top: 0; padding: 0; background: #07060a; }
+#scherm-proloog.actief { display: block; }
+
+/* de heenweg: het titelvuur dooft (500 ms), het woordmerk gaat uit als een vlam (200 ms) */
+body.pl-dooft #scherm-titel { pointer-events: none; }
+body.pl-dooft #scherm-titel .titel-knoppen,
+body.pl-dooft #scherm-titel .titel-stats,
+body.pl-dooft #scherm-titel .titel-sub { opacity: 0; transition: opacity .3s ease; }
+body.pl-dooft #scherm-titel .sintel { filter: opacity(0); transition: filter .5s ease; }   /* filter: de stijg-animatie bezit opacity al */
+body.pl-dooft #scherm-titel .titel-groot { animation: plTitelDooft .3s ease-in forwards; }
+body.pl-dooft.pl-vlam #scherm-titel .titel-groot { animation: plVlamUit .2s ease-in forwards; }
+@keyframes plTitelDooft {
+  to { text-shadow: 0 0 8px rgba(255, 130, 40, .18), 0 4px 0 #4a1f08, 0 8px 24px #000; }
+}
+@keyframes plVlamUit {
+  0%   { opacity: 1; text-shadow: 0 0 8px rgba(255, 130, 40, .18), 0 4px 0 #4a1f08; }
+  40%  { opacity: 1; filter: brightness(1.7); text-shadow: 0 0 42px rgba(255, 205, 130, .95), 0 4px 0 #4a1f08; }
+  100% { opacity: 0; transform: translateY(-10%) scaleY(1.3); filter: blur(4px) brightness(2); }
+}
+
+/* DE SLUIER: body-kind op z 60 (boven de topbalk, onder de overlays en #meldingen) */
+#proloog-sluier { display: none; position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
+#proloog-sluier.toon { display: block; pointer-events: auto; cursor: pointer; }
+#proloog-sluier .pl-doek { position: absolute; inset: 0; background: #07060a; }
+#proloog-sluier .pl-vonklaag { position: absolute; inset: 0; pointer-events: none; }
+
+/* het kooltje: het eerste beeld van de outro, en het laatste van de proloog */
+.pl-kooltje {
+  position: absolute; left: 0; top: 0;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  border: 0 solid var(--ember);
+  background: radial-gradient(circle, #fff1c9 0 22%, #ffb35c 46%, #ff7a22 74%, #b33a10 100%);
+  box-shadow: 0 0 10px 3px rgba(255, 140, 50, .75), 0 0 28px 10px rgba(255, 100, 30, .28);
+  pointer-events: none;
+  transition: width .6s cubic-bezier(.3, 1.3, .5, 1), height .6s cubic-bezier(.3, 1.3, .5, 1),
+    background .45s ease, border-width .45s ease, box-shadow .6s ease, opacity .35s ease;
+}
+.pl-kooltje::after {
+  content: ''; position: absolute; inset: -7px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 150, 60, .55), transparent 70%);
+  animation: plAdem 2.6s ease-in-out infinite;
+}
+@keyframes plAdem {
+  0%, 100% { opacity: .45; transform: scale(.8); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+.pl-kooltje.vlieg {
+  transition: transform .9s cubic-bezier(.45, .05, .3, 1), width .6s cubic-bezier(.3, 1.3, .5, 1), height .6s cubic-bezier(.3, 1.3, .5, 1),
+    background .45s ease, border-width .45s ease, box-shadow .6s ease, opacity .35s ease;
+}
+/* zwelt tot de ember-ring van #kaart-held (de maat zet de brug inline: 56 px, staand 32) */
+.pl-kooltje.ring {
+  background: transparent;
+  border-width: 2.5px;
+  box-shadow: 0 0 16px rgba(255, 156, 63, .55), inset 0 0 12px rgba(255, 156, 63, .35);
+}
+.pl-kooltje.ring::after { inset: -14px; }
+.pl-kooltje.weg { opacity: 0; }
+.pl-kooltje.direct { transition: none; }
+
+/* SLAY LIT brandt in: 110 ms per letter, flits #fff4d6, koelt in 350 ms af naar amber; LIT wordt ember */
+.pl-titel {
+  position: absolute; left: 50%; top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap; text-align: center;
+  font-family: 'Pirata One', 'Pirata Fallback', serif;
+  font-size: clamp(3.4rem, min(15.5vw, 15.5vh), 6.5rem);   /* 104 px laptop, 56 liggend, 64 staand (plan par. 3) */
+  line-height: .95; letter-spacing: .02em;
+  pointer-events: none;
+}
+.pl-titel .pl-letter { display: inline-block; opacity: 0; color: var(--ember-fel); }
+.pl-titel .pl-spatie { display: inline-block; width: .3em; }
+.pl-titel .pl-letter.brand { animation: plBrand .35s ease-out forwards; }
+.pl-titel .pl-letter.pl-lit.brand { animation-name: plBrandLit; }
+@keyframes plBrand {
+  0%   { opacity: 1; color: #fff4d6; text-shadow: 0 0 18px #fff4d6, 0 0 46px rgba(255, 196, 107, .9); }
+  100% { opacity: 1; color: var(--ember-fel); text-shadow: 0 0 34px rgba(255, 130, 40, .5), 0 4px 0 #4a1f08, 0 8px 24px #000; }
+}
+@keyframes plBrandLit {
+  0%   { opacity: 1; color: #fff4d6; text-shadow: 0 0 18px #fff4d6, 0 0 46px rgba(255, 196, 107, .9); }
+  100% { opacity: 1; color: var(--ember); text-shadow: 0 0 42px rgba(255, 120, 30, .7), 0 4px 0 #4a1f08, 0 8px 24px #000; }
+}
+.pl-titel .pl-letter.weg { animation: plLetterWeg .28s ease-in forwards; }
+@keyframes plLetterWeg {
+  0%   { opacity: 1; color: #fff4d6; }
+  100% { opacity: 0; transform: translateY(-6px) scale(1.12); filter: blur(4px); color: var(--ember); }
+}
+.pl-titel.statisch .pl-letter { opacity: 1; text-shadow: 0 0 34px rgba(255, 130, 40, .5), 0 4px 0 #4a1f08, 0 8px 24px #000; }
+.pl-titel.statisch .pl-letter.pl-lit { color: var(--ember); }
+.pl-tagline {
+  position: absolute; left: 50%; top: 0; margin: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: 'Alegreya', Georgia, serif; font-style: italic;
+  font-size: clamp(15px, min(3.9vw, 4.2vh), 22px);   /* 22 / 15 / 16 px */
+  color: var(--perkament-dof);
+  opacity: 0; transition: opacity .7s ease;
+  pointer-events: none;
+}
+.pl-tagline.toon { opacity: 1; }
+.pl-tagline.weg { opacity: 0; transition-duration: .3s; }
+.pl-tagline.direct { transition: none; }
+
+/* de vonken: de letters vallen uiteen, en één vonk vult straks de fakkel */
+.pl-vonk-deeltje, .pl-fakkelvonk {
+  position: absolute; left: 0; top: 0;
+  width: 4px; height: 4px; margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: #ffe2a8;
+  box-shadow: 0 0 8px 3px rgba(255, 150, 55, .85), 0 0 18px 5px rgba(255, 100, 30, .3);
+  pointer-events: none;
+}
+.pl-fakkelvonk { width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; background: #fff1c9; box-shadow: 0 0 10px 4px rgba(255, 150, 60, .85), 0 0 22px 8px rgba(255, 110, 30, .35); }
+/* de warme gloed rond de held, die in 2,2 s dooft */
+.pl-gloed {
+  position: absolute; left: 0; top: 0; width: 0; height: 0;
+  border-radius: 50%; opacity: 0; pointer-events: none;
+  mix-blend-mode: screen;
+  background: radial-gradient(circle, rgba(255, 175, 90, .55) 0%, rgba(255, 120, 40, .22) 32%, transparent 68%);
+}
+
+/* body.pl-landt: tijdens de landing. De topbalk wacht boven de rand, het vignet en de
+   held-img zijn weg; de knopen van rij 1 komen eerst, dan de paden, dan de rest. */
+body.pl-landt #topbalk { transform: translateY(-105%); }
+body.pl-landt.pl-tb-in #topbalk { transform: none; transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+body.pl-landt #licht-vignet { opacity: 0 !important; }
+body.pl-landt #kaart-held img { transition: opacity .35s ease; }
+body.pl-landt:not(.pl-held-in) #kaart-held img { opacity: 0; }
+body.pl-landt:not(.pl-onthul) #kaart-vlak .knoop,
+body.pl-landt:not(.pl-onthul) #kaart-vlak > svg { opacity: 0; }
+body.pl-landt.pl-onthul #kaart-vlak .knoop.kan { animation: plOpkomen .5s ease-out .15s both; }
+body.pl-landt.pl-onthul #kaart-vlak > svg { animation: plOpkomen .9s ease-out .55s both; }
+body.pl-landt.pl-onthul #kaart-vlak .knoop:not(.kan) { animation: plOpkomen .8s ease-out .85s both; }
+@keyframes plOpkomen { from { opacity: 0; } }
+#tb-fakkel.pl-fakkel-vol { animation: plFakkelVol .8s ease-out; }
+@keyframes plFakkelVol {
+  0%   { box-shadow: 0 0 0 rgba(255, 156, 63, 0); }
+  30%  { box-shadow: 0 0 18px rgba(255, 170, 70, .85); border-color: var(--ember-fel); }
+  100% { box-shadow: 0 0 0 rgba(255, 156, 63, 0); }
+}
+
+/* de Codex: de proloog herbeleven, per hoofdstuk (js/proloog-brug.js vult de knoppen) */
+.codex-pl-hoofdstukken { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; max-width: 760px; margin: -4px auto 16px; }
+.codex-pl-hoofdstukken[hidden] { display: none; }
+.codex-pl-hoofdstukken .pl-hfst { font-size: .98rem; }
+
+/* POORT DICHT: de heldkeuze met het masker uit de afgrond voorgeselecteerd */
+.held-kaart.voorkeur { border-color: var(--ember); }
+.held-kaart.voorkeur:not(.gekozen-held):not(.afgewezen-held) { animation: plVoorkeur 2.8s ease-in-out infinite alternate; }
+.held-kaart.voorkeur .held-kies { box-shadow: 0 0 18px rgba(255, 156, 63, .65); }
+@keyframes plVoorkeur {
+  from { box-shadow: 0 0 0 1px rgba(255, 156, 63, .45), 0 0 26px rgba(255, 140, 50, .3); }
+  to   { box-shadow: 0 0 0 1px rgba(255, 156, 63, .8), 0 0 56px rgba(255, 140, 50, .55); }
+}
+
+/* lite / reduced motion: de brug kiest dan zelf het rustige pad (geen schaal, geen vonken);
+   hier alleen de lussen die dan nog zouden bewegen */
+body.lite .pl-kooltje::after, body.lite .held-kaart.voorkeur { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .pl-kooltje::after, .held-kaart.voorkeur { animation: none !important; }
+  body.pl-dooft #scherm-titel .titel-groot { animation: none !important; opacity: 0; transition: opacity .3s ease; }
+  .held-kaart.voorkeur { box-shadow: 0 0 0 1px rgba(255, 156, 63, .7), 0 0 40px rgba(255, 140, 50, .45); }
 }

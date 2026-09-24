@@ -68,7 +68,8 @@ const WIPE_VERSIE = 1;
 try {
   if ((parseInt(localStorage.getItem('slayit_wipe') || '0', 10) || 0) < WIPE_VERSIE) {
     ['slayit_save_v1', 'slayit_codex', 'slayit_daily', 'slayit_einde_pending',
-     'slayit_porren_gezien', 'slayit_proloog', 'slayit_proloog_over']
+     'slayit_porren_gezien', 'slayit_proloog', 'slayit_proloog_over',
+     'slayit_proloog_klaar', 'slaylit_proloog_v3']   /* proloog R1: de landingsvlag + de proloog-save */
       .forEach(k => localStorage.removeItem(k));
     localStorage.setItem('slayit_wipe', String(WIPE_VERSIE));
   }
@@ -4173,12 +4174,13 @@ function kiesGevechtAchtergrond(soort) {
 const SCHERM_MUZIEK = {
   titel: 'titel', held: 'titel', kaart: 'kaart', rust: 'rust',
   winkel: 'kaart', event: 'kaart', schat: 'kaart', beloning: 'kaart',
-  wereld: 'kaart'   /* de wereld (js/wereld.js) is dezelfde afdaling → zelfde muziek, anders valt ze stil */
+  wereld: 'kaart',  /* de wereld (js/wereld.js) is dezelfde afdaling → zelfde muziek, anders valt ze stil */
+  proloog: 'stil'   /* proloog R1: de proloog regelt haar eigen klank via Klank.koppel() (js/proloog-brug.js) */
 };
 function toonScherm(naam) {
   $$('.scherm').forEach(el => el.classList.remove('actief'));
   $('#scherm-' + naam).classList.add('actief');
-  $('#topbalk').style.display = (naam === 'titel' || naam === 'outro') ? 'none' : 'flex';
+  $('#topbalk').style.display = (naam === 'titel' || naam === 'outro' || naam === 'proloog') ? 'none' : 'flex';
   document.body.dataset.scherm = naam;   /* o.a. voor het fakkel-vignet */
   zetLichtVisueel();
   evalueerDraaiBlok();                    /* combat=liggend, encounters=staand */
@@ -4338,7 +4340,11 @@ function renderTopbalk() {
       const def = DRANKEN[d];
       return `<button class="drank" data-dart="${d}" data-tip="${def.naam} — ${def.tekst} (gebruiken: tik · verhaal: vasthouden of rechtsklik)"
         style="--dkleur:${def.kleur}" onclick="gebruikDrank(${i})" oncontextmenu="return bekijkDrank(event, '${d}')">${def.icoon}</button>`;
-    }).join('') + `<span class="drank-leeg">${'◌'.repeat(Math.max(0, drankSlots() - S.dranken.length))}</span>`;
+    }).join('') + (() => {
+      /* de lege flesplaatsen: een flesjesomtrek (css .drank-leeg i) met uitleg i.p.v. drie kale ◌◌◌ */
+      const n = Math.max(0, drankSlots() - S.dranken.length);
+      return n ? `<span class="drank-leeg" data-tip="lege flesplaats — drankjes vind je onderweg" aria-label="${n} lege flesplaats${n === 1 ? '' : 'en'}">${'<i></i>'.repeat(n)}</span>` : '';
+    })();
     verfraaiItemArt($('#topbalk'));
   }
 }
@@ -6179,7 +6185,9 @@ function toonCodex() {
       const tip = wit ? ' · 🤍 keerde terug uit het zwart' : (gevallen ? ' · ✝ offerde zich op' : '');
       return `<div class="codex-slot rel-${d.zeld} ${gevallen && !wit ? 'gevallen' : ''}" data-mgart="${mgart}" data-tip="${d.naam}${tip} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${wit ? '🤍' : d.icoon}${gevallen && !wit ? '<span class="codex-kruis">✝</span>' : ''}</div>`;
     }).join('') + `</div>
-    <p class="codex-scherf-uitleg">De nissen zijn dichtgelast. De Drempel is een tafel geworden — wie hier al iemand wekte, daalt nog altijd met hem af.</p>` + slachtblokBlok + outroBlok + scherfCodexBlok() + `
+    <p class="codex-scherf-uitleg">De nissen zijn dichtgelast. De Drempel is een tafel geworden — wie hier al iemand wekte, daalt nog altijd met hem af.</p>` + slachtblokBlok
+    + (typeof proloogCodexBlok === 'function' ? proloogCodexBlok() : '')   /* proloog R1: herbeleven per hoofdstuk (js/proloog-brug.js) */
+    + outroBlok + scherfCodexBlok() + `
     <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt + mgOntdekt === rels.length + dranks.length + mgs.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
     <small>🗝️ = opgeladen: dit relikwie kun je bij een nieuwe run éénmalig meenemen uit het Schrijn.</small></p>`;
   verfraaiItemArt($('#overlay-codex'));   /* incl. het Codex-titelicoon (data-icoon) */
@@ -11200,7 +11208,8 @@ const DEV_MENU = [
       { label: '⚠ 🜂 Drempeltafel: fase tafel', tip: '⚠ Springt rechtstreeks naar een fase van de tafel i.p.v. de nissen — voor gericht testen van tafel/spel/uitkomst. Taint: deze run schrijft niets meer naar de Codex.', doe: () => { if (typeof devDrempeltafelFase === 'function') devDrempeltafelFase('tafel'); else melding('⚡ DEV: devDrempeltafelFase ontbreekt — js/drempeltafel.js is niet geladen.'); } },
       { label: '🪓 Het Slachtblok', tip: 'Vult je dek zo nodig aan tot 12 kaarten (raakt je save) en opent de smeedkamer in altaar-modus.', doe: () => devSlachtblok() },
       { label: '🎬 De Outro', tip: 'Speelt de outro vanaf hier af, zonder run. Raakt je save niet.', doe: () => { if (typeof devOutro === 'function') devOutro(); else melding('⚡ DEV: devOutro ontbreekt (js/outro.js).'); } },
-      { label: '📼 De Proloog', tip: 'Verlaat het spel en opent proloog/index.html in ditzelfde tabblad. Je save blijft staan.', doe: () => { location.href = 'proloog/index.html'; } }
+      { label: '📼 De Proloog', tip: 'Herbeleeft de proloog in deze pagina (js/proloog-brug.js): geen contract, geen save, geen nieuwe run. Daarna terug naar dit scherm.', doe: () => { if (typeof herbeleefProloog === 'function') herbeleefProloog(); else melding('⚡ DEV: herbeleefProloog ontbreekt (js/proloog-brug.js).'); } },
+      { label: '🛬 De landing', tip: 'Speelt de landing na de Afgrond af met de Gifmagiër. Zonder lopende run en als nieuwe speler start dat een nieuwe run; anders de heldkeuze met voorselectie. Raakt de proloogvlaggen niet.', doe: () => { if (typeof devLanding === 'function') devLanding('gifmagier'); else melding('⚡ DEV: devLanding ontbreekt (js/proloog-brug.js).'); } }   /* DEV-SHORTCUT */
     ]
   },
   {
@@ -11652,18 +11661,15 @@ function naarTitel() {
 }
 
 function startNieuw() {
-  /* de eerste keer gaat de proloog vóór de afdaling (PROLOOG.md: firstRun);
-     wie hem al speelde (of bewust oversloeg) daalt meteen af.
-     PROBE-WRITE eerst: als setItem gooit (vol/privé-modus) kan de proloog zijn
-     sleutels nooit wegschrijven → zonder deze check zit je in een eeuwige
-     redirect-lus proloog↔game. Storage kapot? Dan gewoon meteen afdalen. */
+  /* de eerste keer gaat de proloog vóór de afdaling (PROLOOG.md: firstRun). Sinds
+     proloog R1 zonder herlaad: ze draait in deze pagina (scherm 'proloog') en landt
+     zelf op de kaart — de gate en de poorten wonen in js/proloog-brug.js.
+     PROBE-WRITE eerst: kan de opslag niets bewaren, dan kan de proloog zijn
+     sleutels nooit wegschrijven → dan gewoon meteen de heldkeuze. */
   try {
     localStorage.setItem('slayit_probe', '1');
     localStorage.removeItem('slayit_probe');
-    if (!localStorage.getItem('slayit_proloog') && !localStorage.getItem('slayit_proloog_over')) {
-      location.href = 'proloog/';
-      return;
-    }
+    if (typeof proloogMoetSpelen === 'function' && proloogMoetSpelen()) { startProloog(); return; }
   } catch (e) {}
   toonHeldKeuze();
 }
@@ -12049,7 +12055,7 @@ function wijzigAscensie(delta) {
   Klank.sfx('klik');
 }
 
-function toonHeldKeuze() {
+function toonHeldKeuze(opts) {   /* opts.voorkeur = held-id: het masker uit de proloog krijgt een ember-rand (js/proloog-brug.js) */
   toonScherm('held');
   schrijnKeuzes = [];
   scherfKeuzes = [];
@@ -12105,6 +12111,7 @@ function toonHeldKeuze() {
   }
   verfraaiItemArt($('#schrijn-vak'));
   verfraaiItemArt($('#scherf-vak'));   /* scherf-art meteen inladen (stond eerder als emoji tot je een scherf aanklikte) */
+  if (opts && opts.voorkeur && typeof markeerHeldVoorkeur === 'function') markeerHeldVoorkeur(opts.voorkeur);
 }
 
 function bekijkStartdek(id, e) {
@@ -12396,6 +12403,8 @@ window.addEventListener('appinstalled', () => {
    ⚙️ Instellingen (installeerApp). Onthoudt 'weg'; niet als al geïnstalleerd. */
 function toonSchermNudge() {
   if (!window.mobiel || document.getElementById('scherm-nudge')) return;
+  /* niet over de proloog of haar landing heen: de brug roept hem na de landing opnieuw aan */
+  if (typeof proloogBezig === 'function' && proloogBezig()) { toonSchermNudge.uitgesteld = true; return; }
   try { if (localStorage.getItem('slayit_nudge_v2') === 'weg') return; } catch (e) {}
   if (appGeinstalleerd()) return;
   const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
@@ -12939,6 +12948,8 @@ function wisselInzage(aan) {
     /* de outro (js/outro.js) heeft een eigen keydown/keyup-state-machine — de
        menu-router en de Enter/Spatie-repeat-onderdrukking blijven erbuiten */
     if (document.body.dataset.scherm === 'outro') return;
+    /* idem de proloog (eigen toetsen in haar shadow root, Esc = overslaan) en haar landing */
+    if (document.body.dataset.scherm === 'proloog' || (typeof proloogBezig === 'function' && proloogBezig())) return;
     /* vastgehouden Enter/Spatie mag niet door menu's/dialogen heen ratelen
        (pijltjes mogen wél herhalen — fijn om door een lange rij te bladeren) */
     if (e.repeat && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); return; }
@@ -13007,8 +13018,9 @@ window.addEventListener('DOMContentLoaded', () => {
   /* audio mag pas starten na een gebruikersgebaar */
   const eersteGebaar = () => {
     Klank.init();
-    const naam = (S && S.scherm) || 'titel';
-    Klank.muziek(SCHERM_MUZIEK[naam] || 'titel');
+    /* het scherm uit de body (de proloog draait ook zonder run, dus zonder S) */
+    const naam = document.body.dataset.scherm || (S && S.scherm) || 'titel';
+    if (naam !== 'proloog') Klank.muziek(SCHERM_MUZIEK[naam] || 'titel');   /* de proloog zette haar klank al zelf */
     document.removeEventListener('pointerdown', eersteGebaar);
     document.removeEventListener('keydown', eersteGebaar);
   };
@@ -13049,6 +13061,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const magHerladen = () => {
         const scherm = document.body.dataset.scherm;
         return !(scherm === 'gevecht' || scherm === 'outro' || (window.Outro && Outro.actief)
+          || scherm === 'proloog' || (typeof proloogBezig === 'function' && proloogBezig())   /* de proloog en haar landing */
           || document.getElementById('overlay-slachtblok'));   /* niet middenin het smeed-ritueel (debug-sweep) */
       };
       navigator.serviceWorker.addEventListener('controllerchange', () => {

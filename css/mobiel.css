@@ -1788,3 +1788,13 @@ body[data-modus="mobiel"] .dt-overlay .sb-balk { background: linear-gradient(0de
   body[data-modus="mobiel"] .dt-nis-kolom, body[data-modus="mobiel"] .dt-scherf-kolom { flex: 1 1 100%; max-width: none; }
   body[data-modus="mobiel"] .dt-stop-lang { display: none; }   /* de uitleg staat in de tafelvoet */
 }
+
+/* ============================================================
+   DE NAAD (proloog R1) — het mobiele spoor. De landing zelf meet alles live
+   (getBoundingClientRect); hier alleen de maten die op een telefoon anders zijn.
+   ============================================================ */
+/* het kooltje is op de telefoon kleiner (plan par. 3: 8 px, op telefoon 4) */
+body[data-modus="mobiel"] .pl-kooltje { width: 4px; height: 4px; }
+body[data-modus="mobiel"] .pl-kooltje::after { inset: -6px; }
+/* de lege flesplaatsen: een volwaardige raakzone voor de uitleg (tik = tip) */
+body[data-modus="mobiel"] .drank-leeg { min-height: 38px; padding: 0 5px; gap: 6px; }
