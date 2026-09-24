@@ -560,9 +560,10 @@ img { max-width: 100%; display: block; }
    amber waas en een tweede vignet over het liftcanvas hangen, ook in de stilte */
 .pl-app[data-fase="val"] .crt-laag { opacity: 0 !important; }
 .val-scherm { position: absolute; left: 0; top: 0; image-rendering: crisp-edges; image-rendering: pixelated; }
-/* de scanlines op het opgeschaalde beeld (val.js zet de periode = de schaal): een css-laag,
+/* de scanlines op het opgeschaalde beeld (val.js zet de periode = de schaal, en --val-lijn = de
+   dikte in fysieke pixels omgerekend: de schaal kan fractioneel zijn in css-px): een css-laag,
    geen blit van het hele scherm per beeld */
-.val-scan { position: absolute; left: 0; top: 0; pointer-events: none; background-image: linear-gradient(to bottom, transparent calc(100% - 1px), rgba(0, 0, 0, .12) calc(100% - 1px)); }
+.val-scan { position: absolute; left: 0; top: 0; pointer-events: none; background-image: linear-gradient(to bottom, transparent calc(100% - var(--val-lijn, 1px)), rgba(0, 0, 0, .12) calc(100% - var(--val-lijn, 1px))); }
 .val-laag { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .val-hanger { position: absolute; width: 0; height: 0; pointer-events: none; }
 /* de spiegel voor schermlezers: wat het canvas zegt (lichtkrant, LED, onderschriften) */

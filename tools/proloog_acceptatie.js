@@ -51,6 +51,17 @@
                "IK HEB HET LICHT NOG."; de maskerzinnen hebben één bron (proloog = outro).
    8 statisch  + 'OPGEHANGEN' en 'Rechtstreeks afdalen' nergens in proloog/*; de OutroFX-exports
                met één regel per constante in outro.js; val.js zonder audio-code.
+   FIXER R2 (review-fixes, elk met een eigen controle):
+   1/11a..e    VERBINDING VERBROKEN ≥ 900 ms op het canvas, ook voor wie doortikt.
+  11a          het schaarhek dicht van bij het eerste beeld; na de vloer blijft 0042 zichtbaar staan
+               (kruin + schoenen in de gloed van zijn kooltje, pixels); de vellen dwarrelen omhoog
+               (niets onder de kooivloer); de lift houdt halt op 2 KANTOORTUIN; brom (vertrek → tl),
+               verre donder bij de bliksem, het slot van het hek.
+  11b          de gevallen foto ligt naast de knop −∞, niet eronder.
+  11f          echte telefoons (DPR 3, 750x340 en 360x560): de schaal in fysieke pixels, ≥ 1,5x.
+  11g          verborgen tab pauzeert klok én wachtmuziek; klank uit/aan rond −7 geeft de vaste
+               noot terug; een dichte context bij de stilte hangt de lijn toch op; skip in de stilte
+               heft de stilte op (Klank.stilteWeg).
    Het script heeft GEEN server nodig: het bedient de worktree rechtstreeks vanaf
    schijf via route.fulfill op http://localhost:4173/** (ook onder /slay-lit/).
    Elke regel toont de GEMETEN waarde. Exit 1 bij minstens één fout.
@@ -88,7 +99,7 @@ async function open(browser, vp, o) {
   o = o || {};
   const prefix = o.prefix || '/';
   const ctx = await browser.newContext({
-    viewport: { width: vp.w, height: vp.h }, deviceScaleFactor: 1,
+    viewport: { width: vp.w, height: vp.h }, deviceScaleFactor: o.dpr || 1,   /* fixer R2: echte telefoons (DPR 3) */
     isMobile: !!vp.m, hasTouch: !!vp.m, serviceWorkers: 'block',
     reducedMotion: o.rustig ? 'reduce' : 'no-preference'
   });
@@ -317,7 +328,7 @@ const vt323 = page => page.evaluate(async () => { try { await document.fonts.rea
 const R2_SPION = (o) => {
   if (window.__r2) return;
   o = o || {};
-  const r2 = window.__r2 = { klank: [], val: [], tekst: [], dom: [], held: [], fase: [], frames: [], valStart: null, valLite: null, oproepT: null };
+  const r2 = window.__r2 = { klank: [], val: [], tekst: [], dom: [], held: [], hek: [], pk: [], fase: [], frames: [], valStart: null, valLite: null, oproepT: null, handle: null };
   const nu = () => performance.now();
   const plek = () => {
     const h = document.getElementById('scherm-proloog'), R = h && h.shadowRoot, a = R && R.getElementById('pl-app');
@@ -335,9 +346,22 @@ const R2_SPION = (o) => {
     };
   };
   if (K) {
-    spion(K, 'jingle', 'jingle'); spion(K, 'stilte', 'stilte'); spion(K, 'wachtHervat', 'hervat');
-    if (K.wacht) { spion(K.wacht, 'start', 'start'); spion(K.wacht, 'stop', 'stop'); spion(K.wacht, 'transponeer', 'transponeer'); }
+    spion(K, 'jingle', 'jingle'); spion(K, 'stilte', 'stilte'); spion(K, 'wachtHervat', 'hervat'); spion(K, 'stilteWeg', 'stilteWeg');
+    if (K.wacht) { spion(K.wacht, 'start', 'start'); spion(K.wacht, 'stop', 'stop'); spion(K.wacht, 'transponeer', 'transponeer'); spion(K.wacht, 'pauzeer', 'pauzeer'); }
   }
+  /* fixer R2: de klanklaag van de proloog (ProloogKlank: sfx, brom, pauzeer, stilteWeg), ook als proloog/audio.js pas later (lui) laadt */
+  const wikkelPK = pk => {
+    if (!pk || pk.__r2) return pk;
+    const uit = Object.create(pk);
+    ['sfx', 'brom', 'pauzeer', 'stilteWeg'].forEach(n => {
+      if (typeof pk[n] !== 'function') return;
+      uit[n] = function (...a) { const r = pk[n].apply(pk, a); r2.pk.push(Object.assign({ t: nu(), k: n, a: JSON.stringify(a), r }, plek())); return r; };
+    });
+    uit.__r2 = true;
+    return uit;
+  };
+  let echtePK = wikkelPK(window.ProloogKlank);
+  Object.defineProperty(window, 'ProloogKlank', { configurable: true, get() { return echtePK; }, set(v) { echtePK = wikkelPK(v); } });
   /* de val: ProloogVal.start omwikkelen, ook als val.js pas later (lui) laadt */
   const wikkel = v => {
     if (!v || v.__r2 || typeof v.start !== 'function') return v;
@@ -347,7 +371,7 @@ const R2_SPION = (o) => {
       const bij = opts.bij;
       opts.bij = (naam, arg, laat) => { r2.val.push({ t: nu(), naam, arg, laat }); return typeof bij === 'function' ? bij(naam, arg, laat) : undefined; };
       const h = st.call(v, opts);
-      r2.valStart = nu(); r2.valLite = h ? h.lite : null;
+      r2.valStart = nu(); r2.valLite = h ? h.lite : null; r2.handle = h || null;
       return h;
     } });
   };
@@ -366,6 +390,10 @@ const R2_SPION = (o) => {
       if (img && img.width === 24 && img.height === 66 && a.length === 2) {
         const v = this.__r2vorige;
         r2.held.push({ t: nu(), x: a[0], y: a[1], cw: this.canvas.width, ch: this.canvas.height, kooi: v || null });
+      }
+      /* fixer R2: het schaarhek (liggend 90x101, staand 84x105) — hoe breed het getekend wordt */
+      if (img && ((img.width === 90 && img.height === 101) || (img.width === 84 && img.height === 105))) {
+        r2.hek.push({ t: nu(), w: a.length >= 8 ? a[6] : img.width, vol: img.width });
       }
       this.__r2vorige = (img && a.length === 2) ? { x: a[0], y: a[1], w: img.width, h: img.height } : null;
       return di.call(this, img, ...a);
@@ -451,7 +479,31 @@ function toetsVerbinding(r2, label, heel) {
   const inVal = x => vv && x >= vv.t0 && (vv.t1 === null || x <= vv.t1);
   t(dom.length === 1 && cv.length === 1 && inVal(dom[0].t) && inVal(cv[0].t0) && r2.tekst.every(x => x.fase === 'val'),
     `${label}: "VERBINDING VERBROKEN" verschijnt precies 1x${heel ? ' in de hele proloog' : ''}: DOM ${dom.length}x (${dom.map(d => d.waar).join(',') || '-'}), canvas ${cv.length} keer (${cv.map(e => Math.round(e.t1 - e.t0) + ' ms').join(',') || '-'})` + (vv && dom[0] ? `, ${((dom[0].t - vv.t0) / 1000).toFixed(2)} s na het begin van de val` : ''));
+  /* fixer R2: het scharnier naar het je blijft minstens 1 s staan, ook voor wie doortikt (review: 450 ms) */
+  const duur = cv.length ? Math.round(cv[0].t1 - cv[0].t0) : 0;
+  t(duur >= 900, `${label}: VERBINDING VERBROKEN staat ${duur} ms op het canvas (≥ 900, ook bij doortikken)`);
 }
+/* fixer R2 · pixels van het liftcanvas (in de pagina): het silhouet van 0042 na de vloer, en waar de
+   factuurvellen zijn. De geometrie komt uit de spion: de laatste tekenbeurt van 0042 (x, y) en de
+   kooi die er vlak vóór getekend werd (bakKooi: x = K.x, w = K.w, h = K.y + K.h = de kooivloer). */
+const PIXELS = () => {
+  const R = document.getElementById('scherm-proloog').shadowRoot, c = R && R.querySelector('.val-scherm');
+  const h = window.__r2.held[window.__r2.held.length - 1];
+  if (!c || !h || !h.kooi) return null;
+  const W = c.width, H = c.height, d = c.getContext('2d').getImageData(0, 0, W, H).data;
+  const px = (x, y) => { const i = (y * W + x) * 4; return [d[i], d[i + 1], d[i + 2]]; };
+  const tel = (x0, y0, x1, y1, f) => { let n = 0; for (let y = Math.max(0, y0); y < Math.min(H, y1); y++) for (let x = Math.max(0, x0); x < Math.min(W, x1); x++) if (f(px(x, y))) n++; return n; };
+  const licht = p => Math.max(p[0], p[1], p[2]) >= 40;
+  const papier = p => p[0] >= 100 && p[1] >= 85 && p[2] >= 60;
+  const K = h.kooi, vloer = K.h, sx = h.x, sy = h.y;   /* K.y is hier 0: de kooi wordt vanaf de bovenrand getekend */
+  const onder = W > H ? 161 : 266;   /* L.onder.y (val.js): daar begint het onderschrift */
+  return {
+    t: window.__r2.handle ? +window.__r2.handle.t.toFixed(2) : null,
+    kruin: tel(sx - 1, sy - 1, sx + 25, sy + 12, licht), schoen: tel(sx - 1, sy + 56, sx + 25, sy + 67, licht),
+    naast: tel(K.x + K.w + 8, sy + 56, K.x + K.w + 32, sy + 67, licht),
+    velBoven: tel(K.x, sy, K.x + K.w, vloer, papier), velOnder: tel(K.x, vloer, K.x + K.w, onder, papier)
+  };
+};
 /* geen vrij vallende figuur: elke tekenbeurt van 0042 staat binnen de kooi, op dezelfde plek,
    met de voeten op de vloer van de kooi, ook als de vloer uiteenvalt */
 function toetsSprite(r2, label) {
@@ -1300,6 +1352,9 @@ async function kaartPlaat(page, vp) {
       };
       requestAnimationFrame(lus);
     });
+    /* fixer R2: wachten tot de klok van de val (handle.t, pauzebewust) op s seconden staat */
+    const valOp = (page, s, ms) => wachtOp(page, x => !!(window.__r2 && window.__r2.handle && window.__r2.handle.t >= x), ms || 16000, s);
+    const inAfgrond = () => { const R = document.getElementById('scherm-proloog').shadowRoot; const a = R && R.getElementById('pl-app'); return !!a && a.dataset.fase === 'afgrond'; };
 
     /* 11a · onaangeraakt, geduwd: de regie van 12,6 s, de klank, VERBINDING, 0042 in de kooi */
     for (const vp of [VPS.laptop, VPS.liggend, VPS.staand]) {
@@ -1317,7 +1372,13 @@ async function kaartPlaat(page, vp) {
       t(lay.layout === (staand ? 'staand' : 'liggend') && lay.canvas && lay.canvas.join('x') === (staand ? '180x320' : '320x180') && lay.fase === 'daal' && lay.rect[2] > 0 && lay.rect[0] >= 0 && lay.rect[0] + lay.rect[2] <= vp.w + 1,
         `${L}: het liftcanvas ${lay.canvas && lay.canvas.join('x')} (${lay.layout}), opgeschaald tot [${lay.rect}] binnen het scherm, fase "${lay.fase}"`);
       await sonde(page, `${L} de lift daalt`);
-      const tot = await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; const a = R && R.getElementById('pl-app'); return !!a && a.dataset.fase === 'afgrond'; }, 18000);
+      /* fixer R2 · gevoeligheid: pixels na de vloer — de vellen (9,1 s) en het silhouet (9,7 s) */
+      await valOp(page, 9.1);
+      const pv = await page.evaluate(PIXELS);
+      await valOp(page, 9.7);
+      const ps = await page.evaluate(PIXELS);
+      await shot(page, `${vp.n}-val-silhouet`);
+      const tot = await wachtOp(page, inAfgrond, 18000);
       await slaap(700);
       const r2 = await r2Lees(page);
       const vv = valVenster(r2);
@@ -1336,6 +1397,28 @@ async function kaartPlaat(page, vp) {
       const tl = r2.val.find(v => v.naam === 'tl'), e6 = r2.val.find(v => v.naam === 'etage' && v.arg === 6), vb = r2.val.find(v => v.naam === 'verbinding');
       t(!!tl && !!e6 && Math.abs(tl.t - e6.t) < 30 && !!vb && vb.t > tl.t,
         `${L}: de kooi-tl sterft bij −3 (${tl && e6 ? Math.round(tl.t - e6.t) : '?'} ms na etage −3), daarna pas VERBINDING VERBROKEN op de meter-LED`);
+      /* ---- fixer R2 ---- */
+      /* gevoeligheid 1: het schaarhek staat dicht van bij het eerste beeld (nooit een open kooi op het dak) */
+      const hk = r2.hek.filter(h => h.t >= r2.valStart - 300 && (!vv || vv.t1 === null || h.t <= vv.t1));
+      t(hk.length > 50 && hk.every(h => h.w === h.vol) && Math.abs(hk[0].t - r2.valStart) < 60,
+        `${L}: het schaarhek staat dicht van bij het eerste beeld: ${hk.length} tekenbeurten, ${hk.filter(h => h.w === h.vol).length} op volle breedte, de eerste ${hk[0] ? Math.round(hk[0].t - r2.valStart) : '?'} ms na de start`);
+      /* gevoeligheid 2: na de vloer blijft 0042 zichtbaar staan (kruin én schoenen in de gloed), en de vellen gaan omhoog */
+      t(!!ps && ps.kruin >= 10 && ps.schoen >= 6 && ps.naast <= 2,
+        `${L}: 0042 blijft staan in de gloed van zijn kooltje (${ps ? ps.t : '?'} s, de vloer is weg): kruin ${ps ? ps.kruin : '?'} en schoenen ${ps ? ps.schoen : '?'} lichte pixels, naast de kooi ${ps ? ps.naast : '?'}`);
+      t(!!pv && pv.velBoven >= 20 && pv.velOnder === 0,
+        `${L}: de factuurvellen dwarrelen gewichtloos omhoog, in de kooi: ${pv ? pv.velBoven : '?'} vel-pixels boven de kooivloer, ${pv ? pv.velOnder : '?'} eronder (${pv ? pv.t : '?'} s)`);
+      /* creatief 7: de lift houdt halt op 2 KANTOORTUIN (je stoel draait nog) */
+      const eT = k => { const e = r2.val.find(v => v.naam === 'etage' && v.arg === k); return e ? e.t / 1000 : NaN; };
+      const g12 = eT(2) - eT(1), g23 = eT(3) - eT(2);
+      t(g23 >= g12 + 0.2, `${L}: de lift houdt halt op 2 KANTOORTUIN: ${g23.toFixed(2)} s tussen het doven van 3 en 2 (tussen 4 en 3: ${g12.toFixed(2)} s)`);
+      /* creatief 6: de brom van motor en kabels valt stil met de kooi-tl; een verre donder bij de bliksem; het hek vergrendelt */
+      const evN = n => r2.val.find(v => v.naam === n);
+      const pkBij = (e, f) => e ? r2.pk.find(p => p.t >= e.t - 1 && p.t <= e.t + 60 && f(p)) : null;
+      const bromAan = pkBij(evN('vertrek'), p => p.k === 'brom' && p.a === '[true]'), bromUit = pkBij(tl, p => p.k === 'brom' && p.a === '[false]');
+      const donder = pkBij(evN('bliksem'), p => p.k === 'sfx' && p.a === '["bliksem"]'), grendel = pkBij(evN('hek'), p => p.k === 'sfx' && p.a === '["hek"]');
+      const bromLaatst = r2.pk.filter(p => p.k === 'brom').pop();
+      t(!!bromAan && bromAan.r === true && !!bromUit && !!donder && donder.r === true && !!grendel && grendel.r === true && !!bromLaatst && bromLaatst.a === '[false]',
+        `${L}: de klank van de lift: brom aan bij het vertrek (${bromAan ? 'ja' : 'NEE'}), stil met de kooi-tl (${bromUit ? 'ja' : 'NEE'}); verre donder bij de bliksem (${donder ? 'ja' : 'NEE'}); het slot van het hek (${grendel ? 'ja' : 'NEE'}); na de val geen brom meer (${bromLaatst ? bromLaatst.a : '-'})`);
       const sp = await page.evaluate(() => window.__spiegel);
       const moet = [/EEN OGENBLIKJE/, /BLIJF EVEN AAN DE LIJN/, /UW OPROEP IS BELANGRIJK/, /^VERBINDING VERBROKEN$/, /DE VLOER IS EEN VERONDERSTELLING/, /VOOR HET EERST IN VIJFENTWINTIG JAAR/];
       t(moet.every(re => sp.some(s => re.test(s))), `${L}: de spiegel (aria-live) zegt alles wat het canvas zegt: ${sp.map(s => '"' + s.slice(0, 28) + '"').join(' → ')}`);
@@ -1374,6 +1457,26 @@ async function kaartPlaat(page, vp) {
       const baas = r2.val.some(v => v.naam === 'baasDrukt') ? await sr(page, `const k = R.querySelector('.val-knop'); return k ? k.classList.contains('ingedrukt') : null;`) : false;
       t(nog === 'breekpunt/val' && baas === false, `${L}: wie sprong, drukt zelf: 1,8 s na de knop nog in de val ("${nog}"), de knop niet ingedrukt (${baas})`);
       await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+      /* fixer R2: de gevallen foto ligt NAAST de knop −∞ (niet half eronder): de heldere foto-pixels
+         links van de knop, omgerekend naar het scherm, liggen buiten de knop en zijn ring van 5 px */
+      const foto = await page.evaluate(() => {
+        const R = document.getElementById('scherm-proloog').shadowRoot, c = R.querySelector('.val-scherm'), k = R.querySelector('.val-knop');
+        if (!c || !k) return null;
+        const cr = c.getBoundingClientRect(), kr = k.getBoundingClientRect(), S = cr.width / c.width;
+        const kx = kr.left + kr.width / 2, ky = kr.top + kr.height / 2, straal = k.offsetWidth / 2 + 5;
+        const cx = Math.round((kx - cr.left) / S), cy = Math.round((ky - cr.top) / S);
+        const W = c.width, H = c.height, d = c.getContext('2d').getImageData(0, 0, W, H).data;
+        let n = 0, vrij = 0;
+        for (let y = Math.max(0, cy - 14); y < Math.min(H, cy + 14); y++) for (let x = Math.max(0, cx - 44); x < Math.min(W, cx); x++) {
+          const i = (y * W + x) * 4;
+          if (Math.min(d[i], d[i + 1], d[i + 2]) < 170) continue;
+          n++;
+          if (Math.hypot(cr.left + (x + 0.5) * S - kx, cr.top + (y + 0.5) * S - ky) > straal) vrij++;
+        }
+        return { n, vrij, straal: Math.round(straal), S: +S.toFixed(2) };
+      });
+      t(!!foto && foto.n >= 15 && foto.vrij >= 0.9 * foto.n,
+        `${L}: de gevallen foto ligt naast de knop −∞, niet eronder: ${foto ? foto.vrij + '/' + foto.n : '?'} foto-pixels buiten de knop (straal ${foto ? foto.straal : '?'} px met ring, schaal ${foto ? foto.S : '?'})`);
       await sonde(page, `${L} de liftknop −∞`);
       await tik(page, vp, '.val-knop');
       t(await wachtScene(page, 'breekpunt/afgrond', 4000), `${L}: zelf ingedrukt → de Afgrond`);
@@ -1453,6 +1556,94 @@ async function kaartPlaat(page, vp) {
       const fx = await page.evaluate(() => OutroFX.isLite());
       t(w >= 0 && fx, `${L}: onder zware last schakelt de val naar lite (data-val-lite "fps" na ${w} ms, OutroFX lite ${fx}), zoals de outro met haar fps-bewaker`);
       await cdp.detach().catch(() => {});
+      await ctx.close();
+    }
+
+    /* 11f · fixer R2: echte telefoons met browserbalken (DPR 3). De schaal is een geheel aantal FYSIEKE
+       pixels per pixel: nooit meer 1x (320x180 css-px, een postzegel) op een telefoon */
+    for (const vp of [{ n: 'iphone-liggend', w: 750, h: 340, m: true }, { n: 'android-staand', w: 360, h: 560, m: true }]) {
+      const L = 'val ' + vp.n + ' DPR 3';
+      kop(`11f · ${L} ${vp.w}x${vp.h} · de schaal in fysieke pixels`);
+      const { ctx, page } = await open(browser, vp, { dpr: 3, opslag: { slaylit_proloog_v3: valSave('geduwd') }, geenNudge: true });
+      await r2Spion(page, { zonderCanvas: true });
+      await klikNieuw(page, vp);
+      t(await wachtScene(page, 'breekpunt/val', 6000), `${L}: hervat in de val`);
+      await slaap(1200);
+      const m = await sr(page, `const c = R.querySelector('.val-scherm'), s = R.querySelector('.val-scan'), b = c.getBoundingClientRect();
+        return { cw: c.width, ch: c.height, r: [b.left, b.top, b.width, b.height], dpr: devicePixelRatio, scan: s.hidden, lijn: parseFloat(s.style.getPropertyValue('--val-lijn')) };`);
+      const fys = m.r[2] * m.dpr / m.cw, fysH = m.r[3] * m.dpr / m.ch;
+      t(m.r[2] >= 1.5 * m.cw && Math.abs(fys - Math.round(fys)) < 0.02 && Math.abs(fysH - Math.round(fys)) < 0.02 && m.r[0] >= -0.5 && m.r[0] + m.r[2] <= vp.w + 0.5 && m.r[1] >= -0.5 && m.r[1] + m.r[3] <= vp.h + 0.5,
+        `${L}: het liftcanvas ${m.cw}x${m.ch} op [${m.r.map(v => v.toFixed(1)).join(', ')}] css-px: ${(m.r[2] / m.cw).toFixed(2)}x (≥ 1,5x; was 1x) = ${fys.toFixed(2)} fysieke px per pixel (geheel: scherp), binnen het scherm`);
+      t(m.scan === false && Math.abs(m.lijn * m.dpr - 1) < 0.02, `${L}: de scanlines blijven (vanaf 3 fysieke px per pixel), één fysieke pixel dik (${(m.lijn * m.dpr).toFixed(2)})`);
+      await shot(page, `${vp.n}-val-dpr3`);
+      t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+    }
+
+    /* 11g · fixer R2: de klank-randjes van de val — een verborgen tab pauzeert klok én klank; klank uit
+       en weer aan rond −7 geeft de vaste noot terug; een dichte context bij de stilte hangt de lijn
+       toch op; wie in de stilte overslaat, hoort de Afgrond meteen */
+    {
+      const vp = VPS.laptop, L = 'val klank-randjes';
+      kop(`11g · ${L} · verborgen tab, klank uit/aan rond −7, dichte context bij de stilte, skip in de stilte`);
+      let { ctx, page } = await open(browser, vp, { opslag: { slaylit_proloog_v3: valSave('geduwd') }, geenNudge: true });
+      await r2Spion(page, { zonderCanvas: true });
+      await klikNieuw(page, vp);
+      t(await wachtScene(page, 'breekpunt/val', 6000), `${L}: hervat in de val`);
+      const verberg = v => page.evaluate(aan => {
+        Object.defineProperty(document, 'hidden', { configurable: true, get: () => aan });
+        Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (aan ? 'hidden' : 'visible') });
+        document.dispatchEvent(new Event('visibilitychange'));
+      }, v);
+      const lees = () => page.evaluate(() => ({ vt: window.__r2.handle.t, st: Klank.wacht.stand, klok: Klank.koppel().ctx.currentTime }));
+      await valOp(page, 2.5);
+      await verberg(true);
+      await slaap(300);
+      const a = await lees();
+      await slaap(1500);
+      const b = await lees();
+      const pz = await page.evaluate(() => window.__r2.pk.filter(p => p.k === 'pauzeer').map(p => p.a + '=' + p.r));
+      t(Math.abs(b.vt - a.vt) < 0.05 && a.st.pauze === true && b.st.pauze === true && b.st.actief === true && pz[0] === '[true]=true',
+        `${L}: tab verborgen → de klok staat stil (${a.vt.toFixed(3)} → ${b.vt.toFixed(3)} s in 1,5 s) en de wachtmuziek ook (pauze ${b.st.pauze}, de lijn blijft: ${b.st.actief}; ProloogKlank.pauzeer ${pz.join(', ')}; audioklok +${(b.klok - a.klok).toFixed(2)} s)`);
+      await verberg(false);
+      await slaap(400);
+      const c = await lees();
+      t(c.st.pauze === false && c.st.actief === true && c.vt > b.vt + 0.2, `${L}: weer zichtbaar → klok en wacht lopen verder (pauze ${c.st.pauze}, de val op ${c.vt.toFixed(2)} s)`);
+      /* klank uit vóór −7 (±6,87 s), weer aan erna: vasteNoot() speelde niets zolang de klank uit stond */
+      await valOp(page, 6.5);
+      await page.evaluate(() => Klank.zet('aan', false));
+      await valOp(page, 7.3);
+      const m1 = await page.evaluate(() => Klank.wacht.stand);
+      await page.evaluate(() => Klank.zet('aan', true));
+      await slaap(150);
+      const m2 = await page.evaluate(() => Klank.wacht.stand);
+      t(m1.vast === true && m1.toon === -7 && m1.vastKlinkt === false && m2.vastKlinkt === true && m2.actief === true,
+        `${L}: klank uit vóór −7 en weer aan erna → de vaste noot klinkt weer (voor het aanzetten ${m1.vastKlinkt}, erna ${m2.vastKlinkt}; stand ${JSON.stringify(m2)})`);
+      /* een dichte context (iOS na backgrounden) op het moment van de stilte */
+      await valOp(page, 8.3);
+      await page.evaluate(() => Klank.koppel().ctx.suspend());
+      await valOp(page, 9.2);
+      const s1 = await page.evaluate(() => ({ st: Klank.wacht.stand, ctx: Klank.koppel().ctx.state, stil: window.__r2.klank.filter(k => k.k === 'stilte').map(k => k.r) }));
+      await page.evaluate(() => Klank.koppel().ctx.resume());
+      t(s1.ctx === 'suspended' && s1.stil.length === 1 && s1.stil[0] === false && s1.st.actief === false,
+        `${L}: bij een dichte context (${s1.ctx}) hangt de stilte de lijn toch op: Klank.stilte → ${s1.stil.join(',')}, de wacht daarna actief: ${s1.st.actief}`);
+      await wachtOp(page, inAfgrond, 8000);
+      t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+      /* skip in de stilte: de Afgrond hoeft niet op het einde van de stilte te wachten */
+      ({ ctx, page } = await open(browser, vp, { opslag: { slaylit_proloog_v3: valSave('geduwd') }, geenNudge: true }));
+      await r2Spion(page, { zonderCanvas: true });
+      await klikNieuw(page, vp);
+      t(await wachtScene(page, 'breekpunt/val', 6000), `${L}: opnieuw hervat in de val`);
+      await valOp(page, 9.05);
+      const voor = await page.evaluate(() => Klank.stil);
+      await houdSkip(page, vp, 950);
+      const naar = await wachtOp(page, inAfgrond, 3000);
+      await slaap(250);
+      const s2 = await page.evaluate(() => ({ stil: Klank.stil, weg: window.__r2.klank.filter(k => k.k === 'stilteWeg').map(k => k.r), vt: window.__r2.handle.t }));
+      t(voor === true && naar >= 0 && s2.weg.indexOf(true) !== -1 && s2.stil === false,
+        `${L}: skip in de stilte (de val op ${s2.vt.toFixed(2)} s) → de Afgrond klinkt meteen: de stilte liep (${voor}), Klank.stilteWeg → ${s2.weg.join(',') || '-'}, 250 ms later nog stil: ${s2.stil}`);
+      t(page.__f.length === 0, `${L}: geen paginafouten (skip)` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
       await ctx.close();
     }
   }

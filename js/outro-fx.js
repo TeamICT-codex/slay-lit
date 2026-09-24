@@ -854,7 +854,7 @@ const OutroFX = (() => {
   const tekstBreedte = (str, schaal) => String(str).length * 6 * (schaal || 1) - (schaal || 1);
 
   /* de maskerzinnen — EÉN bron voor de Afgrond van de proloog (aanloop + kern,
-     proloog/data.js maskerZin()) en de reunië in de outro (alleen de kern, in het
+     proloog/data.js maskerZin()) en de reünie in de outro (alleen de kern, in het
      pixelfont). Sleutel = game-held-id. {jeugddroom} vult de proloog in; zonder
      droom geldt aanloopZonder. Wijzig hier, nergens anders. */
   const MASKERZINNEN = {

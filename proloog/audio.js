@@ -12,8 +12,8 @@
    de wachtmuziek, het transponeren, de stilte en de val-geluiden, op Klank.*. */
 window.SLAYLIT_AUDIO = (function () {
   let ctx = null, master = null, viaBus = false;
-  let humNodes = null, noiseNode = null, noiseGain = null, droneNodes = null;
-  let heartTimer = null, heartRate = 900, heartPauze = false;
+  let humNodes = null, noiseNode = null, noiseGain = null, droneNodes = null, bromNodes = null;
+  let heartTimer = null, heartRate = 900, heartPauze = false, pauzeNu = false;
   let volKlok = null;
 
   /* ---------- koppeling met het spel ---------- */
@@ -27,7 +27,7 @@ window.SLAYLIT_AUDIO = (function () {
     if (c !== ctx) {
       /* nieuwe (of eerste) context: eigen submix erop, alles wat nog van een oude
          context hing is waardeloos → vergeten */
-      ctx = c; humNodes = null; noiseNode = null; noiseGain = null; droneNodes = null;
+      ctx = c; humNodes = null; noiseNode = null; noiseGain = null; droneNodes = null; bromNodes = null;
       master = c.createGain();
       const bus = k.bus || k.uit || k.sfxBus || null;
       viaBus = false;
@@ -55,7 +55,7 @@ window.SLAYLIT_AUDIO = (function () {
   }
   /* continue lagen (brom/drone/ruis/hart) volgen een mute-klik binnen ±0,7 s */
   function volgVolume() {
-    const nodig = !!(humNodes || droneNodes || noiseNode || heartTimer);
+    const nodig = !!(humNodes || droneNodes || noiseNode || heartTimer || bromNodes);
     if (nodig && !volKlok) volKlok = setInterval(syncVolume, 700);
     else if (!nodig && volKlok) { clearInterval(volKlok); volKlok = null; }
   }
@@ -367,6 +367,74 @@ window.SLAYLIT_AUDIO = (function () {
     for (let i = 0; i < 9; i++) stoot(t + i * 0.045 + Math.random() * 0.02, 0.05, 'bandpass', 1800 + Math.random() * 3000, 8, 0.045);
     stoot(t + 0.42, 0.08, 'bandpass', 900, 3, 0.06);
   }
+  // grendel (fixer R2): het schaarhek staat van bij het eerste beeld dicht; wat je hoort, is
+  // het slot dat vergrendelt — de pal, een droge klak en het hek dat even natrilt
+  function grendel() {
+    if (!ensure()) return; const t = now();
+    stoot(t, 0.02, 'bandpass', 2400, 6, 0.07);
+    stoot(t + 0.05, 0.03, 'bandpass', 1500, 4, 0.07);
+    const g = ctx.createGain(); g.connect(master);
+    g.gain.setValueAtTime(0.0001, t + 0.05); g.gain.linearRampToValueAtTime(0.09, t + 0.056); g.gain.exponentialRampToValueAtTime(0.0008, t + 0.17);
+    const o = ctx.createOscillator(); o.type = 'triangle';
+    o.frequency.setValueAtTime(420, t + 0.05); o.frequency.exponentialRampToValueAtTime(260, t + 0.16);
+    o.connect(g); o.start(t + 0.05); o.stop(t + 0.19);
+    for (let i = 0; i < 3; i++) stoot(t + 0.1 + i * 0.05, 0.04, 'bandpass', 2800 + Math.random() * 1400, 9, 0.018);
+  }
+  // donder (fixer R2): de bliksem die op het dak in de mast slaat, ver weg. Gerommel dat
+  // aanrolt, geen klap: licht is sneller dan geluid, dus het komt pas na ±0,35 s
+  function donder() {
+    if (!ensure()) return; const t = now() + 0.35;
+    const n = ctx.createBufferSource(); n.buffer = ruisBuf(); n.loop = true;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.6;
+    lp.frequency.setValueAtTime(280, t); lp.frequency.exponentialRampToValueAtTime(90, t + 2.2);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.1, t + 0.3);
+    g.gain.linearRampToValueAtTime(0.05, t + 0.65);
+    g.gain.linearRampToValueAtTime(0.075, t + 0.95);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + 2.4);
+    n.connect(lp); lp.connect(g); g.connect(master);
+    n.start(t, Math.random() * 0.5); n.stop(t + 2.5);
+  }
+  // lift-brom (fixer R2): de motor en de kabels van de goederenlift, zolang ze daalt. Ze valt
+  // stil samen met de kooi-tl: de stroom hapert en is weg. Bewust geen motor die hoorbaar
+  // uitdraait en geen rem: de mechaniek stopt gewoon (een uitlopende motor zou een val
+  // suggereren, keuze 3). Een pauze (tab verborgen) zet haar stil, zoals de wacht.
+  const BROM = 0.03;
+  function liftBrom(aan) {
+    if (!aan) {
+      if (!bromNodes || !ctx) { bromNodes = null; volgVolume(); return; }
+      const { g, os } = bromNodes; const t = now();
+      try {
+        const v = g.gain.value;
+        g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(v, t);
+        g.gain.setValueAtTime(0, t + 0.08); g.gain.setValueAtTime(v * 0.6, t + 0.16); g.gain.setValueAtTime(0, t + 0.2);
+      } catch (e) {}
+      os.forEach(o => { try { o.stop(t + 0.3); } catch (e) {} });
+      bromNodes = null;
+      volgVolume();
+      return;
+    }
+    if (bromNodes || !ensure()) return;
+    const t = now();
+    const g = ctx.createGain(); g.gain.value = 0;
+    const gm = ctx.createGain(); gm.gain.value = 1;   /* het ritme van de rails: een trage golf */
+    g.connect(gm); gm.connect(master);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 220; lp.Q.value = 0.7; lp.connect(g);
+    const o1 = ctx.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = 49;
+    const o2 = ctx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = 98.5;
+    o1.connect(lp); o2.connect(lp);
+    const n = ctx.createBufferSource(); n.buffer = ruisBuf(); n.loop = true;   /* de kabels zingen zacht */
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = 3;
+    const ng = ctx.createGain(); ng.gain.value = 0.3;
+    n.connect(bp); bp.connect(ng); ng.connect(g);
+    const lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 1.6;
+    const lfoG = ctx.createGain(); lfoG.gain.value = 0.2; lfo.connect(lfoG); lfoG.connect(gm.gain);
+    [o1, o2, n, lfo].forEach(o => o.start(t));
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(pauzeNu ? 0 : BROM, t + 0.5);
+    bromNodes = { g, os: [o1, o2, n, lfo] };
+    volgVolume();
+  }
 
   /* ---------- levenscyclus (aangestuurd door proloog.js) ---------- */
   /* op een gebruikersgebaar: het spel zijn audio laten starten/hervatten */
@@ -378,8 +446,13 @@ window.SLAYLIT_AUDIO = (function () {
     }
     ensure();
   }
-  /* pauze (tab verborgen / draai-blok): de hartslag houdt zijn adem in */
+  /* pauze (tab verborgen / draai-blok): de hartslag houdt zijn adem in, de lift-brom zwijgt */
   function pauzeer(aan) {
+    aan = !!aan;
+    if (aan !== pauzeNu) {
+      pauzeNu = aan;
+      if (bromNodes && ctx) { try { const g = bromNodes.g.gain, t = now(); g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.setTargetAtTime(aan ? 0 : BROM, t, 0.05); } catch (e) {} }
+    }
     if (aan === heartPauze) return;
     heartPauze = aan;
     if (aan) { if (heartTimer) { clearInterval(heartTimer); heartTimer = -1; } }
@@ -388,8 +461,8 @@ window.SLAYLIT_AUDIO = (function () {
   /* alles uit (Proloog.stop) — ook de wachtmuziek, als ze nog liep (herbeleven dat
      halverwege stopt, een skip): de wacht mag de proloog nooit overleven */
   function stilte() {
-    heartPauze = false;
-    heartStop(); humOff(); noiseOff(); droneOff();
+    heartPauze = false; pauzeNu = false;
+    heartStop(); humOff(); noiseOff(); droneOff(); liftBrom(false);
     if (volKlok) { clearInterval(volKlok); volKlok = null; }
     try { const K = window.Klank; if (K && K.wacht && K.wacht.stand.actief) K.wacht.stop(); } catch (e) {}
   }
@@ -397,6 +470,7 @@ window.SLAYLIT_AUDIO = (function () {
   return { unlock, humOn, humOff, ding, tik, type, heartStart, heartRateSet, heartStop,
     noiseOn, noiseOff, glitch, stamp, warm, powerOn, droneOn, droneOff, plunge,
     etage, tlSterft, ledUit, vellen, liftknop, kooltje, schaarhek, verbinding, krant,
+    grendel, donder, liftBrom,
     pauzeer, stilte, get gekoppeld() { return !!koppel(); } };
 })();
 
@@ -411,11 +485,16 @@ window.SLAYLIT_AUDIO = (function () {
      transponeer(n)    true/false · n halve tonen, absoluut (-1 … -7); op −7 loopt de
                        lijn vast op de vaste noot
      stilte(ms)        true/false · alles weg, ms stilte, terug (de wacht komt niet terug)
+     stilteWeg()       true/false · (fixer R2) een lopende stilte vroegtijdig opheffen
+     pauzeer(aan)      true/false · (fixer R2) de wacht en de lift-brom zwijgen en plannen
+                       niets zolang de proloog pauzeert (tab verborgen, draai-blok)
+     brom(aan)         (fixer R2) de lift-brom: motor en kabels, van vertrek tot de kooi-tl
      sfx(naam)         true/false · de val-geluiden (etage, tl-sterft, led-uit, vellen,
-                       liftknop, kooltje, schaarhek, verbinding, krant — ook onder de
-                       gebeurtenisnamen van val.js), de proloogklanken (ding, tik, type,
-                       glitch, stamp, warm, powerOn, plunge, beat) of een Klank-sfx
-     stand             { actief, toon, vast } — bv. voor contract.wachtToon */
+                       liftknop, kooltje, grendel, donder, verbinding, krant — ook onder de
+                       gebeurtenisnamen van val.js: hek = grendel, bliksem = donder), de
+                       proloogklanken (ding, tik, type, glitch, stamp, warm, powerOn, plunge,
+                       beat) of een Klank-sfx
+     stand             { actief, toon, vast, vastKlinkt, pauze } — bv. voor contract.wachtToon */
 window.ProloogKlank = (function () {
   const A = window.SLAYLIT_AUDIO || null;
   /* het spel wakker maken (Klank.koppel → init) en Klank teruggeven, of null */
@@ -426,15 +505,16 @@ window.ProloogKlank = (function () {
     return k;
   }
   function probeer(f, anders) { try { const r = f(); return r === undefined ? anders : r; } catch (e) { return anders; } }
-  const EIGEN = ['etage', 'tlSterft', 'ledUit', 'vellen', 'liftknop', 'kooltje', 'schaarhek', 'verbinding', 'krant',
+  const EIGEN = ['etage', 'tlSterft', 'ledUit', 'vellen', 'liftknop', 'kooltje', 'schaarhek', 'grendel', 'donder', 'verbinding', 'krant',
     'ding', 'tik', 'type', 'glitch', 'stamp', 'warm', 'powerOn', 'plunge', 'beat'];
   /* sleutels zonder hoofdletters en leestekens: 'tl-sterft', 'tl_sterft' en 'tlSterft'
      zijn dezelfde; plus synoniemen, en de gebeurtenisnamen van proloog/val.js (hek,
-     krant, etage, tl, verbinding, vloer, kooltje, knop, baasDrukt) klinken rechtstreeks */
+     bliksem, krant, etage, tl, verbinding, vloer, kooltje, knop, baasDrukt) klinken
+     rechtstreeks. Het hek staat al dicht (fixer R2): 'hek' is het slot, niet het dichtschuiven. */
   const ALIAS = { liftbel: 'etage', verdieping: 'etage', tl: 'tlSterft', tluit: 'tlSterft', led: 'ledUit',
     papier: 'vellen', factuurvellen: 'vellen', vloer: 'vellen', knop: 'liftknop', baasdrukt: 'liftknop',
-    adem: 'kooltje', hek: 'schaarhek', verbroken: 'verbinding', ophangen: 'verbinding', lichtkrant: 'krant',
-    stempel: 'stamp' };
+    adem: 'kooltje', hek: 'grendel', slot: 'grendel', bliksem: 'donder', onweer: 'donder',
+    verbroken: 'verbinding', ophangen: 'verbinding', lichtkrant: 'krant', stempel: 'stamp' };
   EIGEN.forEach(n => { ALIAS[n.toLowerCase()] = n; });
   function sfx(naam) {
     if (typeof naam !== 'string' || !naam) return false;
@@ -444,7 +524,8 @@ window.ProloogKlank = (function () {
     if (!k || typeof k.sfx !== 'function') return false;
     return probeer(() => k.sfx(naam) === true, false);
   }
-  const LEEG = { actief: false, toon: 0, vast: false };
+  const LEEG = { actief: false, toon: 0, vast: false, vastKlinkt: false, pauze: false };
+  let pauze = false;   /* de proloog pauzeert (fixer R2): een wacht die nu start, zwijgt meteen */
   return {
     jingle(opts) {
       const k = K();
@@ -455,7 +536,9 @@ window.ProloogKlank = (function () {
       const k = K();
       if (!k || !k.wacht) return false;
       const n = opts && typeof opts.transponeer === 'number' ? opts.transponeer : 0;
-      return !!probeer(() => k.wacht.start({ transponeer: n }), false);
+      const ok = !!probeer(() => k.wacht.start({ transponeer: n }), false);
+      if (ok && pauze && typeof k.wacht.pauzeer === 'function') probeer(() => k.wacht.pauzeer(true), null);   /* gestart in een pauze: meteen stil */
+      return ok;
     },
     wachtStop() {
       const k = window.Klank;
@@ -471,6 +554,23 @@ window.ProloogKlank = (function () {
       const k = K();
       if (!k || typeof k.stilte !== 'function') return false;
       return !!probeer(() => k.stilte(ms), false);
+    },
+    stilteWeg() {
+      const k = window.Klank;
+      if (!k || typeof k.stilteWeg !== 'function') return false;
+      return !!probeer(() => k.stilteWeg(), false);
+    },
+    pauzeer(aan) {
+      pauze = !!aan;
+      if (A && typeof A.pauzeer === 'function') probeer(() => A.pauzeer(!!aan), null);
+      const k = window.Klank;
+      if (!k || !k.wacht || typeof k.wacht.pauzeer !== 'function') return false;
+      return !!probeer(() => k.wacht.pauzeer(!!aan), false);
+    },
+    brom(aan) {
+      if (!A || typeof A.liftBrom !== 'function') return false;
+      if (aan) K();
+      return probeer(() => { A.liftBrom(!!aan); return true; }, false);
     },
     sfx,
     get stand() {

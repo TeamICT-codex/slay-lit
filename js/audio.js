@@ -77,6 +77,7 @@ const Klank = (() => {
     master.gain.setTargetAtTime(vol.aan ? 1 : 0, ctx.currentTime, 0.05);
     musGain.gain.setTargetAtTime(vol.muziek * 0.5, ctx.currentTime, 0.1);
     sfxGain.gain.setTargetAtTime(vol.sfx, ctx.currentTime, 0.05);
+    if (vol.aan) herstelVast();   /* proloog R2: wie op −7 de klank weer aanzet, hoort de vaste noot */
   }
 
   /* ---------- sfx-bouwstenen ---------- */
@@ -426,7 +427,9 @@ const Klank = (() => {
        −n, dan hervat de lus en buigt de lijn in ±3 s omhoog naar 0 (het bandje dat weer
        op toeren komt).
      · stilte(ms) — alles zacht weg, ms stilte, en weer terug. Een lopende wachtlijn
-       komt niet terug: de verbinding is verbroken.
+       komt niet terug: de verbinding is verbroken. stilteWeg() heft ze vroegtijdig op.
+     · wacht.pauzeer(aan) — de lijn zwijgt en plant niets (tab verborgen, draai-blok) en
+       gaat daarna verder waar ze was; op −7 komt de vaste noot terug als ze uitstierf.
      Alles op de ENE context en via musGain (muziekschuif, ducking en mute gelden).
      ============================================================ */
   const JINGLE_MEL = CHIP_MEL_SLOT.concat([   /* + de maat te veel */
@@ -623,7 +626,7 @@ const Klank = (() => {
   }
   function planWacht() {
     const L = lijn;
-    if (!L || L.vast || L.weg || !vol.aan) return;
+    if (!L || L.vast || L.weg || L.pauze || !vol.aan) return;
     const nu = ctx.currentTime;
     if (L.volgende < nu - 0.3) L.volgende = nu + 0.05;   /* na mute of een pauze niets inhalen */
     while (L.volgende < nu + WACHT_VOORUIT) {
@@ -648,6 +651,53 @@ const Klank = (() => {
     if (!vol.aan) return;
     epiano(t, 880, hou, 0.05, L.in, { lijn: L, hou: 0.2, verval: 3 });
     WACHT_PAD[0].forEach(h => padNoot(t, 220 * Math.pow(2, h / 12), hou, 0.012, 0.08, L.in, L, 4));
+    L.vastT = t; L.vastTot = t + hou;   /* waar en tot wanneer ze klinkt (herstelVast, wachtPauzeer) */
+  }
+  /* fixer R2: de vaste noot opnieuw aanslaan als ze niet (meer) klinkt. vasteNoot() speelt
+     niets zolang de klank uit staat: wie op −7 de klankknop uit en weer aan zet, hoorde
+     daarna stilte in plaats van de hangende noot. Ook na een lange pauze (> 30 s). */
+  function herstelVast() {
+    const L = lijn;
+    if (!L || !L.vast || L.weg || L.pauze || !klaar || !vol.aan) return false;
+    const t = ctx.currentTime;
+    if ((L.vastTot || 0) > t + 0.25) return false;   /* ze klinkt nog */
+    vasteNoot(L, t + 0.05, 30);
+    return true;
+  }
+  /* fixer R2: pauze (de proloog: tab verborgen of het draai-blok). De klok van de proloog
+     staat dan stil, dus de wacht ook: de lijn zwijgt (tc 0,05) en plant niets meer; wat al
+     vooruit gepland stond, valt weg en de lus gaat na de pauze verder waar ze was. Geen
+     ctx.suspend(): iOS hervat een gesuspendeerde context pas na een gebaar. */
+  function wachtPauzeer(aan) {
+    const L = lijn;
+    aan = !!aan;
+    if (!L || L.weg || !klaar) return false;
+    if (aan === !!L.pauze) return true;
+    L.pauze = aan;
+    const t = ctx.currentTime;
+    try {
+      const v = L.uit.gain.value;
+      L.uit.gain.cancelScheduledValues(t);
+      L.uit.gain.setValueAtTime(v, t);
+      L.uit.gain.setTargetAtTime(aan ? 0 : WACHT_NIVEAU, t, 0.05);
+    } catch (e) {}
+    if (aan) {
+      const grens = t + 0.02;
+      const eerste = L.rooster.find(r => r.t > grens);
+      if (eerste) { L.stap = eerste.stap; L.volgende = eerste.t; }
+      L.noten.forEach(n => {
+        if (n.t <= grens) return;
+        n.gains.forEach(g => { try { g.disconnect(); } catch (e) {} });
+        n.oscs.forEach(x => { try { x.stop(n.t); } catch (e) {} });
+      });
+      L.noten = L.noten.filter(n => n.t <= grens);
+      L.rooster = L.rooster.filter(r => r.t <= grens);
+      if (L.vast && (L.vastT || 0) > grens) L.vastTot = 0;   /* de vaste noot zelf stond nog gepland */
+    } else {
+      L.volgende = t + 0.08;
+      if (L.vast) herstelVast(); else planWacht();
+    }
+    return true;
   }
   /* de bodem bereikt: wat na tv gepland stond valt weg, de lijn hangt op de vaste noot */
   function loopVast(L, tv) {
@@ -750,10 +800,14 @@ const Klank = (() => {
   /* ---------- de stilte ----------
      Alles zacht weg (±0,15 s), ms stilte, en in 0,35 s weer terug. Doet niets (false)
      als audio geblokkeerd is: een stilte die pas na de volgende tik valt, klopt niet. */
+  let stilTot = 0;   /* tot wanneer (audioklok) de lopende stilte duurt, terugkeer inbegrepen */
   function stilte(ms) {
+    /* de verbinding is verbroken: de wachtlijn komt niet terug. Ook als de context (nog) dicht
+       is (fixer R2): anders speelde de vaste noot van de bevroren audioklok na een hervat
+       (iOS na backgrounden + een tik in het donker) alsnog onder het kooltje en de slotzin. */
+    if (lijn) sluitLijn(0.15);
     if (!klaar || ctx.state !== 'running') return false;
     const s = Math.max(0, Math.min(10000, Number(ms) || 0)) / 1000;
-    if (lijn) sluitLijn(0.15);   /* de verbinding is verbroken: de wachtlijn komt niet terug */
     const t = ctx.currentTime, p = stilGain.gain;
     const v = p.value;
     p.cancelScheduledValues(t);
@@ -761,6 +815,20 @@ const Klank = (() => {
     p.setTargetAtTime(0, t, 0.035);
     p.setValueAtTime(0, t + s);
     p.linearRampToValueAtTime(1, t + s + 0.35);
+    stilTot = t + s + 0.35;
+    return true;
+  }
+  /* fixer R2: een lopende stilte vroegtijdig opheffen, in 0,2 s terug (de proloog: wie in de
+     stilte naar de Afgrond overslaat, of de val die tot het kooltje doorgespoeld wordt).
+     false als er geen stilte liep. */
+  function stilteWeg() {
+    if (!klaar || ctx.currentTime >= stilTot) return false;
+    const t = ctx.currentTime, p = stilGain.gain;
+    const v = p.value;
+    p.cancelScheduledValues(t);
+    p.setValueAtTime(v, t);
+    p.linearRampToValueAtTime(1, t + 0.2);
+    stilTot = 0;
     return true;
   }
 
@@ -768,8 +836,13 @@ const Klank = (() => {
     start: wachtStart,
     stop(opts) { return sluitLijn(opts && typeof opts.fade === 'number' ? opts.fade : 0.6); },
     transponeer,
-    /* alleen-lezen: { actief, toon (halve tonen), vast (op de vaste noot) } */
-    get stand() { return { actief: !!lijn, toon: lijn ? lijn.toon : wachtLaatsteToon, vast: !!(lijn && lijn.vast) }; }
+    pauzeer: wachtPauzeer,
+    /* alleen-lezen: { actief, toon (halve tonen), vast (op de vaste noot), vastKlinkt (die noot
+       klinkt nu echt), pauze (de lijn staat in pauze) } */
+    get stand() {
+      return { actief: !!lijn, toon: lijn ? lijn.toon : wachtLaatsteToon, vast: !!(lijn && lijn.vast),
+        vastKlinkt: !!(lijn && lijn.vast && klaar && (lijn.vastTot || 0) > ctx.currentTime), pauze: !!(lijn && lijn.pauze) };
+    }
   };
 
   /* ---------- de koppeling voor de proloog (R1) ----------
@@ -790,9 +863,10 @@ const Klank = (() => {
   /* ---------- publiek ---------- */
   return {
     init, hervat, sfx, muziek, duck, zetDuister, zetChipLagen, koppel,
-    jingle, wacht, wachtHervat, stilte,
+    jingle, wacht, wachtHervat, stilte, stilteWeg,
     zetTransponeer: transponeer,   /* de naam uit het plan (§4), zelfde functie als wacht.transponeer */
     get klaar() { return klaar; },
+    get stil() { return !!(klaar && ctx.currentTime < stilTot); },   /* loopt er een stilte (Klank.stilte)? */
     get vol() { return vol; },
     zet(sleutel, waarde) { vol[sleutel] = waarde; bewaar(); pasVolumesToe(); },
     get huidigeScene() { return scene; }

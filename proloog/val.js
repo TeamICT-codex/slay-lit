@@ -1,6 +1,7 @@
 /* SLAY LIT — Proloog · DE VAL "IN DE WACHT" (R2 "de val en de klank", sep 2026)
 
-   Eén pixelcanvas (320x180 liggend/laptop, 180x320 staand), integer opgeschaald en
+   Eén pixelcanvas (320x180 liggend/laptop, 180x320 staand), opgeschaald met een geheel
+   aantal FYSIEKE pixels per pixel (fixer R2: ook 1,67 css-px op een DPR-3-telefoon) en
    gecentreerd, met de lichtmotor van de outro (js/outro-fx.js: klimaat, licht, gloed,
    vignet, tekenLucht, het pixelfont). 0042 staat in de goederenlift, en die blijft dalen.
    Door het schaarhek glijden de etages voorbij in hun outro-klimaat — DAK (stormviolet,
@@ -14,8 +15,11 @@
 
    BEWUST NIET (plan §7 keuze 3, gevoeligheid): geen raam naar buiten, geen gevel, geen blik
    omlaag, geen vrij vallende figuur, geen inslag. De lift daalt, de mens valt niet: 0042
-   staat stil in de kooi, het beeld daalt met hem mee, en als het licht op is, blijft
-   alleen zijn kooltje over — op dezelfde plek.
+   staat stil in de kooi, het beeld daalt met hem mee. Fixer R2 (gevoeligheidsreview): het
+   schaarhek staat dicht van bij het eerste beeld (nooit een open kooi op het dak), en als
+   het gekochte licht sterft, blijft 0042 zichtbaar STAAN in de gloed van zijn eigen kooltje
+   (randlicht): hij blijft, de vloer niet. De factuurvellen dwarrelen gewichtloos opzij en
+   omhoog; niets valt naar beneden.
 
    Het canvas tekent op zijn eigen resolutie; de browser schaalt het op (image-rendering:
    pixelated) en de scanlines zijn een css-laag. Zo kost een beeld op een laptop geen blit
@@ -31,13 +35,16 @@
      start(opts) → handle | null      (null = geen OutroFX/canvas: proloog.js valt terug)
        opts = { houder, sprong, tekst (STORY val-blok), nu() (ms, de pauzebewuste klok
                 van de proloog), gepauzeerd(), rustig, lite, bij(naam, arg, laat) }
-       gebeurtenissen: 'hek', 'krant' (0|1|2), 'etage' (k = 0..6: DAK, 4, 3, 2, −1, −2, −3),
-         'tl', 'verbinding', 'ledUit', 'vloer', 'stilte' (ms, ingekort als je erdoorheen
+       gebeurtenissen: 'bliksem' (de geforceerde inslag op het dak; niet in rustig), 'hek' (het
+         slot valt in), 'vertrek' (de lift zet zich in beweging), 'krant' (0|1|2), 'etage'
+         (k = 0..6: DAK, 4, 3, 2, −1, −2, −3), 'tl' (de kooi-tl en de mechaniek vallen stil),
+         'verbinding', 'ledUit', 'vloer', 'stilte' (ms, ingekort als je erdoorheen
          spoelde, maar minstens 120: de lijn valt altijd weg), 'kooltje', 'slot', 'knop', 'baasDrukt'.
        De houder krijgt data-val-fase (daal|donker|stilte|knop), data-val-layout (liggend|staand)
        en data-val-lite ('instelling' = body.lite van de game, 'fps' = de fps-bewaker schakelde). laat = hoeveel s te laat het
          moment vuurt (> 0 na doorspoelen: dan liever geen geluid)
-     handle = { spoel() (één tik: naar de volgende mijlpaal), hang(el, anker) (DOM boven
+     handle = { spoel() (één tik: naar de volgende mijlpaal; VERBINDING VERBROKEN blijft
+       minstens 1 s staan, ook voor wie doortikt), hang(el, anker) (DOM boven
        het canvas, anker 'knop'), druk() (de knop is ingedrukt), kooltje() → { x, y, maat }
        in viewport-px (zoals de Afgrond haar kooltje doorgeeft), stop(), get t, get lite }
      voorbak(tekst)                   bakt de statische beelden en de lucht alvast (idle)
@@ -48,18 +55,26 @@
 
   /* ================= DE REGIE (seconden sinds het eerste beeld van de val) ================= */
   const VERTREK = 0.8;                                        /* de lift zet zich in beweging */
-  const CENTRUM = [0, 2.0, 3.2, 4.4, 5.6, 6.2, 6.7, 7.1];    /* d = k: etage k staat recht voor de kooi */
+  /* d = k: etage k staat recht voor de kooi (aankomst). Fixer R2: op 2 KANTOORTUIN (k = 3: je
+     stoel draait nog, cubicle 7 is leeg) houdt de lift 0,2 s halt, uit gewoonte — de
+     emotionele etage. Die tijd gaat af van de rots (−2, −3), het totaal blijft 12,6 s. */
+  const CENTRUM = [0, 2.0, 3.2, 4.4, 5.8, 6.3, 6.75, 7.1];
+  const HALT = [0, 0, 0, 0.2, 0, 0, 0, 0];                    /* s stilstand bij etage k */
   const NA = 2.6;                                             /* etages per seconde onder −3 (in het donker) */
-  const EASE = 0.55;                                          /* traag waar een etage recht staat, snel in de plaat */
+  const RAND = 0.45;                                          /* snelheid waar een etage recht staat (1 = gemiddeld): traag daar, snel in de plaat */
   const DOOFT = 0.3;                                          /* etage k dooft als d = k + 0.3: ze glijdt al weg */
   const NRS = ['DAK', '4', '3', '2', '-1', '-2', '-3'];
   const KLIMAAT_VAN = [4, 3, 2, 1, 0];                        /* etage k → OutroFX.KLIMAAT-index */
 
+  /* één stuk van etage k naar k+1: een kubische Hermite met snelheid v0/v1 aan de randen —
+     0 bij het vertrek en rond de halt (de lift remt zacht af en trekt zacht op), RAND elders */
+  const herm = (u, v0, v1) => { const u2 = u * u, u3 = u2 * u; return 3 * u2 - 2 * u3 + v0 * (u3 - 2 * u2 + u) + v1 * (u3 - u2); };
   function diepte(t) {
     if (t <= VERTREK) return 0;
     for (let k = 0; k < CENTRUM.length - 1; k++) {
-      const a = k === 0 ? VERTREK : CENTRUM[k], b = CENTRUM[k + 1];
-      if (t < b) { const u = (t - a) / (b - a); return k + u - EASE * Math.sin(2 * Math.PI * u) / (2 * Math.PI); }
+      const a = k === 0 ? VERTREK : CENTRUM[k] + HALT[k], b = CENTRUM[k + 1];
+      if (t < a) return k;                                    /* de halt */
+      if (t < b) return k + herm((t - a) / (b - a), k === 0 || HALT[k] ? 0 : RAND, HALT[k + 1] ? 0 : RAND);
     }
     return CENTRUM.length - 1 + (t - CENTRUM[CENTRUM.length - 1]) * NA;
   }
@@ -68,18 +83,18 @@
     for (let i = 0; i < 44; i++) { const m = (a + b) / 2; if (diepte(m) < doel) a = m; else b = m; }
     return b;
   }
-  const DOOF_T = [0, 1, 2, 3, 4, 5, 6].map(k => tijdVan(k + DOOFT));   /* ≈ 1,24 · 2,44 · 3,64 · 4,84 · 5,82 · 6,38 · 6,85 */
+  const DOOF_T = [0, 1, 2, 3, 4, 5, 6].map(k => tijdVan(k + DOOFT));   /* ≈ 1,27 · 2,41 · 3,58 · 5,07 (na de halt) · 5,97 · 6,45 · 6,87 */
   const TL = {
-    hek: 0.05, hekDuur: 0.5, klak: 0.52, bliksem: 0.3,
+    klak: 0.52, bliksem: 0.3,                                 /* het hek staat al dicht (fixer R2); op 0,52 s valt het slot in */
     krant: [[0.15, 0], [2.0, 1], [3.7, 2], [5.4, 1]],        /* [start, bericht] 0 = de wacht, 1 = BLIJF, 2 = UW OPROEP */
     tlSterft: DOOF_T[6], tlUit: DOOF_T[6] + 0.3,              /* de kooi-tl sterft bij −3 */
-    verbinding: 7.45, oranje: 8.2, ledUit: 8.55, ledWeg: 8.8, /* het laatste gekochte licht */
-    vloer: 8.6, vloerTekst: 8.75, vloerTekstWeg: 10.4,        /* de vloer: factuurvellen */
+    verbinding: 7.45, kijk: 1.0, oranje: 8.2, ledUit: 8.55, ledWeg: 8.8, /* het laatste gekochte licht; kijk = minimale kijktijd van VERBROKEN bij doortikken */
+    vloer: 8.6, vloerTekst: 8.75, vloerTekstWeg: 10.4,        /* de vloer: factuurvellen (0042 staat dan al in zijn eigen gloed) */
     stilte: 8.95, stilteMs: 1500,                             /* 1,5 s stilte (de vellen mogen nog uitklinken) */
     kooltje: 10.45, slot: 10.6, fotoIn: 10.6, knop: 11.2, baas: 12.08, einde: 12.6
   };
-  /* één tik = één stap: naar de volgende mijlpaal */
-  const MIJLPALEN = [VERTREK, 2.0, 3.2, 4.4, 5.6, 6.2, 6.7, TL.verbinding, TL.ledUit, TL.kooltje, TL.knop];
+  /* één tik = één stap: naar de volgende mijlpaal (vertrek, elke etage, VERBINDING, LED uit, kooltje, knop) */
+  const MIJLPALEN = [VERTREK, ...CENTRUM.slice(1, 7), TL.verbinding, TL.ledUit, TL.kooltje, TL.knop];
 
   /* ================= DE TWEE LAYOUTS ================= */
   const LIGGEND = {
@@ -132,9 +147,9 @@
   const ACCENT = new RegExp('[' + String.fromCharCode(0x300) + '-' + String.fromCharCode(0x36f) + ']', 'g');
   const hoofd = s => String(s || '').normalize('NFD').replace(ACCENT, '').toUpperCase();
   /* een 1px donkere omlijning rond elke gevulde pixel (de leesbaarheidstruc van de outro) */
-  function omlijn(c) {
+  function omlijn(c, dVooraf) {
     const w = c.width, h = c.height, x = c.getContext('2d');
-    const d = x.getImageData(0, 0, w, h), p = d.data, vol = i => p[i * 4 + 3] > 40, rand = [];
+    const d = dVooraf || x.getImageData(0, 0, w, h), p = d.data, vol = i => p[i * 4 + 3] > 40, rand = [];
     for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
       const idx = j * w + i;
       if (vol(idx)) continue;
@@ -150,9 +165,9 @@
   function statisch(L, TX) {
     const k = L.staand ? 'staand' : 'liggend';
     if (!STATISCH[k]) {
-      const FX = window.OutroFX;
+      const FX = window.OutroFX, h = bak0042();
       STATISCH[k] = {
-        held: bak0042(), kooi: bakKooi(L), hek: bakHek(L), krant: bakKrant(L), rots: bakRots(L),
+        held: h.held, rand: h.rand, kooi: bakKooi(L), hek: bakHek(L), krant: bakKrant(L), rots: bakRots(L),
         dak: bakKamer(L, 'dak', TX, FX),
         kamers: [null].concat(['directie', 'facturatie', 'kantoortuin', 'archief'].map(s => bakKamer(L, s, TX, FX)))
       };
@@ -186,7 +201,28 @@
     r('#c9302c', cx - 3, 15, 1, 1); r('#c9302c', cx - 4, 16, 1, 3); r('#c9302c', cx - 5, 19, 1, 4);   /* het koord */
     r('#efe9d6', cx - 7, 23, 5, 5); r('#26221a', cx - 6, 24, 3, 1); r('#8a8f93', cx - 6, 26, 3, 1);   /* de badge 0042 */
     r('#cbbd99', cx + 3, 20, 5, 4); r('#a8997a', cx + 3, 20, 5, 1);                       /* de borstzak */
-    return omlijn(c);
+    /* één keer uitlezen (twee readbacks van hetzelfde canvas geven een Canvas2D-waarschuwing) */
+    const d = x.getImageData(0, 0, c.width, c.height);
+    const rand = bakRand(d.data, c.width, c.height);   /* vóór de omlijning: de buitenste pixels van de figuur zelf */
+    return { held: omlijn(c, d), rand };
+  }
+  /* fixer R2 (gevoeligheid): het randlicht van 0042 — de buitenste pixels van zijn figuur,
+     kooloranje, het felst bij het kooltje in zijn borstzak en zwakker naar zijn schoenen toe.
+     Als het gekochte licht sterft, blijft hij zo van kruin tot schoen zichtbaar STAAN in de
+     gloed van zijn eigen kooltje: hij blijft, de vloer niet. 26x68 (1 px marge): een ander
+     formaat dan de sprite, zodat niets het randlicht voor 0042 zelf aanziet. */
+  function bakRand(d, w, h) {
+    const vol = (i, j) => i >= 0 && j >= 0 && i < w && j < h && d[(j * w + i) * 4 + 3] > 40;
+    const uit = mk(w + 2, h + 2), ux = uit.getContext('2d'), img = ux.createImageData(w + 2, h + 2), p = img.data;
+    const [R, G, B] = hexRgb('#ff9c3f');
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+      if (!vol(i, j) || (vol(i - 1, j) && vol(i + 1, j) && vol(i, j - 1) && vol(i, j + 1))) continue;
+      const f = 0.42 + 0.58 * klem(1 - Math.hypot(i - 17, j - 20) / 46, 0, 1);   /* (17,20): het kooltje */
+      const q = ((j + 1) * (w + 2) + i + 1) * 4;
+      p[q] = Math.round(R * f); p[q + 1] = Math.round(G * f); p[q + 2] = Math.round(B * f); p[q + 3] = 255;
+    }
+    ux.putImageData(img, 0, 0);
+    return uit;
   }
   /* de kooi: achterwand, paneel, stijlen, plafond, het kastje met display en meter-LED.
      Bijgesneden tot de kolom van de kooi (van boven tot de vloer): per beeld één kleine blit. */
@@ -449,6 +485,7 @@
     const GEB = [
       { t: TL.bliksem, naam: 'bliksem' },
       { t: TL.klak, naam: 'hek' },
+      { t: VERTREK, naam: 'vertrek' },
       ...TL.krant.map(([t, i]) => ({ t, naam: 'krant', arg: i })),
       ...DOOF_T.map((t, k) => ({ t, naam: 'etage', arg: k })),
       { t: TL.tlSterft, naam: 'tl' },
@@ -498,17 +535,32 @@
     const ledSterkte = t => t < TL.ledUit ? 1 : klem(1 - (t - TL.ledUit) / (TL.ledWeg - TL.ledUit), 0, 1);
     const ledKleur = t => t >= TL.oranje ? '#ff9c3f' : '#79c045';
     const kooltjeXY = () => ({ x: L.held.x + 4, y: L.held.voet - 47 });
-    /* het licht van het kooltje: zwak in de borstzak, feller als het gekochte licht sterft,
-       en in de stilte weer klein — dan ademt het (de code van de outro-intro) */
+    /* hoever het gekochte licht al weg is: 0 tot de kooi-tl sterft, 1 als de LED uitgaat */
+    const warmte = t => t < TL.tlSterft ? 0 : easeUit((t - TL.tlSterft) / (TL.ledUit - TL.tlSterft));
+    /* het licht van het kooltje: zwak in de borstzak; als het gekochte licht sterft, neemt het
+       over en houdt het 0042 in beeld (fixer R2: niet meer terug naar een stip van 2 px, want
+       dan verdween hij in het zwart en leek de vloer hem mee te nemen). Na de stilte ademt
+       het, in de maat van het kooltje (de code van de outro-intro). */
     function kooltjeLicht(t) {
-      if (t < TL.tlUit) return { r: 8, a: 0.35 };
-      if (t < TL.ledUit) { const f = (t - TL.tlUit) / (TL.ledUit - TL.tlUit); return { r: 8 + 9 * f, a: 0.35 + 0.3 * f }; }
-      if (t < TL.kooltje) { const f = (t - TL.ledUit) / (TL.kooltje - TL.ledUit); return { r: 17 - 10 * f, a: 0.65 - 0.3 * f }; }
-      return { r: 7 + 2 * Math.sin((t - TL.kooltje) * 1.1), a: 0.35 };
+      const f = warmte(t);
+      if (t < TL.kooltje) return { r: 8 + 30 * f, a: 0.35 + 0.3 * f };
+      const s = Math.sin((t - TL.kooltje) * 1.1);
+      return { r: 38 + 3 * s, a: 0.65 + 0.05 * s };
     }
+    /* het randlicht van 0042 (bakRand): komt op met de warmte en ademt mee met het kooltje */
+    function randSterkte(t) {
+      const f = warmte(t);
+      return t < TL.kooltje ? f : 0.88 + 0.12 * Math.sin((t - TL.kooltje) * 1.1);
+    }
+    /* de straal van de DOM-knop −∞ in canvas-px, met zijn ring van 5 px (proloog.css:
+       .val-knophouder --knop = clamp(56px, 10vmin, 84px)); gezet in schaal() */
+    let knopR = 12;
+    /* de gevallen foto drijft binnen en komt LINKS naast de knop te liggen (fixer R2: niet
+       half onder de DOM-knop): zijn gloed beschijnt de knop, hijzelf blijft zichtbaar */
     function fotoXY(t) {
       const f = easeUit((t - TL.fotoIn) / (TL.knop - 0.1 - TL.fotoIn));
-      return { x: Math.round(L.knop.x - 13 + Math.sin(t * 3) * 2 * (1 - f)), y: Math.round(-12 + (L.knop.y - 1 + 12) * f) };
+      const x = Math.max(L.held.x + 9, L.knop.x - Math.ceil(knopR) - 7);   /* en niet over de benen van 0042 */
+      return { x: Math.round(x + Math.sin(t * 3) * 2 * (1 - f)), y: Math.round(-12 + (L.knop.y - 4 + 12) * f) };
     }
 
     function teken(t, dt) {
@@ -572,15 +624,12 @@
         w.fillStyle = '#c9a13a';
         for (let gx = K.x; gx < K.x + K.w; gx += 6) w.fillRect(gx, L.vloerY - 4, 3, 1);
       }
-      /* het hek schuift dicht (van rechts naar links) */
-      const hekC = ST.hek;
-      const hekF = rustig ? 1 : easeUit((t - TL.hek) / TL.hekDuur);
-      const hw = Math.round((K.w - 6) * hekF);
-      if (hw > 0) {
-        const gx0 = K.x + 3 + (K.w - 6) - hw;
-        w.drawImage(hekC, 0, 0, hw, hekC.height, gx0, K.y + 3, hw, hekC.height);
-        w.fillStyle = '#8a8168'; w.fillRect(gx0, K.y + 3, 1, hekC.height);
-      }
+      /* het schaarhek staat dicht van bij het eerste beeld (fixer R2, gevoeligheid: nooit een
+         open kooi op het dak, ook geen halve seconde); op TL.klak valt het slot in en trilt
+         het hek één pixel na */
+      const hekC = ST.hek, tril = !rustig && t >= TL.klak && t < TL.klak + 0.08 ? 1 : 0;
+      w.drawImage(hekC, K.x + 3 + tril, K.y + 3);
+      w.fillStyle = '#8a8168'; w.fillRect(K.x + 3 + tril, K.y + 3, 1, hekC.height);
       if (t >= TL.fotoIn - 0.3) {   /* de knop die niet zou mogen bestaan: eerst alleen zijn fitting */
         w.fillStyle = '#1c1f22'; w.fillRect(L.knop.x - 3, L.knop.y - 3, 7, 7);
         w.fillStyle = '#34383c'; w.fillRect(L.knop.x - 2, L.knop.y - 2, 5, 5);
@@ -619,6 +668,12 @@
         ctx.globalAlpha = tk; TK(ctx, nr, T.x + 4 + ((18 - TB(nr)) >> 1), T.y + 7, '#ffb347'); ctx.globalAlpha = 1;
       }
       tekenLed(t);
+      const rs = randSterkte(t);   /* 0042 blijft staan in de gloed van zijn eigen kooltje */
+      if (rs > 0.01) {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5 * rs;
+        ctx.drawImage(ST.rand, L.held.x - 13, L.held.voet - 67);
+        ctx.restore();
+      }
       tekenKooltje(t);
       if (sprong && t >= TL.fotoIn) tekenFoto(t);
       if (t >= TL.vloer) tekenVellen(t);
@@ -721,9 +776,9 @@
     function tekenKooltje(t) {
       const p = kooltjeXY();
       if (t >= TL.kooltje) { FX.kooltje(ctx, p.x, p.y, t - TL.kooltje); return; }
-      const kl = kooltjeLicht(t);
+      const f = warmte(t);   /* de gloed groeit naar die van het ademende kooltje (r 7, 0,55) */
       ctx.fillStyle = '#ff9c3f'; ctx.fillRect(p.x, p.y, 2, 2);
-      FX.gloed(ctx, p.x + 1, p.y + 1, Math.max(3, Math.round(kl.r * 0.55)), '#ff9c3f', 0.25 + kl.a * 0.6);
+      FX.gloed(ctx, p.x + 1, p.y + 1, Math.round(4 + 3 * f), '#ff9c3f', 0.46 + 0.09 * f);
     }
     /* de foto die in de schacht viel (sprong): hij drijft binnen en beschijnt de knop */
     function tekenFoto(t) {
@@ -733,24 +788,31 @@
       ctx.fillStyle = '#c98a4a'; ctx.fillRect(p.x + 2, p.y + 2, 2, 2); ctx.fillRect(p.x + 2, p.y + 4, 2, 2);
       FX.gloed(ctx, p.x + 3, p.y + 4, 12, '#ffb347', 0.45 + 0.08 * Math.sin(t * 4));
     }
-    /* de vloer is een veronderstelling: ze valt uiteen in factuurvellen, in het licht
-       van het kooltje en de laatste oranje gloed van de LED (de mens valt niet mee) */
+    /* de vloer is een veronderstelling: ze valt uiteen in factuurvellen. Fixer R2: de vellen
+       zijn gewichtloos — ze dwarrelen traag opzij en OMHOOG, blijven in de kooi (boven het
+       onderschrift) en worden feller in het licht van het kooltje. Niets valt naar beneden,
+       en 0042 blijft staan (randSterkte). Rustig: ze vervagen ter plaatse. */
+    const VEL_LEEF = 1.9;
     function tekenVellen(t) {
       const K = L.kooi, n = Math.floor((K.w - 8) / 8), kp = kooltjeXY();
       const oranje = t >= TL.oranje ? ledSterkte(t) : 0;
+      const xMin = K.x + 3, xMax = K.x + K.w - 10, yMin = K.y + 6;
       for (let i = 0; i < n; i++) {
         const x0 = K.x + 4 + i * 8, y0 = L.vloerY - 4;
         const age = t - TL.vloer - Math.abs(i - n / 2) * 0.035;
         if (age < 0) { ctx.fillStyle = meng('#07060a', '#4a4436', 0.2 + oranje * 0.5); ctx.fillRect(x0, y0, 8, 4); continue; }
-        const a = klem(1 - age / 1.3, 0, 1);
+        const a = klem((VEL_LEEF - age) / 0.6, 0, 1);
         if (a <= 0) continue;
-        const vy = 8 + hash(i + 3) * 14, vx = (hash(i + 11) - 0.5) * 10;
-        const x = Math.round(x0 + (rustig ? 0 : vx * age)), y = Math.round(y0 + (rustig ? 0 : vy * age + 5 * age * age));
-        const afst = Math.hypot(x - kp.x, y - kp.y);
-        const licht = klem(1 - afst / 70, 0, 1) * 0.75 + oranje * 0.4;
+        const vy = 9 + hash(i + 3) * 12, vx = (hash(i + 11) - 0.5) * 12;
+        const zwaai = Math.sin(age * (2.2 + hash(i + 5) * 1.4) + i * 1.7) * (1.5 + hash(i + 7) * 2);
+        const op = vy * age * (1 - age / (2 * VEL_LEEF + 1));   /* stijgt, en remt wat af */
+        const x = rustig ? x0 : Math.round(klem(x0 + vx * age + zwaai, xMin, xMax));
+        const y = rustig ? y0 : Math.round(Math.max(yMin, y0 - op));
+        const afst = Math.hypot(x + 3 - kp.x, y + 2 - kp.y);
+        const licht = klem(0.45 + klem(1 - afst / 46, 0, 1) * 0.45 + oranje * 0.25, 0, 1);
         const papier = meng('#1a140e', '#ffe8c0', licht), inkt = meng('#1a140e', '#a08d68', licht);
         ctx.globalAlpha = a;
-        const fr = rustig ? 0 : Math.floor(age * 7 + i) % 3;
+        const fr = rustig ? 0 : Math.floor(age * 4 + i) % 3;
         ctx.fillStyle = papier;
         if (fr === 0) { ctx.fillRect(x, y, 7, 5); ctx.fillStyle = inkt; ctx.fillRect(x + 1, y + 1, 5, 1); ctx.fillRect(x + 1, y + 3, 3, 1); }
         else if (fr === 1) { ctx.fillRect(x + 1, y, 5, 5); ctx.fillStyle = inkt; ctx.fillRect(x + 2, y + 2, 3, 1); }
@@ -829,7 +891,10 @@
       while (volgende < GEB.length && GEB[volgende].t <= t) {
         const g = GEB[volgende++], laat = Math.max(0, t - g.t);
         let arg = g.arg;
-        if (g.naam === 'bliksem') { if (!rustig && diepte(t) < 0.5) FX.forceerBliksem(); continue; }
+        if (g.naam === 'bliksem') {   /* de inslag in de mast op het dak; de (verre) donder komt van proloog.js */
+          if (rustig || diepte(t) >= 0.5) continue;
+          FX.forceerBliksem();
+        }
         if (g.naam === 'stilte') arg = Math.max(120, Math.round(TL.stilteMs - laat * 1000));   /* doorgespoeld: de rest van de stilte, minstens een tel (integrator R2: ook wie doorspoelt, hoort de lijn wegvallen — anders hing de vaste noot door tot de Afgrond) */
         if (g.naam === 'krant') zeg(KRANT[g.arg] || '');
         else if (g.naam === 'verbinding') zeg(VERBINDING);
@@ -872,17 +937,28 @@
       const cw = houder.clientWidth || innerWidth, ch = houder.clientHeight || innerHeight;
       const staand = ch > cw;
       if (!L || staand !== L.staand) bouw(staand);
-      const s = Math.max(1, Math.floor(Math.min(cw / L.W, ch / L.H)));
+      /* fixer R2: geheel in FYSIEKE pixels, niet in css-pixels. Een telefoon met browserbalken
+         (iPhone liggend in Safari: 750x340 bij DPR 3, Android met adresbalk 800x304) viel
+         anders terug op 1x: 320x180 css-px, een kwart van het scherm, met een pixelfont van
+         7 px. Nu 5 fysieke px per pixel = 1,67x: even scherp (pixelated, geen halve pixels)
+         en bijna drie keer zo groot. Laptops op DPR 1 blijven zoals ze waren. */
+      const dpr = window.devicePixelRatio > 0 ? window.devicePixelRatio : 1;
+      const fys = Math.max(1, Math.floor(Math.min(cw / L.W, ch / L.H) * dpr + 1e-6));
+      const s = fys / dpr;
       const bw = L.W * s, bh = L.H * s;
-      ox = Math.floor((cw - bw) / 2); oy = Math.floor((ch - bh) / 2);
+      ox = Math.round((cw - bw) / 2 * dpr) / dpr; oy = Math.round((ch - bh) / 2 * dpr) / dpr;
       S = s;
       for (const e of [scherm, scan]) {
         e.style.width = bw + 'px'; e.style.height = bh + 'px';
         e.style.left = ox + 'px'; e.style.top = oy + 'px';
       }
-      /* scanlines op het opgeschaalde beeld: één donkere lijn onder elke pixelrij (vanaf 3x) */
+      /* scanlines op het opgeschaalde beeld: één donkere lijn onder elke pixelrij (vanaf 3
+         fysieke px per pixel), een kwart pixel dik en minstens één fysieke pixel */
       scan.style.backgroundSize = '100% ' + s + 'px';
-      scan.hidden = s < 3 || liteNu;
+      scan.style.setProperty('--val-lijn', (Math.max(1, Math.round(fys / 4)) / dpr) + 'px');
+      scan.hidden = fys < 3 || liteNu;
+      /* de knop −∞ (proloog.css: --knop = clamp(56px, 10vmin, 84px), + een ring van 5 px) in canvas-px */
+      knopR = (Math.max(56, Math.min(84, Math.min(innerWidth, innerHeight) * 0.1)) / 2 + 5) / s;
       laag.classList.toggle('staand', !!L.staand);
       for (const h of hangers) plaats(h);
       if (!eerste && !gestopt) tekenAlles(tijd(), 0);
@@ -920,6 +996,9 @@
       spoel() {
         if (gestopt) return false;
         const t = tijd();
+        /* fixer R2: VERBINDING VERBROKEN is de enige keer in de hele proloog en het scharnier
+           naar het je — minstens TL.kijk (1 s) in beeld, ook voor wie doortikt */
+        if (t >= TL.verbinding - 0.02 && t < TL.verbinding + TL.kijk) return false;
         const m = MIJLPALEN.find(x => x > t + 0.02);
         if (m == null) return false;
         overslag += m - t;

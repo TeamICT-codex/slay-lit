@@ -37,7 +37,9 @@
    komt van bouwer K (proloog/audio.js → window.ProloogKlank) en wordt hier ALLEEN achter een
    guard aangeroepen (klank()): de jingle in de boot, de wachtmuziek vanaf de oproep, een
    halve toon lager per etage in de val (tot −7), stilte(1500) als de vloer weg is, en
-   wachtStop in de Afgrond. */
+   wachtStop in de Afgrond. Fixer R2: de pauze (tab verborgen, draai-blok) houdt ook de
+   wachtmuziek en de lift-brom vast (klank('pauzeer')), de brom loopt van 'vertrek' tot 'tl',
+   en stilteWeg heft een lopende stilte op (Afgrond, stop, doorgespoeld tot het kooltje). */
 (function () {
   'use strict';
   const STORY = window.SLAYLIT_PROLOOG;
@@ -197,6 +199,7 @@
     });
     if (app) app.classList.toggle('pl-gepauzeerd', aan);
     if (AU && AU.pauzeer) AU.pauzeer(aan);
+    klank('pauzeer', aan);   /* fixer R2: de klok staat stil, dus de wachtmuziek en de lift-brom ook */
   }
   function draaiBlokToont() {
     const db = document.getElementById('draai-blok');
@@ -1133,7 +1136,9 @@
     function zetFase(naam) {
       wisAlleT('scene');
       stopVal();
-      if (naam === 'afgrond') wachtUit(); else zorgWacht();
+      klank('brom', false);   /* fixer R2: de lift-brom hoort alleen bij de val */
+      if (naam === 'afgrond') { wachtUit(); klank('stilteWeg'); }   /* wie in de stilte overslaat: de Afgrond klinkt meteen */
+      else zorgWacht();
       spoel = null; sleutels = null;
       P.checkpoint = naam; bewaar();
       app.dataset.fase = naam;
@@ -1287,7 +1292,10 @@
         else if (naam === 'stilte') klank('stilte', arg);
         else if (naam === 'knop') toonKnop();
         else if (naam === 'baasDrukt') { if (!sprong) druk(); }
-        else if (naam !== 'slot' && vers) klank('sfx', naam);   /* hek, krant, tl, verbinding, ledUit, vloer, kooltje */
+        else if (naam === 'vertrek') klank('brom', true);   /* fixer R2: motor en kabels, zolang de lift daalt */
+        else if (naam === 'tl') { klank('brom', false); if (vers) klank('sfx', 'tl'); }   /* de stroom valt weg: tl én mechaniek */
+        else if (naam === 'kooltje') { klank('stilteWeg'); if (vers) klank('sfx', 'kooltje'); }   /* doorgespoeld tot het kooltje: de stilte is voorbij */
+        else if (naam !== 'slot' && vers) klank('sfx', naam);   /* bliksem (donder), hek (grendel), krant, verbinding, ledUit, vloer */
       };
       try {
         if (window.ProloogVal && typeof ProloogVal.start === 'function') {
@@ -1796,6 +1804,8 @@
     stopCamera();
     stopVal();
     wachtUit();
+    klank('pauzeer', false);   /* fixer R2: een pauze mag de volgende proloog niet stil laten beginnen */
+    klank('stilteWeg');        /* en een stilte mag de titel of het herbeleven niet stil laten */
     objectUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch (e) {} });
     objectUrls.clear();
     if (AU && AU.stilte) { try { AU.stilte(); } catch (e) {} }
