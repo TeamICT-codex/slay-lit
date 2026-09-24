@@ -7340,7 +7340,12 @@ const DICK = {
   speelbaarGuard: 6,      /* onder 7 speelbare kaarten geen decreet meer (dan HET VONNIS) */
   lasterCap: 2, dekMinLaster: 16,
   kiezersCap: 3, krachtPerKiezer: 2,
+  /* DE ZITTING LOOPT (R3): elke scène na een overgang duurt minstens zoveel van zijn zetten
+     (HERSCHIKT niet meegeteld) - één volle cyclus. Tot dan houdt hij stand op drempel + 1
+     (in III en IV op 1 HP). Per scène; een ontbrekende sleutel of 0 = geen minimum. */
+  minZetten: { 2: 3, 3: 3, 4: 2 },
   claqueurHp: 16,
+  gifRest: 0.5,           /* DE HERVERKIEZING: dit deel van zijn Gif overleeft (naar beneden afgerond) */
   tempo: 1
 };
 window.DICK = DICK;
@@ -7407,6 +7412,33 @@ function dicktatorKassaTik(g, voor, posten) {
 function vloekenInGevecht(g) {
   return g.trek.concat(g.hand, g.afleg).filter(c => kdef(c).type === 'vloek').length;
 }
+/* DE ZITTING LOOPT (R3, zie dicktatorSlot): hoeveel zetten van de cyclus speelde hij al in
+   deze scène? HERSCHIKT DE ZAAL telt niet mee (die staat nog op de pil zolang b.herschik). */
+function dicktatorSceneZetten(b) {
+  if (!b) return 0;
+  if (b.vorm2) return b.v2Zet || 0;           /* IV telt zijn uitgevoerde vorm-2-zetten (de klok) */
+  if (b.herschik) return 0;
+  return Math.max(0, (b.beurtTeller || 0) - (b.sceneStart || 0));
+}
+/* de vloer van een jonge scène: null = geen vloer. II, III en IV (na elke overgang; scène I
+   heeft er geen achter zich), en niet na een DEV-landing midden in een scène. In IV is de
+   vloer 1 HP: hij valt pas na zijn eerste ONTSLAG. */
+function dicktatorMinZetten(scene) {
+  const m = DICK.minZetten;
+  if (typeof m === 'number') return scene >= 2 ? m : 0;
+  return (m && m[scene]) ?? 0;   /* lookup-bugklasse: een scène zonder sleutel heeft geen minimum */
+}
+function dicktatorVloer(b) {
+  if (!b || b.dood || b.minVrij) return null;
+  const scene = dicktatorScene(b);
+  const min = dicktatorMinZetten(scene);
+  if (scene < 2 || !min || dicktatorSceneZetten(b) >= min) return null;
+  return scene >= 3 ? 1 : dicktatorDrempel(b, scene + 1) + 1;
+}
+/* hoeveel zetten moet de zitting nog duren (voor strook en tooltip) */
+function dicktatorZittingNog(b) {
+  return dicktatorVloer(b) == null ? 0 : dicktatorMinZetten(dicktatorScene(b)) - dicktatorSceneZetten(b);
+}
 /* de scène volgens de HP. <= de drempel = de nieuwe scène (het scèneslot legt hem exact
    OP de drempel, dus die moet al tot de volgende scène horen). */
 function dicktatorFase(v) {
@@ -7423,13 +7455,23 @@ function dicktatorFase(v) {
      schorst hem. De overgang zelf vuurt daarna via checkBaasFase, zoals altijd.
    Vanaf III (80 → 0) en in vorm 2 is er geen slot: de doodsklap is de herverkiezing. */
 function dicktatorSlot(b, n) {
-  if (!b || b.vorm2 || b.herrezen || b.dood) return n;
+  if (!b || b.dood) return n;
   if (b._geschorst) {
     fxNummer(actorEl(b), '⚖️ geschorst', 'fx-blok');
     return 0;
   }
   const scene = dicktatorScene(b);
-  if (scene >= 3) return n;
+  /* DE ZITTING LOOPT (R3): een scène na een overgang duurt minstens DICK.minZetten van zijn
+     eigen zetten. Tot dan blijft hij op zijn vloer staan (drempel + 1, in III: 1 HP) en
+     schorst een klap die er dieper zou gaan hem, zonder dat de scène eindigt. */
+  const vloer = dicktatorVloer(b);
+  if (vloer != null && b.hp - n < vloer) {
+    b._geschorst = true;
+    const rest = Math.max(0, b.hp - vloer);
+    if (!rest) fxNummer(actorEl(b), '⚖️ geschorst', 'fx-blok');
+    return rest;
+  }
+  if (b.vorm2 || b.herrezen || scene >= 3) return n;
   const d = dicktatorDrempel(b, scene + 1);
   if (b.hp - n <= d) {
     b._geschorst = true;
@@ -7878,7 +7920,7 @@ function dicktatorHerverkiezing(g, doel) {
   });
   /* vers bloed, maar niet helemaal: je gif overleeft gehalveerd (de Gifmagiër werd vroeger
      dubbel gestraft), zwak/kwetsbaar en de rest verdwijnen */
-  const gifRest = Math.floor(((doel.status && doel.status.gif) || 0) / 2);
+  const gifRest = Math.floor(((doel.status && doel.status.gif) || 0) * (DICK.gifRest ?? 0.5));
   doel.status = gifRest > 0 ? { gif: gifRest } : {};
   const kracht = doel._kiezers * DICK.krachtPerKiezer;
   /* NA de wis, anders sneeuwt ze onder. STIL: het cijfer valt pas bij DE STEMMING. */
@@ -8364,6 +8406,7 @@ function dicktatorKies(v, beurt) {
     tip: 'het hof neemt zijn plaats in — deze beurt geen schade. De nieuwe scène begint daarna.',
     doe: vv => {
       vv.herschik = false;
+      vv.minVrij = false;                          /* een DEV-landing geldt maar voor één scène */
       vv.sceneStart = (vv.beurtTeller || 0) + 1;   /* eindBeurt hoogt de teller hierna op: de volgende zet is slot 1 */
       baasSpreekt(UITSPRAKEN._dicktator.herschikt);
     }
@@ -10963,6 +11006,7 @@ function _devBedrijfLanding(b, g, scene) {
   }
   b.herschik = false;
   b._geschorst = false;
+  b.minVrij = true;   /* de DEV-landing valt midden in de scène: geen vloer (DE ZITTING LOOPT), zodat de volgende DEV-klap de regie speelt */
   b.sceneStart = (b.beurtTeller || 0);
   if (g.aangezegd && scene >= 3) g.aangezegd.clear();
   b.intent = VIJANDEN[b.id].kies(b, b.beurtTeller || 0);

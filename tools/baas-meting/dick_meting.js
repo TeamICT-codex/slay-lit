@@ -33,6 +33,7 @@
    opties (env):
      MEET_HELDEN=slachter,gifmagier,thoverk   MEET_STERKTES=sterk,gemiddeld,matig
      MEET_BELEID=gebalanceerd,bewust          MEET_REF=0 (Act 1/2-referentie overslaan)
+     MEET_85=0 (de 85%-aankomstvariant van 'gemiddeld' overslaan)
      MEET_WERKERS=4 (parallelle pagina's)     SLAYIT_PLAYWRIGHT=<pad naar node_modules/playwright>
      MEET_DICK='{"hp":300,"FACTUUR":{"tarief2":2}}'  (verkenning: DICK-knoppen in de pagina
        overschrijven, diep samengevoegd; hp gaat ook naar VIJANDEN.de_dicktator. De eindmeting
@@ -163,7 +164,7 @@ function maakJobs() {
   const jobs = [];
   for (const held of HELDEN) for (const st of STERKTES) for (const beleid of BELEID) {
     const varianten = [{ hpPct: 0.62, tag: '' }];
-    if (st === 'gemiddeld') varianten.push({ hpPct: 0.85, tag: '@85' });
+    if (st === 'gemiddeld' && process.env.MEET_85 !== '0') varianten.push({ hpPct: 0.85, tag: '@85' });
     for (const v of varianten) for (let i = 0; i < N; i++) {
       jobs.push({ cel: `${held}/${st}${v.tag}/${beleid}`, held, st, beleid, hpPct: v.hpPct, baas: 'de_dicktator', seed: 'M23-' + (1000 + i) });
     }
