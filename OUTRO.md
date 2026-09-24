@@ -572,5 +572,5 @@ een emissieve laag (vuur, vonken, schermen, tl-buizen) en nabewerking
   valtekst; het bonnetje groeit per regel ("4 ETAGES ...... AFGESCHREVEN").
 - Dev-haken (release-checklist): `_devWissel(n)`, `_devTeleport(tx)`,
   `_devVel(soort)`, `_devConfig(stap)`, `_devEpiloog(n)` + testgetters
-  `_fxNiveau`, `_staat`, `_lvlIdx`, `_lift`, `_luik`.
+  `_fxNiveau`, `_staat`, `_held`, `_lvlIdx`, `_lift`, `_luik`.
 

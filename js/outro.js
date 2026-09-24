@@ -643,7 +643,8 @@ const Outro = (() => {
     vul(59, 6, 59, H - 3, T.GLAS); vul(59, H - 5, 59, H - 3, T.LUCHT);
 
     /* archiefkasten: 2 hoog, in rijen (de inhoud van 25 jaar) */
-    for (const [kx0, kx1] of [[5, 11], [27, 35], [42, 50], [70, 78], [84, 90]]) {
+    /* de eerste kastenrij begint pas op tegel 7: de eerste stap naar rechts moet lukken */
+    for (const [kx0, kx1] of [[7, 11], [27, 35], [42, 50], [70, 78], [84, 90]]) {
       for (let x = kx0; x <= kx1; x += 2) { zet(x, H - 3, T.KAST); zet(x, H - 4, T.KAST); }
     }
     /* bureaus (meubel, 1 hoog) tussen de kasten */
@@ -2247,7 +2248,10 @@ const Outro = (() => {
           !solide(tegelOp(Math.floor((h.x + h.b / 2) / TEGEL), Math.floor(h.y / TEGEL) - 1));
         if (solide(tegelOp(voorX, voetRij)) && vrijBoven) h.vy = -150;
       }
-      if (h.vx !== 0 && h.opGrond) h.loopT += dt * 9; else if (h.opGrond) h.loopT = 0;
+      /* ook tegen een muur of kast loopt de held ter plaatse door: je ziet dat je
+         input aankomt (en dat je hier moet springen of slopen) */
+      h.duwt = wilLopen && h.opGrond && h.vx === 0;
+      if ((h.vx !== 0 || h.duwt) && h.opGrond) h.loopT += dt * 9; else if (h.opGrond) h.loopT = 0;
       if (h.raakbaar > 0) h.raakbaar -= dt;
       if (h.veilig > 0) h.veilig -= dt;
 
@@ -3451,7 +3455,7 @@ const Outro = (() => {
     for (const c of collegas) tekenSprite(((c.loopT % 0.5) < 0.25 ? 'collega1' : 'collega2') + sx, c.x - 1 + ox, c.y + oy, c.vx < 0);
     const h = held;
     if (h.wachtT > 0) return;
-    const fr = !h.opGrond ? 'held_spring' : (Math.abs(h.vx) > 1 ? ((h.loopT % 1) < 0.5 ? 'held_loop1' : 'held_loop2') : 'held_sta');
+    const fr = !h.opGrond ? 'held_spring' : ((Math.abs(h.vx) > 1 || h.duwt) ? ((h.loopT % 1) < 0.5 ? 'held_loop1' : 'held_loop2') : 'held_sta');
     tekenSprite(fr + '@' + maskers[maskerIdx] + sx, h.x + ox - 1, h.y + oy, h.richting < 0);
   }
   /* het impactframe: diepzwart met witte silhouetten (of omgekeerd) */
@@ -3596,7 +3600,7 @@ const Outro = (() => {
     /* de held (knippert kort na een treffer) */
     const h = held;
     if (h.wachtT <= 0 && (h.raakbaar <= 0 || (tijd * 12 | 0) % 2)) {
-      const fr = !h.opGrond ? 'held_spring' : (Math.abs(h.vx) > 1 ? ((h.loopT % 1) < 0.5 ? 'held_loop1' : 'held_loop2') : 'held_sta');
+      const fr = !h.opGrond ? 'held_spring' : ((Math.abs(h.vx) > 1 || h.duwt) ? ((h.loopT % 1) < 0.5 ? 'held_loop1' : 'held_loop2') : 'held_sta');
       const naam = fr + '@' + maskers[maskerIdx];
       if (h.dubbelT > 0 && gebakken[naam]) {
         /* de dubbeljump: een snelle salto rond het middelpunt */
@@ -3922,7 +3926,7 @@ const Outro = (() => {
     }
     /* knipperen na een treffer: de held valt niet weg, hij flitst warm op */
     if (h.wachtT <= 0 && h.raakbaar > 0 && !((tijd * 12 | 0) % 2)) {
-      const fr = !h.opGrond ? 'held_spring' : (Math.abs(h.vx) > 1 ? ((h.loopT % 1) < 0.5 ? 'held_loop1' : 'held_loop2') : 'held_sta');
+      const fr = !h.opGrond ? 'held_spring' : ((Math.abs(h.vx) > 1 || h.duwt) ? ((h.loopT % 1) < 0.5 ? 'held_loop1' : 'held_loop2') : 'held_sta');
       ctx.globalAlpha = 0.65; tekenSprite(fr + '@' + maskers[maskerIdx] + '#g', h.x + ox - 1, h.y + oy, h.richting < 0); ctx.globalAlpha = 1;
     }
     /* het kooltje: de held draagt het op de borst, elke collega een vonkje ervan */
@@ -5045,7 +5049,7 @@ const Outro = (() => {
     startEpiloog();
   }
 
-  return { start, beeindig, slaOver, magSpelen, _devHal, _devNiveau, _devVal, _devKaart, _devConfig, _devEpiloog, _devWissel, _devTeleport, _devVel, get _fxNiveau() { return fxNiveau; }, get _staat() { return staat; }, get _lvlIdx() { return lvlIdx; }, get _lift() { return lvl && lvl.lift ? lvl.lift.x / TEGEL : null; }, get _luik() { return lvl && lvl.luik ? { x: lvl.luik.x / TEGEL, paneel: !!(hal && hal.paneel) } : null; }, get actief() { return staat !== 'uit'; } };
+  return { start, beeindig, slaOver, magSpelen, _devHal, _devNiveau, _devVal, _devKaart, _devConfig, _devEpiloog, _devWissel, _devTeleport, _devVel, get _fxNiveau() { return fxNiveau; }, get _staat() { return staat; }, get _held() { return held ? { x: Math.round(held.x), y: Math.round(held.y), hartjes: held.hartjes } : null; }, get _lvlIdx() { return lvlIdx; }, get _lift() { return lvl && lvl.lift ? lvl.lift.x / TEGEL : null; }, get _luik() { return lvl && lvl.luik ? { x: lvl.luik.x / TEGEL, paneel: !!(hal && hal.paneel) } : null; }, get actief() { return staat !== 'uit'; } };
 })();
 window.Outro = Outro;
 
