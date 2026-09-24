@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v130'; // v130: DE PROLOOG ZONDER NAAD (ronde 1) - de proloog draait in de game-pagina, geen bollekes/Verder/DAAL AF meer, vasthoud-skip, het masker is je held en je landt zonder herlaad op de Act 1-kaart
+const CACHE = 'slayit-v131'; // v131: DE VAL IN DE WACHT (proloog ronde 2) - 0042 daalt in de goederenlift door de etages van de outro, elk licht dooft en de wachtmuziek zakt per etage een halve toon; de jingle in de boot; de outro hervat de wacht op -7 en de reunie zegt IK HEB HET LICHT NOG.
 const BESTANDEN = [
   '.',
   'css/style.css',
