@@ -127,6 +127,18 @@ const OutroFX = (() => {
     lichtX.globalAlpha = klem(sterkte == null ? 1 : sterkte, 0, 1);
     lichtX.drawImage(kegelSprite(breed, lengte, kleur), Math.round(x - breed / 2), Math.round(y));
   }
+  /* vullicht over een horizontale band (de speelstrook): drie harde trappen die
+     naar de vloer toe sterker worden — plafond en ramen blijven donker */
+  function vulBand(y0, y1, kleur, sterkte) {
+    if (sterkte <= 0.02 || y1 <= y0) return;
+    const n = 3, hoog = y1 - y0;
+    lichtX.fillStyle = kleur;
+    for (let b = 0; b < n; b++) {
+      const ya = Math.round(y0 + hoog * b / n), yb = Math.round(y0 + hoog * (b + 1) / n);
+      lichtX.globalAlpha = klem(sterkte * (b + 1) / n, 0, 1);
+      lichtX.fillRect(0, ya, W, yb - ya);
+    }
+  }
   function lichtFlits(kleur, sterkte) {
     if (sterkte <= 0.01) return;
     lichtX.globalAlpha = klem(sterkte, 0, 1);
@@ -741,7 +753,7 @@ const OutroFX = (() => {
   const zetLite = v => { lite = !!v; };
 
   return {
-    init, isLite, zetLite, voorbakTaken, zetBanden, tekenVuurbal, rookBol, schroeiStempel, lichtBegin, licht, kegel, lichtFlits, toepassen, toepassenMasker, gloed, grade, vignet, scanlines,
+    init, isLite, zetLite, voorbakTaken, zetBanden, vulBand, tekenVuurbal, rookBol, schroeiStempel, lichtBegin, licht, kegel, lichtFlits, toepassen, toepassenMasker, gloed, grade, vignet, scanlines,
     tekenLucht, updateBliksem, bliksemSterkte, forceerBliksem, schacht, tekenBliksemPad, tekenWolken, tekenDagWolken,
     get inslag() { return bliksem.flits > 0.6 ? bliksem.inslag : null; }, get bliksemFlits() { return bliksem.flits; }, tekenRegen, bakLucht, lichtSprite,
     get bliksemX() { return bliksem.pX; }

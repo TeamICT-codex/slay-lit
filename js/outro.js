@@ -366,7 +366,7 @@ const Outro = (() => {
   let donderT = 0;                              /* de donder komt een halve tel na de flits */
   let renderDt = 1 / 60;                        /* de laatste tikduur, voor wat in een render-lus beweegt */
   let cine = null, stempel = null;              /* de keynote van de middenmanager + het ONTSLAGEN-stempel */
-  let kettingPunch = 0, mijlpaal = null;        /* SLOOPKETTING: schaal-punch + de banner bij 25/50/100 */
+  let kettingPunch = 0, mijlpaal = null, kettingZin = null;   /* SLOOPKETTING: punch, banner (25/50/100), de korte zin bij 12/24 */
   let voorbak = [], fxNiveau = 2, gemDt = 1 / 60, traagT = 0;   /* voorbakken + de fps-bewaker (2 vol, 1 zuinig, 0 lite) */
   let camX = 0, camY = 0;
   let held = null, drones = [], kogels = [], cocons = [], collegas = [], worp = null;
@@ -410,11 +410,11 @@ const Outro = (() => {
     /* koud → warm: het ambient schuift naar warm naarmate de stoet groeit (de
        velen maken het licht); banden = hoe grof het licht in trappen valt —
        hoe dichter bij B.A.A.S., hoe grover (de boekhoudersblik, onbenoemd) */
-    { naam: 'archief',     koud: '#222a38', warm: '#40342a', tl: '#cfd8e0', grade: '#2f5a7a', gradeS: 0.3,  banden: 4, lucht: null,    horizon: 0 },
-    { naam: 'kantoortuin', koud: '#22342a', warm: '#403622', tl: '#d8f0d0', grade: '#4f7a4a', gradeS: 0.28, banden: 4, lucht: 'nacht', horizon: 150 },
-    { naam: 'facturatie',  koud: '#1a3640', warm: '#40301e', tl: '#cfeef4', grade: '#2f7a8a', gradeS: 0.28, banden: 3, lucht: 'nacht', horizon: 196 },
-    { naam: 'directie',    koud: '#34191c', warm: '#502e1c', tl: '#dfe2ff', grade: '#8a2a2a', gradeS: 0.3,  banden: 3, lucht: 'storm', horizon: 236 },
-    { naam: 'penthouse',   koud: '#302640', warm: '#523036', tl: '#dfe2ff', grade: '#6a2a5a', gradeS: 0.26, banden: 2, lucht: 'storm', horizon: 232 }
+    { naam: 'archief',     koud: '#36435a', warm: '#604e3f', tl: '#cfd8e0', grade: '#2f5a7a', gradeS: 0.3,  banden: 4, lucht: null,    horizon: 0 },
+    { naam: 'kantoortuin', koud: '#365343', warm: '#605133', tl: '#d8f0d0', grade: '#4f7a4a', gradeS: 0.28, banden: 4, lucht: 'nacht', horizon: 150 },
+    { naam: 'facturatie',  koud: '#2a5666', warm: '#60482d', tl: '#cfeef4', grade: '#2f7a8a', gradeS: 0.28, banden: 3, lucht: 'nacht', horizon: 196 },
+    { naam: 'directie',    koud: '#53282d', warm: '#78452a', tl: '#dfe2ff', grade: '#8a2a2a', gradeS: 0.3,  banden: 3, lucht: 'storm', horizon: 236 },
+    { naam: 'penthouse',   koud: '#4d3d66', warm: '#7b4851', tl: '#dfe2ff', grade: '#6a2a5a', gradeS: 0.26, banden: 2, lucht: 'storm', horizon: 232 }
   ];
   const klimaatNu = () => KLIMAAT[klem(lvlIdx, 0, KLIMAAT.length - 1)];
   /* hex-kleuren mengen (gecachet: het ambient verandert zelden) */
@@ -506,6 +506,19 @@ const Outro = (() => {
         x.globalCompositeOperation = 'source-in'; x.fillStyle = kl; x.fillRect(0, 0, c.width, c.height);
         gebakken[naam + sfx2] = c;
       }
+    }
+    /* de koude randlijn van de vijanden (#rand): alleen de omlijning, herkleurd */
+    for (const naam of ['drone1', 'drone2', 'torentje', 'slang', 'slijm', 'manager', 'kopieerbot']) {
+      const bron = gebakken[naam]; if (!bron) continue;
+      const c = document.createElement('canvas'); c.width = bron.width; c.height = bron.height;
+      const x = c.getContext('2d'); x.drawImage(bron, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+      for (let i = 0; i < p.length; i += 4) {
+        const rand = p[i + 3] > 200 && p[i + 3] < 250 && p[i] < 24 && p[i + 1] < 22 && p[i + 2] < 18;
+        if (rand) { p[i] = 159; p[i + 1] = 208; p[i + 2] = 220; p[i + 3] = 255; } else p[i + 3] = 0;
+      }
+      x.putImageData(d, 0, 0);
+      gebakken[naam + '#rand'] = c;
     }
   }
 
@@ -1018,7 +1031,7 @@ const Outro = (() => {
     sloopKetting = 0; kettingT = 0; kettingPiek = 0;
     bomWachtrij = []; stortWachtrij = []; dakval = null; papierWachtrij = 0; signKlok = 0;
     glasWachtrij = []; wrakken = []; motes = []; cine = null;
-    post = []; stempel = null; mijlpaal = null; impactTot = -9; hitstop = 0; stopDoel = null; verbleek = 0; verbleekTot = 0;
+    post = []; stempel = null; mijlpaal = null; kettingZin = null; impactTot = -9; hitstop = 0; stopDoel = null; verbleek = 0; verbleekTot = 0;
     hal = (lvl.soort === 'hal' || lvl.soort === 'dak')
       ? { t: 0, baasHits: 0, laatsteHit: -99, regel: null, regelT: 0, flitsT: 0, paneel: false, spawnKlok: 2.5, kapot: lvl.soort === 'dak', frames: bakBaas(lvl.soort === 'dak') }
       : null;
@@ -1031,7 +1044,7 @@ const Outro = (() => {
     lvl = VERDIEPINGEN[idx]();
     bakLevel();
     held.x = lvl.spelerStart.x; held.y = lvl.spelerStart.y;
-    held.vx = held.vy = 0; held.hartjes = 3; held.raakbaar = 1; held.wachtT = 0;
+    held.vx = held.vy = 0; held.hartjes = 3; held.raakbaar = 0; held.veilig = 1; held.wachtT = 0;
     laadLevelEntiteiten();
     collegas = [];
     /* spawn-x klemmen: zonder klem belandt collega 2+ ín/achter de linker betonmuur
@@ -1098,7 +1111,7 @@ const Outro = (() => {
 
   /* DE SPRONG — de val uit de proloog, nu vrijwillig. En zacht. */
   function startVal() {
-    staat = 'val'; valT = 0; valPuin = []; valStap = -1; partikels = [];
+    staat = 'val'; valT = 0; valPuin = []; valStap = -1; valZak = 0; partikels = [];
     if (window.Klank && Klank.muziek) { try { Klank.muziek('outro_slot'); } catch (e) {} }
     sfx('win', 0.5);
   }
@@ -1114,7 +1127,7 @@ const Outro = (() => {
     for (let i = 1; i < keys.length; i++) if (t < keys[i][0]) return mengKleur(keys[i - 1][1], keys[i][1], (t - keys[i - 1][0]) / (keys[i][0] - keys[i - 1][0]));
     return keys[keys.length - 1][1];
   }
-  let valPuin = [], valStap = -1;
+  let valPuin = [], valStap = -1, valZak = 0;
   function renderVal() {
     const chute = valT > 1.1;
     const scroll = (valT < 1.1 ? valT * 240 : 264 + (valT - 1.1) * 55);
@@ -1244,14 +1257,21 @@ const Outro = (() => {
     /* 5. de rookdeken: even bijna zwart, alleen de vlammen — dan breek je erdoor */
     if (valT > 0.25 && valT < 1.6 && fx) {
       const dy = valT < 1.1 ? 0 : -(valT - 1.1) * 1.4 * 240;
-      for (let i = 0; i < (liteModus ? 14 : 28); i++) {
-        const x = (i * 23) % (BREED + 20) - 10, y = 30 + ((i * 37) % 120) + dy + Math.sin(valT * 3 + i) * 4;
-        const c = fx.rookBol(14, i % 5 === 0 ? 'warm' : 'koud');
-        ctx.drawImage(c, Math.round(x - 14), Math.round(y - 14));
-        if (i % 5 === 0) fx.gloed(ctx, x, y + 6, 18, '#ff6a2a', 0.35);
+      for (let i = 0; i < (liteModus ? 14 : 30); i++) {
+        /* zes pluimen, elk een tros bollen van verschillende maat */
+        const pluim = i % 6, pX = 20 + pluim * 56 + Math.sin(pluim * 2.3) * 14, pY = 40 + ((pluim * 53) % 90);
+        const r = 7 + ((i * 7) % 8), hoek = i * 2.4;
+        const x = pX + Math.cos(hoek) * (6 + (i % 4) * 5), y = pY + Math.sin(hoek) * (5 + (i % 3) * 6) + dy + Math.sin(valT * 3 + i) * 3;
+        const c = fx.rookBol(r, i % 5 === 0 ? 'warm' : 'koud');
+        ctx.drawImage(c, Math.round(x - c.width / 2), Math.round(y - c.height / 2));
+        if (i % 5 === 0) fx.gloed(ctx, x, y + 5, 16, '#ff6a2a', 0.35);
       }
     }
     /* 6. DE VELEN springen mee, elk aan een eigen valscherm — in tegenlicht */
+    /* staat er tekst bovenaan, dan zakt de formatie 20 px (nooit door de koepels) */
+    const tekstAan = (valT > 5.4 && valT < 8.6) || (valT > 9 && valT < 12.2);
+    valZak += ((tekstAan ? 20 : 0) - valZak) * Math.min(1, renderDt * 3);
+    const tekstZak = Math.round(valZak);
     if (chute && collegas.length && valT < 11.6) {
       const velen = Math.min(collegas.length, 14);
       const CHUTE_KL = ['#5fd0d8', '#79c045', '#ffd23f', '#e0836a', '#a86fe0'];
@@ -1259,7 +1279,7 @@ const Outro = (() => {
       for (let i = 0; i < velen; i++) {
         const fase = i * 1.3;
         const cx3 = 18 + (i + 0.5) * stap3 + Math.sin(valT * 1.4 + fase) * 5;
-        const cy3 = 50 + ((i * 3) % 5) * 15 + Math.sin(valT * 2 + fase) * 3;
+        const cy3 = 50 + ((i * 3) % 5) * 15 + Math.sin(valT * 2 + fase) * 3 + tekstZak;
         tekenValscherm(cx3 + 3, cy3 - 13, 12, CHUTE_KL[i % CHUTE_KL.length], zonX, cx3, cy3);
         const spr = ((valT * 3 + i) % 1) < 0.5 ? 'collega1' : 'collega2';
         if (Math.abs(cx3 - zonX) < 70 && !liteModus) tekenSprite(spr + '#g', Math.round(cx3), Math.round(cy3), false);
@@ -1320,18 +1340,22 @@ const Outro = (() => {
   function tekenValscherm(cx, cy, r, kl, zonX, hx, hy) {
     const tegen = Math.abs(cx - zonX) < 70 && valT > 1.3;
     const lichtK = tegen ? mengKleur(kl, '#fff4d6', 0.35) : kl, donker = mengKleur(kl, '#1a1020', 0.35);
-    const hh = Math.round(r * 0.6);
+    const hh = Math.round(r * 0.8);
     for (let dy = -hh; dy <= 0; dy++) {
       const w = Math.round(r * Math.sqrt(Math.max(0, 1 - Math.pow(dy / hh, 2))));
+      /* per rij in vlakken: panelen in twee tinten, de bovenste rij lichter */
       for (let dx = -w; dx < w; dx += 1) {
         const paneel = Math.floor((dx + r) / (r / 2.5)) % 2;
-        ctx.fillStyle = dy === 0 ? donker : (paneel ? lichtK : donker);
+        ctx.fillStyle = dy === -hh ? lichtK : (paneel ? lichtK : donker);
         ctx.fillRect(Math.round(cx + dx), Math.round(cy + dy), 1, 1);
       }
     }
+    /* drie schulpjes aan de onderrand */
+    ctx.fillStyle = donker;
+    for (let k = 0; k < 3; k++) { const sx = Math.round(cx - r + (k + 0.5) * (2 * r / 3)); ctx.fillRect(sx - 2, Math.round(cy) + 1, 4, 1); }
     /* de rand aan de zonkant */
     if (tegen) { ctx.fillStyle = '#fff4d6'; ctx.fillRect(Math.round(cx) + (zonX > cx ? r - 2 : -r), Math.round(cy - 2), 2, 2); }
-    ctx.fillStyle = 'rgba(40,30,30,0.7)';
+    ctx.fillStyle = 'rgba(232,220,196,0.8)';   /* lichte touwen: ook tegen de donkere gevel zichtbaar */
     const touw = (x0, y0, x1, y1) => { const st = Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0))); for (let q = 0; q <= st; q += 2) ctx.fillRect(Math.round(x0 + (x1 - x0) * q / st), Math.round(y0 + (y1 - y0) * q / st), 1, 1); };
     touw(cx - r + 1, cy, hx + 1, hy + 3); touw(cx + r - 1, cy, hx + 5, hy + 3);
     if (fx && tegen && !liteModus) fx.gloed(ctx, cx, cy - r * 0.3, r, '#fff4d6', 0.12);
@@ -1377,7 +1401,7 @@ const Outro = (() => {
       regels: [
         'EINDAFREKENING - B.A.A.S.',
         '',
-        dots('4 VERDIEPINGEN', 'AFGESCHREVEN'),
+        dots('4 ETAGES', 'AFGESCHREVEN'),
         dots(collegas.length + " COLLEGA'S", 'BEVRIJD'),
         dots('1 SCHAKELAAR', '0U06'),
         dots('ZONDER ONS', 'NIETS'),
@@ -1621,7 +1645,7 @@ const Outro = (() => {
       bx.fillStyle = '#1e2119'; for (let x = 0; x < W2; x += 5) bx.fillRect(x, plafond, 1, vloer - plafond);
       bx.fillStyle = '#121310'; bx.fillRect(0, vloer - 6, W2, 6);
       bx.fillStyle = '#23261d'; bx.fillRect(0, vloer - 7, W2, 1);
-      const stijl = { kozijn: '#2a2d24', roede: '#262920', licht: '#3b3f31', roedeX: 14, kalf: 0.34 };
+      const stijl = { kozijn: '#2a2d24', roede: '#262920', licht: '#3b3f31', roedeX: 27, kalf: 0.34 };
       for (let x = 34; x < W2 - 40; x += 84) raam(x, 22, 54, 64, stijl);
       /* de klok tussen twee ramen: altijd 0U06 */
       for (let x = 100; x < W2 - 40; x += 336) {
@@ -1955,7 +1979,7 @@ const Outro = (() => {
       }
     }
     popups.push({ x: px, y: py, txt, txt0: txt, n: 1, kleur: kleur || '#9fe06a', t: 0.9, pop: 0.07 });
-    if (popups.length > 8) popups.shift();
+    if (popups.length > 3) popups.shift();
   }
 
   /* de SLOOPKETTING: elke sloop binnen 2s telt door; hoe hoger, hoe meer juice */
@@ -1963,6 +1987,8 @@ const Outro = (() => {
     const oud = sloopKetting;
     sloopKetting += (n || 1);
     if (Math.floor(sloopKetting / 10) > Math.floor(oud / 10)) kettingPunch = 0.12;
+    if (oud < 12 && sloopKetting >= 12) kettingZin = { t: 0, txt: 'SAMEN SLOPEN WE SNELLER.' };
+    else if (oud < 24 && sloopKetting >= 24) kettingZin = { t: 0, txt: 'DIT DOEN DE VELEN.' };
     for (const m of [25, 50, 100]) if (oud < m && sloopKetting >= m) { mijlpaal = { t: 0, txt: 'SLOOPKETTING X' + m }; sfx('applaus', 0.5); sfx('schitter', 0.1); }
     kettingT = 2;
     if (sloopKetting > kettingPiek) kettingPiek = sloopKetting;
@@ -2032,6 +2058,7 @@ const Outro = (() => {
     balkT += klem(balkDoel - balkT, -dt * 4, dt * 4);
     if (kettingPunch > 0) kettingPunch -= dt;
     if (mijlpaal) { mijlpaal.t += dt; if (mijlpaal.t > 0.8) mijlpaal = null; }
+    if (kettingZin) { kettingZin.t += dt; if (kettingZin.t > 1.6) kettingZin = null; }
     const vDoel = tijd < verbleekTot ? 0.85 : 0;
     verbleek += klem(vDoel - verbleek, -dt * 1.5, dt * 4);
   }
@@ -2222,6 +2249,7 @@ const Outro = (() => {
       }
       if (h.vx !== 0 && h.opGrond) h.loopT += dt * 9; else if (h.opGrond) h.loopT = 0;
       if (h.raakbaar > 0) h.raakbaar -= dt;
+      if (h.veilig > 0) h.veilig -= dt;
 
       /* DE BIJL — zwaai: sloopt 3×3 vóór je (dit is het speelgoed) */
       h.zwaaiKlok -= dt;
@@ -2628,7 +2656,7 @@ const Outro = (() => {
       const n = popupWachtrij >= 4 ? Math.min(popupWachtrij, 20) : 1;
       popupWachtrij -= n;
       const minuten = n * 6, u = (minuten / 60) | 0, m = minuten % 60;
-      popup(h.x + h.b / 2 + (Math.random() - 0.5) * 24, h.y - 6 - Math.random() * 10,
+      popup(h.x + h.b / 2 + (Math.random() - 0.5) * 24, h.y - 20 - Math.random() * 8,
         '-' + u + 'U' + (m < 10 ? '0' : '') + m);
       sfx('schitter', 0.25);
     }
@@ -2845,6 +2873,7 @@ const Outro = (() => {
 
   function raakHeld() {
     const h = held;
+    if (h.veilig > 0) return;   /* net aangekomen op een etage: even onaantastbaar */
     h.hartjes--; h.raakbaar = 1.2;
     fakkelDip = 1;
     schud(2.2); stop('held');
@@ -3123,6 +3152,22 @@ const Outro = (() => {
   }
 
   /* ---------- de lichtpas: elke bron in de lichtkaart ---------- */
+  /* het zieke licht van elke machine: koud cyaan, ziek amber, ziek groen */
+  const VIJAND_LICHT = { drone: '#5fd0d8', kopie: '#9fd0dc', kopieerbot: '#5fd0d8', torentje: '#d8a040', slang: '#b0d050', slijm: '#8ad04a', kaart: '#a86fe0', manager: '#d8a040' };
+  const VIJAND_SPRITE = { drone: null, torentje: 'torentje', slang: 'slang', slijm: 'slijm', manager: 'manager', kopieerbot: 'kopieerbot', kopie: 'kopieerbot' };
+  /* de koude randlijn: de donkere omlijning van een vijand, emissief herkleurd */
+  function tekenVijandRanden(ox, oy) {
+    ctx.globalAlpha = 0.6;
+    for (const d of drones) {
+      if (d.dood || d.soort === 'kaart') continue;
+      const naam = d.soort === 'drone' ? (((tijd * 10) | 0) % 2 ? 'drone1' : 'drone2') : VIJAND_SPRITE[d.soort];
+      if (!naam) continue;
+      const x = d.soort === 'kopieerbot' || d.soort === 'kopie' ? d.x - 1 : d.x, y = d.soort === 'kopieerbot' || d.soort === 'kopie' ? d.y - 1 : (d.soort === 'slijm' ? d.y - (d.opGrond ? 0 : 1) : d.y);
+      const flip = d.soort === 'slang' ? d.richting < 0 : d.soort === 'manager' ? d.vx < 0 : false;
+      tekenSprite(naam + '#rand', x + ox, y + oy, flip);
+    }
+    ctx.globalAlpha = 1;
+  }
   /* de kaarten lezen in het donker eerst op kleur, dan pas op vorm */
   const KAART_LICHT = { koffie: '#c98a4a', mail: '#8ab0ff', over: '#6a76c0', schok: '#9a9a9a', bonus: '#ffd23f' };
   function verlicht(ox, oy, K) {
@@ -3137,6 +3182,12 @@ const Outro = (() => {
       if (bl > 0.02) fx.licht(cx, r.y + r.h + oy, rr + 30, '#c8d4ff', bl);
     }
     if (lvl.soort === 'dak' && bl > 0.02) fx.lichtFlits('#9aa6d8', bl * 0.8);
+    /* vullicht op de speelstrook: de vloer, de held en de vijanden blijven
+       leesbaar, terwijl plafond en ramen het donker houden */
+    if (lvl.soort !== 'dak' && !cine) {
+      const vloer = lvl.rijen * TEGEL + oy - 2 * TEGEL;
+      fx.vulBand(vloer - 62, vloer + 4, mengKleur(K.tl, K.warm, 0.35), 0.3);
+    }
     if (dakval && dakval.t > 0.6) {
       const flik = fx.bliksemSterkte() > 0.5 && ((tijd * 30) | 0) % 2 ? 0 : 1;
       fx.schacht(BREED * 0.55 - 40, 46, 0.25, '#8aa0d8', klem((dakval.t - 0.6) * 2, 0, 1) * 0.9 * flik);
@@ -3189,12 +3240,22 @@ const Outro = (() => {
       const L = lvl.lift, x = L.x + L.b / 2 + ox;
       if (x > -50 && x < BREED + 50) fx.licht(x, L.y - 10 + oy, Math.sin(tijd * 5) > 0 ? 32 : 26, '#3fd06a', 0.75);
     }
+    /* de vijanden geven zelf ziek systeemlicht: wat licht geeft, blijft leesbaar */
+    for (const d of drones) {
+      if (d.dood) continue;
+      const x = d.x + (d.b || 8) / 2 + ox, y = d.y + (d.h || 8) / 2 + oy;
+      if (x < -20 || x > BREED + 20) continue;
+      fx.licht(x, y, d.soort === 'manager' ? 16 : 12, VIJAND_LICHT[d.soort] || '#5fd0d8', 0.5);
+      /* de volgspot van de keynote blijft hem volgen tijdens het gevecht */
+      if (d.soort === 'manager' && d.grafiek) fx.licht(x, d.y + 14 + oy, 26, '#fff4e0', 0.5);
+    }
+    for (const w of wrakken) fx.licht(w.x + 4 + ox, w.y + 4 + oy, 12, '#ffb347', 0.6);
     /* 5. de held draagt zijn eigen warme licht mee — de fakkel. Hij ademt,
        groeit met de SLOOPKETTING en dooft even tot een kooltje als je geraakt
        wordt. De rand kleurt naar het masker; de kern is altijd hetzelfde amber. */
     if (h.wachtT <= 0) {
       const tint = HELD_TINT[maskers[maskerIdx]] ? HELD_TINT[maskers[maskerIdx]].R : '#ff9c3f';
-      const dip = 1 - fakkelDip * 0.7;
+      const dip = 1 - fakkelDip * 0.3;
       const gedimd = (1 - (hal && hal.gloed ? hal.gloed * 0.5 : 0)) * dip;
       const r = Math.round((44 + Math.min(12, sloopKetting * 0.5) + Math.sin(tijd * 1.3) * 3) * (0.55 + 0.45 * dip) / 2) * 2;
       const fx0 = h.x + h.b / 2 + ox, fy0 = h.y + 6 + oy;
@@ -3613,6 +3674,7 @@ const Outro = (() => {
     /* ===== 4. EMISSIEF — wat zelf licht geeft, na de lichtkaart ===== */
     tekenTls(ox, oy, true);
     tekenLampPixels(ox, oy);
+    if (fx) tekenVijandRanden(ox, oy);
     tekenGrafiek(ox, oy);
     if (dakval) tekenDakval(ox, oy);
     if (hal && lvl.baas) {
@@ -3678,11 +3740,11 @@ const Outro = (() => {
     }
     /* de middenmanager: zijn naam en zijn balk blijven leesbaar in het donker */
     for (const d of drones) {
-      if (d.dood || d.soort !== 'manager') continue;
+      if (d.dood || d.soort !== 'manager' || d.x + 12 + ox < 0 || d.x + ox > BREED) continue;
       const bw = 16, bx = d.x + 6 - bw / 2 + ox, by = d.y - 7 + oy;
       ctx.fillStyle = '#1b1813'; ctx.fillRect(bx - 1, by - 1, bw + 2, 4);
       ctx.fillStyle = '#c9302c'; ctx.fillRect(bx, by, Math.max(0, Math.round(bw * d.hp / (d.hpMax || 14))), 2);
-      tekst(ctx, 'MIDDENMANAGER', d.x + 6 - tekstBreedte('MIDDENMANAGER') / 2 + ox, by - 8, '#efe9d6');
+      tekst(ctx, 'MIDDENMANAGER', klem(d.x + 6 - tekstBreedte('MIDDENMANAGER') / 2 + ox, 2, BREED - tekstBreedte('MIDDENMANAGER') - 2), Math.max(26, by - 8), '#efe9d6');
     }
     /* de post is verstuurd */
     ctx.fillStyle = '#efe9d6';
@@ -3858,6 +3920,11 @@ const Outro = (() => {
         ctx.fillRect(Math.round(bx + ox), Math.round(by + oy), k === 0 ? 2 : 1, k === 0 ? 2 : 1);
       }
     }
+    /* knipperen na een treffer: de held valt niet weg, hij flitst warm op */
+    if (h.wachtT <= 0 && h.raakbaar > 0 && !((tijd * 12 | 0) % 2)) {
+      const fr = !h.opGrond ? 'held_spring' : (Math.abs(h.vx) > 1 ? ((h.loopT % 1) < 0.5 ? 'held_loop1' : 'held_loop2') : 'held_sta');
+      ctx.globalAlpha = 0.65; tekenSprite(fr + '@' + maskers[maskerIdx] + '#g', h.x + ox - 1, h.y + oy, h.richting < 0); ctx.globalAlpha = 1;
+    }
     /* het kooltje: de held draagt het op de borst, elke collega een vonkje ervan */
     if (h.wachtT <= 0 && (h.raakbaar <= 0 || (tijd * 12 | 0) % 2) && !(h.dubbelT > 0)) {
       ctx.fillStyle = fakkelDip > 0.5 ? '#8f2a1c' : '#ff9c3f';
@@ -3879,7 +3946,11 @@ const Outro = (() => {
 
     /* popups ("-0U06") */
     /* popups (nooit over de HUD-regels bovenaan: minstens y 24) */
-    for (const p of popups) { const sc = p.pop > 0 ? 2 : 1; tekst(ctx, p.txt, Math.round(p.x + ox) - tekstBreedte(p.txt, sc) / 2, Math.max(24, Math.round(p.y + oy) - (sc - 1) * 4), p.kleur, sc); }
+    for (const p of popups) {
+      const sc = p.pop > 0 ? 2 : 1, w = tekstBreedte(p.txt, sc);
+      const x = klem(Math.round(p.x + ox) - w / 2, 2, BREED - w - 2);
+      tekst(ctx, p.txt, x, klem(Math.round(p.y + oy) - (sc - 1) * 4, 26, HOOG - 30), p.kleur, sc);
+    }
 
     /* de kaart-splash: een kaart uit het oude leven, nu een wapen */
     if (splash && splash.kaart) {
@@ -3920,7 +3991,7 @@ const Outro = (() => {
     tekenStempel();
     tekenBalken();
     tekenNaamband();
-    if (!cine) renderHud();
+    if (!cine && staat !== 'wissel') renderHud();
     /* de levelwissel: de liftdeuren schuiven dicht over het beeld, en op de
        nieuwe etage weer open (de rit zelf is renderSchacht) */
     if (staat === 'wissel') {
@@ -3930,6 +4001,16 @@ const Outro = (() => {
     presenteer();
   }
 
+  /* een zin in regels van hoogstens maxBr px (woordgrenzen) */
+  function regelsBinnen(str, maxBr) {
+    const uit = []; let r = '';
+    for (const w of String(str).split(' ')) {
+      const test = r ? r + ' ' + w : w;
+      if (r && tekstBreedte(test) > maxBr) { uit.push(r); r = w; } else r = test;
+    }
+    if (r) uit.push(r);
+    return uit;
+  }
   /* ---------- de goederenlift: deuren en de rit door de schacht ---------- */
   const ETAGE_NR = ['-1', '2', '3', '4', 'DAK'];
   function easeUit(f) { f = klem(f, 0, 1); return 1 - Math.pow(1 - f, 3); }
@@ -4000,10 +4081,13 @@ const Outro = (() => {
       if (y < -20 || y > HOOG + 10) continue;
       const laatste = k === 0 && rem > 0;
       const K = KLIMAAT[laatste ? naar : van];
+      const f = klem(t / 2.2, 0, 1), Kv = KLIMAAT[van], Kn = KLIMAAT[naar];
+      const bandKl = mengKleur(mengKleur(Kv.tl, Kv.grade, 0.45), mengKleur(Kn.tl, Kn.grade, 0.45), laatste ? 1 : f);
       ctx.fillStyle = '#26221b'; ctx.fillRect(0, Math.round(y) + sy, BREED, 10);
       ctx.fillStyle = '#3a342a'; ctx.fillRect(0, Math.round(y) + sy, BREED, 1);
       tekst(ctx, laatste ? ETAGE_NR[naar] : ETAGE_NR[van], 120 + sx, Math.round(y) + 12 + sy, '#3a352a', 2);
-      banden.push({ y: y - 10, kl: K.tl });
+      banden.push({ y: y - 10, kl: bandKl });
+      void K;
     }
     /* snelheid: stofstrepen en een tegengewicht dat naar beneden raast */
     ctx.fillStyle = '#231f18';
@@ -4072,12 +4156,25 @@ const Outro = (() => {
       const n1 = lvl.naam;
       tekst(ctx, n1.slice(0, Math.floor((wisselT - 1.1) * 24)), midX - tekstBreedte(n1) / 2, 74, '#ffb347');
       const bind = BINDREGELS[wisselDoel];
-      if (bind && wisselT > 1.7) tekst(ctx, bind.slice(0, Math.floor((wisselT - 1.7) * 30)), Math.max(106, midX - tekstBreedte(bind) / 2), 94, '#efe9d6');
+      if (bind && wisselT > 1.7) {
+        let budget = Math.floor((wisselT - 1.7) * 30), y = 94;
+        for (const regel of regelsBinnen(bind, 196)) {
+          if (budget <= 0) break;
+          tekst(ctx, regel.slice(0, budget), midX - tekstBreedte(regel) / 2, y, '#efe9d6');
+          budget -= regel.length + 1; y += 10;
+        }
+      }
     }
     if (fx) fx.vignet(ctx, 1);
   }
 
   function renderHud() {
+    /* de HUD krijgt een eigen ondergrond: lampen en ramen strepen er niet meer door */
+    {
+      const tweede = collegas.length || maskers.length > 1 || upgrades.koffie || upgrades.mail || upgrades.over || upgrades.schok || upgrades.bonus || sloopKetting >= 3;
+      const regels = hal ? (collegas.length || sloopKetting >= 3 ? 3 : 2) : (tweede ? 2 : 1);
+      ctx.fillStyle = 'rgba(8,6,4,0.5)'; ctx.fillRect(0, 0, BREED, 4 + regels * 9);
+    }
     /* hartjes linksboven */
     for (let i = 0; i < 3; i++) ctx.drawImage(gebakken[i < held.hartjes ? 'hart' : 'hart_leeg'], 4 + i * 7, 4);
     /* de masker-chips: je herenigde zelven (Q of tik = wisselen) */
@@ -4098,18 +4195,23 @@ const Outro = (() => {
     /* de SLOOPKETTING-combometer: klein en rustig, maar bij elke tiental een
        schaal-punch; de kleur loopt van beige via geel en oranje naar rood en
        vanaf 40 door de regenboog. Mijlpalen (25/50/100) krijgen een banner. */
-    if (sloopKetting >= 3 && staat === 'spel') {
+    if (sloopKetting >= 3 && staat === 'spel' && !mijlpaal) {
+      /* vast in de HUD-zone bovenaan (op het dak: onder de waardemeter) —
+         nooit meer midden in het speelveld */
       const n = sloopKetting;
       const kl = n >= 40 ? regenboog(tijd) : n >= 30 ? '#ff5a3c' : n >= 20 ? '#ff9c3f' : n >= 10 ? '#ffd23f' : '#cfc0a0';
       const sc = kettingPunch > 0 ? 2 : 1;
       const t2 = 'SLOOPKETTING X' + n;
       const jit = Math.round(Math.sin(tijd * 50) * Math.min(2, n / 20));
+      const ky = hal ? 22 : 13;
       ctx.globalAlpha = 0.55 + 0.45 * klem(kettingT, 0, 1);
-      tekst(ctx, t2, BREED / 2 - tekstBreedte(t2, sc) / 2 + jit, 40 - (sc - 1) * 4, kl, sc);
-      /* de combo krijgt betekenis: dit lukt alleen samen */
-      const sub = n >= 24 ? 'DIT DOEN DE VELEN.' : n >= 12 ? 'SAMEN SLOPEN WE SNELLER.' : null;
-      if (sub) tekst(ctx, sub, BREED / 2 - tekstBreedte(sub) / 2, 50, '#efe9d6');
+      tekst(ctx, t2, BREED / 2 - tekstBreedte(t2, sc) / 2 + jit, ky - (sc - 1) * 4, kl, sc);
       ctx.globalAlpha = 1;
+    }
+    /* de combo krijgt betekenis: bij 12 en 24 één korte zin — dit lukt alleen samen */
+    if (kettingZin && staat === 'spel') {
+      const a = klem(kettingZin.t < 0.2 ? kettingZin.t / 0.2 : (1.6 - kettingZin.t) / 0.3, 0, 1);
+      ctx.globalAlpha = a; tekst(ctx, kettingZin.txt, BREED / 2 - tekstBreedte(kettingZin.txt) / 2, hal ? 31 : 23, '#efe9d6'); ctx.globalAlpha = 1;
     }
     if (mijlpaal) {
       const t = mijlpaal.t, uit = t > 0.5 ? (t - 0.5) / 0.25 : 0;
@@ -4138,7 +4240,7 @@ const Outro = (() => {
     tekst(ctx, reg, BREED - 4 - tekstBreedte(reg), regY, '#cfc0a0');
     if (collegas.length) {
       const st = 'DE VELEN: ' + collegas.length;
-      tekst(ctx, st, BREED - 4 - tekstBreedte(st), regY + 9, '#5fd0d8');
+      tekst(ctx, st, BREED - 4 - tekstBreedte(st), regY + 9, '#ffb347');
     }
     /* de besturingshint: twee regels, alleen op de eerste verdieping */
     if (hintT > 0 && lvlIdx === 0 && staat === 'spel') {
@@ -4384,7 +4486,7 @@ const Outro = (() => {
       tekenHandtekening(seed);
     }
     for (let i = 0; i < 5; i++) {
-      const rij = CONFIG_RIJEN[i], y = 104 + i * 10;
+      const rij = CONFIG_RIJEN[i], y = 103 + i * 9;
       const om = configStap >= i + 2;
       tekst(ctx, rij.label + ':', 16, y, GRIJS);
       const vx = 16 + tekstBreedte(rij.label + ': ');
@@ -4392,11 +4494,14 @@ const Outro = (() => {
       else tekst(ctx, '[ ' + rij.oud + ' ]', vx, y, configStap === i + 1 ? WIT : GRIJS);
     }
     if (configStap >= 7) {
-      tekst(ctx, 'WEET U HET ZEKER? DIT IS NIET FACTUREERBAAR.', 16, 158, GRIJS);
-      if (((tijd * 2) | 0) % 2) tekst(ctx, '[ OPSLAAN EN OPNIEUW OPSTARTEN (0U06) ]', 16, 167, A);
+      /* de belangrijkste knop van het spel: altijd zichtbaar, warm wit, met cursor */
+      tekst(ctx, 'WEET U HET ZEKER? DIT IS NIET FACTUREERBAAR.', 16, 149, GRIJS);
+      const knop = '[ OPSLAAN EN OPNIEUW OPSTARTEN (0U06) ]';
+      tekst(ctx, knop, 16, 159, '#fff0d0');
+      if (((tijd * 2) | 0) % 2) tekst(ctx, '_', 16 + tekstBreedte(knop) + 4, 159, '#fff0d0');
     } else {
       const hint = window.mobiel ? 'TIK OM VERDER TE GAAN' : 'DRUK OP EEN TOETS';
-      if (((tijd * 1.6) | 0) % 2) tekst(ctx, hint, BREED - 16 - tekstBreedte(hint), HOOG - 16, GRIJS);
+      if (((tijd * 1.6) | 0) % 2) tekst(ctx, hint, BREED - 16 - tekstBreedte(hint), HOOG - 20, GRIJS);
     }
     ctx = hoofd;
     /* het beeld van de buis: bij een omzetting even een horizontale hapering */
@@ -4414,7 +4519,14 @@ const Outro = (() => {
     /* de rollende band */
     const by = ((tijd * 18) % 220) - 20;
     ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = '#1e160a'; ctx.fillRect(0, Math.round(by), BREED, 14); ctx.restore();
-    if (fx) { fx.vignet(ctx, 1); fx.vignet(ctx, 0.6); }
+    if (fx) { fx.vignet(ctx, 1); fx.vignet(ctx, 0.35); }
+    /* de knop die alles beslecht ligt bóven de nabewerking: hij gloeit door */
+    if (configStap >= 7) {
+      const knop = '[ OPSLAAN EN OPNIEUW OPSTARTEN (0U06) ]';
+      if (fx) fx.gloed(ctx, 16 + tekstBreedte(knop) / 2, 162, 44, '#ffd9a0', 0.14 + 0.05 * Math.sin(tijd * 4));
+      tekst(ctx, knop, 16, 159, '#fff0d0');
+      if (((tijd * 2) | 0) % 2) tekst(ctx, '_', 16 + tekstBreedte(knop) + 4, 159, '#fff0d0');
+    }
   }
   /* de handtekening in fakkelkool: een krabbel die zich tekent, witheet begint
      en afkoelt tot een sintelrode lijn, met hier en daar een opstijgend vonkje */
@@ -4600,6 +4712,7 @@ const Outro = (() => {
       /* het fotootje: het beeld stolt, loopt naar sepia — alleen het kooltje en
        de rode vrucht houden hun kleur — en de rode stippellijn tekent zich rond */
       e.fotoT = (e.fotoT || 0) + renderDt;
+      if (!e.skipWeg) { e.skipWeg = true; const sk = document.getElementById('outro-skip'); if (sk) sk.style.display = 'none'; }
       ctx.drawImage(e.foto, 0, 0);
       ctx.save(); ctx.globalCompositeOperation = 'color'; ctx.globalAlpha = klem(e.fotoT, 0, 1) * 0.75;
       ctx.fillStyle = '#b08a5a'; ctx.fillRect(0, 0, BREED, HOOG); ctx.restore();
@@ -4632,12 +4745,18 @@ const Outro = (() => {
     }
     /* de omgekeerde factuur ratelt uit de dot-matrix (180 breed: de langste
        regel is 28 tekens à 6px vanaf x=12 → 180 dekt hem mét marge) */
-    ctx.fillStyle = 'rgba(40,24,30,0.35)'; ctx.fillRect(10, 8, 180, 80);            /* slagschaduw */
-    ctx.fillStyle = '#e8e0c8'; ctx.fillRect(8, 6, 180, 80);
-    ctx.fillStyle = '#c9bda0'; ctx.fillRect(8, 6, 180, 2);
-    ctx.fillStyle = '#d8ceb2'; for (let k = 0; k < 9; k++) ctx.fillRect(8 + k * 20 + 9, 84, 2, 2);   /* de perforatie */
     let budget = Math.max(0, Math.floor((e.t - 1.2) * 26));
     if (e.spoed || e.klaar) budget = 9999;
+    /* het bonnetje groeit mee met wat de printer er al op zette (eerst is er
+       enkel een strookje, de lucht blijft vrij) */
+    /* precies zoals de printer hieronder telt: lege regels kosten niets */
+    let rest = budget, laatste = -1;
+    e.regels.forEach((regel, i) => { const n = Math.min(regel.length, rest); rest -= n; if (n > 0) laatste = i; });
+    const papierH = e.klaar ? 80 : Math.min(80, 12 + (laatste + 1) * 10);
+    ctx.fillStyle = 'rgba(40,24,30,0.35)'; ctx.fillRect(10, 8, 180, papierH);            /* slagschaduw */
+    ctx.fillStyle = '#e8e0c8'; ctx.fillRect(8, 6, 180, papierH);
+    ctx.fillStyle = '#c9bda0'; ctx.fillRect(8, 6, 180, 2);
+    ctx.fillStyle = '#d8ceb2'; for (let k = 0; k < 9; k++) ctx.fillRect(8 + k * 20 + 9, 6 + papierH - 2, 2, 2);   /* de perforatie */
     let ty = 14;
     for (const regel of e.regels) {
       const n = Math.min(regel.length, budget);
@@ -4650,9 +4769,9 @@ const Outro = (() => {
     /* de allerlaatste woorden van het spel */
     if (e.klaar) {
       const w = 'NIET-FACTUREERBAAR.';
-      if (((e.t * 1.2) | 0) % 2) tekst(ctx, w, BREED / 2 - tekstBreedte(w) / 2, 158, '#efe9d6');
+      if (((e.t * 1.2) | 0) % 2) tekst(ctx, w, BREED / 2 - tekstBreedte(w) / 2, 151, '#efe9d6');
       const hint = window.mobiel ? 'TIK OM AF TE SLUITEN' : 'DRUK OP EEN TOETS';
-      tekst(ctx, hint, BREED / 2 - tekstBreedte(hint) / 2, 170, 'rgba(110,106,88,0.8)');
+      tekst(ctx, hint, BREED / 2 - tekstBreedte(hint) / 2, 162, 'rgba(110,106,88,0.8)');
     }
   }
 
@@ -4820,7 +4939,7 @@ const Outro = (() => {
     tijd = 0; introT = 0; hitstop = 0; accu = 0;
     tijdSchaal = 1; slowmoToestand = null; slowmoKoeling = 0; stopBudget = 0.25; stopDoel = null;
     kickX = kickY = kickVX = kickVY = 0; trauma = 0; balkT = 0; balkTot = 0;
-    impactTot = -9; impactKlok = -9; inversKlok = -9; verbleek = 0; verbleekTot = 0; meterKnallen = []; knalVenster = []; cine = null; stempel = null; kettingPunch = 0; mijlpaal = null;
+    impactTot = -9; impactKlok = -9; inversKlok = -9; verbleek = 0; verbleekTot = 0; meterKnallen = []; knalVenster = []; cine = null; stempel = null; kettingPunch = 0; mijlpaal = null; kettingZin = null;
     /* volledige presentatie-reset — anders speelt een HERbeleving vrijwel zonder
        sfx (sfxKlok-throttles staan nog op de eind-tijd van de vorige run) */
     sfxKlok = {}; splash = null; schermFlits = 0; schudT = 0; schudKracht = 0; fakkelDip = 0;

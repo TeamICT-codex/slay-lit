@@ -561,6 +561,15 @@ een emissieve laag (vuur, vonken, schermen, tl-buizen) en nabewerking
   een vaste ladder (geen bakken per frame); regen alleen achter zichtbare
   ramen; een fps-bewaker schaalt stil af (vol → zuinig → lite) als een
   toestel 2 s onder ~40 fps zakt. Gemeten 60 fps desktop en lite (cpu ×4).
+- Leesbaarheidsronde (na een art-direction-review met contrastmetingen):
+  lichter ambient + vullicht op de speelstrook; vijanden geven zelf ziek
+  systeemlicht en krijgen een koude randlijn (contrast drone 1,2:1 → leesbaar);
+  de volgspot blijft op de manager; de held flitst warm op i.p.v. weg te
+  knipperen (geen knipper bij het begin van een etage, fakkeldip max −30%);
+  vaste tekstzones (HUD-strook, SLOOPKETTING op HUD-regel 2, max 3 popups
+  boven het hoofd); de OPSLAAN-knop binnen het CRT-kader en boven de
+  nabewerking; bindregels in de lift afgebroken; de formatie zakt onder de
+  valtekst; het bonnetje groeit per regel ("4 ETAGES ...... AFGESCHREVEN").
 - Dev-haken (release-checklist): `_devWissel(n)`, `_devTeleport(tx)`,
   `_devVel(soort)`, `_devConfig(stap)`, `_devEpiloog(n)` + testgetters
   `_fxNiveau`, `_staat`, `_lvlIdx`, `_lift`, `_luik`.
