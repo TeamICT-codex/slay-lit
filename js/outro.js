@@ -359,7 +359,7 @@ const Outro = (() => {
   let tijdSchaal = 1, slowmoToestand = null, slowmoKoeling = 0, stopBudget = 0.25, stopDoel = null;
   let kickX = 0, kickY = 0, kickVX = 0, kickVY = 0, trauma = 0;
   let balkT = 0, balkTot = 0;                   /* filmbalken: 0..1, en tot wanneer ze moeten blijven */
-  let impactF = 0, impactInvers = false, impactKlok = -9, inversKlok = -9;
+  let impactTot = -9, impactInvers = false, impactKlok = -9, inversKlok = -9;
   let verbleek = 0, verbleekTot = 0;            /* 0..1: het systeem verbleekt, de mensen niet */
   let meterKnallen = [], knalVenster = [];     /* tijdstippen van recente knallen (ketting / slow-mo) */
   let reduceMotion = false;
@@ -398,6 +398,7 @@ const Outro = (() => {
   let devModus = false;
   let fx = null;                                /* OutroFX: licht, lucht en nabewerking (optioneel) */
   let wereldC = null, wereldCtx = null;         /* de belichte wereldlaag (met doorzichtige ramen) */
+  let hoofdCtxRef = null;                       /* het echte hoofdcontext: elk frame begint daar weer (ook na een fout) */
   let tls = [];                                 /* de tl-bakken (en in de directie: kroonluchters) */
   let fakkelDip = 0;                            /* 1 = de fakkel is net tot een kooltje gedoofd (treffer) */
 
@@ -1017,6 +1018,7 @@ const Outro = (() => {
     sloopKetting = 0; kettingT = 0; kettingPiek = 0;
     bomWachtrij = []; stortWachtrij = []; dakval = null; papierWachtrij = 0; signKlok = 0;
     glasWachtrij = []; wrakken = []; motes = []; cine = null;
+    post = []; stempel = null; mijlpaal = null; impactTot = -9; hitstop = 0; stopDoel = null; verbleek = 0; verbleekTot = 0;
     hal = (lvl.soort === 'hal' || lvl.soort === 'dak')
       ? { t: 0, baasHits: 0, laatsteHit: -99, regel: null, regelT: 0, flitsT: 0, paneel: false, spawnKlok: 2.5, kapot: lvl.soort === 'dak', frames: bakBaas(lvl.soort === 'dak') }
       : null;
@@ -1283,7 +1285,7 @@ const Outro = (() => {
       if (fx) fx.gloed(ctx, hx2 + 4, hy2 + 7, 5, '#ff9c3f', 0.6);
     }
     /* 8. voorgrondpuin: zwarte silhouetten die vlak langs de camera razen */
-    if (valT > 5 && valT < 8.6 && Math.random() < (liteModus ? 0.02 : 0.045) && valPuin.length < (liteModus ? 2 : 4)) {
+    if (valT > 5 && valT < 8.6 && Math.random() < (liteModus ? 0.02 : 0.045) * renderDt * 60 && valPuin.length < (liteModus ? 2 : 4)) {
       valPuin.push({ soort: (Math.random() * 4) | 0, x: 150 + Math.random() * 150, y: -40, vy: 250 + Math.random() * 60, rot: (Math.random() * 4) | 0 });
     }
     for (const b of valPuin) {
@@ -1318,8 +1320,9 @@ const Outro = (() => {
   function tekenValscherm(cx, cy, r, kl, zonX, hx, hy) {
     const tegen = Math.abs(cx - zonX) < 70 && valT > 1.3;
     const lichtK = tegen ? mengKleur(kl, '#fff4d6', 0.35) : kl, donker = mengKleur(kl, '#1a1020', 0.35);
-    for (let dy = -Math.round(r * 0.6); dy <= 0; dy++) {
-      const w = Math.round(r * Math.sqrt(1 - Math.pow(dy / (r * 0.6), 2)));
+    const hh = Math.round(r * 0.6);
+    for (let dy = -hh; dy <= 0; dy++) {
+      const w = Math.round(r * Math.sqrt(Math.max(0, 1 - Math.pow(dy / hh, 2))));
       for (let dx = -w; dx < w; dx += 1) {
         const paneel = Math.floor((dx + r) / (r / 2.5)) % 2;
         ctx.fillStyle = dy === 0 ? donker : (paneel ? lichtK : donker);
@@ -1391,6 +1394,17 @@ const Outro = (() => {
   const solide = t => t !== T.LUCHT && t !== T.LADDER;
 
   /* ---------- de tegel-kaart bakken + hertekenen (dirty per tegel) ---------- */
+  /* de roetlagen voor verkoolde tegels: 25/50/75% Bayer-dither, één keer gebakken */
+  const roetLagen = [];
+  function roetLaag(n) {
+    if (!roetLagen[n]) {
+      const c = document.createElement('canvas'); c.width = TEGEL; c.height = TEGEL;
+      const x = c.getContext('2d'); x.fillStyle = '#0b0907';
+      for (let yy = 0; yy < TEGEL; yy++) for (let xx = 0; xx < TEGEL; xx++) if (BAYER4[(yy & 3) * 4 + (xx & 3)] < n * 4) x.fillRect(xx, yy, 1, 1);
+      roetLagen[n] = c;
+    }
+    return roetLagen[n];
+  }
   let tegelCanvas = null, tegelCtx = null, bgCanvas = null;
   function tekenTegel(tx, ty) {
     const t = tegelOp(tx, ty), px = tx * TEGEL, py = ty * TEGEL;
@@ -1477,10 +1491,9 @@ const Outro = (() => {
     /* verkoold: een gedithered roetlaag (25/50/75%) na een knal in de buurt */
     const sch = lvl.schroei ? lvl.schroei[idx] : 0;
     if (sch && t !== T.GLAS && t !== T.PLANT && t !== T.LADDER) {
-      cx.fillStyle = '#0b0907';
-      for (let yy = 0; yy < TEGEL; yy++) for (let xx = 0; xx < TEGEL; xx++) {
-        if (BAYER4[(yy & 3) * 4 + (xx & 3)] < sch * 4) cx.fillRect(px + xx, py + yy, 1, 1);
-      }
+      cx.globalCompositeOperation = 'source-atop';
+      cx.drawImage(roetLaag(sch), px, py);
+      cx.globalCompositeOperation = 'source-over';
     }
     /* schade-craquelé zodra een meertraps-tegel is aangetikt */
     const maxHp = TEGEL_HP[t];
@@ -1980,21 +1993,27 @@ const Outro = (() => {
     hitstop = d;
     if (doel) stopDoel = doel;
   }
-  /* slow-mo: 80 ms inzakken, een plateau, 250 ms smooth terug; 4 s afkoeling */
-  function slowmo(duur, schaal) {
-    if (slowmoKoeling > 0 && !(slowmoToestand)) { voegTrauma(0.3); return; }
+  /* slow-mo: 80 ms inzakken, een plateau, 250 ms smooth terug; 4 s afkoeling.
+     Loopt er al een, dan wordt die verlengd (nooit herstart: geen tik op 1x).
+     prio = een gescript verhaalmoment: dat omzeilt de afkoeling. */
+  function slowmo(duur, schaal, prio) {
+    const S = slowmoToestand;
+    if (S) { S.duur = Math.max(S.duur, S.t + duur); S.schaal = Math.min(S.schaal, schaal); return; }
+    if (slowmoKoeling > 0 && !prio) { voegTrauma(0.3); return; }
     slowmoToestand = { t: 0, duur, schaal }; slowmoKoeling = 4;
   }
   function balken(duur) { balkTot = Math.max(balkTot, tijd + duur); }
-  /* het impactframe: 1-2 frames silhouet. Hoogstens één per 250 ms, een
-     inverse (witte wereld) hoogstens één per 2 s, en nooit bij reduced motion */
-  function impact(n, invers) {
-    if (reduceMotion || tijd - impactKlok < (liteModus ? 0.4 : 0.25)) return;
-    impactKlok = tijd; impactF = Math.max(impactF, n);
-    impactInvers = !!invers && !liteModus && tijd - inversKlok > 2;
+  /* het impactframe: een silhouet van n/60 s (op tijd, niet per renderframe).
+     Hoogstens één per 250 ms, een inverse (witte wereld) hoogstens één per 2 s,
+     en nooit bij reduced motion. prio (verhaalmomenten) omzeilt beide limieten. */
+  function impact(n, invers, prio) {
+    if (reduceMotion) return;
+    if (!prio && tijd - impactKlok < (liteModus ? 0.4 : 0.25)) return;
+    impactKlok = tijd; impactTot = Math.max(impactTot, tijd + n / 60);
+    impactInvers = !!invers && !liteModus && (prio || tijd - inversKlok > 2);
     if (impactInvers) inversKlok = tijd;
   }
-  function verbleekMoment(duur) { verbleekTot = Math.max(verbleekTot, tijd + duur); balken(duur); slowmo(0.7, 0.3); }
+  function verbleekMoment(duur, prio) { verbleekTot = Math.max(verbleekTot, tijd + duur); balken(duur); slowmo(0.7, 0.3, prio); }
   /* alles wat op echte tijd loopt (ook tijdens hitstop en slow-mo) */
   function regieTik(dt) {
     stopBudget = Math.min(0.25, stopBudget + dt * 0.25);
@@ -2069,7 +2088,7 @@ const Outro = (() => {
     if (staat === 'wissel') { if (spelToets) e.preventDefault(); return; }
     /* intro: ELKE toets spoelt door (zoals de hint belooft) — ook Enter e.d. */
     if (staat === 'intro' && !e.repeat) { e.preventDefault(); introT = introT >= 10.2 ? 11.6 : 10.4; return; }
-    if (cine && spelToets && !e.repeat && cine.t < 2.2 && cine.t > 0.3) { e.preventDefault(); cine.t = 2.2; return; }
+    if (cine && spelToets && !e.repeat && cine.t < 2.2 && cine.t > 0.3) { e.preventDefault(); slaKeynoteOver(); return; }
     if (spelToets) {
       e.preventDefault();
       if (!e.repeat && (k === 'w' || k === 'arrowup' || k === ' ')) held && (held.sprongBuf = SPRONGBUFFER);
@@ -2116,7 +2135,7 @@ const Outro = (() => {
     if (staat === 'epiloog') { if (epi && epi.klaar) beeindig(); else if (epi) epi.spoed = true; return; }
     if (staat === 'wissel') return;
     /* een tik slaat de keynote van de middenmanager over */
-    if (cine && cine.t > 0.3 && cine.t < 2.2) { cine.t = 2.2; return; }
+    if (cine && cine.t > 0.3 && cine.t < 2.2) { slaKeynoteOver(); return; }
     const p = canvasPunt(e);
     /* tik op de masker-chips linksboven = wisselen */
     if (maskers.length > 1 && p.x < 64 && p.y < 22) { wisselMasker(); return; }
@@ -2276,7 +2295,7 @@ const Outro = (() => {
           }
           for (const tl of tls) losTl(tl, false);
           voegTrauma(0.4); sfx('inzakken', 0.2);
-          verbleekMoment(1.6);
+          verbleekMoment(1.6, true);
         } else {
           startWissel(lvlIdx + 1);
         }
@@ -2286,7 +2305,7 @@ const Outro = (() => {
         if (dakval.t > 0.4 && dakval.t < 0.95 && Math.random() < dt * 40) {
           duwPartikel({ soort: 'gruis', x: dakval.x0 + Math.random() * BREED, y: TEGEL + 1, vx: (Math.random() - 0.5) * 6, vy: 10, t: 0.9, kleur: '#8a8168', g: 1, stuit: false });
         }
-        if (dakval.t > 0.55 && !dakval.klap) { dakval.klap = true; impact(2, true); voegTrauma(1); }
+        if (dakval.t > 0.55 && !dakval.klap) { dakval.klap = true; impact(2, true, true); voegTrauma(1); }
         if (dakval.t > 1.6 && !dakval.flits && fx) { dakval.flits = true; fx.forceerBliksem(); }
         if (dakval.t > 2.3) { dakval = null; startWissel(lvlIdx + 1); }
       }
@@ -2468,6 +2487,7 @@ const Outro = (() => {
       if (c.opGrond && Math.abs(c.x - oudX) < 0.2 && c.vx !== 0) c.vy = -180;   /* hupje over een obstakel */
       if (Math.abs(c.x - h.x) > BREED) { c.x = h.x - 12; c.y = h.y; c.vy = 0; }  /* te ver achter → bijtrekken */
       c.loopT += Math.abs(c.vx) > 1 ? dt * 8 : 0;
+      if (c.lichtT > 0) { c.lichtT -= dt; if (c.lichtT <= 0) { c.licht = 1; spawnVonk(c.x + 3, c.y + 5, '#ffd9a0', 4); sfx('schitter', 0.1); } }
     }
 
     /* — de upgrade-kaarten: kaarten die je aanvallen pimpen — */
@@ -2553,10 +2573,7 @@ const Outro = (() => {
     for (const p of partikels) {
       p.t -= dt;
       if (p.soort === 'vuurbal' || p.soort === 'schok' || p.soort === 'spoor' || p.soort === 'gloei' || p.soort === 'ster') continue;   /* staan stil, vervagen in de render */
-      if (p.soort === 'vonkboog') {
-        if (p.t <= 0 && p.doel) { p.doel.licht = 1; spawnVonk(p.doel.x + 3, p.doel.y + 5, '#ffd9a0', 4); sfx('schitter', 0.1); }
-        continue;
-      }
+      if (p.soort === 'vonkboog') continue;   /* puur beeld: het licht zelf hangt aan c.lichtT */
       if (p.soort === 'crtuit') continue;
       if (p.soort === 'brok' || p.soort === 'scherf') {
         if (p.lig) continue;
@@ -2673,13 +2690,13 @@ const Outro = (() => {
     if (d.hp <= 0) {
       d.dood = true;
       /* de laatste machine van de etage valt: de tijd houdt even de adem in */
-      if (!drones.some(e => !e.dood) && !hal) slowmo(0.6, 0.3);
+      if (!drones.some(e => !e.dood) && !hal) slowmo(0.6, 0.3, true);
       bumpKetting(2);   /* een gevelde vijand voedt de SLOOPKETTING extra */
       if (d.soort === 'manager') {
         /* DE MIDDENMANAGER valt — in drie bedrijven (zie sterfManager) */
         d.dood = false; d.sterf = { t: 0, klok: 0 };
-        stop('manager', d); impact(2, true);
-        verbleekTot = Math.max(verbleekTot, tijd + 1.6); balken(2); slowmo(1.4, 0.3);
+        stop('manager', d); impact(2, true, true);
+        verbleekTot = Math.max(verbleekTot, tijd + 1.6); balken(2); slowmo(1.4, 0.3, true);
         schermFlits = Math.max(schermFlits, 0.12);
         sfx('dood', 0.2);
       } else if (d.soort === 'slijm') {
@@ -2739,7 +2756,13 @@ const Outro = (() => {
     stempel = { t: 0, txt: 'ONTSLAGEN' };
     hudTekst = 'DE MIDDENMANAGER: "IK VOERDE ALLEEN MAAR UIT." — NIEMAND VOERT DIT NOG UIT.'; hudTekstT = 4;
     voegTrauma(0.7); sfx('hamer', 0.2); sfx('dood', 0.2);
-    if (!drones.some(e => !e.dood)) slowmo(0.6, 0.3);
+    if (!drones.some(e => !e.dood)) slowmo(0.6, 0.3, true);
+  }
+  /* overslaan: meteen naar het einde, de balken schuiven weg, de muziek komt terug */
+  function slaKeynoteOver() {
+    if (!cine) return;
+    cine.t = 2.2; balkTot = tijd + 0.25;
+    if (window.Klank && Klank.duck) { try { Klank.duck(0.001, 0.08); } catch (e) {} }
   }
   /* de keynote tikt op echte tijd: de camera zoekt hem, de lampen floepen aan */
   function cineTik(dt) {
@@ -2748,7 +2771,7 @@ const Outro = (() => {
     const sm = f => { f = klem(f, 0, 1); return f * f * (3 - 2 * f); };
     camX = c.t < 1.9 ? c.camX0 + (doel - c.camX0) * sm(c.t / 0.6) : doel + (c.camX0 - doel) * sm((c.t - 1.9) / 0.5);
     for (const [drempel, n] of [[0.35, 1], [0.5, 2], [0.65, 3], [0.8, 4]]) if (c.t > drempel && c.klak < n) { c.klak = n; sfx('klap', 0.03); }
-    if (c.t > 1.1 && !c.slam) { c.slam = true; kick(0, 3); impact(1, false); sfx('hamer', 0.1); }
+    if (c.t > 1.1 && !c.slam) { c.slam = true; kick(0, 3); impact(1, false, true); sfx('hamer', 0.1); }
     if (c.t > 2.4) { cine = null; d.grafiek = true; }
   }
   /* de naamband (Metal Slug-stijl): schuin, rood, met zijn portret op 3x */
@@ -2783,13 +2806,15 @@ const Outro = (() => {
     if (t > 2.2) { stempel = null; return; }
     const sc = t < 0.12 ? 3 : 2, txt = stempel.txt;
     const w = tekstBreedte(txt, sc) + 8, h = 8 * sc + 8;
-    if (!stempelC) stempelC = document.createElement('canvas');
-    stempelC.width = w; stempelC.height = h;
-    const x = stempelC.getContext('2d');
-    x.fillStyle = '#d43d2a';
-    for (let i = 0; i < w; i += 4) { x.fillRect(i, 0, 2, 1); x.fillRect(i, h - 1, 2, 1); }
-    for (let i = 0; i < h; i += 4) { x.fillRect(0, i, 1, 2); x.fillRect(w - 1, i, 1, 2); }
-    tekst(x, txt, 4, 4, '#d43d2a', sc);
+    const sleutel = txt + sc;
+    if (!stempelC || stempelC.sleutel !== sleutel) {
+      stempelC = document.createElement('canvas'); stempelC.width = w; stempelC.height = h; stempelC.sleutel = sleutel;
+      const x = stempelC.getContext('2d');
+      x.fillStyle = '#d43d2a';
+      for (let i = 0; i < w; i += 4) { x.fillRect(i, 0, 2, 1); x.fillRect(i, h - 1, 2, 1); }
+      for (let i = 0; i < h; i += 4) { x.fillRect(0, i, 1, 2); x.fillRect(w - 1, i, 1, 2); }
+      tekst(x, txt, 4, 4, '#d43d2a', sc);
+    }
     const a = t < 1.6 ? 1 : t < 1.8 ? 0.66 : t < 2 ? 0.33 : 0.15;
     const x0 = Math.round(BREED / 2 - w / 2), y0 = Math.round(62 - h / 2) + (t < 0.12 ? -4 : 0);
     ctx.globalAlpha = a;
@@ -2838,7 +2863,7 @@ const Outro = (() => {
       schud(1.8);
       spawnVonk(c.x + 8, c.y + 8, '#5fd0d8', 10);
       spawnGruis(c.x + 8, c.y + 12, T.GIPS);
-      const nieuw = { x: c.x + 4, y: c.y + 8, vx: 0, vy: 0, b: 7, h: 11, opGrond: false, loopT: 0, licht: 0 };
+      const nieuw = { x: c.x + 4, y: c.y + 8, vx: 0, vy: 0, b: 7, h: 11, opGrond: false, loopT: 0, licht: 0, lichtT: 0.5 };
       collegas.push(nieuw);
       /* de vonk-estafette: een vonkje springt van de fakkel naar de collega */
       duwPartikel({ soort: 'vonkboog', x0: held.x + held.b / 2, y0: held.y + 6, x: held.x, y: held.y, doel: nieuw, t: 0.5, maxT: 0.5 });
@@ -2864,7 +2889,7 @@ const Outro = (() => {
       maskers.push(mk);
       maskerIdx = maskers.length - 1;   /* meteen in je nieuwe zelf */
       splash = { t: 2.4, mk };
-      verbleekMoment(1.2);
+      verbleekMoment(1.2, true);
       schud(2); stop('cel');
       spawnVonk(c.x + 8, c.y + 10, HELD_TINT[mk].R, 14);
 
@@ -3269,7 +3294,7 @@ const Outro = (() => {
     fx.updateBliksem(dt, K.lucht === 'storm' && staat === 'spel', (inslag) => {
       donderT = inslag ? 0.25 : 0.5 + Math.random() * 0.4;
       if (inslag && hal && lvl.baas) {
-        hal.flitsT = 0.5; voegTrauma(0.6);
+        hal.flitsT = reduceMotion ? 0.15 : 0.5; voegTrauma(0.6);
         spawnVonk(lvl.baas.x + 100, lvl.baas.y - 18, '#dfe6ff', 14);
         spawnVonk(lvl.baas.x + 100, lvl.baas.y - 18, '#ffffff', 6);
       }
@@ -3396,6 +3421,9 @@ const Outro = (() => {
   }
 
   function render() {
+    /* vangnet: liep een vorig frame vast met ctx op een offscreen-laag (wereld of
+       CRT), dan zou het scherm bevriezen — elk frame start op het hoofdcanvas */
+    if (hoofdCtxRef) ctx = hoofdCtxRef;
     ctx.imageSmoothingEnabled = false;
     /* camera-offset incl. schermschud */
     const trAmp = trauma * trauma * ((liteModus || reduceMotion) ? 1.5 : 5);
@@ -3425,7 +3453,7 @@ const Outro = (() => {
     if (staat === 'epiloog') { renderEpiloog(); presenteer(); return; }
 
     /* ===== 0. HET IMPACTFRAME — de wereld bevriest in silhouet ===== */
-    if (impactF > 0 && staat === 'spel') { renderImpact(ox, oy); impactF--; presenteer(); return; }
+    if (tijd < impactTot && staat === 'spel') { renderImpact(ox, oy); presenteer(); return; }
     if (fx && lvl.soort === 'dak' && staat === 'spel' && !reduceMotion && fx.bliksemFlits > 0.93) { renderBliksemFrame(ox, oy); presenteer(); return; }
 
     /* ===== 1. DE BUITENWERELD — onbelicht, straalt door ramen en open lucht ===== */
@@ -3885,7 +3913,7 @@ const Outro = (() => {
     }
     /* de knalflits over het hele beeld */
     if (schermFlits > 0) {
-      ctx.fillStyle = 'rgba(255,244,214,' + (schermFlits * 3).toFixed(2) + ')';
+      ctx.fillStyle = 'rgba(255,244,214,' + (schermFlits * (reduceMotion ? 1 : 3)).toFixed(2) + ')';
       ctx.fillRect(0, 0, BREED, HOOG);
       schermFlits -= 0.016;
     }
@@ -3952,7 +3980,7 @@ const Outro = (() => {
     const t = wisselT - 0.7;                       /* 0 .. 2.2 */
     const rem = t > 1.8 ? (t - 1.8) / 0.4 : 0;
     const scroll = 230 * Math.min(t, 1.8) + (rem > 0 ? 230 * 0.4 / 3 * (1 - Math.pow(1 - rem, 3)) : 0);
-    const trAmp = trauma * trauma * 4;
+    const trAmp = reduceMotion ? 0 : trauma * trauma * (liteModus ? 1.5 : 4);
     const sx = Math.round(trAmp * Math.sin(tijd * 37)), sy = Math.round(trAmp * Math.sin(tijd * 29));
     ctx.fillStyle = '#0b0a08'; ctx.fillRect(0, 0, BREED, HOOG);
     /* de schachtwanden (links en rechts van de kooi) en de geleiderails */
@@ -4334,7 +4362,8 @@ const Outro = (() => {
     /* de terminal wordt op de fosforlaag getekend (met nagloei), dan pas getoond */
     const hoofd = ctx;
     ctx = crtX;
-    ctx.fillStyle = liteModus ? '#060503' : 'rgba(6,5,3,0.42)'; ctx.fillRect(0, 0, BREED, HOOG);
+    /* de nagloei dooft per seconde even snel, hoe hoog de verversing ook is */
+    ctx.fillStyle = liteModus ? '#060503' : 'rgba(6,5,3,' + (1 - Math.pow(0.58, renderDt * 60)).toFixed(3) + ')'; ctx.fillRect(0, 0, BREED, HOOG);
     const A = mengKleur('#ffb347', '#ffe8b8', klem((configStap - 1) / 6, 0, 1)), GRIJS = '#6e6a58', WIT = '#efe9d6';
     ctx.strokeStyle = A; ctx.globalAlpha = 0.35; ctx.lineWidth = 1;
     ctx.strokeRect(8.5, 8.5, BREED - 17, HOOG - 17); ctx.globalAlpha = 1;
@@ -4749,6 +4778,7 @@ const Outro = (() => {
     /* dekkende contexts: zonder alfakanaal hoeft de compositor het grote
        canvas niet te blenden — merkbaar goedkoper op mobiele gpu's */
     ctx = canvas.getContext('2d', { alpha: false });
+    hoofdCtxRef = ctx;
     schermCtx = schermCanvas.getContext('2d', { alpha: false });
     mozaiek = document.createElement('canvas');
     mozaiek.width = BREED; mozaiek.height = HOOG;
@@ -4761,7 +4791,7 @@ const Outro = (() => {
     fx = null; wereldC = null; wereldCtx = null;
     if (window.OutroFX) {
       try {
-        OutroFX.init({ breed: BREED, hoog: HOOG, lite: liteModus, tekst });
+        OutroFX.init({ breed: BREED, hoog: HOOG, lite: liteModus, rustig: reduceMotion, tekst });
         wereldC = document.createElement('canvas'); wereldC.width = BREED; wereldC.height = HOOG;
         wereldCtx = wereldC.getContext('2d');
         fx = OutroFX;
@@ -4790,7 +4820,7 @@ const Outro = (() => {
     tijd = 0; introT = 0; hitstop = 0; accu = 0;
     tijdSchaal = 1; slowmoToestand = null; slowmoKoeling = 0; stopBudget = 0.25; stopDoel = null;
     kickX = kickY = kickVX = kickVY = 0; trauma = 0; balkT = 0; balkTot = 0;
-    impactF = 0; impactKlok = -9; inversKlok = -9; verbleek = 0; verbleekTot = 0; meterKnallen = []; knalVenster = []; cine = null; stempel = null; kettingPunch = 0; mijlpaal = null;
+    impactTot = -9; impactKlok = -9; inversKlok = -9; verbleek = 0; verbleekTot = 0; meterKnallen = []; knalVenster = []; cine = null; stempel = null; kettingPunch = 0; mijlpaal = null;
     /* volledige presentatie-reset — anders speelt een HERbeleving vrijwel zonder
        sfx (sfxKlok-throttles staan nog op de eind-tijd van de vorige run) */
     sfxKlok = {}; splash = null; schermFlits = 0; schudT = 0; schudKracht = 0; fakkelDip = 0;

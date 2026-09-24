@@ -10,7 +10,7 @@
    ============================================================ */
 
 const OutroFX = (() => {
-  let W = 320, H = 180, lite = false, tekstFn = null, bandenNu = 6;
+  let W = 320, H = 180, lite = false, rustig = false, tekstFn = null, bandenNu = 6;
   let lichtC = null, lichtX = null;
   let vignetC = null, scanC = null, scanS = 0;
   const cache = new Map();                    /* gebakken lichtsprites */
@@ -23,11 +23,29 @@ const OutroFX = (() => {
   /* deterministische rng — elke stad is elke keer dezelfde stad */
   function rng(zaad) { let s = (zaad >>> 0) || 1; return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 100000) / 100000; }; }
 
+  /* pixels rechtstreeks in ImageData schrijven: bakken zonder duizenden
+     losse fillRect-aanroepen (die op mobiel een voorbak-taak laten haperen) */
+  const rgbCache = {};
+  const rgbVan = k => rgbCache[k] || (rgbCache[k] = hex(k));
+  function pixelVel(w, h) {
+    const c = mk(w, h), x = c.getContext('2d'), img = x.createImageData(c.width, c.height), p = img.data, W2 = c.width;
+    return {
+      c,
+      zet(xx, yy, kleur) {
+        if (xx < 0 || yy < 0 || xx >= W2 || yy >= c.height) return;
+        const k = rgbVan(kleur), i = (yy * W2 + xx) * 4;
+        p[i] = k[0]; p[i + 1] = k[1]; p[i + 2] = k[2]; p[i + 3] = 255;
+      },
+      klaar() { x.putImageData(img, 0, 0); return c; }
+    };
+  }
+
   function init(opts) {
-    W = opts.breed || 320; H = opts.hoog || 180; lite = !!opts.lite; tekstFn = opts.tekst || null;
+    W = opts.breed || 320; H = opts.hoog || 180; lite = !!opts.lite; rustig = !!opts.rustig; tekstFn = opts.tekst || null;
     lichtC = mk(W, H); lichtX = lichtC.getContext('2d');
     vignetC = bakVignet();
     bliksem.t = 0; bliksem.volgende = 3 + Math.random() * 4; bliksem.pad = null;
+    bliksem.flits = 0; bliksem.tak = null; bliksem.inslag = null;
   }
   const isLite = () => lite;
   /* hoe grof het licht in trappen valt (per laag: 4 → 2, na de flip 6 → 8) */
@@ -65,7 +83,7 @@ const OutroFX = (() => {
   }
   /* een lichtkegel naar beneden (tl-bak, spot): smal bovenaan, breed onderaan */
   function kegelSprite(breed, lengte, kleur) {
-    breed = breed | 0; lengte = lengte | 0;
+    breed = Math.max(1, breed | 0); lengte = Math.max(1, lengte | 0);
     const sleutel = 'k' + breed + 'x' + lengte + kleur + bandenNu;
     let c = cache.get(sleutel); if (c) return c;
     c = mk(breed, lengte);
@@ -254,14 +272,14 @@ const OutroFX = (() => {
     const sleutel = tint + r;
     if (rookCache[sleutel]) return rookCache[sleutel];
     const T2 = ROOK[tint] || ROOK.koud, D = r * 2;
-    const c = mk(D, D), x = c.getContext('2d');
+    const v = pixelVel(D, D);
     for (let yy = 0; yy < D; yy++) for (let xx = 0; xx < D; xx++) {
       const dx = (xx + 0.5 - r) / r, dy = (yy + 0.5 - r) / r, d = Math.sqrt(dx * dx + dy * dy);
       const drempel = BAYER[(yy & 3) * 4 + (xx & 3)] / 16;
       if (d > 1 || (d > 0.72 && drempel < (d - 0.72) * 3.2)) continue;
-      x.fillStyle = dy > 0.35 ? T2.onder : (dy < -0.45 ? T2.top : T2.lijf);
-      x.fillRect(xx, yy, 1, 1);
+      v.zet(xx, yy, dy > 0.35 ? T2.onder : (dy < -0.45 ? T2.top : T2.lijf));
     }
+    const c = v.klaar();
     rookCache[sleutel] = c;
     return c;
   }
@@ -271,20 +289,20 @@ const OutroFX = (() => {
     r = Math.max(6, Math.min(30, Math.round(r / 2) * 2));
     if (schroeiCache[r]) return schroeiCache[r];
     const b = r * 2, h = r * 2 + 18;
-    const c = mk(b, h), x = c.getContext('2d');
-    x.fillStyle = '#0b0907';
+    const v = pixelVel(b, h), Z = '#0b0907';
     const cy = 18 + r;
     for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < b; xx++) {
       const dx = (xx + 0.5 - r) / r, dy = (yy + 0.5 - cy) / (r * 0.8), d = Math.sqrt(dx * dx + dy * dy);
       const drempel = BAYER[(yy & 3) * 4 + (xx & 3)] / 16;
-      if (d < 1 && drempel < (1 - d) * 1.4 + 0.1) x.fillRect(xx, yy, 1, 1);
+      if (d < 1 && drempel < (1 - d) * 1.4 + 0.1) v.zet(xx, yy, Z);
     }
     /* roetstrepen omhoog, die naar boven toe uitdunnen */
     const rr = rng(r * 13);
     for (let k = 0; k < 4; k++) {
       const sx = Math.round(r * 0.4 + rr() * r * 1.2), l = 8 + ((rr() * 12) | 0);
-      for (let yy = 0; yy < l; yy++) if (BAYER[(yy & 3) * 4 + (sx & 3)] / 16 < 1 - yy / l) x.fillRect(sx, cy - r * 0.6 - yy, 1, 1);
+      for (let yy = 0; yy < l; yy++) if (BAYER[(yy & 3) * 4 + (sx & 3)] / 16 < 1 - yy / l) v.zet(sx, Math.round(cy - r * 0.6 - yy), Z);
     }
+    const c = v.klaar();
     schroeiCache[r] = { c, ox: r, oy: cy };
     return schroeiCache[r];
   }
@@ -388,13 +406,11 @@ const OutroFX = (() => {
      aan de onderbuik GESMOLTEN ROOD ONDERLICHT van je eigen brandende toren
      (de Act 3-handtekening: 3 px #8a2a1c met een rand van 1 px #ff6a2a) */
   const WOLK_B = 640;
-  let wolken = null;
-  function bakWolken() {
-    if (wolken) return wolken;
-    /* elke laag = een rij cumulus-bulten (cirkels): een geschulpte onderrand
-       die van onder rood aangelicht wordt, en een donker, getextureerd lijf */
-    const laag = (zaad, hoog, lijf, licht, rood) => {
-      const c = mk(WOLK_B, hoog), x = c.getContext('2d'), r = rng(zaad);
+  const wolken = [null, null, null];
+  /* elke laag = een rij cumulus-bulten (cirkels): een geschulpte onderrand
+     die van onder rood aangelicht wordt, en een donker, getextureerd lijf */
+  function stormLaag(zaad, hoog, lijf, licht, rood) {
+      const v = pixelVel(WOLK_B, hoog), r = rng(zaad);
       const onder = new Float32Array(WOLK_B).fill(-1), bov = new Float32Array(WOLK_B).fill(hoog);
       for (let k = 0; k < 26; k++) {
         const bx = r() * WOLK_B, br = 10 + r() * 22, by = hoog * (0.25 + r() * 0.45);
@@ -417,25 +433,26 @@ const OutroFX = (() => {
             else if (tot <= 7 && drempel < (8 - tot) / 6) kl = '#5a1e22';        /* de gloed dithert omhoog uit */
           }
           if (yy - b0 < 2 && drempel > 0.6) continue;                           /* rafelrand */
-          x.fillStyle = kl; x.fillRect(xx, yy, 1, 1);
+          v.zet(xx, yy, kl);
         }
       }
-      return c;
-    };
-    wolken = [
-      { c: laag(91, 60, '#140e1e', '#231a30', false), f: 0.08, v: 3, y: -12 },
-      { c: laag(57, 64, '#1a1124', '#2a1c34', true), f: 0.18, v: 7, y: 6 },
-      { c: laag(23, 58, '#1e1222', '#301c30', true), f: 0.32, v: 12, y: 26 }
-    ];
-    return wolken;
+      return v.klaar();
   }
+  const STORM = [
+    [91, 60, '#140e1e', '#231a30', false, 0.08, 3, -12],
+    [57, 64, '#1a1124', '#2a1c34', true, 0.18, 7, 6],
+    [23, 58, '#1e1222', '#301c30', true, 0.32, 12, 26]
+  ];
+  function bakWolkLaag(i) {
+    if (!wolken[i]) { const [z, h, l, li, ro, f, v, y] = STORM[i]; wolken[i] = { c: stormLaag(z, h, l, li, ro), f, v, y }; }
+    return wolken[i];
+  }
+  function bakWolken() { for (let i = 0; i < STORM.length; i++) bakWolkLaag(i); return wolken; }
   /* dageraadwolken: roze lijf, een gouden rand aan de zonkant (boven), een
      paarse onderbuik — voor de val en de epiloog */
-  let dagWolken = null;
-  function bakDagWolken() {
-    if (dagWolken) return dagWolken;
-    const laag = (zaad, hoog, lijf, rand, onderK) => {
-      const c = mk(WOLK_B, hoog), x = c.getContext('2d'), r = rng(zaad);
+  const dagWolken = [null, null];
+  function dagLaag(zaad, hoog, lijf, rand, onderK) {
+      const v = pixelVel(WOLK_B, hoog), r = rng(zaad);
       const onder = new Float32Array(WOLK_B).fill(-1), bov = new Float32Array(WOLK_B).fill(hoog);
       for (let k = 0; k < 14; k++) {
         const bx = r() * WOLK_B, br = 8 + r() * 18, by = hoog * (0.35 + r() * 0.3);
@@ -453,17 +470,20 @@ const OutroFX = (() => {
           let kl = lijf;
           if (yy - b0 < 2) kl = rand; else if (yy - b0 < 4 && drempel < 0.5) kl = rand;
           if (o - yy <= 2) kl = onderK;
-          x.fillStyle = kl; x.fillRect(xx, yy, 1, 1);
+          v.zet(xx, yy, kl);
         }
       }
-      return c;
-    };
-    dagWolken = [
-      { c: laag(301, 40, '#b86a7a', '#ffd8b0', '#7a4a6a'), f: 0.1, v: 3, y: 0 },
-      { c: laag(177, 46, '#d88a8a', '#fff0d0', '#9a5a72'), f: 0.2, v: 6, y: 0 }
-    ];
-    return dagWolken;
+      return v.klaar();
   }
+  const DAG = [
+    [301, 40, '#b86a7a', '#ffd8b0', '#7a4a6a', 0.1, 3, 0],
+    [177, 46, '#d88a8a', '#fff0d0', '#9a5a72', 0.2, 6, 0]
+  ];
+  function bakDagLaag(i) {
+    if (!dagWolken[i]) { const [z, h, l, ra, on, f, v, y] = DAG[i]; dagWolken[i] = { c: dagLaag(z, h, l, ra, on), f, v, y }; }
+    return dagWolken[i];
+  }
+  function bakDagWolken() { for (let i = 0; i < DAG.length; i++) bakDagLaag(i); return dagWolken; }
   function tekenDagWolken(ctx, t, dx, y0, y1) {
     const W2 = bakDagWolken();
     for (let i = 0; i < (lite ? 1 : 2); i++) {
@@ -518,7 +538,7 @@ const OutroFX = (() => {
       if (opDonder) opDonder(bliksem.inslag);
     }
   }
-  const bliksemSterkte = () => bliksem.flits * bliksem.flits;
+  const bliksemSterkte = () => bliksem.flits * bliksem.flits * (rustig ? 0.25 : 1);
   const forceerBliksem = () => { bliksem.t = bliksem.volgende; };
   /* een schuine lichtschacht (parallellogram) in de lichtkaart: 3 banden over
      de breedte, met een gedithered rafelrand — het maanlicht door het gat */
@@ -711,7 +731,9 @@ const OutroFX = (() => {
     for (const R of VB_KLASSEN) t.push(() => vuurbalFrames(R));
     for (const tint of ['koud', 'warm', 'heet']) t.push(() => { for (let r = 2; r <= 14; r++) rookBol(r, tint); });
     t.push(() => { for (let r = 6; r <= 30; r += 2) schroeiStempel(r); });
-    t.push(bakStad); t.push(bakWolken); t.push(bakDagWolken);
+    t.push(bakStad);
+    for (let i = 0; i < STORM.length; i++) t.push(() => bakWolkLaag(i));
+    for (let i = 0; i < DAG.length; i++) t.push(() => bakDagLaag(i));
     t.push(() => bakRegen(false)); t.push(() => bakRegen(true));
     t.push(() => { for (const n of ['nacht', 'storm']) bakLucht(n, H); });
     return t;
