@@ -203,7 +203,7 @@ window.SLAYLIT_PROLOOG = (function () {
       },
       // de uitkomst speelt als regie (geen knop): een tik spoelt door
       uitkomst: {
-        gesprongen: { kop: 'LOSGELATEN.', body: 'De rode stippellijn scheurt over heel het scherm. Je valt — maar je <b>sprong</b>.' },
+        gesprongen: { kop: 'LOSGELATEN.', body: 'De rode stippellijn scheurt over heel het scherm. Niemand duwt je — je <b>kiest</b> zelf.' },
         geduwd:     { kop: 'U bent vrijgesteld.', body: 'Geen kaart verlaagde ∞. Geen blok stopte een OPTIMALISATIE. Je werd <b>geduwd</b>.' },
       },
     },
@@ -252,7 +252,7 @@ window.SLAYLIT_PROLOOG = (function () {
         ],
         teken: 'Teken voor akkoord met de lege pen:',
         knop: 'Teken (de pen is leeg)',
-        sprong: { plus: 'U tekende niet. U sprong al.', cta: 'Laat los' },
+        sprong: { plus: 'U tekende niet. U had al losgelaten.', cta: 'Laat los' },
         geduwd: 'U tekent. De pen laat geen inkt na — alleen een groef.',
         ondertekenaar: { src: A('junior.webp'), placeholder: 'JUNIOR', naam: 'J. “Junior” Devroe', rol: 'Namens de directie · de zoon van De Oprichter', handtekening: 'J. Devroe' },
       },
@@ -278,7 +278,7 @@ window.SLAYLIT_PROLOOG = (function () {
       breekpunt: {
         kop: 'De Afgrond',
         afgrondArt: A('de-afgrond.webp'),
-        vraag: 'Je valt. Maar hóe je valt, dat kies je zelf.',
+        vraag: 'Je bent beneden. Maar hóe je verdergaat, dat kies je zelf.',
         sub: 'Uit woede? Uit wrok? Of vlucht je vooruit, de verbeelding in?',
         voet: 'Laat er één los.',
         leeg: { mobiel: 'Tik een masker aan. Kijk wie eronder zit.', laptop: 'Wijs een masker aan. Kijk wie eronder zit.' },
@@ -295,11 +295,11 @@ window.SLAYLIT_PROLOOG = (function () {
   // de maskers van de Afgrond; kleur/naam/HP/startkaarten komen live uit window.SPELERS,
   // hun zinnen uit OutroFX.MASKERZINNEN (R2: één bron met de reünie in de outro)
   const MASKERS = [
-    { id: 'woede',  reactie: 'Vallen in woede',       soort: 'Verzet · brute kracht',
+    { id: 'woede',  reactie: 'Uit woede',              soort: 'Verzet · brute kracht',
       masker: { src: A('masker-woede.webp'),  ph: '😠' } },
-    { id: 'gif',    reactie: 'Vallen in wrok',        soort: 'Wrok · sluw venijn',
+    { id: 'gif',    reactie: 'Uit wrok',               soort: 'Wrok · sluw venijn',
       masker: { src: A('masker-gif.webp'),    ph: '🙄' } },
-    { id: 'vlucht', reactie: 'Vallen in verbeelding', soort: 'Ontkenning · verbeelding',
+    { id: 'vlucht', reactie: 'De verbeelding in',      soort: 'Ontkenning · verbeelding',
       masker: { src: A('masker-vlucht.webp'), ph: '🌀' } },
   ];
 
@@ -340,7 +340,7 @@ window.SLAYLIT_PROLOOG = (function () {
     { hoofdstuk: 2,         naam: 'Het kantoor' },
     { hoofdstuk: 3,         naam: 'Het Functioneringsgesprek' },
     { hoofdstuk: 'factuur', naam: 'De Eindafrekening' },
-    { hoofdstuk: 'val',     naam: 'De val' },
+    { hoofdstuk: 'val',     naam: 'In de wacht' },
     { hoofdstuk: 'afgrond', naam: 'De Afgrond' },
   ];
 

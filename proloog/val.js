@@ -552,6 +552,11 @@
       const f = warmte(t);
       return t < TL.kooltje ? f : 0.88 + 0.12 * Math.sin((t - TL.kooltje) * 1.1);
     }
+    /* na −∞ trekt het licht zich terug in het kooltje (verificatie R2: anders verdween 0042 in
+       één beeld op de snit naar de Afgrond). 0 tot de knop ingedrukt is, 1 als er alleen nog het
+       kale kooltje staat; proloog.js snijdt na 520 ms (rustig 150 ms), dus net daarvoor. */
+    const INKEER = rustig ? 0.12 : 0.45;
+    const inkeer = t => ingedruktT < 0 ? 0 : easeUit((t - ingedruktT) / INKEER);
     /* de straal van de DOM-knop −∞ in canvas-px, met zijn ring van 5 px (proloog.css:
        .val-knophouder --knop = clamp(56px, 10vmin, 84px)); gezet in schaal() */
     let knopR = 12;
@@ -651,10 +656,10 @@
       if (tk > 0.02) FX.kegel(K.x + (K.w >> 1), K.y + 5, K.w - 6, K.h - 9, '#e8e0c8', 0.85 * tk);
       const ls = ledSterkte(t);
       if (ls > 0.02) FX.licht(T.x + 26 + ((T.w - 30) >> 1), T.y + 14, 40, ledKleur(t), 0.35 * ls);
-      const kp = kooltjeXY(), kl = kooltjeLicht(t);
-      FX.licht(kp.x + 1, kp.y + 1, kl.r, '#ff9c3f', kl.a + (ingedruktT >= 0 ? klem(0.5 - (t - ingedruktT), 0, 0.5) : 0));
-      if (sprong && t >= TL.fotoIn) { const p = fotoXY(t); FX.licht(p.x + 3, p.y + 4, 20, '#ffb347', 0.75); }
-      if (!sprong && t >= TL.knop) FX.licht(L.knop.x, L.knop.y, 16, '#79c045', 0.45);
+      const kp = kooltjeXY(), kl = kooltjeLicht(t), ik = inkeer(t);
+      FX.licht(kp.x + 1, kp.y + 1, kl.r + (8 - kl.r) * ik, '#ff9c3f', kl.a + (0.35 - kl.a) * ik + (ingedruktT >= 0 ? klem(0.5 - (t - ingedruktT), 0, 0.5) : 0));
+      if (sprong && t >= TL.fotoIn && ik < 1) { const p = fotoXY(t); FX.licht(p.x + 3, p.y + 4, 20, '#ffb347', 0.75 * (1 - ik)); }
+      if (!sprong && t >= TL.knop && ik < 1) FX.licht(L.knop.x, L.knop.y, 16, '#79c045', 0.45 * (1 - ik));
       if (fy0 > -L.plaat) FX.lichtFlits('#b8c4ff', FX.bliksemSterkte() * 0.3);
       if (lucht) { FX.toepassenMasker(wl, wc); ctx.drawImage(wc, 0, 0); } else FX.toepassen(ctx);
 
@@ -668,21 +673,21 @@
         ctx.globalAlpha = tk; TK(ctx, nr, T.x + 4 + ((18 - TB(nr)) >> 1), T.y + 7, '#ffb347'); ctx.globalAlpha = 1;
       }
       tekenLed(t);
-      const rs = randSterkte(t);   /* 0042 blijft staan in de gloed van zijn eigen kooltje */
+      const rs = randSterkte(t) * (1 - ik);   /* 0042 blijft staan in de gloed van zijn eigen kooltje, tot −∞ */
       if (rs > 0.01) {
         ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5 * rs;
         ctx.drawImage(ST.rand, L.held.x - 13, L.held.voet - 67);
         ctx.restore();
       }
       tekenKooltje(t);
-      if (sprong && t >= TL.fotoIn) tekenFoto(t);
+      if (sprong && t >= TL.fotoIn && ik < 1) tekenFoto(t, 1 - ik);
       if (t >= TL.vloer) tekenVellen(t);
       tekenKrant(t);
       if (t >= TL.vloerTekst && t < TL.vloerTekstWeg) {
         const a = klem(Math.min((t - TL.vloerTekst) / 0.25, (TL.vloerTekstWeg - t) / 0.35), 0, 1);
         onderschrift(VLOER, '#cfc0a0', a, 999);
       }
-      if (t >= TL.slot) onderschrift(SLOT, '#ffd9a0', 1, Math.floor((t - TL.slot) * 60));
+      if (t >= TL.slot && ik < 1) onderschrift(SLOT, '#ffd9a0', 1 - ik, Math.floor((t - TL.slot) * 60));
       if (rustig && dEcht < 7.2 && t > VERTREK) {   /* rustig: de etage wisselt in een korte dip naar zwart */
         const fr = dEcht - Math.floor(dEcht), a = klem(1 - Math.abs(fr - 0.5) * 3.2, 0, 1);
         if (a > 0.01) {
@@ -781,12 +786,14 @@
       FX.gloed(ctx, p.x + 1, p.y + 1, Math.round(4 + 3 * f), '#ff9c3f', 0.46 + 0.09 * f);
     }
     /* de foto die in de schacht viel (sprong): hij drijft binnen en beschijnt de knop */
-    function tekenFoto(t) {
+    function tekenFoto(t, a) {   /* a: dekking, zakt na −∞ naar 0 (inkeer) */
       const p = fotoXY(t);
+      ctx.globalAlpha = a;
       ctx.fillStyle = '#efe9d6'; ctx.fillRect(p.x, p.y, 6, 8);
       ctx.fillStyle = '#ffd9a0'; ctx.fillRect(p.x + 1, p.y + 1, 4, 5);
       ctx.fillStyle = '#c98a4a'; ctx.fillRect(p.x + 2, p.y + 2, 2, 2); ctx.fillRect(p.x + 2, p.y + 4, 2, 2);
-      FX.gloed(ctx, p.x + 3, p.y + 4, 12, '#ffb347', 0.45 + 0.08 * Math.sin(t * 4));
+      ctx.globalAlpha = 1;
+      FX.gloed(ctx, p.x + 3, p.y + 4, 12, '#ffb347', (0.45 + 0.08 * Math.sin(t * 4)) * a);
     }
     /* de vloer is een veronderstelling: ze valt uiteen in factuurvellen. Fixer R2: de vellen
        zijn gewichtloos — ze dwarrelen traag opzij en OMHOOG, blijven in de kooi (boven het
@@ -1013,7 +1020,7 @@
         hangers.push(h);
         plaats(h);
       },
-      druk() { if (ingedruktT < 0) ingedruktT = tijd(); },
+      druk() { if (ingedruktT < 0) { ingedruktT = tijd(); laag.classList.add('ingedrukt'); } },   /* css: de knop gloeit op en dooft mee in het kooltje */
       kooltje() {
         const p = kooltjeXY(), r = scherm.getBoundingClientRect();
         return { x: Math.round(r.left + (p.x + 1) * S), y: Math.round(r.top + (p.y + 1) * S), maat: 2 * S };

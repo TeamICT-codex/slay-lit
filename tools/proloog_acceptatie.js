@@ -62,6 +62,9 @@
   11g          verborgen tab pauzeert klok én wachtmuziek; klank uit/aan rond −7 geeft de vaste
                noot terug; een dichte context bij de stilte hangt de lijn toch op; skip in de stilte
                heft de stilte op (Klank.stilteWeg).
+   SLOT R2 (merge-sessie):
+  11h          de inkeer na −∞: het licht trekt zich terug in het kooltje (randlicht, foto, knop)
+               vóór de snit naar de Afgrond; 0042 verdwijnt niet meer in één beeld.
    Het script heeft GEEN server nodig: het bedient de worktree rechtstreeks vanaf
    schijf via route.fulfill op http://localhost:4173/** (ook onder /slay-lit/).
    Elke regel toont de GEMETEN waarde. Exit 1 bij minstens één fout.
@@ -1644,6 +1647,52 @@ async function kaartPlaat(page, vp) {
       t(voor === true && naar >= 0 && s2.weg.indexOf(true) !== -1 && s2.stil === false,
         `${L}: skip in de stilte (de val op ${s2.vt.toFixed(2)} s) → de Afgrond klinkt meteen: de stilte liep (${voor}), Klank.stilteWeg → ${s2.weg.join(',') || '-'}, 250 ms later nog stil: ${s2.stil}`);
       t(page.__f.length === 0, `${L}: geen paginafouten (skip)` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+    }
+
+    /* 11h · slot R2: de inkeer na −∞. Na het drukken trekt het licht zich terug in het kooltje
+       (randlicht, foto, knop), zodat er op de snit naar de Afgrond alleen het kooltje staat —
+       0042 verdwijnt niet meer in één beeld. Echte tijd; per beeld het licht op het canvas
+       buiten het kooltje (> 14 px) en erbij (< 5 px), via een eigen kopie (geen readback-waarschuwing). */
+    for (const r of [{ vp: VPS.laptop, pad: 'gesprongen' }, { vp: VPS.liggend, pad: 'geduwd' }]) {
+      const vp = r.vp, L = 'val inkeer ' + vp.n + ' ' + (r.pad === 'geduwd' ? 'geduwd' : 'sprong');
+      kop(`11h · ${L} · na −∞ trekt het licht zich terug in het kooltje, dan pas de snit`);
+      const { ctx, page } = await open(browser, vp, { opslag: { slaylit_proloog_v3: valSave(r.pad) }, geenNudge: true });
+      await r2Spion(page, { zonderCanvas: true });
+      await klikNieuw(page, vp);
+      t(await wachtScene(page, 'breekpunt/val', 6000), `${L}: hervat in de val`);
+      await valOp(page, 11.35);
+      await page.evaluate(() => {
+        const ik = window.__ik = { s: [], druk: null };
+        const kopie = document.createElement('canvas'), kx = kopie.getContext('2d', { willReadFrequently: true });
+        const lus = () => {
+          const h = document.getElementById('scherm-proloog'), R = h && h.shadowRoot;
+          const c = R && R.querySelector('.val-scherm'), laag = R && R.querySelector('.val-laag');
+          if (!c || !window.__r2.handle) { ik.klaar = true; return; }
+          if (ik.druk == null && laag && laag.classList.contains('ingedrukt')) ik.druk = performance.now();
+          kopie.width = c.width; kopie.height = c.height; kx.drawImage(c, 0, 0);
+          const d = kx.getImageData(0, 0, c.width, c.height).data, k = window.__r2.handle.kooltje(), b = c.getBoundingClientRect();
+          const px = (k.x - b.left) * c.width / b.width, py = (k.y - b.top) * c.height / b.height;
+          let bu = 0, nb = 0, bi = 0, ni = 0;
+          for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+            const i = (y * c.width + x) * 4, lum = 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2], af = Math.hypot(x - px, y - py);
+            if (af > 14) { bu += lum; nb++; } else if (af < 5) { bi += lum; ni++; }
+          }
+          const hg = R.querySelector('.val-hanger');
+          ik.s.push({ t: performance.now(), buiten: bu / nb, kool: bi / ni, knop: hg ? +getComputedStyle(hg).opacity : 0 });
+          requestAnimationFrame(lus);
+        };
+        requestAnimationFrame(lus);
+      });
+      await slaap(250);
+      if (r.pad === 'gesprongen') await page.locator('#scherm-proloog .val-knop').click();
+      t(await wachtOp(page, inAfgrond, 4000) >= 0, `${L}: de Afgrond volgt`);
+      const ik = await page.evaluate(() => window.__ik);
+      const voor = ik.s.filter(s => ik.druk != null && s.t < ik.druk).pop(), na = ik.s.filter(s => ik.druk != null && s.t >= ik.druk), eind = na[na.length - 1];
+      t(!!voor && !!eind && eind.t - ik.druk >= 350 && eind.buiten <= 0.5 * voor.buiten && eind.knop < 0.1 && eind.kool > 40,
+        `${L}: het laatste valbeeld (${eind ? Math.round(eind.t - ik.druk) : '?'} ms na het drukken, ${na.length} beelden): licht buiten het kooltje ${voor ? voor.buiten.toFixed(2) : '?'} → ${eind ? eind.buiten.toFixed(2) : '?'} (≤ de helft), de knop op opacity ${eind ? eind.knop.toFixed(2) : '?'} (< 0,1), het kooltje brandt nog (${eind ? eind.kool.toFixed(0) : '?'} > 40)`);
+      await shot(page, `${vp.n}-inkeer-afgrond`);
+      t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
       await ctx.close();
     }
   }

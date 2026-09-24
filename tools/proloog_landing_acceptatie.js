@@ -47,7 +47,7 @@ window.Proloog = (function () {
     },
     stop: function () { actief = false; clearTimeout(tm); window.__plLog.push({ stop: true }); if (o && o.host && o.host.shadowRoot) o.host.shadowRoot.innerHTML = ''; },
     slaOver: function () {},
-    hoofdstukken: [{ hoofdstuk: 0, naam: 'Maandag, 06:42' }, { hoofdstuk: 1, naam: 'Inklokken' }, { hoofdstuk: 2, naam: 'Het kantoor' }, { hoofdstuk: 3, naam: 'Het Functioneringsgesprek' }, { hoofdstuk: 'factuur', naam: 'De Eindafrekening' }, { hoofdstuk: 'val', naam: 'De val' }, { hoofdstuk: 'afgrond', naam: 'De Afgrond' }],
+    hoofdstukken: [{ hoofdstuk: 0, naam: 'Maandag, 06:42' }, { hoofdstuk: 1, naam: 'Inklokken' }, { hoofdstuk: 2, naam: 'Het kantoor' }, { hoofdstuk: 3, naam: 'Het Functioneringsgesprek' }, { hoofdstuk: 'factuur', naam: 'De Eindafrekening' }, { hoofdstuk: 'val', naam: 'In de wacht' }, { hoofdstuk: 'afgrond', naam: 'De Afgrond' }],
     get actief() { return actief; }
   };
 })();`;

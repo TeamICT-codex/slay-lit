@@ -591,6 +591,11 @@ img { max-width: 100%; display: block; }
 }
 .val-knop.ingedrukt { transform: scale(.9); animation: none; box-shadow: 0 0 0 4px #1a130b, 0 0 70px rgba(255, 170, 70, .95), inset 0 6px 14px rgba(0, 0, 0, .7); }
 .val-knop.baas.ingedrukt { box-shadow: 0 0 0 4px #0c140a, 0 0 60px rgba(121, 192, 69, .85), inset 0 6px 14px rgba(0, 0, 0, .7); }
+/* na −∞ trekt alles zich terug in het kooltje (val.js: inkeer, 0,45 s): de knop gloeit even op
+   en dooft dan mee, zodat er op de snit naar de Afgrond alleen het kooltje staat */
+.val-laag.ingedrukt .val-hanger { opacity: 0; transition: opacity .34s ease .1s; }
+:host([data-lite]) .val-laag.ingedrukt .val-hanger { transition-duration: .1s; transition-delay: 0s; }
+@media (prefers-reduced-motion: reduce) { .val-laag.ingedrukt .val-hanger { transition-duration: .1s; transition-delay: 0s; } }
 @keyframes plKnopAan { from { opacity: 0; transform: scale(.6); } }
 @keyframes plKnopGloei { 50% { box-shadow: 0 0 0 5px #1a130b, 0 0 56px rgba(255, 160, 60, .75), inset 0 -6px 12px rgba(0, 0, 0, .6); } }
 @keyframes plKnopGloeiBaas { 50% { box-shadow: 0 0 0 5px #0c140a, 0 0 48px rgba(121, 192, 69, .65), inset 0 -6px 12px rgba(0, 0, 0, .6); } }
