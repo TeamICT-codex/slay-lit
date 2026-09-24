@@ -500,3 +500,68 @@ NOG OPEN — ontwerpbeslissingen (Thomas):
   één keer de proloog (bewuste PR-keuze; overslaan kan rechtsboven).
 - Factuur-payoff: dots()-breedte 24 is te smal voor de langste regel
   (cosmetisch, 3px overloop) — meenemen bij de eerstvolgende outro-polish.
+
+## Visuele herwerking (sep 2026) — "een film over wie het licht maakt"
+
+Volledige visuele herwerking van de outro, met behoud van de flow (intro →
+V-1 → V2 → V3 (MIDDENMANAGER) → V4 (dakval) → penthouse (B.A.A.S., paneel)
+→ config → val → epiloog). Ontworpen door een drieledig ontwerpteam
+(licht & sfeer · sloop-juice · verhaal & poëzie) en een synthese.
+
+**De these in beeld.** Het systeem heeft alleen gekocht licht: koude
+tl-bakken, cyaan monitors, het groene noodbord, het zieke, haperende amber
+van B.A.A.S. Warm licht komt uitsluitend van mensen of van wat zij
+ontketenen: de fakkel (het kooltje op de borst van de held), de vonk die bij
+elke bevrijding naar een collega overspringt, vuur. Hoe groter de stoet, hoe
+warmer het donker van een etage. Hoe hoger je klimt, hoe grover het licht
+in trappen valt (4 → 2 banden: de boekhoudersblik, onbenoemd); na de flip
+ontdooit dat weer (val 6, epiloog 8).
+
+**Kleur per laag.** V-1 koud staalblauw (kelderraampjes op de stoep: regen,
+een auto, benen van een voorbijganger) · V2 ziek tl-groen (grote ramen op
+de nachtstad, klok op 0U06) · V3 ijscyaan (ordnerwand, lintvenster,
+monitorzee) · V4 bordeaux + messing (lambrisering, portretten, bankierslampen,
+panoramaramen op het onweer) · penthouse stormviolet met **gesmolten rood
+onderlicht op de wolken** (Act 3-handtekening) · config amber → dageraadwit ·
+val nacht → rook → roze → goud → dag · epiloog volle kleur → sepiafoto.
+
+**Techniek.** Nieuw bestand `js/outro-fx.js` (`window.OutroFX`, geladen vóór
+outro.js; staat in sw.js BESTANDEN). outro.js tekent de wereld op een eigen
+laag met doorzichtige ramen, belicht die met een multiply-lichtkaart
+(gebande, gedithered lichtsprites, uitgeknipt op de wereldvorm zodat de
+buitenwereld onbelicht doorstraalt) en legt ze op de procedurele stad
+(drie parallaxlagen, regen, bliksem, zoeklichten, reclamezeppelin). Daarna
+een emissieve laag (vuur, vonken, schermen, tl-buizen) en nabewerking
+(kleurtoon + vignet). Zonder OutroFX draait alles onbelicht door (getest).
+- Regietafel: slow-mo met afkoeling, gewogen hitstop (budget 0,25 s/s) met
+  trillend doelwit, camera-veer + trauma, filmbalken, impactframes (max 1
+  per 250 ms, inverse max 1 per 2 s, uit bij reduced motion), "het systeem
+  verbleekt" (desaturatie — alleen de mensen houden kleur).
+- Sloop: gebakken vuurbalframes + nabranders, gedithered rook die van onder
+  aangelicht is, afkoelende sintels, puin uit de échte tegeltextuur (in
+  kwartslagen), schroeiplekken in de achterwand + verkoolde tegels,
+  glasruiten die als één ruit versplinteren, meterkasten die elkaar met
+  bliksemboogjes aansteken, monitors die als een CRT uitsterven, drones in
+  een doodsspiraal, tl-bakken die slingeren en neerstorten, stof in de
+  lichtbundels, bijl-smear + contactster, samengevoegde popups (-0U06 X6),
+  SLOOPKETTING-punch + mijlpaalbanner (25/50/100).
+- Set pieces: liftdeuren + liftschacht (i.p.v. zwarte fades) · keynote van
+  de MIDDENMANAGER (volgspot, beamergrafiek die met zijn hp zakt, naamband)
+  en zijn dood in drie bedrijven + ONTSLAGEN-stempel · dakval in vier tempi
+  (barst, sifting, inverse klap, maanschacht met regen) · penthouse-onweer
+  (bliksem slaat in op de antenne van B.A.A.S., plassen spiegelen het vuur,
+  vlammen over de dakrand) · CRT-config (fosfor-nagloei, scanlines,
+  rollende band, handtekening in fakkelkool, beeldbuis klapt dicht bij
+  OPSLAAN — klein en stil) · val (godrays, valschermen in tegenlicht,
+  pannenkoek-instorting zonder schud, voorgrondpuin) · epiloog (lange
+  schaduwen, frietluik als tweede warmte, de laatste sintel landt in de
+  borstzak, het beeld stolt tot het fotootje met de rode stippellijn) ·
+  intro (doodsflits, ademend kooltje, fosforgloed, witheet geprinte titel).
+- Prestaties: effecten worden tijdens de intro voorgebakken; lichtstralen op
+  een vaste ladder (geen bakken per frame); regen alleen achter zichtbare
+  ramen; een fps-bewaker schaalt stil af (vol → zuinig → lite) als een
+  toestel 2 s onder ~40 fps zakt. Gemeten 60 fps desktop en lite (cpu ×4).
+- Dev-haken (release-checklist): `_devWissel(n)`, `_devTeleport(tx)`,
+  `_devVel(soort)`, `_devConfig(stap)`, `_devEpiloog(n)` + testgetters
+  `_fxNiveau`, `_staat`, `_lvlIdx`, `_lift`, `_luik`.
+

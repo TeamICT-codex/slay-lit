@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v128'; // v128: DE DREMPELTAFEL - de scherven worden ingezet aan de tafel (vijf spellen, uitbetaling, parkering), vervangt De Scherpe Kamer
+const CACHE = 'slayit-v129'; // v129: DE OPZEGTERMIJN visueel herwerkt - lichtmotor (js/outro-fx.js), klimaat per etage, liftschacht, onweer op het dak, CRT-config, de val de dageraad in en de epiloog als foto
 const BESTANDEN = [
   '.',
   'css/style.css',
@@ -14,6 +14,7 @@ const BESTANDEN = [
   'js/audio.js',
   'js/scene3d.js',
   'js/data.js',
+  'js/outro-fx.js',
   'js/outro.js',
   'js/online.js',
   'js/game.js',
