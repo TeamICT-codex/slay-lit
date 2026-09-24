@@ -1406,6 +1406,7 @@
 
       function kies(it) {
         if (gekozen || !actief || klaarGeroepen) return;
+        const klikT = performance.now();
         gekozen = true; sleutels = null; spoel = null;
         if (gepeld !== it) { gepeld = it; items.forEach(x => x.btn.classList.toggle('gepeld', x === it)); }
         if (AU) AU.plunge();
@@ -1451,6 +1452,16 @@
         /* via T(…, 0): een draai-blok of een verborgen tab houdt de overname nog altijd vast */
         const naarKlaar = () => T(() => klaarMet(uitkomst), 0);
         if (anim && anim.finished && anim.finished.then) {
+          /* de startvertraging inhalen: speel de rest iets sneller (hoogstens 1,5x), zodat het
+             einde — en dus de overname — toch op T 1,5 na de klik valt, zoals plan §3 wil */
+          if (anim.ready && anim.updatePlaybackRate) anim.ready.then(() => {
+            /* currentTime en 'nu' op dezelfde klok: de frametijd van de tijdlijn (die kan na een
+               zwaar frame ver achter performance.now() liggen — dan was de inhaalslag te groot) */
+            const tl = document.timeline && typeof document.timeline.currentTime === 'number' ? document.timeline.currentTime : performance.now();
+            const rest = TOKEN_MS - (+anim.currentTime || 0);
+            const beschikbaar = klikT + TOKEN_MS - tl;
+            if (rest > 0 && beschikbaar > 0 && rest > beschikbaar + 20) anim.updatePlaybackRate(Math.min(1.5, rest / beschikbaar));
+          }).catch(() => { /* geannuleerd: dan geen inhaalslag */ });
           anim.finished.then(naarKlaar, naarKlaar);
           T(() => klaarMet(uitkomst), TOKEN_MS + 400);   /* vangnet (klaarMet is idempotent) */
         } else {
