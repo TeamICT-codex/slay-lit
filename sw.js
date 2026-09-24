@@ -3,7 +3,6 @@
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
 const CACHE = 'slayit-v130'; // v130: DE PROLOOG ZONDER NAAD (ronde 1) - de proloog draait in de game-pagina, geen bollekes/Verder/DAAL AF meer, vasthoud-skip, het masker is je held en je landt zonder herlaad op de Act 1-kaart
-
 const BESTANDEN = [
   '.',
   'css/style.css',
