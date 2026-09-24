@@ -4166,6 +4166,14 @@ function plaatsGevechtsplaat() {
   _plaatsLaag(bg, bg.dataset.plaat || url, d3Voet);
   /* de crossfade-laag toont de NIEUWE plaat; die staat in haar eigen data-plaat */
   if (laag2) _plaatsLaag(laag2, laag2.dataset.plaat || url, d3Voet);
+  /* finale: geplaatst terwijl #scherm-gevecht nog een schok draagt (.beef/.slowmo, bv. een
+     hoveling die aantreedt tijdens de klap) → de maat klopt pas na de schok. Eén uitgestelde
+     herplaatsing (.beef duurt 350 ms, de timer in schudScherm 420). Alleen bij een schok-
+     klasse, zodat een blijvende transform nooit een eindeloze herhaling wordt. */
+  const sc = $('#scherm-gevecht');
+  if (sc && (sc.classList.contains('beef') || sc.classList.contains('slowmo'))) {
+    clearTimeout(bg._herplaatsT); bg._herplaatsT = setTimeout(plaatsGevechtsplaat, 450);
+  }
 }
 window.plaatsGevechtsplaat = plaatsGevechtsplaat;
 
