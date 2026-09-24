@@ -125,6 +125,10 @@
   function laadProloog() {
     if (window.Proloog && typeof window.Proloog.start === 'function') return Promise.resolve(window.Proloog);
     if (_laden) return _laden;
+    /* de CSS laadt de proloog zelf in haar shadow root; hier alleen alvast de HTTP-cache
+       warm (geen <link rel=preload>: die klaagt in de console als de speler niet start),
+       zodat het eerste beeld na het zwarte doek meteen gestyled is (integratie R1) */
+    try { if (window.fetch) fetch('proloog/proloog.css', { credentials: 'same-origin' }).catch(() => { /* de proloog wacht zelf max 2,5 s */ }); } catch (e) { /* geen fetch */ }
     _laden = new Promise((ok, nee) => {
       let geladen = 0, af = false;
       const klaar = fout => {
@@ -191,6 +195,14 @@
     const gebaar = !(navigator.userActivation && !navigator.userActivation.isActive);   /* de ?proloog=1-route heeft er geen */
     if (gebaar && window.mobiel && typeof wisselFullscreen === 'function') wisselFullscreen(true);
     muziek('stil');   /* het titelvuur dooft, de muziek mee */
+    /* stond de fullscreen-/installnudge al op de titel (hij komt 1,2 s na de boot), dan
+       mag hij niet over de proloog blijven hangen (iOS: geen fullscreen die hem sluit).
+       Weg ermee; landingEinde biedt hem daarna opnieuw aan (integratie R1). */
+    const nudge = $id('scherm-nudge');
+    if (nudge) {
+      nudge.remove();
+      if (typeof toonSchermNudge === 'function') toonSchermNudge.uitgesteld = true;
+    }
 
     const laden = laadProloog();
     const vanTitel = vorig === 'titel';

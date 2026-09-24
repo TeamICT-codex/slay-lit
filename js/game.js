@@ -69,7 +69,7 @@ try {
   if ((parseInt(localStorage.getItem('slayit_wipe') || '0', 10) || 0) < WIPE_VERSIE) {
     ['slayit_save_v1', 'slayit_codex', 'slayit_daily', 'slayit_einde_pending',
      'slayit_porren_gezien', 'slayit_proloog', 'slayit_proloog_over',
-     'slayit_proloog_klaar', 'slaylit_proloog_v3']   /* proloog R1: de landingsvlag + de proloog-save */
+     'slayit_proloog_klaar', 'slaylit_proloog_v3', 'slaylit_proloog_v2']   /* proloog R1: de landingsvlag + de proloog-save (en de oude v2, anders migreert die na een WIPE terug in de proloog) */
       .forEach(k => localStorage.removeItem(k));
     localStorage.setItem('slayit_wipe', String(WIPE_VERSIE));
   }

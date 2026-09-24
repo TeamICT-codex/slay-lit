@@ -526,7 +526,7 @@ img { max-width: 100%; display: block; }
 .bo-rol { color: #6d5c39; }
 
 /* de val (R1: nog de tekstval; de lift 'in de wacht' komt in R2) */
-.fase-val { justify-content: center; cursor: pointer; }
+.fase-val { justify-content: center; cursor: pointer; overflow: hidden; }   /* de ruis schudt 6px opzij: binnen het vak houden, anders loopt #scene 6px te breed (integratie R1) */
 .val-noise { position: absolute; inset: 0; pointer-events: none; opacity: .1; background: repeating-conic-gradient(#222 0% .0002%, #000 .0003% .0005%); animation: plRuis .18s steps(3) infinite; }
 @keyframes plRuis { 50% { transform: translate(6px, -4px); } }
 .val-hart { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(120, 10, 30, .28) 100%); animation: plHartslag .85s ease-in-out infinite; }

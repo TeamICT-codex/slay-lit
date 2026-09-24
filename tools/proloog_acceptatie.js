@@ -1,0 +1,893 @@
+/* ============================================================================
+   PROLOOG R1 · DE NAAD — ACCEPTATIESUITE (de ECHTE proloog + de echte brug)
+   Loopt de R1-criteria uit .claude/notities/proloog_herwerking_plan.md §5 af, van
+   'Nieuw avontuur' op de titel tot en met de landing op de Act 1-kaart, op
+   1440x900 (laptop), 800x360 (liggend, isMobile/hasTouch) en 412x915 (staand).
+   Anders dan tools/proloog_landing_acceptatie.js (de game-kant met een STUB-proloog)
+   draait hier de echte proloog/*.js in de shadow root: dit is de naad zelf.
+
+   Draaien (Windows, vanuit een map met playwright + pngjs in node_modules):
+       NODE_PATH="$PWD/node_modules" SLAYIT_WORKTREE="...\SLAY-IT-proloog" \
+       SLAYIT_SHOTS="$PWD/proloog_shots" node "...\SLAY-IT-proloog\tools\proloog_acceptatie.js"
+   Optioneel een filter als argument: hoofd | skip | herbeleef | wipe | poort | stub | rustig |
+   statisch (meerdere mogen, komma-gescheiden). Zonder argument draait alles (±7 min).
+
+   WAT HET MEET (plan §5 R1 'klaar als', per formaat waar het ertoe doet):
+   1 hoofd     de hele proloog gespeeld (drie formaten, sprong/geduwd/sprong, drie maskers):
+               titel → proloog → kaart, 0x framenavigated, geen oude nav/bolletjes/Verder/
+               DAAL AF, nergens scroll, elke zichtbare CTA in beeld en raak (shadow root én
+               document), S.held = het masker, jeugddroomTekst() = het getypte, 1 AudioContext,
+               plaatdiff < 2/255, CSS-tokens/titelfont vóór = tijdens = na, fakkel 80,
+               de sluier neemt over op T 1,5 s op exact het kooltje, lege drankslots.
+   2 skip      Esc (laptop) en de ring (touch) 0,8 s vasthouden; kort = niets; ook wie
+               overslaat landt; de nudge van de titel hangt niet over de proloog.
+   3 herbeleef titelknop, Codex-hoofdstuk en midden in een run: opslag byte-gelijk.
+   4 wipe      hervatten na een herlaad; na een WIPE weer scène 0.
+   5 poort     veteraan en lopende run → de heldkeuze met voorselectie.
+   6 stub      proloog/ → ../?proloog=1 onder /slay-lit/, zonder lek of 404.
+   7 rustig    reduced motion: klaar op 0,9 s, statische titel, overvloeier.
+   8 statisch  wat R1 wegnam blijft weg (grep op de bronnen).
+   Het script heeft GEEN server nodig: het bedient de worktree rechtstreeks vanaf
+   schijf via route.fulfill op http://localhost:4173/** (ook onder /slay-lit/).
+   Elke regel toont de GEMETEN waarde. Exit 1 bij minstens één fout.
+   ============================================================================ */
+const { chromium } = require('playwright');
+const path = require('path'); const fs = require('fs');
+let PNG = null; try { PNG = require('pngjs').PNG; } catch (e) { /* de plaatdiff meldt dan een fout */ }
+
+const WORKTREE = process.env.SLAYIT_WORKTREE ||
+  'C:\\Users\\Thomas Aelbrecht\\Desktop\\Workspace\\SLAY-IT-proloog';
+const UIT = process.env.SLAYIT_SHOTS || path.join(__dirname, 'proloog_shots');
+fs.mkdirSync(UIT, { recursive: true });
+const HOST = 'localhost:4173';
+const FILTER = (process.argv[2] || '').split(',').map(s => s.trim()).filter(Boolean);
+const doe = naam => !FILTER.length || FILTER.includes(naam);
+
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav', '.webmanifest': 'application/manifest+json' };
+const slaap = ms => new Promise(r => setTimeout(r, ms));
+
+let ok = 0, fout = 0; const fouten = [];
+const t = (goed, tekst) => { if (goed) ok++; else { fout++; fouten.push(tekst); } console.log('   ' + (goed ? 'ok   ' : 'FOUT ') + tekst); };
+const kop = s => console.log('\n== ' + s + ' ==');
+
+/* de drie formaten; per formaat een ander pad en een ander masker, zodat de drie
+   helden en beide uitwegen allemaal minstens één keer echt landen */
+const VPS = {
+  laptop: { n: 'laptop', w: 1440, h: 900, pad: 'sprong', masker: 'woede', held: 'slachter', droom: 'brandweerman' },
+  liggend: { n: 'liggend', w: 800, h: 360, m: true, pad: 'geduwd', masker: 'vlucht', held: 'thoverk', droom: 'zeeën bevaren' },
+  staand: { n: 'staand', w: 412, h: 915, m: true, pad: 'sprong', masker: 'gif', held: 'gifmagier', droom: "piloot van d'Artagnan" }
+};
+const HELD_VAN = { woede: 'slachter', gif: 'gifmagier', vlucht: 'thoverk' };
+
+/* ---------- de browsercontext: de worktree vanaf schijf, met meters ---------- */
+async function open(browser, vp, o) {
+  o = o || {};
+  const prefix = o.prefix || '/';
+  const ctx = await browser.newContext({
+    viewport: { width: vp.w, height: vp.h }, deviceScaleFactor: 1,
+    isMobile: !!vp.m, hasTouch: !!vp.m, serviceWorkers: 'block',
+    reducedMotion: o.rustig ? 'reduce' : 'no-preference'
+  });
+  /* fullscreen dat stil niets doet (zoals iOS / een geweigerde vraag): de nudge sluit dan niet vanzelf */
+  if (o.geenFullscreen) await ctx.addInitScript(() => { Element.prototype.requestFullscreen = function () { return Promise.resolve(); }; });
+  /* precies één AudioContext? tel elke constructie */
+  await ctx.addInitScript(() => {
+    window.__acN = 0;
+    const O = window.AudioContext || window.webkitAudioContext;
+    if (O) {
+      const W = class extends O { constructor(...a) { super(...a); window.__acN++; } };
+      window.AudioContext = W; window.webkitAudioContext = W;
+    }
+  });
+  const page = await ctx.newPage();
+  page.__f = []; page.__404 = []; page.__nav = 0; page.__load = 0;
+  page.on('pageerror', e => page.__f.push(e.message));
+  page.on('load', () => { page.__load++; });   /* echte documentladingen (framenavigated telt ook history.replaceState) */
+  page.on('console', m => { if (m.type() === 'error' && !/rest\/v1|Failed to load resource|supabase/i.test(m.text())) page.__f.push('console: ' + m.text()); });
+  page.on('framenavigated', f => { if (f === page.mainFrame()) page.__nav++; });
+  await ctx.route('**/*', route => {
+    const u = new URL(route.request().url());
+    if (/supabase\.co/i.test(u.host) || /\/rest\/v1\//.test(u.pathname)) return route.abort();
+    if (u.host !== HOST) return route.abort();
+    const p = decodeURIComponent(u.pathname);
+    if (!p.startsWith(prefix)) { page.__404.push(p); return route.fulfill({ status: 404, body: 'buiten de site' }); }
+    let rel = p.slice(prefix.length) || 'index.html';
+    let f = path.join(WORKTREE, rel.split('/').join(path.sep));
+    if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
+    if (!fs.existsSync(f) || !fs.statSync(f).isFile()) { page.__404.push(p); return route.fulfill({ status: 404, body: 'weg' }); }
+    return route.fulfill({ status: 200, contentType: MIME[path.extname(f).toLowerCase()] || 'application/octet-stream', body: fs.readFileSync(f) });
+  });
+  await page.goto('http://' + HOST + prefix, { waitUntil: 'load' });
+  await page.evaluate(([opslag, nudge]) => {
+    localStorage.clear();
+    localStorage.setItem('slayit_wipe', '1'); localStorage.setItem('slayit_wereld', '0');
+    if (nudge) localStorage.setItem('slayit_nudge_v2', 'weg');
+    Object.entries(opslag || {}).forEach(([k, v]) => localStorage.setItem(k, v));
+  }, [o.opslag || null, !!o.geenNudge]);
+  await page.goto('http://' + HOST + prefix + (o.pad || ''), { waitUntil: 'load' });
+  await slaap(800);
+  page.__nav = 0;
+  await volgSchermen(page);
+  return { ctx, page };
+}
+/* body.dataset.scherm door de tijd heen (titel → proloog → kaart) */
+async function volgSchermen(page) {
+  await page.evaluate(() => {
+    window.__schermLog = [document.body.dataset.scherm];
+    new MutationObserver(() => {
+      const s = document.body.dataset.scherm;
+      if (window.__schermLog[window.__schermLog.length - 1] !== s) window.__schermLog.push(s);
+    }).observe(document.body, { attributes: true, attributeFilter: ['data-scherm'] });
+  });
+}
+
+/* ---------- CSS-lek: de tokens en fonts van de game, gemeten op het document ---------- */
+const LEK = () => {
+  const r = getComputedStyle(document.documentElement);
+  const tok = ['--paars', '--nacht', '--goud', '--tekst', '--vuur', '--rand'].map(k => k + '=' + r.getPropertyValue(k).trim()).join(';');
+  const tg = document.querySelector('.titel-groot'), kn = document.querySelector('#scherm-titel .knop-groot');
+  return {
+    tokens: tok,
+    bodyBg: getComputedStyle(document.body).backgroundColor,
+    bodyFont: getComputedStyle(document.body).fontFamily,
+    titelFont: tg ? getComputedStyle(tg).fontFamily : null,
+    titelMaat: tg ? getComputedStyle(tg).fontSize : null,
+    knopFont: kn ? getComputedStyle(kn).fontFamily : null,
+    sheets: document.styleSheets.length,
+    htmlFs: getComputedStyle(document.documentElement).fontSize
+  };
+};
+
+/* ---------- de sonde: scroll, CTA's in beeld en raak, verboden elementen ---------- */
+const SONDE = () => {
+  const host = document.getElementById('scherm-proloog');
+  const R = host && host.shadowRoot;
+  const vw = innerWidth, vh = innerHeight;
+  const desc = e => e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + (e.classList && e.classList.length ? '.' + [...e.classList].slice(0, 2).join('.') : '');
+  const app = R && R.getElementById('pl-app');
+  const se = document.scrollingElement;
+  const res = {
+    scherm: document.body.dataset.scherm,
+    scene: host && host.dataset.plScene, fase: app && app.dataset.fase,
+    doc: { sh: se.scrollHeight, ch: se.clientHeight, sw: se.scrollWidth, cw: se.clientWidth, sy: scrollY, sx: scrollX },
+    scroll: [], uitBeeld: [], geblokt: [], ctas: [], verboden: [], nudge: !!document.getElementById('scherm-nudge'), clip: []
+  };
+  /* de oude nav, de bolletjes, 'Verder', 'DAAL AF' en 'Rechtstreeks afdalen': nergens meer */
+  const VERBODEN_SEL = '#proloog-nav, .proloog-nav, .nav-dots, .dot, .nav-knop, #knop-daalaf, #knop-skip, .knop-daalaf';
+  const VERBODEN_TXT = /^\s*(◂\s*)?verder\b|daal af|rechtstreeks afdalen/i;
+  if (document.querySelector(VERBODEN_SEL)) res.verboden.push('pagina: ' + desc(document.querySelector(VERBODEN_SEL)));
+  if (R && R.querySelector(VERBODEN_SEL)) res.verboden.push('shadow: ' + desc(R.querySelector(VERBODEN_SEL)));
+  const zichtbaarEl = (e, wortel) => {
+    for (let x = e; x && x !== wortel; x = x.parentNode || x.host) {
+      if (!(x instanceof Element)) break;
+      const cs = getComputedStyle(x);
+      if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) return false;
+    }
+    return true;
+  };
+  if (R) R.querySelectorAll('button, a').forEach(b => { if (VERBODEN_TXT.test(b.textContent || '') && zichtbaarEl(b, R)) res.verboden.push('shadow-knop "' + b.textContent.trim().slice(0, 30) + '"'); });
+  if (res.scherm === 'proloog') document.querySelectorAll('button, a').forEach(b => {
+    if (!b.getClientRects().length) return;
+    if (VERBODEN_TXT.test(b.textContent || '') && zichtbaarEl(b, document)) res.verboden.push('pagina-knop "' + b.textContent.trim().slice(0, 30) + '"');
+  });
+  if (!R) return res;
+  /* scroll: host, app en scène mogen NOOIT overlopen; een auto/scroll-vak ook niet;
+     niets mag verschoven staan. overflow:hidden mag bewust clippen (de log, de bon). */
+  const kan = v => v === 'auto' || v === 'scroll';
+  const streng = [host, app, R.getElementById('scene')].filter(Boolean);
+  streng.forEach(e => {
+    if (e.scrollHeight > e.clientHeight + 1) res.scroll.push(desc(e) + ' h ' + e.scrollHeight + '>' + e.clientHeight);
+    if (e.scrollWidth > e.clientWidth + 1) res.scroll.push(desc(e) + ' w ' + e.scrollWidth + '>' + e.clientWidth);
+  });
+  R.querySelectorAll('*').forEach(e => {
+    const cs = getComputedStyle(e);
+    if (cs.display === 'none') return;
+    if (kan(cs.overflowY) && e.clientHeight > 0 && e.scrollHeight > e.clientHeight + 1) res.scroll.push(desc(e) + ' h ' + e.scrollHeight + '>' + e.clientHeight);
+    if (kan(cs.overflowX) && e.clientWidth > 0 && e.scrollWidth > e.clientWidth + 1) res.scroll.push(desc(e) + ' w ' + e.scrollWidth + '>' + e.clientWidth);
+    if (e.scrollTop > 0 || e.scrollLeft > 0) res.scroll.push(desc(e) + ' verschoven ' + e.scrollTop + '/' + e.scrollLeft);
+    if (cs.overflowY === 'hidden' && e.clientHeight > 0 && e.scrollHeight > e.clientHeight + 1) res.clip.push(desc(e));
+  });
+  /* elke zichtbare CTA: volledig in beeld, en raak — in de shadow root (R.elementFromPoint)
+     én in het document (niets van de game erover, bv. de nudge of een melding) */
+  R.querySelectorAll('button, input').forEach(b => {
+    if (b.type === 'file' || b.disabled) return;
+    if (b.classList.contains('pl-skip') && !b.classList.contains('zichtbaar')) return;
+    if (!zichtbaarEl(b, R)) return;
+    if (b.closest('.valt-links, .valt-rechts, .uitverkoren, [inert]')) return;
+    const r = b.getBoundingClientRect(); if (r.width < 1 || r.height < 1) return;
+    const naam = desc(b) + ' "' + (b.textContent || b.placeholder || b.getAttribute('aria-label') || '').trim().replace(/\s+/g, ' ').slice(0, 24) + '"';
+    res.ctas.push(naam);
+    if (r.left < -1 || r.top < -1 || r.right > vw + 1 || r.bottom > vh + 1) { res.uitBeeld.push(naam + ' [' + [r.left, r.top, r.right, r.bottom].map(Math.round) + ']'); return; }
+    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+    const hit = R.elementFromPoint(x, y);
+    const top = document.elementFromPoint(x, y);
+    if (!hit || !(hit === b || b.contains(hit))) res.geblokt.push(naam + ' <- ' + (hit ? desc(hit) : 'niets'));
+    else if (top !== host) res.geblokt.push(naam + ' <- pagina ' + (top ? desc(top) : 'niets'));
+  });
+  return res;
+};
+async function sonde(page, label) {
+  const m = await page.evaluate(SONDE);
+  const p = [];
+  if (m.doc.sh > m.doc.ch + 1 || m.doc.sw > m.doc.cw + 1 || m.doc.sy || m.doc.sx) p.push('document scrolt ' + JSON.stringify(m.doc));
+  if (m.scroll.length) p.push('scroll: ' + m.scroll.join(' | '));
+  if (m.uitBeeld.length) p.push('uit beeld: ' + m.uitBeeld.join(' | '));
+  if (m.geblokt.length) p.push('geblokkeerd: ' + m.geblokt.join(' | '));
+  if (m.verboden.length) p.push('verboden: ' + m.verboden.join(' | '));
+  if (m.scherm === 'proloog' && m.nudge) p.push('de nudge ligt over de proloog');
+  t(!p.length, label + ' [' + (m.scene || m.scherm) + (m.fase ? '/' + m.fase : '') + '] geen scroll, geen oude nav, ' + m.ctas.length + ' CTA in beeld en raak' + (p.length ? ' — ' + p.join(' ;; ') : ''));
+  return m;
+}
+
+/* ---------- hulpjes in de shadow root ---------- */
+const sr = (page, src, arg) => page.evaluate(([s, a]) => {
+  const h = document.getElementById('scherm-proloog'); const R = h && h.shadowRoot;
+  return (new Function('R', 'arg', s))(R, a);
+}, [src, arg]);
+const scene = page => page.evaluate(() => {
+  const h = document.getElementById('scherm-proloog'); if (!h || !h.shadowRoot) return null;
+  const a = h.shadowRoot.getElementById('pl-app');
+  return (h.dataset.plScene || '') + (a && a.dataset.fase && h.dataset.plScene === 'breekpunt' ? '/' + a.dataset.fase : '');
+});
+async function wachtScene(page, doel, ms) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < (ms || 15000)) { const s = await scene(page); if (s && s.indexOf(doel) === 0) return true; await slaap(100); }
+  return false;
+}
+async function wachtOp(page, fn, ms, arg) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) { if (await page.evaluate(fn, arg)) return Date.now() - t0; await slaap(60); }
+  return -1;
+}
+async function tik(page, vp, sel, o) {
+  const l = page.locator(sel).first();
+  if (vp.m) await l.tap(o || {}); else await l.click(o || {});
+}
+async function shot(page, naam) { await page.screenshot({ path: path.join(UIT, naam + '.png') }).catch(() => {}); }
+const opslag = page => page.evaluate(() => {
+  const o = {};
+  ['slayit_proloog', 'slayit_proloog_over', 'slayit_proloog_klaar', 'slaylit_proloog_v3', 'slaylit_proloog_v2', 'slayit_save_v1', 'slayit_codex', 'slayit_daily']
+    .forEach(k => { o[k] = localStorage.getItem(k); });
+  return o;
+});
+const STAND = () => {
+  const tb = document.getElementById('topbalk');
+  const sl = document.getElementById('proloog-sluier');
+  const chip = document.getElementById('tb-fakkel');
+  const dl = document.querySelector('#tb-dranken .drank-leeg');
+  let jd; try { jd = jeugddroomTekst(); } catch (e) { jd = 'FOUT ' + e.message; }
+  const host = document.getElementById('scherm-proloog');
+  return {
+    scherm: document.body.dataset.scherm, log: (window.__schermLog || []).join(' > '),
+    held: (typeof S !== 'undefined' && S) ? S.held : null, fakkel: (typeof S !== 'undefined' && S) ? S.fakkel : null,
+    seed: (typeof S !== 'undefined' && S) ? S.seed : null,
+    jeugddroom: jd, chip: chip ? chip.textContent.trim() : null,
+    tb: getComputedStyle(tb).display, tbTf: getComputedStyle(tb).transform,
+    sluier: sl ? sl.classList.contains('toon') : null, sluierKind: sl ? sl.children.length : null,
+    bodyPl: [...document.body.classList].filter(c => /^pl-/.test(c)).join(','),
+    kaartTf: document.getElementById('scherm-kaart').style.transform || '',
+    bezig: typeof proloogBezig === 'function' ? proloogBezig() : 'geen',
+    actief: !!(window.Proloog && Proloog.actief),
+    appLeeg: !!(host && host.shadowRoot && host.shadowRoot.getElementById('pl-app') && !host.shadowRoot.getElementById('pl-app').children.length),
+    acN: window.__acN, klank: window.Klank ? Klank.huidigeScene : null,
+    drankLeeg: dl ? { tip: dl.dataset.tip, n: dl.querySelectorAll('i').length } : null,
+    voorkeur: [...document.querySelectorAll('.held-kaart.voorkeur')].map(e => e.dataset.held).join(','),
+    url: location.pathname + location.search
+  };
+};
+const stand = page => page.evaluate(STAND);
+const vt323 = page => page.evaluate(async () => { try { await document.fonts.ready; } catch (e) {} return document.fonts.check('16px VT323'); });
+
+/* ---------- de proloog spelen (de echte, geen stub) ---------- */
+async function klikNieuw(page, vp) {
+  const k = page.locator('#scherm-titel .knop-groot', { hasText: 'Nieuw avontuur' });
+  if (vp.m) await k.tap(); else await k.click();
+}
+async function naarProloog(page, vp, label) {
+  await klikNieuw(page, vp);
+  await slaap(250);
+  const dooft = await page.evaluate(() => document.body.classList.contains('pl-dooft') && document.body.dataset.scherm === 'titel');
+  const w = await wachtOp(page, () => document.body.dataset.scherm === 'proloog' && !!(window.Proloog && Proloog.actief), 6000);
+  t(dooft && w >= 0, `${label}: 'Nieuw avontuur' → het titelvuur dooft (${dooft}) → scherm 'proloog' na ${w < 0 ? 'NOOIT' : (w + 250) + ' ms'}`);
+  return w >= 0;
+}
+/* het kantoor: elke handeling (glimlach, foto, invoer, oproep) + doorspoelen tot het gesprek */
+async function speelKantoor(page, vp, droom, label) {
+  const gezien = {};
+  let n = 0;
+  for (let i = 0; i < 400; i++) {
+    const st = await sr(page, `
+      const q = s => R.querySelector(s);
+      const a = q('.term-acties button[data-actie]');
+      return { scene: R.host.dataset.plScene, actie: a ? a.dataset.actie : null, invoer: !!q('.term-invoer input'),
+        fk: !!q('.foto-kijk'), fkCta: !!q('.fk-cta'), op: !!q('.oproep'), opCta: !!q('.op-cta'),
+        spreker: !!q('.spreker-kaart'), glitch: !!q('.glitch-frame'), collega: R.querySelectorAll('.tl-collega').length };`);
+    if (st.scene !== 'kantoor') break;
+    const eerste = k => { if (gezien[k]) return false; gezien[k] = 1; return true; };
+    if (eerste('start')) { await slaap(700); await sonde(page, `${label} kantoor`); await shot(page, `${vp.n}-03-kantoor`); }
+    if (st.collega && eerste('collega')) await sonde(page, `${label} kantoor, een collega spreekt in de log`);
+    if (st.spreker && eerste('spreker')) await sonde(page, `${label} kantoor, Barts kaart`);
+    if (st.actie) {
+      await slaap(200);
+      if (eerste('actie-' + st.actie)) { await sonde(page, `${label} kantoor, handeling "${st.actie}"`); await shot(page, `${vp.n}-04-kantoor-${st.actie}`); }
+      await tik(page, vp, '.term-acties button[data-actie]');
+      await slaap(250); continue;
+    }
+    if (st.fkCta) { if (eerste('fk')) await sonde(page, `${label} kantoor, de foto`); await tik(page, vp, '.fk-cta'); await slaap(300); continue; }
+    if (st.invoer) {
+      await sonde(page, `${label} kantoor, de jeugddroom-invoer`);
+      await shot(page, `${vp.n}-05-kantoor-invoer`);
+      await page.locator('.term-invoer input').fill(droom);
+      await page.keyboard.press('Enter'); await slaap(300); continue;
+    }
+    if (st.opCta) { await sonde(page, `${label} kantoor, de oproep`); await shot(page, `${vp.n}-06-oproep`); await tik(page, vp, '.op-cta'); await slaap(500); continue; }
+    /* doorspoelen: laptop met een toets, touch met een tik op de log of de overlay */
+    n++;
+    if (!vp.m) await page.keyboard.press(n % 2 ? 'Space' : 'ArrowRight');
+    else {
+      const doel = st.op ? '.oproep' : st.fk ? '.foto-kijk' : '.term-log';
+      await page.locator(doel).first().tap({ position: { x: 16, y: 16 }, force: true }).catch(() => {});
+    }
+    await slaap(150);
+  }
+  t(!!(gezien.collega && gezien.spreker && gezien['actie-glimlach'] && gezien['actie-foto']), `${label}: kantoor doorlopen (glimlach, foto, collega-regels in de log, Barts kaart: ${Object.keys(gezien).join(',')})`);
+}
+async function speelGesprek(page, vp, pad, label) {
+  await slaap(700);
+  await sonde(page, `${label} gesprek`);
+  await shot(page, `${vp.n}-07-gesprek`);
+  const kaart = async (id, toets) => {
+    if (!vp.m && toets) await page.keyboard.press(toets);
+    else await tik(page, vp, `.kkaart[data-kaart="${id}"]`);
+    await slaap(450);
+  };
+  if (pad === 'sprong') {
+    await kaart('glimlach', '1'); await kaart('koffie', '3');
+    if (!vp.m) await page.keyboard.press('e'); else await tik(page, vp, '.knop-eindig');
+    await slaap(600);
+    await kaart('foto');
+    t(await sr(page, `return !!R.querySelector('.kkaart.kk-klaar') && !R.querySelector('.foto-kijk');`), `${label}: eerste tik op de foto tilt hem op (geen modal)`);
+    await sonde(page, `${label} gesprek, foto opgetild`);
+    await kaart('foto');
+    await slaap(700);
+    if (vp.m) await page.locator('.foto-kijk').tap({ position: { x: 10, y: 10 }, force: true }); else await page.keyboard.press('Space');
+    await slaap(400);
+    await sonde(page, `${label} gesprek, de foto (vasthouden)`);
+    await tik(page, vp, '.fk-cta');
+  } else {
+    await kaart('glimlach', '1'); await kaart('mailtje', '2');
+    for (let b = 0; b < 3; b++) {
+      if (b === 1) await sonde(page, `${label} gesprek, beurt 2`);
+      await tik(page, vp, '.knop-eindig'); await slaap(550);
+    }
+  }
+  await slaap(400);
+  await sonde(page, `${label} de uitkomst (regie, geen knop)`);
+  const c = JSON.parse((await opslag(page)).slayit_proloog || 'null');
+  t(!!c && c.v === 2 && c.uitweg === pad, `${label}: contract na het gesprek: v ${c && c.v}, uitweg "${c && c.uitweg}"`);
+  t(await wachtScene(page, 'breekpunt/factuur', 6000), `${label}: de uitkomst loopt zelf door naar de Eindafrekening`);
+}
+async function speelBreekpunt(page, vp, pad, label) {
+  await slaap(600);
+  if (vp.m) await page.locator('.bon-venster').tap({ force: true }); else await page.keyboard.press('Enter');
+  await slaap(400);
+  await sonde(page, `${label} de factuur`);
+  await shot(page, `${vp.n}-08-factuur`);
+  await tik(page, vp, '.fase-factuur .knop-groot');
+  await slaap(700);
+  await sonde(page, `${label} het ontslag`);
+  if (pad === 'sprong') await tik(page, vp, '.brief-cta');
+  else await tik(page, vp, '.knop-pen');
+  t(await wachtScene(page, 'breekpunt/val', 5000), `${label}: naar de val`);
+  await slaap(1200);
+  await sonde(page, `${label} de val`);
+  for (let i = 0; i < 24; i++) {
+    if (await sr(page, `return !!R.querySelector('.val-knop');`)) break;
+    if (vp.m) await page.locator('.fase-val').tap({ position: { x: 12, y: 12 }, force: true }).catch(() => {}); else await page.keyboard.press('Space');
+    await slaap(220);
+  }
+  await slaap(250);
+  if (pad === 'sprong') { await sonde(page, `${label} de liftknop −∞`); await tik(page, vp, '.val-knop'); }
+  t(await wachtScene(page, 'breekpunt/afgrond', 5000), `${label}: naar de Afgrond (${pad === 'sprong' ? 'zelf ingedrukt' : 'B.A.A.S. drukt'})`);
+}
+/* de Afgrond: pellen (hover/tik) en kiezen; meet de overname door de sluier */
+async function kiesMasker(page, vp, masker, label, o) {
+  o = o || {};
+  await slaap(900);
+  await sonde(page, `${label} de Afgrond`);
+  await shot(page, `${vp.n}-09-afgrond`);
+  const knop = page.locator(`.afg-masker[data-masker="${masker}"]`);
+  if (vp.m) await knop.tap(); else { await page.mouse.move(2, 2); await knop.hover(); }
+  await slaap(550);
+  const verwacht = await page.evaluate(id => ({ naam: SPELERS[id].naam, hp: SPELERS[id].hp, kleur: 'rgb(' + SPELERS[id].kleur.replace(/\s+/g, '') .split(',').join(', ') + ')' }), HELD_VAN[masker]);
+  const info = await sr(page, `
+    const b = R.querySelector('.afg-masker[data-masker="' + arg + '"]'); const ring = b.querySelector('.afg-ring');
+    return { gepeld: b.classList.contains('gepeld'), naam: (R.querySelector('.afg-naam') || {}).textContent, hp: (R.querySelector('.afg-hp') || {}).textContent,
+      kaarten: (R.querySelector('.afg-kaarten') || {}).textContent, zin: (R.querySelector('.afg-zin') || {}).textContent, ring: getComputedStyle(ring).borderTopColor };`, masker);
+  t(info.gepeld && info.naam === verwacht.naam && String(info.hp).indexOf(String(verwacht.hp)) !== -1 && /Startkaarten/.test(info.kaarten || ''),
+    `${label}: de eerste ${vp.m ? 'tik' : 'hover'} pelt "${masker}" af tot ${info.naam} (${info.hp}) met startkaarten uit SPELERS`);
+  t(info.ring === verwacht.kleur, `${label}: ring in SPELERS[${HELD_VAN[masker]}].kleur (${info.ring})`);
+  if (o.zin) t(o.zin.test(info.zin || ''), `${label}: maskerzin "${(info.zin || '').trim()}"`);
+  await sonde(page, `${label} de Afgrond, afgepeld`);
+  await shot(page, `${vp.n}-10-afgrond-gepeld`);
+  /* meet: het moment van de keuze (+ waar het kooltje staat) en het moment dat de sluier dichtgaat */
+  await page.evaluate(() => {
+    const R = document.getElementById('scherm-proloog').shadowRoot;
+    window.__keuze = null; window.__overname = null;
+    R.addEventListener('click', e => {
+      if (window.__keuze || !(e.target.closest && e.target.closest('.afg-masker, .afg-kies'))) return;
+      const k = R.querySelector('.afg-kool-kern'); const r = k && k.getBoundingClientRect();
+      window.__keuze = { t: performance.now(), x: r ? r.left + r.width / 2 : null, y: r ? r.top + r.height / 2 : null };
+    }, true);
+    const sl = document.getElementById('proloog-sluier');
+    const mo = new MutationObserver(() => {
+      if (window.__overname || !sl.classList.contains('toon')) return;
+      const k = sl.querySelector('.pl-kooltje'); const r = k && k.getBoundingClientRect();
+      window.__overname = { t: performance.now(), x: r ? r.left + r.width / 2 : null, y: r ? r.top + r.height / 2 : null, scherm: document.body.dataset.scherm };
+      mo.disconnect();
+    });
+    mo.observe(sl, { attributes: true, attributeFilter: ['class'] });
+  });
+  if (o.viaKnop) await tik(page, vp, '.afg-kies'); else if (vp.m) await knop.tap(); else await knop.click();
+  const w = await wachtOp(page, () => !!window.__overname, 4000);
+  const m = await page.evaluate(() => ({ k: window.__keuze, o: window.__overname }));
+  const dt = m.k && m.o ? Math.round(m.o.t - m.k.t) : null;
+  const d = m.k && m.o ? Math.hypot(m.o.x - m.k.x, m.o.y - m.k.y) : null;
+  const [lo, hi] = o.rustig ? [850, 1150] : [1450, 1750];
+  t(w >= 0 && dt >= lo && dt <= hi, `${label}: de sluier neemt over ${dt} ms na de keuze (plan-T ${o.rustig ? '0,9' : '1,5'} s)`);
+  t(d !== null && d <= 2, `${label}: het kooltje van de sluier staat op het kooltje van de Afgrond (afstand ${d === null ? '?' : d.toFixed(1)} px)`);
+}
+/* wacht tot de landing voorbij is: speelbaar */
+async function wachtLanding(page, ms) {
+  return wachtOp(page, () => typeof proloogBezig === 'function' && !proloogBezig() && !document.getElementById('proloog-sluier').classList.contains('toon'), ms || 12000);
+}
+/* de vasthoud-skip: Esc 0,95 s op laptop, de ring 0,95 s vasthouden op touch */
+async function houdSkip(page, vp, ms) {
+  if (vp.m) {
+    const b = await page.locator('.pl-skip').boundingBox();
+    if (!b) return false;
+    /* touch: een echte aanraking via CDP (pointerdown + vasthouden + loslaten) */
+    const cdp = await page.context().newCDPSession(page);
+    const x = b.x + b.width / 2, y = b.y + b.height / 2;
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+    await slaap(ms);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await cdp.detach();
+  } else {
+    await page.keyboard.down('Escape'); await slaap(ms); await page.keyboard.up('Escape');
+  }
+  return true;
+}
+/* plaatdiff: gemiddeld verschil per kanaal (0-255) over het vlak van #scherm-kaart */
+function diffPng(a, b) {
+  if (!PNG) return null;
+  const A = PNG.sync.read(a), B = PNG.sync.read(b);
+  if (A.width !== B.width || A.height !== B.height) return 255;
+  let som = 0;
+  for (let i = 0; i < A.data.length; i += 4) som += Math.abs(A.data[i] - B.data[i]) + Math.abs(A.data[i + 1] - B.data[i + 1]) + Math.abs(A.data[i + 2] - B.data[i + 2]);
+  return som / (A.width * A.height * 3);
+}
+async function kaartPlaat(page, vp) {
+  await page.evaluate(() => { const n = document.getElementById('scherm-nudge'); if (n) n.remove(); document.querySelectorAll('#meldingen > *').forEach(m => m.remove()); });
+  if (vp.m) await page.mouse.move(vp.w - 2, vp.h - 2); else await page.mouse.move(vp.w - 3, Math.round(vp.h * 0.55));
+  await slaap(300);
+  const r = await page.evaluate(() => { const b = document.getElementById('scherm-kaart').getBoundingClientRect(); return { x: Math.max(0, b.left), y: Math.max(0, b.top), w: Math.min(innerWidth, b.right) - Math.max(0, b.left), h: Math.min(innerHeight, b.bottom) - Math.max(0, b.top) }; });
+  return page.screenshot({ animations: 'disabled', clip: { x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.w), height: Math.round(r.h) } });
+}
+
+/* ============================================================================ */
+(async () => {
+  const browser = await chromium.launch();
+  const t00 = Date.now();
+
+  /* ==========================================================================
+     1 · DE HOOFDROUTE: 'Nieuw avontuur' → de hele proloog → de Afgrond → de kaart
+     ========================================================================== */
+  if (doe('hoofd')) for (const vp of [VPS.laptop, VPS.liggend, VPS.staand]) {
+    kop(`1 · hoofdroute ${vp.n} ${vp.w}x${vp.h} · pad ${vp.pad} · masker ${vp.masker}`);
+    const L = vp.n;
+    const { ctx, page } = await open(browser, vp);
+    const lekVoor = await page.evaluate(LEK);
+    if (!(await naarProloog(page, vp, L))) { await ctx.close(); continue; }
+    const inP = await page.evaluate(() => {
+      const h = document.getElementById('scherm-proloog'); const r = h.getBoundingClientRect();
+      return { shadow: !!h.shadowRoot, rect: [r.left, r.top, r.width, r.height].map(Math.round), tb: getComputedStyle(document.getElementById('topbalk')).display,
+        modus: h.getAttribute('data-modus'), body: document.body.dataset.modus };
+    });
+    t(inP.shadow && inP.rect.join() === [0, 0, vp.w, vp.h].join(), `${L}: de proloog draait in een shadow root op #scherm-proloog, schermvullend [${inP.rect}]`);
+    t(inP.tb === 'none' && inP.modus === inP.body, `${L}: topbalk verborgen (${inP.tb}), data-modus gespiegeld op de host (${inP.modus} = body ${inP.body})`);
+    await slaap(900);
+    t(await vt323(page), `${L}: VT323 staat in het document (fonts.css) en is geladen`);
+    const crt = await sr(page, `const p = R.querySelector('.ovm-prompt'); return p ? getComputedStyle(p).fontFamily : null;`);
+    t(/VT323/.test(crt || ''), `${L}: de CRT-prompt in de shadow root gebruikt VT323 (${crt})`);
+    const lekTijdens = await page.evaluate(LEK);
+    t(JSON.stringify(lekTijdens) === JSON.stringify(lekVoor), `${L}: geen CSS-lek terwijl de proloog draait (tokens, body, titelfont, #sheets gelijk)` + (JSON.stringify(lekTijdens) === JSON.stringify(lekVoor) ? '' : ' — voor ' + JSON.stringify(lekVoor) + ' tijdens ' + JSON.stringify(lekTijdens)));
+    const klank = await page.evaluate(() => ({ scene: window.Klank ? Klank.huidigeScene : null, gekoppeld: !!(window.SLAYLIT_AUDIO && SLAYLIT_AUDIO.gekoppeld), acN: window.__acN }));
+    t(klank.scene === 'stil' && klank.gekoppeld && klank.acN === 1, `${L}: klank: de game-muziek staat op "${klank.scene}", de proloog hangt aan Klank.koppel() (${klank.gekoppeld}), ${klank.acN} AudioContext`);
+    await sonde(page, `${L} overzicht`);
+    await shot(page, `${vp.n}-01-overzicht`);
+    await tik(page, vp, '.ov-monitor');
+    t(await wachtScene(page, 'boot', 5000), `${L}: de monitor → de boot`);
+    await slaap(1100);
+    await sonde(page, `${L} boot`);
+    const boot = await sr(page, `return R.querySelector('.boot').textContent;`);
+    t(!/SLAY/.test(boot), `${L}: de boot toont SLAY LIT niet ("${boot.replace(/\s+/g, ' ').slice(0, 40)}…")`);
+    await shot(page, `${vp.n}-02-boot`);
+    await tik(page, vp, '.boot-cta .knop-groot');
+    t(await wachtScene(page, 'kantoor', 5000), `${L}: Klok in → het kantoor`);
+    await speelKantoor(page, vp, vp.droom, L);
+    t(await wachtScene(page, 'gesprek', 5000), `${L}: de oproep → het gesprek`);
+    await speelGesprek(page, vp, vp.pad, L);
+    await speelBreekpunt(page, vp, vp.pad, L);
+    const zin = vp.masker === 'vlucht' ? new RegExp('Ik wou ' + vp.droom.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' worden') : null;
+    await kiesMasker(page, vp, vp.masker, L, { zin, viaKnop: vp.n === 'liggend' });
+    /* de landing */
+    await slaap(1400);
+    await shot(page, `${vp.n}-11-landing-titel`);
+    const tijdens = await stand(page);
+    t(tijdens.scherm === 'kaart' && tijdens.sluier && tijdens.held === vp.held && !tijdens.actief,
+      `${L}: achter de sluier al op de kaart (scherm "${tijdens.scherm}", S.held "${tijdens.held}", Proloog.actief ${tijdens.actief})`);
+    const w = await wachtLanding(page, 12000);
+    t(w >= 0, `${L}: de landing is klaar (nog ${w} ms na T 2,9)`);
+    await slaap(400);
+    await shot(page, `${vp.n}-12-kaart`);
+    const s = await stand(page);
+    const ls = await opslag(page);
+    const c = JSON.parse(ls.slayit_proloog || 'null') || {};
+    t(s.log === 'titel > proloog > kaart', `${L}: body.dataset.scherm: ${s.log}`);
+    t(page.__nav === 0, `${L}: 0x framenavigated tijdens de hele doorloop (gemeten ${page.__nav}), url "${s.url}"`);
+    t(s.held === vp.held, `${L}: S.held = "${s.held}" = de held van masker "${vp.masker}"`);
+    t(s.jeugddroom === vp.droom, `${L}: jeugddroomTekst() = "${s.jeugddroom}" (getypt: "${vp.droom}")`);
+    t(c.v === 2 && c.held === vp.held && c.masker === vp.masker && c.uitweg === vp.pad && c.jeugddroom === vp.droom && c.glimlachen >= 1 && c.fotoKantoor === true && c.wachtToon === -7 && c.echo === 0,
+      `${L}: contract compleet ${JSON.stringify(c)}`);
+    t(ls.slayit_proloog_klaar === '1' && !ls.slayit_proloog_over, `${L}: slayit_proloog_klaar = ${ls.slayit_proloog_klaar}, geen _over-vlag (${ls.slayit_proloog_over})`);
+    t(s.acN === 1 && s.klank === 'kaart', `${L}: precies 1 AudioContext (${s.acN}), de muziek glijdt door naar "${s.klank}"`);
+    t(s.fakkel === 80 && /80/.test(s.chip || ''), `${L}: fakkel na de landing ${s.fakkel}, chip "${s.chip}"`);
+    t(s.tb === 'flex' && s.tbTf === 'none' && !s.sluier && s.bodyPl === '' && s.kaartTf === '' && s.bezig === false,
+      `${L}: speelbaar: topbalk ${s.tb}/${s.tbTf}, sluier ${s.sluier}, pl-klassen "${s.bodyPl}", kaart-transform "${s.kaartTf}", proloogBezig ${s.bezig}`);
+    t(!s.actief && s.appLeeg, `${L}: Proloog gestopt (actief ${s.actief}) en de shadow root leeg (${s.appLeeg})`);
+    t(!!s.drankLeeg && s.drankLeeg.n === 3 && /lege flesplaats/.test(s.drankLeeg.tip || ''), `${L}: lege drankslots = ${s.drankLeeg ? s.drankLeeg.n + ' flesjesomtrekken, data-tip "' + s.drankLeeg.tip + '"' : 'GEEN'}`);
+    const lekNa = await page.evaluate(LEK);
+    t(JSON.stringify(lekNa) === JSON.stringify(lekVoor), `${L}: CSS-tokens, titelfont en #sheets vóór = na` + (JSON.stringify(lekNa) === JSON.stringify(lekVoor) ? '' : ' — voor ' + JSON.stringify(lekVoor) + ' na ' + JSON.stringify(lekNa)));
+    await sonde(page, `${L} de kaart na de landing`);
+    t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+    const miss = page.__404.filter(p => !/rest\/v1|supabase|favicon/.test(p));
+    t(miss.length === 0, `${L}: geen 404's` + (miss.length ? ' — ' + miss.slice(0, 5).join(', ') : ''));
+    /* de plaat: identiek aan een rechtstreekse kiesHeldEcht met dezelfde seed */
+    await slaap(1400);
+    const A = await kaartPlaat(page, vp);
+    fs.writeFileSync(path.join(UIT, vp.n + '-13-plaat-na-landing.png'), A);
+    const ref = await open(browser, vp, { opslag: { slayit_proloog_klaar: '1' }, geenNudge: true });
+    await ref.page.evaluate(([sd, h]) => { toonHeldKeuze(); document.getElementById('seed-invoer').value = sd; kiesHeldEcht(h); }, [s.seed, vp.held]);
+    await slaap(2600);
+    const B = await kaartPlaat(ref.page, vp);
+    fs.writeFileSync(path.join(UIT, vp.n + '-13-plaat-referentie.png'), B);
+    const d = diffPng(A, B);
+    t(d !== null && d < 2, `${L}: plaatdiff van #scherm-kaart na de landing vs. rechtstreeks (seed ${s.seed}): ${d === null ? 'n.v.t. (pngjs ontbreekt)' : d.toFixed(3)}/255 (< 2)`);
+    await ref.ctx.close();
+    await ctx.close();
+  }
+
+  /* ==========================================================================
+     2 · DE VASTHOUD-SKIP (0,8 s): kort indrukken doet niets; vasthouden snijdt naar
+         de Afgrond, en ook wie overslaat kiest een masker en LANDT
+     ========================================================================== */
+  if (doe('skip')) {
+    /* 2a · laptop: Esc. Kort Esc (0,3 s) is ook 'fullscreen uit' en mag nooit overslaan */
+    {
+      const vp = VPS.laptop, L = 'skip laptop';
+      kop('2a · ' + L + ' · Esc vasthouden, maskerkeuze met het toetsenbord');
+      const { ctx, page } = await open(browser, vp);
+      await naarProloog(page, vp, L);
+      await tik(page, vp, '.ov-monitor'); await wachtScene(page, 'boot', 5000);
+      await tik(page, vp, '.boot-cta .knop-groot'); await wachtScene(page, 'kantoor', 5000);
+      const zicht = await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; const s = R && R.querySelector('.pl-skip.zichtbaar'); return !!s && getComputedStyle(s).opacity > 0.2; }, 6000);
+      t(zicht >= 0, `${L}: de skip-ring verschijnt (na ${zicht} ms in het kantoor; plan: 4 s na de start)`);
+      await sonde(page, `${L} kantoor met de skip in beeld`);
+      await houdSkip(page, vp, 300);
+      await slaap(700);
+      const naKort = await scene(page);
+      t(naKort === 'kantoor' && !(await opslag(page)).slayit_proloog_over, `${L}: Esc 0,3 s → niets (scène "${naKort}", geen _over-vlag)`);
+      await houdSkip(page, vp, 950);
+      t(await wachtScene(page, 'breekpunt/afgrond', 3000), `${L}: Esc 0,95 s vasthouden → de Afgrond`);
+      const ls = await opslag(page);
+      const c = JSON.parse(ls.slayit_proloog || 'null') || {};
+      t(ls.slayit_proloog_over === '1' && c.v === 2 && c.uitweg === 'geduwd' && c.jeugddroom === null,
+        `${L}: slayit_proloog_over = ${ls.slayit_proloog_over}, contract v${c.v} uitweg "${c.uitweg}" jeugddroom ${c.jeugddroom}`);
+      await slaap(900);
+      const skipWeg = await sr(page, `const s = R.querySelector('.pl-skip'); return !s || !s.classList.contains('zichtbaar') || getComputedStyle(s).display === 'none' || getComputedStyle(s).opacity < 0.05;`);
+      t(skipWeg, `${L}: geen skip meer in de Afgrond (dat ÍS de keuze)`);
+      await sonde(page, `${L} de Afgrond`);
+      /* toetsenbord: → → → pelt de Kolendruïde (terugvalzin zonder jeugddroom), ← de Gifmagiër, Enter kiest */
+      await page.mouse.move(2, 2);
+      for (let i = 0; i < 3; i++) { await page.keyboard.press('ArrowRight'); await slaap(160); }
+      const zin = await sr(page, `return { held: (R.querySelector('.afg-info') || {}).dataset ? R.querySelector('.afg-info').dataset.held : null, zin: (R.querySelector('.afg-zin') || {}).textContent };`);
+      t(zin.held === 'thoverk' && /Ik wou ooit iets worden/.test(zin.zin || ''), `${L}: →→→ pelt de Kolendruïde, terugvalzin zonder jeugddroom: ${zin.zin}`);
+      await page.keyboard.press('ArrowLeft'); await slaap(250);
+      await page.evaluate(() => {
+        window.__overname = null;
+        const sl = document.getElementById('proloog-sluier');
+        const mo = new MutationObserver(() => { if (sl.classList.contains('toon') && !window.__overname) { window.__overname = { t: performance.now() }; mo.disconnect(); } });
+        mo.observe(sl, { attributes: true, attributeFilter: ['class'] });
+        window.__keuzeT = performance.now();
+      });
+      await page.keyboard.press('Enter');
+      const w = await wachtOp(page, () => !!window.__overname, 4000);
+      t(w >= 0, `${L}: ← + Enter kiest de Gifmagiër (sluier dicht na ${w} ms)`);
+      /* een toets tijdens de landing springt naar het eind */
+      await slaap(1500);
+      await page.keyboard.press('Enter');
+      await slaap(250);
+      const s = await stand(page);
+      t(s.scherm === 'kaart' && s.held === 'gifmagier' && !s.sluier && s.bezig === false && /80/.test(s.chip || ''),
+        `${L}: Enter tijdens de landing → meteen speelbaar op de kaart met ${s.held} (sluier ${s.sluier}, chip "${s.chip}")`);
+      t(s.jeugddroom === null, `${L}: overgeslagen vóór de audit → jeugddroomTekst() ${JSON.stringify(s.jeugddroom)} (het eindgevecht zwijgt er dan netjes over)`);
+      t(s.log === 'titel > proloog > kaart' && page.__nav === 0 && s.acN === 1, `${L}: ${s.log}, ${page.__nav}x framenavigated, ${s.acN} AudioContext`);
+      t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+    }
+    /* 2b · staand: de ring vasthouden met een echte aanraking; de nudge stond al op de titel */
+    {
+      const vp = VPS.staand, L = 'skip staand';
+      kop('2b · ' + L + ' · de ring vasthouden (touch), met de nudge al op de titel');
+      const { ctx, page } = await open(browser, vp, { geenFullscreen: true });
+      await slaap(1600);   /* de fullscreen-nudge verschijnt 1,2 s na de boot, óp de titel */
+      const nudgeVoor = await page.evaluate(() => !!document.getElementById('scherm-nudge'));
+      await naarProloog(page, vp, L);
+      await slaap(600);
+      const nudgeTijdens = await page.evaluate(() => !!document.getElementById('scherm-nudge'));
+      t(!nudgeTijdens, `${L}: de nudge (op de titel: ${nudgeVoor}) hangt niet over de proloog (${nudgeTijdens})`);
+      await tik(page, vp, '.ov-monitor'); await wachtScene(page, 'boot', 5000);
+      await tik(page, vp, '.boot-cta .knop-groot'); await wachtScene(page, 'kantoor', 5000);
+      for (let i = 0; i < 60; i++) {
+        if (await sr(page, `return !!R.querySelector('.term-acties button[data-actie="glimlach"]');`)) break;
+        await page.locator('.term-log').first().tap({ position: { x: 16, y: 16 }, force: true }).catch(() => {});
+        await slaap(160);
+      }
+      await tik(page, vp, '.term-acties button[data-actie="glimlach"]');
+      await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pl-skip.zichtbaar')); }, 6000);
+      await sonde(page, `${L} kantoor met de skip in beeld`);
+      await houdSkip(page, vp, 350);
+      await slaap(600);
+      t((await scene(page)) === 'kantoor', `${L}: de ring 0,35 s aanraken → niets (scène "${await scene(page)}")`);
+      await houdSkip(page, vp, 950);
+      t(await wachtScene(page, 'breekpunt/afgrond', 3000), `${L}: de ring 0,95 s vasthouden → de Afgrond`);
+      const c = JSON.parse((await opslag(page)).slayit_proloog || 'null') || {};
+      t(c.uitweg === 'geduwd' && c.glimlachen === 1, `${L}: het contract telt de ene glimlach (${c.glimlachen}) en zegt "geduwd"`);
+      await kiesMasker(page, vp, 'woede', L);
+      const w = await wachtLanding(page, 12000);
+      const s = await stand(page);
+      t(w >= 0 && s.scherm === 'kaart' && s.held === 'slachter' && s.fakkel === 80, `${L}: geland op "${s.scherm}" met ${s.held}, fakkel ${s.fakkel}`);
+      t(s.log === 'titel > proloog > kaart' && page.__nav === 0 && s.acN === 1, `${L}: ${s.log}, ${page.__nav}x framenavigated, ${s.acN} AudioContext`);
+      if (nudgeVoor) {
+        /* fullscreen weigert hier (zoals op iOS): de nudge sloot dus niet vanzelf. Hij moet
+           weg zijn tijdens de proloog en 1,5 s na de landing terugkomen */
+        const fs0 = await page.evaluate(() => !!document.fullscreenElement);
+        const terug = await wachtOp(page, () => !!document.getElementById('scherm-nudge'), 4000);
+        t(fs0 ? terug < 0 : terug >= 0, `${L}: na de landing: fullscreen ${fs0} → de nudge ${fs0 ? 'blijft weg' : 'komt terug'} (${terug < 0 ? 'weg' : 'terug na ' + terug + ' ms'})`);
+      }
+      t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+    }
+  }
+
+  /* ==========================================================================
+     3 · HERBELEVEN: laat save, contract en proloog-save byte-gelijk; nooit kiesHeldEcht
+     ========================================================================== */
+  if (doe('herbeleef')) {
+    const vp = VPS.laptop, L = 'herbeleven';
+    kop('3 · ' + L + ' · titelknop, Codex-hoofdstuk en midden in een run');
+    const contract = { v: 2, jeugddroom: 'astronaut', uitweg: 'sprong', held: 'thoverk', masker: 'vlucht', glimlachen: 3, fotoKantoor: true, zelfGestempeld: false, wachtToon: -7, echo: 0 };
+    const v3 = { scene: 4, checkpoint: 'afgrond', choices: { jeugddroom: 'astronaut', val: 'gesprongen', held: 'thoverk', masker: 'vlucht' }, gezien: [0, 1, 2, 3, 4] };
+    const { ctx, page } = await open(browser, vp, { opslag: { slayit_proloog_klaar: '1', slayit_proloog: JSON.stringify(contract), slaylit_proloog_v3: JSON.stringify(v3) } });
+    const dump = () => page.evaluate(() => JSON.stringify(Object.keys(localStorage).sort().filter(k => /proloog|save|codex|daily/.test(k)).map(k => [k, localStorage.getItem(k)])));
+    const voor = await dump();
+    /* 3a · de titelknop 'Proloog' (al gekend → herbeleven), een stukje spelen, dan de skip = terug */
+    await page.locator('#scherm-titel .knop-stil', { hasText: 'Proloog' }).click();
+    const w = await wachtOp(page, () => document.body.dataset.scherm === 'proloog' && !!(window.Proloog && Proloog.actief), 6000);
+    t(w >= 0 && (await scene(page)) === 'overzicht', `${L}: titelknop 'Proloog' → herbeleven vanaf scène 0 (${await scene(page)})`);
+    await tik(page, vp, '.ov-monitor'); await wachtScene(page, 'boot', 5000);
+    await tik(page, vp, '.boot-cta .knop-groot'); await wachtScene(page, 'kantoor', 5000);
+    await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pl-skip.zichtbaar')); }, 6000);
+    await houdSkip(page, vp, 950);
+    const terug = await wachtOp(page, () => document.body.dataset.scherm === 'titel' && !proloogBezig(), 5000);
+    let s = await stand(page);
+    t(terug >= 0 && s.log === 'titel > proloog > titel', `${L}: vasthouden tijdens het herbeleven → terug naar de titel (${s.log})`);
+    t((await dump()) === voor, `${L}: na de titelknop + skip is de opslag byte-gelijk (contract, proloog-save, geen run, geen _over)`);
+    /* 3b · de Codex: hoofdstuk 'De Afgrond' → een masker kiezen → terug, geen run */
+    await page.evaluate(() => toonCodex()); await slaap(1200);
+    const hfst = await page.evaluate(() => [...document.querySelectorAll('#codex-inhoud [data-pl-hoofdstuk]')].map(b => b.dataset.plHoofdstuk));
+    t(hfst.includes('afgrond') && hfst.length >= 8, `${L}: de Codex toont 'Proloog herbeleven' + de hoofdstukken (${hfst.join(',')})`);
+    await page.locator('#codex-inhoud [data-pl-hoofdstuk="afgrond"]').click();
+    t(await wachtScene(page, 'breekpunt/afgrond', 6000), `${L}: Codex → rechtstreeks de Afgrond`);
+    await slaap(900);
+    const zin = await (async () => { await page.locator('.afg-masker[data-masker="vlucht"]').hover(); await slaap(400); return sr(page, `return (R.querySelector('.afg-zin') || {}).textContent;`); })();
+    t(/Ik wou astronaut worden/.test(zin || ''), `${L}: de Afgrond leest de jeugddroom uit het contract (${zin})`);
+    await page.locator('.afg-masker[data-masker="vlucht"]').click();
+    const t2 = await wachtOp(page, () => document.body.dataset.scherm === 'titel' && !proloogBezig(), 7000);
+    s = await stand(page);
+    t(t2 >= 0 && s.scherm === 'titel' && !s.sluier && s.tb === 'none', `${L}: na de keuze onthult de sluier het vorige scherm: "${s.scherm}", sluier ${s.sluier}`);
+    t((await dump()) === voor, `${L}: na het Codex-hoofdstuk + maskerkeuze is de opslag byte-gelijk (geen contract, geen save, geen kiesHeldEcht)`);
+    /* 3c · midden in een run: herbeleven en terug op de kaart, de run onaangeroerd */
+    await page.evaluate(() => { nieuwSpel('slachter', 'HERBELEEF-1', 0); saveSpel(); renderKaartScherm(); });
+    await slaap(500);
+    const runVoor = await dump();
+    await page.evaluate(() => herbeleefProloog(2));
+    t(await wachtScene(page, 'kantoor', 6000), `${L}: herbeleefProloog(2) midden in een run → het kantoor`);
+    await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pl-skip.zichtbaar')); }, 6000);
+    await houdSkip(page, vp, 950);
+    await wachtOp(page, () => document.body.dataset.scherm === 'kaart' && !proloogBezig(), 5000);
+    s = await stand(page);
+    t(s.scherm === 'kaart' && s.held === 'slachter' && s.tb === 'flex' && s.seed === 'HERBELEEF-1', `${L}: terug op de kaart met dezelfde run (${s.held}, seed ${s.seed}, topbalk ${s.tb})`);
+    t((await dump()) === runVoor, `${L}: de save van de lopende run is byte-gelijk gebleven`);
+    t(page.__nav === 0 && s.acN === 1, `${L}: ${page.__nav}x framenavigated, ${s.acN} AudioContext over drie herbelevingen`);
+    t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+    await ctx.close();
+  }
+
+  /* ==========================================================================
+     4 · HERVATTEN en de WIPE: na een herlaad het laatste checkpoint; na een WIPE scène 0
+     ========================================================================== */
+  if (doe('wipe')) {
+    const vp = VPS.liggend, L = 'wipe';
+    kop('4 · hervatten na een herlaad, dan een WIPE (liggend)');
+    const { ctx, page } = await open(browser, vp, { geenNudge: true });
+    await naarProloog(page, vp, L);
+    await tik(page, vp, '.ov-monitor'); await wachtScene(page, 'boot', 5000);
+    await tik(page, vp, '.boot-cta .knop-groot'); await wachtScene(page, 'kantoor', 5000);
+    for (let i = 0; i < 60; i++) {
+      if (await sr(page, `return !!R.querySelector('.term-acties button[data-actie="glimlach"]');`)) break;
+      await page.locator('.term-log').first().tap({ position: { x: 16, y: 16 }, force: true }).catch(() => {});
+      await slaap(160);
+    }
+    await tik(page, vp, '.term-acties button[data-actie="glimlach"]');
+    await slaap(400);
+    const save1 = JSON.parse((await opslag(page)).slaylit_proloog_v3 || 'null') || {};
+    t(save1.scene === 2, `${L}: de proloog-save staat in het kantoor (scène ${save1.scene}, checkpoint ${save1.checkpoint})`);
+    await page.reload({ waitUntil: 'load' }); await slaap(800); await volgSchermen(page);
+    await naarProloog(page, vp, L + ' (herladen)');
+    await slaap(600);
+    t((await scene(page)) === 'kantoor', `${L}: na een herlaad hervat 'Nieuw avontuur' in het kantoor (${await scene(page)}), niet op scène 0`);
+    /* ook een oude v2-save (de proloog vóór R1) moet mee weg, anders migreert hij terug in de proloog */
+    await page.evaluate(() => { localStorage.setItem('slayit_proloog_klaar', '1'); localStorage.setItem('slayit_proloog_over', '1'); localStorage.setItem('slaylit_proloog_v2', JSON.stringify({ idx: 5, choices: { val: 'gesprongen', jeugddroom: 'oud' }, maxReached: 5 })); localStorage.setItem('slayit_wipe', '0'); });
+    await page.reload({ waitUntil: 'load' }); await slaap(800); await volgSchermen(page);
+    const naWipe = await opslag(page);
+    t(!naWipe.slayit_proloog && !naWipe.slayit_proloog_klaar && !naWipe.slayit_proloog_over && !naWipe.slaylit_proloog_v3 && !naWipe.slaylit_proloog_v2,
+      `${L}: de WIPE wist contract, klaar, over, de proloog-save en de oude v2-save (over: ${Object.keys(naWipe).filter(k => naWipe[k] !== null).join(',') || 'niets'})`);
+    await naarProloog(page, vp, L + ' (na de WIPE)');
+    await slaap(500);
+    const s0 = await scene(page);
+    const save0 = JSON.parse((await opslag(page)).slaylit_proloog_v3 || 'null') || {};
+    t(s0 === 'overzicht' && save0.scene === 0, `${L}: na de WIPE start de proloog weer op scène 0 (${s0}, save scène ${save0.scene})`);
+    await sonde(page, `${L} scène 0 na de WIPE`);
+    t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+    await ctx.close();
+  }
+
+  /* ==========================================================================
+     5 · DE POORTEN: een veteraan of een lopende run landt op de heldkeuze met voorselectie
+     ========================================================================== */
+  if (doe('poort')) for (const geval of [
+    { n: 'veteraan (Codex.runs 3) liggend', vp: VPS.liggend, opslag: { slayit_codex: JSON.stringify({ runs: 3 }) }, masker: 'vlucht' },
+    { n: 'lopende run laptop', vp: VPS.laptop, run: true, masker: 'gif' }
+  ]) {
+    const vp = geval.vp, L = 'poort ' + geval.n;
+    kop('5 · ' + L);
+    const { ctx, page } = await open(browser, vp, { opslag: geval.opslag, geenNudge: true });
+    let runVoor = null;
+    if (geval.run) runVoor = await page.evaluate(() => { nieuwSpel('slachter', 'POORT-1', 0); saveSpel(); naarTitel(); return localStorage.getItem('slayit_save_v1'); });
+    await naarProloog(page, vp, L);
+    await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pl-skip.zichtbaar')); }, 6000);
+    await houdSkip(page, vp, 950);
+    t(await wachtScene(page, 'breekpunt/afgrond', 3000), `${L}: skip → de Afgrond`);
+    await kiesMasker(page, vp, geval.masker, L);
+    await wachtLanding(page, 12000);
+    await slaap(300);
+    const s = await stand(page);
+    const held = HELD_VAN[geval.masker];
+    t(s.scherm === 'held' && s.voorkeur === held && s.log === 'titel > proloog > held', `${L}: de heldkeuze (${s.log}) met de ember-rand op "${s.voorkeur}"`);
+    const kies = await page.evaluate(() => {
+      const k = document.querySelector('.held-kaart.voorkeur .held-kies'); if (!k) return null;
+      const r = k.getBoundingClientRect(); const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return { in: r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth, raak: !!(el && el.closest('.held-kies')), tekst: k.textContent.trim(), y: [Math.round(r.top), Math.round(r.bottom)] };
+    });
+    t(!!kies && kies.in && kies.raak, `${L}: "${kies && kies.tekst}" staat volledig in beeld (y ${kies && kies.y.join('-')} van ${vp.h}) en is raak`);
+    if (geval.run) t((await page.evaluate(() => localStorage.getItem('slayit_save_v1'))) === runVoor, `${L}: de save van de lopende run is byte-gelijk (kiesHeldEcht liep niet)`);
+    else t(!(await page.evaluate(() => localStorage.getItem('slayit_save_v1'))), `${L}: geen run gestart vóór de klik`);
+    /* nog één klik: 'Speel als …' */
+    if (!geval.run) {
+      await tik(page, vp, '.held-kaart.voorkeur .held-kies');
+      await slaap(500);
+      await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => /toch beginnen/i.test(x.textContent) && x.getClientRects().length); if (b) b.click(); });
+      await wachtOp(page, () => document.body.dataset.scherm === 'kaart', 4000);
+      const s2 = await stand(page);
+      t(s2.scherm === 'kaart' && s2.held === held, `${L}: één klik later op de kaart met ${s2.held}`);
+    }
+    t(page.__nav === 0 && page.__f.length === 0, `${L}: ${page.__nav}x framenavigated, geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+    await ctx.close();
+  }
+
+  /* ==========================================================================
+     6 · DE STUB proloog/index.html → ../?proloog=1, onder /slay-lit/ (GitHub Pages-pad)
+     ========================================================================== */
+  if (doe('stub')) {
+    const vp = VPS.staand, L = 'stub /slay-lit/';
+    kop('6 · ' + L + ' · oude link proloog/ → de proloog in de game-pagina');
+    const { ctx, page } = await open(browser, vp, { prefix: '/slay-lit/', geenNudge: true });
+    const lekVoor = await page.evaluate(LEK);
+    page.__nav = 0; page.__load = 0;
+    await page.goto('http://' + HOST + '/slay-lit/proloog/', { waitUntil: 'load' });
+    const w = await wachtOp(page, () => document.body && document.body.dataset.scherm === 'proloog' && !!(window.Proloog && Proloog.actief), 8000);
+    const url = await page.evaluate(() => location.pathname + location.search);
+    t(w >= 0 && url === '/slay-lit/', `${L}: proloog/ → location.replace('../?proloog=1') → de proloog start in de game (url nu "${url}", parameter weg)`);
+    t(page.__load === 1 && page.__nav === 3, `${L}: de stub stuurt door vóór hij zelf uitlaadt: 1 documentlading (de game: ${page.__load}); framenavigated ${page.__nav} = stub + game + history.replaceState die de parameter wist`);
+    const navNaStart = page.__nav, loadNaStart = page.__load;
+    await slaap(900);
+    await sonde(page, `${L} scène 0`);
+    await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pl-skip.zichtbaar')); }, 6000);
+    await houdSkip(page, vp, 950);
+    t(await wachtScene(page, 'breekpunt/afgrond', 3000), `${L}: skip → de Afgrond`);
+    await kiesMasker(page, vp, 'vlucht', L);
+    await wachtLanding(page, 12000);
+    const s = await stand(page);
+    t(s.scherm === 'kaart' && s.held === 'thoverk' && s.fakkel === 80, `${L}: geland op "${s.scherm}" met ${s.held}, fakkel ${s.fakkel}`);
+    t(page.__nav === navNaStart && page.__load === loadNaStart && s.acN === 1, `${L}: geen herlaad of navigatie sinds de start (${page.__nav - navNaStart}/${page.__load - loadNaStart}), ${s.acN} AudioContext`);
+    const lekNa = await page.evaluate(LEK);
+    t(JSON.stringify(lekNa) === JSON.stringify(lekVoor), `${L}: geen CSS-lek onder /slay-lit/ (tokens, fonts, #sheets vóór = na)` + (JSON.stringify(lekNa) === JSON.stringify(lekVoor) ? '' : ' — ' + JSON.stringify(lekVoor) + ' / ' + JSON.stringify(lekNa)));
+    const miss = page.__404.filter(p => !/rest\/v1|supabase|favicon/.test(p));
+    t(miss.length === 0, `${L}: geen 404's en niets buiten /slay-lit/ opgevraagd` + (miss.length ? ' — ' + miss.slice(0, 5).join(', ') : ''));
+    t(page.__f.length === 0, `${L}: geen paginafouten (ook niet zonder gebaar: geen fullscreen-weigering)` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+    await ctx.close();
+  }
+
+  /* ==========================================================================
+     7 · REDUCED MOTION: klaar na 0,9 s, geen schaal, geen vonken, overvloeier 800 ms
+     ========================================================================== */
+  if (doe('rustig')) {
+    const vp = VPS.laptop, L = 'reduced motion';
+    kop('7 · ' + L + ' (laptop)');
+    const { ctx, page } = await open(browser, vp, { rustig: true });
+    await naarProloog(page, vp, L);
+    await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pl-skip.zichtbaar')); }, 6000);
+    await houdSkip(page, vp, 950);
+    t(await wachtScene(page, 'breekpunt/afgrond', 3000), `${L}: skip → de Afgrond`);
+    await kiesMasker(page, vp, 'gif', L, { rustig: true });
+    await slaap(300);
+    const r = await page.evaluate(() => ({
+      statisch: !!document.querySelector('#proloog-sluier .pl-titel.statisch'),
+      tf: document.getElementById('scherm-kaart').style.transform, vonken: document.querySelectorAll('.pl-vonk-deeltje').length,
+      pl: [...document.body.classList].filter(c => /^pl-/.test(c)).join(',')
+    }));
+    t(r.statisch && r.tf === '' && r.vonken === 0 && r.pl === '', `${L}: statische titel (${r.statisch}), geen schaal ("${r.tf}"), ${r.vonken} vonken, geen pl-landt ("${r.pl}")`);
+    const w = await wachtLanding(page, 4000);
+    t(w >= 0 && w <= 2300, `${L}: de rustige landing is klaar na ~${w + 300} ms (1,2 s titel + 0,8 s overvloeier)`);
+    const s = await stand(page);
+    t(s.scherm === 'kaart' && s.held === 'gifmagier' && s.fakkel === 80 && /80/.test(s.chip || ''), `${L}: geland op "${s.scherm}" met ${s.held}, chip "${s.chip}"`);
+    t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+    await ctx.close();
+  }
+
+  /* ==========================================================================
+     8 · STATISCH: wat R1 wegnam, blijft weg (grep op de bronnen)
+     ========================================================================== */
+  if (doe('statisch')) {
+    kop('8 · statisch (bronnen)');
+    const lees = p => fs.readFileSync(path.join(WORKTREE, p), 'utf8');
+    const pjs = lees('proloog/proloog.js'), pcss = lees('proloog/proloog.css'), stub = lees('proloog/index.html'), sw = lees('sw.js'), idx = lees('index.html'), fcss = lees('assets/fonts/fonts.css');
+    const code = pjs.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    t(!/location\.href|DOMContentLoaded|proloog-nav|knop-daalaf|knop-skip/.test(code), `proloog.js: geen location.href, DOMContentLoaded, #proloog-nav, DAAL AF of 'Rechtstreeks afdalen'-knop meer`);
+    const pcssCode = pcss.replace(/\/\*[\s\S]*?\*\//g, '');
+    t(!/@font-face/.test(pcssCode) && /:host\s*\{[^}]*all:\s*initial/.test(pcssCode), `proloog.css: geen @font-face (shadow root negeert die) en :host { all: initial }`);
+    t(/font-family:\s*'VT323'/.test(fcss), `assets/fonts/fonts.css: VT323 staat in het document`);
+    const pau = lees('proloog/audio.js').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    t(!/new\s+(window\.)?(webkit)?AudioContext|slaylit_audio_mute/.test(pau) && /Klank\.koppel|K\.koppel/.test(pau), `proloog/audio.js: geen eigen AudioContext en geen eigen mute-sleutel; een laag op Klank.koppel()`);
+    t(/location\.replace\(['"]\.\.\/\?proloog=1['"]\)/.test(stub) && /<noscript>/.test(stub), `proloog/index.html is een stub: location.replace('../?proloog=1') + noscript`);
+    t(['js/proloog-brug.js', 'proloog/proloog.js', 'proloog/data.js', 'proloog/audio.js', 'proloog/proloog.css', 'assets/fonts/fonts.css'].every(f => sw.indexOf("'" + f + "'") !== -1), `sw.js: de brug, de proloogbestanden en fonts.css staan in de cache-lijsten`);
+    t(/id="scherm-proloog"/.test(idx) && /id="proloog-sluier"/.test(idx) && /js\/proloog-brug\.js/.test(idx) && !/location\.href='proloog\//.test(idx), `index.html: #scherm-proloog, #proloog-sluier en de brug; geen location.href naar proloog/ meer`);
+  }
+
+  await browser.close();
+  console.log(`\n============================================\nSAMENVATTING PROLOOG R1: ${ok} ok, ${fout} FOUT  (${Math.round((Date.now() - t00) / 1000)} s)\n============================================`);
+  if (fout) { console.log(fouten.map(f => ' - ' + f).join('\n')); }
+  process.exit(fout ? 1 : 0);
+})().catch(e => { console.error('CRASH', e); process.exit(2); });
