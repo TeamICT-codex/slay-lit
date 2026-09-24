@@ -465,11 +465,21 @@ const SONDE = () => {
   await page.goto('http://' + HOST + '/', { waitUntil: 'load' }); await slaap(700);
   await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => /toch beginnen/i.test(x.textContent)); if (b) b.click(); }); await slaap(600);
   const urlVoor = page.url();
-  await klikScene(/De Proloog/); await slaap(1800);
+  const vorigScherm = await page.evaluate(() => document.body.dataset.scherm);
+  await klikScene(/De Proloog/);
+  /* F1: de proloog moet echt STARTEN (de bestanden staan in de testwortel) \u2014 een stil mislukte
+     herbeleving die terugvalt op het vorige scherm is een fout, geen geslaagde test */
+  const plStand = () => page.evaluate(() => ({ scherm: document.body.dataset.scherm, actief: !!(window.Proloog && window.Proloog.actief), bezig: typeof proloogBezig === 'function' && proloogBezig() }));
+  let pl = await plStand();
+  for (let i = 0; i < 60 && !(pl.scherm === 'proloog' && pl.actief); i++) { await slaap(100); pl = await plStand(); }
   const url = page.url();
-  const pl = await page.evaluate(() => ({ scherm: document.body.dataset.scherm, actief: !!(window.Proloog && window.Proloog.actief), bezig: typeof proloogBezig === 'function' && proloogBezig() }));
-  t(url === urlVoor && (pl.scherm === 'proloog' || !pl.bezig), `De Proloog \u2192 in deze pagina herbeleefd: url "${url.replace('http://' + HOST, '')}" (ongewijzigd: ${url === urlVoor}), scherm "${pl.scherm}", Proloog.actief ${pl.actief}`);
-  await page.evaluate(() => { try { if (window.Proloog && Proloog.stop) Proloog.stop(); } catch (e) {} });
+  /* afbreken via de skip-API, zoals een speler (herbeleven: terug naar waar je was) \u2014 niet
+     met Proloog.stop() buiten de brug om, dat liet 'bezig' in de brug op true staan */
+  await page.evaluate(() => { try { if (window.Proloog && Proloog.slaOver) Proloog.slaOver(); } catch (e) {} });
+  let na = await plStand();
+  for (let i = 0; i < 40 && na.bezig; i++) { await slaap(100); na = await plStand(); }
+  t(url === urlVoor && pl.scherm === 'proloog' && pl.actief && !na.bezig && !na.actief && na.scherm === vorigScherm,
+    `De Proloog \u2192 in deze pagina herbeleefd: url "${url.replace('http://' + HOST, '')}" (ongewijzigd: ${url === urlVoor}), scherm "${pl.scherm}", Proloog.actief ${pl.actief}; slaOver() \u2192 terug op "${na.scherm}" (was "${vorigScherm}"), proloogBezig ${na.bezig}`);
   await boot();
 
   /* ---------- 3f \u00b7 SCHAKELAARS ---------- */

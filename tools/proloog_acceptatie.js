@@ -10,7 +10,7 @@
        NODE_PATH="$PWD/node_modules" SLAYIT_WORKTREE="...\SLAY-IT-proloog" \
        SLAYIT_SHOTS="$PWD/proloog_shots" node "...\SLAY-IT-proloog\tools\proloog_acceptatie.js"
    Optioneel een filter als argument: hoofd | skip | herbeleef | wipe | poort | stub | rustig |
-   statisch (meerdere mogen, komma-gescheiden). Zonder argument draait alles (±7 min).
+   glimlach | lite | statisch (meerdere mogen, komma-gescheiden). Zonder argument draait alles (±9 min).
 
    WAT HET MEET (plan §5 R1 'klaar als', per formaat waar het ertoe doet):
    1 hoofd     de hele proloog gespeeld (drie formaten, sprong/geduwd/sprong, drie maskers):
@@ -27,6 +27,12 @@
    6 stub      proloog/ → ../?proloog=1 onder /slay-lit/, zonder lek of 404.
    7 rustig    reduced motion: klaar op 0,9 s, statische titel, overvloeier.
    8 statisch  wat R1 wegnam blijft weg (grep op de bronnen).
+   9 glimlach  (F1) een herlaad telt geen glimlach dubbel (gesprek en kantoor).
+  10 lite      (F1) body.lite geldt ook in de proloog: geen blur, geen flikker, rustig pad.
+   F1 (review-fixes) meet daarnaast in de hoofdroute: het naadframe (token ≤ 12 px of ≤ .15),
+   de klankknop, het doek #07060a, de voorgeladen Afgrond-art, de onthulling (ease-out) en de
+   fakkelvonk; in 2c overslaan + herladen in de Afgrond; de nudge niet over de verse kaart;
+   herbeleven vanuit de Codex eindigt in de Codex.
    Het script heeft GEEN server nodig: het bedient de worktree rechtstreeks vanaf
    schijf via route.fulfill op http://localhost:4173/** (ook onder /slay-lit/).
    Elke regel toont de GEMETEN waarde. Exit 1 bij minstens één fout.
@@ -287,8 +293,12 @@ async function naarProloog(page, vp, label) {
   await klikNieuw(page, vp);
   await slaap(250);
   const dooft = await page.evaluate(() => document.body.classList.contains('pl-dooft') && document.body.dataset.scherm === 'titel');
+  /* F1: het doek van de heenweg is puur #07060a, hetzelfde zwart als de sluier van de landing */
+  await wachtOp(page, () => { const d = document.getElementById('toneel-doek'); return !!d && d.classList.contains('aan'); }, 1500);
+  const doekKleur = await page.evaluate(() => { const d = document.getElementById('toneel-doek'); return d && d.classList.contains('aan') ? getComputedStyle(d).backgroundColor : 'niet gezien'; });
   const w = await wachtOp(page, () => document.body.dataset.scherm === 'proloog' && !!(window.Proloog && Proloog.actief), 6000);
   t(dooft && w >= 0, `${label}: 'Nieuw avontuur' → het titelvuur dooft (${dooft}) → scherm 'proloog' na ${w < 0 ? 'NOOIT' : (w + 250) + ' ms'}`);
+  t(doekKleur === 'rgb(7, 6, 10)', `${label}: het doek van de heenweg is puur #07060a (${doekKleur})`);
   return w >= 0;
 }
 /* het kantoor: elke handeling (glimlach, foto, invoer, oproep) + doorspoelen tot het gesprek */
@@ -413,13 +423,21 @@ async function kiesMasker(page, vp, masker, label, o) {
   /* meet: het moment van de keuze (+ waar het kooltje staat) en het moment dat de sluier dichtgaat */
   await page.evaluate(() => {
     const R = document.getElementById('scherm-proloog').shadowRoot;
-    window.__keuze = null; window.__overname = null;
+    window.__keuze = null; window.__overname = null; window.__tok = [];
+    const sl = document.getElementById('proloog-sluier');
     R.addEventListener('click', e => {
       if (window.__keuze || !(e.target.closest && e.target.closest('.afg-masker, .afg-kies'))) return;
       const k = R.querySelector('.afg-kool-kern'); const r = k && k.getBoundingClientRect();
       window.__keuze = { t: performance.now(), x: r ? r.left + r.width / 2 : null, y: r ? r.top + r.height / 2 : null };
+      /* F1: een rAF-sampler op het gekozen token, tot het frame waarin de sluier dichtgaat */
+      const loop = () => {
+        const toon = sl.classList.contains('toon');
+        const sch = R.querySelector('.afg-masker.uitverkoren .afg-schijf');
+        if (sch) { const b = sch.getBoundingClientRect(); window.__tok.push({ t: Math.round(performance.now() - window.__keuze.t), b: Math.round(b.width), o: +(+getComputedStyle(sch).opacity).toFixed(2), sluier: toon }); }
+        if (!toon && performance.now() - window.__keuze.t < 3000) requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
     }, true);
-    const sl = document.getElementById('proloog-sluier');
     const mo = new MutationObserver(() => {
       if (window.__overname || !sl.classList.contains('toon')) return;
       const k = sl.querySelector('.pl-kooltje'); const r = k && k.getBoundingClientRect();
@@ -436,6 +454,57 @@ async function kiesMasker(page, vp, masker, label, o) {
   const [lo, hi] = o.rustig ? [850, 1150] : [1450, 1750];
   t(w >= 0 && dt >= lo && dt <= hi, `${label}: de sluier neemt over ${dt} ms na de keuze (plan-T ${o.rustig ? '0,9' : '1,5'} s)`);
   t(d !== null && d <= 2, `${label}: het kooltje van de sluier staat op het kooltje van de Afgrond (afstand ${d === null ? '?' : d.toFixed(1)} px)`);
+  /* F1 (review, vondst 1): in het laatste frame vóór de sluier is het token weg in het kooltje
+     (≤ 12 px of opacity ≤ .15) — ook op laptop, waar het vroeger nog 61-69 px op .6 stond */
+  const tok = await page.evaluate(() => window.__tok);
+  const laatste = (tok || []).filter(s => !s.sluier).pop();
+  t(!!laatste && (laatste.b <= 12 || laatste.o <= 0.15), `${label}: het naadframe is naadloos: laatste frame vóór de sluier (t ${laatste ? laatste.t : '?'} ms) token ${laatste ? laatste.b + ' px op opacity ' + laatste.o : 'niet gemeten'} (≤ 12 px of ≤ .15)`);
+}
+/* F1: meters voor de landing zelf — de onthulling (het radiale masker van .pl-doek) en de fakkelvonk */
+async function meetLanding(page) {
+  await page.evaluate(() => {
+    const sl = document.getElementById('proloog-sluier');
+    window.__onthul = []; window.__vonk = { max: 0, staart: 0 };
+    const t0 = performance.now();
+    const loop = () => {
+      const d = sl.querySelector('.pl-doek');
+      const m = d && (d.style.maskImage || d.style.webkitMaskImage);
+      if (m && d.style.display !== 'none') window.__onthul.push({ t: Math.round(performance.now() - t0), m });
+      sl.querySelectorAll('.pl-fakkelvonk').forEach(v => {
+        if (v.classList.contains('pl-staart')) window.__vonk.staart = Math.max(window.__vonk.staart, sl.querySelectorAll('.pl-staart').length);
+        else window.__vonk.max = Math.max(window.__vonk.max, v.offsetWidth);
+      });
+      if (performance.now() - t0 < 9000 && sl.classList.contains('toon')) requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  });
+}
+async function toetsLanding(page, vp, label) {
+  const r = await page.evaluate(() => ({ o: window.__onthul || [], v: window.__vonk || {} }));
+  /* de buitenrand = de laatste stop (de browser normaliseert #000 tot rgb(0, 0, 0)) */
+  const buiten = s => { const m = /([\d.]+)px\)\s*$/.exec(s.m); return m ? +m[1] : null; };
+  const eerste = r.o[0], max = Math.max(0, ...r.o.map(buiten).filter(x => x !== null));
+  const op250 = eerste ? r.o.find(s => s.t - eerste.t >= 250) : null;
+  const frac = op250 && max ? buiten(op250) / max : null;
+  t(!!eerste && max > 0 && buiten(eerste) <= 0.1 * max && frac !== null && frac >= 0.3,
+    `${label}: de onthulling begint op het kooltje (eerste buitenrand ${eerste ? buiten(eerste) : '?'} van ${Math.round(max)} px) en gaat meteen open: na 250 ms ${frac === null ? '?' : Math.round(frac * 100)} % van de straal (ease-out, ≥ 30 %)`);
+  const minVonk = vp.m ? 7 : 10;
+  t(r.v.max >= minVonk && r.v.staart === 2, `${label}: de fakkelvonk is ${r.v.max} px (≥ ${minVonk}) met een staart van ${r.v.staart} kopieën`);
+}
+/* F1: wordt de Afgrond-art vóór haar eerste frame al geladen? (vroeger ±150 ms lege schijven) */
+async function meetAfgrondArt(page) {
+  await page.evaluate(() => {
+    const R = document.getElementById('scherm-proloog').shadowRoot;
+    window.__afgArt = null;
+    const mo = new MutationObserver(() => {
+      if (window.__afgArt) return;
+      const imgs = [...R.querySelectorAll('.afg-masker img, .afg-art img')];
+      if (imgs.length < 7) return;
+      window.__afgArt = { n: imgs.length, klaar: imgs.filter(i => i.complete && i.naturalWidth > 0).length };
+      mo.disconnect();
+    });
+    mo.observe(R, { childList: true, subtree: true });
+  });
 }
 /* wacht tot de landing voorbij is: speelbaar */
 async function wachtLanding(page, ms) {
@@ -506,6 +575,19 @@ async function kaartPlaat(page, vp) {
     t(klank.scene === 'stil' && klank.gekoppeld && klank.acN === 1, `${L}: klank: de game-muziek staat op "${klank.scene}", de proloog hangt aan Klank.koppel() (${klank.gekoppeld}), ${klank.acN} AudioContext`);
     await sonde(page, `${L} overzicht`);
     await shot(page, `${vp.n}-01-overzicht`);
+    /* F1 (review, vondst 2): de klankknop naast de skip — de game-mute, gesynchroniseerd met ⚙️ */
+    const klankKnop = () => page.evaluate(() => {
+      const R = document.getElementById('scherm-proloog').shadowRoot; const k = R && R.querySelector('.pl-klank');
+      return { er: !!k, aan: Klank.vol.aan, cb: document.getElementById('inst-geluid').checked, pressed: k && k.getAttribute('aria-pressed'), icoon: k && k.textContent.trim(), scene: R.host.dataset.plScene };
+    });
+    const k0 = await klankKnop();
+    await tik(page, vp, '.pl-klank'); await slaap(150);
+    const k1 = await klankKnop();
+    if (vp.m) await tik(page, vp, '.pl-klank'); else await page.keyboard.press('m');
+    await slaap(150);
+    const k2 = await klankKnop();
+    t(k0.er && k0.aan && !k1.aan && !k1.cb && k1.pressed === 'true' && k1.icoon === '🔇' && k2.aan && k2.cb && k2.icoon === '🔊' && k2.scene === 'overzicht',
+      `${L}: de klankknop dempt (${k0.aan} → ${k1.aan}, ⚙️ ${k1.cb}, ${k1.icoon}) en ${vp.m ? 'een tweede tik' : 'M'} zet het weer aan (${k2.aan}, ${k2.icoon}); de scène spoelt niet door (${k2.scene})`);
     await tik(page, vp, '.ov-monitor');
     t(await wachtScene(page, 'boot', 5000), `${L}: de monitor → de boot`);
     await slaap(1100);
@@ -518,9 +600,13 @@ async function kaartPlaat(page, vp) {
     await speelKantoor(page, vp, vp.droom, L);
     t(await wachtScene(page, 'gesprek', 5000), `${L}: de oproep → het gesprek`);
     await speelGesprek(page, vp, vp.pad, L);
+    await meetAfgrondArt(page);
     await speelBreekpunt(page, vp, vp.pad, L);
+    const afgArt = await page.evaluate(() => window.__afgArt);
+    t(!!afgArt && afgArt.klaar === afgArt.n, `${L}: de Afgrond-art is al geladen in haar eerste frame (${afgArt ? afgArt.klaar + '/' + afgArt.n : 'niet gemeten'} beelden klaar, voorgeladen tijdens de val)`);
     const zin = vp.masker === 'vlucht' ? new RegExp('Ik wou ' + vp.droom.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' worden') : null;
     await kiesMasker(page, vp, vp.masker, L, { zin, viaKnop: vp.n === 'liggend' });
+    await meetLanding(page);
     /* de landing */
     await slaap(1400);
     await shot(page, `${vp.n}-11-landing-titel`);
@@ -529,6 +615,7 @@ async function kaartPlaat(page, vp) {
       `${L}: achter de sluier al op de kaart (scherm "${tijdens.scherm}", S.held "${tijdens.held}", Proloog.actief ${tijdens.actief})`);
     const w = await wachtLanding(page, 12000);
     t(w >= 0, `${L}: de landing is klaar (nog ${w} ms na T 2,9)`);
+    await toetsLanding(page, vp, L);
     await slaap(400);
     await shot(page, `${vp.n}-12-kaart`);
     const s = await stand(page);
@@ -592,8 +679,9 @@ async function kaartPlaat(page, vp) {
       t(await wachtScene(page, 'breekpunt/afgrond', 3000), `${L}: Esc 0,95 s vasthouden → de Afgrond`);
       const ls = await opslag(page);
       const c = JSON.parse(ls.slayit_proloog || 'null') || {};
-      t(ls.slayit_proloog_over === '1' && c.v === 2 && c.uitweg === 'geduwd' && c.jeugddroom === null,
-        `${L}: slayit_proloog_over = ${ls.slayit_proloog_over}, contract v${c.v} uitweg "${c.uitweg}" jeugddroom ${c.jeugddroom}`);
+      /* F1 (review, vondst 4): _over komt pas bij de landing — in de Afgrond is er nog geen held */
+      t(ls.slayit_proloog_over === null && c.v === 2 && c.uitweg === 'geduwd' && c.jeugddroom === null,
+        `${L}: in de Afgrond nog geen _over-vlag (${ls.slayit_proloog_over}); contract v${c.v} uitweg "${c.uitweg}" jeugddroom ${c.jeugddroom}`);
       await slaap(900);
       const skipWeg = await sr(page, `const s = R.querySelector('.pl-skip'); return !s || !s.classList.contains('zichtbaar') || getComputedStyle(s).display === 'none' || getComputedStyle(s).opacity < 0.05;`);
       t(skipWeg, `${L}: geen skip meer in de Afgrond (dat ÍS de keuze)`);
@@ -622,6 +710,8 @@ async function kaartPlaat(page, vp) {
       t(s.scherm === 'kaart' && s.held === 'gifmagier' && !s.sluier && s.bezig === false && /80/.test(s.chip || ''),
         `${L}: Enter tijdens de landing → meteen speelbaar op de kaart met ${s.held} (sluier ${s.sluier}, chip "${s.chip}")`);
       t(s.jeugddroom === null, `${L}: overgeslagen vóór de audit → jeugddroomTekst() ${JSON.stringify(s.jeugddroom)} (het eindgevecht zwijgt er dan netjes over)`);
+      const lsNa = await opslag(page);
+      t(lsNa.slayit_proloog_over === '1' && lsNa.slayit_proloog_klaar === '1', `${L}: na de landing: _over = ${lsNa.slayit_proloog_over}, _klaar = ${lsNa.slayit_proloog_klaar}`);
       t(s.log === 'titel > proloog > kaart' && page.__nav === 0 && s.acN === 1, `${L}: ${s.log}, ${page.__nav}x framenavigated, ${s.acN} AudioContext`);
       t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
       await ctx.close();
@@ -661,12 +751,39 @@ async function kaartPlaat(page, vp) {
       t(s.log === 'titel > proloog > kaart' && page.__nav === 0 && s.acN === 1, `${L}: ${s.log}, ${page.__nav}x framenavigated, ${s.acN} AudioContext`);
       if (nudgeVoor) {
         /* fullscreen weigert hier (zoals op iOS): de nudge sloot dus niet vanzelf. Hij moet
-           weg zijn tijdens de proloog en 1,5 s na de landing terugkomen */
+           weg zijn tijdens de proloog, NIET over de verse kaart vallen (F1, vondst 8), en pas
+           bij de volgende rustige schermwissel terugkomen (hier: terug naar de titel) */
         const fs0 = await page.evaluate(() => !!document.fullscreenElement);
+        const opKaart = await wachtOp(page, () => !!document.getElementById('scherm-nudge'), 3500);
+        await page.evaluate(() => naarTitel());
         const terug = await wachtOp(page, () => !!document.getElementById('scherm-nudge'), 4000);
-        t(fs0 ? terug < 0 : terug >= 0, `${L}: na de landing: fullscreen ${fs0} → de nudge ${fs0 ? 'blijft weg' : 'komt terug'} (${terug < 0 ? 'weg' : 'terug na ' + terug + ' ms'})`);
+        t(opKaart < 0 && (fs0 ? terug < 0 : terug >= 0), `${L}: na de landing: niet over de kaart (${opKaart < 0 ? 'weg' : 'VERSCHEEN na ' + opKaart + ' ms'}); fullscreen ${fs0} → op de titel ${fs0 ? 'blijft hij weg' : 'komt hij terug'} (${terug < 0 ? 'weg' : 'na ' + terug + ' ms'})`);
       }
       t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+    }
+    /* 2c · overslaan en dan herladen vóór de maskerkeuze (F1, vondst 4): 'Nieuw avontuur'
+       brengt je terug in de Afgrond, en de directe landing met de held van het masker blijft */
+    {
+      const vp = VPS.laptop, L = 'skip + herlaad';
+      kop('2c · ' + L + ' · overslaan, herladen in de Afgrond, dan toch direct landen');
+      const { ctx, page } = await open(browser, vp, { geenNudge: true });
+      await naarProloog(page, vp, L);
+      await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pl-skip.zichtbaar')); }, 6000);
+      await houdSkip(page, vp, 950);
+      t(await wachtScene(page, 'breekpunt/afgrond', 3000), `${L}: skip → de Afgrond`);
+      await page.reload({ waitUntil: 'load' }); await slaap(800); await volgSchermen(page); page.__nav = 0;
+      const gate = await page.evaluate(() => ({ moet: proloogMoetSpelen(), over: localStorage.getItem('slayit_proloog_over'), v3: JSON.parse(localStorage.getItem('slaylit_proloog_v3') || 'null') }));
+      t(gate.moet && gate.over === null && gate.v3 && gate.v3.checkpoint === 'afgrond', `${L}: na de herlaad zegt de gate nog 'spelen' (${gate.moet}), geen _over (${gate.over}), save op "${gate.v3 && gate.v3.checkpoint}"`);
+      await naarProloog(page, vp, L + ' (herladen)');
+      t(await wachtScene(page, 'breekpunt/afgrond', 4000), `${L}: 'Nieuw avontuur' → meteen terug in de Afgrond`);
+      await kiesMasker(page, vp, 'gif', L);
+      const w = await wachtLanding(page, 12000);
+      const s = await stand(page);
+      const ls = await opslag(page);
+      t(w >= 0 && s.scherm === 'kaart' && s.held === 'gifmagier' && s.log === 'titel > proloog > kaart' && ls.slayit_proloog_klaar === '1',
+        `${L}: direct geland op "${s.scherm}" met ${s.held} (${s.log}), _klaar ${ls.slayit_proloog_klaar}`);
+      t(page.__f.length === 0 && page.__nav === 0, `${L}: geen paginafouten, ${page.__nav}x framenavigated` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
       await ctx.close();
     }
   }
@@ -707,6 +824,10 @@ async function kaartPlaat(page, vp) {
     const t2 = await wachtOp(page, () => document.body.dataset.scherm === 'titel' && !proloogBezig(), 7000);
     s = await stand(page);
     t(t2 >= 0 && s.scherm === 'titel' && !s.sluier && s.tb === 'none', `${L}: na de keuze onthult de sluier het vorige scherm: "${s.scherm}", sluier ${s.sluier}`);
+    /* F1 (vondst 9): wie vanuit de Codex herbeleeft, staat daarna weer IN de Codex */
+    const codexOpen = await wachtOp(page, () => { const o = document.getElementById('overlay-codex'); return !!o && o.classList.contains('open') && !!o.querySelector('[data-pl-hoofdstuk="afgrond"]'); }, 2000);
+    t(codexOpen >= 0, `${L}: terug in de Codex, met de hoofdstukken (${codexOpen >= 0 ? 'open' : 'NIET open'})`);
+    await page.evaluate(() => { const o = document.getElementById('overlay-codex'); if (o) o.classList.remove('open'); });
     t((await dump()) === voor, `${L}: na het Codex-hoofdstuk + maskerkeuze is de opslag byte-gelijk (geen contract, geen save, geen kiesHeldEcht)`);
     /* 3c · midden in een run: herbeleven en terug op de kaart, de run onaangeroerd */
     await page.evaluate(() => { nieuwSpel('slachter', 'HERBELEEF-1', 0); saveSpel(); renderKaartScherm(); });
@@ -868,6 +989,91 @@ async function kaartPlaat(page, vp) {
   }
 
   /* ==========================================================================
+     9 · GLIMLACHEN (F1, vondst 5): een herlaad telt geen glimlach dubbel — niet in het
+         gesprek (dat na een herlaad opnieuw begint) en niet in het kantoor (checkpoint vóór de knop)
+     ========================================================================== */
+  if (doe('glimlach')) {
+    const vp = VPS.laptop, L = 'glimlachen';
+    kop('9 · ' + L + ' · een herlaad telt niets dubbel (gesprek en kantoor)');
+    const v3g = { scene: 3, checkpoint: 'start', choices: { jeugddroom: 'astronaut', glimlachen: 2, glimCp: 2, meter: 80 }, gezien: [0, 1, 2, 3] };
+    const cG = { v: 2, jeugddroom: 'astronaut', uitweg: null, held: null, masker: null, glimlachen: 2, fotoKantoor: false, zelfGestempeld: false, wachtToon: -7, echo: 0 };
+    const { ctx, page } = await open(browser, vp, { opslag: { slaylit_proloog_v3: JSON.stringify(v3g), slayit_proloog: JSON.stringify(cG) }, geenNudge: true });
+    await naarProloog(page, vp, L);
+    t(await wachtScene(page, 'gesprek', 5000), `${L}: 'Nieuw avontuur' hervat in het gesprek`);
+    await slaap(700);
+    await page.keyboard.press('1'); await slaap(450);
+    let ls = await opslag(page);
+    const va = JSON.parse(ls.slaylit_proloog_v3 || 'null') || {}, ca = JSON.parse(ls.slayit_proloog || 'null') || {};
+    t(va.choices && va.choices.glimlachen === 2 && ca.glimlachen === 2, `${L}: een glimlach in het lopende gesprek telt nog niet (save ${va.choices && va.choices.glimlachen}, contract ${ca.glimlachen})`);
+    await page.reload({ waitUntil: 'load' }); await slaap(800); await volgSchermen(page);
+    await naarProloog(page, vp, L + ' (herladen)');
+    t(await wachtScene(page, 'gesprek', 5000), `${L}: na de herlaad begint het gesprek opnieuw`);
+    await slaap(700);
+    await page.keyboard.press('1'); await slaap(450);
+    for (let b = 0; b < 3; b++) { await page.keyboard.press('e'); await slaap(600); }
+    t(await wachtScene(page, 'breekpunt/factuur', 6000), `${L}: geduwd → de Eindafrekening`);
+    ls = await opslag(page);
+    const vb = JSON.parse(ls.slaylit_proloog_v3 || 'null') || {}, cb = JSON.parse(ls.slayit_proloog || 'null') || {};
+    t(cb.glimlachen === 3 && vb.choices && vb.choices.glimlachen === 3 && cb.uitweg === 'geduwd',
+      `${L}: herlaad + één glimlach + einde: contract ${cb.glimlachen}, save ${vb.choices && vb.choices.glimlachen} (2 uit het kantoor + 1; vroeger 4)`);
+    /* het kantoor: de save staat op het checkpoint vóór de GLIMLACH-knop, maar de knop was al
+       ingedrukt (glimlachen 1). Hervatten moet de teller van het checkpoint terugzetten. */
+    const v3k = { scene: 2, checkpoint: 'beat:9', choices: { glimlachen: 1, glimCp: 0, meter: 78 }, gezien: [0, 1, 2] };
+    await page.evaluate(v => { localStorage.removeItem('slayit_proloog'); localStorage.setItem('slaylit_proloog_v3', v); }, JSON.stringify(v3k));
+    await page.reload({ waitUntil: 'load' }); await slaap(800); await volgSchermen(page);
+    await naarProloog(page, vp, L + ' (kantoor)');
+    t(await wachtScene(page, 'kantoor', 5000), `${L}: hervat in het kantoor, op het checkpoint 'glimlach'`);
+    for (let i = 0; i < 40; i++) {
+      if (await sr(page, `return !!R.querySelector('.term-acties button[data-actie="glimlach"]');`)) break;
+      await page.keyboard.press('Space'); await slaap(150);
+    }
+    await tik(page, vp, '.term-acties button[data-actie="glimlach"]'); await slaap(400);
+    const vk = JSON.parse((await opslag(page)).slaylit_proloog_v3 || 'null') || {};
+    t(vk.choices && vk.choices.glimlachen === 1, `${L}: kantoor hervat + GLIMLACH: ${vk.choices && vk.choices.glimlachen} glimlach (niet 2)`);
+    t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+    await ctx.close();
+  }
+
+  /* ==========================================================================
+     10 · LITE (F1, vondst 3): de prestatiemodus geldt ook IN de proloog — geen blur over de
+          val, geen CRT-flikker, het rustige pad bij de keuze (klaar op 0,9 s)
+     ========================================================================== */
+  if (doe('lite')) {
+    const vp = VPS.liggend, L = 'lite';
+    kop('10 · ' + L + ' (liggend, body.lite)');
+    const v3 = { scene: 4, checkpoint: 'val', choices: { jeugddroom: 'piloot', val: 'geduwd', glimlachen: 1 }, gezien: [0, 1, 2, 3, 4] };
+    const { ctx, page } = await open(browser, vp, { opslag: { slayit_inst: JSON.stringify({ lite: true, d3: false, mobielHersteld2: true }), slaylit_proloog_v3: JSON.stringify(v3) }, geenNudge: true });
+    const bodyLite = await page.evaluate(() => document.body.classList.contains('lite'));
+    await naarProloog(page, vp, L);
+    t(await wachtScene(page, 'breekpunt/val', 5000), `${L}: hervat in de val`);
+    await slaap(2600);
+    const m = await sr(page, `const v = R.querySelector('.bs-vak'); const g = R.getElementById('crt-glow');
+      return { lite: R.host.hasAttribute('data-lite'), filter: v ? getComputedStyle(v).filter : null, glow: g ? getComputedStyle(g).animationName : null };`);
+    t(bodyLite && m.lite && m.filter === 'none' && m.glow === 'none', `${L}: body.lite ${bodyLite} → host data-lite ${m.lite}; de val zonder blur (filter "${m.filter}"), de CRT-gloed zonder flikker ("${m.glow}")`);
+    const live = await page.evaluate(() => new Promise(ok => {
+      const h = document.getElementById('scherm-proloog');
+      document.body.classList.remove('lite');
+      setTimeout(() => { const uit = !h.hasAttribute('data-lite'); document.body.classList.add('lite'); setTimeout(() => ok({ uit, weer: h.hasAttribute('data-lite') }), 60); }, 60);
+    }));
+    t(live.uit && live.weer, `${L}: de host volgt body.lite live (uit: ${live.uit}, weer aan: ${live.weer})`);
+    for (let i = 0; i < 40; i++) {
+      if ((await scene(page)) === 'breekpunt/afgrond') break;
+      await page.locator('.fase-val').tap({ position: { x: 12, y: 12 }, force: true }).catch(() => {});
+      await slaap(250);
+    }
+    t(await wachtScene(page, 'breekpunt/afgrond', 6000), `${L}: doorgespoeld tot de Afgrond`);
+    await kiesMasker(page, vp, 'woede', L, { rustig: true });
+    await slaap(300);
+    const r = await page.evaluate(() => ({ statisch: !!document.querySelector('#proloog-sluier .pl-titel.statisch'), tf: document.getElementById('scherm-kaart').style.transform }));
+    t(r.statisch && r.tf === '', `${L}: de landing kiest het rustige pad (statische titel ${r.statisch}, geen schaal "${r.tf}")`);
+    const w = await wachtLanding(page, 5000);
+    const s = await stand(page);
+    t(w >= 0 && s.scherm === 'kaart' && s.held === 'slachter' && s.fakkel === 80, `${L}: geland op "${s.scherm}" met ${s.held}, fakkel ${s.fakkel}`);
+    t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+    await ctx.close();
+  }
+
+  /* ==========================================================================
      8 · STATISCH: wat R1 wegnam, blijft weg (grep op de bronnen)
      ========================================================================== */
   if (doe('statisch')) {
@@ -884,6 +1090,14 @@ async function kaartPlaat(page, vp) {
     t(/location\.replace\(['"]\.\.\/\?proloog=1['"]\)/.test(stub) && /<noscript>/.test(stub), `proloog/index.html is een stub: location.replace('../?proloog=1') + noscript`);
     t(['js/proloog-brug.js', 'proloog/proloog.js', 'proloog/data.js', 'proloog/audio.js', 'proloog/proloog.css', 'assets/fonts/fonts.css'].every(f => sw.indexOf("'" + f + "'") !== -1), `sw.js: de brug, de proloogbestanden en fonts.css staan in de cache-lijsten`);
     t(/id="scherm-proloog"/.test(idx) && /id="proloog-sluier"/.test(idx) && /js\/proloog-brug\.js/.test(idx) && !/location\.href='proloog\//.test(idx), `index.html: #scherm-proloog, #proloog-sluier en de brug; geen location.href naar proloog/ meer`);
+    /* F1-reviewfixes die statisch te bewaken zijn */
+    const scss = lees('css/style.css'), mob = lees('css/mobiel.css'), brug = lees('js/proloog-brug.js');
+    t(!/@keyframes\s+plAdem\b/.test(scss) && /@keyframes\s+plSluierAdem\b/.test(scss) && /@keyframes\s+plAdem\b/.test(pcss),
+      `@keyframes plAdem bestaat maar één keer (proloog.css); de sluier ademt op plSluierAdem (style.css)`);
+    t(!/\bconst esc\s*=/.test(brug), `js/proloog-brug.js: de dode helper esc() is weg`);
+    const naad = mob.indexOf('DE NAAD (proloog R1)'), drempel = mob.indexOf('G. DE DREMPELTAFEL');
+    t(naad > 0 && drempel > naad, `css/mobiel.css: het proloogblok staat vóór de Drempeltafel, niet onderaan (de finale-tak voegt daar toe; geen mergeconflict)`);
+    t(/:host\(\[data-lite\]\)\s*\.crt-laag/.test(pcss) && /toggleAttribute\('data-lite'/.test(pjs), `proloog: body.lite wordt gespiegeld als data-lite op de host, en :host([data-lite]) zet de CRT-lagen stil`);
   }
 
   await browser.close();

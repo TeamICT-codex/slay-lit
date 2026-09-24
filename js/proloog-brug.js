@@ -15,7 +15,7 @@
      neemt deze brug het beeld over (de sluier gaat in hetzelfde frame dicht,
      met een kooltje op exact dezelfde plek).
    - localStorage: 'slayit_proloog' (contract, schrijft de proloog), 'slayit_proloog_over'
-     (de vasthoud-skip, schrijft de proloog), 'slayit_proloog_klaar' (zet DEZE brug bij de
+     (de vasthoud-skip; de proloog schrijft hem pas bij de landing), 'slayit_proloog_klaar' (zet DEZE brug bij de
      landing) en 'slaylit_proloog_v3' (de eigen save van de proloog; hier alleen gelezen
      voor de Codex-hoofdstukken).
 
@@ -68,7 +68,6 @@
   };
   const rustig = () => !!((window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)
     || document.body.classList.contains('lite'));
-  const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   function mk(tag, cls, tekst) {
     const e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -129,6 +128,12 @@
        warm (geen <link rel=preload>: die klaagt in de console als de speler niet start),
        zodat het eerste beeld na het zwarte doek meteen gestyled is (integratie R1) */
     try { if (window.fetch) fetch('proloog/proloog.css', { credentials: 'same-origin' }).catch(() => { /* de proloog wacht zelf max 2,5 s */ }); } catch (e) { /* geen fetch */ }
+    /* F1: ook de fonts van de proloog (assets/fonts/fonts.css). De browser haalt een font pas
+       op als er tekst in staat; zonder dit flitst de CRT-letter op het eerste beeld nog even
+       in Courier (de game zelf gebruikt VT323 en Special Elite nergens vóór de proloog) */
+    try {
+      if (document.fonts && document.fonts.load) ['16px "VT323"', '16px "Special Elite"'].forEach(f => { document.fonts.load(f).catch(() => { /* terugvalfont */ }); });
+    } catch (e) { /* geen FontFace-API */ }
     _laden = new Promise((ok, nee) => {
       let geladen = 0, af = false;
       const klaar = fout => {
@@ -165,24 +170,29 @@
 
   function proloogBezig() { return bezig || L.bezig; }
 
+  /* het doek van de heenweg: puur #07060a (css #toneel-doek.pl-zwart), hetzelfde zwart waarin
+     de landing straks eindigt — het begin rijmt op het eind (F1: het gevechtsdoek #0b0509 is
+     net paarser en liet de titel in zijn fade nog zwak doorschemeren) */
   function doek(aan, duur) {
     const d = $id('toneel-doek');
     if (!d) return;
     d.style.setProperty('--doek', '1');
     d.style.setProperty('--doek-t', duur + 's');
+    if (aan) d.classList.add('pl-zwart');
     d.classList.toggle('aan', aan);
     if (!aan) setTimeout(() => {
-      if (!d.classList.contains('aan')) { d.style.removeProperty('--doek'); d.style.removeProperty('--doek-t'); }
+      if (!d.classList.contains('aan')) { d.style.removeProperty('--doek'); d.style.removeProperty('--doek-t'); d.classList.remove('pl-zwart'); }
     }, duur * 1000 + 60);
   }
   function titelSchoon() { document.body.classList.remove('pl-dooft', 'pl-vlam'); }
 
-  /* opts: { herbeleef, hoofdstuk } */
+  /* opts: { herbeleef, hoofdstuk, vanCodex } */
   function startProloog(opts) {
     opts = opts || {};
     if (proloogBezig()) return;
     const host = $id('scherm-proloog');
     const herbeleef = !!opts.herbeleef;
+    const vanCodex = herbeleef && !!opts.vanCodex;
     if (!host) { if (!herbeleef && typeof toonHeldKeuze === 'function') toonHeldKeuze(); return; }
     bezig = true;
     const vorig = document.body.dataset.scherm || 'titel';
@@ -236,13 +246,13 @@
         klaar: uitkomst => {
           if (afgehandeld) return;
           afgehandeld = true;
-          if (herbeleef) terugNaHerbeleven(uitkomst && uitkomst.kooltje, herstel, false);
+          if (herbeleef) terugNaHerbeleven(uitkomst && uitkomst.kooltje, herstel, false, vanCodex);
           else landingNaProloog(uitkomst);
         },
         over: () => {
           if (afgehandeld) return;
           afgehandeld = true;
-          if (herbeleef) { terugNaHerbeleven(null, herstel, true); return; }
+          if (herbeleef) { terugNaHerbeleven(null, herstel, true, vanCodex); return; }
           /* hoort niet te gebeuren (de skip eindigt óók in de Afgrond), maar dan toch netjes */
           schrijf(SLEUTEL.over, '1');
           try { P.stop(); } catch (e) { /* al gestopt */ }
@@ -257,7 +267,11 @@
       bezig = false;
       doek(false, 0.3);
       if (window.console) console.warn('[proloog] ' + (fout && fout.message ? fout.message : fout));
-      if (herbeleef) { herstel(); if (typeof melding === 'function') melding('📼 De proloog kon niet laden — probeer het zo nog eens.'); }
+      if (herbeleef) {
+        herstel();
+        if (vanCodex && typeof toonCodex === 'function') { try { toonCodex(); } catch (e) { /* de titel volstaat */ } }
+        if (typeof melding === 'function') melding('📼 De proloog kon niet laden — probeer het zo nog eens.');
+      }
       else { titelSchoon(); toonHeldKeuze(); }
     });
   }
@@ -274,9 +288,10 @@
   function herbeleefProloog(hoofdstuk) {
     if (proloogBezig()) return;
     const ov = $id('overlay-codex');
+    const vanCodex = !!(ov && ov.classList.contains('open'));   /* F1: daarna terug IN de Codex */
     if (ov) ov.classList.remove('open');
     if ($id('dev-menu') && typeof devMenuSluit === 'function') devMenuSluit();
-    startProloog({ herbeleef: true, hoofdstuk: geldigHoofdstuk(hoofdstuk) });
+    startProloog({ herbeleef: true, hoofdstuk: geldigHoofdstuk(hoofdstuk), vanCodex });
   }
 
   /* ============================================================
@@ -345,7 +360,10 @@
     return d;
   }
 
-  /* een radiaal masker opent het doek vanuit (cx, cy) */
+  /* een radiaal masker opent het doek vanuit (cx, cy).
+     F1 (creatief): de rand begint OP het kooltje (buitenrand r = 0) en loopt ease-out
+     (1-(1-p)^3): de grond gaat open op het moment dat het kooltje landt. Vroeger startte hij
+     op -zacht met een ease-in-out en zag je ±0,7 s alleen een stipje op zwart. */
   function onthul(doekEl, cx, cy, duur, klaar) {
     const W = window.innerWidth, H = window.innerHeight;
     const ver = Math.max(Math.hypot(cx, cy), Math.hypot(W - cx, cy), Math.hypot(cx, H - cy), Math.hypot(W - cx, H - cy));
@@ -353,9 +371,10 @@
     const t0 = performance.now();
     const stap = nu => {
       const p = Math.min(1, Math.max(0, (nu - t0) / duur));
-      const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
-      const r = -zacht + (ver + zacht) * e;
-      const m = `radial-gradient(circle at ${cx.toFixed(1)}px ${cy.toFixed(1)}px, transparent ${Math.max(0, r).toFixed(1)}px, #000 ${Math.max(0, r + zacht).toFixed(1)}px)`;
+      const e = 1 - Math.pow(1 - p, 3);
+      const buiten = (ver + zacht) * e;                  /* waar het zwart weer volledig is */
+      const r = buiten - Math.min(zacht, buiten);        /* waar het volledig open is */
+      const m = `radial-gradient(circle at ${cx.toFixed(1)}px ${cy.toFixed(1)}px, transparent ${r.toFixed(1)}px, #000 ${Math.max(0.1, buiten).toFixed(1)}px)`;
       doekEl.style.webkitMaskImage = m;
       doekEl.style.maskImage = m;
       if (p < 1) L.raf = requestAnimationFrame(stap);
@@ -421,7 +440,7 @@
     const k = kooltjeGeldig(kooltje);
     const zacht = rustig();
     Object.assign(L, { bezig: true, soort: 'run', held: heldGeldig(heldId) ? heldId : 'slachter', pad: null, kernGedaan: false,
-      heldkeuzeGetoond: false, telKlaar: false, vlak: false, zacht, dev: !!opties.dev });
+      heldkeuzeGetoond: false, telKlaar: false, vlak: false, zacht, dev: !!opties.dev, naCodex: false });
     bezig = true;
     const s = L.sluier = bouwSluier(k, true);
     if (!zacht) document.body.classList.add('pl-landt');
@@ -550,14 +569,24 @@
       stap();
     };
     if (!naar || !Element.prototype.animate) { tel(); return; }
+    const mx = (van.x + naar.x) / 2, my = Math.min(van.y, naar.y) - Math.max(40, Math.abs(van.x - naar.x) * 0.18);
+    const baan = (o, s) => [
+      { transform: `translate(${van.x}px, ${van.y}px) scale(${s})`, opacity: o },
+      { transform: `translate(${mx}px, ${my}px) scale(${1.2 * s})`, opacity: o, offset: 0.5 },
+      { transform: `translate(${naar.x}px, ${naar.y}px) scale(${0.5 * s})`, opacity: 0.2 * o }
+    ];
+    /* F1 (creatief): het slotbeeld van 'de meter die jou mat, is nu je licht' moet opvallen —
+       een grotere vonk (css: 11 px laptop, 8 px telefoon) met een korte staart: twee gedempte
+       kopieën die 40 en 80 ms later dezelfde baan volgen */
+    [[0.25, 0.55, 80], [0.5, 0.75, 40]].forEach(([o, sc, vertraging]) => {
+      const st = mk('i', 'pl-fakkelvonk pl-staart');
+      s.vonkLaag.appendChild(st);
+      const as = anim(st, baan(o, sc), { duration: TL.vonkDuur, delay: vertraging, easing: 'ease-in', fill: 'both' });
+      if (as) as.onfinish = () => st.remove(); else st.remove();
+    });
     const v = mk('i', 'pl-fakkelvonk');
     s.vonkLaag.appendChild(v);
-    const mx = (van.x + naar.x) / 2, my = Math.min(van.y, naar.y) - Math.max(40, Math.abs(van.x - naar.x) * 0.18);
-    const a = anim(v, [
-      { transform: `translate(${van.x}px, ${van.y}px) scale(1)`, opacity: 1 },
-      { transform: `translate(${mx}px, ${my}px) scale(1.2)`, opacity: 1, offset: 0.5 },
-      { transform: `translate(${naar.x}px, ${naar.y}px) scale(.5)`, opacity: 0.2 }
-    ], { duration: TL.vonkDuur, easing: 'ease-in', fill: 'forwards' });
+    const a = anim(v, baan(1, 1), { duration: TL.vonkDuur, easing: 'ease-in', fill: 'forwards' });
     sfx('schitter');
     if (a) a.onfinish = () => { v.remove(); tel(); }; else tel();
   }
@@ -636,18 +665,43 @@
     }
     L.sluier = null; L.kern = null;
     bezig = false;
-    /* de fullscreen-/installnudge werd tijdens de proloog uitgesteld */
-    if (typeof toonSchermNudge === 'function' && toonSchermNudge.uitgesteld) {
-      toonSchermNudge.uitgesteld = false;
-      setTimeout(toonSchermNudge, 1500);
+    /* herbeleven vanuit de Codex: terug IN de Codex (F1), zodat je hoofdstuk na hoofdstuk kunt kijken */
+    if (L.soort === 'herbeleef' && L.naCodex) {
+      L.naCodex = false;
+      try { if (typeof toonCodex === 'function') toonCodex(); } catch (e) { /* dan de titel */ }
     }
+    /* de fullscreen-/installnudge werd tijdens de proloog uitgesteld. F1 (review): niet over
+       het eerste speelbare moment van een verse run (de kaart, net na de landing), maar bij de
+       volgende rustige schermwissel: terug naar de titel, of terug op de kaart na de eerste knoop. */
+    if (typeof toonSchermNudge === 'function' && toonSchermNudge.uitgesteld) {
+      if (L.soort === 'run' && document.body.dataset.scherm === 'kaart') nudgeLater();
+      else { toonSchermNudge.uitgesteld = false; setTimeout(toonSchermNudge, 1500); }
+    }
+  }
+  function nudgeLater() {
+    if (!window.MutationObserver) return;   /* dan komt hij bij de volgende boot */
+    let weg = false;
+    const mo = new MutationObserver(() => {
+      const s = document.body.dataset.scherm;
+      if (s !== 'kaart' && s !== 'titel') { weg = true; return; }
+      if (s === 'kaart' && !weg) return;
+      mo.disconnect();
+      setTimeout(() => {
+        if (!toonSchermNudge.uitgesteld) return;
+        const nu = document.body.dataset.scherm;
+        if (proloogBezig() || (nu !== 'kaart' && nu !== 'titel')) { nudgeLater(); return; }   /* intussen al verder: volgende keer */
+        toonSchermNudge.uitgesteld = false;
+        toonSchermNudge();
+      }, 1500);
+    });
+    mo.observe(document.body, { attributes: true, attributeFilter: ['data-scherm'] });
   }
 
   /* HERBELEVEN: de sluier onthult het vorige scherm (geen titel, geen run) */
-  function terugNaHerbeleven(kooltje, herstel, snel) {
+  function terugNaHerbeleven(kooltje, herstel, snel, naCodex) {
     lWis();
     const k = kooltjeGeldig(kooltje);
-    Object.assign(L, { bezig: true, soort: 'herbeleef', pad: null, kernGedaan: false, zacht: rustig() });
+    Object.assign(L, { bezig: true, soort: 'herbeleef', pad: null, kernGedaan: false, zacht: rustig(), naCodex: !!naCodex });
     const s = L.sluier = bouwSluier(k, false);
     if (snel) s.kool.classList.add('weg', 'direct');
     skipHaken(s.el);

@@ -99,6 +99,27 @@ img { max-width: 100%; display: block; }
 /* in het gesprek ligt de hand onderaan: de skip wijkt naar rechtsboven */
 .pl-app[data-scene="gesprek"] .pl-skip { bottom: auto; top: calc(8px + env(safe-area-inset-top)); }
 
+/* ---------- de klankknop (F1): de game-mute, naast de skip-ring, van bij de start ---------- */
+.pl-klank {
+  position: absolute; z-index: 80;
+  right: calc(56px + env(safe-area-inset-right)); bottom: calc(10px + env(safe-area-inset-bottom));
+  width: 40px; height: 40px; border-radius: 50%;
+  display: grid; place-items: center; text-align: center;
+  background: rgba(10, 8, 5, .55); box-shadow: inset 0 0 0 2px rgba(216, 203, 162, .28);
+  font-size: .95rem; line-height: 1; color: var(--manila);
+  opacity: .4; transition: opacity .3s ease;
+  touch-action: manipulation;
+}
+.pl-klank:hover, .pl-klank:focus-visible { opacity: 1; }
+.pl-klank.uit { opacity: .75; box-shadow: inset 0 0 0 2px rgba(200, 56, 90, .55); }   /* gedempt: zichtbaar waarom het stil is */
+.pl-klank-icoon { pointer-events: none; }
+/* in de Afgrond is er geen skip meer: de klankknop schuift in de hoek en wordt stiller */
+.pl-afgrond .pl-klank { right: calc(10px + env(safe-area-inset-right)); opacity: .25; }
+.pl-afgrond .pl-klank.uit { opacity: .5; }
+.pl-landt .pl-klank { display: none; }
+/* in het gesprek: linksboven, de skip staat rechtsboven (de titel heeft 48 px marge aan elke kant) */
+.pl-app[data-scene="gesprek"] .pl-klank { bottom: auto; top: calc(8px + env(safe-area-inset-top)); right: auto; left: calc(10px + env(safe-area-inset-left)); }
+
 /* ---------- gedeelde knoppen ---------- */
 .knop-groot {
   font-family: var(--f-type); font-size: 1.05rem; line-height: 1.2; color: var(--fosfor-zwart); text-align: center;
@@ -195,7 +216,8 @@ img { max-width: 100%; display: block; }
 .boot-tm { font-family: var(--f-type); font-size: .9rem; color: var(--manila-dof); }
 .boot-baas { font-family: var(--f-crt); font-size: clamp(1.15rem, 5vw, 1.5rem); color: var(--groen); text-shadow: 0 0 12px rgba(106, 211, 106, .6); margin-top: 6px; }
 .boot-cta { margin-top: 10px; }
-.boot-version { position: absolute; bottom: calc(14px + env(safe-area-inset-bottom)); left: 56px; right: 56px; font-family: var(--f-crt); font-size: .9rem; color: var(--groen-dof); }
+/* staand staat de regel BOVEN de hoek met de klankknop en de skip (anders liepen ze over "SYSTEEM") */
+.boot-version { position: absolute; bottom: calc(60px + env(safe-area-inset-bottom)); left: 16px; right: 16px; font-family: var(--f-crt); font-size: .9rem; color: var(--groen-dof); }
 
 /* ═══════════════ SCÈNE · kantoor ═══════════════ */
 .scene-kantoor { display: flex; flex-direction: column; }
@@ -659,7 +681,7 @@ img { max-width: 100%; display: block; }
 @media (min-width: 700px) and (min-height: 600px) {
   .badge { width: 260px; bottom: 28px; left: 24px; }
   .ov-kicker { left: 24px; top: 20px; }
-  .boot-version { left: 0; right: 0; }
+  .boot-version { left: 0; right: 0; bottom: calc(14px + env(safe-area-inset-bottom)); }
 
   .kant-header { font-size: .8rem; padding: 10px 22px; }
   .kant-body { flex-direction: row; align-items: stretch; width: 100%; max-width: 1200px; margin: 0 auto; padding: 16px 22px 22px; gap: 18px; }
@@ -787,7 +809,9 @@ img { max-width: 100%; display: block; }
   .int-naam { font-size: 1rem; }
   .int-tele { font-size: .82rem; }
   .int-hint { font-size: .68rem; }
-  .flits { grid-area: flits; min-height: 0; padding: 5px 44px 5px 9px; }
+  .flits { grid-area: flits; min-height: 0; padding: 5px 92px 5px 9px; }   /* rechts: de klankknop en de skip */
+  /* liggend staat linksboven B.A.A.S.: de klankknop gaat rechtsboven naast de skip */
+  .pl-app[data-scene="gesprek"] .pl-klank { left: auto; right: calc(56px + env(safe-area-inset-right)); }
   .flits-tekst { font-size: .84rem; line-height: 1.25; }
   .speler-balk { grid-area: balk; flex-wrap: nowrap; padding: 5px 8px; gap: 8px; }
   .sp-welzijn { flex: 1 1 auto; }
@@ -851,3 +875,13 @@ img { max-width: 100%; display: block; }
   .ov-zoomlaag { transition: none; }
   .afg-mom, .afg-held { transition-duration: .2s; }
 }
+/* de prestatiemodus (body.lite, door proloog.js gespiegeld als data-lite op de host): dezelfde
+   lussen stil als bij reduced motion, plus de CRT-flikker. Het blurfilter van de val schrapt
+   proloog.js zelf (rustig() = reduced motion óf lite). */
+:host([data-lite]) .crt-laag,
+:host([data-lite]) .ov-backdrop .art-img, :host([data-lite]) .ovm-screen, :host([data-lite]) .afg-rimpel,
+:host([data-lite]) .foto-kind.pulse, :host([data-lite]) .val-noise, :host([data-lite]) .val-hart,
+:host([data-lite]) .afg-kool-gloed, :host([data-lite]) .afg-kool-kern, :host([data-lite]) .val-knop,
+:host([data-lite]) .kk-klaar, :host([data-lite]) .boot-merk, :host([data-lite]) .glitch-frame,
+:host([data-lite]) .afg-info-leeg { animation: none !important; }
+:host([data-lite]) .ov-zoomlaag { transition: none; }

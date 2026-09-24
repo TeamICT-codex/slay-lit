@@ -25,7 +25,8 @@
                              masker, glimlachen, fotoKantoor, zelfGestempeld, wachtToon:-7, echo:0 },
                              stapsgewijs geschreven; nooit bij herbeleven. Elk pad (sprong, geduwd,
                              skip) eindigt met uitweg + held.
-   - 'slayit_proloog_over' = '1' — alleen via de vasthoud-skip (Esc op laptop).
+   - 'slayit_proloog_over' = '1' — alleen na de vasthoud-skip (Esc op laptop), en pas geschreven
+                             bij de landing (klaarMet): wie in de Afgrond herlaadt, keert daar terug.
    - 'slaylit_proloog_v3'  = eigen voortgang { scene, checkpoint, choices, gezien[] }; na een herlaad
                              hervat je op het laatste checkpoint, nooit midden in het gesprek.
                              De oude v2-sleutel wordt gemigreerd en gewist.
@@ -47,10 +48,12 @@
   const FASEN = ['factuur', 'ontslag', 'val', 'afgrond'];
   const SKIP_ZICHTBAAR_MS = 4000;
   const SKIP_HOUD_MS = 800;
+  const TOKEN_MS = 1500;   /* het token zinkt in het kooltje; klaar() volgt uit het einde (plan §3: T 1,5) */
 
   /* ---------- sessie-staat ---------- */
-  let host = null, R = null, app = null, wrap = null, skipEl = null, hintEl = null;
-  let opts = {}, actief = false, herbeleef = false, klaarGeroepen = false;
+  let host = null, R = null, app = null, wrap = null, skipEl = null, hintEl = null, klankEl = null;
+  let opts = {}, actief = false, herbeleef = false, klaarGeroepen = false, overgeslagen = false;
+  let glimOpen = 0;        /* glimlachen van het lopende gesprek: pas geteld als het gesprek eindigt (of bij de skip) */
   let P = null, contractVers = false;
   let spoel = null;        /* doorspoel-handler van de actieve beat/overlay (null = hier moet je handelen) */
   let sleutels = null;     /* scène-eigen toetsen (gesprek, afgrond) → true als verwerkt */
@@ -80,6 +83,7 @@
     if (typeof c.pasfoto === 'string' && c.pasfoto.indexOf('data:image/') === 0) u.pasfoto = c.pasfoto;
     if (typeof c.meter === 'number' && isFinite(c.meter)) u.meter = Math.max(0, Math.min(100, c.meter));
     if (typeof c.glimlachen === 'number' && isFinite(c.glimlachen)) u.glimlachen = Math.max(0, Math.min(999, c.glimlachen | 0));
+    if (typeof c.glimCp === 'number' && isFinite(c.glimCp)) u.glimCp = Math.max(0, Math.min(999, c.glimCp | 0));
     if (c.fotoKantoor) u.fotoKantoor = true;
     if (typeof c.held === 'string') u.held = c.held;
     if (typeof c.masker === 'string') u.masker = c.masker;
@@ -132,6 +136,13 @@
     return c;
   }
   function uitwegVan(val) { return val === 'gesprongen' ? 'sprong' : val === 'geduwd' ? 'geduwd' : null; }
+  /* F1 (review): de glimlachen van het gesprek tellen pas mee als het gesprek eindigt (of bij
+     de skip). Het gesprek begint na een herlaad opnieuw; meteen tellen gaf per herlaad dubbele
+     glimlachen in het contract (en straks op de factuur van R4). */
+  function telGlimlachenBij() {
+    if (glimOpen > 0 && P) P.choices.glimlachen = (P.choices.glimlachen || 0) + glimOpen;
+    glimOpen = 0;
+  }
 
   /* ---------- timers: één klok die pauzeert (tab verborgen / draai-blok) ---------- */
   const klok = { lijst: new Map(), id: 0, pauze: false };
@@ -210,7 +221,13 @@
   }
   function interp(tmpl, data) { return (tmpl || '').replace(/\{(\w+)\}/g, (_, k) => (data[k] != null ? data[k] : '…')); }
   function isMobiel() { return !!(host && host.getAttribute('data-modus') === 'mobiel'); }
-  function rustig() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
+  /* reduced motion OF de prestatiemodus (body.lite, gespiegeld als data-lite op de host):
+     geen blur over het vak, geen tokenvlucht, kortere regie (plan §3: lite = rustig) */
+  function isLite() { return !!(host && host.hasAttribute('data-lite')); }
+  function rustig() {
+    if (isLite()) return true;
+    try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; }
+  }
   function focusStil(e) { if (e && !isMobiel()) { try { e.focus({ preventScroll: true }); } catch (x) {} } }
   function ontfocus() { try { const a = R && R.activeElement; if (a && a.blur) a.blur(); } catch (x) {} }
   /* een overlay is modaal: de rest van de scène wordt inert (geen tik of spatie op een
@@ -285,7 +302,11 @@
       try { f(); } catch (e) { meldFout(e); }
       return;
     }
-    if (!herbeleef) schrijf(OVER, '1');
+    /* F1 (review): 'slayit_proloog_over' pas bij de landing (klaarMet), niet hier. Wie in de
+       Afgrond herlaadt of de app sluit, heeft nog geen held: dan moet 'Nieuw avontuur' hem
+       terugbrengen in de Afgrond (de save staat daar), niet op de heldkeuze zonder voorselectie. */
+    overgeslagen = true;
+    telGlimlachenBij();
     /* ook wie overslaat, krijgt een uitweg: wie niet zelf sprong, werd geduwd */
     if (!P.choices.val) P.choices.val = 'geduwd';
     schrijfContract({ uitweg: uitwegVan(P.choices.val), jeugddroom: P.choices.jeugddroom || null,
@@ -495,6 +516,9 @@
     const m = /^beat:(\d+)$/.exec(P.checkpoint || '');
     if (m && beats[+m[1]] && beats[+m[1]].cp) stap = +m[1];
     let meter = (stap > 0 && typeof P.choices.meter === 'number') ? P.choices.meter : (scene.meterStart || 0);
+    /* hervat op een checkpoint: ook de glimlachteller van toen (anders telt een herlaad
+       tussen de GLIMLACH-knop en het volgende checkpoint die glimlach dubbel) */
+    if (stap > 0 && typeof P.choices.glimCp === 'number') P.choices.glimlachen = P.choices.glimCp;
     const data = () => ({ jeugddroom: P.choices.jeugddroom || '…' });
 
     /* — koptekst — */
@@ -601,7 +625,7 @@
       if (!actief || stap >= beats.length) return;
       const beat = beats[stap];
       spoel = null;
-      if (beat.cp) { P.checkpoint = 'beat:' + stap; P.choices.meter = meter; bewaar(); }
+      if (beat.cp) { P.checkpoint = 'beat:' + stap; P.choices.meter = meter; P.choices.glimCp = P.choices.glimlachen || 0; bewaar(); }
 
       if (PASSIEF[beat.type]) {
         if (AU && beat.type === 'warm') AU.warm();
@@ -831,6 +855,7 @@
       paniek: 0, einde: null, fotoKlaar: false
     };
     const fotoSrc = (S.hand.find(k => k.id === 'foto') || {}).src;
+    glimOpen = 0;   /* een (her)start van het gesprek telt van nul */
 
     wrap.appendChild(el('div', 'gesprek-titel', S.titel));
 
@@ -970,6 +995,7 @@
       /* het contract krijgt zijn uitweg NU, en de save springt meteen door naar de
          Eindafrekening: een herlaad tijdens de uitkomst hervat daar, niet in het gesprek */
       P.choices.val = hoe;
+      telGlimlachenBij();
       P.scene = IDX.breekpunt; P.checkpoint = 'factuur';
       bewaar();
       schrijfContract({ uitweg: uitwegVan(hoe), glimlachen: P.choices.glimlachen || 0 });
@@ -1009,7 +1035,7 @@
       if (e.energie) st.energie += e.energie;
       if (e.welzijn) st.welzijn = Math.max(0, st.welzijn + e.welzijn);
       if (e.baasFact) st.baasFact = Math.min(100, st.baasFact + e.baasFact);
-      if (k.id === 'glimlach') { P.choices.glimlachen = (P.choices.glimlachen || 0) + 1; bewaar(); }
+      if (k.id === 'glimlach') glimOpen++;   /* telt pas bij eindig(): zie telGlimlachenBij */
       const lijnen = (S.reacties && S.reacties[k.id]) || [];
       if (lijnen.length) zetFlits('jij', lijnen[Math.min(st.paniek, lijnen.length - 1)]);
       st.paniek++;
@@ -1179,6 +1205,7 @@
 
     function faseVal() {
       zetFase('val');
+      laadAfgrondVoor();
       titel.style.display = 'none';
       vak.innerHTML = ''; vak.className = 'bs-vak fase-val';
       const v = S.val;
@@ -1398,21 +1425,37 @@
         it.btn.classList.add('uitverkoren');
         const ci = items.indexOf(it);
         items.forEach((x, i) => { if (x !== it) x.btn.classList.add(i < ci ? 'valt-links' : 'valt-rechts'); });
-        /* het gekozen token: krimpen tot token (0-0,9 s), dan zinken in het kooltje (0,9-1,5 s) */
+        /* het gekozen token: krimpen tot token (0-0,9 s), dan zinken in het kooltje (0,9-1,5 s).
+           F1 (review): klaar() volgt uit het EINDE van de animatie, niet uit een blinde timer.
+           De animatie start pas bij haar eerste frame, en op een laptop kost het herstylen van
+           de Afgrond bij de klik 100-170 ms: een timer vanaf de klik gaf de sluier dan een token
+           van ±65 px op opacity .6 in het naadframe (een 'pop'). Het zinken is ook minder
+           achterwaarts geladen, en het token is op 92 % al volledig in het kooltje verdwenen:
+           de laatste ±120 ms vóór de overname is het beeld puur zwart met één kooltje. */
+        let anim = null;
         if (!zacht && it.schijf.animate) {
           const sr = it.schijf.getBoundingClientRect();
           const dx = kooltje.x - (sr.left + sr.width / 2), dy = kooltje.y - (sr.top + sr.height / 2);
           const w = sr.width || 1;
           const s1 = tokenMaat() / w, s2 = eindMaat() / w;
+          const eind = 'translate(' + dx.toFixed(1) + 'px, ' + dy.toFixed(1) + 'px) scale(' + s2.toFixed(3) + ')';
           try {
-            it.schijf.animate([
+            anim = it.schijf.animate([
               { transform: 'translate(0px, 0px) scale(1)', opacity: 1, easing: 'cubic-bezier(.3,0,.3,1)' },
-              { transform: 'translate(' + (dx * 0.22).toFixed(1) + 'px, ' + (dy * 0.22).toFixed(1) + 'px) scale(' + s1.toFixed(3) + ')', opacity: 1, offset: 0.6, easing: 'cubic-bezier(.55,0,.85,.4)' },
-              { transform: 'translate(' + dx.toFixed(1) + 'px, ' + dy.toFixed(1) + 'px) scale(' + s2.toFixed(3) + ')', opacity: 0 }
-            ], { duration: 1500, fill: 'forwards' });
-          } catch (e) {}
+              { transform: 'translate(' + (dx * 0.22).toFixed(1) + 'px, ' + (dy * 0.22).toFixed(1) + 'px) scale(' + s1.toFixed(3) + ')', opacity: 1, offset: 0.6, easing: 'cubic-bezier(.45,0,.75,.55)' },
+              { transform: eind, opacity: 0, offset: 0.92 },
+              { transform: eind, opacity: 0 }
+            ], { duration: TOKEN_MS, fill: 'forwards' });
+          } catch (e) { anim = null; }
         }
-        T(() => klaarMet(uitkomst), zacht ? 900 : 1500);
+        /* via T(…, 0): een draai-blok of een verborgen tab houdt de overname nog altijd vast */
+        const naarKlaar = () => T(() => klaarMet(uitkomst), 0);
+        if (anim && anim.finished && anim.finished.then) {
+          anim.finished.then(naarKlaar, naarKlaar);
+          T(() => klaarMet(uitkomst), TOKEN_MS + 400);   /* vangnet (klaarMet is idempotent) */
+        } else {
+          T(() => klaarMet(uitkomst), zacht ? 900 : TOKEN_MS);
+        }
       }
 
       /* toetsen: ←/→ pelt het buurmasker, Enter (op de gefocuste knop) kiest */
@@ -1461,6 +1504,32 @@
       ph: (G && G.icoon) || F.ph
     };
   }
+  /* F1 (creatief): de art van de Afgrond (maskers, helden, de afgrond) alvast binnenhalen en
+     decoderen — tijdens de val, of zodra de skip kan. Anders staan de maskerschijven bij het
+     binnenkomen ±150 ms leeg (gemeten op 412x915). Eén keer per pagina. */
+  let afgrondVoorgeladen = null;
+  function laadAfgrondVoor() {
+    if (afgrondVoorgeladen) return;
+    afgrondVoorgeladen = [];
+    const bronnen = [];
+    try {
+      const sc = STORY.scenes[IDX.breekpunt];
+      const b = sc && sc.breekpunt;
+      if (b && b.afgrondArt) bronnen.push(b.afgrondArt);
+      (STORY.MASKERS || []).forEach(m => {
+        if (m.masker && m.masker.src) bronnen.push(m.masker.src);
+        const h = heldInfo(heldVoorMasker(m.id));
+        if (h && h.art) bronnen.push(h.art);
+      });
+    } catch (e) { return; }
+    bronnen.forEach(src => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = src;
+      if (img.decode) img.decode().catch(() => { /* de <img> in de Afgrond heeft een eigen terugval */ });
+      afgrondVoorgeladen.push(img);
+    });
+  }
   function kortLiggend() { return innerHeight <= 560 && innerWidth > innerHeight; }
   function tokenMaat() { return kortLiggend() ? 72 : innerWidth < 700 ? 64 : 104; }
   function eindMaat() { return (kortLiggend() || innerWidth < 700 || isMobiel()) ? 4 : 8; }
@@ -1470,6 +1539,7 @@
     if (klaarGeroepen || !actief) return;
     klaarGeroepen = true;
     houdSkipStop();
+    if (overgeslagen && !herbeleef) schrijf(OVER, '1');   /* de skip telt pas als je landt */
     const f = opts.klaar;
     if (typeof f === 'function') { try { f(uitkomst); } catch (e) { meldFout(e); } }
   }
@@ -1521,15 +1591,48 @@
     skipEl.innerHTML = '<svg viewBox="0 0 36 36" aria-hidden="true"><circle class="pl-skip-spoor" cx="18" cy="18" r="15"/><circle class="pl-skip-vul" cx="18" cy="18" r="15"/></svg><span class="pl-skip-pijl" aria-hidden="true">⏭</span>';
     skipEl.appendChild(el('span', 'pl-skip-tekst', isMobiel() ? 'houd vast · overslaan' : 'houd Esc · overslaan'));
     app.appendChild(skipEl);
+    /* F1 (review): de klankknop. De topbalk (met ⚙️ Instellingen) is hier verborgen en de oude
+       nav met zijn 🔇 is weg; zonder deze knop kon je ±2 min brom, typmachine en hartslag
+       alleen met het toestelvolume stilzetten. Hij schakelt de game-mute (Klank.vol.aan). */
+    klankEl = el('button', 'pl-klank');
+    klankEl.type = 'button';
+    klankEl.appendChild(el('span', 'pl-klank-icoon'));
+    if (!isMobiel()) klankEl.title = 'Geluid aan/uit (M)';
+    app.appendChild(klankEl);
+    tekenKlank();
     return true;
   }
+  /* ---------- de klankknop: de game-mute, gesynchroniseerd met ⚙️ Instellingen ---------- */
+  function klankAan() {
+    try { return !(window.Klank && Klank.vol && Klank.vol.aan === false); } catch (e) { return true; }
+  }
+  function tekenKlank() {
+    if (!klankEl) return;
+    const aan = klankAan();
+    klankEl.classList.toggle('uit', !aan);
+    klankEl.setAttribute('aria-pressed', aan ? 'false' : 'true');
+    klankEl.setAttribute('aria-label', aan ? 'Geluid dempen' : 'Geluid weer aan');
+    const i = klankEl.querySelector('.pl-klank-icoon');
+    if (i) i.textContent = aan ? '🔊' : '🔇';
+  }
+  function wisselKlank() {
+    const K = window.Klank;
+    if (!K || typeof K.zet !== 'function') return;
+    try { K.zet('aan', !klankAan()); } catch (e) { meldFout(e); }
+    const cb = document.getElementById('inst-geluid');
+    if (cb) cb.checked = klankAan();
+    if (klankAan() && AU) AU.unlock();   /* weer aan: meteen hoorbaar, ook als de context sliep */
+    tekenKlank();
+  }
   function toonApp() {
-    [wrap, skipEl, hintEl].forEach(e => { if (e) e.style.visibility = ''; });
+    [wrap, skipEl, hintEl, klankEl].forEach(e => { if (e) e.style.visibility = ''; });
   }
   function spiegelModus() {
     if (!host) return;
     const m = (document.body && document.body.dataset.modus === 'mobiel') || (!document.body.dataset.modus && window.mobiel) ? 'mobiel' : 'laptop';
     host.setAttribute('data-modus', m);
+    /* de prestatiemodus: :host([data-lite]) zet de CRT-flikker en de andere lussen stil */
+    host.toggleAttribute('data-lite', !!(document.body && document.body.classList.contains('lite')));
   }
 
   /* ---------- levenscyclus ---------- */
@@ -1553,6 +1656,7 @@
     }
     if (tag === 'INPUT' || tag === 'TEXTAREA' || (bron && bron.isContentEditable)) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'm' || e.key === 'M') { e.preventDefault(); if (!e.repeat) wisselKlank(); return; }   /* M = geluid aan/uit */
     if (sleutels && sleutels(e)) { e.preventDefault(); return; }
     if (e.repeat) return;
     if (tag === 'BUTTON' && (e.key === 'Enter' || e.key === ' ')) return;   /* de knop zelf klikt */
@@ -1568,13 +1672,13 @@
     if (!host) return false;
     opts = o;
     herbeleef = !!o.herbeleef;
-    klaarGeroepen = false; spoel = null; sleutels = null; hintGezien = {};
+    klaarGeroepen = false; overgeslagen = false; glimOpen = 0; spoel = null; sleutels = null; hintGezien = {};
     spiegelModus();
     if (!maakRoot()) return false;
     actief = true;
     if (!cssGeladen) {
       /* tot de css binnen is: alleen het zwarte vlak (anders flitst de skip ongestyled op) */
-      [wrap, skipEl, hintEl].forEach(e => { e.style.visibility = 'hidden'; });
+      [wrap, skipEl, hintEl, klankEl].forEach(e => { e.style.visibility = 'hidden'; });
       T(toonApp, 2500, 'sessie');   /* vangnet: nooit langer dan 2,5 s op de css wachten */
     }
 
@@ -1623,14 +1727,17 @@
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => luister(skipEl, t, houdSkipStop));
     luister(skipEl, 'contextmenu', e => e.preventDefault());
     luister(skipEl, 'click', e => e.stopPropagation());
+    /* de klankknop: stopPropagation, anders spoelt dezelfde tik ook de scène door */
+    luister(klankEl, 'click', e => { e.stopPropagation(); wisselKlank(); });
     if (window.MutationObserver) {
       const db = document.getElementById('draai-blok');
       if (db) { const mo = new MutationObserver(evalueerPauze); mo.observe(db, { attributes: true, attributeFilter: ['class'] }); opruimers.push(() => mo.disconnect()); }
-      if (document.body) { const mb = new MutationObserver(spiegelModus); mb.observe(document.body, { attributes: true, attributeFilter: ['data-modus'] }); opruimers.push(() => mb.disconnect()); }
+      if (document.body) { const mb = new MutationObserver(spiegelModus); mb.observe(document.body, { attributes: true, attributeFilter: ['data-modus', 'class'] }); opruimers.push(() => mb.disconnect()); }
     }
 
     render();
-    T(() => { if (skipEl && magSkippen()) skipEl.classList.add('zichtbaar'); }, SKIP_ZICHTBAAR_MS, 'sessie');
+    /* de skip verschijnt; vanaf nu kan de Afgrond elk moment komen → haar art alvast laden */
+    T(() => { if (skipEl && magSkippen()) skipEl.classList.add('zichtbaar'); laadAfgrondVoor(); }, SKIP_ZICHTBAAR_MS, 'sessie');
     evalueerPauze();
     return true;
   }
@@ -1649,7 +1756,7 @@
     spoel = null; sleutels = null;
     if (app) { app.innerHTML = ''; app.className = 'pl-app'; delete app.dataset.scene; delete app.dataset.fase; }
     if (host) { delete host.dataset.plScene; }
-    wrap = null; skipEl = null; hintEl = null;
+    wrap = null; skipEl = null; hintEl = null; klankEl = null;
     return wasActief;
   }
 

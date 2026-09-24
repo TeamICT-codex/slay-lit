@@ -1669,6 +1669,20 @@ body[data-modus="mobiel"] .plaat-instort { --plaat-schaal: 1.05; --plaat-rot: -.
 }
 
 /* ============================================================
+   DE NAAD (proloog R1) — het mobiele spoor. De landing zelf meet alles live
+   (getBoundingClientRect); hier alleen de maten die op een telefoon anders zijn.
+   Staat bewust HIER (vóór de Drempeltafel) en niet onderaan het bestand: de finale-tak
+   voegt onderaan een blok toe; zo botsen de twee bij de merge niet (F1).
+   ============================================================ */
+/* het kooltje is op de telefoon kleiner (plan par. 3: 8 px, op telefoon 4) */
+body[data-modus="mobiel"] .pl-kooltje { width: 4px; height: 4px; }
+body[data-modus="mobiel"] .pl-kooltje::after { inset: -6px; }
+/* de lege flesplaatsen: een volwaardige raakzone voor de uitleg (tik = tip) */
+body[data-modus="mobiel"] .drank-leeg { min-height: 38px; padding: 0 5px; gap: 6px; }
+/* de fakkelvonk van de landing: op de telefoon 8 px (laptop 11 px, style.css) */
+body[data-modus="mobiel"] .pl-fakkelvonk { width: 8px; height: 8px; margin: -4px 0 0 -4px; }
+
+/* ============================================================
    G. DE DREMPELTAFEL (v128) — het gokritueel aan de Drempel (Act 1 → 2)
    Alles onder body[data-modus="mobiel"]; de basis + het laptop-spoor staan in
    css/drempeltafel.css. Twee sporen — zie het geheugenbestand mobiel-laptop-sporen.md.
@@ -1788,13 +1802,3 @@ body[data-modus="mobiel"] .dt-overlay .sb-balk { background: linear-gradient(0de
   body[data-modus="mobiel"] .dt-nis-kolom, body[data-modus="mobiel"] .dt-scherf-kolom { flex: 1 1 100%; max-width: none; }
   body[data-modus="mobiel"] .dt-stop-lang { display: none; }   /* de uitleg staat in de tafelvoet */
 }
-
-/* ============================================================
-   DE NAAD (proloog R1) — het mobiele spoor. De landing zelf meet alles live
-   (getBoundingClientRect); hier alleen de maten die op een telefoon anders zijn.
-   ============================================================ */
-/* het kooltje is op de telefoon kleiner (plan par. 3: 8 px, op telefoon 4) */
-body[data-modus="mobiel"] .pl-kooltje { width: 4px; height: 4px; }
-body[data-modus="mobiel"] .pl-kooltje::after { inset: -6px; }
-/* de lege flesplaatsen: een volwaardige raakzone voor de uitleg (tik = tip) */
-body[data-modus="mobiel"] .drank-leeg { min-height: 38px; padding: 0 5px; gap: 6px; }
