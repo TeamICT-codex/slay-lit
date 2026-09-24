@@ -13,7 +13,10 @@
    BASE = '' (onder /slay-lit/ lost de browser ze vanzelf relatief op). Vroeger stonden
    hier ±25 '../'-paden; in-page gaven die een stille 404.
    Weg in R1: de afdalingsscène en het slotframe (de landing op de kaart doet de game),
-   de fotovraag-modal, de camerapopup en Barts bijnaam. */
+   de fotovraag-modal, de camerapopup en Barts bijnaam.
+   R2 "DE VAL EN DE KLANK": de val is een pixelcanvas (proloog/val.js, de lichtmotor van
+   de outro); hieronder staan alleen nog haar teksten. De maskerzinnen hebben één bron
+   met de outro: OutroFX.MASKERZINNEN (js/outro-fx.js, altijd geladen in de game-pagina). */
 
 window.SLAYLIT_PROLOOG = (function () {
   const BASE = '';
@@ -253,20 +256,21 @@ window.SLAYLIT_PROLOOG = (function () {
         geduwd: 'U tekent. De pen laat geen inkt na — alleen een groef.',
         ondertekenaar: { src: A('junior.webp'), placeholder: 'JUNIOR', naam: 'J. “Junior” Devroe', rol: 'Namens de directie · de zoon van De Oprichter', handtekening: 'J. Devroe' },
       },
+      // IN DE WACHT (R2): de goederenlift daalt door de etages van de outro (proloog/val.js).
+      // Keuze 3 (gevoeligheid): geen raam naar buiten, geen gevel, geen blik omlaag, geen
+      // vrij vallende figuur, geen inslag — de lift daalt, de mens valt niet.
+      // Alles hieronder staat in het pixelfont (hoofdletters, zonder accenten).
       val: {
-        // dramatisch traag: ruis, vertroebeling, hartslag (de lift 'in de wacht' komt in R2)
-        beats: [
-          { t: 'B.A.A.S.: “Blijf even aan de lijn. Een medewerker komt zo bij u.”', dur: 2600 },
-          { t: 'De wachtmuziek zakt een halve toon. En nog een.', dur: 2600 },
-          { t: 'Het tl-licht zoemt in uw kaakgewricht. Ruis kruipt over het scherm.', dur: 2800 },
-          { t: 'De vloer is een veronderstelling. U had het moeten nalezen.', dur: 2800 },
-          { t: 'Uw hartslag in uw oren — sneller dan de klok ooit tikte.', dur: 2600 },
-        ],
-        sprong: 'U viel niet. U liet los. In uw vuist: iets dat warm blijft.',
-        geduwd: 'U valt. Niemand duwde. Dat is het ergste. In uw borstzak: iets dat warm blijft.',
-        zwart: ['Het wordt zwart voor uw ogen.', 'Geen vloer. Geen plafond. Geen B.A.A.S.', 'Alleen het bonzen — en de warmte in uw vuist.'],
-        slot: 'VERBINDING VERBROKEN',
-        // de liftknop die niet zou mogen bestaan: wie sprong, drukt hem zelf in
+        wacht: 'Een ogenblikje. Ik zet u even in de wacht.',          // de lichtkrant, bij het dichtschuiven van het hek
+        krant: ['Blijf even aan de lijn.', 'Uw oproep is belangrijk voor ons.'],   // de lichtkrant, om beurten
+        zeppelin: 'UW WELZIJN IS ONZE KPI  -  ',                     // op de romp, boven het dak
+        verbinding: 'VERBINDING VERBROKEN',   // de meter-LED op 80 %: de ENIGE keer in de hele proloog
+        vloer: 'De vloer is een veronderstelling. U had het moeten nalezen.',
+        slot: 'Voor het eerst in vijfentwintig jaar wordt er niets gefactureerd.',
+        // de bordjes op de etages
+        deur: 'J. DEVROE', kast: ['VOORZIENING', 'GETROFFEN'], cubicle: '7', friet: 'FRIET', poster: 'GLIMLACH!',
+        // de liftknop die niet zou mogen bestaan: wie sprong, drukt hem zelf in (beschenen
+        // door de gevallen foto); wie geduwd werd, ziet B.A.A.S. hem indrukken
         knop: '−∞',
         knopSprong: 'Druk hem in.',
         knopGeduwd: 'B.A.A.S. drukt hem voor je in.',
@@ -288,18 +292,15 @@ window.SLAYLIT_PROLOOG = (function () {
   // (de game leest held/masker uit het contract; js/outro.js kent beide vormen)
   const HELD_MAP = { woede: 'slachter', gif: 'gifmagier', vlucht: 'thoverk' };
 
-  // de maskers van de Afgrond; kleur/naam/HP/startkaarten komen live uit window.SPELERS
+  // de maskers van de Afgrond; kleur/naam/HP/startkaarten komen live uit window.SPELERS,
+  // hun zinnen uit OutroFX.MASKERZINNEN (R2: één bron met de reünie in de outro)
   const MASKERS = [
     { id: 'woede',  reactie: 'Vallen in woede',       soort: 'Verzet · brute kracht',
-      masker: { src: A('masker-woede.webp'),  ph: '😠' },
-      zin: 'Genoeg geglimlacht. Nu is het hún beurt.' },
+      masker: { src: A('masker-woede.webp'),  ph: '😠' } },
     { id: 'gif',    reactie: 'Vallen in wrok',        soort: 'Wrok · sluw venijn',
-      masker: { src: A('masker-gif.webp'),    ph: '🙄' },
-      zin: 'We passen ons aan. Zoals altijd.' },
+      masker: { src: A('masker-gif.webp'),    ph: '🙄' } },
     { id: 'vlucht', reactie: 'Vallen in verbeelding', soort: 'Ontkenning · verbeelding',
-      masker: { src: A('masker-vlucht.webp'), ph: '🌀' },
-      zin: 'Ik wou {jeugddroom} worden. Ik heb het licht nog.',
-      zinZonder: 'Ik wou ooit iets worden. Ik heb het licht nog.' },
+      masker: { src: A('masker-vlucht.webp'), ph: '🌀' } },
   ];
 
   // terugval-heldinfo als window.SPELERS (js/data.js) of een id ontbreekt (lookup-bugklasse)
@@ -315,13 +316,21 @@ window.SLAYLIT_PROLOOG = (function () {
                  start: ['Takkenslag ×4', 'Verdediging ×4', 'Vonkenbeet', 'Stoofpotje'] },
   };
 
-  // de zin van een masker, met de jeugddroom ingevuld (of de terugvalzin zonder droom)
+  // de zin van een masker (aanloop + kern), met de jeugddroom ingevuld of de terugvalzin
+  // zonder droom. De tekst leeft in OutroFX.MASKERZINNEN (sleutel = game-held-id): de outro
+  // citeert er de kern van. Ontbreekt die bron (of het masker), dan '' — de Afgrond laat de
+  // regel dan weg (lookup-bugklasse: nooit blind een onbekende sleutel lezen).
   function maskerZin(id, jeugddroom) {
-    const m = MASKERS.find(x => x.id === id);
-    if (!m) return '';
+    const bron = window.OutroFX && window.OutroFX.MASKERZINNEN;
+    const held = Object.prototype.hasOwnProperty.call(HELD_MAP, id) ? HELD_MAP[id] : null;
+    const z = bron && held && Object.prototype.hasOwnProperty.call(bron, held) ? bron[held] : null;
+    if (!z || typeof z.kern !== 'string') return '';
     const droom = typeof jeugddroom === 'string' ? jeugddroom.trim() : '';
-    if (m.zin.indexOf('{jeugddroom}') === -1) return m.zin;
-    return droom ? m.zin.replace('{jeugddroom}', droom) : (m.zinZonder || m.zin.replace('{jeugddroom}', 'iets'));
+    let aanloop = typeof z.aanloop === 'string' ? z.aanloop : '';
+    if (aanloop.indexOf('{jeugddroom}') !== -1) {
+      aanloop = droom ? aanloop.replace('{jeugddroom}', droom) : (z.aanloopZonder || aanloop.replace('{jeugddroom}', 'iets'));
+    }
+    return (aanloop ? aanloop + ' ' : '') + z.kern;
   }
 
   // hoofdstukken voor herbeleven (titel/DEV/Codex): Proloog.start({ hoofdstuk })

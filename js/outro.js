@@ -320,29 +320,11 @@ const Outro = (() => {
       '...kk..kk...'
     ]
   };
-  /* ---------- 3×5 pixel-font (hoofdletters — alle outro-UI is kapitaal) ---------- */
-  /* ---------- 5×7 dot-matrix-font (leesbaar, ook op 320px) ---------- */
-  const FONT = {
-    A:[14,17,17,31,17,17,17],B:[30,17,17,30,17,17,30],C:[14,17,16,16,16,17,14],
-    D:[30,17,17,17,17,17,30],E:[31,16,16,30,16,16,31],F:[31,16,16,30,16,16,16],
-    G:[14,17,16,23,17,17,15],H:[17,17,17,31,17,17,17],I:[14,4,4,4,4,4,14],
-    J:[7,2,2,2,2,18,12],K:[17,18,20,24,20,18,17],L:[16,16,16,16,16,16,31],
-    M:[17,27,21,21,17,17,17],N:[17,25,21,19,17,17,17],O:[14,17,17,17,17,17,14],
-    P:[30,17,17,30,16,16,16],Q:[14,17,17,17,21,18,13],R:[30,17,17,30,20,18,17],
-    S:[15,16,16,14,1,1,30],T:[31,4,4,4,4,4,4],U:[17,17,17,17,17,17,14],
-    V:[17,17,17,17,17,10,4],W:[17,17,17,21,21,27,17],X:[17,17,10,4,10,17,17],
-    Y:[17,17,10,4,4,4,4],Z:[31,1,2,4,8,16,31],
-    '0':[14,17,19,21,25,17,14],'1':[4,12,4,4,4,4,14],'2':[14,17,1,6,8,16,31],
-    '3':[14,17,1,6,1,17,14],'4':[2,6,10,18,31,2,2],'5':[31,16,30,1,1,17,14],
-    '6':[6,8,16,30,17,17,14],'7':[31,1,2,4,8,8,8],'8':[14,17,17,14,17,17,14],
-    '9':[14,17,17,15,1,2,12],
-    ':':[0,4,0,0,0,4,0],'.':[0,0,0,0,0,6,6],',':[0,0,0,0,0,4,8],
-    '-':[0,0,0,14,0,0,0],'+':[0,4,4,31,4,4,0],'=':[0,0,31,0,31,0,0],
-    '!':[4,4,4,4,4,0,4],'?':[14,17,1,2,4,0,4],'/':[1,1,2,4,8,16,16],
-    "'":[4,4,0,0,0,0,0],'"':[10,10,0,0,0,0,0],
-    '(':[2,4,8,8,8,4,2],')':[8,4,2,2,2,4,8],'[':[14,8,8,8,8,8,14],']':[14,2,2,2,2,2,14],
-    ' ':[0,0,0,0,0,0,0]
-  };
+  /* ---------- het 5x7-dot-matrix-font + de tekstrenderer ----------
+     Sinds proloog R2 OutroFX-exports (js/outro-fx.js): de val van de proloog
+     tekent met hetzelfde font. Eén bron, hier één regel per constante. */
+  const tekst = OutroFX.tekst;
+  const tekstBreedte = OutroFX.tekstBreedte;
 
   /* ---------- module-staat ---------- */
   let canvas = null, ctx = null;
@@ -402,20 +384,9 @@ const Outro = (() => {
   let tls = [];                                 /* de tl-bakken (en in de directie: kroonluchters) */
   let fakkelDip = 0;                            /* 1 = de fakkel is net tot een kooltje gedoofd (treffer) */
 
-  /* ---------- het klimaat per laag: van koud tl-grijs naar warm vuur ----------
-     ambient = de basis van de lichtkaart (multiply: alles wat geen licht vangt
-     zakt naar deze tint), tl = de kleur van de buizen, grade = een kleurtoon
-     over het hele beeld. Hoe hoger je klimt, hoe warmer en roder het wordt. */
-  const KLIMAAT = [
-    /* koud → warm: het ambient schuift naar warm naarmate de stoet groeit (de
-       velen maken het licht); banden = hoe grof het licht in trappen valt —
-       hoe dichter bij B.A.A.S., hoe grover (de boekhoudersblik, onbenoemd) */
-    { naam: 'archief',     koud: '#36435a', warm: '#604e3f', tl: '#cfd8e0', grade: '#2f5a7a', gradeS: 0.3,  banden: 4, lucht: null,    horizon: 0 },
-    { naam: 'kantoortuin', koud: '#365343', warm: '#605133', tl: '#d8f0d0', grade: '#4f7a4a', gradeS: 0.28, banden: 4, lucht: 'nacht', horizon: 150 },
-    { naam: 'facturatie',  koud: '#2a5666', warm: '#60482d', tl: '#cfeef4', grade: '#2f7a8a', gradeS: 0.28, banden: 3, lucht: 'nacht', horizon: 196 },
-    { naam: 'directie',    koud: '#53282d', warm: '#78452a', tl: '#dfe2ff', grade: '#8a2a2a', gradeS: 0.3,  banden: 3, lucht: 'storm', horizon: 236 },
-    { naam: 'penthouse',   koud: '#4d3d66', warm: '#7b4851', tl: '#dfe2ff', grade: '#6a2a5a', gradeS: 0.26, banden: 2, lucht: 'storm', horizon: 232 }
-  ];
+  /* het klimaat per laag (koud tl-grijs → warm vuur): sinds proloog R2 een
+     OutroFX-export — de val van de proloog daalt door dezelfde etages */
+  const KLIMAAT = OutroFX.KLIMAAT;
   const klimaatNu = () => KLIMAAT[klem(lvlIdx, 0, KLIMAAT.length - 1)];
   /* hex-kleuren mengen (gecachet: het ambient verandert zelden) */
   const mengCache = new Map();
@@ -556,44 +527,6 @@ const Outro = (() => {
     return c;
   }
 
-  /* tekst in het 3×5-font (alleen hoofdletters; onbekende tekens = spatie) */
-  /* tekst-cache: elke (regel, kleur, schaal) wordt één keer als mini-canvas
-     gebakken en daarna geblit. Zonder cache hertekent de HUD duizenden
-     1px-fillRects per frame (5x7-font = tot 35 rects x 2 passes per teken) —
-     op mobiel dé grootste constante CPU-post van de outro. */
-  const tekstCache = new Map();
-  function tekst(cx, str, x, y, kleur, schaal) {
-    schaal = schaal || 1;
-    /* gedachtestreepjes zitten niet in het 5x7-font — normaliseer, anders
-       vallen ze stil weg (verdiepingsnamen, seed-strings) */
-    str = String(str).replace(/[—–]/g, '-').toUpperCase();
-    const sleutel = str + '' + kleur + '' + schaal;
-    let c = tekstCache.get(sleutel);
-    if (!c) {
-      if (tekstCache.size > 192) tekstCache.clear();   /* grof maar afdoende: nooit onbegrensd */
-      c = document.createElement('canvas');
-      c.width = Math.max(1, str.length * 6 * schaal + schaal);
-      c.height = 8 * schaal;   /* 7 glyphrijen + 1 rij slagschaduw */
-      const tc = c.getContext('2d');
-      /* eerst de slagschaduw, dan de kleur: leesbaar op elke drukke achtergrond */
-      for (const schaduw of [1, 0]) {
-        tc.fillStyle = schaduw ? 'rgba(8,6,4,0.9)' : kleur;
-        let px = schaduw * schaal;
-        const py = schaduw * schaal;
-        for (const ch of str) {
-          const gl = FONT[ch] || FONT[' '];
-          for (let r = 0; r < 7; r++) for (let b = 0; b < 5; b++) {
-            if (gl[r] & (16 >> b)) tc.fillRect(px + b * schaal, py + r * schaal, schaal, schaal);
-          }
-          px += 6 * schaal;
-        }
-      }
-      tekstCache.set(sleutel, c);
-    }
-    cx.drawImage(c, Math.round(x), Math.round(y));
-    return tekstBreedte(str, schaal);
-  }
-  const tekstBreedte = (str, schaal) => String(str).length * 6 * (schaal || 1) - (schaal || 1);
   /* woord-afbreking: tekst binnen maxBr px houden, over meerdere regels.
      Geeft de y ná de laatste regel terug (zodat de aanroeper kan doorstapelen). */
   function tekstWrap(cx, str, x, y, kleur, maxBr, regelH, schaal) {
@@ -2911,7 +2844,7 @@ const Outro = (() => {
 
   /* de maskers: de twee losgelaten delen van jezelf zitten hier ook vast */
   const MASKER_NAAM = { slachter: 'DE SLACHTER', gifmagier: 'DE GIFMAGIER', thoverk: 'THOVERK' };
-  const MASKER_REGEL = { slachter: '"NU IS HET HUN BEURT."', gifmagier: '"WE PASSEN ONS AAN. ZOALS ALTIJD."', thoverk: '"VUURTJE NODIG? FLAME!"' };
+  const MASKER_REGEL = OutroFX.REUNIE;   /* proloog R2: de reünie citeert de maskerzinnen van de Afgrond (één bron in OutroFX.MASKERZINNEN) */
   function volgendMasker() { return Object.keys(HELD_TINT).find(m => maskers.indexOf(m) === -1) || null; }
   function misschienCelOpen(c, px, py, straal) {
     if (c.open) return;
@@ -4016,7 +3949,7 @@ const Outro = (() => {
     return uit;
   }
   /* ---------- de goederenlift: deuren en de rit door de schacht ---------- */
-  const ETAGE_NR = ['-1', '2', '3', '4', 'DAK'];
+  const ETAGE_NR = OutroFX.ETAGE_NR;   /* sinds proloog R2 een OutroFX-export: de val toont dezelfde nummers */
   function easeUit(f) { f = klem(f, 0, 1); return 1 - Math.pow(1 - f, 3); }
   function tekenLiftdeuren(dicht) {
     if (dicht <= 0.001) return;
@@ -4333,8 +4266,8 @@ const Outro = (() => {
     }
     /* het kooltje: het enige warme in het zwart, en het ademt */
     const kx = BREED / 2 - 1, ky = 34;
-    ctx.fillStyle = '#ff9c3f'; ctx.fillRect(kx, ky, 2, 2);
-    if (fx) fx.gloed(ctx, kx + 1, ky + 1, Math.round(7 + 2 * Math.sin(introT * 1.1)), '#ff9c3f', 0.55 + 0.15 * Math.sin(introT * 1.1));
+    /* proloog R2: dezelfde code tekent het kooltje waarop de val van de proloog eindigt */
+    if (fx) fx.kooltje(ctx, kx, ky, introT); else { ctx.fillStyle = '#ff9c3f'; ctx.fillRect(kx, ky, 2, 2); }
     /* de briefing dooft weg zodra de titelkaart komt — geen overlap, en de
        dissolve leest als een bewuste overgang (werkt voor 7 én 8 regels) */
     const briefAlpha = klem(1 - (introT - 9) / 1, 0, 1);
@@ -4953,6 +4886,9 @@ const Outro = (() => {
     else { document.querySelectorAll('.scherm').forEach(el => el.classList.remove('actief')); scherm.classList.add('actief'); }
     schaalCanvas();
     if (window.Klank && Klank.muziek) { try { Klank.muziek('stil'); } catch (e) {} }
+    /* proloog R2 (keuze 5): "IK HAAL U UIT DE WACHT." — de wachtmuziek van de proloog hervat
+       op de toon waar de val haar liet (contract.wachtToon, standaard −7) en buigt omhoog */
+    if (window.Klank && Klank.wachtHervat) { try { Klank.wachtHervat(Math.min(12, Math.abs(+proloog.wachtToon) || 7), { buig: true }); } catch (e) {} }
 
     window.addEventListener('keydown', opToetsNeer);
     window.addEventListener('keyup', opToetsOp);

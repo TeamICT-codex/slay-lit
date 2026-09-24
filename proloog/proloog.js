@@ -30,7 +30,14 @@
    - 'slaylit_proloog_v3'  = eigen voortgang { scene, checkpoint, choices, gezien[] }; na een herlaad
                              hervat je op het laatste checkpoint, nooit midden in het gesprek.
                              De oude v2-sleutel wordt gemigreerd en gewist.
-   Spelersinvoer (jeugddroom) gaat ALTIJD via textContent, nooit via innerHTML of inline handlers. */
+   Spelersinvoer (jeugddroom) gaat ALTIJD via textContent, nooit via innerHTML of inline handlers.
+
+   R2 "DE VAL EN DE KLANK": de val is een pixelcanvas (proloog/val.js, window.ProloogVal) met
+   de lichtmotor van de outro; ze tekent op speelTijd() (dezelfde pauze als T()). De klank
+   komt van bouwer K (proloog/audio.js → window.ProloogKlank) en wordt hier ALLEEN achter een
+   guard aangeroepen (klank()): de jingle in de boot, de wachtmuziek vanaf de oproep, een
+   halve toon lager per etage in de val (tot −7), stilte(1500) als de vloer weg is, en
+   wachtStop in de Afgrond. */
 (function () {
   'use strict';
   const STORY = window.SLAYLIT_PROLOOG;
@@ -61,6 +68,8 @@
   let cam = null;          /* { stream } van de pasfoto-camera */
   let cssGeladen = false;
   let hintGezien = {};
+  let val = null;          /* R2: de lopende val (window.ProloogVal-handle) */
+  let wachtAan = false;    /* R2: loopt de wachtmuziek (sinds de oproep)? */
   const opruimers = [];
   const objectUrls = new Set();
 
@@ -146,6 +155,10 @@
 
   /* ---------- timers: één klok die pauzeert (tab verborgen / draai-blok) ---------- */
   const klok = { lijst: new Map(), id: 0, pauze: false };
+  /* R2: de pauzebewuste speeltijd (ms) — dezelfde pauze als T(): de val tekent hierop,
+     dus een verborgen tab of het draai-blok houdt ook het liftcanvas vast */
+  let pauzeSinds = 0, pauzeTotaal = 0;
+  function speelTijd() { const nu = performance.now(); return nu - pauzeTotaal - (klok.pauze ? nu - pauzeSinds : 0); }
   function T(fn, ms, groep) {
     const id = ++klok.id;
     const t = { fn, rest: Math.max(0, ms || 0), start: performance.now(), h: null, groep: groep || 'scene' };
@@ -177,6 +190,7 @@
     if (aan === klok.pauze) return;
     klok.pauze = aan;
     const nu = performance.now();
+    if (aan) pauzeSinds = nu; else pauzeTotaal += nu - pauzeSinds;
     klok.lijst.forEach((t, id) => {
       if (aan) { clearTimeout(t.h); t.h = null; t.rest = Math.max(0, t.rest - (nu - t.start)); }
       else { t.start = nu; t.h = setTimeout(() => vuur(id), t.rest); }
@@ -189,6 +203,21 @@
     return !!(db && db.classList.contains('toon'));
   }
   function evalueerPauze() { if (actief) zetPauze(!!(document.hidden || draaiBlokToont())); }
+
+  /* ---------- R2: de klank van bouwer K (window.ProloogKlank), altijd achter een guard ---------- */
+  function klank(naam, ...args) {
+    const K = window.ProloogKlank;
+    if (!K || typeof K[naam] !== 'function') return;
+    try { K[naam](...args); } catch (e) { meldFout(e); }
+  }
+  /* de wachtmuziek loopt van de oproep tot de Afgrond; ook wie na een herlaad in het gesprek,
+     de factuur, het ontslag of de val hervat (of er een hoofdstuk herbeleeft), hoort haar */
+  function zorgWacht() { if (wachtAan) return; wachtAan = true; klank('wachtStart'); }
+  function wachtUit() { if (!wachtAan) return; wachtAan = false; klank('wachtStop'); }
+  function stopVal() { if (val) { const v = val; val = null; try { v.stop(); } catch (e) { meldFout(e); } } }
+  /* het liftcanvas alvast bakken (idle), terwijl de factuur print: zo wacht het eerste beeld
+     van de val niet op het bakken van de etages en de onweerslucht */
+  function bakValVoor(sc) { try { if (window.ProloogVal && typeof ProloogVal.voorbak === 'function') ProloogVal.voorbak(sc && sc.val); } catch (e) { meldFout(e); } }
 
   /* ---------- DOM-hulpjes (alles in de shadow root) ---------- */
   function el(tag, cls, tekst) {
@@ -326,8 +355,10 @@
     wisAlleT('scene');
     spoel = null; sleutels = null;
     stopCamera();
+    stopVal();
     if (AU) { AU.heartStop(); AU.noiseOff(); AU.droneOff(); }
     const scene = STORY.scenes[P.scene];
+    if (scene.kind === 'gesprek') zorgWacht();   /* R2: in de wacht, al sinds de oproep */
     wrap.innerHTML = '';
     wrap.className = 'scene scene-' + scene.kind;
     wrap.style.filter = '';
@@ -505,6 +536,7 @@
     b.appendChild(el('div', 'boot-version', scene.version));
     wrap.appendChild(b);
     if (AU) AU.unlock();
+    klank('jingle', { vals: true });   /* R2: de bedrijfsjingle, één maat te lang en net vals */
     focusStil(k);
   }
 
@@ -758,6 +790,7 @@
     /* de oproep: jij wordt uit de zaal gelicht */
     function toonOproep() {
       const o = scene.oproep;
+      zorgWacht();   /* R2: "uw aanwezigheid is vereist" — en u staat in de wacht */
       const laag = el('div', 'oproep');
       const links = el('div', 'op-links');
       const zaal = el('div', 'op-zaal');
@@ -1099,6 +1132,8 @@
 
     function zetFase(naam) {
       wisAlleT('scene');
+      stopVal();
+      if (naam === 'afgrond') wachtUit(); else zorgWacht();
       spoel = null; sleutels = null;
       P.checkpoint = naam; bewaar();
       app.dataset.fase = naam;
@@ -1109,6 +1144,7 @@
        papier loopt onderaan het venster uit, dus nooit een scrollbalk */
     function faseFactuur() {
       zetFase('factuur');
+      bakValVoor(S);
       titel.textContent = S.titel; titel.style.display = '';
       vak.innerHTML = ''; vak.className = 'bs-vak fase-factuur';
       const f = S.factuur;
@@ -1155,6 +1191,7 @@
 
     function faseOntslag() {
       zetFase('ontslag');
+      bakValVoor(S);
       titel.style.display = 'none';
       vak.innerHTML = ''; vak.className = 'bs-vak fase-ontslag';
       const o = S.ontslag;
@@ -1203,94 +1240,75 @@
       focusStil(cta);
     }
 
+    /* ═══ IN DE WACHT: DE VAL (R2) ═══
+       Een pixelcanvas (proloog/val.js) met de lichtmotor van de outro: 0042 in de
+       goederenlift, de etages van de outro glijden voorbij en doven, de wachtmuziek zakt een
+       halve toon per etage (tot −7), de meter-LED toont VERBINDING VERBROKEN (de enige keer),
+       de vloer valt uiteen, stilte, één ademend kooltje. Dan licht de knop −∞ op: wie sprong,
+       drukt hem zelf in (beschenen door de gevallen foto); wie geduwd werd, ziet B.A.A.S.
+       drukken. Eén tik = één stap vooruit, naar de volgende mijlpaal van de val. */
     function faseVal() {
       zetFase('val');
       laadAfgrondVoor();
       titel.style.display = 'none';
       vak.innerHTML = ''; vak.className = 'bs-vak fase-val';
       const v = S.val;
-      const veld = el('div', 'val-veld');
-      vak.appendChild(el('div', 'val-noise'));
-      const hart = el('div', 'val-hart');
-      vak.appendChild(hart);
-      vak.appendChild(veld);
-      if (AU) { AU.humOff(); AU.heartStart(900); AU.noiseOn(0.03); }
-      let i = 0, fase = 'beats', zi = 0, tid = null;
-      let zwartVak = null;
-      const regelEls = [];
-      const echo = el('p', 'val-regel val-echo', sprong ? v.sprong : v.geduwd);
-
-      function tekenBeats() {
-        const k = Math.min(1, i / v.beats.length);
-        if (!rustig()) vak.style.filter = 'blur(' + (k * 2.4).toFixed(2) + 'px) contrast(' + (1 + k * 0.25) + ')';
-        hart.style.animationDuration = (0.85 - k * 0.45).toFixed(2) + 's';
-        if (AU) { AU.heartRateSet(Math.round(900 - k * 430)); AU.noiseOn(0.03 + k * 0.08); }
-        regelEls.forEach((e2, n) => { e2.style.opacity = n === i - 1 ? 1 : 0.25; });
-      }
-      function volgendeBeat() {
-        if (i >= v.beats.length) { tid = T(startZwart, 700); return; }
-        const p = el('p', 'val-regel', v.beats[i].t);
-        veld.insertBefore(p, echo);
-        regelEls.push(p);
-        i++;
-        tekenBeats();
-        tid = T(volgendeBeat, v.beats[i - 1].dur);
-      }
-      veld.appendChild(echo);
-      volgendeBeat();
-
-      function startZwart() {
-        if (fase !== 'beats') return;
-        fase = 'zwart';
-        vak.style.filter = '';
-        veld.innerHTML = '';
-        zwartVak = el('div', 'val-zwart');
-        veld.appendChild(zwartVak);
-        if (AU) { AU.heartRateSet(470); AU.noiseOn(0.13); }
-        tid = T(volgendeZwart, 400);
-      }
-      function volgendeZwart() {
-        if (fase !== 'zwart') return;
-        if (zi >= v.zwart.length) { slot(); return; }
-        const p = el('p', 'zwart-regel', v.zwart[zi]);
-        zwartVak.appendChild(p);
-        zwartVak.querySelectorAll('p').forEach((e2, n) => { e2.style.opacity = n === zi ? 1 : 0.28; });
-        zi++;
-        tid = T(volgendeZwart, 1800);
-      }
-      function slot() {
-        if (fase === 'slot') return;
-        fase = 'slot';
-        spoel = null;
-        if (AU) { AU.heartStop(); AU.noiseOff(); }
-        veld.innerHTML = '';
-        const s = el('div', 'val-slot');
-        s.appendChild(el('div', 'val-slot-kop', v.slot));
-        /* de liftknop die niet zou mogen bestaan: wie sprong, drukt hem in; wie geduwd
-           werd, ziet B.A.A.S. hem indrukken */
-        let weg = false;
-        const druk = () => {
-          if (weg) return; weg = true; spoel = null;
-          knopEl.classList.add('ingedrukt');
-          if (AU) AU.stamp();
-          T(faseAfgrond, rustig() ? 150 : 520);
-        };
-        const knopEl = knop('val-knop', v.knop, druk);
+      if (AU) { AU.humOff(); AU.heartStop(); AU.noiseOff(); }
+      klank('transponeer', 0);
+      let knopEl = null, weg = false;
+      const druk = () => {
+        if (weg || !knopEl || !actief) return;
+        weg = true; spoel = null;
+        knopEl.classList.add('ingedrukt');
+        klank('sfx', 'knop');
+        const van = val ? val.kooltje() : null;   /* het kooltje van de lift: de Afgrond neemt het over */
+        if (val) val.druk();
+        T(() => faseAfgrond(van), rustig() ? 150 : 520);
+      };
+      /* de knop die niet zou mogen bestaan: een echte knop, op zijn fitting in het canvas */
+      function toonKnop() {
+        if (knopEl) return;
+        const houder = el('div', 'val-knophouder');
+        knopEl = knop('val-knop ' + (sprong ? 'foto' : 'baas'), v.knop, druk);
         knopEl.setAttribute('aria-label', 'Min oneindig');
-        s.appendChild(knopEl);
-        s.appendChild(el('p', 'val-knop-zin', sprong ? v.knopSprong : v.knopGeduwd));
-        veld.appendChild(s);
-        if (!sprong) { T(druk, 1700); spoel = druk; }
+        houder.appendChild(knopEl);
+        houder.appendChild(el('p', 'val-knop-zin', sprong ? v.knopSprong : v.knopGeduwd));
+        if (val) val.hang(houder, 'knop'); else vak.appendChild(houder);
+        spoel = sprong ? null : druk;   /* sprong: hier handel jij; geduwd: een tik laat B.A.A.S. drukken */
         focusStil(knopEl);
       }
-      /* doorspoelen: één tik = één stap vooruit in de actieve fase */
-      const stapDoor = () => {
-        wisT(tid);
-        if (fase === 'beats') { if (i >= v.beats.length) startZwart(); else volgendeBeat(); }
-        else if (fase === 'zwart') { if (zi >= v.zwart.length) slot(); else volgendeZwart(); }
-        if (fase !== 'slot') spoel = stapDoor;
+      /* de momenten van de val → klank (bouwer K: ProloogKlank kent de gebeurtenisnamen van
+         val.js als sfx) en de knop. Wie doorspoelt, hoort de transponering wel stap voor stap
+         zakken, maar geen stapel belletjes (laat > 0,25 s: geen sfx). */
+      const opVal = (naam, arg, laat) => {
+        if (!actief) return;
+        const vers = !(laat > 0.25);
+        if (naam === 'etage') { klank('transponeer', -(arg + 1)); if (vers) klank('sfx', 'etage'); }   /* DAK … −3 → −1 … −7 */
+        else if (naam === 'stilte') klank('stilte', arg);
+        else if (naam === 'knop') toonKnop();
+        else if (naam === 'baasDrukt') { if (!sprong) druk(); }
+        else if (naam !== 'slot' && vers) klank('sfx', naam);   /* hek, krant, tl, verbinding, ledUit, vloer, kooltje */
       };
-      spoel = stapDoor;
+      try {
+        if (window.ProloogVal && typeof ProloogVal.start === 'function') {
+          val = ProloogVal.start({ houder: vak, sprong, tekst: v, nu: speelTijd, gepauzeerd: () => klok.pauze,
+            rustig: rustig(), lite: isLite(), bij: opVal });
+        }
+      } catch (e) { meldFout(e); val = null; }
+      if (!val) {
+        /* terugval zonder canvas (geen OutroFX of geen 2D-context): de uitkomst in woorden, dan de knop */
+        vak.classList.add('val-nood');
+        vak.appendChild(el('p', 'val-nood-kop', v.verbinding));
+        toonKnop();
+        if (!sprong) T(druk, 1700);
+        return;
+      }
+      const spoelVal = () => {
+        if (!val || weg) return;
+        val.spoel();
+        if (!knopEl) spoel = spoelVal;   /* nog in de val; anders zette toonKnop() de volgende stap */
+      };
+      spoel = spoelVal;
       toonHint('val');
     }
 
@@ -1300,7 +1318,7 @@
        stijl, HP en startkaarten komen uit window.SPELERS; de tweede tik (of de knop)
        laat los. De andere twee kantelen ±18° en vallen, het gekozen token krimpt en
        zinkt in het kooltje. Op puur zwart gaat klaar(uitkomst) naar de game (plan §3). */
-    function faseAfgrond() {
+    function faseAfgrond(van) {
       zetFase('afgrond');
       houdSkipStop();
       app.classList.add('pl-afgrond');
@@ -1390,7 +1408,9 @@
         ik.appendChild(el('b', 'afg-naam', it.h.naam));
         ik.appendChild(el('span', 'afg-hp', '♥ ' + it.h.hp));
         tekst.appendChild(ik);
-        tekst.appendChild(el('p', 'afg-zin', '“' + STORY.maskerZin(it.m.id, P.choices.jeugddroom) + '”'));
+        /* R2: de zin komt uit OutroFX.MASKERZINNEN (één bron met de outro); geen bron → geen regel */
+        const zin = STORY.maskerZin(it.m.id, P.choices.jeugddroom);
+        if (zin) tekst.appendChild(el('p', 'afg-zin', '“' + zin + '”'));
         tekst.appendChild(el('p', 'afg-stijl', it.h.stijl));
         const kaarten = el('p', 'afg-kaarten');
         kaarten.appendChild(el('span', 'afg-kaarten-kop', 'Startkaarten'));
@@ -1403,6 +1423,19 @@
         info.appendChild(actie);
       }
       tekenInfo(null);
+      /* R2: uit de val — het kooltje van de lift zweeft naar zijn plek tussen de maskers, en
+         de Afgrond doemt eromheen op (rustig: meteen op zijn plek, zonder vlucht) */
+      if (van && typeof van.x === 'number' && isFinite(van.x) && isFinite(van.y) && !rustig()) {
+        vak.classList.add('uit-val');
+        try {
+          const kr = kern.getBoundingClientRect();
+          const dx = van.x - (kr.left + kr.width / 2), dy = van.y - (kr.top + kr.height / 2);
+          if (kool.animate && (Math.abs(dx) > 1 || Math.abs(dy) > 1)) {
+            kool.animate([{ transform: 'translate(' + dx.toFixed(1) + 'px, ' + dy.toFixed(1) + 'px)' }, { transform: 'translate(0px, 0px)' }],
+              { duration: 650, easing: 'cubic-bezier(.3, 0, .2, 1)' });
+          }
+        } catch (e) { /* geen vlucht: het kooltje staat gewoon op zijn plek */ }
+      }
 
       function kies(it) {
         if (gekozen || !actief || klaarGeroepen) return;
@@ -1683,7 +1716,7 @@
     if (!host) return false;
     opts = o;
     herbeleef = !!o.herbeleef;
-    klaarGeroepen = false; overgeslagen = false; glimOpen = 0; spoel = null; sleutels = null; hintGezien = {};
+    klaarGeroepen = false; overgeslagen = false; glimOpen = 0; spoel = null; sleutels = null; hintGezien = {}; wachtAan = false;
     spiegelModus();
     if (!maakRoot()) return false;
     actief = true;
@@ -1761,6 +1794,8 @@
     klok.pauze = false;
     opruimers.splice(0).forEach(f => { try { f(); } catch (e) {} });
     stopCamera();
+    stopVal();
+    wachtUit();
     objectUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch (e) {} });
     objectUrls.clear();
     if (AU && AU.stilte) { try { AU.stilte(); } catch (e) {} }

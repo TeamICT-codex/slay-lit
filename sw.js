@@ -33,6 +33,7 @@ const BESTANDEN = [
   'proloog/proloog.css',
   'proloog/data.js',
   'proloog/audio.js',
+  'proloog/val.js',         // proloog R2: de val 'in de wacht' (het liftcanvas)
   'proloog/proloog.js',
   'assets/icoon.svg',
   'assets/icoon-180.png',

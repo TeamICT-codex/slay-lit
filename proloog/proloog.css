@@ -550,35 +550,68 @@ img { max-width: 100%; display: block; }
 .bo-txt b { font-weight: 400; }
 .bo-rol { color: #6d5c39; }
 
-/* de val (R1: nog de tekstval; de lift 'in de wacht' komt in R2) */
-.fase-val { justify-content: center; cursor: pointer; overflow: hidden; }   /* de ruis schudt 6px opzij: binnen het vak houden, anders loopt #scene 6px te breed (integratie R1) */
-.val-noise { position: absolute; inset: 0; pointer-events: none; opacity: .1; background: repeating-conic-gradient(#222 0% .0002%, #000 .0003% .0005%); animation: plRuis .18s steps(3) infinite; }
-@keyframes plRuis { 50% { transform: translate(6px, -4px); } }
-.val-hart { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(120, 10, 30, .28) 100%); animation: plHartslag .85s ease-in-out infinite; }
-@keyframes plHartslag { 0%, 100% { opacity: .25; } 12% { opacity: 1; } 24% { opacity: .4; } 32% { opacity: .8; } }
-.val-veld { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 12px; max-width: min(92vw, 520px); text-align: center; }
-.val-regel { font-family: var(--f-serif); font-size: 1.05rem; line-height: 1.42; transition: opacity .5s; }
-.val-echo { font-family: var(--f-type); font-size: .84rem; color: var(--amber); margin-top: 6px; }
-.val-zwart { display: flex; flex-direction: column; gap: 14px; }
-.zwart-regel { font-family: var(--f-crt); font-size: 1.2rem; color: #9aa38f; transition: opacity .5s; }
-.val-slot { display: flex; flex-direction: column; align-items: center; gap: clamp(12px, 3vh, 20px); }
-.val-slot-kop { font-family: var(--f-crt); font-size: clamp(1.7rem, 8vw, 2.6rem); color: var(--rood); text-shadow: 0 0 24px rgba(200, 56, 90, .7); animation: plCaretFlits 1.2s steps(1) infinite; }
-@keyframes plCaretFlits { 50% { opacity: .55; } }
-/* de liftknop die niet zou mogen bestaan (−∞), beschenen door iets warms */
+/* ═══ IN DE WACHT: de val (R2) — het liftcanvas van proloog/val.js ═══
+   Eén pixelcanvas, integer opgeschaald en gecentreerd (val.js zet maat en plaats in px);
+   de rest van het vak is het zwart van de afgrond. De CRT-lagen van de proloog wijken:
+   het canvas heeft zijn eigen scanlines en vignet (anders moiré op de opgeschaalde pixels). */
+.bs-vak.fase-val { padding: 0; gap: 0; background: var(--afgrond-zwart); overflow: hidden; cursor: pointer; }
+.pl-app[data-fase="val"] .crt-laag { opacity: 0; }
+.val-scherm { position: absolute; left: 0; top: 0; image-rendering: crisp-edges; image-rendering: pixelated; }
+/* de scanlines op het opgeschaalde beeld (val.js zet de periode = de schaal): een css-laag,
+   geen blit van het hele scherm per beeld */
+.val-scan { position: absolute; left: 0; top: 0; pointer-events: none; background-image: linear-gradient(to bottom, transparent calc(100% - 1px), rgba(0, 0, 0, .12) calc(100% - 1px)); }
+.val-laag { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.val-hanger { position: absolute; width: 0; height: 0; pointer-events: none; }
+/* de spiegel voor schermlezers: wat het canvas zegt (lichtkrant, LED, onderschriften) */
+.val-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; pointer-events: none; }
+
+/* de liftknop die niet zou mogen bestaan (−∞), op zijn fitting in het canvas. Sprong: warm,
+   beschenen door de gevallen foto. Geduwd: B.A.A.S.-groen, en hij drukt zichzelf in. */
+.val-knophouder { --knop: clamp(56px, 10vmin, 84px); }
 .val-knop {
-  width: clamp(72px, 20vh, 96px); height: clamp(72px, 20vh, 96px); border-radius: 50%;
-  font-family: var(--f-crt); font-size: clamp(1.7rem, 5vh, 2.3rem); color: #ffe2b0; text-align: center;
+  position: absolute; left: 0; top: 0; pointer-events: auto;
+  width: var(--knop); height: var(--knop); margin: calc(var(--knop) / -2) 0 0 calc(var(--knop) / -2);
+  border-radius: 50%;
+  font-family: var(--f-crt); font-size: calc(var(--knop) * .42); line-height: 1; color: #ffe2b0; text-align: center;
   background: radial-gradient(circle at 50% 38%, #4a3418, #160e06 72%);
   border: 3px solid #7a6440;
-  box-shadow: 0 0 0 6px #1a130b, 0 0 36px rgba(255, 160, 60, .45), inset 0 -6px 12px rgba(0, 0, 0, .6);
-  animation: plKnopGloei 1.6s ease-in-out infinite; transition: transform .12s ease;
+  box-shadow: 0 0 0 5px #1a130b, 0 0 36px rgba(255, 160, 60, .45), inset 0 -6px 12px rgba(0, 0, 0, .6);
+  animation: plKnopAan .45s ease-out both, plKnopGloei 1.6s ease-in-out .45s infinite;
+  transition: transform .12s ease;
+}
+.val-knop.baas {
+  color: #d8f0c0; border-color: #4a6a3a;
+  background: radial-gradient(circle at 50% 38%, #25361a, #0a1206 72%);
+  box-shadow: 0 0 0 5px #0c140a, 0 0 32px rgba(121, 192, 69, .4), inset 0 -6px 12px rgba(0, 0, 0, .6);
+  animation: plKnopAan .45s ease-out both, plKnopGloeiBaas 1.6s ease-in-out .45s infinite;
 }
 .val-knop.ingedrukt { transform: scale(.9); animation: none; box-shadow: 0 0 0 4px #1a130b, 0 0 70px rgba(255, 170, 70, .95), inset 0 6px 14px rgba(0, 0, 0, .7); }
-@keyframes plKnopGloei { 50% { box-shadow: 0 0 0 6px #1a130b, 0 0 56px rgba(255, 160, 60, .75), inset 0 -6px 12px rgba(0, 0, 0, .6); } }
-.val-knop-zin { font-family: var(--f-serif); font-style: italic; font-size: .95rem; color: var(--manila-dof); }
+.val-knop.baas.ingedrukt { box-shadow: 0 0 0 4px #0c140a, 0 0 60px rgba(121, 192, 69, .85), inset 0 6px 14px rgba(0, 0, 0, .7); }
+@keyframes plKnopAan { from { opacity: 0; transform: scale(.6); } }
+@keyframes plKnopGloei { 50% { box-shadow: 0 0 0 5px #1a130b, 0 0 56px rgba(255, 160, 60, .75), inset 0 -6px 12px rgba(0, 0, 0, .6); } }
+@keyframes plKnopGloeiBaas { 50% { box-shadow: 0 0 0 5px #0c140a, 0 0 48px rgba(121, 192, 69, .65), inset 0 -6px 12px rgba(0, 0, 0, .6); } }
+/* de zin: liggend rechts van de knop, staand eronder */
+.val-knop-zin {
+  position: absolute; left: calc(var(--knop) / 2 + 12px); top: 0; transform: translateY(-50%);
+  white-space: nowrap; pointer-events: none;
+  font-family: var(--f-serif); font-style: italic; font-size: .95rem; color: var(--manila-dof); text-shadow: 0 1px 4px #000;
+  animation: plValZin .6s ease .3s both;
+}
+.val-laag.staand .val-knop-zin { left: 0; top: calc(var(--knop) / 2 + 10px); transform: translateX(-50%); }
+@keyframes plValZin { from { opacity: 0; } }
+/* terugval zonder canvas: de uitkomst in woorden, dan de knop */
+.val-nood { justify-content: center; align-items: center; }
+.val-nood-kop { font-family: var(--f-crt); font-size: clamp(1.6rem, 7vw, 2.4rem); color: var(--rood); text-shadow: 0 0 24px rgba(200, 56, 90, .7); }
+.val-nood .val-knophouder { position: relative; width: 0; height: 0; margin: 64px 0 96px; }
+.val-nood .val-knop-zin { left: 0; top: calc(var(--knop) / 2 + 10px); transform: translateX(-50%); }
 
 /* ═══════════════ DE AFGROND = DE HELDKEUZE ═══════════════ */
 .fase-afgrond { padding: 0; justify-content: center; align-items: stretch; background: var(--afgrond-zwart); overflow: hidden; }
+/* R2: uit de val — de Afgrond doemt op rond het kooltje dat uit de lift komt (≤ 0,9 s) */
+.uit-val .afgrond { animation: plAfgBinnen .9s ease backwards; }
+.uit-val .afg-maskers { animation: plAfgBinnen .6s ease .1s backwards; }
+.uit-val .afg-kopvak, .uit-val .afg-info, .uit-val .afg-voet { animation: plAfgBinnen .6s ease .25s backwards; }
+@keyframes plAfgBinnen { from { opacity: 0; } }
 .afgrond { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; transition: opacity 1.1s ease .3s; }
 .afg-art { position: absolute; inset: 0; width: 100%; height: 100%; }
 .afg-art .art-img { width: 100%; height: 100%; object-fit: cover; opacity: .5; }
@@ -839,8 +872,6 @@ img { max-width: 100%; display: block; }
   .brief-body { gap: 5px; }
   .br-warm { font-size: .86rem; }
   .br-koud { font-size: .74rem; }
-  .val-regel { font-size: .98rem; line-height: 1.34; }
-  .val-veld { gap: 8px; }
 
   .afg-stage {
     --schijf: clamp(62px, 23vh, 92px);
@@ -873,17 +904,17 @@ img { max-width: 100%; display: block; }
 
 /* rustig aan voor wie dat vraagt */
 @media (prefers-reduced-motion: reduce) {
-  .ov-backdrop .art-img, #crt-glow, .ovm-screen, .afg-rimpel, .foto-kind.pulse, .val-noise, .val-hart,
+  .ov-backdrop .art-img, #crt-glow, .ovm-screen, .afg-rimpel, .foto-kind.pulse, .val-knop-zin,
   .afg-kool-gloed, .afg-kool-kern, .val-knop, .kk-klaar, .boot-merk, .glitch-frame, .afg-info-leeg { animation: none !important; }
   .ov-zoomlaag { transition: none; }
   .afg-mom, .afg-held { transition-duration: .2s; }
 }
 /* de prestatiemodus (body.lite, door proloog.js gespiegeld als data-lite op de host): dezelfde
-   lussen stil als bij reduced motion, plus de CRT-flikker. Het blurfilter van de val schrapt
-   proloog.js zelf (rustig() = reduced motion óf lite). */
+   lussen stil als bij reduced motion, plus de CRT-flikker. Het liftcanvas van de val krijgt
+   lite en rustig mee van proloog.js (rustig() = reduced motion óf lite). */
 :host([data-lite]) .crt-laag,
 :host([data-lite]) .ov-backdrop .art-img, :host([data-lite]) .ovm-screen, :host([data-lite]) .afg-rimpel,
-:host([data-lite]) .foto-kind.pulse, :host([data-lite]) .val-noise, :host([data-lite]) .val-hart,
+:host([data-lite]) .foto-kind.pulse, :host([data-lite]) .val-knop-zin,
 :host([data-lite]) .afg-kool-gloed, :host([data-lite]) .afg-kool-kern, :host([data-lite]) .val-knop,
 :host([data-lite]) .kk-klaar, :host([data-lite]) .boot-merk, :host([data-lite]) .glitch-frame,
 :host([data-lite]) .afg-info-leeg { animation: none !important; }

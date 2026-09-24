@@ -31,7 +31,7 @@
     over: 'slayit_proloog_over',
     save: 'slaylit_proloog_v3'
   };
-  const BRONNEN = ['proloog/data.js', 'proloog/audio.js', 'proloog/proloog.js'];
+  const BRONNEN = ['proloog/data.js', 'proloog/audio.js', 'proloog/val.js', 'proloog/proloog.js'];   /* R2: val.js = het liftcanvas van de val */
   const LAAD_GEDULD = 10000;   /* ms: daarna valt de nieuwe speler terug op de heldkeuze */
   /* masker-id's van de OUDE proloog (contract zonder v:2) → game-held; ook het vangnet
      als een uitkomst alleen een masker meegeeft (lookup-bugklasse: nooit blind SPELERS[x]) */
@@ -147,7 +147,7 @@
       BRONNEN.forEach(src => {
         const s = document.createElement('script');
         s.src = src;
-        s.async = false;   /* volgorde bewaren: data → audio → proloog */
+        s.async = false;   /* volgorde bewaren: data → audio → val → proloog */
         s.dataset.proloog = '1';
         s.onload = () => { if (++geladen === BRONNEN.length) klaar(null); };
         s.onerror = () => klaar(new Error('laden mislukt: ' + src));

@@ -6,7 +6,10 @@
    (js/audio.js) → { ctx, sfx(naam), muziek(scène) } en optioneel een uitgangsbus.
    De eigen mute-sleutel ('slaylit_audio_mute') is weg: de game-mute (Klank.vol.aan)
    en de sfx-schuif gelden. Ontbreekt Klank.koppel, of bestaat de context nog niet
-   (geen gebaar gehad), dan zwijgt alles stil — nooit een fout. window.SLAYLIT_AUDIO. */
+   (geen gebaar gehad), dan zwijgt alles stil — nooit een fout. window.SLAYLIT_AUDIO.
+
+   R2 "DE VAL EN DE KLANK": daarbovenop window.ProloogKlank (onderaan) — de jingle,
+   de wachtmuziek, het transponeren, de stilte en de val-geluiden, op Klank.*. */
 window.SLAYLIT_AUDIO = (function () {
   let ctx = null, master = null, viaBus = false;
   let humNodes = null, noiseNode = null, noiseGain = null, droneNodes = null;
@@ -258,6 +261,113 @@ window.SLAYLIT_AUDIO = (function () {
     const n = ctx.createBufferSource(); n.buffer = buf; n.connect(bp); bp.connect(ng); n.start(t);
   }
 
+  /* —— de val (R2): de goederenlift in de wacht ——
+     Kleine, droge geluiden van een systeem dat één voor één uitgaat. Bewust GEEN
+     val-whoosh, geen wind en geen inslag (keuze 3: de lift daalt, de mens valt niet). */
+  let ruisB = null, ruisCtx = null;
+  function ruisBuf() {
+    if (ruisB && ruisCtx === ctx) return ruisB;
+    const len = ctx.sampleRate; ruisB = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = ruisB.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    ruisCtx = ctx; return ruisB;
+  }
+  /* een kort gefilterd ruisstootje */
+  function stoot(t, dur, soort, freq, q, vol) {
+    const n = ctx.createBufferSource(); n.buffer = ruisBuf();
+    const f = ctx.createBiquadFilter(); f.type = soort; f.frequency.value = freq; f.Q.value = q;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+    n.connect(f); f.connect(g); g.connect(master);
+    n.start(t, Math.random() * 0.5); n.stop(t + dur + 0.05);
+  }
+  /* de liftbel zakt mee met de wachtmuziek */
+  function liftToon() {
+    try { const s = window.Klank && window.Klank.wacht && window.Klank.wacht.stand; return s && typeof s.toon === 'number' ? s.toon : 0; } catch (e) { return 0; }
+  }
+  // etage: één dof liftbelletje per verdieping, en de kooi die over de railnaad tikt
+  function etage() {
+    if (!ensure()) return; const t = now();
+    bel(1318.5 * Math.pow(2, liftToon() / 12), t, 0.55, 0.06);
+    const g = ctx.createGain(); g.connect(master);
+    g.gain.setValueAtTime(0.0001, t + 0.05); g.gain.linearRampToValueAtTime(0.12, t + 0.06); g.gain.exponentialRampToValueAtTime(0.0008, t + 0.2);
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(90, t + 0.05); o.frequency.exponentialRampToValueAtTime(55, t + 0.18);
+    o.connect(g); o.start(t + 0.05); o.stop(t + 0.22);
+    for (let i = 0; i < 4; i++) stoot(t + 0.06 + i * 0.035 + Math.random() * 0.012, 0.03, 'bandpass', 2600 + Math.random() * 1600, 5, 0.03);
+  }
+  // tl-sterft: de kooi-tl hapert drie keer, en de starter geeft het op met één droog tikje
+  function tlSterft() {
+    if (!ensure()) return; const t = now();
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 100;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 420; bp.Q.value = 0.8;
+    const g = ctx.createGain(); g.gain.value = 0;
+    o.connect(bp); bp.connect(g); g.connect(master);
+    const flak = [[0, 0.09, 0.05], [0.16, 0.2, 0.035], [0.33, 0.36, 0.028], [0.5, 0.52, 0.016]];
+    flak.forEach(([a, b, v]) => { g.gain.setValueAtTime(v, t + a); g.gain.setValueAtTime(0, t + b); stoot(t + a, 0.012, 'highpass', 5000, 0.7, 0.04); });
+    o.start(t); o.stop(t + 0.6);
+    stoot(t + 0.62, 0.02, 'highpass', 3500, 0.7, 0.07);
+  }
+  // led-uit: het laatste gekochte licht — een klein elektronisch zuchtje naar beneden
+  function ledUit() {
+    if (!ensure()) return; const t = now();
+    const g = ctx.createGain(); g.connect(master);
+    g.gain.setValueAtTime(0.04, t); g.gain.exponentialRampToValueAtTime(0.0006, t + 0.35);
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(1760, t); o.frequency.exponentialRampToValueAtTime(220, t + 0.33);
+    o.connect(g); o.start(t); o.stop(t + 0.37);
+    stoot(t, 0.01, 'highpass', 4000, 0.7, 0.035);
+  }
+  // vellen: de vloer valt uiteen in factuurvellen — papier dat fladdert, geen dreun
+  function vellen() {
+    if (!ensure()) return; const t = now();
+    for (let i = 0; i < 16; i++) {
+      const tt = t + Math.pow(i / 16, 1.3) * 1.6 + Math.random() * 0.05;
+      stoot(tt, 0.04 + Math.random() * 0.07, 'bandpass', 1800 + Math.random() * 2600, 1.4, 0.05 * (1 - i / 20));
+    }
+  }
+  // liftknop: de knop −∞ gaat in — klik, een mechanische tunk en het relais
+  function liftknop() {
+    if (!ensure()) return; const t = now();
+    stoot(t, 0.018, 'highpass', 2500, 0.7, 0.1);
+    const g = ctx.createGain(); g.connect(master);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.18, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0008, t + 0.16);
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.14);
+    o.connect(g); o.start(t); o.stop(t + 0.18);
+    stoot(t + 0.09, 0.012, 'bandpass', 3200, 3, 0.045);
+  }
+  // kooltje: één warme ademhaling (zachte ruis die aanzwelt en wegebt) met drie knispers
+  function kooltje() {
+    if (!ensure()) return; const t = now();
+    const n = ctx.createBufferSource(); n.buffer = ruisBuf(); n.loop = true;
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 700; f.Q.value = 0.5;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.05, t + 0.9); g.gain.linearRampToValueAtTime(0, t + 2.2);
+    n.connect(f); f.connect(g); g.connect(master); n.start(t); n.stop(t + 2.3);
+    [0.35, 0.8, 1.3].forEach((d) => stoot(t + d + Math.random() * 0.1, 0.02, 'highpass', 3000 + Math.random() * 2500, 0.7, 0.035));
+  }
+  // verbinding: de lijn valt weg — de haak die neergaat (klik-klak) en een korte kraak
+  function verbinding() {
+    if (!ensure()) return; const t = now();
+    stoot(t, 0.012, 'bandpass', 1900, 2, 0.09);
+    stoot(t + 0.065, 0.016, 'bandpass', 1300, 2, 0.07);
+    for (let i = 0; i < 5; i++) stoot(t + 0.09 + i * 0.022 + Math.random() * 0.01, 0.015, 'bandpass', 900 + Math.random() * 2200, 1.2, 0.025);
+  }
+  // krant: de lichtkrant schuift een nieuw bericht in — één klein elektronisch tikje
+  function krant() {
+    if (!ensure()) return; const t = now();
+    const g = ctx.createGain(); g.connect(master);
+    g.gain.setValueAtTime(0.018, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.04);
+    const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = 2093;
+    o.connect(g); o.start(t); o.stop(t + 0.05);
+  }
+  // schaarhek: het metalen hek van de goederenlift ratelt dicht
+  function schaarhek() {
+    if (!ensure()) return; const t = now();
+    for (let i = 0; i < 9; i++) stoot(t + i * 0.045 + Math.random() * 0.02, 0.05, 'bandpass', 1800 + Math.random() * 3000, 8, 0.045);
+    stoot(t + 0.42, 0.08, 'bandpass', 900, 3, 0.06);
+  }
+
   /* ---------- levenscyclus (aangestuurd door proloog.js) ---------- */
   /* op een gebruikersgebaar: het spel zijn audio laten starten/hervatten */
   function unlock() {
@@ -275,14 +385,97 @@ window.SLAYLIT_AUDIO = (function () {
     if (aan) { if (heartTimer) { clearInterval(heartTimer); heartTimer = -1; } }
     else if (heartTimer === -1) { heartTimer = null; heartStart(heartRate); }
   }
-  /* alles uit (Proloog.stop) */
+  /* alles uit (Proloog.stop) — ook de wachtmuziek, als ze nog liep (herbeleven dat
+     halverwege stopt, een skip): de wacht mag de proloog nooit overleven */
   function stilte() {
     heartPauze = false;
     heartStop(); humOff(); noiseOff(); droneOff();
     if (volKlok) { clearInterval(volKlok); volKlok = null; }
+    try { const K = window.Klank; if (K && K.wacht && K.wacht.stand.actief) K.wacht.stop(); } catch (e) {}
   }
 
   return { unlock, humOn, humOff, ding, tik, type, heartStart, heartRateSet, heartStop,
     noiseOn, noiseOff, glitch, stamp, warm, powerOn, droneOn, droneOff, plunge,
+    etage, tlSterft, ledUit, vellen, liftknop, kooltje, schaarhek, verbinding, krant,
     pauzeer, stilte, get gekoppeld() { return !!koppel(); } };
+})();
+
+/* ---------- window.ProloogKlank (R2): de publieke klanklaag van de proloog ----------
+   Bovenop Klank.koppel() / Klank.* (js/audio.js). Elke oproep is veilig: ontbreekt
+   Klank, is er geen Web Audio of wacht de context nog op een gebaar, dan blijft het
+   stil en komt er nooit een fout. Wat terugkomt:
+     jingle(opts)      duur in s (0 = niets gespeeld). Standaard { vals: true }: in de
+                       proloog is de jingle nooit zuiver (pas in de outro-reboot).
+     wachtStart(opts)  true/false · de wachtmuziek op opts.transponeer (standaard 0)
+     wachtStop()       true/false · zacht weg (0,6 s)
+     transponeer(n)    true/false · n halve tonen, absoluut (-1 … -7); op −7 loopt de
+                       lijn vast op de vaste noot
+     stilte(ms)        true/false · alles weg, ms stilte, terug (de wacht komt niet terug)
+     sfx(naam)         true/false · de val-geluiden (etage, tl-sterft, led-uit, vellen,
+                       liftknop, kooltje, schaarhek, verbinding, krant — ook onder de
+                       gebeurtenisnamen van val.js), de proloogklanken (ding, tik, type,
+                       glitch, stamp, warm, powerOn, plunge, beat) of een Klank-sfx
+     stand             { actief, toon, vast } — bv. voor contract.wachtToon */
+window.ProloogKlank = (function () {
+  const A = window.SLAYLIT_AUDIO || null;
+  /* het spel wakker maken (Klank.koppel → init) en Klank teruggeven, of null */
+  function K() {
+    const k = window.Klank;
+    if (!k) return null;
+    try { if (typeof k.koppel === 'function') k.koppel(); } catch (e) {}
+    return k;
+  }
+  function probeer(f, anders) { try { const r = f(); return r === undefined ? anders : r; } catch (e) { return anders; } }
+  const EIGEN = ['etage', 'tlSterft', 'ledUit', 'vellen', 'liftknop', 'kooltje', 'schaarhek', 'verbinding', 'krant',
+    'ding', 'tik', 'type', 'glitch', 'stamp', 'warm', 'powerOn', 'plunge', 'beat'];
+  /* sleutels zonder hoofdletters en leestekens: 'tl-sterft', 'tl_sterft' en 'tlSterft'
+     zijn dezelfde; plus synoniemen, en de gebeurtenisnamen van proloog/val.js (hek,
+     krant, etage, tl, verbinding, vloer, kooltje, knop, baasDrukt) klinken rechtstreeks */
+  const ALIAS = { liftbel: 'etage', verdieping: 'etage', tl: 'tlSterft', tluit: 'tlSterft', led: 'ledUit',
+    papier: 'vellen', factuurvellen: 'vellen', vloer: 'vellen', knop: 'liftknop', baasdrukt: 'liftknop',
+    adem: 'kooltje', hek: 'schaarhek', verbroken: 'verbinding', ophangen: 'verbinding', lichtkrant: 'krant',
+    stempel: 'stamp' };
+  EIGEN.forEach(n => { ALIAS[n.toLowerCase()] = n; });
+  function sfx(naam) {
+    if (typeof naam !== 'string' || !naam) return false;
+    const eigen = ALIAS[naam.toLowerCase().replace(/[^a-z]/g, '')];
+    if (eigen && A && typeof A[eigen] === 'function') { K(); return probeer(() => { A[eigen](); return true; }, false); }
+    const k = K();
+    if (!k || typeof k.sfx !== 'function') return false;
+    return probeer(() => k.sfx(naam) === true, false);
+  }
+  const LEEG = { actief: false, toon: 0, vast: false };
+  return {
+    jingle(opts) {
+      const k = K();
+      if (!k || typeof k.jingle !== 'function') return 0;
+      return probeer(() => k.jingle(Object.assign({ vals: true }, opts || {})), 0) || 0;
+    },
+    wachtStart(opts) {
+      const k = K();
+      if (!k || !k.wacht) return false;
+      const n = opts && typeof opts.transponeer === 'number' ? opts.transponeer : 0;
+      return !!probeer(() => k.wacht.start({ transponeer: n }), false);
+    },
+    wachtStop() {
+      const k = window.Klank;
+      if (!k || !k.wacht) return false;
+      return !!probeer(() => k.wacht.stop(), false);
+    },
+    transponeer(n) {
+      const k = window.Klank;
+      if (!k || !k.wacht) return false;
+      return !!probeer(() => k.wacht.transponeer(n), false);
+    },
+    stilte(ms) {
+      const k = K();
+      if (!k || typeof k.stilte !== 'function') return false;
+      return !!probeer(() => k.stilte(ms), false);
+    },
+    sfx,
+    get stand() {
+      const k = window.Klank;
+      return (k && k.wacht && probeer(() => k.wacht.stand, null)) || Object.assign({}, LEEG);
+    }
+  };
 })();

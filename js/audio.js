@@ -6,7 +6,7 @@
 
 const Klank = (() => {
   let ctx = null, klaar = false;
-  let master, comp, musGain, sfxGain, duckGain, echo, echoTerug;
+  let master, comp, stilGain, musGain, sfxGain, duckGain, echo, echoTerug;
   let ruisBuffer = null;
 
   /* instellingen (bewaard in localStorage) — veilig lezen: een corrupte/getamperde
@@ -34,7 +34,11 @@ const Klank = (() => {
     comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -18; comp.ratio.value = 6;
     master = ctx.createGain();
-    master.connect(comp); comp.connect(ctx.destination);
+    /* stilGain: de allerlaatste schakel vóór de luidsprekers. Klank.stilte(ms) laat
+       daarmee ALLES (muziek, sfx, de proloogbus) zacht wegvallen en terugkomen, los
+       van de mute (die blijft op master). */
+    stilGain = ctx.createGain();
+    master.connect(comp); comp.connect(stilGain); stilGain.connect(ctx.destination);
 
     duckGain = ctx.createGain();
     musGain = ctx.createGain();
@@ -150,7 +154,8 @@ const Klank = (() => {
     warmtik()  { toon(740 + Math.random() * 60, 0.06, 'sine', 0.05, 690); }
   };
 
-  function sfx(naam) { if (klaar && SFX[naam]) SFX[naam](); }
+  /* geeft true terug als de naam bestaat (en dus klonk, of stil bleef door de mute) */
+  function sfx(naam) { if (klaar && SFX[naam]) { SFX[naam](); return true; } return false; }
 
   /* muziek even laten dimmen (bij grote klappen) */
   function duck(diepte, duur) {
@@ -244,6 +249,11 @@ const Klank = (() => {
 
   function muziek(naam) {
     if (!SCENES[naam]) naam = 'stil';
+    /* de wachtmuziek wijkt voor elke expliciete muziekwissel, ook naar dezelfde scène
+       (Outro.beeindig zet 'stil' terwijl het al 'stil' is). Echte muziek (een scène met
+       tempo) neemt meteen over; 'stil'/'afgrond' pas na 0,4 s: Outro.start zet 'stil' in
+       dezelfde adem waarin de intro de wacht hervat, en die volgorde mag niet uitmaken. */
+    if (lijn && !lijn.weg && (SCENES[naam].bpm || performance.now() - lijn.startWand > 400)) sluitLijn(0.25);
     if (naam === scene) return;
     scene = naam;
     pasScene();
@@ -252,6 +262,7 @@ const Klank = (() => {
   /* planner: kijkt vooruit en plant noten op het tellenraster */
   function plan() {
     if (!klaar || !vol.aan) return;
+    if (lijn) planWacht();   /* de wachtmuziek loopt los van de scène (die is dan 'stil') */
     const s = SCENES[scene];
     if (!s || !s.bpm) return;
     /* na mute of een lange pauze: niet alle gemiste noten inhalen */
@@ -399,6 +410,368 @@ const Klank = (() => {
     drone.filter.frequency.setTargetAtTime(aan ? 115 : 170, t, 1);
   }
 
+  /* ============================================================
+     DE BEDRIJFSJINGLE EN DE WACHTMUZIEK (proloog R2, sep 2026)
+     Dezelfde contour als CHIP_MEL, maar in majeur (CHIP_MEL_SLOT): het opgewekte
+     deuntje van het bedrijf, euforisch en beige. In de reboot van de outro klinkt ze
+     "voor het eerst zuiver en in majeur" (OUTRO.md), dus in de proloog NOOIT zuiver:
+     · jingle({vals}) — de boot, uit de CRT-speaker: één maat te lang (ze landt, en
+       landt dan nóg eens) en de laatste noot zakt net onder de toon.
+     · wacht — dezelfde jingle als muzak door een telefoonlijn (300-3400 Hz, een
+       snuifje lijnruis, een wiegelend bandje), trager, in een lus tot stop().
+       transponeer(n) zet de hele lijn n halve tonen lager (glijdend, ±120 ms) en, zoals
+       een bandje dat trager draait, zakt het tempo mee. Op −7 (de bodem) loopt ze vast
+       op één vaste noot: de grondtoon, die blijft hangen tot de stilte haar afsnijdt.
+     · wachtHervat(n, {buig}) — de outro haalt je UIT de wacht: dezelfde vaste noot op
+       −n, dan hervat de lus en buigt de lijn in ±3 s omhoog naar 0 (het bandje dat weer
+       op toeren komt).
+     · stilte(ms) — alles zacht weg, ms stilte, en weer terug. Een lopende wachtlijn
+       komt niet terug: de verbinding is verbroken.
+     Alles op de ENE context en via musGain (muziekschuif, ducking en mute gelden).
+     ============================================================ */
+  const JINGLE_MEL = CHIP_MEL_SLOT.concat([   /* + de maat te veel */
+    7, null, 9, null, 11, null, 12, null, 16, null, null, null, 12, null, null, null
+  ]);
+  const JINGLE_AKK = [[0, 4, 7], [5, 9, 12], [7, 11, 14], [0, 4, 7], [7, 11, 14], [0, 4, 7]];   /* I IV V I | V I, per 8 stappen */
+  const JINGLE_STAP = 0.095;
+  const WACHT_MEL = CHIP_MEL_SLOT;
+  const WACHT_PAD = [[7, 12, 16], [5, 9, 12], [7, 11, 14], [7, 12, 16]];   /* boven 220 Hz: I IV V I */
+  const WACHT_BAS = [0, 5, 7, 0];
+  const WACHT_STAP = 0.16;    /* 16e noten, 1,6x trager dan de outro-chip */
+  const WACHT_BODEM = -7;     /* hier loopt de lijn vast op de vaste noot */
+  const WACHT_VOORUIT = 1.5;  /* planningsvenster (s): ook een verborgen tab (1 tik/s) hapert niet */
+  /* niveaus, A-gewogen gemeten tegen de spelmuziek: de wacht zit op het niveau van de
+     titelmuziek (zacht, achtergrond), de jingle 3-4 dB daarboven (een moment, geen knal) */
+  const WACHT_NIVEAU = 0.3, JINGLE_NIVEAU = 0.45;
+
+  function biquad(type, freq, q) {
+    const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = freq; b.Q.value = q; return b;
+  }
+
+  /* een goedkope FM-piano (DX-achtig): draaggolf + modulator 1:1 met een wegstervende
+     index (de aanslag) en een tikje 'tine' op 4x. o.lijn: de transponeerlijn waar elke
+     oscillator aan hangt (via detune, zodat ook klinkende noten meeglijden).
+     o.vals = [van, naar] in cent: de noot zakt tijdens het klinken net onder de toon. */
+  function epiano(t, f, duur, sterkte, uit, o) {
+    o = o || {};
+    const car = ctx.createOscillator(), mod = ctx.createOscillator(), tine = ctx.createOscillator();
+    const mg = ctx.createGain(), g = ctx.createGain(), tg = ctx.createGain();
+    car.frequency.value = f; mod.frequency.value = f; tine.frequency.value = f * 4;
+    const index = o.helder || 1.4;
+    mg.gain.setValueAtTime(f * index, t);
+    mg.gain.setTargetAtTime(f * 0.15, t + 0.005, 0.09);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(sterkte, t + 0.006);
+    g.gain.setTargetAtTime(sterkte * (o.hou || 0.3), t + 0.02, o.verval || 0.3);
+    g.gain.setTargetAtTime(0, t + duur, 0.07);
+    tg.gain.setValueAtTime(0, t);
+    tg.gain.linearRampToValueAtTime(sterkte * (o.tine || 0.18), t + 0.003);
+    tg.gain.setTargetAtTime(0, t + 0.004, 0.05);
+    if (o.vals) {
+      [car, mod, tine].forEach(x => { x.detune.setValueAtTime(o.vals[0], t); x.detune.linearRampToValueAtTime(o.vals[1], t + duur); });
+    }
+    mod.connect(mg); mg.connect(car.frequency);
+    car.connect(g); g.connect(uit);
+    tine.connect(tg); tg.connect(uit);
+    const eind = t + duur + 0.45;
+    [car, mod, tine].forEach(x => { x.start(t); x.stop(eind); });
+    if (o.lijn) aanLijn(o.lijn, t, [car, mod, tine], [g, tg], eind);
+  }
+  /* zachte pad-stem: twee triangles ±5 cent (koortje) */
+  function padNoot(t, f, duur, sterkte, aanzet, uit, lijnL, verval) {
+    const g = ctx.createGain(), oscs = [];
+    [-5, 5].forEach(c => { const x = ctx.createOscillator(); x.type = 'triangle'; x.frequency.value = f; x.detune.value = c; x.connect(g); oscs.push(x); });
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(sterkte, t + aanzet);
+    if (verval) g.gain.setTargetAtTime(sterkte * 0.25, t + aanzet, verval);
+    g.gain.setTargetAtTime(0, t + duur, 0.12);
+    g.connect(uit);
+    oscs.forEach(x => { x.start(t); x.stop(t + duur + 0.7); });
+    if (lijnL) aanLijn(lijnL, t, oscs, [g], t + duur + 0.7);
+  }
+  function plukBas(t, f, duur, sterkte, uit, lijnL) {
+    const x = ctx.createOscillator(), g = ctx.createGain();
+    x.type = 'triangle'; x.frequency.value = f;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(sterkte, t + 0.01);
+    g.gain.setTargetAtTime(0, t + 0.02, duur * 0.35);
+    x.connect(g); g.connect(uit);
+    x.start(t); x.stop(t + duur + 0.3);
+    if (lijnL) aanLijn(lijnL, t, [x], [g], t + duur + 0.3);
+  }
+  /* koperen stoot (de 'ta-da' van een bedrijfsfilmpje) */
+  function stab(t, f, duur, sterkte, uit) {
+    const x = ctx.createOscillator(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
+    x.type = 'sawtooth'; x.frequency.value = f;
+    lp.type = 'lowpass'; lp.Q.value = 0.8;
+    lp.frequency.setValueAtTime(600, t);
+    lp.frequency.linearRampToValueAtTime(2400, t + 0.04);
+    lp.frequency.setTargetAtTime(900, t + 0.05, 0.15);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(sterkte, t + 0.03);
+    g.gain.setTargetAtTime(sterkte * 0.45, t + 0.05, 0.2);
+    g.gain.setTargetAtTime(0, t + duur, 0.08);
+    x.connect(lp); lp.connect(g); g.connect(uit);
+    x.start(t); x.stop(t + duur + 0.5);
+  }
+
+  /* ---------- de jingle ----------
+     Speelt één keer, meteen. Geeft de duur in seconden terug (tot de laatste noot
+     uitgeklonken is), of 0 als er niets klinkt: geen audio, mute, of een context die
+     nog op een gebaar wacht (een jingle die pas bij de volgende tik losbarst, is erger
+     dan geen jingle). */
+  function jingle(opts) {
+    opts = opts || {};
+    if (!klaar || !vol.aan || ctx.state !== 'running') return 0;
+    const vals = !!opts.vals;
+    const mel = vals ? JINGLE_MEL : CHIP_MEL_SLOT;
+    let laatste = -1;
+    for (let i = mel.length - 1; i >= 0; i--) if (mel[i] !== null) { laatste = i; break; }
+    /* de CRT-speaker: geen laag, geen glans */
+    const bus = ctx.createGain(); bus.gain.value = JINGLE_NIVEAU;
+    const hp = biquad('highpass', 170, 0.7), lp = biquad('lowpass', 5200, 0.7);
+    bus.connect(hp); hp.connect(lp); lp.connect(musGain);
+    const t0 = ctx.currentTime + 0.05;
+    let t = t0, eind = t0;
+    for (let i = 0; i < mel.length; i++) {
+      const d = JINGLE_STAP * (i >= 32 ? 1.08 : 1);   /* de maat te veel sleept een tikje */
+      if (i % 8 === 0) {
+        const akk = JINGLE_AKK[i >> 3];
+        const groot = i === 24 || i === mel.length - 8;
+        akk.forEach(h => stab(t, 220 * Math.pow(2, h / 12), d * (groot ? 7 : 4.5), groot ? 0.026 : 0.018, bus));
+      }
+      if (i % 2 === 0) plukBas(t, 110 * Math.pow(2, JINGLE_AKK[i >> 3][0] / 12), d * 1.8, 0.05, bus);
+      const n = mel[i];
+      if (n !== null) {
+        const f = 440 * Math.pow(2, n / 12);
+        if (i === laatste) {
+          const duur = vals ? 1.3 : 1.0;
+          epiano(t, f, duur, 0.06, bus, { helder: 2.2, tine: 0.3, hou: 0.45, verval: 0.6, vals: vals ? [-30, -48] : null });
+          eind = t + duur + 0.3;
+        } else {
+          epiano(t, f, d * 2.4, 0.06, bus, { helder: 2.2, tine: 0.3 });
+        }
+      }
+      t += d;
+    }
+    const nu = ctx.currentTime;
+    setTimeout(() => { try { bus.disconnect(); } catch (e) {} }, (eind - nu + 1.5) * 1000);
+    return Math.round((eind - nu) * 1000) / 1000;
+  }
+
+  /* ---------- de wachtlijn ---------- */
+  let lijn = null;             /* de lopende wachtlijn, of null (niemand in de wacht) */
+  let wachtLaatsteToon = 0;    /* waar de lijn het laatst stond (voor de stand) */
+  function zachteKnik() {      /* de lijnverzadiging: kleinsignaal-versterking 1, zacht plafond */
+    const c = new Float32Array(1024);
+    for (let i = 0; i < c.length; i++) { const x = i / 511.5 - 1; c[i] = 0.25 * Math.tanh(4 * x); }
+    return c;
+  }
+  function maakLijn(toon) {
+    const t = ctx.currentTime;
+    const L = { toon, vast: false, weg: false, startWand: performance.now(), stap: 0, volgende: t + 0.08, noten: [], rooster: [], buig: null };
+    /* de transponeerbron: één waarde in cent die ELKE oscillator van de lijn volgt
+       (via detune) — zo glijden ook de noten die al klinken mee */
+    if (ctx.createConstantSource) {
+      L.bron = ctx.createConstantSource(); L.cent = L.bron.offset; L.bronUit = L.bron;
+    } else {   /* oude Safari: een lus van enen door een gain */
+      const b = ctx.createBuffer(1, 128, ctx.sampleRate); b.getChannelData(0).fill(1);
+      L.bron = ctx.createBufferSource(); L.bron.buffer = b; L.bron.loop = true;
+      L.bronUit = ctx.createGain(); L.bron.connect(L.bronUit); L.cent = L.bronUit.gain;
+    }
+    L.cent.value = toon * 100;
+    L.som = ctx.createGain();
+    L.bronUit.connect(L.som);
+    /* het bandje wiegelt: ±7 cent op 0,45 Hz */
+    L.wow = ctx.createOscillator(); L.wow.frequency.value = 0.45;
+    L.wowG = ctx.createGain(); L.wowG.gain.value = 7;
+    L.wow.connect(L.wowG); L.wowG.connect(L.som);
+    /* de telefoonlijn: 300-3400 Hz (twee keer twee polen), een neus op 1,8 kHz, een
+       zachte verzadiging en een snuifje lijnruis. Mono, zoals alles hier. */
+    L.in = ctx.createGain();
+    const hp1 = biquad('highpass', 300, 0.707), hp2 = biquad('highpass', 300, 0.707);
+    const lp1 = biquad('lowpass', 3400, 0.707), lp2 = biquad('lowpass', 3400, 0.707);
+    const neus = biquad('peaking', 1800, 0.9); neus.gain.value = 4;
+    const knik = ctx.createWaveShaper(); knik.curve = zachteKnik();
+    L.uit = ctx.createGain(); L.uit.gain.value = 0;
+    L.in.connect(hp1); hp1.connect(hp2); hp2.connect(lp1); lp1.connect(lp2); lp2.connect(neus); neus.connect(knik); knik.connect(L.uit);
+    L.ruis = ctx.createBufferSource(); L.ruis.buffer = ruisBuffer; L.ruis.loop = true;
+    const rf = biquad('bandpass', 2200, 0.5), rg = ctx.createGain(); rg.gain.value = 0.0045;
+    L.ruis.connect(rf); rf.connect(rg); rg.connect(lp1);   /* ook de ruis zit in de telefoonband */
+    L.uit.connect(musGain);
+    L.bron.start(t); L.wow.start(t); L.ruis.start(t);
+    L.uit.gain.setTargetAtTime(WACHT_NIVEAU, t, 0.12);
+    return L;
+  }
+  /* elke oscillator van een noot hangt aan de transponeerbron; los na het einde */
+  function aanLijn(L, t, oscs, gains, eind) {
+    oscs.forEach(x => {
+      try { L.som.connect(x.detune); } catch (e) {}
+      x.onended = () => { try { L.som.disconnect(x.detune); } catch (e) {} };
+    });
+    L.noten.push({ t, gains, oscs, eind });
+  }
+  /* de verwachte transpositie (halve tonen) op tijdstip t — voor het tempo */
+  function toonOp(L, t) {
+    const b = L.buig;
+    if (b && t < b.t1) {
+      if (t <= b.t0) return b.van;
+      const p = (t - b.t0) / (b.t1 - b.t0);
+      return b.van + (b.naar - b.van) * p * p * (3 - 2 * p);
+    }
+    return L.toon;
+  }
+  function planWacht() {
+    const L = lijn;
+    if (!L || L.vast || L.weg || !vol.aan) return;
+    const nu = ctx.currentTime;
+    if (L.volgende < nu - 0.3) L.volgende = nu + 0.05;   /* na mute of een pauze niets inhalen */
+    while (L.volgende < nu + WACHT_VOORUIT) {
+      const t = L.volgende;
+      const d = WACHT_STAP / Math.pow(2, toonOp(L, t) / 12);   /* een trager bandje: lager én trager */
+      plaatsWachtStap(L, t, L.stap, d);
+      L.rooster.push({ t, stap: L.stap });
+      L.volgende += d; L.stap++;
+    }
+    L.noten = L.noten.filter(n => n.t > nu - 4);
+    L.rooster = L.rooster.filter(r => r.t > nu - 1);
+  }
+  function plaatsWachtStap(L, t, stap, d) {
+    const i = stap % 32, maat = (i >> 3) & 3;
+    if (i % 8 === 0) WACHT_PAD[maat].forEach(h => padNoot(t, 220 * Math.pow(2, h / 12), d * 8.2, 0.011, d * 1.5, L.in, L));
+    if (i % 4 === 0) plukBas(t, 220 * Math.pow(2, WACHT_BAS[maat] / 12), d * 3, i % 8 === 0 ? 0.032 : 0.022, L.in, L);
+    const n = WACHT_MEL[i];
+    if (n !== null) epiano(t, 440 * Math.pow(2, n / 12), d * 2.2, 0.045 * (0.9 + Math.random() * 0.2), L.in, { lijn: L });
+  }
+  /* de vaste noot: de grondtoon (A5, op −7 een D5) + het I-akkoord, lang aangehouden */
+  function vasteNoot(L, t, hou) {
+    if (!vol.aan) return;
+    epiano(t, 880, hou, 0.05, L.in, { lijn: L, hou: 0.2, verval: 3 });
+    WACHT_PAD[0].forEach(h => padNoot(t, 220 * Math.pow(2, h / 12), hou, 0.012, 0.08, L.in, L, 4));
+  }
+  /* de bodem bereikt: wat na tv gepland stond valt weg, de lijn hangt op de vaste noot */
+  function loopVast(L, tv) {
+    L.vast = true;
+    L.noten.forEach(n => {
+      if (n.t < tv - 0.001) return;
+      n.gains.forEach(g => { try { g.disconnect(); } catch (e) {} });
+      n.oscs.forEach(x => { try { x.stop(n.t); } catch (e) {} });
+    });
+    vasteNoot(L, tv, 30);
+    L.wowG.gain.setTargetAtTime(12, tv, 1.5);   /* het bandje blijft haken */
+  }
+  function sluitLijn(fade) {
+    const L = lijn;
+    if (!L) return false;
+    lijn = null;
+    L.weg = true;
+    wachtLaatsteToon = L.toon;
+    if (!klaar) return true;
+    const t = ctx.currentTime, f = Math.max(0.02, fade || 0);
+    try {
+      const v = L.uit.gain.value;
+      L.uit.gain.cancelScheduledValues(t);
+      L.uit.gain.setValueAtTime(v, t);
+      L.uit.gain.setTargetAtTime(0, t, f / 4);
+    } catch (e) {}
+    [L.bron, L.wow, L.ruis].forEach(x => { try { x.stop(t + f + 0.4); } catch (e) {} });
+    /* ook de lange noten (de vaste noot houdt 30 s aan) niet stil laten doordraaien */
+    L.noten.forEach(n => { if (n.eind > t + f + 0.4) n.oscs.forEach(x => { try { x.stop(Math.max(n.t, t + f + 0.4)); } catch (e) {} }); });
+    setTimeout(() => {
+      try { L.uit.disconnect(); } catch (e) {}
+      L.noten.forEach(n => n.gains.forEach(g => { try { g.disconnect(); } catch (e) {} }));
+    }, (f + 0.6) * 1000);
+    return true;
+  }
+  /* -7 is de bodem: dieper bestaat niet (daar hangt de lijn, en daar hervat de outro) */
+  function klemToon(n) { n = Number(n); return Math.max(WACHT_BODEM, Math.min(12, isFinite(n) ? n : 0)); }
+
+  /* n halve tonen t.o.v. de oorspronkelijke toonhoogte (absoluut: -1, -2 … -7).
+     Glijdt in ±120 ms; op −7 (de bodem, lager wordt −7) loopt de lijn vast op de vaste noot. */
+  function transponeer(n) {
+    n = klemToon(n);
+    wachtLaatsteToon = n;
+    const L = lijn;
+    if (!L || L.weg || !klaar) return false;
+    const t = ctx.currentTime;
+    L.toon = n; L.buig = null;
+    try {
+      const v = L.cent.value;
+      L.cent.cancelScheduledValues(t);
+      L.cent.setValueAtTime(v, t);
+      L.cent.setTargetAtTime(n * 100, t, 0.035);   /* 97 % na 120 ms */
+    } catch (e) {}
+    if (n <= WACHT_BODEM && !L.vast) {
+      /* de eerste achtste NA het glijden: de vaste noot valt op de maat */
+      const plek = L.rooster.find(r => r.t >= t + 0.13 && r.stap % 2 === 0);
+      loopVast(L, plek ? plek.t : Math.max(L.volgende, t + 0.13));
+    }
+    return true;
+  }
+  function wachtStart(opts) {
+    opts = opts || {};
+    init();
+    if (!klaar) return false;
+    const n = klemToon(opts.transponeer || 0);
+    if (lijn && !lijn.weg) { transponeer(n); return true; }   /* al in de wacht */
+    lijn = maakLijn(n);
+    wachtLaatsteToon = n;
+    if (n <= WACHT_BODEM) loopVast(lijn, lijn.volgende);
+    else planWacht();
+    return true;
+  }
+  /* de outro: hervat op −n (dezelfde vaste noot als waar de proloog ophing) en buig
+     (opts.buig) in opts.duur (3 s) omhoog naar 0, tempo mee — het bandje komt op toeren */
+  function wachtHervat(n, opts) {
+    opts = opts || {};
+    init();
+    if (!klaar) return false;
+    n = Math.min(12, Math.abs(Number(n) || 0));
+    if (lijn) sluitLijn(0.08);
+    const L = lijn = maakLijn(-n);
+    const t = ctx.currentTime + 0.05;
+    vasteNoot(L, t, 1.1);
+    L.volgende = t + 0.9; L.stap = 0;
+    if (opts.buig && n > 0) {
+      const duur = typeof opts.duur === 'number' && opts.duur > 0 ? opts.duur : 3;
+      const t0 = t + 0.6;
+      L.buig = { t0, t1: t0 + duur, van: -n, naar: 0 };
+      /* smoothstep in 24 lineaire stukjes (geen setValueCurve: dat laat zich in
+         Firefox niet netjes afbreken als transponeer() tussenkomt) */
+      L.cent.setValueAtTime(-n * 100, t0);
+      for (let k = 1; k <= 24; k++) { const p = k / 24; L.cent.linearRampToValueAtTime((-n + n * p * p * (3 - 2 * p)) * 100, t0 + duur * p); }
+      L.toon = 0;
+    }
+    wachtLaatsteToon = L.toon;
+    planWacht();
+    return true;
+  }
+
+  /* ---------- de stilte ----------
+     Alles zacht weg (±0,15 s), ms stilte, en in 0,35 s weer terug. Doet niets (false)
+     als audio geblokkeerd is: een stilte die pas na de volgende tik valt, klopt niet. */
+  function stilte(ms) {
+    if (!klaar || ctx.state !== 'running') return false;
+    const s = Math.max(0, Math.min(10000, Number(ms) || 0)) / 1000;
+    if (lijn) sluitLijn(0.15);   /* de verbinding is verbroken: de wachtlijn komt niet terug */
+    const t = ctx.currentTime, p = stilGain.gain;
+    const v = p.value;
+    p.cancelScheduledValues(t);
+    p.setValueAtTime(v, t);
+    p.setTargetAtTime(0, t, 0.035);
+    p.setValueAtTime(0, t + s);
+    p.linearRampToValueAtTime(1, t + s + 0.35);
+    return true;
+  }
+
+  const wacht = {
+    start: wachtStart,
+    stop(opts) { return sluitLijn(opts && typeof opts.fade === 'number' ? opts.fade : 0.6); },
+    transponeer,
+    /* alleen-lezen: { actief, toon (halve tonen), vast (op de vaste noot) } */
+    get stand() { return { actief: !!lijn, toon: lijn ? lijn.toon : wachtLaatsteToon, vast: !!(lijn && lijn.vast) }; }
+  };
+
   /* ---------- de koppeling voor de proloog (R1) ----------
      De proloog (proloog/audio.js) maakt geen eigen AudioContext meer: ze bouwt haar
      klanken op DEZE context en stuurt ze door een eigen bus, zodat de game-mute en de
@@ -417,6 +790,8 @@ const Klank = (() => {
   /* ---------- publiek ---------- */
   return {
     init, hervat, sfx, muziek, duck, zetDuister, zetChipLagen, koppel,
+    jingle, wacht, wachtHervat, stilte,
+    zetTransponeer: transponeer,   /* de naam uit het plan (§4), zelfde functie als wacht.transponeer */
     get klaar() { return klaar; },
     get vol() { return vol; },
     zet(sleutel, waarde) { vol[sleutel] = waarde; bewaar(); pasVolumesToe(); },

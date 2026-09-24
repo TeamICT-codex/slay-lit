@@ -7,6 +7,9 @@
    bliksem, zoeklichten en de reclamezeppelin; de onweerslucht op
    het dak; de dageraad. Alles procedureel — geen enkel asset.
    outro.js orkestreert; deze module weet niets van de spelwereld.
+   Sinds proloog R2 ook de GEDEELDE WERELD (KLIMAAT, ETAGE_NR, het pixelfont,
+   de maskerzinnen, het kooltje): de val van de proloog (proloog/val.js) daalt
+   door dezelfde etages die de outro beklimt, met dezelfde lichtmotor.
    ============================================================ */
 
 const OutroFX = (() => {
@@ -138,6 +141,14 @@ const OutroFX = (() => {
       lichtX.globalAlpha = klem(sterkte * (b + 1) / n, 0, 1);
       lichtX.fillRect(0, ya, W, yb - ya);
     }
+  }
+  /* een rechthoek in de lichtkaart op een eigen basistint zetten (source-over, na
+     lichtBegin): elke etage van de val heeft haar eigen klimaat naast de kooi (proloog R2) */
+  function lichtRegio(x, y, w, h, kleur) {
+    if (w <= 0 || h <= 0) return;
+    lichtX.globalCompositeOperation = 'source-over'; lichtX.globalAlpha = 1;
+    lichtX.fillStyle = kleur; lichtX.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+    lichtX.globalCompositeOperation = 'lighter';
   }
   function lichtFlits(kleur, sterkte) {
     if (sterkte <= 0.01) return;
@@ -329,7 +340,7 @@ const OutroFX = (() => {
   };
   const luchtCache = new Map();
   function bakLucht(naam, hoog) {
-    const sleutel = naam + hoog; let c = luchtCache.get(sleutel); if (c) return c;
+    const sleutel = naam + hoog + 'x' + W; let c = luchtCache.get(sleutel); if (c) return c;   /* W erbij: de val van de proloog bakt ook op 180 breed */
     const L = LUCHTEN[naam] || LUCHTEN.nacht;
     c = mk(W, hoog); const x = c.getContext('2d'); const img = x.createImageData(W, hoog); const p = img.data;
     const kl = L.banden.map(hex), n = kl.length - 1;
@@ -586,7 +597,7 @@ const OutroFX = (() => {
      dat per frame alleen verschoven wordt (4 blits i.p.v. honderden rects) */
   const regenVel = {};
   function bakRegen(nabij) {
-    const sleutel = nabij ? 'n' : 'v';
+    const sleutel = (nabij ? 'n' : 'v') + W + 'x' + H;   /* proloog R2: ook op 180x320 */
     if (regenVel[sleutel]) return regenVel[sleutel];
     const c = mk(W, H), x = c.getContext('2d'), r = rng(nabij ? 777 : 333);
     const n = nabij ? 38 : 80, lengte = nabij ? 7 : 4;
@@ -643,7 +654,9 @@ const OutroFX = (() => {
   /* ---------- tekenLucht: de hele buitenwereld in één aanroep ----------
      opts: { lucht:'nacht'|'storm'|'dageraad', horizon: y van de stadvoet,
              camX, t, regen: bool, bliksem: bool, zoeklicht: bool, zeppelin: bool,
-             maan: bool } */
+             maan: bool }
+     proloog R2 (optioneel, standaard ongewijzigd): krant: de tekst van de lichtkrant
+     op de romp, krantUit: de krant en de navigatielichten gedoofd, zepX/zepY: de plaats. */
   function tekenLucht(ctx, o) {
     const hoog = H;
     ctx.drawImage(bakLucht(o.lucht || 'nacht', hoog), 0, 0);
@@ -679,7 +692,7 @@ const OutroFX = (() => {
     /* de zeppelin, heel traag, met een lichtkrant die loopt en een zoeklicht */
     if (o.zeppelin && tekstFn) {
       const z = bakZeppelin();
-      const zx = Math.round(((t * 5 - camX * 0.06) % (W + ZEP_B + 60)) - ZEP_B - 20), zy = Math.round(18 + Math.sin(t * 0.4) * 2);
+      const zx = o.zepX != null ? Math.round(o.zepX) : Math.round(((t * 5 - camX * 0.06) % (W + ZEP_B + 60)) - ZEP_B - 20), zy = Math.round((o.zepY != null ? o.zepY : 18) + Math.sin(t * 0.4) * 2);
       if (!lite) {
         /* het zoeklicht uit de gondel veegt traag over de stad */
         const hoek = Math.sin(t * 0.5) * 0.45;
@@ -691,14 +704,16 @@ const OutroFX = (() => {
         ctx.closePath(); ctx.fill(); ctx.restore();
       }
       ctx.drawImage(z, zx, zy);
-      const krant = 'EEN PRODUCTIEF LEVEN  -  UW WELZIJN IS ONZE KPI  -  GLIMLACH  -  ';
-      const off = ((t * 16) % (krant.length * 6));
-      ctx.save(); ctx.beginPath(); ctx.rect(zx + 19, zy + 10, 82, 8); ctx.clip();
-      tekstFn(ctx, krant + krant, zx + 19 - off, zy + 10, '#ffb347');
-      ctx.restore();
-      /* navigatielichten: rood links, groen rechts, om beurten */
-      if (((t * 1.5) | 0) % 2) { ctx.fillStyle = '#ff4a3a'; ctx.fillRect(zx + 6, zy + 13, 2, 2); }
-      else { ctx.fillStyle = '#6aff9a'; ctx.fillRect(zx + 112, zy + 13, 2, 2); }
+      if (!o.krantUit) {
+        const krant = o.krant || 'EEN PRODUCTIEF LEVEN  -  UW WELZIJN IS ONZE KPI  -  GLIMLACH  -  ';
+        const off = ((t * 16) % (krant.length * 6));
+        ctx.save(); ctx.beginPath(); ctx.rect(zx + 19, zy + 10, 82, 8); ctx.clip();
+        tekstFn(ctx, krant + krant, zx + 19 - off, zy + 10, '#ffb347');
+        ctx.restore();
+        /* navigatielichten: rood links, groen rechts, om beurten */
+        if (((t * 1.5) | 0) % 2) { ctx.fillStyle = '#ff4a3a'; ctx.fillRect(zx + 6, zy + 13, 2, 2); }
+        else { ctx.fillStyle = '#6aff9a'; ctx.fillRect(zx + 112, zy + 13, 2, 2); }
+      }
     }
     /* de stad, drie lagen parallax */
     const S = bakStad();
@@ -752,11 +767,121 @@ const OutroFX = (() => {
   }
   const zetLite = v => { lite = !!v; };
 
+  /* ============================================================
+     DE GEDEELDE WERELD (proloog R2) — wat de outro én de val van de
+     proloog (proloog/val.js) allebei tonen. Eén bron: js/outro.js leest
+     ze met één regel per constante; de proloog draait in de game-pagina,
+     waar deze module altijd al geladen is (de proloog laadt lui).
+     ============================================================ */
+  /* ---------- het klimaat per laag: van koud tl-grijs naar warm vuur ----------
+     ambient = de basis van de lichtkaart (multiply: alles wat geen licht vangt
+     zakt naar deze tint), tl = de kleur van de buizen, grade = een kleurtoon
+     over het hele beeld. Hoe hoger je klimt, hoe warmer en roder het wordt. */
+  const KLIMAAT = [
+    /* koud → warm: het ambient schuift naar warm naarmate de stoet groeit (de
+       velen maken het licht); banden = hoe grof het licht in trappen valt —
+       hoe dichter bij B.A.A.S., hoe grover (de boekhoudersblik, onbenoemd) */
+    { naam: 'archief',     koud: '#36435a', warm: '#604e3f', tl: '#cfd8e0', grade: '#2f5a7a', gradeS: 0.3,  banden: 4, lucht: null,    horizon: 0 },
+    { naam: 'kantoortuin', koud: '#365343', warm: '#605133', tl: '#d8f0d0', grade: '#4f7a4a', gradeS: 0.28, banden: 4, lucht: 'nacht', horizon: 150 },
+    { naam: 'facturatie',  koud: '#2a5666', warm: '#60482d', tl: '#cfeef4', grade: '#2f7a8a', gradeS: 0.28, banden: 3, lucht: 'nacht', horizon: 196 },
+    { naam: 'directie',    koud: '#53282d', warm: '#78452a', tl: '#dfe2ff', grade: '#8a2a2a', gradeS: 0.3,  banden: 3, lucht: 'storm', horizon: 236 },
+    { naam: 'penthouse',   koud: '#4d3d66', warm: '#7b4851', tl: '#dfe2ff', grade: '#6a2a5a', gradeS: 0.26, banden: 2, lucht: 'storm', horizon: 232 }
+  ];
+  /* de etagenummers van de goederenlift (index = KLIMAAT-index) */
+  const ETAGE_NR = ['-1', '2', '3', '4', 'DAK'];
+
+  /* ---------- 5×7 dot-matrix-font (leesbaar, ook op 320px) ---------- */
+  const FONT = {
+    A:[14,17,17,31,17,17,17],B:[30,17,17,30,17,17,30],C:[14,17,16,16,16,17,14],
+    D:[30,17,17,17,17,17,30],E:[31,16,16,30,16,16,31],F:[31,16,16,30,16,16,16],
+    G:[14,17,16,23,17,17,15],H:[17,17,17,31,17,17,17],I:[14,4,4,4,4,4,14],
+    J:[7,2,2,2,2,18,12],K:[17,18,20,24,20,18,17],L:[16,16,16,16,16,16,31],
+    M:[17,27,21,21,17,17,17],N:[17,25,21,19,17,17,17],O:[14,17,17,17,17,17,14],
+    P:[30,17,17,30,16,16,16],Q:[14,17,17,17,21,18,13],R:[30,17,17,30,20,18,17],
+    S:[15,16,16,14,1,1,30],T:[31,4,4,4,4,4,4],U:[17,17,17,17,17,17,14],
+    V:[17,17,17,17,17,10,4],W:[17,17,17,21,21,27,17],X:[17,17,10,4,10,17,17],
+    Y:[17,17,10,4,4,4,4],Z:[31,1,2,4,8,16,31],
+    '0':[14,17,19,21,25,17,14],'1':[4,12,4,4,4,4,14],'2':[14,17,1,6,8,16,31],
+    '3':[14,17,1,6,1,17,14],'4':[2,6,10,18,31,2,2],'5':[31,16,30,1,1,17,14],
+    '6':[6,8,16,30,17,17,14],'7':[31,1,2,4,8,8,8],'8':[14,17,17,14,17,17,14],
+    '9':[14,17,17,15,1,2,12],
+    ':':[0,4,0,0,0,4,0],'.':[0,0,0,0,0,6,6],',':[0,0,0,0,0,4,8],
+    '-':[0,0,0,14,0,0,0],'+':[0,4,4,31,4,4,0],'=':[0,0,31,0,31,0,0],
+    '!':[4,4,4,4,4,0,4],'?':[14,17,1,2,4,0,4],'/':[1,1,2,4,8,16,16],
+    "'":[4,4,0,0,0,0,0],'"':[10,10,0,0,0,0,0],
+    '(':[2,4,8,8,8,4,2],')':[8,4,2,2,2,4,8],'[':[14,8,8,8,8,8,14],']':[14,2,2,2,2,2,14],
+    '%':[24,25,2,4,8,19,3],   /* proloog R2: de meter-LED in de lift (FACT. 80%) — de outro gebruikt hem niet */
+    ' ':[0,0,0,0,0,0,0]
+  };
+
+  /* tekst in het 5×7-font (alleen hoofdletters; onbekende tekens = spatie) */
+  /* tekst-cache: elke (regel, kleur, schaal) wordt één keer als mini-canvas
+     gebakken en daarna geblit. Zonder cache hertekent de HUD duizenden
+     1px-fillRects per frame (5x7-font = tot 35 rects x 2 passes per teken) —
+     op mobiel dé grootste constante CPU-post van de outro. */
+  const tekstCache = new Map();
+  function tekst(cx, str, x, y, kleur, schaal) {
+    schaal = schaal || 1;
+    /* gedachtestreepjes zitten niet in het 5x7-font — normaliseer, anders
+       vallen ze stil weg (verdiepingsnamen, seed-strings) */
+    str = String(str).replace(/[—–]/g, '-').toUpperCase();
+    const sleutel = str + '\u0001' + kleur + '\u0001' + schaal;
+    let c = tekstCache.get(sleutel);
+    if (!c) {
+      if (tekstCache.size > 192) tekstCache.clear();   /* grof maar afdoende: nooit onbegrensd */
+      c = document.createElement('canvas');
+      c.width = Math.max(1, str.length * 6 * schaal + schaal);
+      c.height = 8 * schaal;   /* 7 glyphrijen + 1 rij slagschaduw */
+      const tc = c.getContext('2d');
+      /* eerst de slagschaduw, dan de kleur: leesbaar op elke drukke achtergrond */
+      for (const schaduw of [1, 0]) {
+        tc.fillStyle = schaduw ? 'rgba(8,6,4,0.9)' : kleur;
+        let px = schaduw * schaal;
+        const py = schaduw * schaal;
+        for (const ch of str) {
+          const gl = FONT[ch] || FONT[' '];
+          for (let r = 0; r < 7; r++) for (let b = 0; b < 5; b++) {
+            if (gl[r] & (16 >> b)) tc.fillRect(px + b * schaal, py + r * schaal, schaal, schaal);
+          }
+          px += 6 * schaal;
+        }
+      }
+      tekstCache.set(sleutel, c);
+    }
+    cx.drawImage(c, Math.round(x), Math.round(y));
+    return tekstBreedte(str, schaal);
+  }
+  const tekstBreedte = (str, schaal) => String(str).length * 6 * (schaal || 1) - (schaal || 1);
+
+  /* de maskerzinnen — EÉN bron voor de Afgrond van de proloog (aanloop + kern,
+     proloog/data.js maskerZin()) en de reunië in de outro (alleen de kern, in het
+     pixelfont). Sleutel = game-held-id. {jeugddroom} vult de proloog in; zonder
+     droom geldt aanloopZonder. Wijzig hier, nergens anders. */
+  const MASKERZINNEN = {
+    slachter:  { aanloop: 'Genoeg geglimlacht.', kern: 'Nu is het hún beurt.' },
+    gifmagier: { aanloop: '', kern: 'We passen ons aan. Zoals altijd.' },
+    thoverk:   { aanloop: 'Ik wou {jeugddroom} worden.', aanloopZonder: 'Ik wou ooit iets worden.', kern: 'Ik heb het licht nog.' }
+  };
+  /* de kern in het pixelfont (hoofdletters, zonder accenten: het font kent geen Ú) */
+  const pixelVeilig = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  const REUNIE = {};
+  for (const id in MASKERZINNEN) REUNIE[id] = '"' + pixelVeilig(MASKERZINNEN[id].kern) + '"';
+
+  /* het kooltje van de outro-intro: het enige warme in het zwart, en het ademt.
+     De val van de proloog eindigt erop, de outro begint ermee (zelfde code). */
+  function kooltje(ctx, x, y, t) {
+    ctx.fillStyle = '#ff9c3f'; ctx.fillRect(x, y, 2, 2);
+    gloed(ctx, x + 1, y + 1, Math.round(7 + 2 * Math.sin(t * 1.1)), '#ff9c3f', 0.55 + 0.15 * Math.sin(t * 1.1));
+  }
+
+
   return {
     init, isLite, zetLite, voorbakTaken, zetBanden, vulBand, tekenVuurbal, rookBol, schroeiStempel, lichtBegin, licht, kegel, lichtFlits, toepassen, toepassenMasker, gloed, grade, vignet, scanlines,
     tekenLucht, updateBliksem, bliksemSterkte, forceerBliksem, schacht, tekenBliksemPad, tekenWolken, tekenDagWolken,
     get inslag() { return bliksem.flits > 0.6 ? bliksem.inslag : null; }, get bliksemFlits() { return bliksem.flits; }, tekenRegen, bakLucht, lichtSprite,
-    get bliksemX() { return bliksem.pX; }
+    get bliksemX() { return bliksem.pX; },
+    /* proloog R2: de gedeelde wereld + twee kleine hulpjes voor de val */
+    KLIMAAT, ETAGE_NR, FONT, tekst, tekstBreedte, MASKERZINNEN, REUNIE, kooltje, lichtRegio
   };
 })();
 window.OutroFX = OutroFX;
