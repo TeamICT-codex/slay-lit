@@ -6109,7 +6109,7 @@ function scherfCodexBlok() {
     const slots = vereist.map(sid => {
       const d = scherfDef(sid);
       return (heeft(sid) || ontg)   /* wekte je hier ooit een bondgenoot (oudere Codex), dan zijn de scherven verbruikt maar het maaksel volbracht — toon het vervuld, niet als ❓ */
-        ? `<div class="scherf-cx-slot vol ${ontg && !heeft(sid) ? 'verbruikt' : ''}" data-shart="${sid}" data-tip="${(d && scherfTekst(sid)) || ''}">${d ? bronIcoon(d.bron) : '🜂'}</div>`
+        ? `<div class="scherf-cx-slot vol ${ontg && !heeft(sid) ? 'verbruikt' : ''}" data-shart="${sid}" data-tip="${escSyn((d && scherfTekst(sid)) || '')}">${d ? bronIcoon(d.bron) : '🜂'}</div>`   /* escSyn: de tekst eindigt op een " — anders sneed die het attribuut af */
         : `<div class="scherf-cx-slot leeg" data-tip="??? — nog te vinden (${mysterieBronLabel(d && d.bron)})">❓</div>`;
     }).join('');
     const klasse = ontg ? 'ontgrendeld' : (n === vereist.length ? 'compleet' : '');
@@ -12081,7 +12081,7 @@ function scherfLoadoutHtml() {
     <div class="schrijn-rij">` + bezit.map(sid => {
       const d = scherfDef(sid); if (!d) return '';
       return `<button class="schrijn-slot scherf-slot ${scherfKeuzes.includes(sid) ? 'gekozen' : ''}" data-shart="${sid}"
-        data-tip="${scherfTekst(sid)}" onclick="kiesScherfLoadout('${sid}')">${bronIcoon(d.bron)}</button>`;   /* scherfTekst: met de metgezellen geparkeerd de tafelTekst (DE NISSEN DICHT) */
+        data-tip="${escSyn(scherfTekst(sid))}" onclick="kiesScherfLoadout('${sid}')">${bronIcoon(d.bron)}</button>`;   /* scherfTekst: met de metgezellen geparkeerd de tafelTekst (DE NISSEN DICHT); escSyn: de tekst eindigt op een " */
     }).join('') + `</div>`;
 }
 function kiesScherfLoadout(sid) {
