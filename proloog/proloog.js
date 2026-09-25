@@ -952,6 +952,7 @@
     const lijst = el('button', 'br-lijst');
     lijst.type = 'button';
     lijst.dataset.actie = 'foto';
+    lijst.disabled = true;   /* integrator R3: pas een handeling in het quotum (daarvoor is het een lijstje) */
     lijst.setAttribute('aria-label', 'Kijk naar de foto');
     lijst.appendChild(art(S.foto.src, '', 'br-lijst-art'));
     lijst.appendChild(el('span', 'br-stip', S.foto.stip));
@@ -1095,7 +1096,7 @@
       actie.appendChild(knopGlim);
       schuif();
       focusStil(knopGlim);
-      if (!P.choices.fotoKantoor) { lijst.classList.add('mag'); lijst.addEventListener('click', kijkKlik); }
+      if (!P.choices.fotoKantoor) { lijst.disabled = false; lijst.classList.add('mag'); lijst.addEventListener('click', kijkKlik); }
       else lijst.disabled = true;
       /* in het quotum spoelt een tik alleen het typen door (de knop is de handeling) */
       if (!spoel) spoel = quotumSpoel;
