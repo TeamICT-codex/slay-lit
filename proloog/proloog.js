@@ -479,10 +479,14 @@
     regen(true);
 
     const zaal = el('div', 'ik-zaal');
-    zaal.appendChild(art(scene.backdrop.src, '', 'ik-plaat'));
+    /* integrator R3: de camera zoomt IN de zaal (de lens), en de zaal clipt. Zo loopt #scene
+       tijdens de duik niet over (een scale(6) op een kind van #scene maakte hem scrollbaar). */
+    const lens = el('div', 'ik-lens');
+    lens.appendChild(art(scene.backdrop.src, '', 'ik-plaat'));
     const donker = el('div', 'ik-donker');
-    zaal.appendChild(donker);
-    zaal.appendChild(el('div', 'ik-flits'));
+    lens.appendChild(donker);
+    lens.appendChild(el('div', 'ik-flits'));
+    zaal.appendChild(lens);
     wrap.appendChild(zaal);
     const regenEl = el('div', 'ik-regen');
     regenEl.setAttribute('aria-hidden', 'true');
@@ -682,7 +686,7 @@
     function duik() {
       if (fase !== 'in') return;
       const g = plaatGeo();
-      zaal.style.transformOrigin = g.dx.toFixed(0) + 'px ' + g.dy.toFixed(0) + 'px';
+      lens.style.transformOrigin = g.dx.toFixed(0) + 'px ' + g.dy.toFixed(0) + 'px';
       wrap.classList.add('ik-duik');
       T(weg, zacht ? 300 : 700);
     }
@@ -984,7 +988,11 @@
     zak.appendChild(kool);
     bureau.appendChild(zak);
 
-    wrap.appendChild(bureau);
+    /* integrator R3: een vast kader dat clipt, rond het bureau. De pull-back (scale 2,6 → 1) en
+       de V-hold van de scheur bewegen het bureau zelf; zonder kader liep #scene dan over. */
+    const kader = el('div', 'br-kader');
+    kader.appendChild(bureau);
+    wrap.appendChild(kader);
 
     /* — de staat tekenen — */
     function zetMeter(v) {
@@ -1097,8 +1105,8 @@
       bewaar();
       schrijfContract({ glimlachen: P.choices.glimlachen });
       if (tel1) klank('sfx', 'glimlach', n, 'opDeTel'); else klank('sfx', 'glimlach', n);
-      klank('sfx', 'naald');
       zetMeter(meter + S.meter.stap);
+      klank('sfx', 'naald', meter);   /* integrator R3: de nieuwe stand (K: hoger = iets hoger) */
       zetLicht();
       if (tel1) { lamp.classList.remove('tel'); void lamp.offsetWidth; lamp.classList.add('tel'); }
       if (!zacht && knopGlim.animate) { try { knopGlim.animate([{ filter: 'brightness(1.45)' }, { filter: 'none' }], { duration: 260, easing: 'ease-out' }); } catch (x) {} }   /* het d-ding, even fel */
@@ -1228,8 +1236,12 @@
       form.appendChild(voet);
       const arm = el('div', 'z8-arm');
       form.appendChild(arm);
-      wrap.appendChild(form);
-      const vrij = modaal(form);
+      /* integrator R3: een laag die aan de schermrand clipt — de stempelslag (scale 2,6) liep
+         staand buiten beeld en maakte #scene scrollbaar */
+      const formLaag = el('div', 'z8-laag');
+      formLaag.appendChild(form);
+      wrap.appendChild(formLaag);
+      const vrij = modaal(formLaag);
       let verstuurd = false, gestempeld = false, tid = null;
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); stuur(); } });
       inp.addEventListener('click', e => e.stopPropagation());
@@ -1273,15 +1285,20 @@
         klank('sfx', 'buizenpost');
         buis.classList.add('zuigt');
         let af = false;
-        const klaar = () => { if (af) return; af = true; wisT(tid3); form.remove(); vrij(); buis.classList.remove('zuigt'); collegas(); };
+        const klaar = () => { if (af) return; af = true; wisT(tid3); formLaag.remove(); vrij(); buis.classList.remove('zuigt'); collegas(); };
         if (!zacht && form.animate) {
           try {
             const fr = form.getBoundingClientRect(), mr = mond.getBoundingClientRect();
             const dx = mr.left + mr.width / 2 - (fr.left + fr.width / 2), dy = mr.top + mr.height / 2 - (fr.top + fr.height / 2);
+            /* integrator R3: de eigen centrering van het formulier (translateX(-50%), liggend
+               translate(-50%, -50%)) blijft eronder staan; zonder die basis sprong het formulier
+               bij het aanzuigen een halve breedte naar rechts (en liep #scene over) */
+            const basis = getComputedStyle(form).transform;
+            const b0 = basis && basis !== 'none' ? basis + ' ' : '';
             form.animate([
-              { transform: 'translate(0, 0) scale(1) rotate(0deg)', opacity: 1 },
-              { transform: 'translate(' + (dx * 0.35).toFixed(0) + 'px, ' + (dy * 0.2).toFixed(0) + 'px) scale(.5, .16) rotate(-8deg)', opacity: 1, offset: 0.35 },
-              { transform: 'translate(' + dx.toFixed(0) + 'px, ' + dy.toFixed(0) + 'px) scale(.05, .04) rotate(-20deg)', opacity: 0 }
+              { transform: b0 + 'translate(0, 0) scale(1) rotate(0deg)', opacity: 1 },
+              { transform: b0 + 'translate(' + (dx * 0.35).toFixed(0) + 'px, ' + (dy * 0.2).toFixed(0) + 'px) scale(.5, .16) rotate(-8deg)', opacity: 1, offset: 0.35 },
+              { transform: b0 + 'translate(' + dx.toFixed(0) + 'px, ' + dy.toFixed(0) + 'px) scale(.05, .04) rotate(-20deg)', opacity: 0 }
             ], { duration: 640, easing: 'cubic-bezier(.5, 0, .8, .4)', fill: 'forwards' });
           } catch (x) {}
         } else form.classList.add('weg');
@@ -1336,7 +1353,9 @@
       const achterNaarVoor = rijen.slice().reverse();
       const tids = [];
       achterNaarVoor.forEach((r, i) => tids.push(T(() => { r.classList.add('uit'); klank('sfx', 'tlDooft', i); }, 300 + i * 360)));
-      const spot = () => { bureau.classList.add('spot'); zoem(false); };
+      /* integrator R3: alleen jouw spot brandt nog — dan zoemt ook alleen die ene tl nog (K's
+         lichtstand op 1 lamp), onder de wachtmuziek; de zoem gaat pas weg met de lift */
+      const spot = () => { bureau.classList.add('spot'); zoem(true, { lampen: 1 }); };
       tids.push(T(spot, 300 + achterNaarVoor.length * 360));
       const knopT = T(bevestig, S.oproep.knopNa || 2500);
       spoel = () => {
@@ -1364,6 +1383,7 @@
       fase = 'lift';
       spoel = null;
       klank('sfx', 'toets');
+      zoem(false);   /* integrator R3: je laat het kantoor achter; de regen hoor je nog tot het dak */
       const L = S.lift;
       const laag = el('div', 'lift' + (zacht ? ' zacht' : ''));
       laag.appendChild(el('div', 'lift-hek'));

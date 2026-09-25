@@ -146,7 +146,9 @@ img { max-width: 100%; display: block; }
    (.ik-donker) krimpt naar het verdwijnpunt van kantoor-overzicht.webp, en de camera duikt
    in de terminal die daar al gloeit (.ik-duik). */
 .scene-overzicht { background: #040504; }
-.ik-zaal { position: absolute; inset: 0; overflow: hidden; transition: transform .7s cubic-bezier(.55, 0, .9, .45), filter .7s ease; }
+.ik-zaal { position: absolute; inset: 0; overflow: hidden; }
+/* integrator R3: de camera zoomt in de lens, de zaal clipt (anders liep #scene over tijdens de duik) */
+.ik-lens { position: absolute; inset: 0; transition: transform .7s cubic-bezier(.55, 0, .9, .45), filter .7s ease; }
 .ik-plaat, .ik-plaat .art-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .ik-plaat .art-img { filter: sepia(.2) brightness(.82) contrast(1.05); }
 /* het donker: dicht binnen de ellips (nog niet verlicht), open erbuiten (de banken die al branden) */
@@ -202,7 +204,7 @@ img { max-width: 100%; display: block; }
 .ik-tik .ik-rij { filter: brightness(.42) saturate(.7); }
 .ik-aan .ik-rij { filter: none; }
 .ik-duik .ik-post { opacity: 0; }
-.ik-duik .ik-zaal { transform: scale(6); filter: brightness(1.35); }
+.ik-duik .ik-lens { transform: scale(6); filter: brightness(1.35); }
 
 /* de tl-bak boven de klok, en zijn lichtkegel (gekocht licht) */
 .ik-tl { position: absolute; left: 50%; top: calc(-1 * clamp(64px, 12vh, 118px)); width: 150%; height: 12px; transform: translateX(-50%); border-radius: 3px; background: #2b2e2a; box-shadow: 0 -4px 0 #1b1c19; z-index: 2; }
@@ -333,7 +335,7 @@ img { max-width: 100%; display: block; }
 .tl-collega {
   align-self: flex-start; max-width: 94%; font-family: var(--f-serif); font-size: clamp(.95rem, 3.8vw, 1.05rem); line-height: 1.3;
   color: var(--manila); background: rgba(216, 203, 162, .08); border-left: 3px solid var(--manila-dof); border-radius: 6px; padding: 4px 9px 5px;
-  animation: plOpdoemen .35s ease;
+  animation: plVerschijn .35s ease;
 }
 .tl-c-kiss { color: #ffe9b0; border-left-color: var(--goud); background: rgba(255, 233, 176, .09); }
 .tl-c-warm { color: #ffe2c0; border-left-color: #e0913c; background: rgba(255, 170, 90, .1); }
@@ -347,6 +349,8 @@ img { max-width: 100%; display: block; }
    scheidingswand, de hoofden, De Oprichter en Juniors memo), de CRT, het fotolijstje en de
    VU-meter, de knop, de borstzak. Achter alles: de wand (stof) en het bureaublad. */
 .scene-kantoor { background: #0b0a08; }
+/* integrator R3: het vaste kader rond het bureau clipt de pull-back en de V-hold (niet #scene) */
+.br-kader { position: absolute; inset: 0; overflow: hidden; }
 .bureau {
   --tl: 0; --kool: 1; --tel: 750ms; --telfase: 0ms; --spot-y: 80%;
   position: absolute; inset: 0; overflow: hidden;
@@ -431,7 +435,7 @@ img { max-width: 100%; display: block; }
   background: linear-gradient(180deg, rgba(220, 236, 255, calc(.04 + var(--tl) * .3)), rgba(220, 236, 255, calc(var(--tl) * .15)) 55%, rgba(220, 236, 255, calc(var(--tl) * .09))); transition: background .4s ease; }
 
 /* De Oprichter aan de wand, Juniors memo (grid-items die op de kopstrook liggen) */
-.br-oprichter { grid-area: wand; z-index: 3; align-self: end; justify-self: start; margin: 0 0 10px 5%; width: clamp(54px, 13vw, 88px);
+.br-oprichter { grid-area: wand; z-index: 3; align-self: end; justify-self: start; margin: 0 0 10px 1.5%; width: clamp(38px, 9.5vw, 88px);   /* integrator R3: staand hing hij over het naamplaatje BART */
   padding: 4px; background: linear-gradient(160deg, #6d5518, #4a390f); border: 2px solid var(--goud); border-radius: 5px; box-shadow: 0 8px 18px rgba(0, 0, 0, .55); }
 .br-opr-art { display: block; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 2px; }
 .br-opr-art .art-img { object-position: 50% 20%; }
@@ -573,7 +577,7 @@ img { max-width: 100%; display: block; }
 
 /* — optioneel: de foto. Eén regel, dan de harde snit (geen overgang) — */
 .br-kijk { position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; cursor: pointer;
-  background: radial-gradient(ellipse at 50% 45%, rgba(60, 34, 14, .9), rgba(6, 4, 2, .97) 70%); animation: plOpdoemen .5s ease; }
+  background: radial-gradient(ellipse at 50% 45%, rgba(60, 34, 14, .9), rgba(6, 4, 2, .97) 70%); animation: plVerschijn .5s ease; }
 .br-kijk-beeld { width: min(56vw, 300px, 42vh); aspect-ratio: 1; border-radius: 4px; overflow: hidden; border: 8px solid #efe7cf; border-bottom-width: 22px; transform: rotate(-1.4deg) scale(1.02);
   box-shadow: 0 18px 50px rgba(0, 0, 0, .8), 0 0 80px rgba(255, 170, 80, .3); animation: plKijkIn 1.6s ease-out both; }
 @keyframes plKijkIn { from { transform: rotate(-1.4deg) scale(.86); } }
@@ -586,6 +590,8 @@ img { max-width: 100%; display: block; }
 .br-kijk.snit .br-snit { display: flex; }
 
 /* — de Zingevingsaudit: formulier Z-8 (papier op je bureau) — */
+.z8-laag { position: absolute; inset: 0; z-index: 30; overflow: hidden; pointer-events: none; }   /* integrator R3: clipt de stempelslag aan de schermrand */
+.z8-laag > .z8 { pointer-events: auto; }
 .z8 { position: absolute; z-index: 30; left: 50%; top: calc(18px + env(safe-area-inset-top)); width: min(92vw, 420px); transform: translateX(-50%); padding: 14px 16px 16px;
   display: flex; flex-direction: column; gap: 10px; background: #f2ead2; color: var(--inkt); font-family: var(--f-type); border-radius: 2px;
   box-shadow: 0 18px 44px rgba(0, 0, 0, .7), 0 0 0 1px rgba(0, 0, 0, .2); animation: plZ8In .42s cubic-bezier(.2, .8, .3, 1) both; }
@@ -606,10 +612,10 @@ img { max-width: 100%; display: block; }
 .z8-arm { position: absolute; right: 30px; top: -120%; width: 16px; height: 120%; background: linear-gradient(90deg, #585a55, #9ca09a 45%, #4a4c48); border-radius: 0 0 4px 4px; opacity: 0; pointer-events: none; }
 .z8.machine .z8-arm { animation: plArm .5s cubic-bezier(.5, 0, .8, .5) both; }
 @keyframes plArm { 0% { opacity: 1; transform: translateY(-40px); } 60% { opacity: 1; transform: translateY(calc(100% + 40px)); } 100% { opacity: 1; transform: translateY(0); } }
-.z8.weg { opacity: 0; transform: translate(-50%, -60px) scale(.2); transition: opacity .3s ease, transform .3s ease; }
+.z8.weg { opacity: 0; transition: opacity .3s ease; }   /* rustig: vervagen ter plaatse (liggend is de basis translate(-50%, -50%)) */
 
 /* — de goederenlift omhoog (≤ 3 s): het schaarhek DICHT, 2 · 3 · 4 · DAK — */
-.lift { position: absolute; inset: 0; z-index: 40; display: flex; align-items: flex-start; justify-content: center; background: #070605; cursor: pointer; animation: plOpdoemen .2s ease; }
+.lift { position: absolute; inset: 0; z-index: 40; display: flex; align-items: flex-start; justify-content: center; background: #070605; cursor: pointer; animation: plVerschijn .2s ease; }
 .lift-hek { position: absolute; inset: 0; pointer-events: none; opacity: .55;
   background: repeating-linear-gradient(90deg, transparent 0 46px, rgba(120, 104, 72, .55) 46px 50px), repeating-linear-gradient(55deg, transparent 0 34px, rgba(120, 104, 72, .35) 34px 37px), repeating-linear-gradient(-55deg, transparent 0 34px, rgba(120, 104, 72, .35) 34px 37px); }
 .lift-paneel { position: relative; z-index: 2; margin-top: calc(14% + env(safe-area-inset-top)); display: flex; align-items: center; gap: 14px; padding: 8px 16px; border-radius: 8px;
@@ -1199,8 +1205,8 @@ img { max-width: 100%; display: block; }
   .afg-kool-gloed, .afg-kool-kern, .val-knop, .kk-klaar, .boot-merk, .afg-info-leeg,
   .ik-regen span, .ik-kaart, .boot-inhoud, .glim-knop, .vu-naald-tel, .br-tl-buis, .br-kool-gloed, .br-kool-kern,
   .hoofd.pop, .tl-knipoog, .br-kijk, .br-kijk-beeld, .z8, .ik-klok.tsjonk, .ik-klok.tsjonk .ik-venster, .bureau.vhold { animation: none !important; }
-  .ik-zaal, .glim-knop, .vu-naald, .ik-kaart:not(.sleept):not(.in) { transition: none; }
-  .ik-duik .ik-zaal { transform: none; filter: none; }
+  .ik-lens, .glim-knop, .vu-naald, .ik-kaart:not(.sleept):not(.in) { transition: none; }
+  .ik-duik .ik-lens { transform: none; filter: none; }
   .afg-mom, .afg-held { transition-duration: .2s; }
 }
 /* de prestatiemodus (body.lite, door proloog.js gespiegeld als data-lite op de host): dezelfde
@@ -1214,6 +1220,6 @@ img { max-width: 100%; display: block; }
 :host([data-lite]) .ik-regen span, :host([data-lite]) .ik-kaart, :host([data-lite]) .boot-inhoud, :host([data-lite]) .glim-knop,
 :host([data-lite]) .vu-naald-tel, :host([data-lite]) .br-tl-buis, :host([data-lite]) .br-kool-gloed, :host([data-lite]) .br-kool-kern,
 :host([data-lite]) .hoofd.pop, :host([data-lite]) .tl-knipoog, :host([data-lite]) .bureau.vhold { animation: none !important; }
-:host([data-lite]) .ik-zaal { transition: none; }
-:host([data-lite]) .ik-duik .ik-zaal { transform: none; filter: none; }
+:host([data-lite]) .ik-lens { transition: none; }
+:host([data-lite]) .ik-duik .ik-lens { transform: none; filter: none; }
 :host([data-lite]) .ik-regen { display: none; }
