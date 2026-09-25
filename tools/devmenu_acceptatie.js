@@ -33,6 +33,9 @@ const SONDE = () => {
     dek: (typeof S !== 'undefined' && S && S.dek) ? S.dek.length : null,
     relikwieen: (typeof S !== 'undefined' && S && S.relikwieen) ? S.relikwieen.length : null,
     metgezel: (typeof S !== 'undefined' && S && S.metgezel) ? S.metgezel.id : null,
+    mgAan: (typeof metgezellenAan === 'function') ? metgezellenAan() : null,
+    tbMetgezel: (() => { const c = document.getElementById('tb-metgezel'); return c ? c.style.display !== 'none' : null; })(),
+    toasts: [...document.querySelectorAll('#meldingen .toast')].map(e => e.textContent).join(' | '),
     inGevecht: !!(typeof S !== 'undefined' && S && S.gevecht),
     vijanden: (typeof S !== 'undefined' && S && S.gevecht) ? S.gevecht.vijanden.map(v => v.id + (v.dood ? '\u2020' : '')).join(',') : '',
     baas: b ? { hp: b.hp, maxHp: b.maxHp, fase: b.fase || 1, vorm2: !!b.vorm2, herrezen: !!b.herrezen, krachtVast: b.krachtVast || 0 } : null,
@@ -392,11 +395,23 @@ const SONDE = () => {
       `\u2026 schoon opgeruimd: ceremonie ${s.ceremonie}, invoer vrij ${s.eindDisabled === false}, ${s.vonnis} .vonnis, #toneel-doek.aan ${s.doek}, .hitstop ${s.hitstop}`);
   }
 
-  /* ---------- 3c \u00b7 METGEZEL ---------- */
+  /* ---------- 3c \u00b7 METGEZEL (DE NISSEN DICHT: geparkeerd, via de DEV-schakelaar) ---------- */
   console.log('\n== 3c \u00b7 METGEZEL ==');
+  const mgSchakel = () => page.evaluate(() => { const r = document.querySelectorAll('#dev-menu .dev-rij')[2]; const b = r && r.children[0]; return b ? b.textContent : ''; });
+  /* 3c-0 \u00b7 geparkeerd: de kiezer weigert, en dat is ZICHTBAAR (geen stille no-op) */
+  await page.evaluate(() => document.querySelectorAll('#meldingen .toast').forEach(e => e.remove()));
+  s = await sonde();
+  t(s.mgAan === false, `standaard geparkeerd: metgezellenAan() = ${s.mgAan}`);
+  await klik(2, 1); await slaap(400); s = await sonde();
+  t(s.metgezel === null && /geparkeerd/.test(s.toasts), `geparkeerd \u00b7 Drops \u2192 S.metgezel = ${JSON.stringify(s.metgezel)}, melding "${s.toasts}"`);
+  await openLogo();
+  const lblUit = await mgSchakel();
+  await klik(2, 0); await slaap(400); s = await sonde();
+  const lblAan = await mgSchakel();
+  t(s.mgAan === true && /uit$/.test(lblUit) && /AAN$/.test(lblAan) && s.menuOpen, `schakelaar \u2192 metgezellenAan() = ${s.mgAan} ("${lblUit}" \u2192 "${lblAan}"), menu blijft open ${s.menuOpen}`);
   const mg = [['drops', 'Drops'], ['vlamwachter', 'Vlamwacht'], ['mosgeest', 'Mosgeest'], ['drops_wit', 'De Witte'], [null, 'weg']];
   for (let i = 0; i < mg.length; i++) {
-    await klik(2, i); await slaap(700); s = await sonde();
+    await klik(2, i + 1); await slaap(700); s = await sonde();   /* +1: de schakelaar staat vooraan (D3) */
     t(s.metgezel === mg[i][0], `${mg[i][1]} \u2192 S.metgezel = ${JSON.stringify(s.metgezel)}`);
   }
 
@@ -418,6 +433,21 @@ const SONDE = () => {
      (de run schrijft daarna niets meer naar de Codex of naar een erfstuk). */
   t(warnKlassen.length === 8 && warnKlassen.every(x => /true$/.test(x)), `de destructieve knoppen dragen \u26a0 \u00e9n .dev-warn: ${warnKlassen.join(' | ')}`);
   await dichtMenu();
+
+  /* ---------- 3d-bis \u00b7 de schakelaar weer UIT, en een herlaad parkeert ---------- */
+  console.log('\n== 3d-bis \u00b7 METGEZELLEN WEER GEPARKEERD ==');
+  await page.evaluate(() => { stopGevechtLus(); S.gevecht = null; devMetgezel('drops'); });   /* een lopende metgezel in de run */
+  s = await sonde();
+  t(s.mgAan === true && s.metgezel === 'drops' && s.tbMetgezel === true, `v\u00f3\u00f3r UIT: metgezellenAan() ${s.mgAan}, S.metgezel ${s.metgezel}, chip zichtbaar ${s.tbMetgezel}`);
+  await klik(2, 0); await slaap(400); s = await sonde();
+  t(s.mgAan === false && s.metgezel === null && s.tbMetgezel === false, `schakelaar UIT \u2192 metgezellenAan() ${s.mgAan}, S.metgezel ${JSON.stringify(s.metgezel)}, #tb-metgezel zichtbaar ${s.tbMetgezel}`);
+  await klik(2, 0); await slaap(300); await dichtMenu();   /* weer AAN \u2026 */
+  s = await sonde();
+  const aanVoorHerlaad = s.mgAan;
+  await page.reload({ waitUntil: 'load' }); await slaap(700);
+  s = await sonde();
+  t(aanVoorHerlaad === true && s.mgAan === false, `herlaad \u2192 de override leeft alleen in het geheugen: v\u00f3\u00f3r ${aanVoorHerlaad}, na de herlaad metgezellenAan() = ${s.mgAan}`);
+  await boot();
 
   /* ---------- 3e \u00b7 SC\u00c8NES ---------- */
   console.log('\n== 3e \u00b7 SC\u00c8NES ==');
@@ -514,7 +544,7 @@ const SONDE = () => {
   console.log('\n== 3g \u00b7 OPRUIMEN ==');
   await page.evaluate(() => { Codex.gevallen = ['drops']; bewaarCodex(); });
   await klik(6, 0); await slaap(600); s = await sonde();
-  t(!s.codex.dropsGevallen, `\u26a0 Drops-Codex wissen \u2192 Codex.gevallen bevat drops = ${s.codex.dropsGevallen}`);
+  t(!s.codex.dropsGevallen && s.mgAan === false, `\u26a0 Drops-Codex wissen \u2192 Codex.gevallen bevat drops = ${s.codex.dropsGevallen} (met de metgezellen geparkeerd: metgezellenAan() ${s.mgAan} \u2014 opruimen mag altijd)`);
   await klik(1, 1, { pil: 2 }); await slaap(200);   /* tempo 0,3x zetten */
   let voor = await sonde();
   await klik(6, 1); await slaap(400); s = await sonde();
