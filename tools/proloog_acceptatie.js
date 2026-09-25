@@ -2287,8 +2287,18 @@ function klankReeks(pk, verwacht) {
           };
           lus();
         }, sels);
+        /* de buitenpoll kan het element zien vóór de lus in de pagina aan de beurt was (een evaluate
+           is ook een taak): lees W tot beide tijden er staan (hoogstens 1,5 s) */
         let tussenW = {};
-        const tussen = async (a, b) => { const W = tussenW = await page.evaluate(() => window.__r3t || {}); return W[a] != null && W[b] != null ? Math.round(W[b] - W[a]) : -1; };
+        const tussen = async (a, b) => {
+          const t0 = Date.now();
+          for (;;) {
+            const W = tussenW = await page.evaluate(() => window.__r3t || {});
+            if (W[a] != null && W[b] != null) return Math.round(W[b] - W[a]);
+            if (Date.now() - t0 > 1500) return -1;
+            await slaap(30);
+          }
+        };
         const herstart = async voor => {
           await page.reload({ waitUntil: 'load' }); await slaap(700); await volgSchermen(page);
           if (voor) await voor();
