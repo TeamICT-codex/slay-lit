@@ -74,6 +74,7 @@
   let spoel = null;        /* doorspoel-handler van de actieve beat/overlay (null = hier moet je handelen) */
   let sleutels = null;     /* scène-eigen toetsen (gesprek, afgrond) → true als verwerkt */
   let houd = null;         /* lopende vasthoud-skip */
+  let houdT0 = 0;          /* wanneer het vasthouden begon (performance.now) */
   let cam = null;          /* { stream } van de pasfoto-camera */
   let cssGeladen = false;
   let hintGezien = {};
@@ -333,6 +334,7 @@
   function houdSkipStart() {
     if (houd || !magSkippen() || !skipEl) return;
     skipEl.classList.add('zichtbaar', 'vult');
+    houdT0 = performance.now();
     houd = setTimeout(() => {
       houd = null;
       if (skipEl) skipEl.classList.remove('vult');
@@ -343,6 +345,10 @@
     if (!houd) return;
     clearTimeout(houd); houd = null;
     if (skipEl) skipEl.classList.remove('vult');
+    /* integrator R3: wie lang genoeg vasthield, slaat over, ook als de timer nog niet vuurde. De
+       browser behandelt invoer vóór timers: op een haperend toestel kwam het loslaten na 0,95 s
+       soms vóór de timer van 0,8 s, en dan brak het vasthouden af. Kort blijft kort. */
+    if (performance.now() - houdT0 >= SKIP_HOUD_MS) slaOver();
   }
   function slaOver() {
     if (!actief || klaarGeroepen || inAfgrond()) return;
