@@ -49,7 +49,7 @@ const BUILDS = {
     sterk: {
       held: 'slachter', hp: 92, label: 'Slachter sterk (22 kaarten, 6 relikwieën)',
       relikwieen: ['brandend_bloed', 'krachtsteen', 'oorlogsbanier', 'stalen_vuist', 'brandmerkijzer', 'stempelkussen'],
-      dranken: ['heeldrank'], laster: 0, metgezel: 'drops',
+      dranken: ['heeldrank'], laster: 0, metgezel: null,   /* solo: metgezellen geparkeerd (DE NISSEN DICHT) */
       dek: [['slag', 1], ['slag', 1], ['verdediging', 1], ['verdediging', 1], ['verdediging', 0],
             ['knal', 1], ['zware_klap', 1], ['zware_klap', 0], ['uithaal', 1], ['executie', 1], ['afgekeurd', 1],
             ['ontslagbrief', 1], ['in_drievoud', 1], ['originele_handtekening', 0], ['genadeslag', 0],
@@ -70,7 +70,7 @@ const BUILDS = {
     gemiddeld: {
       held: 'gifmagier', hp: 72, label: 'Gifmagiër gemiddeld (22 kaarten, 4 relikwieën)',
       relikwieen: ['slangenamulet', 'smaragden_ring', 'oorlogsbanier', 'stempelkussen'],
-      dranken: ['heeldrank'], laster: 1, metgezel: 'drops',
+      dranken: ['heeldrank'], laster: 1, metgezel: null,   /* solo: metgezellen geparkeerd (DE NISSEN DICHT) */
       dek: [['prik', 1], ['prik', 0], ['prik', 0], ['verdediging', 1], ['verdediging', 0], ['verdediging', 0],
             ['dodelijke_kus', 1], ['gifflits', 1], ['gifflits', 0], ['giftige_steek', 0], ['slangenbeet', 0], ['gifpamflet', 0],
             ['giftand', 0], ['venijnregen', 0], ['sluiproute', 1], ['sluiproute', 0], ['verlammend_gif', 0], ['lastercampagne', 0],
@@ -88,7 +88,7 @@ const BUILDS = {
     sterk: {
       held: 'thoverk', hp: 84, label: 'Kolendruïde sterk (22 kaarten, 6 relikwieën)',
       relikwieen: ['houten_been', 'bronzen_schub', 'krachtsteen', 'oorlogsbanier', 'stempelkussen', 'mosamulet'],
-      dranken: ['heeldrank'], laster: 0, metgezel: 'drops',
+      dranken: ['heeldrank'], laster: 0, metgezel: null,   /* solo: metgezellen geparkeerd (DE NISSEN DICHT) */
       dek: [['takkenslag', 1], ['takkenslag', 1], ['verdediging', 1], ['verdediging', 1], ['verdediging', 0],
             ['vonkenbeet', 1], ['wurgwortels', 1], ['sporenstoot', 1], ['doorslag_doornen', 1], ['perkamentslag', 1],
             ['het_origineel_kaart', 0], ['doornmantel', 1], ['duivelspact', 0], ['kolenstempel', 0], ['bastvel', 1], ['bastvel', 0],
@@ -97,7 +97,7 @@ const BUILDS = {
     gemiddeld: {
       held: 'thoverk', hp: 80, label: 'Kolendruïde gemiddeld (22 kaarten, 5 relikwieën)',
       relikwieen: ['houten_been', 'bronzen_schub', 'oorlogsbanier', 'stempelkussen', 'anker'],
-      dranken: ['heeldrank'], laster: 1, metgezel: 'drops',
+      dranken: ['heeldrank'], laster: 1, metgezel: null,   /* solo: metgezellen geparkeerd (DE NISSEN DICHT) */
       dek: [['takkenslag', 1], ['takkenslag', 0], ['takkenslag', 0], ['verdediging', 1], ['verdediging', 0], ['verdediging', 0],
             ['vonkenbeet', 0], ['wurgwortels', 0], ['sporenstoot', 0], ['perkamentslag', 0], ['doorslag_doornen', 0],
             ['bastvel', 1], ['bastvel', 0], ['tegenvuur', 0], ['asregen', 0], ['eikenhuid', 0], ['kolengloed', 0],
