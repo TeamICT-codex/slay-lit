@@ -256,10 +256,10 @@ const zichtbareTekst = page => page.evaluate(() => {
   return stukken.join(' | ');
 });
 /* één stap van de doorloop: geen metgezel in de staat, geen verboden woord in beeld */
-async function stap(page, scen, naam) {
+async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene bedoelde regel (het afscheid) */
   const st = await staat(page);
   const tekst = await zichtbareTekst(page);
-  const treffers = tekst.split(' | ').filter(s => VERBODEN.test(s));
+  const treffers = tekst.split(' | ').filter(s => VERBODEN.test(s) && !(uitzondering && uitzondering.test(s)));
   const log = await leesLog(page);
   t(st.sMet === null && st.runMet === null && st.gMet === null && st.zone !== 'ZICHTBAAR' && st.chip !== 'ZICHTBAAR' && st.wereldMet === 0,
     `${scen} · ${naam}: geen metgezel (S.metgezel ${st.sMet}, runMetgezel ${st.runMet}, g.metgezel ${st.gMet}, zone ${st.zone}, chip ${st.chip}, #w-metgezel ${st.wereldMet} tekens)`);
@@ -434,7 +434,7 @@ async function stap(page, scen, naam) {
       await page.evaluate(() => doorgaan()); await slaap(2300);
       const toast1 = await page.evaluate(() => [...document.querySelectorAll('#meldingen .toast')].map(e => e.textContent).filter(x => /blijft achter/.test(x)));
       const na1 = await saveMet();
-      const s1 = await stap(page, 'save/' + mgid, 'herlaad 1');
+      const s1 = await stap(page, 'save/' + mgid, 'herlaad 1 (de afscheidsregel is de enige bedoelde treffer)', /^🐾 .+ blijft achter\. Vanaf hier daal je alleen af\.$/);
       await page.screenshot({ path: path.join(UIT, `save-${mgid}-herlaad1.png`) });
       /* herlaad 2 — ZONDER tussentijdse save */
       await laad(page);
@@ -591,7 +591,7 @@ async function stap(page, scen, naam) {
           } catch (e) { fout = String((e && e.stack) || e).slice(0, 300); }
           const b = boss();
           const uit = { ronde, gewonnen: !!g._gewonnen, verloren: !!g._verloren || S.hp <= 0, gebroken: !!g.copycatGebroken, gMetOoit,
-            ontgrendel: window.__ontgrendel, wit: isOntgrendeld('drops_wit'), fout, baasHp: b ? b.hp : null, hp: S.hp };
+            ontgrendel: window.__ontgrendel, wit: !!(Codex.mysteries && Codex.mysteries.drops_wit && Codex.mysteries.drops_wit.voltooid), fout, baasHp: b ? b.hp : null, hp: S.hp };
           try { g.voorbij = true; stopGevechtLus(); } catch (e) {}
           S.gevecht = null;
           document.querySelectorAll('#baas-intro, .baas-flits, .baas-spraak, .roof-overlay, .roof-speel-kaart, .steel-vlieger').forEach(nd => { try { nd.remove(); } catch (e) {} });
@@ -615,11 +615,12 @@ async function stap(page, scen, naam) {
       S.fakkel = 0; zetLichtVisueel();
       verliesHp(sp(), 6, g.vijanden[0]);
       await new Promise(res => setTimeout(res, 200));
-      return { hp: S.hp, verloren: !!g._verloren || g.voorbij, gMet: !!g.metgezel, ontgrendel: window.__ontgrendel, wit: isOntgrendeld('drops_wit') };
+      return { hp: S.hp, verloren: !!g._verloren || g.voorbij, gMet: !!g.metgezel, ontgrendel: window.__ontgrendel, wit: !!(Codex.mysteries && Codex.mysteries.drops_wit && Codex.mysteries.drops_wit.voltooid) };
     });
     t(pb.hp === 0 && pb.verloren && !pb.gMet && pb.ontgrendel === 0 && !pb.wit, `poort B: sterven op fakkel 0 is gewoon sterven — HP ${pb.hp}, verloren ${pb.verloren}, geen Witte (ontgrendelMetgezel ${pb.ontgrendel}×)`);
     const cxNa = await leesMgCodex(page);
-    t(normaliseer(cxNa) === normaliseer(cxVoor), 'de metgezelsleutels van de Codex zijn na drie Erfprins-gevechten inhoudelijk gelijk');
+    t(normaliseer(cxNa) === normaliseer(cxVoor), 'de metgezelsleutels van de Codex zijn na drie Erfprins-gevechten inhoudelijk gelijk' +
+      (normaliseer(cxNa) === normaliseer(cxVoor) ? '' : ` — voor ${normaliseer(cxVoor)} na ${normaliseer(cxNa)}`));
     t(page.__f.length === 0, 'geen paginafouten' + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
     await sluit(ctx, page, 'erfprins');
   }
