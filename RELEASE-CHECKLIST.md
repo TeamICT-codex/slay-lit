@@ -53,8 +53,8 @@ beslissen (Drops/Copycat-breker — zie `.claude/notities/metgezel_impact.md`) e
 `.drempel-*`-regels in `css/style.css` (~r3549–3587) opruimen.
 
 - [x] **De parkering is beslist en afgebouwd: DE NISSEN DICHT (B1).** Eén vlag
-  `METGEZELLEN_AAN = false` (js/game.js, gelezen via `metgezellenAan()`), zeven poorten, 24
-  speler-teksten; een lopende run met een metgezel stuurt hem bij het laden weg met één regel;
+  `METGEZELLEN_AAN = false` (js/game.js, gelezen via `metgezellenAan()`), zeven poorten, de
+  speler-teksten T1-T24 (plus de scherf-tip in de heldkeuze-loadout); een lopende run met een metgezel stuurt hem bij het laden weg met één regel;
   de Codex-data blijft bewaard maar wordt niet meer geschreven. Plan, beslissingen en de
   terugkeer-checklist (§8): `.claude/notities/bazen_onderzoek/ontwerp/M_metgezel_parkering_plan.md`.
   Acceptatie: `tools/nissen_acceptatie.js`.
