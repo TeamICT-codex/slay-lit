@@ -21,8 +21,9 @@
    ±1560 woorden) meer, maar een film met één handeling per beat: inklokken (prikklok +
    tl-golf), de CRT degausst, het Glimlachquotum aan één bureau, de Zingevingsaudit, Karel,
    de oproep en de lift omhoog. Hieronder alleen de TEKST en de maten; de regie staat in
-   proloog.js (sceneOverzicht, sceneBoot, sceneKantoor). 199 woorden zichtbaar in 0-2
-   (labels en cijfers meegeteld; plan: ≈400, max 450). */
+   proloog.js (sceneOverzicht, sceneBoot, sceneKantoor). Gemeten door de suite (deel 13):
+   174-191 woorden zichtbaar in 0-2 per formaat, 198 in de strings hieronder (labels en
+   cijfers meegeteld; plan: ≈400, max 450). */
 
 window.SLAYLIT_PROLOOG = (function () {
   const BASE = '';
