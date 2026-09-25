@@ -12081,7 +12081,7 @@ function scherfLoadoutHtml() {
     <div class="schrijn-rij">` + bezit.map(sid => {
       const d = scherfDef(sid); if (!d) return '';
       return `<button class="schrijn-slot scherf-slot ${scherfKeuzes.includes(sid) ? 'gekozen' : ''}" data-shart="${sid}"
-        data-tip="${d.codexTekst}" onclick="kiesScherfLoadout('${sid}')">${bronIcoon(d.bron)}</button>`;
+        data-tip="${scherfTekst(sid)}" onclick="kiesScherfLoadout('${sid}')">${bronIcoon(d.bron)}</button>`;   /* scherfTekst: met de metgezellen geparkeerd de tafelTekst (DE NISSEN DICHT) */
     }).join('') + `</div>`;
 }
 function kiesScherfLoadout(sid) {
