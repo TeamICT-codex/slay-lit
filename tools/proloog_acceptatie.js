@@ -74,7 +74,8 @@
    B doortikkend, C herladen), alles gemeten IN de pagina (window.__r3, R3_METER):
   13 kantoor   (1) scènes 0-2 ≤ 50 s natuurlijk (handelt 0,6 s nadat het kan, typt 140 ms/teken,
                de foto erbij) en ≤ 25 s doortikkend (tik om de 150 ms); (2) de langste GEDWONGEN
-               wacht ≤ 2,5 s (doortikkend: geen handeling in beeld terwijl er getikt wordt);
+               wacht ≤ 2,5 s (doortikkend: geen handeling in beeld EN een tik die niets doorspoelt;
+               elke tik wordt in de pagina gelogd met of hij iets deed, window.__r3.tik);
                (3) elke collega-regel bij verschijnen volledig in beeld, in de log en raak
                (R.elementFromPoint), ook 500 ms later; (4) ≤ 450 woorden zichtbaar (de gerenderde
                tekst, gemonsterd; + het totaal van data.js); (5) grep op de vier preekregels in
