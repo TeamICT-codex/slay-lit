@@ -881,10 +881,14 @@ async function kaartPlaat(page, vp) {
    collega  elke collega-regel in de log: bij verschijnen (2 beelden later) en 500 ms later:
             de rechthoek in de viewport en in de log, en R.elementFromPoint in het midden
    scroll   document, host, app en #scene: nooit een overloop
-   glim     de echte klikken op [ GLIMLACH ] (capture op de shadow root, vóór de knop zelf) */
+   glim     de echte klikken op [ GLIMLACH ] (capture op de shadow root, vóór de knop zelf)
+   tik      (integrator R3, hervat) elke doorspoeltik van de speler en of hij iets DEED: laptop
+            (ArrowRight) = de proloog deed preventDefault (dat doet ze alleen als er een spoel is);
+            touch (een tik naast de knoppen) = de shadow root veranderde tijdens de dispatch van
+            die ene klik (de spoel-handler draait synchroon in de click) */
 const R3_METER = () => {
   if (window.__r3) return;
-  const r3 = window.__r3 = { t0: null, eind: null, scenes: [], kan: [], knip: [], slay: [], collega: [], scroll: [], glim: 0, hint: [], rust: { vhold: false, scheurZacht: false, duik: false } };
+  const r3 = window.__r3 = { t0: null, eind: null, scenes: [], kan: [], knip: [], slay: [], collega: [], scroll: [], glim: 0, hint: [], tik: [], rust: { vhold: false, scheurZacht: false, duik: false } };
   const nu = () => performance.now();
   const rel = t => Math.round(t - (r3.t0 === null ? t : r3.t0));
   const FILM = { overzicht: 1, boot: 1, kantoor: 1 };
@@ -939,6 +943,28 @@ const R3_METER = () => {
     const b = e.target && e.target.closest && e.target.closest('[data-actie="glimlach"]');
     if (b && !b.disabled) r3.glim++;
   };
+  /* de doorspoeltikken: DEED de tik iets? (zie 'tik' hierboven) */
+  const loopt = () => r3.t0 !== null && r3.eind === null;
+  let inTik = null;
+  const moTik = new MutationObserver(recs => { if (inTik) inTik.n += recs.length; });
+  addEventListener('keydown', e => {
+    if (e.key !== 'ArrowRight' || !loopt()) return;
+    const t = rel(nu());
+    setTimeout(() => r3.tik.push({ t, gebruikt: e.defaultPrevented, via: 'toets' }), 0);   /* na de hele dispatch */
+  });
+  addEventListener('click', e => {
+    if (!loopt() || !wortel) return;
+    const bron = (e.composedPath && e.composedPath()[0]) || e.target;
+    if (!bron || bron.nodeType !== 1 || !wortel.contains(bron) || bron.closest('button, input, a')) return;   /* een knop is een handeling, geen tik */
+    moTik.takeRecords();
+    inTik = { t: rel(nu()), n: 0 };
+  }, true);
+  addEventListener('click', () => {
+    if (!inTik) return;
+    const n = inTik.n + moTik.takeRecords().length;
+    r3.tik.push({ t: inTik.t, gebruikt: n > 0, via: 'tik' });
+    inTik = null;
+  });
   const monster = (R, h, t) => {
     if (!KNIP) { const D = window.SLAYLIT_PROLOOG; KNIP = D && D.scenes && D.scenes[2] && D.scenes[2].knipoog || null; }
     let knip = false;
@@ -982,7 +1008,7 @@ const R3_METER = () => {
   };
   const lus = () => {
     const h = document.getElementById('scherm-proloog'), R = h && h.shadowRoot;
-    if (R && R !== wortel) { wortel = R; mo.observe(R, { childList: true, subtree: true }); R.addEventListener('click', klik, true); }
+    if (R && R !== wortel) { wortel = R; mo.observe(R, { childList: true, subtree: true }); moTik.observe(R, { childList: true, subtree: true, attributes: true, characterData: true }); R.addEventListener('click', klik, true); }
     const sc = (h && h.dataset.plScene) || null, t = nu();
     if (sc !== vorigScene) { if (sc === 'overzicht' && r3.t0 === null) r3.t0 = t; r3.scenes.push({ t: rel(t), scene: sc }); vorigScene = sc; }
     if (r3.t0 !== null && r3.eind === null && sc && !FILM[sc]) r3.eind = rel(t);
@@ -1014,6 +1040,30 @@ function langsteStretch(kan, eind) {
     if (t1 - kan[i].t > langst) { langst = t1 - kan[i].t; waar = `${(kan[i].t / 1000).toFixed(2)}-${(t1 / 1000).toFixed(2)} s, ${volgende ? 'vóór [' + volgende.kan + ']' : 'tot het gesprek'}`; }
   }
   return { ms: langst, waar };
+}
+/* integrator R3 (hervat): de langste GEDWONGEN wacht (plan §5 R3: geen handeling beschikbaar ÉN een
+   tik spoelt niet door). Binnen elke stretch zonder handeling (kan-log) knippen de tikken die iets
+   deden (r3.tik) de stretch in stukken; een stuk telt als gedwongen zodra er minstens één tik in viel
+   die NIETS deed. Het stuk wordt gemeten van de vorige tik die wel iets deed (of het begin van de
+   stretch) tot de volgende (of het einde): een bovengrens, hoogstens één tikinterval te ruim. Zo telt
+   de tikcadans van de speler zelf niet mee (acht momenten doorspoelen kost acht tikken, geen wacht). */
+function gedwongenWacht(kan, tikken, eind) {
+  let langst = 0, waar = 'geen enkele tik die niets deed', nutteloos = 0;
+  for (let i = 0; i < kan.length; i++) {
+    if (kan[i].kan) continue;
+    const s = kan[i].t, volgende = kan.slice(i + 1).find(k => k.kan), e = volgende ? volgende.t : eind;
+    const tk = tikken.filter(x => x.t >= s && x.t < e).sort((a, b) => a.t - b.t);
+    let vorige = s, los = 0;
+    const stuk = (t1, tot) => {
+      if (los && t1 - vorige > langst) { langst = t1 - vorige; waar = `${(vorige / 1000).toFixed(2)}-${(t1 / 1000).toFixed(2)} s, ${los} tik(ken) zonder effect, tot ${tot}`; }
+    };
+    for (const x of tk) {
+      if (x.gebruikt) { stuk(x.t, 'een tik die doorspoelde'); vorige = x.t; los = 0; }
+      else { los++; nutteloos++; }
+    }
+    stuk(e, volgende ? '[' + volgende.kan + ']' : 'het gesprek');
+  }
+  return { ms: langst, waar, nutteloos, tikken: tikken.length, gebruikt: tikken.filter(x => x.gebruikt).length };
 }
 /* scènes 0-2 spelen zoals een speler: 'natuurlijk' (handelt 0,6 s nadat het kan, tikt nooit door,
    typt 140 ms per teken) of 'doortik' (handelt meteen, tikt om de 150 ms waar er niets te doen
@@ -2189,11 +2239,16 @@ function klankReeks(pk, verwacht) {
         const eind = r3.eind;
         M.doortik = eind;
         t(eind !== null && eind <= 25000, `${L}: scènes 0-2 duren ${(eind / 1000).toFixed(1)} s doortikkend (≤ 25 s), ${film.tikken} tikken; handelingen: ${film.acties.join(', ')}`);
-        /* (2) de langste GEDWONGEN wacht: geen handeling beschikbaar terwijl er om de 150 ms getikt wordt
-           (wat een tik doorspoelt, is dan al doorgespoeld; wat overblijft kan een tik niet inkorten) */
+        /* (2) de langste GEDWONGEN wacht: geen handeling beschikbaar ÉN een tik spoelt niet door.
+           integrator R3 (hervat): gemeten per tik IN de pagina (deed hij iets?), niet meer als de hele
+           stretch zonder handeling terwijl er getikt wordt: die telde de tikcadans van de speler mee
+           (acht momenten doorspoelen = acht tikken) en rekte onder last tot 3 s zonder één echte wacht. */
         const st = langsteStretch(r3.kan, eind);
-        M.gedwongen = st.ms;
-        t(st.ms <= 2500, `${L}: de langste gedwongen wacht is ${(st.ms / 1000).toFixed(2)} s (≤ 2,5 s; ${st.waar})`);
+        const gw = gedwongenWacht(r3.kan, r3.tik || [], eind);
+        M.gedwongen = gw.ms; M.stretchTik = st.ms;
+        t(gw.gebruikt >= 6 && gw.ms <= 2500,
+          `${L}: de langste gedwongen wacht is ${(gw.ms / 1000).toFixed(2)} s (≤ 2,5 s; ${gw.waar}) — ${gw.tikken} doorspoeltikken, ${gw.gebruikt} deden iets, ${gw.nutteloos} niets zonder handeling in beeld`);
+        console.log(`   info ${L}: langste stretch zonder handeling terwijl er getikt wordt (incl. de tikcadans zelf) ${(st.ms / 1000).toFixed(2)} s (${st.waar})`);
         t(film.gedaan.glimlach === 5 && r3.glim === 5 && c.glimlachen === 5 && c.fotoKantoor === false && c.zelfGestempeld === false && c.jeugddroom === droom,
           `${L}: contract: glimlachen ${c.glimlachen} (${r3.glim} klikken), fotoKantoor ${c.fotoKantoor}, zelfGestempeld ${c.zelfGestempeld} (weggetikt → de machine), jeugddroom "${c.jeugddroom}"`);
         t(r3.knip.length === 1 && r3.slay.length === 0 && r3.scroll.length === 0,
@@ -2351,7 +2406,7 @@ function klankReeks(pk, verwacht) {
     kop('13 · R3 metingen');
     for (const n of ['laptop', 'liggend', 'staand']) {
       const m = R3M[n]; if (!m) continue;
-      console.log(`   ${n.padEnd(8)} natuurlijk ${(m.natuurlijk / 1000).toFixed(1)} s · doortikkend ${(m.doortik / 1000).toFixed(1)} s · gedwongen wacht ${(m.gedwongen / 1000).toFixed(2)} s · stretch natuurlijk ${(m.natStretch / 1000).toFixed(1)} s · collega's ${m.collega} · ${m.woorden} woorden`);
+      console.log(`   ${n.padEnd(8)} natuurlijk ${(m.natuurlijk / 1000).toFixed(1)} s · doortikkend ${(m.doortik / 1000).toFixed(1)} s · gedwongen wacht ${(m.gedwongen / 1000).toFixed(2)} s (stretch al tikkend ${(m.stretchTik / 1000).toFixed(2)} s) · stretch natuurlijk ${(m.natStretch / 1000).toFixed(1)} s · collega's ${m.collega} · ${m.woorden} woorden`);
     }
     console.log(`   data.js scènes 0-2: ${R3M.dataWoorden} woorden`);
   }
