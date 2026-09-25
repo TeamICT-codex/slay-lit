@@ -284,8 +284,10 @@ async function huidigeAfwijking(page) {
     const staat = await page.evaluate(() => ({
       scherm: document.body.dataset.scherm,
       d3: document.getElementById('scherm-gevecht').classList.contains('d3-actief'),
-      vijand: S.gevecht ? S.gevecht.vijanden.map(v => v.id).join(',') : ''
+      vijand: S.gevecht ? S.gevecht.vijanden.map(v => v.id).join(',') : '',
+      gMet: S.gevecht && S.gevecht.metgezel ? S.gevecht.metgezel.id : null
     }));
+    t(staat.gMet === null, gev.naam + ': solo (DE NISSEN DICHT) \u2014 g.metgezel ' + staat.gMet);
     let beurten = 0;
     for (let i = 0; i < 5; i++) {
       const voorbij = await page.evaluate(() => !S.gevecht || S.gevecht.voorbij);

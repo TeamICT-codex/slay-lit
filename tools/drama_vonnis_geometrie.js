@@ -185,6 +185,7 @@ async function draaiViewport(browser, vp) {
   const opzet = async () => {
     let w = 0; while (w < 9000) { const bezig = await page.evaluate(() => { const g = S.gevecht; return !g ? false : (g._regieBezig != null || !!g.ceremonie); }); if (!bezig) break; await slaap(250); w += 250; }
     await page.evaluate(() => { devDicktator('slachter_mid'); });
+    t(await page.evaluate(() => !!S.gevecht && S.gevecht.metgezel === null && !S.metgezel), 'solo (DE NISSEN DICHT): het proces staat zonder metgezel \u2014 S.gevecht.metgezel null');
     /* HET DRAAI-BLOK WEG (les uit drama_stap_c_sporen.js r129-131). Bij de START van een
        gevecht op een STAANDE telefoon legt #draai-blok ("Draai je toestel") een dekkend
        paneel op z2000 over het hele scherm: de getallen blijven geldig (een fixed overlay

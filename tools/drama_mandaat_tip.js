@@ -60,6 +60,7 @@ async function spoor(browser, sp) {
   await page.evaluate(() => { const k = document.querySelector('.held-kies'); if (k) k.click(); }); await slaap(300);
   await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => /toch beginnen/i.test(x.textContent)); if (b) b.click(); }); await slaap(800);
   await page.evaluate(() => { devDicktator('slachter_mid'); });
+  t(await page.evaluate(() => !!S.gevecht && S.gevecht.metgezel === null && !S.metgezel), 'solo (DE NISSEN DICHT): het proces staat zonder metgezel \u2014 S.gevecht.metgezel null');
   for (let i = 0; i < 20; i++) { if (await page.evaluate(() => document.body.dataset.scherm === 'gevecht' && !!S.gevecht)) break; await slaap(200); }
   await page.evaluate(() => { const db = document.getElementById('draai-blok'); if (db && db.classList.contains('toon')) { try { speelTochStaand(); } catch (e) { db.classList.remove('toon'); } } }); await slaap(200);
   for (let i = 0; i < 40; i++) { if (await page.evaluate(() => document.body.dataset.scherm === 'gevecht' && !!S.gevecht && !document.querySelector('#baas-intro'))) break; await slaap(400); }
