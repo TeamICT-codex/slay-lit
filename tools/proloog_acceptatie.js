@@ -930,7 +930,9 @@ const R3_METER = () => {
     for (const m of muts) for (const n of m.addedNodes) {
       if (n.nodeType !== 1 || !n.classList.contains('tl-collega')) continue;
       requestAnimationFrame(() => requestAnimationFrame(() => meetRegel(n, 'bij')));
-      setTimeout(() => meetRegel(n, 'later'), 500);
+      /* 500 ms later, gemeten in het eerstvolgende beeld (de animatietijdlijn staat binnen een taak
+         stil: onder last las een kale setTimeout nog de opacity van het eerste beeld) */
+      setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(() => meetRegel(n, 'later'))), 500);
     }
   });
   const klik = e => {
@@ -1052,10 +1054,17 @@ async function speelFilm(page, vp, modus, droom, L, o) {
           if (nat) { if (vp.m) await inp.tap(); else await inp.click(); await inp.pressSequentially(droom, { delay: 140 }); }
           else await inp.fill(droom);
           await page.keyboard.press('Enter');
-        } else await tik(page, vp, `[data-actie="${kies}"]`, { timeout: 3000 });
+        } else {
+          /* integrator R3 (hervat): het kan-log is één beeld oud. Onder last kan de knop intussen weg,
+             disabled of inert zijn (de lift is al vertrokken); een klik daarop wacht 3 s en rekt de
+             meting. Kijk het daarom vlak voor de klik nog eens na. */
+          const nog = await sr(page, `const b = R.querySelector('[data-actie="${kies}"]'); if (!b || b.disabled) return false; for (let x = b; x && x !== R; x = x.parentNode) { if (x.nodeType === 1 && x.inert) return false; } return true;`);
+          if (!nog) { await slaap(30); continue; }
+          await tik(page, vp, `[data-actie="${kies}"]`, { timeout: 3000 });
+        }
         acties.push(kies);
+        gedaan[kies] = (gedaan[kies] || 0) + 1;   /* alleen wat echt lukte */
       } catch (e) { acties.push('MISLUKT ' + kies + ': ' + e.message.split('\n')[0]); }
-      gedaan[kies] = (gedaan[kies] || 0) + 1;
       await slaap(40);
       continue;
     }
@@ -2207,8 +2216,22 @@ function klankReeks(pk, verwacht) {
         const save = () => page.evaluate(() => JSON.parse(localStorage.getItem('slaylit_proloog_v3') || 'null') || {});
         const contract = () => page.evaluate(() => JSON.parse(localStorage.getItem('slayit_proloog') || 'null') || {});
         const wachtSr = async (src, ms) => { const t0 = Date.now(); while (Date.now() - t0 < (ms || 8000)) { if (await sr(page, src)) return Date.now() - t0; await slaap(70); } return -1; };
-        const herstart = async () => {
+        /* integrator R3 (hervat): tussentijden IN de pagina (rAF, performance.now()): het eerste beeld
+           waarin elke selector bestaat. Van buitenaf pollen rekte of kromp een wachttijd onder last
+           (de knop na 2,5 s werd liggend eens '1,8 s', omdat de poll de oproep te laat zag). */
+        const kijkUit = sels => page.evaluate(sels => {
+          const W = window.__r3t = {};
+          const lus = () => {
+            const h = document.getElementById('scherm-proloog'), R = h && h.shadowRoot;
+            if (R) for (const s of sels) if (W[s] == null && R.querySelector(s)) W[s] = performance.now();
+            if (sels.some(s => W[s] == null)) requestAnimationFrame(lus);
+          };
+          requestAnimationFrame(lus);
+        }, sels);
+        const tussen = async (a, b) => { const W = await page.evaluate(() => window.__r3t || {}); return W[a] != null && W[b] != null ? Math.round(W[b] - W[a]) : -1; };
+        const herstart = async voor => {
           await page.reload({ waitUntil: 'load' }); await slaap(700); await volgSchermen(page);
+          if (voor) await voor();
           await klikNieuw(page, vp);
           return wachtOp(page, () => document.body.dataset.scherm === 'proloog' && !!(window.Proloog && Proloog.actief), 8000);
         };
@@ -2266,11 +2289,11 @@ function klankReeks(pk, verwacht) {
         s = await save();
         t(inv.v === droom && inv.meter === '98%' && !inv.knop && s.choices.glimlachen === 5,
           `${L}: herladen na het stempelen → terug op het formulier, ingevuld ("${inv.v}"), meter ${inv.meter}, geen GLIMLACH meer, glimlachen ${s.choices.glimlachen}`);
+        await kijkUit(['[data-actie="stempel"]', '.z8.machine']);
         await tik(page, vp, '[data-actie="noteer"]');
         const st0 = await wachtSr(`return !!R.querySelector('[data-actie="stempel"]');`);
-        const tStempel = Date.now();
         const mach = await wachtSr(`return !!R.querySelector('.z8.machine');`, 8000);
-        const dMach = Date.now() - tStempel;
+        const dMach = await tussen('[data-actie="stempel"]', '.z8.machine');   /* in de pagina gemeten */
         c = await contract();
         const machTekst = (await wachtSr(`return [...R.querySelectorAll('.tl-baas')].some(p => /Geen probleem\\. Ik doe het wel\\./.test(p.textContent));`, 3000)) >= 0;   /* B.A.A.S. typt de regel */
         t(st0 >= 0 && mach >= 0 && dMach >= 5500 && dMach <= 7000 && c.zelfGestempeld === false && machTekst,
@@ -2278,11 +2301,10 @@ function klankReeks(pk, verwacht) {
         await wachtSr(`return !!R.querySelector('.oproep');`, 16000);
         s = await save();
         t(s.checkpoint === 'oproep' && s.choices.glimCp === 5, `${L}: de oproep: checkpoint '${s.checkpoint}', glimCp ${s.choices.glimCp}`);
-        await herstart();
+        await herstart(() => kijkUit(['.oproep', '[data-actie="bevestig"]']));
         const op = await wachtSr(`return !!R.querySelector('.oproep');`, 3000);
-        const tOp = Date.now();
         const bev = await wachtSr(`const b = R.querySelector('[data-actie="bevestig"]'); return !!b;`, 5000);
-        const dBev = Date.now() - tOp;
+        const dBev = await tussen('.oproep', '[data-actie="bevestig"]');   /* in de pagina gemeten */
         const knip = await sr(page, `return !!R.querySelector('.hoofd-karel.uit') && !!R.querySelector('.tl-knip');`);
         const wacht = await page.evaluate(() => window.Klank && Klank.wacht ? Klank.wacht.stand.actief : null);
         t(op >= 0 && bev >= 0 && dBev >= 1900 && dBev <= 3200 && knip && wacht === true,
