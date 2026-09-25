@@ -130,6 +130,16 @@
 > `bart_blinker2.webp` voor de collega's (zelfde kader, zelfde vergeelde print), een masker
 > (`masker-woede/-gif/-vlucht`) voor 0042 (dezelfde man). Nieuwe namen bij de drop mee in
 > `ZWAAR` van `sw.js`, zoals de rest van `assets/proloog/`.
+>
+> **De drop-route (proloog R3 F1).** `converteer_webp.py` kent de map `proloog` (MAPPEN, met een
+> cap van 384 px voor `collega_*` en 1024 px voor `medewerker_*`) en schrijft zo zelf de sleutel
+> `proloog` in `assets/art-manifest.js`: vanaf dan laadt het spel de portretten vanzelf, en is de
+> vlag `NIEUWE_ART` in `proloog/data.js` overbodig (die geldt alleen zolang het manifest de map niet
+> kent). `verwijder_dambord.py` snijdt in deze map **alleen** `medewerker_0042` (de collega's zijn
+> volle beelden en gaan nooit door de flood-fill). ⚠ Die twee scripts staan in `.claude/` (buiten
+> git): de aangepaste versies staan in de worktree `SLAY-IT-proloog/.claude/` en moeten bij de merge
+> naar `SLAY IT/.claude/` gekopieerd worden, anders zet de drop rauwe PNG's in de repo. Laadt een
+> beloofde plaat toch niet (404), dan valt het hoofd terug op het silhouet, niet op een puntje.
 
 - [ ] `collega_marleen.png` · `assets/proloog` · prompt: `assets/proloog/PROMPTS.txt` → kopregel `collega_marleen.png` (r52) · R3, scène 2 (het Glimlachquotum): de enige warme lamp van de kantoortuin, vest, autosleutels aan een rood hangertje ("Ik ga zo frieten halen"). 1024x1024, VOL beeld (geen cut-out) · terugval: silhouet + bureaulamp/vest · **nieuw (optioneel)**
 - [ ] `collega_rudi.png` · `assets/proloog` · prompt: `assets/proloog/PROMPTS.txt` → kopregel `collega_rudi.png` (r61) · R3, scène 2: de archivaris, bril op het voorhoofd, archiefdoos als schild, staalblauw accent ("Dat was Karel. Twaalf jaar."). 1024x1024, VOL beeld · terugval: silhouet + archiefdoos/bril · **nieuw (optioneel)**

@@ -31,9 +31,9 @@ Werkwijze per blok:
   3. Genereer, kies de beste variant, sla op als PNG onder EXACT de
      bestandsnaam uit de kopregel.
   4. Drop in assets/proloog/ en zeg "ruim de nieuwe art op" → de
-     /art-drop-skill. De drie portretten zijn VOLLE beelden (geen
-     cut-out): alleen converteer_webp.py. medewerker_0042 is een
-     cut-out: verwijder_dambord.py + converteer_webp.py.
+     /art-drop-skill. De drie portretten zijn VOLLE beelden: alleen
+     converteer_webp.py (cap 384 px; het manifest kent de map zelf).
+     0042 is een cut-out: verwijder_dambord.py + converteer_webp.py.
 
 Tips:
 - Genereer de drie collega's in dezelfde sessie: ze moeten naast Bart
@@ -43,8 +43,8 @@ Tips:
   illustration, painterly film still, not a photograph" vooraan.
 - Wordt het cartoonesk of te kleurig? Voeg "faded Kodachrome, muted,
   desaturated" toe.
-- De portretten worden KLEIN getoond (±70-84 px): één sterk silhouet-
-  element en één kleuraccent moeten dan nog lezen.
+- De portretten worden KLEIN getoond (40 px liggend, 92 staand, 108
+  laptop): één sterk silhouetelement en één kleuraccent moeten lezen.
 - 0042 kijkt naar RECHTS (held-conventie: hij staat links, B.A.A.S.
   rechts). De pijplijn spiegelt nooit.
 

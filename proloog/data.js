@@ -39,10 +39,13 @@ window.SLAYLIT_PROLOOG = (function () {
 
   // —— R3: nieuwe art die nog MOET komen (de prompts staan in assets/proloog/PROMPTS.txt).
   // Nooit blind een bestand opvragen dat er niet is (een 404-probe per collega): een slot
-  // telt pas als het in ART_MANIFEST.proloog staat, of — zolang het manifest die map niet
-  // kent — als de vlag hieronder op true staat. BIJ DE ART-DROP: zet de vlag op true.
-  // Zonder art tekent proloog.js een silhouet met één attribuut (Marleen: de warme lamp,
-  // Rudi: bril en archiefdoos, Karel: alleen zijn tl-buis en zijn stem).
+  // telt pas als het in ART_MANIFEST.proloog staat. Fixer R3 F1: .claude/converteer_webp.py
+  // kent de map 'proloog' (MAPPEN + een cap voor collega_*), dus na de eerste art-drop schrijft
+  // het manifest de sleutel 'proloog' zelf en is de vlag hieronder overbodig. De vlag geldt
+  // alleen zolang het manifest de map NIET kent (een drop zonder de converter: noodrem).
+  // Zonder art — of als een beloofde plaat toch niet laadt — tekent proloog.js een silhouet
+  // met één attribuut (Marleen: de warme lamp, Rudi: bril en archiefdoos, Karel: alleen zijn
+  // tl-buis en zijn stem).
   const NIEUWE_ART = { collega_marleen: false, collega_rudi: false, collega_karel: false };
   function heeftArt(stam) {
     const m = window.ART_MANIFEST && window.ART_MANIFEST.proloog;
@@ -118,8 +121,9 @@ window.SLAYLIT_PROLOOG = (function () {
         stempelKnop: 'STEMPEL',
         stempel: 'VOORZIENING GETROFFEN',   // dezelfde woorden als de archiefkast in de val (en de outro)
         machine: 'Geen probleem. Ik doe het wel.',
-        wachtMs: 6000,
+        wachtMs: 6000,   // telt vanaf dat STEMPEL kan (fixer R3 F1: ±450 ms tikgrens na 'noteer')
         archief: 'ARCHIEF',
+        bon: 'Z-8 → ARCHIEF.',   // fixer R3 F1: B.A.A.S. typt na de buizenpost waar het formulier heen ging (altijd in beeld)
       },
       // de collega's praten in de terminal-log (naamkop), nooit onder de vouw. Karels tl
       // klakt uit midden in het woord: hij zegt alleen 'knip' (en dan een streep).
@@ -127,12 +131,17 @@ window.SLAYLIT_PROLOOG = (function () {
         { wie: 'karel',   t: 'Zoals ik dus zei—', knip: 'Zoals ik dus z' },
         { wie: 'rudi',    t: 'Dat was Karel. Twaalf jaar.' },
         { wie: 'bart',    t: 'Niks aan de hand! Kop op!' },
-        { wie: 'marleen', t: 'Ik ga zo frieten halen. Wil je iets?' },   // rijmt op het warme frietkot in de val
+        // rijmt op het warme frietkot in de val. Fixer R3 F1: 'afgebroken' = de oproep valt ±0,6 s
+        // na haar vraag binnen (i.p.v. 1,5 s): de enige vraag die een mens je die dag stelt, blijft
+        // onbeantwoord (ze blijft in de log staan tot BEVESTIG)
+        { wie: 'marleen', t: 'Ik ga zo frieten halen. Wil je iets?', afgebroken: 600 },
       ],
       oproep: { t: 'Medewerker 0042. Uw aanwezigheid is vereist.', cta: 'BEVESTIG AANWEZIGHEID', knopNa: 2500 },
       // de goederenlift omhoog naar het dak (≤ 3 s, doortikbaar): het hek DICHT, geen blik
       // omlaag, geen dakrand (keuze 3). Dezelfde etages als de val, in omgekeerde richting.
-      lift: { etages: ['2', '3', '4', 'DAK'], stapMs: 560 },
+      // Fixer R3 F1: het paneel noemt de etage zoals de val (namen[i] hoort bij etages[i]);
+      // de lichtband per etage leest zijn kleur uit OutroFX.KLIMAAT (proloog.js liftKleur).
+      lift: { etages: ['2', '3', '4', 'DAK'], namen: ['KANTOORTUIN', 'FACTURATIE', 'DIRECTIE', ''], stapMs: 560 },
       wand: {
         oprichter: SLOTS.oprichter, plaquette: '◆ De Oprichter ◆',
         memo: { kop: 'MEMO · J. Devroe', t: 'Afwezig vandaag. Tekent uw evaluatie.', portret: A('junior.webp') },
@@ -346,10 +355,12 @@ window.SLAYLIT_PROLOOG = (function () {
   }
 
   // hoofdstukken voor herbeleven (titel/DEV/Codex): Proloog.start({ hoofdstuk })
-  // R3: de namen van 1 en 2 volgen de film (de indices 0-4 blijven)
+  // R3: de namen van 1 en 2 volgen de film (de indices 0-4 blijven). Fixer R3 F1: hoofdstuk 1
+  // heet 'De CRT degausst' — in de Codex stond 'Een Productief Leven™' onder een blok met
+  // dezelfde naam
   const HOOFDSTUKKEN = [
     { hoofdstuk: 0,         naam: 'Maandag, 06:42' },
-    { hoofdstuk: 1,         naam: 'Een Productief Leven™' },
+    { hoofdstuk: 1,         naam: 'De CRT degausst' },
     { hoofdstuk: 2,         naam: 'Het Glimlachquotum' },
     { hoofdstuk: 3,         naam: 'Het Functioneringsgesprek' },
     { hoofdstuk: 'factuur', naam: 'De Eindafrekening' },

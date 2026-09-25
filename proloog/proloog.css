@@ -77,12 +77,19 @@ img { max-width: 100%; display: block; }
 @keyframes plFlikker { 0%, 100% { opacity: 1; } 48% { opacity: .82; } 52% { opacity: .95; } 71% { opacity: .86; } }
 
 /* ---------- "TIK = DOORSPOELEN": knippert 3 s, zoals in de outro ---------- */
+/* fixer R3 F1: een donkere pil met amberen letters (zoals de skip-ring). Grijs op de beige borstzak
+   van het bureau was hij nauwelijks leesbaar, en het is de enige zin die zegt dat de regie weg te
+   tikken is. */
 .pl-hint {
   position: absolute; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom)); transform: translateX(-50%);
   z-index: 70; pointer-events: none; white-space: nowrap;
-  font-family: var(--f-crt); font-size: 1.05rem; letter-spacing: .14em; color: #8a8168;
-  text-shadow: 0 0 8px #000, 0 0 2px #000; opacity: 0;
+  font-family: var(--f-crt); font-size: 1.05rem; line-height: 1.1; letter-spacing: .14em; color: var(--amber-licht);
+  padding: 4px 12px 3px; border-radius: 12px; background: rgba(10, 8, 5, .7); box-shadow: 0 0 0 1px rgba(255, 177, 74, .22);
+  text-shadow: 0 0 6px rgba(255, 177, 74, .35); opacity: 0;
 }
+/* in het bureau: boven de borstzak, in de strook van de knop (die is leeg zolang de hint knippert:
+   bij het typen van B.A.A.S. en bij de collega's; een knop die verschijnt, laat hem wijken) */
+.pl-app[data-scene="kantoor"] .pl-hint { bottom: calc(66px + env(safe-area-inset-bottom)); }
 .pl-hint.toon { animation: plKnipper 1s steps(1) infinite; }
 @keyframes plKnipper { 0% { opacity: .95; } 50% { opacity: 0; } }
 
@@ -152,7 +159,9 @@ img { max-width: 100%; display: block; }
    in de terminal die daar al gloeit (.ik-duik). */
 .scene-overzicht { background: #040504; }
 .ik-zaal { position: absolute; inset: 0; overflow: hidden; }
-/* integrator R3: de camera zoomt in de lens, de zaal clipt (anders liep #scene over tijdens de duik) */
+/* integrator R3: de camera zoomt in de lens, de zaal clipt (anders liep #scene over tijdens de duik).
+   Fixer R3 F1: proloog.js geeft de lens de maat van de plaat (object-fit: cover, in px; staand steekt
+   ze links en rechts buiten beeld) — inset: 0 is alleen de terugval tot dat gebeurd is */
 .ik-lens { position: absolute; inset: 0; transition: transform .7s cubic-bezier(.55, 0, .9, .45), filter .7s ease; }
 .ik-plaat, .ik-plaat .art-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .ik-plaat .art-img { filter: sepia(.2) brightness(.82) contrast(1.05); }
@@ -209,7 +218,9 @@ img { max-width: 100%; display: block; }
 .ik-tik .ik-rij { filter: brightness(.42) saturate(.7); }
 .ik-aan .ik-rij { filter: none; }
 .ik-duik .ik-post { opacity: 0; }
-.ik-duik .ik-lens { transform: scale(6); filter: brightness(1.35); }
+/* fixer R3 F1: schalen rond de terminal én hem naar het midden pannen (--pan-x/-y, door proloog.js
+   geklemd zodat de lens het scherm in elk beeld dekt; staand viel er anders een zwarte muur in) */
+.ik-duik .ik-lens { transform: translate(var(--pan-x, 0px), var(--pan-y, 0px)) scale(6); filter: brightness(1.35); }
 
 /* de tl-bak boven de klok, en zijn lichtkegel (gekocht licht) */
 .ik-tl { position: absolute; left: 50%; top: calc(-1 * clamp(64px, 12vh, 118px)); width: 150%; height: 12px; transform: translateX(-50%); border-radius: 3px; background: #2b2e2a; box-shadow: 0 -4px 0 #1b1c19; z-index: 2; }
@@ -230,7 +241,7 @@ img { max-width: 100%; display: block; }
 }
 .ik-gleuf { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; }
 .ik-spleet { display: block; width: 74%; height: 9px; border-radius: 5px; background: #120e0a; box-shadow: inset 0 3px 5px #000, 0 1px 0 rgba(255, 255, 255, .45); }
-.ik-gleuf-label { font-family: var(--f-type); font-size: .6rem; letter-spacing: .08em; color: #4a3b24; white-space: nowrap; }
+.ik-gleuf-label { font-family: var(--f-type); font-size: .75rem; line-height: 1.12; letter-spacing: .05em; color: #4a3b24; text-align: center; max-width: 100%; }   /* fixer R3 F1: 12 px (was 9,6), mag op twee regels */
 .ik-gleuf-label kbd { margin-left: 6px; font-family: var(--f-crt); font-size: .85rem; padding: 0 4px; border: 1px solid rgba(43, 33, 20, .45); border-radius: 3px; }
 .ik-venster {
   display: flex; align-items: baseline; justify-content: center; gap: 10px; width: 100%;
@@ -264,7 +275,7 @@ img { max-width: 100%; display: block; }
 @keyframes plKaartWenk { 0%, 60%, 100% { box-shadow: 0 6px 16px rgba(0, 0, 0, .55), 0 0 0 2px rgba(255, 244, 214, .3), inset 0 0 0 1px rgba(120, 100, 60, .35); } 80% { box-shadow: 0 6px 16px rgba(0, 0, 0, .55), 0 0 0 3px rgba(255, 244, 214, .75), 0 0 22px rgba(255, 244, 214, .45), inset 0 0 0 1px rgba(120, 100, 60, .35); } }
 .ik-kaart-nr { font-family: var(--f-crt); font-size: 1.15rem; line-height: 1; text-align: center; border-bottom: 1px solid rgba(43, 33, 20, .4); padding-bottom: 2px; }
 .ik-rooster { display: flex; flex-direction: column; gap: 1px; }
-.ik-dagrij { display: flex; align-items: center; gap: 3px; font-family: var(--f-type); font-size: .44rem; line-height: 1.25; border-bottom: 1px dotted rgba(43, 33, 20, .3); }
+.ik-dagrij { display: flex; align-items: center; gap: 3px; font-family: var(--f-type); font-size: .5rem; line-height: 1.25; border-bottom: 1px dotted rgba(43, 33, 20, .3); }
 .ik-dagrij b { font-weight: 400; width: 13px; }
 .ik-dagrij i { font-style: normal; font-family: var(--f-crt); font-size: .7rem; color: #5b2f8a; }
 .ik-aan .ik-kaart { box-shadow: 0 6px 16px rgba(0, 0, 0, .55), 0 0 0 2px rgba(255, 244, 214, .35), inset 0 0 0 1px rgba(120, 100, 60, .35); }
@@ -305,6 +316,7 @@ img { max-width: 100%; display: block; }
 .boot-inhoud { display: flex; flex-direction: column; align-items: center; gap: clamp(6px, 1.8vh, 14px); animation: plDegaussBeeld 1.1s ease-out both; }
 .boot-poweron { position: absolute; inset: 0; background: #dff0d2; animation: plPoweron .55s ease-out forwards; pointer-events: none; }
 @keyframes plPoweron { 0% { opacity: .9; transform: scaleY(.004); } 40% { opacity: .7; transform: scaleY(1); } 100% { opacity: 0; } }
+@keyframes plPoweronZacht { 0% { opacity: .2; } 100% { opacity: 0; } }   /* fixer R3 F1: het rustige pad (reduced motion, lite) */
 @keyframes plDegaussBeeld { 0% { transform: scale(1.06) skewX(3deg); filter: hue-rotate(70deg) saturate(1.8); } 40% { transform: scale(.98) skewX(-1.5deg); filter: hue-rotate(-25deg); } 70% { transform: none; filter: none; } }
 .boot-jingle { font-family: var(--f-type); font-size: .9rem; color: var(--manila-dof); }
 .boot-merk {
@@ -330,7 +342,9 @@ img { max-width: 100%; display: block; }
 .term-line { flex: none; font-family: var(--f-crt); font-size: clamp(1.05rem, 4.2vw, 1.25rem); line-height: 1.25; color: var(--amber); overflow-wrap: anywhere; }
 .tl-baas { color: var(--groen); text-shadow: 0 0 8px rgba(106, 211, 106, .35); }
 .tl-baas::before { content: '> '; opacity: .6; }
-.tl-warm { color: #ffd9a8; text-shadow: 0 0 12px rgba(255, 150, 60, .6); }
+/* fixer R3 F1: echt amber (#ffb14a, het amber van de game) met een zachte gloed — het bleke crème
+   las naast de groene knipoog bijna wit; dit is het ene moment warm licht van B.A.A.S. */
+.tl-warm { color: var(--amber); text-shadow: 0 0 8px rgba(255, 177, 74, .6); }
 .tl-warm::before { content: ''; }
 .tl-knipoog { color: #b8f5b0; text-shadow: 2px 0 rgba(200, 56, 90, .75), -2px 0 rgba(74, 163, 255, .75); letter-spacing: .02em; animation: plIngebrand 2.4s ease-out both; }
 @keyframes plIngebrand { from { filter: brightness(1.8); } }
@@ -348,6 +362,24 @@ img { max-width: 100%; display: block; }
 .tl-c-kiss .tl-wie { color: var(--goud); }
 .tl-c-warm .tl-wie { color: #f0a860; }
 .tl-knip { color: var(--manila-donker); }
+/* fixer R3 F1: een avatarje van de spreker in de naamkop — alleen liggend zichtbaar (daar zijn de
+   hoofden boven de wand maar 40 px); Barts portret, een silhouet, of Karels buis */
+.tl-avatar { display: none; }
+.tl-av-art { display: block; width: 100%; height: 100%; }
+.tl-av-art .art-img { object-position: 50% 22%; transform: scale(1.35); transform-origin: 50% 25%; }
+.tl-av-sil { background:
+    radial-gradient(ellipse 27% 30% at 50% 40%, #2a2118 97%, transparent 100%),
+    radial-gradient(ellipse 60% 40% at 50% 104%, #2a2118 97%, transparent 100%),
+    radial-gradient(circle at 50% 30%, #d8e2ea, #8d98a2); }
+.tl-av-marleen .tl-av-sil { background:
+    radial-gradient(ellipse 18% 15% at 50% 16%, #3a2616 97%, transparent 100%),
+    radial-gradient(ellipse 27% 30% at 50% 42%, #3a2616 97%, transparent 100%),
+    radial-gradient(ellipse 60% 40% at 50% 104%, #6e4226 97%, transparent 100%),
+    radial-gradient(circle at 30% 70%, #ffc47a, #b8712c); }
+.tl-av-buis { position: absolute; left: 12%; right: 12%; top: 44%; height: 3px; border-radius: 2px; background: #eef6ff; box-shadow: 0 0 5px 2px rgba(215, 232, 255, .7); }
+.tl-collega.knip .tl-av-buis { background: #3a3f3a; box-shadow: none; }
+/* de oudste regels verdwijnen niet meer met een afgebroken staartje aan de bovenrand: ze vervagen */
+.br-scherm .term-log { -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 18px); mask-image: linear-gradient(180deg, transparent 0, #000 18px); }
 
 /* ═══════════════ SCÈNE 2 · HET BUREAU (R3) ═══════════════
    Eén vast shot. Het rooster (basis = staand): de kopstrook (het kantoor achter de
@@ -373,7 +405,7 @@ img { max-width: 100%; display: block; }
   background: linear-gradient(180deg, #4a3826 0, #3a2b1c 8px, #2c2117 60%, #1d160f); box-shadow: 0 -2px 0 #6d5638, 0 -14px 30px rgba(0, 0, 0, .35); }
 
 /* — de kopstrook: het kantoor achter de wand, de hoofden, de wandrand, jouw tl, de buizenpost — */
-.br-kopvak { grid-area: wand; position: relative; z-index: 1; overflow: hidden; --wl: 58%; }
+.br-kopvak { grid-area: wand; position: relative; z-index: 1; overflow: hidden; --wl: 58%; --h: clamp(46px, 11vh, 92px); }   /* --h: de maat van een hoofd (ook voor Karels lichtkegel op de wand) */
 .br-achter { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--wl) + 4px); overflow: hidden; background: #15130f; }
 .br-plaat, .br-plaat .art-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 42%; }
 .br-plaat .art-img { filter: blur(2px) brightness(.66) sepia(.3); transform: scale(1.08); }
@@ -386,7 +418,7 @@ img { max-width: 100%; display: block; }
 
 /* de collega's: hoofden boven de scheidingswand (de wand dekt hun schouders) */
 .br-hoofden { position: absolute; left: 0; right: 0; top: 0; height: var(--wl); z-index: 1; }
-.hoofd { --h: clamp(46px, 11vh, 92px); position: absolute; left: calc(var(--x) * 100%); bottom: calc(var(--h) * -.3); width: var(--h); height: var(--h); transform: translateX(-50%); transition: transform .3s ease, filter .3s ease; }
+.hoofd { position: absolute; left: calc(var(--x) * 100%); bottom: calc(var(--h) * -.3); width: var(--h); height: var(--h); transform: translateX(-50%); transition: transform .3s ease, filter .3s ease; }
 .hd-kop { position: absolute; inset: 0; }
 .hd-art { border-radius: 46% 46% 18% 18%; overflow: hidden; box-shadow: 0 -2px 10px rgba(0, 0, 0, .5); }
 .hd-art .art-img { object-position: 50% 22%; transform: scale(1.35); transform-origin: 50% 25%; filter: sepia(.25) brightness(.92); }
@@ -428,7 +460,15 @@ img { max-width: 100%; display: block; }
 .br-wand { position: absolute; left: 0; right: 0; top: var(--wl); bottom: 0; z-index: 2;
   background: repeating-linear-gradient(90deg, rgba(0, 0, 0, .05) 0 2px, transparent 2px 5px), linear-gradient(180deg, #7d7157, #6e634c);
   border-top: 4px solid #9b8e6c; box-shadow: 0 -2px 0 #4a4232, inset 0 6px 10px rgba(0, 0, 0, .25); }
-.br-naamplaat { position: absolute; top: 6px; left: calc(var(--x) * 100%); transform: translateX(-50%); padding: 1px 6px; font-family: var(--f-type); font-size: .52rem; letter-spacing: .12em; color: #2b2114; background: #c9b98f; border-radius: 2px; white-space: nowrap; box-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
+.br-naamplaat { position: absolute; top: 6px; left: calc(var(--x) * 100%); transform: translateX(-50%); padding: 1px 6px; font-family: var(--f-type); font-size: .6rem; letter-spacing: .12em; color: #2b2114; background: #c9b98f; border-radius: 2px; white-space: nowrap; box-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
+/* fixer R3 F1 · Karels buis werpt een koude kegel over de wand en zijn naamplaatje 'KAREL · 7'; klakt
+   de buis uit, dan gaan kegel en plaatje in één klap op zwart (60 ms: een uitval, geen fade) */
+.br-kegel { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--h) * -.7 + 3px); width: calc(var(--h) * 1.7); height: calc(var(--h) * .7 + 30px); transform: translateX(-50%); pointer-events: none;
+  clip-path: polygon(34% 0, 66% 0, 100% 100%, 0 100%);
+  background: linear-gradient(180deg, rgba(228, 240, 255, .5), rgba(228, 240, 255, .22) 60%, rgba(228, 240, 255, .1)); transition: opacity .06s linear; }
+.br-kegel.uit { opacity: 0; }
+.br-naamplaat.belicht { background: #e6ddc4; box-shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 -3px 10px rgba(215, 235, 255, .45); transition: background .06s linear, box-shadow .06s linear, color .06s linear; }
+.br-naamplaat.belicht.uit { background: #6d6450; color: #2f281c; box-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
 
 /* jouw tl, boven je bureau: feller per glimlach, pulseert op de tel */
 .br-tl { position: absolute; left: 50%; top: 0; width: min(44%, 420px); height: 11px; transform: translateX(-50%); z-index: 6; border-radius: 0 0 4px 4px; background: #2e302c; pointer-events: none; }
@@ -457,7 +497,7 @@ img { max-width: 100%; display: block; }
 .br-buis { position: absolute; right: 3%; top: 0; bottom: 18%; width: 30px; z-index: 3; pointer-events: none; }
 .br-buis-pijp { position: absolute; left: 7px; top: 0; bottom: 14px; width: 16px; border-radius: 0 0 4px 4px; background: linear-gradient(90deg, rgba(200, 215, 225, .18), rgba(235, 245, 255, .45) 40%, rgba(160, 175, 185, .2)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .15); }
 .br-buis-mond { position: absolute; left: 0; bottom: 0; width: 30px; height: 16px; border-radius: 4px; background: linear-gradient(#d8b25a, #8a6a28); box-shadow: 0 3px 8px rgba(0, 0, 0, .6); }
-.br-buis-label { position: absolute; right: 34px; bottom: 1px; font-family: var(--f-type); font-size: .5rem; letter-spacing: .1em; color: #d8b25a; white-space: nowrap; }
+.br-buis-label { position: absolute; right: 34px; bottom: 1px; font-family: var(--f-type); font-size: .7rem; letter-spacing: .1em; color: #d8b25a; white-space: nowrap; }
 .br-buis.zuigt .br-buis-pijp { animation: plZuigBuis .7s ease-in; }
 @keyframes plZuigBuis { 50% { background: linear-gradient(90deg, rgba(255, 244, 214, .3), rgba(255, 255, 255, .8) 40%, rgba(200, 210, 220, .3)); } }
 
@@ -481,8 +521,8 @@ img { max-width: 100%; display: block; }
 /* de frietkotmagneet, op de kast van de CRT */
 .br-magneet { position: absolute; top: -8px; right: -6px; z-index: 2; transform: rotate(7deg); display: flex; flex-direction: column; align-items: center; padding: 3px 7px 4px;
   background: linear-gradient(#fff6e0, #f3e2b8); border: 2px solid #c8385a; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, .45); font-family: var(--f-type); color: #7a1f2c; line-height: 1.1; }
-.br-magneet b { font-weight: 400; font-size: .56rem; letter-spacing: .02em; white-space: nowrap; }
-.br-magneet span { font-size: .48rem; color: #4a3b24; white-space: nowrap; }
+.br-magneet b { font-weight: 400; font-size: .66rem; letter-spacing: .02em; white-space: nowrap; }
+.br-magneet span { font-size: .63rem; color: #4a3b24; white-space: nowrap; }
 
 /* — het fotolijstje met de rode stippellijn (optioneel) — */
 .br-foto { grid-area: foto; z-index: 3; min-height: 0; display: flex; align-items: flex-end; justify-content: center; }
@@ -508,14 +548,14 @@ img { max-width: 100%; display: block; }
 .vu-streep.rood { background: linear-gradient(to top, transparent 80%, #b3261e 80%); }
 .vu-naald { position: absolute; left: 50%; bottom: 0; width: 2px; height: 94%; margin-left: -1px; transform-origin: 50% 100%; transform: rotate(var(--hoek, 28deg)); transition: transform .5s cubic-bezier(.3, 1.7, .5, 1); }
 .vu-naald-tel { position: absolute; inset: 0; background: #1b140d; border-radius: 1px; transform-origin: 50% 100%; animation: plNaaldTel var(--tel) ease-out infinite; animation-delay: var(--telfase); }
-@keyframes plNaaldTel { 0% { transform: rotate(2.4deg); } 30%, 100% { transform: rotate(0deg); } }
+@keyframes plNaaldTel { 0% { transform: rotate(5deg); } 30%, 100% { transform: rotate(0deg); } }   /* fixer R3 F1: was 2,4° (de maat zag je niet) */
 .vu-as { position: absolute; left: 50%; bottom: -7px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: #2b2114; }
 .vu-lamp { position: absolute; right: 8px; top: 7px; width: 8px; height: 8px; border-radius: 50%; background: #3b4a33; box-shadow: inset 0 0 2px #000; }
 .vu-lamp.tel { animation: plTelLamp .45s ease-out; }
 @keyframes plTelLamp { 0% { background: #9dff8a; box-shadow: 0 0 10px 3px rgba(130, 255, 110, .8); } 100% { background: #3b4a33; box-shadow: inset 0 0 2px #000; } }
 .vu-label { display: flex; gap: 8px; align-items: baseline; font-family: var(--f-crt); font-size: .86rem; color: var(--manila); white-space: nowrap; }
 .vu-label b { font-weight: 400; font-size: 1.1rem; color: var(--amber); }
-.vu-quotum { font-family: var(--f-type); font-size: .66rem; letter-spacing: .1em; color: var(--manila-dof); white-space: nowrap; }
+.vu-quotum { font-family: var(--f-type); font-size: .75rem; letter-spacing: .1em; color: var(--manila-dof); white-space: nowrap; }
 
 /* — de handeling: [ GLIMLACH 0u06 ] schuift op onder je duim; de gloed klopt op de tel — */
 .br-actie { grid-area: actie; position: relative; z-index: 6; min-width: 0; }
@@ -530,6 +570,10 @@ img { max-width: 100%; display: block; }
 .glim-knop::before { content: '['; opacity: .55; }
 .glim-knop::after { content: ']'; opacity: .55; }
 .glim-knop .u { font-size: .8em; background: rgba(0, 0, 0, .25); border-radius: 6px; padding: 2px 6px; }
+/* fixer R3 F1 · het ritmespel zichtbaar: het chipje '0u06' licht op de tel op (dezelfde maat als de
+   naald en de tl; wie dan tikt, klinkt zuiverder en laat het kooltje even opvlammen) */
+.glim-knop:not(:disabled) .u { animation: plTelChip var(--tel) linear infinite; animation-delay: var(--telfase); }
+@keyframes plTelChip { 0% { background: #f4ffe8; color: #173217; box-shadow: 0 0 10px 2px rgba(210, 255, 190, .8); } 22%, 100% { background: rgba(0, 0, 0, .25); color: inherit; box-shadow: none; } }
 .glim-knop .glim-label { position: relative; }
 .glim-knop:not(:disabled) { animation: plTelPuls var(--tel) linear infinite; animation-delay: var(--telfase); }
 @keyframes plTelPuls { 0% { box-shadow: 0 0 26px rgba(150, 255, 140, .85), 0 4px 0 #2f5f2f; } 28%, 100% { box-shadow: 0 0 12px rgba(106, 211, 106, .3), 0 4px 0 #2f5f2f; } }
@@ -586,7 +630,7 @@ img { max-width: 100%; display: block; }
 .br-kijk-beeld { width: min(56vw, 300px, 42vh); aspect-ratio: 1; border-radius: 4px; overflow: hidden; border: 8px solid #efe7cf; border-bottom-width: 22px; transform: rotate(-1.4deg) scale(1.02);
   box-shadow: 0 18px 50px rgba(0, 0, 0, .8), 0 0 80px rgba(255, 170, 80, .3); animation: plKijkIn 1.6s ease-out both; }
 @keyframes plKijkIn { from { transform: rotate(-1.4deg) scale(.86); } }
-.br-kijk-zin { font-family: var(--f-serif); font-style: italic; font-size: 1.3rem; color: #ffe2c0; text-shadow: 0 0 18px rgba(255, 150, 60, .5); animation: plOpdoemen .8s ease .35s both; }
+.br-kijk-zin { font-family: var(--f-serif); font-style: italic; font-size: 1.3rem; color: #ffe2c0; text-shadow: 0 0 18px rgba(255, 150, 60, .5); animation: plOpdoemen .5s ease .05s both; }   /* fixer R3 F1: de zin staat er binnen de tikgrens (500 ms) */
 .br-snit { display: none; flex-direction: column; align-items: center; gap: 4px; padding: 10px 18px; transform: rotate(-4deg); border: 4px solid #c42a22; border-radius: 6px;
   font-family: var(--f-black); font-size: clamp(1.4rem, 6vw, 2.6rem); line-height: 1; color: #d9352c; letter-spacing: .03em; }
 .br-snit b { font-weight: 400; }
@@ -607,7 +651,9 @@ img { max-width: 100%; display: block; }
 .z8-invoer { flex: 1; min-width: 0; font-family: var(--f-type); font-size: 1.05rem; color: var(--inkt); background: #fffaf0; border: 0; border-bottom: 2px solid #8d7a52; border-radius: 0; padding: 8px 6px; min-height: 44px; outline: none; }
 .z8-invoer:focus { border-bottom-color: var(--inkt); background: #fff; }
 .z8-noteer { font-family: var(--f-type); font-size: .9rem; color: #f2ead2; background: var(--inkt); border-radius: 6px; padding: 0 12px; min-height: 44px; white-space: nowrap; }
-.z8-antwoord { font-family: var(--f-type); font-size: 1.25rem; min-height: 0; }
+/* fixer R3 F1: het antwoord neemt de hoogte van de invoerrij over — zo verschijnt STEMPEL een rij
+   LAGER dan 'noteer', niet onder de vinger van een dubbeltik */
+.z8-antwoord { font-family: var(--f-type); font-size: 1.25rem; min-height: 44px; display: flex; align-items: center; }
 .z8-antwoord:empty { display: none; }
 .z8-voet { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .z8-voet:empty { display: none; }
@@ -617,10 +663,10 @@ img { max-width: 100%; display: block; }
 .z8-arm { position: absolute; right: 30px; top: -120%; width: 16px; height: 120%; background: linear-gradient(90deg, #585a55, #9ca09a 45%, #4a4c48); border-radius: 0 0 4px 4px; opacity: 0; pointer-events: none; }
 .z8.machine .z8-arm { animation: plArm .5s cubic-bezier(.5, 0, .8, .5) both; }
 @keyframes plArm { 0% { opacity: 1; transform: translateY(-40px); } 60% { opacity: 1; transform: translateY(calc(100% + 40px)); } 100% { opacity: 1; transform: translateY(0); } }
-.z8.weg { opacity: 0; transition: opacity .3s ease; }   /* rustig: vervagen ter plaatse (liggend is de basis translate(-50%, -50%)) */
+.z8.weg { opacity: 0; transition: opacity .3s ease; }   /* rustig: vervagen ter plaatse (de basis blijft translateX(-50%)) */
 
 /* — de goederenlift omhoog (≤ 3 s): het schaarhek DICHT, 2 · 3 · 4 · DAK — */
-.lift { position: absolute; inset: 0; z-index: 40; display: flex; align-items: flex-start; justify-content: center; background: #070605; cursor: pointer; animation: plVerschijn .2s ease; }
+.lift { position: absolute; inset: 0; z-index: 40; overflow: hidden; display: flex; align-items: flex-start; justify-content: center; background: #070605; cursor: pointer; animation: plVerschijn .2s ease; }   /* overflow: de lichtband glijdt tot onder de rand */
 .lift-hek { position: absolute; inset: 0; pointer-events: none; opacity: .55;
   background: repeating-linear-gradient(90deg, transparent 0 46px, rgba(120, 104, 72, .55) 46px 50px), repeating-linear-gradient(55deg, transparent 0 34px, rgba(120, 104, 72, .35) 34px 37px), repeating-linear-gradient(-55deg, transparent 0 34px, rgba(120, 104, 72, .35) 34px 37px); }
 .lift-paneel { position: relative; z-index: 2; margin-top: calc(14% + env(safe-area-inset-top)); display: flex; align-items: center; gap: 14px; padding: 8px 16px; border-radius: 8px;
@@ -628,6 +674,19 @@ img { max-width: 100%; display: block; }
 .lift-pijl { color: var(--amber); text-shadow: 0 0 10px rgba(255, 177, 74, .8); font-size: 1.1rem; }
 .lift-etage { min-width: 1.2em; text-align: center; transition: color .1s, text-shadow .1s; }
 .lift-etage.aan { color: #ffdc9a; text-shadow: 0 0 12px rgba(255, 177, 74, .95); }
+/* fixer R3 F1: het paneel noemt de etage zoals de val (KANTOORTUIN, FACTURATIE, DIRECTIE), en achter
+   het dichte hek glijdt per etage een lichtband in haar klimaat naar beneden (de lift gaat omhoog;
+   OutroFX.KLIMAAT: 2 ziekgroen, 3 ijscyaan, 4 bordeaux, DAK stormviolet). Geen buitenzicht. */
+.lift-paneel { flex-direction: column; gap: 3px; }
+.lift-rij { display: flex; align-items: center; gap: 14px; }
+.lift-naam { min-height: 1em; font-family: var(--f-crt); font-size: .95rem; letter-spacing: .18em; line-height: 1; color: #c9a860; text-shadow: 0 0 8px rgba(255, 177, 74, .45); }
+.lift-hek { z-index: 1; }
+.lift-band { --band: #6f5a34; position: absolute; left: 0; right: 0; top: 0; height: 46%; z-index: 0; pointer-events: none; opacity: 0;
+  background: linear-gradient(180deg, transparent 0%, var(--band) 34%, rgba(235, 240, 255, .18) 50%, var(--band) 66%, transparent 100%);
+  transform: translateY(-110%); }
+.lift-band.glijdt { animation: plLiftBand .56s linear both; }
+@keyframes plLiftBand { 0% { opacity: .95; transform: translateY(-110%); } 100% { opacity: .95; transform: translateY(230%); } }
+.lift.zacht .lift-band.glijdt { animation: none; opacity: .5; transform: translateY(60%); }   /* rustig: de band staat stil, alleen de kleur wisselt */
 .lift::after { content: ''; position: absolute; left: 50%; top: 72%; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: radial-gradient(circle at 45% 40%, #fff1c9, #ffb45a 45%, #e0521c 100%); box-shadow: 0 0 14px 5px rgba(255, 140, 50, .6); }
 
 /* foto-kijk-overlay (het gesprek) */
@@ -991,7 +1050,7 @@ img { max-width: 100%; display: block; }
   .ik-rij { flex-wrap: nowrap; gap: 44px; }
   .ik-badge { order: 0; width: 280px; }
   .ik-klok { width: 236px; padding: 15px 15px 14px; gap: 11px; }
-  .ik-gleuf-label { font-size: .7rem; }
+  .ik-gleuf-label { font-size: .75rem; }
   .ik-tijd { font-size: 3rem; }
   .ik-dag { font-size: 1.4rem; }
   .ik-merk { font-size: .6rem; }
@@ -1000,7 +1059,7 @@ img { max-width: 100%; display: block; }
   .ik-rekkaart::after { top: 15px; height: 15px; }
   .ik-kaart { width: 64px; height: 128px; top: -58px; padding: 5px 5px 4px; }
   .ik-kaart-nr { font-size: 1.4rem; }
-  .ik-dagrij { font-size: .54rem; }
+  .ik-dagrij { font-size: .56rem; }
   .ik-dagrij i { font-size: .85rem; }
   .boot-version { left: 0; right: 0; bottom: calc(46px + env(safe-area-inset-bottom)); }
   .ik-regen { left: 7%; top: 10%; width: min(18%, 280px); height: 66%; }
@@ -1012,8 +1071,7 @@ img { max-width: 100%; display: block; }
     grid-template-rows: minmax(210px, 31%) minmax(0, 1fr) 70px 58px;
     grid-template-areas: "wand wand wand wand wand" ". foto crt vu ." ". foto actie vu ." ". zak zak zak .";
   }
-  .br-kopvak { --wl: 50%; }
-  .hoofd { --h: clamp(78px, 12vh, 110px); }
+  .br-kopvak { --wl: 50%; --h: clamp(78px, 12vh, 110px); }
   .br-naamplaat { font-size: .6rem; top: 8px; }
   .br-oprichter { width: 92px; margin: 0 0 14px max(24px, calc(50% - 560px)); }
   .br-plaquette { display: block; font-size: .56rem; }   /* integrator R3: alleen breed; staand is het portret 39 px en las de plaquette '◆ De Op' */
@@ -1077,6 +1135,10 @@ img { max-width: 100%; display: block; }
   .term-line { font-size: 1.02rem; line-height: 1.18; }
   .tl-collega { font-size: .9rem; padding: 3px 8px 4px; }
   .tl-wie { font-size: .64rem; }
+  /* fixer R3 F1: het avatarje van de spreker (de hoofden boven de wand zijn hier maar 40 px) */
+  .tl-avatar { display: inline-block; position: relative; width: 18px; height: 18px; margin: -4px 5px -4px 0; vertical-align: middle; border-radius: 50%; overflow: hidden; background: #15130f; box-shadow: 0 0 0 1px rgba(216, 203, 162, .35); }
+  .tl-c-kiss .tl-avatar { box-shadow: 0 0 0 1px rgba(245, 197, 66, .6); }
+  .tl-c-warm .tl-avatar { box-shadow: 0 0 0 1px rgba(240, 168, 96, .7), 0 0 6px rgba(255, 170, 80, .5); }
 
   /* scène 2: een smalle kopstrook, de CRT breed in het midden; de knop onder de CRT, het
      kooltje linksonder, de hoek rechtsonder blijft vrij voor de klankknop en de skip */
@@ -1086,9 +1148,8 @@ img { max-width: 100%; display: block; }
     grid-template-rows: 60px minmax(0, 1fr) 48px;
     grid-template-areas: "wand wand wand wand wand" ". foto crt vu ." ". zak actie . .";
   }
-  .br-kopvak { --wl: 64%; }
-  .hoofd { --h: 40px; }
-  .br-naamplaat { top: 2px; font-size: .42rem; padding: 0 4px; }
+  .br-kopvak { --wl: 64%; --h: 40px; }
+  .br-naamplaat { top: 2px; font-size: .57rem; padding: 0 4px; }   /* fixer R3 F1: 9,1 px (was 6,7) */
   .br-memo { display: none; }
   .br-oprichter { grid-area: vu; align-self: start; justify-self: center; margin: 0; width: 52px; padding: 3px; }
   .br-plaquette { display: none; }
@@ -1100,7 +1161,7 @@ img { max-width: 100%; display: block; }
   .vu-kast { width: 100%; }
   .vu-label { font-size: .78rem; gap: 5px; }
   .vu-label b { font-size: .95rem; }
-  .vu-quotum { font-size: .58rem; }
+  .vu-quotum { font-size: .75rem; }   /* fixer R3 F1: 12 px (was 9,3): het draagt de grap 'bijgesteld: 8' */
   .br-zak-naad { width: 86%; }
   .br-zak::before { width: 94%; }
   .br-zak-naad { width: 46%; }
@@ -1111,14 +1172,19 @@ img { max-width: 100%; display: block; }
   .br-buis-mond { width: 22px; height: 10px; }
   .br-buis-label { display: none; }
   .glim-knop, .knop-bevestig { min-height: 42px; padding: 6px 14px; font-size: 1.12rem; }
-  .z8 { top: 50%; transform: translate(-50%, -50%); width: min(80vw, 540px); padding: 10px 14px 12px; gap: 6px; }
+  /* fixer R3 F1: bovenaan verankerd en compact (vraag + invoer binnen ±120 px): een liggend
+     telefoonklavier neemt ±55-60 % van de hoogte in, en in het midden viel het veld eronder */
+  .z8 { top: calc(6px + env(safe-area-inset-top)); width: min(80vw, 540px); padding: 8px 14px 10px; gap: 5px; }
+  .z8-kop { font-size: .64rem; padding-bottom: 3px; }
   .z8-vraag { font-size: 1rem; }
-  .z8-antwoord { font-size: 1.05rem; }
+  .z8-rij .z8-invoer, .z8-noteer { min-height: 42px; }
+  .z8-antwoord { font-size: 1.05rem; min-height: 42px; }
   .br-kijk { flex-direction: row; gap: 28px; }
   .br-kijk-beeld { width: min(46vh, 190px); border-width: 6px; border-bottom-width: 16px; }
   .lift-paneel { margin-top: 9%; }
-  /* liggend ligt de knop onderaan in het midden: de hint gaat in het bureau naar boven, op de CRT */
-  .pl-app[data-scene="kantoor"] .pl-hint { bottom: auto; top: calc(66px + env(safe-area-inset-top)); }
+  /* liggend ligt de knop onderaan in het midden: de hint staat in die strook (leeg zolang hij knippert),
+     niet meer bovenaan over de log (fixer R3 F1) */
+  .pl-app[data-scene="kantoor"] .pl-hint { bottom: calc(10px + env(safe-area-inset-bottom)); }
 
   .foto-kijk { flex-direction: row; gap: clamp(16px, 4vw, 36px); padding-left: calc(18px + env(safe-area-inset-left)); padding-right: calc(18px + env(safe-area-inset-right)); }
   .fk-beeld { width: min(40vh, 200px); border-width: 6px; border-bottom-width: 18px; }
@@ -1209,9 +1275,13 @@ img { max-width: 100%; display: block; }
   #crt-glow, .afg-rimpel, .val-knop-zin,
   .afg-kool-gloed, .afg-kool-kern, .val-knop, .kk-klaar, .boot-merk, .afg-info-leeg,
   .ik-regen span, .ik-kaart, .boot-inhoud, .glim-knop, .vu-naald-tel, .br-tl-buis, .br-kool-gloed, .br-kool-kern,
-  .hoofd.pop, .tl-knipoog, .br-kijk, .br-kijk-beeld, .z8, .ik-klok.tsjonk, .ik-klok.tsjonk .ik-venster, .bureau.vhold { animation: none !important; }
+  .hoofd.pop, .tl-knipoog, .br-kijk, .br-kijk-beeld, .z8, .ik-klok.tsjonk, .ik-klok.tsjonk .ik-venster, .bureau.vhold, .glim-knop .u { animation: none !important; }
   .ik-lens, .glim-knop, .vu-naald, .ik-kaart:not(.sleept):not(.in) { transition: none; }
   .ik-duik .ik-lens { transform: none; filter: none; }
+  /* fixer R3 F1: geen witte power-on-flits over het hele scherm (alleen een zachte fade op 20 %), en
+     geen blur op de kantoorplaat achter de wand */
+  .boot-poweron { animation: plPoweronZacht .5s ease-out forwards !important; }
+  .br-plaat .art-img { filter: brightness(.6) sepia(.3); transform: none; }
   .afg-mom, .afg-held { transition-duration: .2s; }
 }
 /* de prestatiemodus (body.lite, door proloog.js gespiegeld als data-lite op de host): dezelfde
@@ -1224,7 +1294,9 @@ img { max-width: 100%; display: block; }
 :host([data-lite]) .afg-info-leeg,
 :host([data-lite]) .ik-regen span, :host([data-lite]) .ik-kaart, :host([data-lite]) .boot-inhoud, :host([data-lite]) .glim-knop,
 :host([data-lite]) .vu-naald-tel, :host([data-lite]) .br-tl-buis, :host([data-lite]) .br-kool-gloed, :host([data-lite]) .br-kool-kern,
-:host([data-lite]) .hoofd.pop, :host([data-lite]) .tl-knipoog, :host([data-lite]) .bureau.vhold { animation: none !important; }
+:host([data-lite]) .hoofd.pop, :host([data-lite]) .tl-knipoog, :host([data-lite]) .bureau.vhold, :host([data-lite]) .glim-knop .u { animation: none !important; }
+:host([data-lite]) .boot-poweron { animation: plPoweronZacht .5s ease-out forwards !important; }   /* fixer R3 F1 */
+:host([data-lite]) .br-plaat .art-img { filter: brightness(.6) sepia(.3); transform: none; }   /* fixer R3 F1: geen blur (ook minder paint op zwakke toestellen) */
 :host([data-lite]) .ik-lens { transition: none; }
 :host([data-lite]) .ik-duik .ik-lens { transform: none; filter: none; }
 :host([data-lite]) .ik-regen { display: none; }

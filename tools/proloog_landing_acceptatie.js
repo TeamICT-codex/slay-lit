@@ -47,7 +47,7 @@ window.Proloog = (function () {
     },
     stop: function () { actief = false; clearTimeout(tm); window.__plLog.push({ stop: true }); if (o && o.host && o.host.shadowRoot) o.host.shadowRoot.innerHTML = ''; },
     slaOver: function () {},
-    hoofdstukken: [{ hoofdstuk: 0, naam: 'Maandag, 06:42' }, { hoofdstuk: 1, naam: 'Een Productief Leven™' }, { hoofdstuk: 2, naam: 'Het Glimlachquotum' }, { hoofdstuk: 3, naam: 'Het Functioneringsgesprek' }, { hoofdstuk: 'factuur', naam: 'De Eindafrekening' }, { hoofdstuk: 'val', naam: 'In de wacht' }, { hoofdstuk: 'afgrond', naam: 'De Afgrond' }],   /* R3: de namen van 1 en 2 volgen proloog/data.js */
+    hoofdstukken: [{ hoofdstuk: 0, naam: 'Maandag, 06:42' }, { hoofdstuk: 1, naam: 'De CRT degausst' }, { hoofdstuk: 2, naam: 'Het Glimlachquotum' }, { hoofdstuk: 3, naam: 'Het Functioneringsgesprek' }, { hoofdstuk: 'factuur', naam: 'De Eindafrekening' }, { hoofdstuk: 'val', naam: 'In de wacht' }, { hoofdstuk: 'afgrond', naam: 'De Afgrond' }],   /* R3: de namen van 1 en 2 volgen proloog/data.js */
     get actief() { return actief; }
   };
 })();`;

@@ -250,16 +250,23 @@
     if (tekst != null) e.textContent = tekst;
     return e;
   }
-  /* art met terugval: img, en bij een laadfout een placeholder-span (emoji/label) */
-  function art(src, ph, cls) {
+  /* art met terugval: img, en bij een laadfout een placeholder-span (emoji/label).
+     Fixer R3 F1: met terug(houder) tekent de laadfout de eigen terugval (bv. het silhouet van
+     een collega) in plaats van het puntje — ook als het manifest een plaat belooft die er
+     (nog) niet is. terug geeft true als hij iets tekende. */
+  function art(src, ph, cls, terug) {
     const houder = el('span', cls || 'art-houder');
+    const val = () => {
+      if (typeof terug === 'function') { try { if (terug(houder)) return; } catch (e) { meldFout(e); } }
+      houder.appendChild(el('span', 'art-ph', ph || '·'));
+    };
     if (src) {
       const img = document.createElement('img');
       img.src = src; img.alt = ''; img.draggable = false; img.className = 'art-img'; img.decoding = 'async';
-      img.onerror = function () { img.remove(); houder.appendChild(el('span', 'art-ph', ph || '·')); };
+      img.onerror = function () { img.remove(); val(); houder.classList.add('art-terug'); };
       houder.appendChild(img);
     } else {
-      houder.appendChild(el('span', 'art-ph', ph || '·'));
+      val();
     }
     return houder;
   }
@@ -320,6 +327,16 @@
     spoel = null;
     try { f(); } catch (e) { meldFout(e); }
   }
+  /* Fixer R3 F1 · de tikgrens. Een regie die direct op een handeling volgt, laat zich pas na haar
+     'aanslag' doorspoelen (zoals de 450 ms van de scheur): de tweede tik van een gewone dubbeltik
+     (2 tikken, ±130 ms) spoelt zo nooit het antwoord op je eigen handeling weg (KA-TSJONK, de
+     afdruk van je stempel, de eerste liftbel, de zin bij de foto) en kiest nooit iets voor je
+     (de STEMPEL die onder je vinger verschijnt). Tot dan doet een tik niets. nogGeldig() (optioneel)
+     zegt of de regie nog loopt: zo zet een late timer nooit een spoel van een vorige fase. */
+  function spoelNa(fn, ms, nogGeldig) {
+    spoel = null;
+    return T(() => { if (spoel === null && (!nogGeldig || nogGeldig())) spoel = fn; }, ms == null ? 450 : ms);
+  }
   function toonHint(sleutel) {
     if (!hintEl || hintGezien[sleutel]) return;
     hintGezien[sleutel] = true;
@@ -327,6 +344,9 @@
     hintEl.classList.add('toon');
     T(() => { if (hintEl) hintEl.classList.remove('toon'); }, 3000, 'sessie');
   }
+  /* Fixer R3 F1: zodra er in het bureau een handeling verschijnt (de knop op de plek van de
+     hint), maakt de hint plaats — hij gaat over doorspoelen, niet over de knop */
+  function hintWeg() { if (hintEl) hintEl.classList.remove('toon'); }
 
   /* ---------- de vasthoud-skip ---------- */
   function inAfgrond() { return !!(P && P.scene === IDX.breekpunt && P.checkpoint === 'afgrond'); }
@@ -486,14 +506,29 @@
 
     const zaal = el('div', 'ik-zaal');
     /* integrator R3: de camera zoomt IN de zaal (de lens), en de zaal clipt. Zo loopt #scene
-       tijdens de duik niet over (een scale(6) op een kind van #scene maakte hem scrollbaar). */
+       tijdens de duik niet over (een scale(6) op een kind van #scene maakte hem scrollbaar).
+       Fixer R3 F1: de lens IS de plaat (de maat van object-fit: cover, in px). Staand steekt ze
+       links en rechts buiten het scherm: zo bestaat de gloeiende terminal ook daar, en kan de
+       camera erheen pannen in plaats van rond een punt buiten beeld te schalen (dat schoof een
+       zwarte muur in beeld). */
+    /* de zaal clipt ook in de eerste beelden, vóór proloog.css binnen is: de lens heeft dan al haar
+       maat in px (staand 1463 breed, liggend 500 hoog) en mocht de app niet laten overlopen */
+    zaal.style.cssText = 'position:absolute;inset:0;overflow:hidden;';
     const lens = el('div', 'ik-lens');
+    lens.style.position = 'absolute';
     lens.appendChild(art(scene.backdrop.src, '', 'ik-plaat'));
     const donker = el('div', 'ik-donker');
     lens.appendChild(donker);
     lens.appendChild(el('div', 'ik-flits'));
     zaal.appendChild(lens);
     wrap.appendChild(zaal);
+    legLens();
+    /* draaien tijdens scène 0: de lens volgt (anders dekt een liggende plaat een staand scherm niet) */
+    const opResize = () => {
+      if (!lens.isConnected) { removeEventListener('resize', opResize); return; }
+      if (fase !== 'weg' && !wrap.classList.contains('ik-duik')) legLens();
+    };
+    addEventListener('resize', opResize);
     const regenEl = el('div', 'ik-regen');
     regenEl.setAttribute('aria-hidden', 'true');
     regenEl.appendChild(el('span', 'ik-regen-a'));
@@ -607,6 +642,10 @@
     });
     sleutels = e => {
       if (e.key !== 'Enter' && e.key !== ' ') return false;
+      /* Fixer R3 F1: staat de focus op een ANDERE knop (de pasfoto, de klankknop, de skip), dan
+         klikt die knop zelf — Enter op de pasfoto start de camera, niet het inklokken */
+      const bron = (e.composedPath && e.composedPath()[0]) || e.target;
+      if (bron && bron.tagName === 'BUTTON' && bron !== kaart) return false;
       if (!e.repeat) { try { inklokken(); } catch (err) { meldFout(err); redding(); } }
       return true;
     };
@@ -647,8 +686,10 @@
           try { kaart.animate([{ transform: tf(tx, ty + h * 0.62, 0), clipPath: 'inset(0 0 62% 0)' }, { transform: tf(tx, ty + h * 0.34, 0), clipPath: 'inset(0 0 34% 0)' }], { duration: 220, delay: 90, easing: 'ease-out', fill: 'forwards' }); } catch (x) {}
         } else { kaart.style.transform = tf(tx, ty + h * 0.34, 0); kaart.style.clipPath = 'inset(0 0 34% 0)'; }
         T(golf, zacht ? 120 : 320);
+        /* vanaf hier is het regie: een tik = naar de CRT. Fixer R3 F1: pas NA de dreun (de tikgrens) —
+           de tweede tik van een dubbeltik op de kaart slikte anders KA-TSJONK en de hele tl-golf in */
+        spoelNa(weg, zacht ? 150 : 60, () => fase === 'in');
       }, zacht ? 60 : 390);
-      spoel = weg;   /* vanaf hier is het regie: een tik = naar de CRT */
     }
 
     /* de tl-golf: bank per bank, van voor naar achter; het donker krimpt naar het
@@ -656,7 +697,7 @@
     function golf() {
       if (fase !== 'in') return;
       const banken = scene.banken || [];
-      const g = plaatGeo();
+      const g = legLens();
       let i = 0;
       const stap = () => {
         if (fase !== 'in') return;
@@ -679,20 +720,38 @@
       wrap.classList.add('ik-golf');
       stap();
     }
-    /* de plaat (object-fit: cover) in schermpx: het verdwijnpunt en de terminal die gloeit */
+    /* de plaat (object-fit: cover): de maat en plaats van de lens in schermpx, en IN de lens het
+       verdwijnpunt (px, py) en de terminal die gloeit (dx, dy) */
     function plaatGeo() {
-      const W = zaal.clientWidth || innerWidth, H = zaal.clientHeight || innerHeight;
+      const W = zaal.clientWidth || (app && app.clientWidth) || innerWidth;
+      const H = zaal.clientHeight || (app && app.clientHeight) || innerHeight;
       const s = Math.max(W / 1586, H / 992), iw = 1586 * s, ih = 992 * s;
       const ox = (W - iw) / 2, oy = (H - ih) / 2;
       const vy = 0.385;
-      return { h: ih, vy, px: ox + 0.505 * iw, py: oy + vy * ih,
-        dx: ox + (scene.duik ? scene.duik.x : 0.72) * iw, dy: oy + (scene.duik ? scene.duik.y : 0.42) * ih };
+      return { W, H, iw, ih, ox, oy, h: ih, vy, px: 0.505 * iw, py: vy * ih,
+        dx: (scene.duik ? scene.duik.x : 0.72) * iw, dy: (scene.duik ? scene.duik.y : 0.42) * ih };
     }
-    /* de camera duikt in de terminal: de CRT degausst (scène 1) */
+    function legLens() {
+      const g = plaatGeo();
+      lens.style.left = g.ox.toFixed(1) + 'px'; lens.style.top = g.oy.toFixed(1) + 'px';
+      lens.style.width = g.iw.toFixed(1) + 'px'; lens.style.height = g.ih.toFixed(1) + 'px';
+      return g;
+    }
+    /* de camera duikt in de terminal: de CRT degausst (scène 1). Fixer R3 F1: ze schaalt rond de
+       terminal ÉN pant hem naar het midden van het scherm, geklemd zodat de lens het scherm altijd
+       dekt. Een schaal k rond T plus een pan p is lineair in de voortgang van de overgang: dekt de
+       lens het scherm bij het begin (cover) en bij het einde (de klem), dan ook in elk beeld ertussen. */
+    const DUIK_K = 6;
     function duik() {
       if (fase !== 'in') return;
-      const g = plaatGeo();
-      lens.style.transformOrigin = g.dx.toFixed(0) + 'px ' + g.dy.toFixed(0) + 'px';
+      const g = legLens(), k = DUIK_K;
+      const tx = g.ox + g.dx, ty = g.oy + g.dy;   /* de terminal in schermpx (staand: rechts buiten beeld) */
+      const klem = (p, T, lo, hi, maat) => Math.min(Math.max(p, maat - (T + k * (hi - T))), -(T + k * (lo - T)));
+      const panX = klem(g.W / 2 - tx, tx, g.ox, g.ox + g.iw, g.W);
+      const panY = klem(g.H / 2 - ty, ty, g.oy, g.oy + g.ih, g.H);
+      lens.style.transformOrigin = g.dx.toFixed(1) + 'px ' + g.dy.toFixed(1) + 'px';
+      lens.style.setProperty('--pan-x', panX.toFixed(1) + 'px');
+      lens.style.setProperty('--pan-y', panY.toFixed(1) + 'px');
       wrap.classList.add('ik-duik');
       T(weg, zacht ? 300 : 700);
     }
@@ -879,6 +938,14 @@
     /* de collega's als hoofden boven de scheidingswand */
     const hoofden = el('div', 'br-hoofden');
     const team = {};
+    /* het silhouet met één attribuut, getekend OP het hoofd-element (de terugval zonder art, én
+       als een door het manifest beloofde plaat niet laadt) */
+    function silhouet(lid, kop) {
+      if (lid.attribuut === 'tl') return true;   /* Karel: alleen zijn buis en zijn stem */
+      kop.classList.add('hd-silhouet');
+      if (lid.attribuut === 'doos') kop.appendChild(el('span', 'hd-bril'));
+      return true;
+    }
     (S.team || []).forEach(lid => {
       const h = el('div', 'hoofd hoofd-' + lid.id);
       h.dataset.wie = lid.id;
@@ -886,22 +953,34 @@
       if (lid.attribuut === 'lamp') h.appendChild(el('span', 'hd-lamp'));
       if (lid.attribuut === 'tl') h.appendChild(el('span', 'hd-buis'));
       const beeld = lid.portret || lid.src;
-      if (beeld) h.appendChild(art(beeld, '', 'hd-kop hd-art'));
-      else if (lid.attribuut !== 'tl') {
-        const sil = el('span', 'hd-kop hd-silhouet');
-        if (lid.attribuut === 'doos') sil.appendChild(el('span', 'hd-bril'));
-        h.appendChild(sil);
-      }
+      /* Fixer R3 F1: laadt een plaat niet (404), dan het silhouet, niet het puntje van art() */
+      if (beeld) h.appendChild(art(beeld, '', 'hd-kop hd-art', d => { d.classList.remove('hd-art'); return silhouet(lid, d); }));
+      else if (lid.attribuut !== 'tl') { const k = el('span', 'hd-kop'); silhouet(lid, k); h.appendChild(k); }
       if (lid.attribuut === 'doos') h.appendChild(el('span', 'hd-doos', 'ARCHIEF'));
       hoofden.appendChild(h);
-      team[lid.id] = { lid, h };
+      team[lid.id] = { lid, h, plaat: null, kegel: null };
     });
     kopvak.appendChild(hoofden);
 
     /* de scheidingswand, met De Oprichter en Juniors memo, en de naamplaatjes */
     const wand = el('div', 'br-wand');
-    (S.team || []).forEach(lid => { const p = el('span', 'br-naamplaat', lid.plaat); p.style.setProperty('--x', lid.x); wand.appendChild(p); });
+    (S.team || []).forEach(lid => {
+      const t = team[lid.id];
+      /* Fixer R3 F1: Karels buis werpt een koude lichtkegel over zijn naamplaatje; klakt de buis
+         uit, dan gaan kegel en plaatje mee op zwart (zo zie je het, niet alleen in de log) */
+      if (lid.attribuut === 'tl') { const kg = el('span', 'br-kegel'); kg.style.setProperty('--x', lid.x); wand.appendChild(kg); if (t) t.kegel = kg; }
+      const p = el('span', 'br-naamplaat' + (lid.attribuut === 'tl' ? ' belicht' : ''), lid.plaat);
+      p.dataset.wie = lid.id; p.style.setProperty('--x', lid.x);
+      wand.appendChild(p);
+      if (t) t.plaat = p;
+    });
     kopvak.appendChild(wand);
+    /* een buis klakt uit: hoofd, kegel en naamplaatje op zwart */
+    function tlUit(t) {
+      t.h.classList.add('uit');
+      if (t.plaat) t.plaat.classList.add('uit');
+      if (t.kegel) t.kegel.classList.add('uit');
+    }
     const W = S.wand;
     const opr = el('div', 'br-oprichter');
     opr.appendChild(art(W.oprichter.src, '', 'br-opr-art'));
@@ -1034,10 +1113,24 @@
     }
     function rondAlles() { [...typend].forEach(h => h.rond()); }
     const baas = t => typ('tl-baas', t, 26);
+    /* Fixer R3 F1: een avatarje van de spreker in de naamkop (liggend zichtbaar, waar de hoofden
+       boven de wand maar 40 px zijn): Barts portret, een silhouet, of Karels buis */
+    function avatar(lid) {
+      const a = el('span', 'tl-avatar tl-av-' + lid.id);
+      a.setAttribute('aria-hidden', 'true');
+      const beeld = lid.portret || lid.src;
+      if (lid.attribuut === 'tl') a.appendChild(el('span', 'tl-av-buis'));
+      else if (beeld) a.appendChild(art(beeld, '', 'tl-av-art', d => { d.classList.add('tl-av-sil'); return true; }));
+      else a.appendChild(el('span', 'tl-av-art tl-av-sil'));
+      return a;
+    }
     function collegaLijn(lid, tekst) {
       const p = lijn('tl-collega tl-c-' + (lid.toon || 'neutraal'));
       p.dataset.wie = lid.id;
-      p.appendChild(el('b', 'tl-wie', lid.naam));
+      const wie = el('b', 'tl-wie');
+      wie.appendChild(avatar(lid));
+      wie.appendChild(document.createTextNode(lid.naam));
+      p.appendChild(wie);
       p.appendChild(el('span', 'tl-zegt', tekst));
       return p;
     }
@@ -1078,10 +1171,11 @@
       lijn('tl-baas tl-warm', S.warm);
       lijn('tl-baas', S.ruis);
       if (tot === 'audit') return;
+      if (S.audit.bon) lijn('tl-baas', S.audit.bon);
       S.collegas.forEach(c => {
         const t = team[c.wie]; if (!t) return;
         const p = collegaLijn(t.lid, c.knip || c.t);
-        if (c.knip) { p.querySelector('.tl-zegt').appendChild(el('span', 'tl-knip', '—')); t.h.classList.add('uit'); }
+        if (c.knip) { p.querySelector('.tl-zegt').appendChild(el('span', 'tl-knip', '—')); p.classList.add('knip'); tlUit(t); }
       });
     }
     function quotumStart() {
@@ -1095,6 +1189,7 @@
       knopGlim.style.setProperty('--telfase', '-' + Math.round(telFase(t0, tel)) + 'ms');   /* de gloed klopt op dezelfde maat */
       actie.appendChild(knopGlim);
       schuif();
+      hintWeg();   /* fixer R3 F1: de knop staat waar de hint knipperde */
       focusStil(knopGlim);
       if (!P.choices.fotoKantoor) { lijst.disabled = false; lijst.classList.add('mag'); lijst.addEventListener('click', kijkKlik); }
       else lijst.disabled = true;
@@ -1115,7 +1210,14 @@
       zetMeter(meter + S.meter.stap);
       klank('sfx', 'naald', meter);   /* integrator R3: de nieuwe stand (K: hoger = iets hoger) */
       zetLicht();
-      if (tel1) { lamp.classList.remove('tel'); void lamp.offsetWidth; lamp.classList.add('tel'); }
+      if (tel1) {
+        lamp.classList.remove('tel'); void lamp.offsetWidth; lamp.classList.add('tel');
+        /* fixer R3 F1: een zuivere glimlach (op de tel) laat het kooltje héél even opvlammen,
+           ondanks het gekochte licht — het enige dat de maat je teruggeeft */
+        if (kool.animate) {
+          try { kool.animate([{ offset: 0, opacity: 1, transform: zacht ? 'none' : 'scale(1.5)' }], { duration: zacht ? 300 : 520, easing: 'ease-out' }); } catch (x) {}
+        }
+      }
       if (!zacht && knopGlim.animate) { try { knopGlim.animate([{ filter: 'brightness(1.45)' }, { filter: 'none' }], { duration: 260, easing: 'ease-out' }); } catch (x) {} }   /* het d-ding, even fel */
       if (n === S.quotum.bijstelOp) { quotum = S.quotum.bijgesteld; baas(S.bijgesteld); }
       if (n === S.quotum.bartOp) zegt('bart', S.bart);
@@ -1198,8 +1300,9 @@
           lijst.disabled = true;
           zetLicht();
           tid = T(volgende, 800);
-          spoel = volgende;
-        } else {
+          spoelNa(volgende, 300, () => stap === 1);   /* fixer R3 F1: GEMARKEERD. zie je altijd even */
+        } else if (stap === 1) {
+          stap = 2;
           laag.remove(); vrij();
           spoel = null;
           fase = 'quotum';
@@ -1208,7 +1311,9 @@
         }
       };
       tid = T(volgende, zacht ? 1300 : 1500);
-      spoel = volgende;
+      /* fixer R3 F1 · de tikgrens: de tweede tik van een dubbeltik op het lijstje sprong door
+         'Dat kleine gezicht.' heen naar de snit — de zin staat nu altijd even (de tikgrens) */
+      spoelNa(volgende, 500, () => stap === 0);
     }
     function fotoUit() { lijst.classList.remove('mag'); lijst.disabled = true; lijst.removeEventListener('click', kijkKlik); }
     function kijkKlik(e) { e.stopPropagation(); try { kijkFoto(); } catch (err) { meldFout(err); redding(); } }
@@ -1252,6 +1357,10 @@
       let verstuurd = false, gestempeld = false, tid = null;
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); stuur(); } });
       inp.addEventListener('click', e => e.stopPropagation());
+      /* fixer R3 F1: wie tijdens 'Gelieve zelf af te stempelen' op het PAPIER tikt, laat de machine
+         niet stempelen (dat deed elke tik naast een knop, ook op het formulier zelf). Alleen een tik
+         naast het formulier is wegtikken; de STEMPEL-knop blijft de enige manier om zelf te stempelen. */
+      form.addEventListener('click', e => { if (verstuurd && !gestempeld) e.stopPropagation(); });
       T(() => { if (inp.isConnected && !verstuurd) { try { inp.focus({ preventScroll: true }); } catch (x) {} } }, zacht ? 0 : 380);
       function stuur() {
         if (verstuurd || !actief) return;
@@ -1266,10 +1375,19 @@
         voet.appendChild(el('p', 'z8-zelf', f.zelf));
         const st = knop('z8-stempel', f.stempelKnop, () => stempel(true));
         st.dataset.actie = 'stempel';
+        /* fixer R3 F1 · de tikgrens: STEMPEL verschijnt ±450 ms uitgeschakeld en pas dan mag een tik
+           ernaast de machine laten stempelen. Anders besliste de tweede tik van een gewone dubbeltik
+           op 'noteer' het contractveld zelfGestempeld (touch: STEMPEL schoof onder de vinger = zelf;
+           laptop: de klik viel ernaast = de machine). De 6 s tellen vanaf dat de knop kan. */
+        st.disabled = true;
         voet.appendChild(st);
-        focusStil(st);
-        tid = T(() => stempel(false), f.wachtMs || 6000);
-        spoel = () => stempel(false);   /* wie wegtikt, laat de machine stempelen */
+        T(() => {
+          if (gestempeld || !actief) return;
+          st.disabled = false;
+          focusStil(st);
+          tid = T(() => stempel(false), f.wachtMs || 6000);
+          spoel = () => stempel(false);   /* wie naast het formulier tikt, laat de machine stempelen */
+        }, zacht ? 300 : 450);
       }
       function stempel(zelf) {
         if (gestempeld || !actief) return;
@@ -1282,9 +1400,10 @@
         else { baas(f.machine); form.classList.add('machine'); klank('sfx', 'stempelMachine'); }
         const afdruk = el('div', 'z8-afdruk', f.stempel);
         form.appendChild(afdruk);
-        const door = () => { wisT(tid2); buizenpost(); };
+        let door1 = false;
+        const door = () => { if (door1) return; door1 = true; wisT(tid2); buizenpost(); };
         const tid2 = T(door, zelf ? 600 : 1200);
-        spoel = door;
+        spoelNa(door, zacht ? 250 : 450, () => !door1);   /* fixer R3 F1: de afdruk zie je altijd even */
       }
       function buizenpost() {
         if (!actief || form.classList.contains('weg')) return;
@@ -1292,7 +1411,10 @@
         klank('sfx', 'buizenpost');
         buis.classList.add('zuigt');
         let af = false;
-        const klaar = () => { if (af) return; af = true; wisT(tid3); formLaag.remove(); vrij(); buis.classList.remove('zuigt'); collegas(); };
+        const klaar = () => {
+          if (af) return; af = true; wisT(tid3); formLaag.remove(); vrij(); buis.classList.remove('zuigt');
+          collegas(true);   /* fixer R3 F1: B.A.A.S. typt eerst het bonnetje 'Z-8 → ARCHIEF.' */
+        };
         if (!zacht && form.animate) {
           try {
             const fr = form.getBoundingClientRect(), mr = mond.getBoundingClientRect();
@@ -1310,19 +1432,27 @@
           } catch (x) {}
         } else form.classList.add('weg');
         const tid3 = T(klaar, zacht ? 300 : 820);
-        spoel = klaar;
+        spoelNa(klaar, zacht ? 200 : 350, () => !af);   /* fixer R3 F1: de thwup zie je altijd even */
       }
     }
 
     /* ── Karel, Rudi, Bart en Marleen (in de log); Karels tl klakt uit midden in het woord ── */
-    function collegas() {
+    function collegas(bon) {
       if (!actief) return;
       fase = 'collegas';
       toonHint('collegas');
-      reeks(S.collegas.map(c => ({ doe: () => spreek(c), ms: duur(c) })), () => { if (vorigeSpreker) spreekt(vorigeSpreker, false); oproepStart(); });
+      /* fixer R3 F1: na de thwup typt B.A.A.S. het bonnetje 'Z-8 → ARCHIEF.' — de bestemming van de
+         buizenpost (de kast die de outro openbreekt, etage −1 van de val), op elk formaat in beeld */
+      const stappen = [];
+      if (bon && S.audit.bon) stappen.push({ doe: () => baas(S.audit.bon), ms: S.audit.bon.length * 26 + 450 });
+      S.collegas.forEach(c => stappen.push({ doe: () => spreek(c), ms: duur(c) }));
+      reeks(stappen, () => { if (vorigeSpreker) spreekt(vorigeSpreker, false); oproepStart(); });
     }
     function duur(c) {
       if (c.knip) return c.knip.length * 45 + 800;   /* Karel: typen, de tl klakt uit, een stilte */
+      /* fixer R3 F1: Marleens vraag wordt afgebroken — de oproep valt er ±0,6 s na binnen, en de enige
+         vraag die een mens je die dag stelt, blijft onbeantwoord (ze blijft in de log staan) */
+      if (typeof c.afgebroken === 'number') return c.afgebroken;
       return Math.max(1000, c.t.length * 34 + 350);
     }
     function spreek(c) {
@@ -1335,9 +1465,13 @@
         const knip = () => {
           if (uit) return; uit = true;
           z.appendChild(el('span', 'tl-knip', '—'));
-          t.h.classList.add('uit');
+          p.classList.add('knip');   /* ook zijn avatarje (de buis) in de naamkop dooft */
+          tlUit(t);
           spreekt(c.wie, false);
           klank('sfx', 'tlKlakUit');
+          /* fixer R3 F1: het hele bureau dipt even mee (120-200 ms), gelijk met K's ambient die
+             wegvalt — zo ZIE je dat een buis uitklakt, niet alleen in de log. Rustig: geen dip. */
+          if (!zacht && kader.animate) { try { kader.animate([{ filter: 'brightness(.78)' }, { filter: 'brightness(.78)', offset: 0.4 }, { filter: 'none' }], { duration: 180, easing: 'ease-out' }); } catch (x) {} }
         };
         const h = typMachine(z, c.knip, 45, false, knip);
         return { rond() { h.rond(); } };
@@ -1380,11 +1514,27 @@
       knopBevestig.dataset.actie = 'bevestig';
       actie.style.setProperty('--p', 0.5);
       actie.appendChild(knopBevestig);
+      hintWeg();
       focusStil(knopBevestig);
     }
 
     /* ── de goederenlift omhoog (≤ 3 s, doortikbaar): het schaarhek DICHT, 2 · 3 · 4 · DAK,
-       geen blik omlaag, geen dakrand (keuze 3). Dezelfde etages als de val, in omgekeerde zin. ── */
+       geen blik omlaag, geen dakrand (keuze 3). Dezelfde etages als de val, in omgekeerde zin.
+       Fixer R3 F1: per etage glijdt achter het dichte hek een lichtband in het klimaat van die
+       etage naar beneden (2 ziekgroen, 3 ijscyaan, 4 bordeaux, DAK stormviolet: OutroFX.KLIMAAT,
+       dezelfde kleuren als de val), en het paneel noemt de etage zoals de val (KANTOORTUIN,
+       FACTURATIE, DIRECTIE). Omhoog passeer je wat je straks in de wacht omlaag passeert.
+       Geen buitenzicht, geen figuur: keuze 3 blijft veilig. ── */
+    const LIFT_KLEUR = { '2': '#4f7a4a', '3': '#2f7a8a', '4': '#8a2a2a', 'DAK': '#6a2a5a' };   /* terugval = KLIMAAT[].grade */
+    function liftKleur(nr) {
+      try {
+        const FX = window.OutroFX;
+        const k = FX && Array.isArray(FX.ETAGE_NR) && Array.isArray(FX.KLIMAAT) ? FX.ETAGE_NR.indexOf(nr) : -1;
+        const c = k >= 0 && FX.KLIMAAT[k] && typeof FX.KLIMAAT[k].grade === 'string' ? FX.KLIMAAT[k].grade : null;
+        if (c) return c;
+      } catch (e) {}
+      return Object.prototype.hasOwnProperty.call(LIFT_KLEUR, nr) ? LIFT_KLEUR[nr] : '#6f5a34';
+    }
     function lift() {
       if (fase === 'lift' || !actief) return;
       fase = 'lift';
@@ -1393,10 +1543,16 @@
       zoem(false);   /* integrator R3: je laat het kantoor achter; de regen hoor je nog tot het dak */
       const L = S.lift;
       const laag = el('div', 'lift' + (zacht ? ' zacht' : ''));
+      const band = el('div', 'lift-band');
+      laag.appendChild(band);
       laag.appendChild(el('div', 'lift-hek'));
       const paneel = el('div', 'lift-paneel');
-      paneel.appendChild(el('span', 'lift-pijl', '▲'));
-      const etages = L.etages.map(e => { const s = el('span', 'lift-etage', e); paneel.appendChild(s); return s; });
+      const rijEt = el('div', 'lift-rij');
+      rijEt.appendChild(el('span', 'lift-pijl', '▲'));
+      const etages = L.etages.map(e => { const s = el('span', 'lift-etage', e); rijEt.appendChild(s); return s; });
+      paneel.appendChild(rijEt);
+      const naam = el('div', 'lift-naam', '');
+      paneel.appendChild(naam);
       laag.appendChild(paneel);
       wrap.appendChild(laag);
       modaal(laag);
@@ -1407,15 +1563,22 @@
         regen(false); zoem(false);
         ga(IDX.gesprek);
       };
+      const namen = Array.isArray(L.namen) ? L.namen : [];
       const stap = () => {
         if (i >= etages.length) { tid = T(klaar, 380); return; }
         etages.forEach((e, j) => e.classList.toggle('aan', j === i));
+        const nr = L.etages[i];
+        naam.textContent = typeof namen[i] === 'string' ? namen[i] : '';
+        band.style.setProperty('--band', liftKleur(nr));
+        band.classList.remove('glijdt'); void band.offsetWidth; band.classList.add('glijdt');
         klank('sfx', 'liftDing', i + 2);   /* de verdieping: 2, 3, 4, 5 (= DAK) */
         i++;
+        /* fixer R3 F1 · de tikgrens: pas na de eerste liftbel spoelt een tik de lift door (de tweede
+           tik van een dubbeltik op BEVESTIG slikte de hele lift in, 0 van de 4 bellen) */
+        if (i === 1) spoelNa(klaar, 60, () => !af);
         tid = T(stap, L.stapMs || 560);
       };
       tid = T(stap, 220);
-      spoel = klaar;
     }
 
     /* — waar begint de scène? — */
