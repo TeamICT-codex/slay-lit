@@ -2274,16 +2274,20 @@ function klankReeks(pk, verwacht) {
         /* integrator R3 (hervat): tussentijden IN de pagina (rAF, performance.now()): het eerste beeld
            waarin elke selector bestaat. Van buitenaf pollen rekte of kromp een wachttijd onder last
            (de knop na 2,5 s werd liggend eens '1,8 s', omdat de poll de oproep te laat zag). */
+        /* vierde integrator: een timer van 10 ms i.p.v. rAF — de meting hangt zo niet af van de beelden
+           (onder volle last op 1440x900 gaf de rAF-lus in één run voor beide tussentijden niets terug) */
         const kijkUit = sels => page.evaluate(sels => {
-          const W = window.__r3t = {};
+          const W = window.__r3t = { n: 0 };
           const lus = () => {
+            W.n++;
             const h = document.getElementById('scherm-proloog'), R = h && h.shadowRoot;
             if (R) for (const s of sels) if (W[s] == null && R.querySelector(s)) W[s] = performance.now();
-            if (sels.some(s => W[s] == null)) requestAnimationFrame(lus);
+            if (sels.some(s => W[s] == null) && W.n < 6000) setTimeout(lus, 10);
           };
-          requestAnimationFrame(lus);
+          lus();
         }, sels);
-        const tussen = async (a, b) => { const W = await page.evaluate(() => window.__r3t || {}); return W[a] != null && W[b] != null ? Math.round(W[b] - W[a]) : -1; };
+        let tussenW = {};
+        const tussen = async (a, b) => { const W = tussenW = await page.evaluate(() => window.__r3t || {}); return W[a] != null && W[b] != null ? Math.round(W[b] - W[a]) : -1; };
         const herstart = async voor => {
           await page.reload({ waitUntil: 'load' }); await slaap(700); await volgSchermen(page);
           if (voor) await voor();
@@ -2352,7 +2356,7 @@ function klankReeks(pk, verwacht) {
         c = await contract();
         const machTekst = (await wachtSr(`return [...R.querySelectorAll('.tl-baas')].some(p => /Geen probleem\\. Ik doe het wel\\./.test(p.textContent));`, 3000)) >= 0;   /* B.A.A.S. typt de regel */
         t(st0 >= 0 && mach >= 0 && dMach >= 5500 && dMach <= 7000 && c.zelfGestempeld === false && machTekst,
-          `${L}: niet stempelen: na ${(dMach / 1000).toFixed(1)} s (6 s) stempelt de machine ("Geen probleem. Ik doe het wel." ${machTekst}), zelfGestempeld ${c.zelfGestempeld}`);
+          `${L}: niet stempelen: na ${(dMach / 1000).toFixed(1)} s (6 s) stempelt de machine ("Geen probleem. Ik doe het wel." ${machTekst}), zelfGestempeld ${c.zelfGestempeld}` + (dMach < 0 ? ' — in de pagina: ' + JSON.stringify(tussenW) : ''));
         await wachtSr(`return !!R.querySelector('.oproep');`, 16000);
         s = await save();
         t(s.checkpoint === 'oproep' && s.choices.glimCp === 5, `${L}: de oproep: checkpoint '${s.checkpoint}', glimCp ${s.choices.glimCp}`);
@@ -2363,7 +2367,7 @@ function klankReeks(pk, verwacht) {
         const knip = await sr(page, `return !!R.querySelector('.hoofd-karel.uit') && !!R.querySelector('.tl-knip');`);
         const wacht = await page.evaluate(() => window.Klank && Klank.wacht ? Klank.wacht.stand.actief : null);
         t(op >= 0 && bev >= 0 && dBev >= 1900 && dBev <= 3200 && knip && wacht === true,
-          `${L}: herladen in de oproep → hervat in de oproep: [ BEVESTIG AANWEZIGHEID ] na ${(dBev / 1000).toFixed(1)} s (2,5 s), Karel is weg (${knip}), de wachtmuziek loopt (${wacht})`);
+          `${L}: herladen in de oproep → hervat in de oproep: [ BEVESTIG AANWEZIGHEID ] na ${(dBev / 1000).toFixed(1)} s (2,5 s), Karel is weg (${knip}), de wachtmuziek loopt (${wacht})` + (dBev < 0 ? ' — in de pagina: ' + JSON.stringify(tussenW) : ''));
         await tik(page, vp, '[data-actie="bevestig"]');
         const naar = await wachtSr(`return R.host.dataset.plScene === 'gesprek';`, 6000);
         c = await contract();
@@ -2394,7 +2398,7 @@ function klankReeks(pk, verwacht) {
       const bij = r3.collega.filter(x => x.wanneer === 'bij'), fout3 = bij.filter(x => x.weg || !x.inBeeld || !x.inLog || !x.raak);
       const lite = await page.evaluate(() => { const h = document.getElementById('scherm-proloog'); return h.hasAttribute('data-lite'); });
       t(r3.eind !== null && r3.eind <= 50000 && film.gedaan.glimlach === 5 && c.glimlachen === 5 && c.fotoKantoor === true && c.zelfGestempeld === true && c.jeugddroom === vp.droom,
-        `${L}: scènes 0-2 in ${(r3.eind / 1000).toFixed(1)} s (≤ 50 s); contract glimlachen ${c.glimlachen}, foto ${c.fotoKantoor}, zelf gestempeld ${c.zelfGestempeld}, jeugddroom "${c.jeugddroom}"`);
+        `${L}: scènes 0-2 in ${(r3.eind / 1000).toFixed(1)} s (≤ 50 s); contract glimlachen ${c.glimlachen}, foto ${c.fotoKantoor}, zelf gestempeld ${c.zelfGestempeld}, jeugddroom "${c.jeugddroom}"` + (r3.eind === null || r3.eind > 50000 ? ` — ${r3.scenes.filter(s => s.scene).map(s => s.scene + '@' + (s.t / 1000).toFixed(1)).join(' → ')}; handelingen: ${film.acties.join(', ')}; kan: ${r3.kan.map(k => (k.t / 1000).toFixed(1) + ' [' + k.kan + ']').join(' ')}` : ''));
       t(r3.rust && !r3.rust.vhold && r3.rust.scheurZacht && !r3.rust.duik && (geval.n !== 'lite' || lite),
         `${L}: het rustige pad: geen V-hold (${r3.rust && r3.rust.vhold}), de scheur zacht (${r3.rust && r3.rust.scheurZacht}), geen duik in de lens (${r3.rust && r3.rust.duik})${geval.n === 'lite' ? ', host data-lite ' + lite : ''}`);
       t(r3.knip.length === 1 && r3.slay.length === 0 && r3.scroll.length === 0 && bij.length === 5 && !fout3.length,
