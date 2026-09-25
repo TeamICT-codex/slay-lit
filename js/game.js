@@ -354,8 +354,15 @@ function codexSchrijfToegestaan() { return magErfstukSchrijven(); }
    in de nissen — van welk maaksel ook — en dat koopt een plaats aan DE DREMPELTAFEL. */
 function scherfDef(sid) {
   const M = window.MYSTERIES; if (!M) return null;
-  for (const mid in M) { const s = M[mid].scherven && M[mid].scherven[sid]; if (s) return { sid, mid, bron: s.bron, codexTekst: s.codexTekst, metgezel: M[mid].metgezel }; }
+  for (const mid in M) { const s = M[mid].scherven && M[mid].scherven[sid]; if (s) return { sid, mid, bron: s.bron, codexTekst: s.codexTekst, tafelTekst: s.tafelTekst, metgezel: M[mid].metgezel }; }
   return null;
+}
+/* DE NISSEN DICHT: de speler-tekst van een scherf. Met de metgezellen geparkeerd de tafelTekst
+   (over de inleg en de tafel, BRON-NEUTRAAL: dezelfde scherf valt ook uit een elite, een kist of
+   de Slijmkoning); anders de lore van het maaksel (codexTekst, die blijft staan). */
+function scherfTekst(sid) {
+  const d = scherfDef(sid); if (!d) return '';
+  return (!metgezellenAan() && d.tafelTekst) || d.codexTekst || '';
 }
 function alleScherfIds() {
   const M = window.MYSTERIES || {}; const ids = [];
@@ -3105,8 +3112,10 @@ function toonScherfReveal(sid, opts) {
     <div class="scherf-reveal-binnen">
       <div class="scherf-reveal-kop">${opts.kop || '🜂 EEN SCHERF KIEST JOU'}</div>
       <div class="scherf-reveal-art" data-shart="${sid}">${d ? bronIcoon(d.bron) : '🜂'}</div>
-      <div class="scherf-reveal-flavor"><i>${(d && d.codexTekst) || 'Een fragment van iets groters…'}</i></div>
-      <div class="scherf-reveal-sub">Je draagt nu een scherf — neem 'm mee naar de Drempel.</div>
+      <div class="scherf-reveal-flavor"><i>${(d && scherfTekst(sid)) || 'Een fragment van iets groters…'}</i></div>
+      <div class="scherf-reveal-sub">${huidigeAct() <= 1
+        ? 'Je draagt nu een scherf — drie ervan kopen een plaats aan de tafel op de Drempel.'
+        : 'Je draagt nu een scherf — hij bankt bij het einde van je run, voor de tafel van een volgende afdaling.'}</div>
       <button class="knop-stil scherf-reveal-sluit">Verder ↓</button>
     </div>`;
   document.body.appendChild(ov);
@@ -3395,8 +3404,10 @@ function verliesHp(doel, n, bron) {
         && S.gevecht && !S.gevecht.copycatGebroken) copycatNaSchade(doel, n, bron);
     /* DE PLAGIAATFASE: de Erfprins weigert éénmalig te sterven zolang hij jouw werk
        nog in voorraad heeft — hij verscheurt zijn gestolen arsenaal en verzilvert elke
-       kaart in levenskracht (+12 HP per kaart, max 5; tunebaar). Counterplay: win je
-       arsenaal terug vóór de kill, of breek de machine (Drops) → hij sterft gewoon. */
+       kaart in levenskracht (+12 HP per kaart, max 5; tunebaar). Counterplay was: win je
+       arsenaal terug vóór de kill, of breek de machine (Drops) → hij sterft gewoon. Geen van
+       beide bestaat vandaag (terugwin weg sinds 30 jun; de breker is geparkeerd, DE NISSEN
+       DICHT) — de Erfprins-ronde herbouwt de tegenzet. Zie M_metgezel_parkering_plan.md §2.9. */
     if (doel.hp <= 0 && !doel.dood && doel.id === 'de_erfprins' && !doel.plagiaat
         && S.gevecht && !S.gevecht.copycatGebroken && (doel.gestolen || []).length) {
       doel.plagiaat = true;
@@ -4309,7 +4320,7 @@ function renderTopbalk() {
     if (ged || veilig) {
       tbS.style.display = '';
       tbS.innerHTML = `🜂 ${ged}${veilig ? `<small class="tbs-stash">+${veilig}</small>` : ''}`;
-      tbS.dataset.tip = `Mysterie-scherven: ${ged} bij je (banken bij de Drempel of een overwinning; gevonden scherven overleven ook een dood) · ${veilig} veilig in je stash. Klik voor de Codex.`;
+      tbS.dataset.tip = `${metgezellenAan() ? 'Mysterie-scherven' : 'Scherven'}: ${ged} bij je (banken bij de Drempel of een overwinning; gevonden scherven overleven ook een dood) · ${veilig} veilig in je stash. Klik voor de Codex.`;
     } else tbS.style.display = 'none';
   }
   /* de metgezel in de basis-UI (playtest: "leeft mijn Vlamwacht nog?"): HP tussen de
@@ -5282,17 +5293,21 @@ function toonBaasIntro(g) {
   setTimeout(() => { Klank.sfx('dood'); schudScherm(); }, 700);
   setTimeout(() => el.remove(), 3600);
   setTimeout(() => { if (S.gevecht === g && !g.voorbij && VIJANDEN[b.id].baas) baasSpreekt(baasUitspraken(b.id).intro); }, 3900);
-  /* de Erfprins verklapt cryptisch méér naarmate je hem vaker ontmoette (mysterie-escalatie) */
-  if (b.id === 'de_erfprins' && UITSPRAKEN._erfprins.orakel && !isOntgrendeld('drops')) {
-    const ork = UITSPRAKEN._erfprins.orakel;
+  /* de Erfprins verklapt cryptisch méér naarmate je hem vaker ontmoette (mysterie-escalatie).
+     DE NISSEN DICHT: met de metgezellen geparkeerd is iedereen 'nieuw' en spreekt hij orakelSolo
+     (geen belofte van een breker die niet bestaat); de Erfprins-ronde mag die regels vervangen. */
+  if (b.id === 'de_erfprins' && UITSPRAKEN._erfprins.orakel && (!metgezellenAan() || !isOntgrendeld('drops'))) {
+    const ork = (!metgezellenAan() && UITSPRAKEN._erfprins.orakelSolo) || UITSPRAKEN._erfprins.orakel;
     const idx = Math.max(0, Math.min((Codex.erfprinsOntmoetingen || 1) - 1, ork.length - 1));
     setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(ork[idx]); }, 6400);
   }
   /* scherven-nudge op ÉCHTE voortgang: draagt de speler ≥2 passende scherven, dan verraadt
      de Erfprins nerveus dat ze sámen ergens op passen (reverse psychology — de Drempel).
      De baas-scherf die startGevecht net STIL toekende telt niet mee: die kent de speler
-     pas bij de kill-reveal (review 27 aug). */
-  if (b.id === 'de_erfprins' && typeof meestGevorderdeMysterie === 'function') {
+     pas bij de kill-reveal (review 27 aug).
+     DE NISSEN DICHT: uit met de metgezellen geparkeerd (hij wees in Act 2 naar een poort die
+     dan al achter de speler ligt, als derde tekstlaag in de woede-beat). */
+  if (metgezellenAan() && b.id === 'de_erfprins' && typeof meestGevorderdeMysterie === 'function') {
     const best = meestGevorderdeMysterie();
     let aantal = best ? best.aantal : 0, rijp = !!(best && best.rijp);
     if (best && g.baasScherf && (scherfDef(g.baasScherf) || {}).mid === best.mid) { aantal--; rijp = false; }
@@ -5305,8 +5320,8 @@ function toonBaasIntro(g) {
   }
   /* GRIEF: heb je Drops geofferd maar is de Witte nog niet terug? De Erfprins claimt de
      overwinning — de wond die de reünie later heelt (zie DROPS-DE-WITTE.md). */
-  if (b.id === 'de_erfprins' && Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops')
-      && !isOntgrendeld('drops_wit') && UITSPRAKEN._erfprins.dossier) {
+  if (metgezellenAan() && b.id === 'de_erfprins' && Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops')
+      && !isOntgrendeld('drops_wit') && UITSPRAKEN._erfprins.dossier) {   /* uit met de metgezellen geparkeerd */
     setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(UITSPRAKEN._erfprins.dossier); }, 6400);
   }
 }
@@ -6067,7 +6082,7 @@ function meestGevorderdeMysterie() {
   const heeft = sid => scherfStash().includes(sid) || gedragen().includes(sid);
   let best = null;
   Object.keys(M).forEach(mid => {
-    if (isOntgrendeld(mid)) return;
+    if (metgezellenAan() && isOntgrendeld(mid)) return;   /* geparkeerd: ook een ooit ontwaakt maaksel is gewoon inleg */
     const vereist = M[mid].vereist || [];
     const aantal = vereist.filter(heeft).length;
     if (!aantal) return;
@@ -6078,7 +6093,9 @@ function meestGevorderdeMysterie() {
 /* SCHERVEN-COLLECTIE in de Codex: alle 9 (3 trio's) — gevonden = fragment-art, rest = ❓.
    Leest de PLATTE stash (Codex.scherven) + de gedragen tas. Sinds v128 zijn scherven je INLEG
    aan DE DREMPELTAFEL: elk drietal opent de tafel, van welk maaksel ook. De familie-indeling
-   blijft als verzamelspoor staan (en als geheugen aan de bondgenoten die je ooit wekte). */
+   blijft als verzamelspoor staan. DE NISSEN DICHT: met de metgezellen geparkeerd toont een ooit
+   ontwaakt trio gewoon de echte stash (geen 'doorgrond'/'verbruikt'), en de tips lezen
+   scherfTekst (de tafelTekst). */
 function scherfCodexBlok() {
   const M = window.MYSTERIES; if (!M) return '';
   const heeft = sid => scherfStash().includes(sid) || gedragen().includes(sid);
@@ -6087,12 +6104,12 @@ function scherfCodexBlok() {
   const trios = Object.keys(M).map(mid => {
     const vereist = M[mid].vereist || [];
     if (!vereist.length) return '';
-    const ontg = isOntgrendeld(mid);
+    const ontg = metgezellenAan() && isOntgrendeld(mid);
     const n = vereist.filter(heeft).length;
     const slots = vereist.map(sid => {
       const d = scherfDef(sid);
       return (heeft(sid) || ontg)   /* wekte je hier ooit een bondgenoot (oudere Codex), dan zijn de scherven verbruikt maar het maaksel volbracht — toon het vervuld, niet als ❓ */
-        ? `<div class="scherf-cx-slot vol ${ontg && !heeft(sid) ? 'verbruikt' : ''}" data-shart="${sid}" data-tip="${(d && d.codexTekst) || ''}">${d ? bronIcoon(d.bron) : '🜂'}</div>`
+        ? `<div class="scherf-cx-slot vol ${ontg && !heeft(sid) ? 'verbruikt' : ''}" data-shart="${sid}" data-tip="${(d && scherfTekst(sid)) || ''}">${d ? bronIcoon(d.bron) : '🜂'}</div>`
         : `<div class="scherf-cx-slot leeg" data-tip="??? — nog te vinden (${mysterieBronLabel(d && d.bron)})">❓</div>`;
     }).join('');
     const klasse = ontg ? 'ontgrendeld' : (n === vereist.length ? 'compleet' : '');
@@ -6143,7 +6160,10 @@ function toonCodex() {
   const VRIJSPEELBARE_MG = new Set(['drops', 'vlamwachter', 'mosgeest']);
   const mgs = Object.keys(METGEZELLEN).filter(id => VRIJSPEELBARE_MG.has(id)).sort((a, b) =>
     volgorde.indexOf(METGEZELLEN[a].zeld) - volgorde.indexOf(METGEZELLEN[b].zeld));
-  const mgOntdekt = mgs.filter(m => Codex.metgezellen.includes(m)).length;
+  /* DE NISSEN DICHT: geparkeerd → het blok is weg en de metgezellen tellen niet mee in de
+     voltooiing (anders is de Codex voor een nieuwe speler onafmaakbaar). De data blijft. */
+  const mgOntdekt = metgezellenAan() ? mgs.filter(m => Codex.metgezellen.includes(m)).length : 0;
+  const mgTotaal = metgezellenAan() ? mgs.length : 0;
   /* loopbaan-blok: totalen + de laatste afdalingen (het opstapelende spoor) */
   const loop = loopbaanRegel();
   const gesch = (Codex.gesch || []).slice(0, 5);
@@ -6190,7 +6210,7 @@ function toonCodex() {
         return `<div class="codex-slot leeg" data-tip="??? — nog niet ontdekt">❓</div>`;
       }
       return `<div class="codex-slot" style="--dkleur:${d.kleur}" data-dart="${id}" data-tip="${d.naam} — klik voor het verhaal" onclick="bekijkDrank(event, '${id}')">${d.icoon}</div>`;
-    }).join('') + `</div>
+    }).join('') + `</div>` + (metgezellenAan() ? `
     <h3 class="codex-kop">🐾 Metgezellen <small>${mgOntdekt} / ${mgs.length}</small></h3>
     <div class="codex-rooster">` +
     mgs.map(id => {
@@ -6204,10 +6224,10 @@ function toonCodex() {
       const tip = wit ? ' · 🤍 keerde terug uit het zwart' : (gevallen ? ' · ✝ offerde zich op' : '');
       return `<div class="codex-slot rel-${d.zeld} ${gevallen && !wit ? 'gevallen' : ''}" data-mgart="${mgart}" data-tip="${d.naam}${tip} — klik voor het verhaal" onclick="toonMetgezelBoek('${id}')">${wit ? '🤍' : d.icoon}${gevallen && !wit ? '<span class="codex-kruis">✝</span>' : ''}</div>`;
     }).join('') + `</div>
-    <p class="codex-scherf-uitleg">De nissen zijn dichtgelast. De Drempel is een tafel geworden — wie hier al iemand wekte, daalt nog altijd met hem af.</p>` + slachtblokBlok
+    <p class="codex-scherf-uitleg">De nissen zijn dichtgelast. De Drempel is een tafel geworden — wie hier al iemand wekte, daalt nog altijd met hem af.</p>` : '') + slachtblokBlok
     + (typeof proloogCodexBlok === 'function' ? proloogCodexBlok() : '')   /* proloog R1: herbeleven per hoofdstuk (js/proloog-brug.js) */
     + outroBlok + scherfCodexBlok() + `
-    <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt + mgOntdekt === rels.length + dranks.length + mgs.length ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
+    <p class="codex-voet">Alles wat je ooit vond, over alle runs heen. ${relOntdekt + drOntdekt + mgOntdekt === rels.length + dranks.length + mgTotaal ? 'De Codex is compleet — de diepte heeft geen geheimen meer voor jou! 🏆' : 'Vind ze allemaal...'}<br>
     <small>🗝️ = opgeladen: dit relikwie kun je bij een nieuwe run éénmalig meenemen uit het Schrijn.</small></p>`;
   verfraaiItemArt($('#overlay-codex'));   /* incl. het Codex-titelicoon (data-icoon) */
   $('#overlay-codex').classList.add('open');
@@ -8515,8 +8535,10 @@ function copycatKies(v, beurt) {
     const plan = copycatPlagiaatPlan(v, aantal);
     return { type: 'plagiaat', naam: 'Plagiaat', plan, doe: vv => copycatSpeelTerug(vv, g, plan) };
   }
-  /* arsenaal leeg → grist OPNIEUW als je trek het toelaat (sustain: solo niet uit te zitten —
-     je hebt de breker/metgezel nodig); telegrafeert als 👀 steelt, doet die beurt geen schade. */
+  /* arsenaal leeg → grist OPNIEUW als je trek het toelaat (sustain: solo niet uit te zitten);
+     telegrafeert als 👀 steelt, doet die beurt geen schade. Ontworpen rond de breker/metgezel
+     (g.copycatGebroken) — die is geparkeerd (DE NISSEN DICHT); de Erfprins-ronde herbouwt dit,
+     zie M_metgezel_parkering_plan.md §2.9. */
   if (!g.copycatGebroken && (g.trek || []).length >= 3) {
     return { type: 'steel', naam: 'Naroof', doe: vv => copycatHerroof(vv, g) };
   }

@@ -308,7 +308,7 @@ function dtNissenHtml() {
   return `<div class="dt-nissen">
     <div class="dt-nis-kolom">
       <div class="dt-oogje">de drempel · einde act 1</div>
-      <p class="dt-lore">Drie koude nissen in de poortwand. Voed ze met <b>drie scherven, van welk maaksel ook</b>, en de wand geeft mee — niet naar een bondgenoot, maar naar een <b>tafel</b>. Daarachter zit iets dat al heel lang niemand meer heeft zien winnen.</p>
+      <p class="dt-lore">Drie koude nissen in de poortwand. Voed ze met <b>drie scherven, van welk maaksel ook</b>, en de wand geeft mee — naar een <b>tafel</b>. Daarachter zit iets dat al heel lang niemand meer heeft zien winnen.</p>
       <p class="dt-quote">„Drie scherven is geen sleutel. Het is een <b>inleg</b>."</p>
       <div class="dt-nis-rij">${nissen}</div>
       <div class="sb-balk">

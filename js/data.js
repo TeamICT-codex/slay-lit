@@ -652,8 +652,12 @@ const KAARTEN = {
   },
   de_roddel: {
     naam: 'De Roddel', type: 'vloek', zeld: 'vloek', kost: null, icoon: '🐍',
-    tekst: () => `Onbespeelbaar. Zolang ze in je hand zit, doet je metgezel niets — hij twijfelt aan je.`,
-    flavor: 'Hij heeft iets gehoord. Over jou.',
+    /* DE NISSEN DICHT: met de metgezellen geparkeerd de tekst die solo al waar was (geen
+       balanswijziging: solo deed ze altijd al alleen dit; de vloekpool blijft even lang) */
+    tekst: () => (typeof metgezellenAan === 'function' && metgezellenAan())
+      ? `Onbespeelbaar. Zolang ze in je hand zit, doet je metgezel niets — hij twijfelt aan je.`
+      : `Onbespeelbaar. Neemt ruimte in je hand in.`,
+    flavor: 'Iedereen heeft iets gehoord. Over jou.',
     speel: () => {}
   },
   het_dossier: {
@@ -1665,23 +1669,26 @@ window.SPELERS = SPELERS;   /* HELDNAAM guardde op window.SPELERS → toonde and
    "You were meant to fail": een metgezel wordt niet gegeven maar ontrafeld over
    runs heen. Data-gestuurd TEMPLATE — elke metgezel krijgt een eigen mysterie:
      vereist   : welke scherf-id's nodig zijn (tunebaar; bepaalt de lengte)
-     scherven  : per scherf {bron, codexTekst} (de cryptische regel in de Codex)
+     scherven  : per scherf {bron, codexTekst, tafelTekst} (codexTekst = de lore van het
+                 maaksel; tafelTekst = wat de speler ziet zolang de metgezellen geparkeerd
+                 zijn — over de inleg, BRON-NEUTRAAL; gelezen via scherfTekst(sid) in game.js)
      eindreveal: de tekst van het ontwaak-moment
    GEPARKEERD SINDS v128 (DE DREMPELTAFEL): het Drempel-ritueel dat een metgezel wekte
    (game.js drempelVoltrek) is vervallen — drie scherven kopen nu een plaats aan de tafel.
    Er is dus vandaag géén vrijspeelweg; 'eindreveal' heeft geen lezer meer. Wat WEL blijft
    gelden: 'vereist' + 'scherven' zijn de vindlogica van de negen scherven (bron + de
-   cryptische Codex-regel), en een Codex waarin al iemand ontwaakt is blijft gewoon werken —
-   die metgezel daalt nog altijd mee. De lore hieronder blijft staan voor als de metgezellen
-   terugkeren; ze is data, geen dode code. Zie ONTWERP.md + .claude/notities/metgezel_impact.md. */
+   cryptische Codex-regel). SINDS DE NISSEN DICHT (B1) daalt ook een al ontwaakte metgezel
+   niet meer mee (METGEZELLEN_AAN = false, game.js); de Codex-data blijft bewaard. De lore
+   hieronder blijft staan voor als de metgezellen terugkeren; ze is data, geen dode code.
+   Zie ONTWERP.md + .claude/notities/bazen_onderzoek/ontwerp/M_metgezel_parkering_plan.md. */
 const MYSTERIES = {
   drops: {
     metgezel: 'drops', baasId: 'de_erfprins',
     vereist: ['drops_baas', 'drops_figuur', 'drops_episch'],
     scherven: {
-      drops_baas:   { bron: 'baas',   codexTekst: '„Wat trouw blijft zonder loon, kun je niet kopen — en niet namaken."' },
-      drops_figuur: { bron: 'figuur', codexTekst: '„Het liep al die tijd mee, net buiten je lichtkring — wachtend tot je het riep."' },
-      drops_episch: { bron: 'episch', codexTekst: '„Drie stukken van één trouw. De poort onderin weet welke samenhoren."' },
+      drops_baas:   { bron: 'baas',   codexTekst: '„Wat trouw blijft zonder loon, kun je niet kopen — en niet namaken."', tafelTekst: '„Iets heeft dit heel lang vastgehouden, en het liet niet graag los. Aan tafel telt het gewoon mee."' },
+      drops_figuur: { bron: 'figuur', codexTekst: '„Het liep al die tijd mee, net buiten je lichtkring — wachtend tot je het riep."', tafelTekst: '„Het lag net buiten je lichtkring, alsof het op je wachtte. De bankhouder vraagt niet waar het vandaan komt."' },
+      drops_episch: { bron: 'episch', codexTekst: '„Drie stukken van één trouw. De poort onderin weet welke samenhoren."', tafelTekst: '„Een inleg is een inleg — maar deze geef je niet graag weg."' },
     },
     eindreveal: { titel: 'UIT HET GEDOOFDE LICHT', kreet: 'Je voedde de drempel — en uit het zwart voorbij de poort kroop iets warms naar je toe, en het week niet meer van je zij.' },
   },
@@ -1690,9 +1697,9 @@ const MYSTERIES = {
     metgezel: 'vlamwachter', baasId: 'de_erfprins',
     vereist: ['vlamwachter_baas', 'vlamwachter_figuur', 'vlamwachter_episch'],
     scherven: {
-      vlamwachter_baas:   { bron: 'baas',   codexTekst: '„Iemand stond altijd tussen jou en de klap. Je keek nooit om."' },
-      vlamwachter_figuur: { bron: 'figuur', codexTekst: '„Hij sprak niet, hij doofde niet — hij blééf gewoon staan."' },
-      vlamwachter_episch: { bron: 'episch', codexTekst: '„Het schild slaapt licht. Drie scherven in de koude nissen, en het staat óp."' },
+      vlamwachter_baas:   { bron: 'baas',   codexTekst: '„Iemand stond altijd tussen jou en de klap. Je keek nooit om."', tafelTekst: '„Nog warm. Wie er ook voor betaalde, het was niet jij."' },
+      vlamwachter_figuur: { bron: 'figuur', codexTekst: '„Hij sprak niet, hij doofde niet — hij blééf gewoon staan."', tafelTekst: '„Het zwijgt, en het blijft liggen waar je het neerlegt. Drie ervan, en de wand geeft mee."' },
+      vlamwachter_episch: { bron: 'episch', codexTekst: '„Het schild slaapt licht. Drie scherven in de koude nissen, en het staat óp."', tafelTekst: '„Drie van deze kopen een plaats. Wat je daar inzet, zie je misschien nooit terug."' },
     },
     eindreveal: { titel: 'DE STILLE SCHILD', kreet: 'Drie scherven van één schild vonden elkaar in de nissen — en uit het gevoede vuur stapte een zwijgende schildwacht, voorgoed aan je zij.' },
   },
@@ -1701,9 +1708,9 @@ const MYSTERIES = {
     metgezel: 'mosgeest', baasId: 'de_erfprins',
     vereist: ['mosgeest_baas', 'mosgeest_figuur', 'mosgeest_episch'],
     scherven: {
-      mosgeest_baas:   { bron: 'baas',   codexTekst: '„Waar je heel bleef, sloot de aarde zich zacht om je heen."' },
-      mosgeest_figuur: { bron: 'figuur', codexTekst: '„Het kleine groene licht volgt wie bloeit, niet wie bloedt."' },
-      mosgeest_episch: { bron: 'episch', codexTekst: '„Drie zaden van één groen. Plant ze samen in de koude steen, en het bloeit."' },
+      mosgeest_baas:   { bron: 'baas',   codexTekst: '„Waar je heel bleef, sloot de aarde zich zacht om je heen."', tafelTekst: '„Het ligt zwaarder in je hand dan het eruitziet. De tafel weegt eerlijk — zegt de tafel."' },
+      mosgeest_figuur: { bron: 'figuur', codexTekst: '„Het kleine groene licht volgt wie bloeit, niet wie bloedt."', tafelTekst: '„Er groeit iets groens in de breuk. De bankhouder ziet alleen een inleg."' },
+      mosgeest_episch: { bron: 'episch', codexTekst: '„Drie zaden van één groen. Plant ze samen in de koude steen, en het bloeit."', tafelTekst: '„Het glanst alleen als niemand kijkt. De bankhouder kijkt altijd."' },
     },
     eindreveal: { titel: 'WAT BLOEIT IN HET DONKER', kreet: 'De drie zaden vonden elkaar in de koude steen — en uit de spleten kroop een zacht groen wezen dat je wonden sloot.' },
   },
@@ -1847,7 +1854,17 @@ const UITSPRAKEN = {
       '„Wat rááp je toch allemaal op daar beneden? Scherven? Die passen heus nergens op. Weggooien."',
       '„Hoe beter jij speelt, hoe sterker ík word... maar wat die poort wakker maakt als je haar vóédt — dát kan ik nooit kopiëren."',
     ],
-    /* grief-haak: ná Drops' offer claimt de Erfprins de overwinning — tot Drops de Witte terugkeert */
+    /* DE NISSEN DICHT: het orakel zolang de metgezellen geparkeerd zijn — voor IEDEREEN (regels 1
+       en 3 ongewijzigd; 2 en 4 beloofden een breker die er niet is). De Erfprins-ronde mag deze
+       regels vervangen door een telegraaf van zijn eigen mechaniek. */
+    orakelSolo: [
+      '„Ik hóéf niks zelf te maken — ik kijk gewoon af."',
+      '„Alles wat jij ooit goed deed, heb ik al gezien. Ik wacht gewoon tot je het opnieuw doet."',
+      '„Wat rááp je toch allemaal op daar beneden? Scherven? Die passen heus nergens op. Weggooien."',
+      '„Hoe beter jij speelt, hoe sterker ík word. Zo werkt een nalatenschap."',
+    ],
+    /* grief-haak: ná Drops' offer claimt de Erfprins de overwinning — tot Drops de Witte terugkeert
+       (met de metgezellen geparkeerd onbereikbaar) */
     dossier: '„Ik heb je hond geïndexeerd. Dossier gesloten."',
     /* DE PLAGIAATFASE: zijn weigering om te sterven zolang jouw werk in zijn handen is */
     plagiaat: '„Wegwerpwerk? WEGWERPWERK?! Jouw leven is mijn NOODRANTSOEN."',
@@ -1947,7 +1964,7 @@ const BESTIARIUM = {
   de_archivaris: { act: 2, soort: 'Elite', lore: 'Een gehulde archivaris-inquisiteur met een geketend grootboek en een mantel van dossiers. Hij vergeet niets, vergeeft niets, en zet elke beurt een nieuwe rode zegel bij — zijn macht stapelt en stapelt.', notitie: 'Hoe langer hij leeft, hoe harder hij slaat. Sla snel toe.' },
   de_drempelwachter: { act: 2, soort: 'Wachter', lore: 'Niet alles wat je met scherven wekt, is je gunstig gezind. Voed je de drempel, dan krijgt hij een gezicht: as, oude vlam, en de rotsvaste overtuiging dat jíj de leugen bent die moet worden tegengehouden. Aan tafel is hij hoffelijk — daarachter niet meer.', notitie: 'De bankhouder int zelf. Om de derde beurt komt het Drempelvuur; tel mee en blok op de maat.' },
   het_origineel: { act: 2, soort: 'Episch', lore: 'Het ene ware origineel waarvan heel het Archief zijn bleke kopieën aftrekt — en het houdt vol dat JIJ de namaak bent. Het straalt warm goud-karmozijn in een wereld van koud grijs, en kaatst je eigen klap terug als een vergeelde echo.', notitie: 'Het weerkaatst je sterkste klap. Verdeel je schade i.p.v. alles in één slag.' },
-  de_erfprins: { act: 2, soort: 'Baas', lore: 'De onverdiende erfgenaam van het Archief: een verwend jong dat zelf nooit iets maakte en nu je halve dek rooft om je ermee af te maken. Zonder iets om na te apen is hij niets — mét jouw werk is hij dodelijk.', notitie: 'Hij steelt je beste kaarten. Laat hem níéts overhouden: zolang jouw werk in zijn handen is, weigert hij te vallen.' },   /* v128: de metgezel-zin is geschrapt — met de metgezellen geparkeerd bestaat die breker niet meer (ontgrendelMetgezel heeft geen schrijver), en het Bestiarium wees hem nog aan als DE tip. Zodra de nieuwe Copycat-breker beslist is (drempeltafel_plan.md §2.11), komt hier zijn zin */
+  de_erfprins: { act: 2, soort: 'Baas', lore: 'De onverdiende erfgenaam van het Archief: een verwend jong dat zelf nooit iets maakte en nu je halve dek rooft om je ermee af te maken. Zonder iets om na te apen is hij niets — mét jouw werk is hij dodelijk.', notitie: 'Hij steelt je beste kaarten. Laat hem níéts overhouden: zolang jouw werk in zijn handen is, weigert hij te vallen.' },   /* v128: de metgezel-zin is geschrapt — met de metgezellen geparkeerd bestaat die breker niet meer (ontgrendelMetgezel heeft geen schrijver), en het Bestiarium wees hem nog aan als DE tip. Zodra de nieuwe Copycat-breker beslist is (drempeltafel_plan.md §2.11), komt hier zijn zin. Sinds DE NISSEN DICHT: zie M_metgezel_parkering_plan.md §2.7 */
   /* Act 3 — het Slachtblok */
   de_omroeper: { act: 3, soort: 'Meeloper', lore: 'Zijn rechterarm vergroeide tot een bronzen roeptoeter en zijn eigen stem is hij al jaren kwijt. Wat eruit galmt is de wil van de heerser — hard genoeg om de rest driester te maken.', notitie: 'Zijn Afkondiging buft het hele hof. Snoer hem vroeg de mond.' },
   het_klapvee: { act: 3, soort: 'Meeloper', lore: 'Tientallen handen en identieke glimlachjes, opgestapeld tot één wezen zonder hoofd. Het klapt omdat de rest klapt. Alleen is het zielig; in massa is het dodelijk.', notitie: 'Klapt harder per levende bondgenoot. Dun eerst de kudde uit.' },
@@ -2181,16 +2198,16 @@ const EVENTS = [
     ]
   },
   /* Fase 5 — mysterieuze-figuur-events: alleen in Act 2, alleen zolang het ACTIEVE
-     mysterie nog een figuur-scherf mist. De afscheidsregel = de codexTekst van dat
-     actieve mysterie → de hint verschilt per metgezel zonder te verklappen wélke. */
+     mysterie nog een figuur-scherf mist. De afscheidsregel = scherfTekst(sid): met de
+     metgezellen geparkeerd de tafelTekst van die scherf, anders de codexTekst (lore). */
   {
     id: 'lantaarndrager', titel: 'De Gedoofde Lantaarndrager', icoon: '🏮',
     toon: () => huidigeAct() >= 2 && typeof scherfTeVinden === 'function' && scherfTeVinden('figuur'),
-    tekst: 'Een gebogen figuur zit in het donker, een gedóófde lantaarn in de hand. „Iedereen hierbeneden jaagt op iets," fluistert hij. „Maar weet jij wel wát jou volgt? Luister..."',
+    tekst: 'Een gebogen figuur zit in het donker, een gedóófde lantaarn in de hand. „Iedereen hierbeneden jaagt op iets," fluistert hij. „Maar weet jij wel wát je bij je draagt? Luister..."',
     opties: [
       {
         label: 'Luister naar zijn raadsel', detail: 'Een scherf van een groter geheim.',
-        doe: () => { const sid = vindScherf('figuur'); if (!sid) return 'De figuur is al verstomd.'; const d = scherfDef(sid); toonScherfReveal(sid, { kop: '🜂 EEN RAADSEL WORDT EEN SCHERF' }); return (d ? d.codexTekst : '') + ' Zijn woorden branden zich in je geheugen — je draagt nu een scherf. 🜂'; }
+        doe: () => { const sid = vindScherf('figuur'); if (!sid) return 'De figuur is al verstomd.'; const d = scherfDef(sid); toonScherfReveal(sid, { kop: '🜂 EEN RAADSEL WORDT EEN SCHERF' }); return (d ? scherfTekst(sid) : '') + ' Zijn woorden branden zich in je geheugen — je draagt nu een scherf. 🜂'; }
       },
       { label: 'Loop door', detail: 'Het donker heeft genoeg geheimen.', doe: () => 'Je laat de figuur in zijn duister achter.' }
     ]
@@ -2198,11 +2215,11 @@ const EVENTS = [
   {
     id: 'spiegelaar', titel: 'De Naamloze Spiegelaar', icoon: '🪞',
     toon: () => huidigeAct() >= 2 && typeof scherfTeVinden === 'function' && scherfTeVinden('figuur'),
-    tekst: 'Een gestalte houdt je een blinde spiegel voor. „Alles hierbeneden is na te maken," zegt ze. „Op één ding na — en dát is precies wat jou zoekt. Kijk goed."',
+    tekst: 'Een gestalte houdt je een blinde spiegel voor. „Alles hierbeneden is na te maken," zegt ze. „Op één ding na — en dát ligt straks op tafel. Kijk goed."',
     opties: [
       {
         label: 'Tuur in de blinde spiegel', detail: 'Een scherf van een groter geheim.',
-        doe: () => { const sid = vindScherf('figuur'); if (!sid) return 'De spiegel is weer blind.'; const d = scherfDef(sid); toonScherfReveal(sid, { kop: '🜂 DE SPIEGEL TOONT EEN SCHERF' }); return 'Heel even toont de spiegel iets in het zwart. ' + (d ? d.codexTekst : '') + ' 🜂'; }
+        doe: () => { const sid = vindScherf('figuur'); if (!sid) return 'De spiegel is weer blind.'; const d = scherfDef(sid); toonScherfReveal(sid, { kop: '🜂 DE SPIEGEL TOONT EEN SCHERF' }); return 'Heel even toont de spiegel iets in het zwart. ' + (d ? scherfTekst(sid) : '') + ' 🜂'; }
       },
       { label: 'Zeg niets', detail: 'Je vertrouwt het niet.', doe: () => 'Je zwijgt. De spiegelaar vervaagt in het donker.' }
     ]

@@ -1329,7 +1329,8 @@ const Outro = (() => {
     };
     epi = {
       t: 0, spoed: false, klaar: false,
-      hond: dropsWitActief() ? 'wit' : (dropsGevallen() ? 'poot' : null),
+      hond: (typeof metgezellenAan === 'function' && !metgezellenAan()) ? null   /* DE NISSEN DICHT: geparkeerd → geen witte hond, geen pootafdrukken */
+        : (dropsWitActief() ? 'wit' : (dropsGevallen() ? 'poot' : null)),
       droom: ((typeof S !== 'undefined' && S && S.jeugddroom) || proloog.jeugddroom || null),
       n: collegas.length,
       regels: [
