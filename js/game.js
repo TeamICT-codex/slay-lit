@@ -84,7 +84,7 @@ const SAVE_SLEUTEL = 'slayit_save_v1';
    bewaard en wordt met de vlag uit nooit geschreven. Terugkeer = METGEZELLEN_AAN = true plus
    de checklist in .claude/notities/bazen_onderzoek/ontwerp/M_metgezel_parkering_plan.md §8. */
 const METGEZELLEN_AAN = false;
-let _devMetgezellen = false;     /* DEV-schakelaar, alleen deze sessie (nooit in localStorage: een vergeten override vervalst stil elke playtest) */
+let _devMetgezellen = false;     /* DEV-SHORTCUT: de schakelaar (devMetgezellen), alleen deze sessie — nooit in localStorage: een vergeten override vervalst stil elke playtest */
 function metgezellenAan() { return METGEZELLEN_AAN || _devMetgezellen; }
 
 /* ---------- acts (meerdere verdiepingen-ladders na elkaar) ---------- */

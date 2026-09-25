@@ -82,6 +82,10 @@ een fakkel; licht is tegelijk brandstof, valuta en zicht.
 
 ## Metgezellen & Familiars (Act 2-feature, idee van Thomas 13-06)
 
+> **GEPARKEERD sinds DE NISSEN DICHT (B1)** — `METGEZELLEN_AAN = false` (js/game.js): geen
+> metgezel daalt nog mee; de Codex-data blijft bewaard. Zie
+> `.claude/notities/bazen_onderzoek/ontwerp/M_metgezel_parkering_plan.md` (§8 = terugkeer).
+
 Zodra ontgrendeld blijft een metgezel permanent bij je, voor een
 beperkte duur (bv. N gevechten, of tot het einde van de act). Klein
 wezen naast de held op het strijdtoneel, met één duidelijk
@@ -510,6 +514,9 @@ bestaande engine met andere art + woorden.
 <!-- ============================================================ -->
 
 # Het Metgezel-Systeem: Scherven & De Drempel (live)
+
+> **GEPARKEERD sinds DE NISSEN DICHT (B1)** — zie hierboven en het M-plan. De scherven blijven
+> de inleg aan De Drempeltafel (v128); hun speler-tekst is de `tafelTekst` (via `scherfTekst`).
 
 ## Kernlus (één zin)
 Je verzamelt over runs heen **9 scherven** (3 per metgezel, herkenbaar aan familie-kleur),

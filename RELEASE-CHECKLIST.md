@@ -17,7 +17,7 @@ patcht, devOutro bij de outro — plus index.html en de twee CSS-sporen.
 
 | Wat | Waar | Hoe |
 |---|---|---|
-| **HET DEV-BLOK**: `DEV_SLEUTEL`/`devInst`/`devInstZet`/`devInstWis`, `devSlachtblok`, `devSprongAct2`, `devDrempel`, `devErfprins(Intro)`, `devSlijmkoning`, `devMetgezel`, de Drops-boog (`_devDropsFight`, `_devDropsReset`, `devDropsLevend/Grief/Reunie/WitVecht/Wis`), `DEV_BUILDS`, `DEV_KLAP` + `_devProcesDrempel`/`_devBedrijfLanding`/`_devNaIntro`/`_devKlapNu`, `devDicktator`, `devSprongAct3`, `devInstVlag`, `DEV_MENU`, `devVersie`, `devMenu`/`devMenuSluit`/`devMenuEsc`/`devMenuItem`, `devVersieHaak` én de drie bootregels onderaan | `js/game.js` — van de comment `DEV-SHORTCUT — HET DEV-BLOK` tot en met `if (!document.getElementById('inst-versie')) document.addEventListener('DOMContentLoaded', devVersieHaak);` (~r10344–11091) | De hele regio in één keer wissen. Het blok is zo geknipt dat er niets van het spel tussen staat. **NB:** `vulInstPaneel()` (bij `toonInstellingen`) BLIJFT — dat is gewone code die het blok alleen gebruikte |
+| **HET DEV-BLOK**: `DEV_SLEUTEL`/`devInst`/`devInstZet`/`devInstWis`, `devSlachtblok`, `devSprongAct2`, `devDrempel`, `devErfprins(Intro)`, `devSlijmkoning`, `devMetgezel`, `devMetgezellen` + `_devMgMag` (DE NISSEN DICHT: de schakelaar voor de geparkeerde metgezellen; de `let _devMetgezellen` naast `METGEZELLEN_AAN` mag mee weg, dan wordt `metgezellenAan()` gewoon `return METGEZELLEN_AAN;`), de Drops-boog (`_devDropsFight`, `_devDropsReset`, `devDropsLevend/Grief/Reunie/WitVecht/Wis`), `DEV_BUILDS`, `DEV_KLAP` + `_devProcesDrempel`/`_devBedrijfLanding`/`_devNaIntro`/`_devKlapNu`, `devDicktator`, `devSprongAct3`, `devInstVlag`, `DEV_MENU`, `devVersie`, `devMenu`/`devMenuSluit`/`devMenuEsc`/`devMenuItem`, `devVersieHaak` én de drie bootregels onderaan | `js/game.js` — van de comment `DEV-SHORTCUT — HET DEV-BLOK` tot en met `if (!document.getElementById('inst-versie')) document.addEventListener('DOMContentLoaded', devVersieHaak);` (~r10344–11091) | De hele regio in één keer wissen. Het blok is zo geknipt dat er niets van het spel tussen staat. **NB:** `vulInstPaneel()` (bij `toonInstellingen`) BLIJFT — dat is gewone code die het blok alleen gebruikte |
 | Logo-klik | `index.html:23` | `onclick="devMenu()"` + `title="DEV-menu"` + `style="cursor:pointer"` + de `<!-- DEV-SHORTCUT -->`-comment weghalen |
 | De CSS van het menu | `css/style.css` ~r5470–5516 (`DEV-SHORTCUT: HET DEV-MENU`, t/m `#dev-menu .dev-dicht { … }`) **en** `css/mobiel.css` ~r421–445 (`DEV-SHORTCUT: HET DEV-MENU op het mobiele spoor`) | Beide blokken wissen. Twee sporen, dus twee plekken |
 | `devMobiel` + de Ctrl+Shift+M-listener (+ de enige `console.info`) | `js/game.js` ~r127–143 | Blok wissen. Staat bewust buiten het dev-blok: hij zet `data-modus` vóór de eerste paint. De CSS-comments die devMobiel noemen (style.css/mobiel.css) zijn documentatie — mogen blijven of meegeschoond |
@@ -52,6 +52,14 @@ vrijspeelweg meer (bestaande Codexen blijven werken). Vóór release: die parker
 beslissen (Drops/Copycat-breker — zie `.claude/notities/metgezel_impact.md`) en de dode
 `.drempel-*`-regels in `css/style.css` (~r3549–3587) opruimen.
 
+- [x] **De parkering is beslist en afgebouwd: DE NISSEN DICHT (B1).** Eén vlag
+  `METGEZELLEN_AAN = false` (js/game.js, gelezen via `metgezellenAan()`), zeven poorten, 24
+  speler-teksten; een lopende run met een metgezel stuurt hem bij het laden weg met één regel;
+  de Codex-data blijft bewaard maar wordt niet meer geschreven. Plan, beslissingen en de
+  terugkeer-checklist (§8): `.claude/notities/bazen_onderzoek/ontwerp/M_metgezel_parkering_plan.md`.
+  Acceptatie: `tools/nissen_acceptatie.js`.
+- [ ] De dode `.drempel-*`-CSS opruimen (losse opruimactie, geen deel van de parkering).
+
 ### 1.2 Cache-bump als release-markering
 - `sw.js`: `slayit-v35` → volgende versie bij de release-commit (schone lei op elk toestel;
   de oude cache wordt bij activate gewist).
@@ -70,7 +78,7 @@ beslissen (Drops/Copycat-breker — zie `.claude/notities/metgezel_impact.md`) e
 | Heal-na-elk-gevecht te mild? (tot +17 HP/gevecht) | de heal-hook in `gevechtGewonnen` (opties: <50%-HP-gate / halveren / enkel na elite+) |
 | Slijmkoning-intro-pacing | `STAP` (nu 3900 ms per stadium) |
 | Gifmagiër (co-)sterkste held | pas ná playtest; zo ja: tempo-hefboom (gifflits 0→1), niet de gif-getallen |
-| HET PROCES: is de matige gifbuild te hard gestraft? (bot-meting: 0/12 winst, ook mét heeldrank en metgezel) | **GEEN dial helpt** — gemeten, 12 seeds per cel: hp 200 / 160 / 120 → 0-1/12, tarief 2/3 → 0/12, hofcap 2 → 0/12, 0-kostgewicht 1 → 0/12, claqueur vanaf II → 0/12, factuur bijna uit (2 + 1/post, cap 2) → 1/12. Pas met de Factuur VOLLEDIG uit wint hij 8-10/12. Ook **DE VRIJSTELLING** `DICK.FACTUUR.vrij` (v109, standaard 0 = uit, eerste N posten per beurt gratis) helpt niet: vrij 1 → gif_matig 0/12 én mens 0/12, vrij 2 → gif_matig 0/12 (mens 6/12 factuurbewust) maar gif_opt én kristal naar 12/12/12, vrij 3 → gif_matig 1/12. Dit is een ontwerpkeuze, geen knop: zie de drie ontwerpvragen onderaan §6 van `.claude/notities/eindbaas_contract.md` |
+| HET PROCES: is de matige gifbuild te hard gestraft? (bot-meting: 0/12 winst, ook mét heeldrank en metgezel — metgezel geparkeerd sinds DE NISSEN DICHT, alle metingen voortaan solo) | **GEEN dial helpt** — gemeten, 12 seeds per cel: hp 200 / 160 / 120 → 0-1/12, tarief 2/3 → 0/12, hofcap 2 → 0/12, 0-kostgewicht 1 → 0/12, claqueur vanaf II → 0/12, factuur bijna uit (2 + 1/post, cap 2) → 1/12. Pas met de Factuur VOLLEDIG uit wint hij 8-10/12. Ook **DE VRIJSTELLING** `DICK.FACTUUR.vrij` (v109, standaard 0 = uit, eerste N posten per beurt gratis) helpt niet: vrij 1 → gif_matig 0/12 én mens 0/12, vrij 2 → gif_matig 0/12 (mens 6/12 factuurbewust) maar gif_opt én kristal naar 12/12/12, vrij 3 → gif_matig 1/12. Dit is een ontwerpkeuze, geen knop: zie de drie ontwerpvragen onderaan §6 van `.claude/notities/eindbaas_contract.md` |
 | HET PROCES: valt de mediaan-Slachter te makkelijk? (bot: 12/10/12 over drie beleidsregels, eindigt op ±25% HP) | `DICK.EXECUTIE` (18 → 22) **of** `DICK.FACTUUR.basis3` (7 → 10), niet allebei: samen zakt hij naar 8/12 agressief. `DICK.ONTSLAG` (18/22/26) is nog ongebruikt |
 | HET PROCES: te veel lege rondes? | `DICK.claqueurVanaf` (3 → 2) is gemeten en **werkt niet**: nulschade blijft 32-48% (de vaste cyclus van drie zet zelf al één schadeloze decreetronde per drie = 33% bodem) en de mediaan-Slachter zakt naar 8/12 factuurbewust. Eerst de definitie vastleggen (§6, ontwerpvraag 2) |
 | HET TONEEL (v114): Act 2 gevecht 1 (de schedelgang) moet 31,6% van haar breedte laten wegsnijden (gemeten op 1440×900; de hertest-suite meldt dit als LET OP-regel met het actuele getal) om de voeten op de geschilderde vloer te krijgen — hergenereren of de crop accepteren? | De prompt staat klaar (`assets/achtergronden/PROMPTS.txt`, sectie GEVECHTSTONEEL — RONDE 2, samen met Act 2 EPISCH 1 en 2). Genereren en overschrijven; daarna in `js/art.js` de GROND-entry op `{ grond: 61 }` zetten en `midden` schrappen. Niets genereren mag ook: de plaat klópt, ze zoomt alleen ver in |
@@ -90,7 +98,8 @@ beslissen (Drops/Copycat-breker — zie `.claude/notities/metgezel_impact.md`) e
   hun eigen platen gedropt zijn; `artIdVan` schakelt per pose vanzelf om. Vóór een echte
   release zijn minstens `de_griffier(+_death)` en `de_deurwaarder(+_death)` gewenst —
   anders staat er een Omroeper onder een andere naam.
-- **De metgezel slaat door de ceremonie heen**: valt DE HERVERKIEZING tijdens jouw beurt,
+- **De metgezel slaat door de ceremonie heen** *(geparkeerd sinds DE NISSEN DICHT: onbereikbaar;
+  hoort bij de terugkeer-checklist, M_metgezel_parkering_plan.md §8)*: valt DE HERVERKIEZING tijdens jouw beurt,
   dan kan je metgezel de verse vorm 2 nog één keer raken. Dat is een eigen actor, geen
   vervolgslag van jouw reeks (die wordt wél afgeknipt) — bewust zo gelaten.
 
