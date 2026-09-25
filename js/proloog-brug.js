@@ -751,7 +751,8 @@
      hem uitspeelde, anders de gezien-scènes.
      ============================================================ */
   const HOOFDSTUK_TERUGVAL = {
-    overzicht: 'Een Productief Leven™', boot: 'B.A.A.S. start op', kantoor: 'Het kantoor',
+    /* R3: dezelfde namen als HOOFDSTUKKEN in proloog/data.js (0 inklokken, 1 de CRT, 2 het bureau) */
+    overzicht: 'Maandag, 06:42', boot: 'Een Productief Leven™', kantoor: 'Het Glimlachquotum',
     gesprek: 'Het Functioneringsgesprek', breekpunt: 'De Eindafrekening', afdaling: 'De Afgrond'
   };
   function gezienHoofdstukken() {
