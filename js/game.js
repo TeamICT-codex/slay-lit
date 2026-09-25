@@ -77,6 +77,16 @@ try {
 
 const SAVE_SLEUTEL = 'slayit_save_v1';
 
+/* ---------- DE NISSEN DICHT (B1, 25 sep 2026): de metgezellen zijn GEPARKEERD ----------
+   Eén vlag, één lezer. metgezellenAan() is de ENIGE plek die de vlag leest: een grep op
+   'metgezellenAan' is de volledige kaart van de parkering (zeven poorten in dit bestand, de
+   teksten in data.js/outro.js). De Codex-data (metgezellen, gevallen, mysteries, ...) blijft
+   bewaard en wordt met de vlag uit nooit geschreven. Terugkeer = METGEZELLEN_AAN = true plus
+   de checklist in .claude/notities/bazen_onderzoek/ontwerp/M_metgezel_parkering_plan.md §8. */
+const METGEZELLEN_AAN = false;
+let _devMetgezellen = false;     /* DEV-schakelaar, alleen deze sessie (nooit in localStorage: een vergeten override vervalst stil elke playtest) */
+function metgezellenAan() { return METGEZELLEN_AAN || _devMetgezellen; }
+
 /* ---------- acts (meerdere verdiepingen-ladders na elkaar) ---------- */
 const ACTS_MAX = 3;                       /* Act 3 is LIVE — de outro speelt nu ná de DICKtator */
 const ACT_NAMEN = { 1: 'De Diepte', 2: 'Het Archief', 3: 'Het Slachtblok' };
@@ -2213,7 +2223,7 @@ function alleVijanden() { return S.gevecht ? S.gevecht.vijanden.filter(v => !v.d
 /* de metgezel-actor in het huidige gevecht (of null), en run-niveau-checks */
 function gMet() { return S.gevecht ? S.gevecht.metgezel : null; }
 function metgezelDef() { return (S && S.metgezel && METGEZELLEN[S.metgezel.id]) || null; }
-function heeftMetgezel() { return !!(S && S.metgezel && !S.metgezel.vluchtig && METGEZELLEN[S.metgezel.id]); }
+function heeftMetgezel() { return !!(metgezellenAan() && S && S.metgezel && !S.metgezel.vluchtig && METGEZELLEN[S.metgezel.id]); }   /* poort V2 (geparkeerd → nooit een metgezel in een gevecht) */
 
 /* schade-preview voor kaartteksten (incl. Kracht, Zwak, relikwie).
    LET OP: Kracht/Zwak/Stalen Vuist beïnvloeden ALLEEN echte aanvalsschade ('dmg').
@@ -3516,7 +3526,7 @@ function synergieBoekHtml(mgid) {
 /* werf een metgezel voor de rest van de run (HP gaat mee tussen gevechten) */
 function geefMetgezel(id) {
   const def = METGEZELLEN[id];
-  if (!def) return;
+  if (!def || !metgezellenAan()) return;   /* poort V3: geparkeerd → niemand werft, niets naar de Codex */
   const mx = metgezelMaxHp(id);
   S.metgezel = { id, hp: mx, maxHp: mx, vluchtig: false };
   ontdek('metgezellen', id);
@@ -3542,6 +3552,7 @@ function ontgrendeldeMetgezellen() {
 /* welke vrijgespeelde metgezel daalt déze run mee? Rotatie per run (Codex.runs) zodat élke
    ontgrendelde metgezel aan bod komt over je afdalingen heen. Null als er nog niets vrij is. */
 function kiesRunMetgezel() {
+  if (!metgezellenAan()) return null;   /* poort V4: geparkeerd → geen heldkeuze-band, geen rotatie */
   const lijst = ontgrendeldeMetgezellen();
   if (!lijst.length) return null;
   return lijst[(Codex.runs || 0) % lijst.length];
@@ -3762,7 +3773,7 @@ function metgezelOpoffering() {
    Géén teller — puur de bestaande gevallen-gate + de voltooid-vlag van drops_wit. Het spel
    gedraagt zich alsof hij écht voorgoed weg is; de afwezigheid ÍS de tekst. */
 function dropsInRouw() {
-  return Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops') && !isOntgrendeld('drops_wit');
+  return metgezellenAan() && Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops') && !isOntgrendeld('drops_wit');
 }
 /* een gloeiende pootafdruk in de as bij elke doof-keuze; de allereerste doof ná zijn dood
    is een wit vonkje dat meteen sterft (zaadje-nul, max 1× per save). Presentatie: bewust
@@ -3810,7 +3821,7 @@ function pootSpoorPayoff() {
    Twee geheime poorten, één wonder; eenmalig permanent via isOntgrendeld('drops_wit').
    Bewust GEEN scherven-mysterie (alleen de voltooid-vlag), zodat het anders aanvoelt. */
 function magWitTerugkeren() {
-  return inGevecht() && S.gevecht
+  return metgezellenAan() && inGevecht() && S.gevecht             /* poort V6: geparkeerd → geen grief-terugkeer */
     && !S.daily                                               /* eerlijk veld: geen cross-run-wonder in de dagelijkse afdaling (debug-sweep) */
     && !heeftMetgezel()                                       /* 'terugkeer uit het zwart' alléén als er GEEN levende Drops staat — anders zou drops_wit een nog-aanwezige companion mid-gevecht overschrijven */
     && Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops')
@@ -3819,7 +3830,7 @@ function magWitTerugkeren() {
     && S.gevecht.vijanden.some(v => v.id === 'de_erfprins' && !v.dood);
 }
 function revealDropsWit(g, poort) {
-  if (!g || g.voorbij || isOntgrendeld('drops_wit') || (S && S.daily)) return;   /* tweede net: nooit op een daily */
+  if (!metgezellenAan() || !g || g.voorbij || isOntgrendeld('drops_wit') || (S && S.daily)) return;   /* tweede net: nooit op een daily */
   ontgrendelMetgezel('drops_wit');     /* eenmalig + permanent (Codex), geen scherven */
   Klank.sfx('schitter');
   const sc = document.getElementById('scherm-gevecht');
@@ -4261,6 +4272,14 @@ function laadSpel() {
        metgezel neutraliseren zodat heeftMetgezel() veilig false geeft */
     if (S.metgezel && (typeof S.metgezel !== 'object' || !METGEZELLEN[S.metgezel.id] || typeof S.metgezel.hp !== 'number')) S.metgezel = null;
     if (S.runMetgezel === 'drops_wit') S.runMetgezel = null;   /* stale cache uit oude saves: de Witte hoort nooit in de auto-rotatie (enkel via het grief-moment) */
+    /* DE NISSEN DICHT: een run van vóór de parkering stuurt zijn metgezel netjes weg (één regel,
+       één keer). laadSpel markeert alleen; doorgaan() toont de regel en bewaart meteen, zodat
+       hij bij een volgende herlaad niet terugkomt. */
+    if (!metgezellenAan() && (S.metgezel || S.runMetgezel)) {
+      const weg = S.metgezel && METGEZELLEN[S.metgezel.id];
+      S.metgezel = null; S.runMetgezel = null;
+      if (weg) S._mgAfscheid = weg.naam;
+    }
     if (S.toevalStaat !== undefined) Toeval.zetStaat(S.toevalStaat);
     return true;
   } catch (e) { return false; }
@@ -4297,7 +4316,7 @@ function renderTopbalk() {
      kamers door + gevlucht-status; klik opent zijn boek-pagina */
   const tbM = $('#tb-metgezel');
   if (tbM) {
-    const m = S.metgezel, mdef = m && METGEZELLEN[m.id];
+    const m = S.metgezel, mdef = metgezellenAan() && m && METGEZELLEN[m.id];   /* poort V8: een stale/DEV-gezette metgezel toont geen chip */
     if (mdef) {
       const laatsteAct = huidigeAct() >= ACTS_MAX;
       tbM.style.display = '';
@@ -9908,7 +9927,7 @@ function toonRust() {
   ).join('');
   /* Drops' geest bij het kampvuur — alleen in het grief-venster: hij offerde zich
      (Codex.gevallen) en De Witte is nog niet teruggekeerd. Stil aanwezig, geen tekst. */
-  const geestRouw = Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops')
+  const geestRouw = metgezellenAan() && Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops')   /* poort V7 */
     && !isOntgrendeld('drops_wit')
     && !(Array.isArray(Codex.metgezellen) && Codex.metgezellen.includes('drops_wit'));
   $('#scherm-rust').innerHTML = `
@@ -10737,14 +10756,14 @@ function devSprongAct2() {
   while (S.dranken.length < drankSlots()) S.dranken.push('heeldrank');
   delete S.beloning; delete S.winkel; delete S.huidigEvent;
   S.kaart = genereerKaart();   /* act-bewust → de Act 2-ladder */
-  /* DEV: leg de drie Drops-scherven in je GEDRAGEN tas zodat je de Erfprins-fluister én het
-     Drempel-trio kunt testen — maar NOOIT een verdiende unlock terugdraaien of een gratis
-     trio geven aan wie Drops al wekte (review 27 aug). */
+  /* DEV: leg drie scherven in je GEDRAGEN tas (ze banken bij het einde van de run, voor de
+     Drempeltafel van een volgende afdaling). Met de metgezellen AAN (DEV-schakelaar) blijft de
+     oude regel: NOOIT een gratis trio aan wie Drops al wekte (review 27 aug). */
   S.metgezel = null;
-  const drempelTest = !isOntgrendeld('drops');
+  const drempelTest = !metgezellenAan() || !isOntgrendeld('drops');
   if (drempelTest) (window.MYSTERIES && MYSTERIES.drops.vereist || []).forEach(sid => draagScherf(sid));
   saveSpel();
-  melding(`⚡ DEV: Act 2 — 150 HP + 3 heeldranken${drempelTest ? ' + de 3 Drops-scherven in je tas' : ''}.`);
+  melding(`⚡ DEV: Act 2 — 150 HP + 3 heeldranken${drempelTest ? ' + drie scherven in je tas' : ''}.`);
   renderKaartScherm();
 }
 
@@ -10799,10 +10818,28 @@ function devSlijmkoning() {
   melding('⚡ DEV: meteen tegen de Slijmkoning — 150 HP + heeldranken + opgevuld dek.');
 }
 
+/* DEV-SHORTCUT (DE NISSEN DICHT): de geparkeerde metgezellen voor DEZE sessie aanzetten.
+   Leeft alleen in het geheugen (zoals DICK.tempo): een herlaad parkeert ze weer. Bij uit
+   verdwijnt ook een lopende metgezel uit de run; een metgezel die al in het huidige gevecht
+   staat, blijft tot het einde van dat gevecht (g.metgezel wordt bij startGevecht gebouwd). */
+function devMetgezellen(aan) {
+  _devMetgezellen = !!aan;
+  if (!aan && S) { S.metgezel = null; S.runMetgezel = null; }
+  if (S) renderTopbalk();
+  melding(aan ? '⚡ DEV: metgezellen AAN (alleen deze sessie).' : '⚡ DEV: metgezellen weer geparkeerd.');
+}
+/* de weigering is ZICHTBAAR (geen stille no-op): wie met de vlag uit een metgezel kiest, ziet waarom er niets gebeurt */
+function _devMgMag() {
+  if (metgezellenAan()) return true;
+  melding('⚡ DEV: de metgezellen staan geparkeerd (METGEZELLEN_AAN = false) — zet eerst de DEV-schakelaar aan.');
+  return false;
+}
 /* DEV-SHORTCUT: metgezel aan/uit voor tests (synergie, Roddel-vloek, topbalk-chip,
    victory-poses). In een lopend gevecht stapt hij pas het VOLGENDE gevecht in
-   (g.metgezel wordt bij startGevecht gebouwd — de v70-les). */
+   (g.metgezel wordt bij startGevecht gebouwd — de v70-les). Wegsturen (id null) mag
+   altijd, ook geparkeerd: opruimen mag altijd. */
 function devMetgezel(id) {
+  if (id && !_devMgMag()) return;
   if (!S) nieuwSpel('slachter');
   if (!id) { S.metgezel = null; renderTopbalk(); melding('⚡ DEV: metgezel weggestuurd.'); return; }
   if (!METGEZELLEN[id]) { melding('⚡ DEV: onbekende metgezel: ' + id); return; }
@@ -10831,6 +10868,7 @@ function _devDropsReset() {
 }
 /* 1 · levende Drops vs Erfprins */
 function devDropsLevend() {
+  if (!_devMgMag()) return;
   if (!S) nieuwSpel('slachter');
   _devDropsReset(); ontgrendelMetgezel('drops'); geefMetgezel('drops');
   _devDropsFight(['de_erfprins'], 'baas');
@@ -10838,6 +10876,7 @@ function devDropsLevend() {
 }
 /* 2 · grief — silhouet + pootafdruk */
 function devDropsGrief() {
+  if (!_devMgMag()) return;
   if (!S) nieuwSpel('slachter');
   _devDropsReset(); Codex.gevallen = ['drops']; Codex.dropsOfferRun = 0; Codex.runs = 2; bewaarCodex();
   _devDropsFight(['groene_slijm'], 'gevecht');
@@ -10846,6 +10885,7 @@ function devDropsGrief() {
 }
 /* 3 · reünie NU (cinematic + de Witte verschijnt) */
 function devDropsReunie() {
+  if (!_devMgMag()) return;
   if (!S) nieuwSpel('slachter');
   _devDropsReset(); Codex.gevallen = ['drops']; Codex.dropsOfferRun = 0; Codex.runs = 2; bewaarCodex();
   _devDropsFight(['de_erfprins'], 'baas');
@@ -10854,6 +10894,7 @@ function devDropsReunie() {
 }
 /* 4 · Drops de Witte vecht mee */
 function devDropsWitVecht() {
+  if (!_devMgMag()) return;
   if (!S) nieuwSpel('slachter');
   _devDropsReset(); Codex.gevallen = ['drops']; ontgrendelMetgezel('drops'); ontgrendelMetgezel('drops_wit'); bewaarCodex();
   geefMetgezel('drops_wit');
@@ -10876,7 +10917,7 @@ const DEV_BUILDS = {
   slachter_mid: {
     held: 'slachter', hp: 88, label: 'Slachter gemiddeld (de MEDIAAN-speler)',
     relikwieen: ['brandend_bloed', 'krachtsteen', 'stalen_vuist', 'stempelkussen', 'brandmerkijzer'],
-    dranken: ['heeldrank'], laster: 1, metgezel: 'drops',
+    dranken: ['heeldrank'], laster: 1, metgezel: null,   /* solo: de metgezellen zijn geparkeerd (DE NISSEN DICHT) */
     dek: [['slag', 1], ['slag', 1], ['slag', 0], ['slag', 0], ['verdediging', 1], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0],
           ['knal', 0], ['zware_klap', 1], ['dubbelslag', 0], ['in_drievoud', 0], ['uithaal', 0], ['executie', 0], ['afgekeurd', 0],
           ['ontslagbrief', 0], ['tribunaal', 0], ['schildmuur', 1], ['schildmuur', 0], ['metaalhuid', 0], ['het_hakblok', 0], ['originele_handtekening', 0]]
@@ -10884,7 +10925,7 @@ const DEV_BUILDS = {
   gif_opt: {
     held: 'gifmagier', hp: 74, label: 'Gifmagiër geoptimaliseerd (de STERKSTE build)',
     relikwieen: ['slangenamulet', 'smaragden_ring', 'inktpot', 'oorlogsbanier', 'stempelkussen', 'martelaarskroon'],
-    dranken: ['heeldrank'], laster: 0, metgezel: 'drops',
+    dranken: ['heeldrank'], laster: 0, metgezel: null,
     dek: [['prik', 0], ['prik', 1], ['dodelijke_kus', 1], ['gifflits', 1], ['gifflits', 0], ['gifpamflet', 1], ['gifpamflet', 0],
           ['inktklerk_steek', 0], ['snelle_steek', 1], ['slangenbeet', 0], ['giftand', 1], ['katalyse', 1], ['nachtschade', 0],
           ['karaktermoord', 0], ['de_gifbeker', 0], ['lastercampagne', 0], ['verlammend_gif', 0],
@@ -10893,7 +10934,7 @@ const DEV_BUILDS = {
   gif_opt_kristal: {
     held: 'gifmagier', hp: 74, label: 'Gifmagiër geoptimaliseerd + Energiekristal',
     relikwieen: ['slangenamulet', 'smaragden_ring', 'inktpot', 'oorlogsbanier', 'stempelkussen', 'energiekristal'],
-    dranken: ['heeldrank'], laster: 0, metgezel: 'drops',
+    dranken: ['heeldrank'], laster: 0, metgezel: null,
     dek: [['prik', 0], ['prik', 1], ['dodelijke_kus', 1], ['gifflits', 1], ['gifflits', 0], ['gifpamflet', 1], ['gifpamflet', 0],
           ['inktklerk_steek', 0], ['snelle_steek', 1], ['slangenbeet', 0], ['giftand', 1], ['katalyse', 1], ['nachtschade', 0],
           ['karaktermoord', 0], ['de_gifbeker', 0], ['lastercampagne', 0], ['verlammend_gif', 0],
@@ -11140,7 +11181,7 @@ const DEV_MENU = [
   {
     kop: '🧭 Springen',
     items: [
-      { label: '🗺️ Act 2 · kaart', tip: 'Overschrijft je lopende run: Act 2-kaart, 150 HP, 3 heeldranken (+ de Drops-scherven als Drops nog niet gewekt is).', doe: () => devSprongAct2() },
+      { label: '🗺️ Act 2 · kaart', tip: 'Overschrijft je lopende run: Act 2-kaart, 150 HP, 3 heeldranken + drie scherven in je tas.', doe: () => devSprongAct2() },
       { label: '🌋 Act 3 · kaart', tip: 'Overschrijft je lopende run: de Act 3-ladder (het Slachtblok), 150 HP, volle heeldranken.', doe: () => devSprongAct3() },
       { label: '🫠 Slijmkoning', tip: 'Overschrijft je lopende run en start meteen het Act 1-baasgevecht met 150 HP + opgevuld dek.', doe: () => devSlijmkoning() },
       { label: '🤴 Erfprins', tip: 'Overschrijft je lopende run en start het Act 2-baasgevecht SOLO (geen metgezel), 150 HP + dek van 18.', doe: () => devErfprins() },
@@ -11155,7 +11196,7 @@ const DEV_MENU = [
         opties: [
           { v: 'slachter_mid', label: 'Slachter mediaan', tip: 'De MEDIAAN-speler uit het meetharnas: 88 HP, 22 kaarten, 5 relikwieën. De standaard.' },
           { v: 'gif_opt', label: 'Gifmagiër sterk', tip: 'De sterkste gemeten build: 74 HP, geoptimaliseerd gifdek, 6 relikwieën.' },
-          { v: 'gif_matig', label: 'Gifmagiër matig', tip: 'De build die NIET vermorzeld mag worden: 70 HP, 15 kaarten, 1 relikwie, geen metgezel.' },
+          { v: 'gif_matig', label: 'Gifmagiër matig', tip: 'De build die NIET vermorzeld mag worden: 70 HP, 15 kaarten, 1 relikwie.' },
           { v: 'choreo', label: 'Choreo (kijkmodus)', tip: 'Het oude milde gedrag: 150 HP, volle dranken, willekeurig dek. Om de voorstelling te bekijken, niet om te balanceren.' }
         ]
       },
@@ -11178,8 +11219,9 @@ const DEV_MENU = [
     ]
   },
   {
-    kop: '🐾 Metgezel — in gevecht: vanaf het volgende',
+    kop: '🐾 Metgezel (geparkeerd) — in gevecht: vanaf het volgende',
     items: [
+      { soort: 'schakel', label: '🐾 Metgezellen (geparkeerd)', tip: 'Zet de geparkeerde metgezellen AAN voor deze sessie (niet bewaard: een herlaad parkeert ze weer). Raakt je save niet; de Drops-boog hieronder schrijft wel in je Codex.', stand: () => metgezellenAan(), doe: aan => devMetgezellen(aan) },
       { label: '🐕 Drops', tip: 'Zet Drops in je lopende run (raakt je save, niet je Codex). In een gevecht stapt hij pas vanaf het volgende mee.', doe: () => devMetgezel('drops') },
       { label: '🛡️ Vlamwacht', tip: 'Zet de Vlamwacht in je lopende run (raakt je save, niet je Codex).', doe: () => devMetgezel('vlamwachter') },
       { label: '🍃 Mosgeest', tip: 'Zet de Mosgeest in je lopende run (raakt je save, niet je Codex).', doe: () => devMetgezel('mosgeest') },
@@ -11438,8 +11480,10 @@ function volgendeAct(verslagenBaas) {
   /* Drops komt mee zodra je 'm hebt VRIJGESPEELD (zie het Metgezel-Mysterie) én er
      geen actieve metgezel is. Een in de vorige act gevluchte Drops (heeftMetgezel()
      is dan false want vluchtig) sluit hier weer aan — zo lost de 'later terugvinden'-
-     belofte zich in i.p.v. in permanente limbo te blijven hangen. */
-  if (!heeftMetgezel()) {
+     belofte zich in i.p.v. in permanente limbo te blijven hangen.
+     Poort V5 (DE NISSEN DICHT): het HELE blok is dicht met de vlag uit — anders vuurt de
+     instapmelding nog op een stale S.runMetgezel terwijl geefMetgezel stil weigert. */
+  if (metgezellenAan() && !heeftMetgezel()) {
     /* een gevluchte metgezel sluit weer aan; anders de voor déze run gekozen vrijgespeelde
        metgezel (één keer per run vastgezet via S.runMetgezel zodat hij niet per act wisselt).
        OP EEN DAILY RUN komt er GÉÉN cross-run-vrijgespeelde metgezel mee — net als de Schrijn
@@ -12241,7 +12285,17 @@ function hervatScherm() {
   renderKaartScherm();
 }
 function doorgaan() {
-  if (laadSpel()) hervatScherm();
+  if (laadSpel()) {
+    /* de afscheidsregel van laadSpel (DE NISSEN DICHT): eerst uit S halen, zodat hij nooit in
+       een save belandt (hervatScherm kan zelf bewaren), dan meteen bewaren → één keer */
+    const afscheid = S && S._mgAfscheid;
+    if (S) delete S._mgAfscheid;
+    hervatScherm();
+    if (afscheid) {
+      saveSpel();
+      setTimeout(() => { try { melding('🐾 ' + afscheid + ' blijft achter. Vanaf hier daal je alleen af.'); } catch (e) {} }, 1600);
+    }
+  }
   else { melding('Geen opgeslagen spel gevonden.'); naarTitel(); }
 }
 
