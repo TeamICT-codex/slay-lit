@@ -47,7 +47,7 @@ window.Proloog = (function () {
     },
     stop: function () { actief = false; clearTimeout(tm); window.__plLog.push({ stop: true }); if (o && o.host && o.host.shadowRoot) o.host.shadowRoot.innerHTML = ''; },
     slaOver: function () {},
-    hoofdstukken: [{ hoofdstuk: 0, naam: 'Maandag, 06:42' }, { hoofdstuk: 1, naam: 'Inklokken' }, { hoofdstuk: 2, naam: 'Het kantoor' }, { hoofdstuk: 3, naam: 'Het Functioneringsgesprek' }, { hoofdstuk: 'factuur', naam: 'De Eindafrekening' }, { hoofdstuk: 'val', naam: 'In de wacht' }, { hoofdstuk: 'afgrond', naam: 'De Afgrond' }],
+    hoofdstukken: [{ hoofdstuk: 0, naam: 'Maandag, 06:42' }, { hoofdstuk: 1, naam: 'De CRT degausst' }, { hoofdstuk: 2, naam: 'Het Glimlachquotum' }, { hoofdstuk: 3, naam: 'Het Functioneringsgesprek' }, { hoofdstuk: 'factuur', naam: 'De Eindafrekening' }, { hoofdstuk: 'val', naam: 'In de wacht' }, { hoofdstuk: 'afgrond', naam: 'De Afgrond' }],   /* R3: de namen van 1 en 2 volgen proloog/data.js */
     get actief() { return actief; }
   };
 })();`;
@@ -400,7 +400,7 @@ function diffPng(a, b) {
     const voorLaden = await page.evaluate(() => [...document.querySelectorAll('#codex-inhoud .pl-hfst')].map(b => b.dataset.plHoofdstuk).join(','));
     await slaap(1200);
     const naLaden = await page.evaluate(() => [...document.querySelectorAll('#codex-inhoud .pl-hfst')].map(b => b.dataset.plHoofdstuk + '=' + b.textContent.trim()).join(' · '));
-    t(voorLaden === '0,2' && /^0=1 · Maandag, 06:42 · 2=3 · Het kantoor$/.test(naLaden), `Codex (half gespeeld, gezien [0,2]): vóór het laden ${voorLaden}, daarna "${naLaden}"`);
+    t(voorLaden === '0,2' && /^0=1 · Maandag, 06:42 · 2=3 · Het Glimlachquotum$/.test(naLaden), `Codex (half gespeeld, gezien [0,2]): vóór het laden ${voorLaden}, daarna "${naLaden}"`);
     t(page.__f.length === 0, `Codex half gespeeld: geen paginafouten` + (page.__f.length ? ' — ' + page.__f[0] : ''));
     await ctx.close();
   }
