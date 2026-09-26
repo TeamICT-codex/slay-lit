@@ -1263,13 +1263,24 @@ body.lite .lb-daily-cta { animation: none; }
 
 /* ---------- gevecht ---------- */
 #scherm-gevecht { overflow: hidden; }
-#scherm-gevecht.beef { animation: beef .35s; }
+/* DE SCHOK SCHUDT HET TONEEL, NIET HET SCHERM (B2 · B0.3). Vroeger animeerde .beef
+   transform op #scherm-gevecht zelf. Dat maakte het scherm het containing block van zijn
+   position:fixed-kinderen (plaat, canvas, bazenbalk, spraak), en die sprongen dan 52px
+   omlaag: gemeten 52-55px op 1440x900 en 1366x768, 2D en 3D, voor alle drie de bazen.
+   Nu schudden alleen de toneellagen, op de LOSSE translate-property: die componeert met
+   de inline parallax-transform die gevechtTik() in 3D elke frame op plaat en canvas zet.
+   Een plaat die net een eigen stoot speelt (.plaat-dreun/-kantel/-instort/-inzoom) laten
+   we met rust: de animation-property is één waarde, en de beef zou die stoot afbreken en
+   daarna laten herstarten. Idem #strijdveld tijdens de .toneelschok van de regie. */
+#scherm-gevecht.beef :is(#gevecht-achtergrond, #gevecht-achtergrond-2):not(.plaat-dreun, .plaat-kantel, .plaat-instort, .plaat-inzoom),
+#scherm-gevecht.beef :is(#vista-canvas, #arena-tint),
+#scherm-gevecht.beef #strijdveld:not(.toneelschok) { animation: beef .35s; }
 @keyframes beef {
-  0%, 100% { transform: translate(0, 0); }
-  20% { transform: translate(-9px, 3px); }
-  40% { transform: translate(8px, -4px); }
-  60% { transform: translate(-6px, 2px); }
-  80% { transform: translate(4px, -2px); }
+  0%, 100% { translate: 0 0; }
+  20% { translate: -9px 3px; }
+  40% { translate: 8px -4px; }
+  60% { translate: -6px 2px; }
+  80% { translate: 4px -2px; }
 }
 
 #beurt-label {
@@ -4268,8 +4279,12 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
    v121: de scale is naar de WRAP verhuisd (zie het drama-blok verderop) - hier blijft
    alleen de rust-filter staan, die de woedeGloeiGoud-animatie overneemt zodra .woede erbij komt. */
 .vijand.herverkozen .vijand-art { filter: saturate(1.4) drop-shadow(0 0 18px rgba(255, 190, 60, .7)); }
-/* HET ONTSLAG: een halve tel slow-motion op de klap */
-#scherm-gevecht.slowmo { animation: slowmoPuls .32s ease-out; }
+/* HET ONTSLAG: een halve tel slow-motion op de klap.
+   B2 · B0.3: de flits zit op de toneellagen, niet op #scherm-gevecht - een filter op het
+   scherm zelf maakt het net als .beef het containing block van zijn fixed kinderen (52px
+   sprong). Een plaat die een eigen stoot speelt, houdt die (zie .beef bij 'gevecht'). */
+#scherm-gevecht.slowmo :is(#gevecht-achtergrond, #gevecht-achtergrond-2):not(.plaat-dreun, .plaat-kantel, .plaat-instort, .plaat-inzoom),
+#scherm-gevecht.slowmo :is(#vista-canvas, #strijdveld) { animation: slowmoPuls .32s ease-out; }
 @keyframes slowmoPuls { 0% { filter: brightness(1.55) saturate(.5); } 100% { filter: none; } }
 
 /* ============================================================
@@ -4279,8 +4294,8 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
      .scherm (position:fixed, z-index:1, overflow:hidden); zodra daar een animatie op
      draait wordt het containing block voor al zijn position:fixed-kinderen
      (.baas-flits z55, .baas-spraak z56, .goud-flits z58, .baas-doodflits z70) - die
-     springen dan 52px omlaag en worden geklipt. .beef en .slowmo doen dit al en zijn
-     bestaand/geaccepteerd; alles nieuws gaat op #strijdveld of op een eigen laag.
+     springen dan 52px omlaag en worden geklipt. Sinds B2 (B0.3) schudden ook .beef en
+     .slowmo alleen de toneellagen; alles nieuws gaat op #strijdveld of op een eigen laag.
    - plaat-animaties draaien om --grondY (px, gemeten in _plaatsLaag), NOOIT om 61%:
      dat is de vloerrand in PLAATcoordinaten, niet in elementcoordinaten.
    - figuren bewegen op de LOSSE translate:/scale:/rotate:-properties, nooit op
@@ -4308,8 +4323,8 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
    #gevecht-achtergrond: plaatsGevechtsplaat() bailt in 3D uit en zetLichtVisueel()
    overschrijft die filter bij elke fakkelwijziging INLINE. */
 #arena-tint {
-  /* ABSOLUUT, niet fixed: een fixed kind van #scherm-gevecht springt tijdens .beef en
-     .slowmo (die animeren het scherm zelf) 52px omlaag en wordt door de overflow:hidden
+  /* ABSOLUUT, niet fixed: een fixed kind van #scherm-gevecht sprong tijdens .beef en
+     .slowmo (die animeerden vóór B2 het scherm zelf) 52px omlaag en wordt door de overflow:hidden
      onderaan weggeklipt - precies waar de tint het zwaarst is. Absoluut dekt exact
      dezelfde doos en schudt netjes mee. */
   position: absolute; inset: 0;
@@ -5175,7 +5190,9 @@ body.lite .intent-factuur, body.lite .intent-hof { animation: none; }
    lite was de herrijzenisflits dus geen flits maar een keiharde goudwas over het hele
    scherm. .vijand.vlucht heeft hetzelfde nodig (hofVlucht eindigt op opacity 0, anders
    blijft de gevluchte hoveling gewoon staan tot renderGevecht hem opruimt). */
-body.lite #scherm-gevecht.goud-flits::after, body.lite .vijand.vlucht, body.lite #scherm-gevecht.slowmo { animation: none; }
+body.lite #scherm-gevecht.goud-flits::after, body.lite .vijand.vlucht { animation: none; }
+/* B2 · B0.3: de slowmo-flits zit sinds B2 op de toneellagen, niet meer op het scherm */
+body.lite #scherm-gevecht.slowmo :is(#gevecht-achtergrond, #gevecht-achtergrond-2, #vista-canvas, #strijdveld) { animation: none; }
 body.lite #scherm-gevecht.goud-flits::after { opacity: 0; }
 body.lite .vijand.vlucht { opacity: 0; }
 body.lite #gevecht-achtergrond-2 { transition: none; }
@@ -5239,7 +5256,9 @@ body.lite .einde-doel, body.lite .daily-paneel, body.lite .einde-knoppen {
   }
   .sintel { display: none; }
   .titel-groot, .intent, .knoop.kan, #energie-orb { animation: none !important; }
-  #scherm-gevecht.goud-flits::after, .vijand.vlucht, #scherm-gevecht.slowmo { animation: none !important; }
+  #scherm-gevecht.goud-flits::after, .vijand.vlucht { animation: none !important; }
+  /* B2 · B0.3: schok en slowmo-flits zitten op de toneellagen; zonder beweging dus ook daar uit */
+  #scherm-gevecht:is(.beef, .slowmo) :is(#gevecht-achtergrond, #gevecht-achtergrond-2, #vista-canvas, #arena-tint, #strijdveld) { animation: none !important; }
   #scherm-gevecht.goud-flits::after { opacity: 0 !important; }   /* v121: hetzelfde gaatje als in lite - zonder eindstand 900ms volle goudwas */
   .vijand.vlucht { opacity: 0 !important; }
   #gevecht-achtergrond-2 { transition: none !important; }

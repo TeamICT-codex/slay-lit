@@ -4052,9 +4052,10 @@ function _plaatLayoutBox(el) {
   /* cs.top/cs.left zijn relatief aan het CONTAINING BLOCK, en dat is voor een
      position:fixed element niet altijd de viewport: zodra een voorouder een
      transform/filter/perspective/contain draagt wordt DIE het containing block.
-     #scherm-gevecht doet dat elke keer dat .beef of .slowmo draait, en dan is de
-     kale cs.top 52px mis - terwijl _voetlijnVan() via _layoutOnder() wél in de
-     geschudde frame meet. De oorsprong van het containing block moet er dus bij. */
+     #scherm-gevecht deed dat vóór B2 (B0.3) elke keer dat .beef of .slowmo draaide,
+     en dan is de kale cs.top 52px mis - terwijl _voetlijnVan() via _layoutOnder() wél
+     in de geschudde frame meet. Sinds B2 schudden alleen de toneellagen; dit blijft
+     het vangnet voor elke toekomstige laag die het scherm toch transformeert. */
   const o = _cbOorsprong(el);
   return {
     top: isFinite(top) ? o.top + top : r.top,
