@@ -14,7 +14,9 @@
    Formaten: 800x360 en 846x381 (Thomas' toestel, isMobile/hasTouch), 740x360,
    1440x900 en 1366x768 in 2D en 3D, en 412x915 staand als controle.
    Elk criterium is een getal of een lege lijst, geen oordeel.
-   SLAYIT_TAKEN=<regex> draait een deel (bv. 'rust|dood'); een volledige run duurt ~11 min.
+   SLAYIT_TAKEN=<regex> draait een deel (bv. 'rust|dood'); een volledige run duurt ~13 min
+   (790 controles). Draai hem niet naast andere zware suites: onder last lopen de korte
+   regieregels (1,1 s) onder hun leesdrempel van 0,7 s - herhaal zo'n taak dan één keer.
 
    De eindverificatie van §6, zonder runtime-patches (de code zelf moet het halen):
    - rust: 3 bazen (+ het hof) x statussen {0, 1, 4, 5, held met 5} x fakkel {100, 0}:
@@ -27,6 +29,15 @@
    - de baaspil ook bij fakkel 0 in beeld, zonder ❓, en te lezen onder het vignet;
    - de intent-assert: elke intent-soort heeft een eigen tak in intentTekst (statisch), en
      geen zet van een baas, het hof of een gewone vijand valt terug op 'verzwakt jou'.
+   Plus de regressies van de review-fixes (F1):
+   - B0.3 in 3D: elke labelkolom blijft per frame op zijn plek tijdens schok en slowmo;
+   - B0.4: het orakel bij de eerste ontmoeting (Inventaris-intro) komt in beeld; een
+     genadeklap vlak na een banner: geen banner meer na de overwinning, slotwoord >= 1 s;
+   - B0.1 in een gewoon gevecht (3-4 vijanden, 5-6 statussen): geen chip achter de hand;
+   - B0.8 met 7 en 9 statussen op de held (mobiel): niets in de topbalk of uit beeld;
+   - B0.12 met 7 statussen op de held (laptop): geen chip achter de hand;
+   - B0.6 in de echte flow (decreet, herverkiezing) en de kaats van De Spiegelwachter;
+   - B0.5: de plaat op de telefoon niet over de chips, en een staande plaat springt niet.
    ============================================================================ */
 const { chromium } = require('playwright');
 const path = require('path'); const fs = require('fs');
