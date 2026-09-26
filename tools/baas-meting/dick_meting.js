@@ -17,6 +17,9 @@
      MEET_HELDEN=slachter,gifmagier,thoverk   MEET_STERKTES=sterk,gemiddeld,matig
      MEET_BELEID=gebalanceerd,bewust          MEET_REF=0 (Act 1/2-referentie overslaan)
      MEET_WERKERS=4 (parallelle pagina's)     SLAYIT_PLAYWRIGHT=<pad naar node_modules/playwright>
+     MEET_METGEZEL=drops (alleen voor de TERUGKEER: de metgezellen zijn geparkeerd — DE NISSEN DICHT —
+       dus standaard meet alles SOLO en elk gevecht toetst dat; deze optie zet ze in de pagina aan
+       via devMetgezellen(true) en geeft elke build die metgezel)
    Uitvoer: <label>.json naast het script (of MEET_UIT=<pad>) + een samenvatting op de console. */
 const fs = require('fs'), path = require('path');
 function laadPlaywright() {
@@ -37,6 +40,9 @@ const STERKTES = lijst('MEET_STERKTES', ['sterk', 'gemiddeld', 'matig']);
 const BELEID = lijst('MEET_BELEID', ['gebalanceerd', 'bewust']);
 const REF = process.env.MEET_REF !== '0';
 const WERKERS = parseInt(process.env.MEET_WERKERS || '4', 10);
+/* DE NISSEN DICHT: SOLO is de standaard; MEET_METGEZEL is de terugkeer-variant (M-plan §6) */
+const MEET_METGEZEL = process.env.MEET_METGEZEL || '';
+const metMetgezel = b => (MEET_METGEZEL ? Object.assign({}, b, { metgezel: MEET_METGEZEL }) : b);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff', '.txt': 'text/plain; charset=utf-8', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav' };
 
 /* ============================================================
@@ -261,12 +267,17 @@ async function eenGevecht({ build, job }) {
   S.dranken = (build.dranken || []).slice();
   for (let i = 0; i < (build.laster || 0); i++) S.dek.push(nieuweKaart('laster'));
   S.metgezel = null;
-  if (build.metgezel) { geefMetgezel(build.metgezel); if (S.metgezel) S.metgezel.hp = Math.max(1, Math.round(metgezelMaxHp(build.metgezel) * 0.6)); }
+  if (build.metgezel) {
+    /* alleen via MEET_METGEZEL (terugkeer): de geparkeerde metgezellen eerst aanzetten, anders weigert geefMetgezel stil */
+    if (typeof metgezellenAan === 'function' && !metgezellenAan() && typeof devMetgezellen === 'function') devMetgezellen(true);
+    geefMetgezel(build.metgezel); if (S.metgezel) S.metgezel.hp = Math.max(1, Math.round(metgezelMaxHp(build.metgezel) * 0.6));
+  }
   S.kaart = genereerKaart();
   const hpStart = S.hp, dekStart = S.dek.length;
   const T = window.__T = { bron: {}, bronBd: {}, inBd: {}, uitBd: {}, uitBaas: 0, uitHof: 0, uitSoort: {}, rawIn: 0, geblokt: 0, metgezelVing: 0, decreten: [], rondeIn: 0, _zelf: false, _bewaar: null };
   startGevecht([job.baas], 'baas', bz.rij);
   const g = S.gevecht;
+  const gMetStart = g && g.metgezel ? g.metgezel.id : null;   /* DE NISSEN DICHT: solo wordt GEMETEN, niet aangenomen (M-plan §6) */
   const isBaas = v => VIJANDEN[v.id] && VIJANDEN[v.id].baas;
   /* de levende baas; is hij dood maar leeft zijn gevolg nog (de Slijmkoning splijt), dan het eerste levende doelwit */
   const boss = () => g.vijanden.find(v => isBaas(v) && !v.dood) || alleVijanden()[0] || g.vijanden.find(isBaas);
@@ -577,7 +588,7 @@ async function eenGevecht({ build, job }) {
     sterfBedrijf: dood ? (rondes.length ? rondes[rondes.length - 1].bd : window.__bedrijf()) : null,
     eindBedrijf: window.__bedrijf(), bossHpOver: b ? Math.max(0, b.hp) : null,
     bron: T.bron, bronBd: T.bronBd, inBd: T.inBd, uitBd: T.uitBd, uitBaas: T.uitBaas, uitHof: T.uitHof, uitSoort: T.uitSoort,
-    rawIn: T.rawIn, geblokt: T.geblokt, metgezelVing: T.metgezelVing, drank: T.drank || 0, offerRonde: T.offer || null,
+    rawIn: T.rawIn, geblokt: T.geblokt, metgezelVing: T.metgezelVing, drank: T.drank || 0, offerRonde: T.offer || null, gMet: gMetStart,
     decreten: T.decreten, dekVerlies: T.decreten.length, lasters: b ? (b.lasters || 0) : 0,   /* de Laster van DE VACATURE landt in g.trek, niet in S.dek */
     kiezers: b && b._kiezers != null ? b._kiezers : null, krachtVast: b ? (b.krachtVast || 0) : 0, herrezen: !!(b && b.herrezen),
     log: rondes
@@ -633,10 +644,12 @@ async function main() {
   await Promise.all(paginas.map(async page => {
     while (volgende < jobs.length) {
       const job = jobs[volgende++];
-      const build = buildVan(job.held, job.st);
+      const build = metMetgezel(buildVan(job.held, job.st));
       let r;
       try { r = await page.evaluate(eenGevecht, { build, job }); }
       catch (e) { r = { cel: job.cel, seed: job.seed, fout: 'evaluate: ' + String(e.message || e).slice(0, 300) }; }
+      /* de solo-toets: zonder MEET_METGEZEL staat er nooit een metgezel in het gevecht */
+      if (!r.fout && (r.gMet || null) !== (build.metgezel || null)) r.fout = `metgezel-toets: verwacht ${build.metgezel || 'solo'}, gemeten g.metgezel ${r.gMet || null}`;
       resultaten.push(r);
       if (r.fout) console.log(`  FOUT ${job.cel} ${job.seed}: ${String(r.fout).split('\n')[0]}`);
       if (++klaar % 25 === 0) console.log(`  ${klaar}/${jobs.length} (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
