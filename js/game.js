@@ -4884,6 +4884,10 @@ zetToneelSchaal();   /* meteen bij het laden, vóór het eerste gevecht (v114) *
    co. op de échte (opgehoogde) vijand werken. Bestaande aanroepen geven 'opts' niet mee en
    veranderen dus van geen millimeter. */
 function startGevecht(samenstelling, soort, rij, opts) {
+  /* PROLOOG R5 — DE ECHO IN DE EERSTE KAMER (js/proloog-brug.js): het eerste gevecht na een uitgespeelde
+     proloog is een solo Groene Slijm, en je eerste hand komt binnen als de kantoorkaarten van het gesprek.
+     De brug beslist alles zelf (nooit in de daily, alleen Act 1 rij 0, het eerste gevecht van de run). */
+  if (typeof proloogEcho === 'function') samenstelling = proloogEcho(samenstelling, soort, rij) || samenstelling;
   const g = {
     soort,
     vijanden: samenstelling.map(vid => maakVijand(vid, rij || 0)),
@@ -11292,7 +11296,7 @@ const DEV_MENU = [
       { label: '🪓 Het Slachtblok', tip: 'Vult je dek zo nodig aan tot 12 kaarten (raakt je save) en opent de smeedkamer in altaar-modus.', doe: () => devSlachtblok() },
       { label: '🎬 De Outro', tip: 'Speelt de outro vanaf hier af, zonder run. Raakt je save niet.', doe: () => { if (typeof devOutro === 'function') devOutro(); else melding('⚡ DEV: devOutro ontbreekt (js/outro.js).'); } },
       { label: '📼 De Proloog', tip: 'Herbeleeft de proloog in deze pagina (js/proloog-brug.js): geen contract, geen save, geen nieuwe run. Daarna terug naar dit scherm.', doe: () => { if (typeof herbeleefProloog === 'function') herbeleefProloog(); else melding('⚡ DEV: herbeleefProloog ontbreekt (js/proloog-brug.js).'); } },
-      { label: '🛬 De landing', tip: 'Speelt de landing na de Afgrond af met de Gifmagiër. Zonder lopende run en als nieuwe speler start dat een nieuwe run; anders de heldkeuze met voorselectie. Raakt de proloogvlaggen niet.', doe: () => { if (typeof devLanding === 'function') devLanding('gifmagier'); else melding('⚡ DEV: devLanding ontbreekt (js/proloog-brug.js).'); } }   /* DEV-SHORTCUT */
+      { label: '🛬 De landing', tip: 'Speelt de landing na de Afgrond af met de Gifmagiër. Zonder lopende run en als nieuwe speler start dat een nieuwe run; anders de heldkeuze met voorselectie. De eerste kamer van die run speelt de echo (de kantoorvellen en de slijm), alleen in het geheugen. Raakt de proloogvlaggen en het contract niet.', doe: () => { if (typeof devLanding === 'function') devLanding('gifmagier'); else melding('⚡ DEV: devLanding ontbreekt (js/proloog-brug.js).'); } }   /* DEV-SHORTCUT */
     ]
   },
   {

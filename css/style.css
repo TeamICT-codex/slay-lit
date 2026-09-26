@@ -6217,11 +6217,116 @@ body.pl-landt.pl-onthul #kaart-vlak .knoop:not(.kan) { animation: plOpkomen .8s 
   to   { box-shadow: 0 0 0 1px rgba(255, 156, 63, .8), 0 0 56px rgba(255, 140, 50, .55); }
 }
 
+/* ============================================================
+   R5 · DE ECHO IN DE EERSTE KAMER (plan par. 2 scène 9) — js/proloog-brug.js (proloogEcho)
+   De eerste hand van het eerste gevecht na de proloog komt binnen als de beige kantoorkaarten van
+   het Functioneringsgesprek (de .gs-kaart uit proloog/proloog.css, hier op de maat van #hand), die
+   van onderen wegbranden tot je echte kaarten. Het vel is een KIND van de handkaart: bijwerkKaartEl
+   herschrijft de className van de kaart, niet haar kinderen. Eigen kv-klassen (geen .kaart-naam of
+   .kaart-kost: de game zoekt die met querySelector). Maten in cqw: het vel volgt de kaart (138 px op
+   laptop, 120/104 op mobiel, de opgetilde voorbeeldkaart). Het branden: een masker van 2x de hoogte
+   schuift omhoog (mask-position), de gloeiende rand (.kv-rand) schuift in dezelfde maat mee
+   (background-position) — zelfde duur, zelfde curve, dus altijd op de brandlijn.
+   ============================================================ */
+.kaart-kantoorvel {
+  position: absolute; inset: -2px;          /* over de rand (2 px) van de echte kaart */
+  z-index: 6; pointer-events: none;
+  border-radius: 11px;
+  transform: translateZ(3px);               /* .kaart is preserve-3d: vóór het kaartvlak, ook tijdens de kaartflip */
+  container-type: size;
+}
+.kaart-kantoorvel[data-kantoor="mailtje"]     { --kv-rand: #b8394f; }
+.kaart-kantoorvel[data-kantoor="glimlach"]    { --kv-rand: #5f86a6; }
+.kaart-kantoorvel[data-kantoor="koffie"]      { --kv-rand: #6f8f5a; }
+.kaart-kantoorvel[data-kantoor="overuren"]    { --kv-rand: #d9772a; }
+.kaart-kantoorvel[data-kantoor="verantwoord"] { --kv-rand: #6d665a; }
+.kaart-kantoorvel .kv-papier {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 3px; gap: 2cqw;
+  padding: 8px 8px 6px; padding: 6.5cqw 6cqw 5cqw;
+  border-radius: inherit; overflow: hidden;
+  background: linear-gradient(160deg, rgba(255, 255, 255, .3), transparent 40%), linear-gradient(180deg, #efe6cc, #d4c49c);
+  border: 2px solid var(--kv-rand, #8a7a55);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .25), inset 0 -18px 24px -18px rgba(120, 70, 20, .35);
+  color: #2b2114; text-align: center;
+  /* het masker: bovenste helft zwart (het vel staat er), onderste helft leeg (opgebrand) */
+  -webkit-mask-image: linear-gradient(to top, transparent 48.8%, #000 50%);
+          mask-image: linear-gradient(to top, transparent 48.8%, #000 50%);
+  -webkit-mask-size: 100% 200%; mask-size: 100% 200%;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: 0 0; mask-position: 0 0;
+}
+.kaart-kantoorvel .kv-naam {
+  flex: none; max-width: 100%; padding-top: 1px;
+  font-family: 'Pirata One', 'Pirata Fallback', serif;
+  font-size: 15px; font-size: 11.2cqw; line-height: 1.05; color: #2b2114;
+  overflow-wrap: normal; hyphens: auto; -webkit-hyphens: auto;
+}
+.kaart-kantoorvel .kv-art {
+  flex: none; width: 84%; height: 60px; height: 42cqw;
+  border-radius: 5px; border: 1px solid rgba(0, 0, 0, .45);
+  background: #cbbd97 center 32% / cover no-repeat;
+}
+.kaart-kantoorvel .kv-tekst {
+  flex: 1 1 auto; min-height: 0; overflow: hidden;
+  font-family: 'Alegreya', Georgia, serif; font-size: 11px; font-size: 8.4cqw; line-height: 1.15; color: #3d3020;
+}
+.kaart-kantoorvel .kv-type {
+  flex: none; font-family: 'Special Elite', 'Courier New', monospace;
+  font-size: 8px; font-size: 6cqw; line-height: 1; letter-spacing: .12em; color: rgba(43, 33, 20, .6);
+}
+/* de kostbol van het kantoor ligt precies over die van de echte kaart (.kaart-kost: 32 px op -10/-10) */
+.kaart-kantoorvel .kv-kost {
+  position: absolute; top: -8px; left: -8px; z-index: 2;
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Pirata One', serif; font-size: 1.2rem; color: #fff;
+  background: radial-gradient(circle at 35% 30%, #ffd24a, #c87b1b);
+  border: 2px solid #5a3413; box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
+}
+/* de brandlijn: een gloed op de echte kaart eronder, een witgloeiende lijn, verkoold papier erboven
+   en drie vonkjes op de rand — op dezelfde 2x-hoogte als het masker */
+.kaart-kantoorvel .kv-rand {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+  background:
+    radial-gradient(circle at 22% 47.6%, #fff1c9 0 1.2px, rgba(255, 170, 70, .7) 2px, transparent 3.5px),
+    radial-gradient(circle at 57% 46.8%, #ffe2a8 0 1px, rgba(255, 150, 55, .6) 1.8px, transparent 3px),
+    radial-gradient(circle at 83% 47.9%, #fff1c9 0 1.3px, rgba(255, 160, 60, .7) 2.2px, transparent 3.6px),
+    linear-gradient(to top, transparent 45.5%, rgba(255, 110, 30, .3) 48%, rgba(255, 190, 110, .95) 49.4%, #fff1c9 50%,
+      rgba(255, 150, 50, .95) 50.6%, rgba(110, 42, 10, .85) 51.6%, rgba(55, 22, 8, .55) 53.2%, transparent 55%);
+  background-size: 100% 200%; background-repeat: no-repeat; background-position: 0 0;
+}
+.kaart-kantoorvel.brandt .kv-papier { animation: kvBrand var(--kv-duur, 760ms) cubic-bezier(.42, 0, .58, 1) var(--kv-wacht, 0ms) both; }
+.kaart-kantoorvel.brandt .kv-rand   { animation: kvRand var(--kv-duur, 760ms) cubic-bezier(.42, 0, .58, 1) var(--kv-wacht, 0ms) both; }
+.kaart-kantoorvel.brandt .kv-kost   { animation: kvKost var(--kv-duur, 760ms) linear var(--kv-wacht, 0ms) both; }
+@keyframes kvBrand {
+  from { -webkit-mask-position: 0 0; mask-position: 0 0; }
+  to   { -webkit-mask-position: 0 100%; mask-position: 0 100%; }
+}
+@keyframes kvRand {
+  0%   { opacity: 0; background-position: 0 0; }
+  6%, 90% { opacity: 1; }
+  100% { opacity: 0; background-position: 0 100%; }
+}
+@keyframes kvKost { 0%, 80% { opacity: 1; } 100% { opacity: 0; transform: scale(.7); } }
+/* reduced motion / lite (de brug zet .rustig): geen brandlijn, een stil vel dat in 600 ms wegvloeit */
+.kaart-kantoorvel.rustig .kv-papier { -webkit-mask-image: none; mask-image: none; }
+.kaart-kantoorvel.rustig .kv-rand { display: none; }
+.kaart-kantoorvel.rustig.brandt .kv-papier,
+.kaart-kantoorvel.rustig.brandt .kv-kost { animation: kvVloei var(--kv-duur, 600ms) ease var(--kv-wacht, 0ms) both; }
+@keyframes kvVloei { to { opacity: 0; } }
+/* de zin van de slijm staat op de spraakplaat van het spel (.baas-spraak); rustig zonder haar lange
+   plaatanimatie (3,6 s), alleen een korte inkomst */
+body.lite .baas-spraak.pl-echo-zin { animation: plEchoZin .3s ease both; }
+@keyframes plEchoZin { from { opacity: 0; } }
+
 /* lite / reduced motion: de brug kiest dan zelf het rustige pad (geen schaal, geen vonken);
    hier alleen de lussen die dan nog zouden bewegen */
 body.lite .pl-kooltje::after, body.lite .held-kaart.voorkeur { animation: none !important; }
 @media (prefers-reduced-motion: reduce) {
   .pl-kooltje::after, .held-kaart.voorkeur { animation: none !important; }
+  .baas-spraak.pl-echo-zin { animation: plEchoZin .3s ease both; }
   body.pl-dooft #scherm-titel .titel-groot { animation: none !important; opacity: 0; transition: opacity .3s ease; }
   .held-kaart.voorkeur { box-shadow: 0 0 0 1px rgba(255, 156, 63, .7), 0 0 40px rgba(255, 140, 50, .45); }
 }
