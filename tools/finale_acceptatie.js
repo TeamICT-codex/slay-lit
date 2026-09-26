@@ -1,17 +1,24 @@
 /* ============================================================================
    HET PROCES — FINALE (R1 + R2) · ACCEPTATIESUITE
    Loopt §7.2 van .claude/notities/eindbaas_finale_contract.md af:
-     - het scèneslot (één enorme klap vanaf 240 → hij staat op 160, geschorst, de cyclus
+     - het scèneslot (één enorme klap vanaf DICK.hp → hij staat op de drempel van II, geschorst, de cyclus
        reset via HERSCHIKT DE ZAAL), ook via een gif-tik in de vijandbeurt;
      - geen baasbeurt met 0 schade behalve de zitting en HERSCHIKT DE ZAAL (een volledig
        gevecht van I tot en met IV, zet per zet gelogd);
      - hoogstens 2 decreten, nooit een in III;
      - het keuzescherm verschijnt ALLEEN als een van de twee gespeeld is, en schrapt de
        gekozen kaart; anders valt de duurste zonder scherm;
-     - de herverkiezing halveert het gif en geeft +2 Kracht per kiezer;
-     - HET ONTSLAG 20 → 30 → 40 (→ 40);
+     - de herverkiezing houdt DICK.gifRest van het gif over en geeft +DICK.krachtPerKiezer
+       Kracht per kiezer;
+     - HET ONTSLAG volgt DICK.ONTSLAG (voorbij het einde blijft het laatste bedrag);
      - geen JS-fouten; de strook, de schorsing en het keuzescherm passen op laptop 1440×900
        en mobiel 800×360 + 412×915.
+   Sinds B4 stap 2 (afwerkplan §6) ook de reviewfixes van R1+R2, elk met zijn blok:
+     7 F2 (hetzelfde exemplaar) · 8 F1 (met metgezel, via de DEV-schakelaar van main) ·
+     9 F3+F5 (elke scènewissel sluit het dossier) · 10 F4 (zonder griffier geen dossier) ·
+     11 F6 (het keuzescherm overleeft de reveals) · 12 F7 (schade na het slot) ·
+     13 F8 (solo zonder handwerk) · 14 F9 + F11 (teksten volgen de knoppen).
+   Review F9: de suite leest elk balansgetal uit DICK (R3 draait aan die knoppen).
 
    GEEN dev-server en NOOIT poort 4173: een verzonnen host (localhost:4198) wordt vanaf
    SCHIJF bediend met route.fulfill. Service workers geblokkeerd.
@@ -145,16 +152,18 @@ const sonde = page => page.evaluate(() => {
   kop('1 · het scèneslot (laptop 1440×900)');
   let { ctx, page } = await open(browser, { w: 1440, h: 900 });
   await startProces(page);
+  /* de balansgetallen van dit moment (F9): nooit letterlijk in de suite */
+  const DK = await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); return { hp: DICK.hp, d2: dicktatorDrempel(b, 2), d3: dicktatorDrempel(b, 3), vorm2Pct: DICK.vorm2Pct, gifRest: DICK.gifRest ?? 0.5, K: DICK.krachtPerKiezer, L: (DICK.ONTSLAG || []).slice() }; });
   let s = await sonde(page);
-  t(s.scene === 1 && s.intent === 'DE AANZEGGING' && s.hp === 240, `start: scène ${s.scene}, pil "${s.intent}", ${s.hp}/${s.maxHp}`);
+  t(s.scene === 1 && s.intent === 'DE AANZEGGING' && s.hp === DK.hp, `start: scène ${s.scene}, pil "${s.intent}", ${s.hp}/${s.maxHp}`);
   await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, 999, sp()); checkBaasFase(); renderGevecht(); });
   s = await sonde(page);
-  t(s.hp === 160 && s.geschorst && s.scene === 2, `één klap van 999 vanaf 240 → ${s.hp}/${s.maxHp}, geschorst ${s.geschorst}, scène ${s.scene}`);
+  t(s.hp === DK.d2 && s.geschorst && s.scene === 2, `één klap van 999 vanaf ${DK.hp} → ${s.hp}/${s.maxHp}, geschorst ${s.geschorst}, scène ${s.scene}`);
   t(s.herschik && s.intent === 'HERSCHIKT DE ZAAL', `de pil slaat om naar HERSCHIKT DE ZAAL (0 schade): "${s.intent}"`);
   t(s.chip, 'de GESCHORST-chip staat op de baas');
   await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, 50, sp()); verliesHp(b, 7); renderGevecht(); });
   s = await sonde(page);
-  t(s.hp === 160, `geschorst: een klap van 50 en een tik van 7 doen niets → ${s.hp}`);
+  t(s.hp === DK.d2, `geschorst: een klap van 50 en een tik van 7 doen niets → ${s.hp}`);
   await wachtVrij(page);
   s = await sonde(page);
   t(/deurwaarder:TREEDT AAN/.test(s.hof), `de deurwaarder treedt aan bij de start van II: hof "${s.hof}"`);
@@ -165,15 +174,15 @@ const sonde = page => page.evaluate(() => {
   t(!s.geschorst && s.intent === 'KARAKTERMOORD' && !s.herschik, `daarna: schorsing voorbij (${!s.geschorst}), de cyclus van II begint bij slot 1: "${s.intent}" (sceneStart ${s.sceneStart}, teller ${s.beurtTeller})`);
   await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, 5, sp()); renderGevecht(); });
   s = await sonde(page);
-  t(s.hp === 155, `niet meer geschorst: een klap van 5 → ${s.hp}`);
+  t(s.hp === DK.d2 - 5, `niet meer geschorst: een klap van 5 → ${s.hp}`);
 
   /* het slot via gif, midden in de vijandbeurt */
   kop('1b · het scèneslot via een gif-tik in de vijandbeurt');
   await startProces(page);
-  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); b.hp = 165; b.status.gif = 40; renderGevecht(); });
+  await page.evaluate(d2 => { const b = dicktatorBaas(S.gevecht); b.hp = d2 + 5; b.status.gif = 40; renderGevecht(); }, DK.d2);
   z = await beurt(page, 0);
   s = await sonde(page);
-  t(s.hp === 160 && s.scene === 2 && s.intent === 'HERSCHIKT DE ZAAL', `gif 40 (baas: de helft) vanaf 165 → ${s.hp}, scène ${s.scene}, pil "${s.intent}"`);
+  t(s.hp === DK.d2 && s.scene === 2 && s.intent === 'HERSCHIKT DE ZAAL', `gif 40 (baas: de helft) vanaf ${DK.d2 + 5} → ${s.hp}, scène ${s.scene}, pil "${s.intent}"`);
   t(z.naam === 'DE AANZEGGING', `de baas speelde de zet die op de pil stond ("${z.naam}"), de overgang herschreef hem niet`);
   await ctx.close();
 
@@ -295,29 +304,32 @@ const sonde = page => page.evaluate(() => {
   await ctx.close();
 
   /* ================= 4 · DE HERVERKIEZING ================= */
-  kop('4 · de herverkiezing: gif gehalveerd, +2 per kiezer, alleen de baas');
+  kop(`4 · de herverkiezing: gif × ${DK.gifRest}, +${DK.K} per kiezer, alleen de baas`);
   ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
   await startProces(page, { tirade: true });
   s = await sonde(page);
   t(s.scene === 3 && /deurwaarder/.test(s.hof) && /claqueur/.test(s.hof) && !/griffier/.test(s.hof), `scène III: hof "${s.hof}"`);
   await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); b.status.gif = 7; b.status.zwak = 2; b.status.kwetsbaar = 1; verliesHp(b, b.hp, sp()); checkBaasFase(); renderGevecht(); });
   s = await sonde(page);
-  const K = await page.evaluate(() => DICK.krachtPerKiezer);
-  t(s.herrezen && s.vorm2 && s.hp === Math.ceil(240 * 0.42), `herrezen op ${s.hp}/${s.maxHp} (vorm2 ${s.vorm2})`);
-  t(s.status.gif === 3 && !s.status.zwak && !s.status.kwetsbaar, `gif 7 → ${s.status.gif} (gehalveerd, naar beneden), zwak/kwetsbaar gewist: ${JSON.stringify(s.status)}`);
-  t(s.status.kracht === 2 * K && K === 2, `twee kiezers → +${s.status.kracht} Kracht (${K} per kiezer)`);
+  const K = DK.K;
+  t(s.herrezen && s.vorm2 && s.hp === Math.ceil(DK.hp * DK.vorm2Pct), `herrezen op ${s.hp}/${s.maxHp} (vorm2 ${s.vorm2}, DICK.vorm2Pct ${DK.vorm2Pct})`);
+  const gifNa = Math.floor(7 * DK.gifRest);
+  t((s.status.gif || 0) === gifNa && !s.status.zwak && !s.status.kwetsbaar, `gif 7 → ${s.status.gif || 0} (× DICK.gifRest ${DK.gifRest}, naar beneden: ${gifNa}), zwak/kwetsbaar gewist: ${JSON.stringify(s.status)}`);
+  t(K > 0 && (s.status.kracht || 0) === 2 * K, `twee kiezers → +${s.status.kracht} Kracht (DICK.krachtPerKiezer ${K} per kiezer)`);
   t(s.hof === '', `het hof is gevlucht: "${s.hof}"`);
   t(s.intent === 'DE FACTUUR', `de eerste vorm-2-zet is de AANLOOP: "${s.intent}"`);
   await wachtVrij(page);
   s = await sonde(page);
-  t(/IV · HET MANDAAT/.test(s.strook) && /ONTSLAG over 1/.test(s.strook) && /ONTSLAG 20/.test(s.strook), `de strook: "${s.strook}"`);
+  t(/IV · HET MANDAAT/.test(s.strook) && /ONTSLAG over 1/.test(s.strook) && new RegExp('ONTSLAG ' + DK.L[0] + '\\b').test(s.strook), `de strook: "${s.strook}" (DICK.ONTSLAG[0] = ${DK.L[0]})`);
 
-  kop('5 · HET ONTSLAG 20 → 30 → 40 → 40');
+  /* de verwachte reeks uit DICK.ONTSLAG: het n-de Ontslag, voorbij het einde het laatste bedrag */
+  const ontslagVerwacht = [1, 2, 3, 4].map(n => DK.L[Math.min(n, DK.L.length) - 1]);
+  kop('5 · HET ONTSLAG ' + ontslagVerwacht.join(' → ') + ' (DICK.ONTSLAG ' + JSON.stringify(DK.L) + ')');
   const v2 = [];
   for (let i = 0; i < 8; i++) { const r = await beurt(page, 0); v2.push(r); if (r.voorbij) break; }
   console.log('   zetten: ' + v2.map(r => `${r.naam}(${r.dmg}+${r.kracht}K → -${r.verloren})`).join(' → '));
   const ontslagen = v2.filter(r => r.naam === 'HET ONTSLAG');
-  t(JSON.stringify(ontslagen.map(r => r.dmg)) === JSON.stringify([20, 30, 40, 40]), `ontslagbedragen: ${ontslagen.map(r => r.dmg).join(' → ')}`);
+  t(JSON.stringify(ontslagen.map(r => r.dmg)) === JSON.stringify(ontslagVerwacht), `ontslagbedragen: ${ontslagen.map(r => r.dmg).join(' → ')} (verwacht ${ontslagVerwacht.join(' → ')})`);
   t(JSON.stringify(v2.map(r => r.naam)) === JSON.stringify(['DE FACTUUR', 'HET ONTSLAG', 'DONDERREDE', 'HET ONTSLAG', 'DE FACTUUR', 'HET ONTSLAG', 'DONDERREDE', 'HET ONTSLAG']), 'de cyclus van twee: AANLOOP (Factuur/Donderrede afwisselend) → ONTSLAG');
   t(ontslagen.every(r => r.verloren === r.dmg + r.kracht), `het Ontslag slaat vast + Kracht: ${ontslagen.map(r => r.verloren).join(', ')}`);
   t(v2.filter(r => r.naam === 'DE FACTUUR').every(r => r.verloren === r.dmg), 'de Factuur telt geen Kracht mee');
@@ -621,6 +633,31 @@ const sonde = page => page.evaluate(() => {
   /* ================= 13 · F8 · SOLO ZONDER HANDWERK ================= */
   kop('13 · F8 · elke devDicktator van deze suite stond solo, zonder dat de suite de metgezel wegzette');
   t(nietSolo.length === 0, `starts met een metgezel: ${nietSolo.length} ${nietSolo.length ? JSON.stringify(nietSolo) : ''}`);
+
+  /* ================= 14 · F9 + F11 · TEKSTEN VOLGEN DE KNOPPEN ================= */
+  kop('14 · F9 · de teksten van het Proces volgen DICK (draai aan de knop, de tekst draait mee)');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  const tx = await page.evaluate(() => {
+    const oud = { A: DICK.APPLAUS, D: DICK.decreetCap, K: DICK.krachtPerKiezer };
+    const lees = () => ({ claq: dickTekst(BESTIARIUM.de_claqueur.notitie), dick: dickTekst(BESTIARIUM.de_dicktator.notitie), herv: dickTekst(UITSPRAKEN._dicktator.duiding.herverkiezing) });
+    const nu = lees();
+    DICK.APPLAUS = oud.A + 2; DICK.decreetCap = oud.D + 1; DICK.krachtPerKiezer = oud.K + 3;
+    const gedraaid = lees();
+    Object.assign(DICK, { APPLAUS: oud.A, decreetCap: oud.D, krachtPerKiezer: oud.K });
+    Codex.gezien = (Codex.gezien || []).concat(['de_claqueur']);
+    toonBestiariumPagina('de_claqueur');
+    const pagina = (document.querySelector('#bestiarium-inhoud .best-notitie') || {}).textContent || '';
+    return { oud, nu, gedraaid, pagina, rauw: BESTIARIUM.de_claqueur.notitie + ' | ' + BESTIARIUM.de_dicktator.notitie + ' | ' + UITSPRAKEN._dicktator.duiding.herverkiezing };
+  });
+  t(!/\d+ schade per beurt|max \d+ per gevecht|\+\d+ Kracht per kiezer/.test(tx.rauw) && /\{A\}/.test(tx.rauw) && /\{D\}/.test(tx.rauw) && /\{K\}/.test(tx.rauw),
+    'de ruwe teksten (data.js) noemen APPLAUS, decreetCap en krachtPerKiezer niet letterlijk maar als {A}, {D}, {K}');
+  t(tx.nu.claq.includes(tx.oud.A + ' schade per beurt') && tx.nu.dick.includes('max ' + tx.oud.D + ' per gevecht') && tx.nu.herv.includes('+' + tx.oud.K + ' Kracht') && !/[{}]/.test(tx.nu.claq + tx.nu.dick + tx.nu.herv),
+    `ingevuld: "${tx.nu.claq.slice(0, 40)}…", "max ${tx.oud.D} per gevecht", "${tx.nu.herv}"`);
+  t(tx.gedraaid.claq.includes((tx.oud.A + 2) + ' schade per beurt') && tx.gedraaid.dick.includes('max ' + (tx.oud.D + 1) + ' per gevecht') && tx.gedraaid.herv.includes('+' + (tx.oud.K + 3) + ' Kracht'),
+    `knoppen gedraaid (APPLAUS ${tx.oud.A + 2}, decreetCap ${tx.oud.D + 1}, krachtPerKiezer ${tx.oud.K + 3}): de teksten volgen`);
+  t(tx.pagina.includes(tx.oud.A + ' schade per beurt') && !/[{}]/.test(tx.pagina), `de Bestiarium-pagina van de claqueur: "${tx.pagina.trim()}"`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
 
   await browser.close();
   console.log('\n============================================');

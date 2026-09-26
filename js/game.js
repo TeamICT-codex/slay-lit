@@ -3465,14 +3465,8 @@ function verliesHp(doel, n, bron) {
       renderGevecht();
     }
     /* IV · DE HERVERKIEZING — de DICKtator herrijst éénmalig uit de dood: we leren niet
-       uit de fouten van het verleden. Wie je liet staan, STEMT op hem (+1 Kracht per
-       kiezer), zijn blijvende Kracht komt terug, en hij begint aan HET MANDAAT.
-       NOOIT g.bezig aanraken: verliesHp kan binnen eindBeurt vuren (waar bezig al true is)
-       of binnen speelKaart, waarvan drie finally-blokken hem onvoorwaardelijk op false
-       zetten. Daarom een eigen vlag: g.ceremonie. */
-    /* IV · DE HERVERKIEZING — de DICKtator herrijst éénmalig uit de dood: we leren niet
-       uit de fouten van het verleden. Wie je liet staan, STEMT op hem (+1 Kracht per
-       kiezer), zijn blijvende Kracht komt terug, en hij begint aan HET MANDAAT.
+       uit de fouten van het verleden. Wie je liet staan, STEMT op hem (+DICK.krachtPerKiezer
+       Kracht per kiezer, zijn enige Krachtbron), en hij begint aan HET MANDAAT.
        NOOIT g.bezig aanraken: verliesHp kan binnen eindBeurt vuren (waar bezig al true is)
        of binnen speelKaart, waarvan drie finally-blokken hem onvoorwaardelijk op false
        zetten. Daarom een eigen vlag: g.ceremonie.
@@ -6347,7 +6341,7 @@ function toonBestiariumPagina(id) {
       <h3 class="best-titel">${def.naam}${def.titel ? ` <small>— ${def.titel}</small>` : ''}</h3>
       ${citaat ? `<p class="best-citaat">„${citaat}"</p>` : ''}
       <p class="best-lore">${b.lore}</p>
-      ${b.notitie ? `<p class="best-notitie">— ${b.notitie}</p>` : ''}
+      ${b.notitie ? `<p class="best-notitie">— ${dickTekst(b.notitie)}</p>` : ''}
       <div class="best-nav">
         <button class="knop-stil" onclick="toonBestiariumPagina('${vorige}')" data-tip="${VIJANDEN[vorige].naam}">◀</button>
         <button class="knop-stil" onclick="toonBestiarium(${b.act || 1})">Overzicht</button>
@@ -7366,7 +7360,7 @@ function copycatNaSchade(v, n, bron) {
      I   · DE AANKLACHT  (240→160)  baas + griffier, de shortlist, decreet 1
      II  · DE FACTUUR    (160→80)   + deurwaarder, Factuur per post, decreet 2
      III · DE TIRADE     (80→0)     griffier geëxecuteerd, claqueur, geen decreten meer
-     —   · DE HERVERKIEZING         kiezers = de levende hovelingen (+2 Kracht per stem)
+     —   · DE HERVERKIEZING         kiezers = de levende hovelingen (+DICK.krachtPerKiezer Kracht per stem)
      IV  · HET MANDAAT   (100→0)    alleen de baas, oplopend Ontslag om de twee beurten
    HET SCÈNESLOT: een klap die hem onder de volgende drempel zou brengen, stopt OP de
    drempel en schorst hem tot jouw volgende beurt — geen scène wordt nog overgeslagen.
@@ -7390,7 +7384,8 @@ const DICK = {
   /* de zitting: HET VONNIS = tweede zitting in dezelfde scène of geen dossier;
      EIGENHANDIG = de griffier leeft niet (de beloning: lichter, en géén decreet) */
   VONNIS: 16, EIGENHANDIG: 12,
-  /* II/III · de vloeken-as: 10 + 3 per vloek in het gevecht, geen cap */
+  /* II/III · de vloeken-as: KARAKTERMOORD + KM_PER_VLOEK per vloek in het gevecht, geen cap.
+     Teksten noemen deze getallen nooit letterlijk: {KM}/{V} via dickTekst (review F9). */
   KARAKTERMOORD: 10, KM_PER_VLOEK: 3,
   EXECUTIE: 20,
   APPLAUS: 5,
@@ -7414,6 +7409,17 @@ const DICK = {
   tempo: 1
 };
 window.DICK = DICK;
+/* TEKSTEN DIE EEN BALANSKNOP NOEMEN (review F9): nooit het getal letterlijk, altijd een sleutel
+   die bij het tonen uit DICK komt, zodat R3 aan de knop kan draaien zonder dat een tekst liegt.
+   Voor de Bestiarium-notities en de duidingen van de DICKtator; {A}/{B} in de aanzegging zijn
+   kaartnamen en lopen hier niet langs. Een onbekende sleutel blijft staan (lookup-bugklasse). */
+const DICK_TEKST = { A: 'APPLAUS', K: 'krachtPerKiezer', V: 'KM_PER_VLOEK', KM: 'KARAKTERMOORD', D: 'decreetCap' };
+function dickTekst(s) {
+  return String(s == null ? '' : s).replace(/\{(A|K|V|KM|D)\}/g, (m, k) => {
+    const v = DICK[DICK_TEKST[k]];
+    return (typeof v === 'number') ? String(v) : m;
+  });
+}
 /* ÉÉN BRON VAN WAARHEID voor zijn HP. data.js laadt VÓÓR game.js, dus de vijand-def moet
    het getal zelf dragen; DICK.hp is de balansknop. */
 if (typeof VIJANDEN !== 'undefined' && VIJANDEN.de_dicktator) VIJANDEN.de_dicktator.hp = [DICK.hp, DICK.hp];
@@ -8078,7 +8084,7 @@ function dicktatorHerverkiezing(g, doel) {
     renderGevecht();
     _pipKnapt(3);
   });
-  op(2600, () => vonnisSlam('DE HERVERKIEZING', String(D.herverkiezing || '').replace('{K}', DICK.krachtPerKiezer), { duur: 1400, kleur: 'goud', schok: 1.6 }));
+  op(2600, () => vonnisSlam('DE HERVERKIEZING', dickTekst(D.herverkiezing), { duur: 1400, kleur: 'goud', schok: 1.6 }));
   op(2800, () => _oprijzen(doel, null, 1.12, 400));   /* en hij zakt in op 1.12 = de maat die .herverkozen vasthoudt */
 
   /* t=3000 - DE ZAAL STORT IN, het goudrode mandaatlicht blijft daarna staan */
@@ -8302,7 +8308,7 @@ function toonDecreetReveal(c, kopregel) {
    DE ZITTING = hoogstens één decreet per scène (totaal DICK.decreetCap); een tweede zitting
    of een zitting zonder dossier is HET VONNIS, een zitting zonder griffier EIGENHANDIG VONNIS.
    Na elke overgang speelt hij eerst HERSCHIKT DE ZAAL (0 schade). IV · HET MANDAAT loopt in
-   een cyclus van twee: AANLOOP (DE FACTUUR / DONDERREDE) → HET ONTSLAG (20 → 30 → 40).
+   een cyclus van twee: AANLOOP (DE FACTUUR / DONDERREDE) → HET ONTSLAG (oplopend: DICK.ONTSLAG).
    Geen RNG in de hele moveset en - buiten de zitting en HERSCHIKT - geen beurt zonder schade.
    dicktatorKies is PUUR — alle mutatie zit in de it.doe()-riders hieronder.
    ============================================================ */
