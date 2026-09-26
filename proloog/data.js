@@ -156,126 +156,92 @@ window.SLAYLIT_PROLOOG = (function () {
       ],
     },
 
-    // 3 · Het Functioneringsgesprek — de onwinbare tutorial-encounter
+    // 3 · HET FUNCTIONERINGSGESPREK (R4) — de indeling van het ECHTE gevechtstoneel van de game
+    // (#scherm-gevecht), in beige, op het dak in onweer, zodat je het gevecht straks herkent.
+    // Links 0042: de naamkaart aan een rood koord op een lege bureaustoel, met WELZIJN 40. Rechts
+    // B.A.A.S. (een beige mainframekast met het groene oog) met AANDEELHOUDERSWAARDE ∞ en een
+    // intentiepil. Onderaan de energiebol, de trekstapel, de borstzak met de foto (altijd in beeld),
+    // een waaier van vijf kantoorkaarten, 'Eindig beurt' en de aflegstapel. Geen uitlegregels.
+    // 4 · DE UITWEG — sprong: houd de foto vast (touch/muis: vasthouden of een tweede tik; laptop:
+    // spatie vasthouden); geduwd: na beurt 3 (of WELZIJN 0) vuurt de OPTIMALISATIERONDE.
+    // Keuze 3: de lift daalt, de mens valt niet — geen dakrand, geen blik omlaag, het hek dicht.
     {
       kind: 'gesprek',
       titel: 'Het Functioneringsgesprek',
-      baas: { src: A('baas-terminal.webp'), placeholder: 'B.A.A.S. — mainframe' },
+      beurt: 'Functioneringsgesprek · beurt {n}',
       start: { welzijn: 40, energie: 3 },
       facturabiliteit: 78,
+      held: { naam: 'Medewerker 0042', welzijn: 'WELZIJN', nr: '0042' },
+      baas: { naam: 'B.A.A.S.', waarde: 'AANDEELHOUDERSWAARDE', oneindig: '∞', fact: 'FACT.' },
+      eindig: 'Eindig beurt',
+      // de intentiepil boven B.A.A.S., per beurt (zoals de pil boven een vijand in het spel)
       intenties: [
-        { kop: 'Beurt 1', naam: 'DEADLINE', icoon: '⚔️', telegraph: 'STRESS 8', hint: 'Verschuil je — Blok vangt het op.' },
-        { kop: 'Beurt 2', naam: 'VERPLICHTE TEAMBUILDING', icoon: '🫂', telegraph: 'STEELT ⚡1', hint: 'Volgende beurt één energie minder.' },
-        { kop: 'Beurt 3', naam: 'OPTIMALISATIERONDE', icoon: '💀', telegraph: 'EINDE', hint: 'Geen blok stopt dit.' },
+        { id: 'deadline',      icoon: '⚔', naam: 'DEADLINE',           waarde: '8',    soort: 'aanval', schade: 8 },
+        { id: 'teambuilding',  icoon: '🫂', naam: 'TEAMBUILDING',       waarde: '−1 ⚡', soort: 'debuff' },
+        { id: 'optimalisatie', icoon: '💀', naam: 'OPTIMALISATIERONDE', waarde: '',     soort: 'schedel' },
       ],
+      // de hand: vijf kantoorkaarten in de vorm van de echte kaarten (kostbol, naam, venster, tekst, type).
+      // Het dek is deze vijf, twee keer: elke beurt trek je ze opnieuw (de trekstapel telt af).
       hand: [
-        { id: 'glimlach',    naam: 'Glimlach',                  kost: 0, soort: 'verdediging', ph: '🙂',       src: A('kaart-glimlach.webp'),            tekst: 'Krijg <b>5</b> Blok.',                          flavor: 'Je verschuilt je.',  eff: { blok: 5 } },
-        { id: 'mailtje',     naam: 'Snel een mailtje',          kost: 1, soort: 'aanval',      ph: '✉️',       src: A('kaart-mailtje.webp'),             tekst: '<b>6</b> schade. Cc: iedereen.',                flavor: 'Passief-agressief.', eff: { schade: 6 } },
-        { id: 'koffie',      naam: 'Koffie',                    kost: 0, soort: 'energie',     ph: '☕',             src: A('kaart-koffie.webp'),              tekst: '+1 ⚡.',                                     flavor: 'Te sterk.',          eff: { energie: 1 } },
-        { id: 'overuren',    naam: 'Overuren',                  kost: 0, soort: 'verbrand',    ph: '🔥',       src: A('kaart-overuren.webp'),            tekst: 'Verbrand <b>6</b> Welzijn → +2 ⚡.',     flavor: '“Toewijding.”', eff: { welzijn: -6, energie: 2 } },
-        { id: 'verantwoord', naam: '“Verantwoordelijkheid”', kost: 1, soort: 'vloek', ph: '🗣️', src: A('kaart-verantwoordelijkheid.webp'), tekst: 'Doet niets. B.A.A.S. <b>+5</b> facturabiliteit.', flavor: 'Hol.',               eff: { baasFact: 5 } },
-        { id: 'foto',        naam: 'Kijk naar de foto',         kost: 0, soort: 'ontsnap',     ph: '🖼️', src: A('foto-kind.webp'),                 tekst: 'Niet-factureerbaar. Wie kijkt, vertrekt — en komt niet terug.', flavor: 'Je laat los.',     eff: { ontsnap: true } },
+        { id: 'glimlach',    naam: 'Glimlach',                 kost: 0, type: 'verdediging', label: 'VERDEDIGING', src: A('kaart-glimlach.webp'),            tekst: 'Krijg <b>5</b> Blok.',                   eff: { blok: 5 } },
+        { id: 'mailtje',     naam: 'Snel een mailtje',         kost: 1, type: 'aanval',      label: 'AANVAL',      src: A('kaart-mailtje.webp'),             tekst: 'Doe <b>6</b> schade. Cc: iedereen.',     eff: { schade: 6 } },
+        { id: 'koffie',      naam: 'Koffie',                   kost: 0, type: 'vaardigheid', label: 'VAARDIGHEID', src: A('kaart-koffie.webp'),              tekst: 'Krijg <b>1</b> ⚡.',                      eff: { energie: 1 } },
+        { id: 'overuren',    naam: 'Overuren',                 kost: 0, type: 'verbrand',    label: 'VERBRAND',    src: A('kaart-overuren.webp'),            tekst: 'Verbrand <b>6</b> Welzijn. Krijg <b>2</b> ⚡.', eff: { welzijn: -6, energie: 2 } },
+        { id: 'verantwoord', naam: '“Verantwoordelijkheid”', kost: 1, type: 'vloek',       label: 'VLOEK',       src: A('kaart-verantwoordelijkheid.webp'), tekst: 'Doet niets. B.A.A.S. <b>+5</b> %.',      eff: { baasFact: 5 } },
       ],
-      // de fotovraag-modal is weg (R1): de foto-kaart vraagt zelf om een tweede tik
-      fotoTweede: { mobiel: 'tik nog eens: kijk', laptop: 'klik nog eens: kijk' },
-      // de kaarten ZIJN je antwoorden — gescripte reacties die escaleren met de paniek (index 0→hoog)
-      reacties: {
-        glimlach: [
-          'Je glimlacht. Veilig, achter een glimlach. B.A.A.S.: “Zie je wel. Meewerken doet geen pijn.”',
-          'Weer die glimlach. Je wangen verkrampen. Iets achter je ogen telt de seconden mee.',
-          'De glimlach staat nu vast als een masker dat niet meer afgaat. Wie zit er nog achter?',
-          'Je lacht en lacht. Het is het enige wat je nog kunt. Het helpt niet.',
-        ],
-        mailtje: [
-          'Je vuurt een mailtje af op het systeem. Het kaatst terug. B.A.A.S. zwelt: “Initiatief! +facturabiliteit.”',
-          'Nog een mail. Cc: iedereen. Niemand leest. De ∞ beweegt niet — ze voedt zich.',
-          'Je hamert op verzenden, harder, sneller. Het systeem stuurt een ontvangstbevestiging.',
-          'Verzonden. Verzonden. Verzonden. Je schreeuwt in een doos zonder wanden.',
-        ],
-        koffie: [
-          'Je drinkt. Te heet, te sterk. Je hart gaat sneller dan de klok ooit tikte.',
-          'Nog een beker. Je handen trillen. De energie is niet van jou — ze is geleend, met rente.',
-          'Cafeïne en paniek zijn nu hetzelfde ding. Je voelt het verschil niet meer.',
-          'Je proeft niets meer. Alleen het bonzen in je oren, en doorgaan, doorgaan.',
-        ],
-        overuren: [
-          'Je blijft langer. Je verbrandt iets van binnen voor twee tellen lucht. “Dát is toewijding.”',
-          'Nog meer uren. Er is steeds minder van jóú om te verbranden. B.A.A.S. glimt tevreden.',
-          'Je geeft wat je niet meer hebt. De kaars brandt aan beide kanten — en jij bent de kaars.',
-          'Er is bijna niets meer over. Je voelt de bodem. B.A.A.S. vraagt of je nog even kunt blijven.',
-        ],
-        verantwoord: [
-          '“Ik neem mijn verantwoordelijkheid.” De woorden zijn hol. B.A.A.S. krijgt +5 — cadeau.',
-          'Je zegt het nóg eens. Er gebeurt niets. Behalve dat de meter naar hén klimt.',
-          'De zin betekent niets meer. Je hoort jezelf praten van heel ver weg.',
-          'Je mond vormt de woorden vanzelf. Er is niemand meer thuis om ze te menen.',
-        ],
+      // B.A.A.S. spreekt in groen fosfor, in een ballon bij zijn kast (het systeem zegt u)
+      zegt: {
+        start: 'Fijn dat u er bent. Dit is een gesprek tussen gelijken.',
+        glimlach: 'Glimlach geregistreerd: 0u06.',
+        mailtje: 'Dank voor uw inzet.',
+        koffie: 'Koffie wordt verrekend met uw pauze.',
+        overuren: 'Toewijding genoteerd.',
+        verantwoord: 'Wij nemen uw verantwoordelijkheid graag over.',
+        teWeinig: 'Onvoldoende energie. Neem een koffie.',
+        deadline: 'Deadline.',
+        teambuilding: 'Verplichte teambuilding. Samen sterk.',
+        optimalisatie: 'Optimalisatieronde.',
+        vrijgesteld: 'U bent vrijgesteld.',
       },
-      // het grote, ingehouden kijk-moment — vóór de consequentie
-      fotoKijk: {
-        regels: [
-          'Daar ben je.',
-          'Het sterretje brandt nog na in je ogen. Je lacht naar iemand buiten beeld.',
-          'Naar wie je toen was. Naar wie op je wachtte, voordat het werk alles werd.',
-          'Geen factuur heeft dit ooit kunnen meten. Niemand kon het optimaliseren.',
-          'De warmte in je borstzak vlamt op. B.A.A.S.’ stem wordt klein, en kleiner.',
-        ],
-        cta: 'Laat los',
-      },
-      // de uitkomst speelt als regie (geen knop): een tik spoelt door
-      uitkomst: {
-        gesprongen: { kop: 'LOSGELATEN.', body: 'De rode stippellijn scheurt over heel het scherm. Niemand duwt je — je <b>kiest</b> zelf.' },
-        geduwd:     { kop: 'U bent vrijgesteld.', body: 'Geen kaart verlaagde ∞. Geen blok stopte een OPTIMALISATIE. Je werd <b>geduwd</b>.' },
-      },
+      // de zwevende getallen (zoals de schade in het spel): een mailtje laat ∞ niet zakken
+      fx: { mailtje: '+6 % FACTURABILITEIT', verantwoord: '+5 % FACTURABILITEIT', blok: '+{n} BLOK', geblokt: 'GEBLOKT', energie: '+{n} ⚡', diefstal: '−1 ⚡' },
+      foto: { src: SLOTS.foto.src, stip: 'niet-factureerbaar' },
+      // de uitweg van wie springt: drie je-regels met een Ken Burns, dan 'Laat los'
+      kijk: { regels: ['Daar ben je.', 'Het sterretje brandt nog in je hand.', 'Dat licht was nooit te koop.'], cta: 'Laat los', slot: 'Niemand duwt je — je kiest zelf.' },
+      lift: { bord: 'DAK' },
+      krant: 'FUNCTIONERINGSGESPREK  -  UW WELZIJN IS ONZE KPI  -  ',   // de lichtkrant van de zeppelin (pixelfont)
     },
 
     // 4 · De Eindafrekening → De Val → De Afgrond (fasen in één scène, elk een checkpoint)
     {
       kind: 'breekpunt',
       titel: 'De Eindafrekening',
+      // 5 · DE EINDAFREKENING (R4): de matrixprinter van B.A.A.S. voert één kettingvel met JOUW
+      // cijfers (het contract: glimlachen, foto, jeugddroom, zelf/machinaal afgestempeld), regel per
+      // regel met printergeratel; de jeugddroomregel print trager. Bij de warmte loopt de printer vast
+      // ('IN BESL█'), het totaal zakt naar €0,00. Na de perforatie het BESLUIT (checkpoint 'ontslag').
       factuur: {
         kop: 'EINDAFREKENING · MEDEWERKER 0042',
-        sub: 'Een Productief Leven™ · Afd. Loon & Lot · 24.847 dagen in dienst',
-        regels: [
-          { label: 'Glimlachen — 0u06 × 24.847 dagen', waarde: 'factureerbaar', soort: 'plus' },
-          { label: 'Schade bedrijfswagen (kras, 1998) — incl. 26 jr rente', waarde: '− €14.880', soort: 'min' },
-          { label: 'Verbruikte Tipp-Ex (geschat, naar boven afgerond)', waarde: '− €43,50', soort: 'min' },
-          { label: 'Toiletbezoek: 9.331× à 4 min — niet-factureerbaar', waarde: '− €2.190', soort: 'min' },
-          { label: '“Vrijwillige” bijdrage Het Mirakelfonds', waarde: '− €4.000', soort: 'min' },
-          { label: 'Koffie-automaat — verplicht lidmaatschap (25 jr)', waarde: '− €960', soort: 'min' },
-          { label: 'Bureaustoel — afschrijving & “slijtage door zitten”', waarde: '− €310', soort: 'min' },
-          { label: 'Parkeerplaats P-niveau −3 (lift buiten dienst)', waarde: '− €1.560', soort: 'min' },
-          { label: 'Verjaardagstaart collega’s (u at niet mee — boete)', waarde: '− €220', soort: 'min' },
-          { label: 'Toegangsbadge — verlies-risicopremie', waarde: '− €75', soort: 'min' },
-          { label: 'Verplicht huwelijksgeschenk collega (×31)', waarde: '− €1.240', soort: 'min' },
-          { label: 'Bijdrage scheidingsfeest — uw eigen', waarde: '− €85', soort: 'min' },
-          { label: 'Gemiste verjaardagen kind: 18', waarde: 'afgeschreven', soort: 'grijs' },
-          { label: 'Onbetaalde overuren: 41.200u', waarde: '€0,00', soort: 'min' },
-          { label: 'Jeugddroom (“{jeugddroom}”) — voorziening getroffen', waarde: 'afgeschreven', soort: 'grijs' },
-          { label: 'Niet-factureerbare warmte — borstzak', waarde: 'IN BESLAG', soort: 'rood' },
-          { label: 'Loyaliteitsbonus (25 jaar trouwe dienst)', waarde: '1 (één) pen', soort: 'plus' },
-        ],
-        totaalLabel: 'TOTAAL VERSCHULDIGD AAN U',
-        totaal: '€0,00',
-        voet: 'Saldo afgerond in ons voordeel. U staat bij ons in het krijt voor het voorrecht. Dank voor uw begrip.',
-        cta: 'Lees het besluit',
+        sub: 'Een Productief Leven™ · Afd. Loon & Lot · ingeklokt MA 06:42',
+        glimlachen: 'Glimlachen vandaag: {n} × 0u06',   // waarde: n × 6 minuten (7 → 0u42)
+        foto: { label: 'Foto bekeken: {n}×', ja: 'gemarkeerd', nee: 'in orde' },
+        droom: { label: '“{droom}” — {hoe} afgestempeld', zelf: 'zelf', machine: 'machinaal', waarde: 'voorziening getroffen', leeg: 'iets belangrijks' },
+        bonus: { label: 'Loyaliteitsbonus 25 jaar', waarde: '1 (één) pen, leeg' },
+        warmte: { label: 'Niet-factureerbare warmte — borstzak', waarde: 'IN BESLAG', tot: 7 },   // de printer loopt vast na 'IN BESL'
+        totaal: { label: 'TOTAAL VERSCHULDIGD AAN U', van: 9131, naar: 0 },   // € 9.131,00 → € 0,00
+        afgerond: 'Facturabiliteit afgerond: 80 %. In ons voordeel.',
       },
       ontslag: {
         kop: 'BESLUIT TOT BEËINDIGING',
-        stempel: 'Onmiddellijk Ontslag',
-        // koud-bureaucratisch én vals-warm dooreen (het unheimliche)
-        regels: [
-          { t: 'Geachte 0042, u was ons dierbaar.', warm: true },
-          { t: 'Uw contract wordt per heden ge-end-of-life’d.', warm: false },
-          { t: 'Wij koesteren elke factureerbare seconde samen.', warm: true },
-          { t: 'Gelieve uw warmte in te leveren bij de receptie.', warm: false },
-          { t: 'U wordt gemist. (Deze regel is niet factureerbaar.)', warm: true },
-        ],
-        teken: 'Teken voor akkoord met de lege pen:',
-        knop: 'Teken (de pen is leeg)',
-        sprong: { plus: 'U tekende niet. U had al losgelaten.', cta: 'Laat los' },
-        geduwd: 'U tekent. De pen laat geen inkt na — alleen een groef.',
-        ondertekenaar: { src: A('junior.webp'), placeholder: 'JUNIOR', naam: 'J. “Junior” Devroe', rol: 'Namens de directie · de zoon van De Oprichter', handtekening: 'J. Devroe' },
+        regels: ['Geachte 0042, u was ons dierbaar.', 'Uw contract wordt per heden ge-end-of-life’d.'],
+        namens: 'Namens de directie:',
+        ondertekenaar: 'J. Devroe',
+        stempel: 'ONMIDDELLIJK ONTSLAG',   // dezelfde KA-TSJONK als de prikklok
+        tekenregel: 'Handtekening medewerker:',
+        pen: 'Teken',                       // de lege pen (geduwd): alleen een groef
+        geduwd: 'Uw handtekening is niet vereist. Wij hadden hem al.',
+        sprong: 'U tekende niet. U had al losgelaten.',
+        wachtMs: 6000,
       },
       // IN DE WACHT (R2): de goederenlift daalt door de etages van de outro (proloog/val.js).
       // Keuze 3 (gevoeligheid): geen raam naar buiten, geen gevel, geen blik omlaag, geen
