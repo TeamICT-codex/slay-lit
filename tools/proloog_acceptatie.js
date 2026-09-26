@@ -3272,7 +3272,7 @@ function klankReeks(pk, verwacht) {
       await r4Kaart(page, vp, 'glimlach');
       const wl = await r4Vasthouden(page, vp, 'vasthouden');
       const f = await wachtScene(page, 'breekpunt/factuur', 10000);
-      await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pv-regel[data-post="foto"]')); }, 8000);
+      await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pv-regel[data-post="droom"]')); }, 9000);
       const p = await sr(page, `const o = {}; R.querySelectorAll('.pv-regel[data-post]').forEach(r => { o[r.dataset.post] = r.textContent.replace(/\\s+/g, ' ').trim(); }); return o;`);
       await page.evaluate(() => Proloog.slaOver());
       await slaap(600);
