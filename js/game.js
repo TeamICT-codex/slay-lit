@@ -7759,6 +7759,7 @@ function dicktatorOvergang(b, g, nieuw, oud) {
      meer vóór de banner valt (op de stand van VÓÓR de klap, zie verliesHp). */
   b._bbToon = (b._hpVoorKlap != null ? Math.max(b.hp, b._hpVoorKlap) : b.hp);
   b.herschik = true;
+  dicktatorSluitDossier(b, g);   /* elke scènewissel sluit het dossier (review F3 + F5) */
   _ceremonieAan(g);
 
   if (nieuw === 2) dicktatorRegieProces(b, g, op, U, D);
@@ -7987,7 +7988,7 @@ function dicktatorHerverkiezing(g, doel) {
   doel.fase = 3;                          /* meteen de wanhoopsfase (pips + woede); geen tweede fase-flits meer */
   doel.v2Zet = 0;                         /* de klok van HET MANDAAT: telt de uitgevoerde vorm-2-zetten */
   doel.decreten = DICK.decreetCap;        /* in vorm 2 bestaat de griffie niet meer */
-  if (g && g.aangezegd) g.aangezegd.clear();   /* het open dossier valt weg met de vorige regering */
+  dicktatorSluitDossier(doel, g);         /* het open dossier valt weg met de vorige regering (F3: elke scènewissel) */
   _bbExtraSig = null;
   doel.intent = VIJANDEN[doel.id].kies(doel, doel.beurtTeller || 0);   /* = de AANLOOP (DE FACTUUR) */
   if (!g) return;
@@ -8407,6 +8408,15 @@ function dicktatorDecreetMogelijk(v, scene) {
   if (scene > 2) return false;
   if ((v.decreten || 0) >= DICK.decreetCap) return false;
   return !((v.zittingIn || {})[scene]);
+}
+/* EEN SCÈNEWISSEL SLUIT HET DOSSIER (review F3 + F5). Een dossier hoort bij de zitting van
+   zijn eigen scène; wat na de wissel nog open stond, loog: een I-dossier met "zitting over 2"
+   in de eerste beurt van II, zegels in III waar geen decreet meer valt. Eén regel voor elke
+   wissel: de overgang, de herverkiezing en de DEV-landing. De eerste KARAKTERMOORD van II zet
+   daarna een nieuw dossier. */
+function dicktatorSluitDossier(b, g) {
+  if (g && g.aangezegd && g.aangezegd.size) g.aangezegd.clear();
+  if (b) b.dossierScene = null;
 }
 /* de zitting van deze scène is gehouden - welke vorm ze ook kreeg. Het dossier sluit. */
 function dicktatorZittingGehouden(v, g, scene) {
@@ -11110,7 +11120,7 @@ function _devBedrijfLanding(b, g, scene) {
   b._geschorst = false;
   b.minVrij = true;   /* de DEV-landing valt midden in de scène: geen vloer (DE ZITTING LOOPT), zodat de volgende DEV-klap de regie speelt */
   b.sceneStart = (b.beurtTeller || 0);
-  if (g.aangezegd && scene >= 3) g.aangezegd.clear();
+  if (scene >= 2) dicktatorSluitDossier(b, g);   /* dezelfde regel als de echte wissel (F3): geen DEV-uitzondering meer */
   b.intent = VIJANDEN[b.id].kies(b, b.beurtTeller || 0);
   dicktatorHersync(false);
   renderGevecht();   /* zet de fase-klassen (.woede, pips, beleidsstrook) zelf terug */
@@ -11198,15 +11208,17 @@ function devDicktator(profiel = 'slachter_mid', opties = {}) {
   /* de sprongen: elk zet het gevecht in een latere staat zodat je die scène kunt bekijken */
   const g = S.gevecht, v = g && g.vijanden[0];
   if (!v) return;
-  /* de griffier mee op het toneel en de shortlist gezet, zonder de aanzegging af te wachten.
-     beurtTeller 3 + sceneStart 3 = de volgende zet is slot 1 (de aanzegging - die zet nu
-     geen nieuwe shortlist, want het dossier staat al open). */
-  const roepHof = () => {
+  /* de griffier mee op het toneel en (met dossier = de scène) de shortlist gezet, zonder de
+     aanzegging af te wachten. beurtTeller 3 + sceneStart 3 = de volgende zet is slot 1 (de
+     aanzegging - die zet nu geen nieuwe shortlist, want het dossier staat al open). Sinds F3
+     sluit elke scènewissel het dossier, ook de DEV-landing: wie verder landt dan scène I,
+     roept het hof zonder dossier (dossier 0), anders sprak hij een aanzegging uit die de
+     landing meteen weer schrapte. */
+  const roepHof = (dossier = 1) => {
     v.griffierGeroepen = true;
     const n = dicktatorRoep('de_griffier'); if (n) n._aangetreden = true;
     v.beurtTeller = 3; v.sceneStart = 3;
-    dicktatorShortlist(g, v);
-    v.dossierScene = 1;
+    if (dossier && dicktatorShortlist(g, v)) v.dossierScene = dossier;
     v.intent = VIJANDEN[v.id].kies(v, v.beurtTeller);
     dicktatorHersync(false);
   };
@@ -11224,7 +11236,7 @@ function devDicktator(profiel = 'slachter_mid', opties = {}) {
   });
   const netVoor = opties.netVoor || opties.speelAf || 0;
   if (netVoor) {
-    roepHof();
+    roepHof(netVoor === 2 ? 1 : 0);
     if (netVoor >= 3) landTot(netVoor - 1);   /* III vertrekt uit scène II, de herverkiezing uit III */
     const doelHp = _devProcesDrempel(v, netVoor) + DEV_KLAP;
     const naam = netVoor === 2 ? 'I→II · DE FACTUUR' : (netVoor === 3 ? 'II→III · DE TIRADE' : 'DE HERVERKIEZING');
@@ -11236,7 +11248,7 @@ function devDicktator(profiel = 'slachter_mid', opties = {}) {
     /* IV · HET MANDAAT — de plek waar het écht kan gaan slepen. Geland in III (deurwaarder +
        claqueur = twee kiezers), en de herverkiezing valt ZELF (één punt langs het normale
        schadepad) zodra de intro weg is. staart: twee decreten gevallen (lasters erin). */
-    roepHof();
+    roepHof(0);
     landTot(3);
     if (opties.staart) {
       for (let i = 0; i < DICK.decreetCap && S.dek.length > 3; i++) { S.dek.pop(); S.dek.push(nieuweKaart('laster')); }
@@ -11245,14 +11257,18 @@ function devDicktator(profiel = 'slachter_mid', opties = {}) {
     v.hp = 1;
     zetHpNaIntro(1, 1);
   } else if (opties.tirade) {
-    roepHof();
+    roepHof(0);
     landTot(3);
     v.hp = _devProcesDrempel(v, 3);
   } else if (opties.hof) {
-    /* zoals vroeger: het VOLLEDIGE hof van scène II op het toneel (griffier + deurwaarder),
-       op de drempel van II; het dossier uit I staat nog open */
-    roepHof();
+    /* het VOLLEDIGE hof van scène II op het toneel (griffier + deurwaarder), op de drempel
+       van II, met een open dossier van II (alsof zijn KARAKTERMOORD net viel). Vroeger het
+       dossier uit I, maar dat bestaat sinds F3 niet meer: elke scènewissel sluit het. */
+    roepHof(0);
     landTot(2);
+    if (dicktatorShortlist(g, v)) v.dossierScene = 2;
+    v.intent = VIJANDEN[v.id].kies(v, v.beurtTeller);
+    dicktatorHersync(false);
     v.hp = _devProcesDrempel(v, 2);
   }
   renderGevecht();

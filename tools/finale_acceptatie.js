@@ -465,6 +465,51 @@ const sonde = page => page.evaluate(() => {
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
 
+  /* ================= 9 · F3 + F5 · ELKE SCÈNEWISSEL SLUIT HET DOSSIER ================= */
+  kop('9 · F3 + F5 · elke scènewissel sluit het dossier (echte overgangen)');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page);
+  const dossierStand = page => page.evaluate(() => {
+    const g = S.gevecht, b = dicktatorBaas(g);
+    const zegels = [...document.querySelectorAll('.kaart-zegel')].filter(e => e.style.display !== 'none' && e.offsetParent !== null).length;
+    return {
+      n: g.aangezegd ? g.aangezegd.size : 0, scene: dicktatorScene(b), dossierScene: b.dossierScene == null ? null : b.dossierScene,
+      zegelsDek: S.dek.filter(c => kaartAangezegd(c)).length, zegelsDom: zegels,
+      strook: (document.querySelector('#baas-balk .bb-proces') || {}).textContent || ''
+    };
+  });
+  let z9 = await beurt(page, 0);
+  let d9 = await dossierStand(page);
+  t(z9.naam === 'DE AANZEGGING' && d9.n === 2 && d9.dossierScene === 1 && d9.zegelsDek === 2 && /📜/.test(d9.strook), `I: de aanzegging zet een dossier (${d9.n} kaarten, scène ${d9.dossierScene}, strook "${d9.strook}")`);
+  const wissel = await page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g); verliesHp(b, 999, sp()); checkBaasFase(); return { n: g.aangezegd.size, dossierScene: b.dossierScene == null ? null : b.dossierScene, scene: dicktatorScene(b), zegels: S.dek.filter(c => kaartAangezegd(c)).length }; });
+  t(wissel.scene === 2 && wissel.n === 0 && wissel.dossierScene === null && wissel.zegels === 0, `I → II: op het moment van de wissel is het dossier dicht (${wissel.n} kaarten, dossierScene ${wissel.dossierScene}, ${wissel.zegels} zegels)`);
+  await wachtVrij(page);
+  d9 = await dossierStand(page);
+  t(d9.n === 0 && d9.zegelsDom === 0 && !/📜|zitting over/.test(d9.strook), `de eerste beurt van II: geen 📜 en geen "zitting over" in de strook ("${d9.strook}"), ${d9.zegelsDom} zegels in beeld (F5)`);
+  z9 = await beurt(page, 0);
+  t(z9.naam === 'HERSCHIKT DE ZAAL', `de eerste vijandbeurt van II: "${z9.naam}"`);
+  z9 = await beurt(page, 0);
+  d9 = await dossierStand(page);
+  t(z9.naam === 'KARAKTERMOORD' && d9.n === 2 && d9.dossierScene === 2 && /📜/.test(d9.strook), `de eerste KARAKTERMOORD van II zet een nieuw dossier (${d9.n} kaarten, scène ${d9.dossierScene}, strook "${d9.strook}")`);
+  /* II → III met een open dossier. DE ZITTING LOOPT houdt hem nu nog op zijn vloer; minVrij
+     (de DEV-vlag van de landing) zet de vloer voor deze ene scène uit, zodat de wissel met
+     een open dossier valt - de toestand die zonder vloer (of na zijn zetten) gewoon kan. */
+  const wissel3 = await page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g); b.minVrij = true; verliesHp(b, 999, sp()); checkBaasFase(); return { n: g.aangezegd.size, dossierScene: b.dossierScene == null ? null : b.dossierScene, scene: dicktatorScene(b), zegels: S.dek.filter(c => kaartAangezegd(c)).length }; });
+  t(wissel3.scene === 3 && wissel3.n === 0 && wissel3.dossierScene === null && wissel3.zegels === 0, `II → III met een open dossier: bij de wissel dicht (${wissel3.n} kaarten, ${wissel3.zegels} zegels)`);
+  await wachtVrij(page);
+  const iii = [];
+  for (let i = 0; i < 4; i++) { const r = await beurt(page, 0); const d = await dossierStand(page); iii.push(r.naam + ':' + d.n + '/' + d.zegelsDom); }
+  t(iii.every(x => /:0\/0$/.test(x)), `in III nooit een dossier of zegel: ${iii.join(' → ')}`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  /* de DEV-landing volgt dezelfde regel (geen uitzondering meer) */
+  await startProces(page, { tirade: true });
+  d9 = await dossierStand(page);
+  t(d9.scene === 3 && d9.n === 0 && d9.zegelsDek === 0, `devDicktator({tirade}) landt in III zonder dossier (${d9.n} kaarten)`);
+  await startProces(page, { hof: true });
+  d9 = await dossierStand(page);
+  t(d9.scene === 2 && d9.n === 2 && d9.dossierScene === 2, `devDicktator({hof}) landt in II met een dossier van II (${d9.n} kaarten, scène ${d9.dossierScene})`);
+  await ctx.close();
+
   await browser.close();
   console.log('\n============================================');
   console.log(fout === 0 ? `FINALE ACCEPTATIE: ALLES GROEN — ${ok} ok` : `FINALE ACCEPTATIE: ${ok} ok, ${fout} FOUT`);
