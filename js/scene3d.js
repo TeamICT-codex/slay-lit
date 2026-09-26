@@ -34,6 +34,9 @@ const Vista = (() => {
     camera.updateMatrixWorld(true);
   }
   function kaderStand() { return { fov: camera ? camera.fov : null, kijkY, eigen: !!kaderOverride }; }
+  /* B2 · B0.6: de naam van de textuur die een acteur NU toont ('idle' in rust) - zo zijn ook
+     poses zonder eigen voetmarge toetsbaar (decreet, factuur) */
+  function poseNu(actor) { const a = acteurs.get(actor); return a ? (a.poseNu || 'idle') : null; }
   /* De vloer van het toneel: elke acteur staat met zijn GETEKENDE voeten op deze
      wereldhoogte (zie voetmarge() en maakActeur). Dat is meteen de bron van
      voetlijnY() — de lijn waar plaatsGevechtsplaat() de geschilderde vloerrand
@@ -393,6 +396,10 @@ const Vista = (() => {
       const states = ['attack', 'hit', 'death', 'poison', 'gif', 'block', 'victory', 'cast', 'wounded'];   /* 'gif' = eenmalige immuun/kaats-reactiepose (los van 'poison' = aanhoudende vergiftigde stand) */
       /* signature-kaarten hebben een eigen pose (alleen helden) */
       if (sleutel.isSpeler) states.push('beulswerk', 'moederslang', 'flame');
+      /* B2 · B0.6: de signatuurposes van de bazen (plagiaat, decreet, factuur, herkozen) ook in 3D -
+         zonder deze tak laadde Vista ze nooit en bleef de sprite in rust. Poses zonder art vallen
+         stil weg (het art-manifest kent ze niet). */
+      else states.push('plagiaat', 'plagiaat_variant', 'decreet', 'factuur', 'herkozen');
       states.forEach(st => {
         laadKarakterAfbeelding(artId + '_' + st, img => {
           if (!img || !sprite.parent) return;
@@ -637,6 +644,7 @@ const Vista = (() => {
          art ook echt geladen is telt — anders zou de quad schuiven zonder dat het
          beeld verandert. */
       zetVoetAnker(a, (st !== 'idle' && a.stateTex[st]) ? poseMarge(a, st) : a.margeBasis);
+      a.poseNu = (st !== 'idle' && a.stateTex[st]) ? st : 'idle';   /* B2 · B0.6: meetbaar via Vista.poseNu */
 
       if (st !== 'idle' && a.stateTex[st]) {
         if (a.mat.map !== a.stateTex[st]) a.mat.map = a.stateTex[st];
@@ -897,6 +905,7 @@ const Vista = (() => {
     beschikbaar, start, gevechtStart, gevechtEind, raak, aanval, sterf, pose, tik, schermPos, resize, zwaai, zetLicht, schud,
     voetlijnY, voetlijnInfo, voetMeting,
     zetKader, kaderStand,   /* B2 · B0.12 */
+    poseNu,                 /* B2 · B0.6 */
     get actief() { return actief; },
     get klaar() { return klaar; }
   };

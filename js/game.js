@@ -2841,11 +2841,19 @@ function pose2DArtEl(actor) {
   return (i >= 0 && GDOM.vijanden[i]) ? GDOM.vijanden[i].wrap.querySelector('.vijand-art') : null;
 }
 const pose2DTimers = new WeakMap();
+const POSES_SIGNATUUR_BAAS = ['plagiaat', 'plagiaat_variant', 'decreet', 'factuur', 'herkozen'];   /* B2 · B0.6 (idem scene3d.js) */
 function pose2D(actor, state, duur) {
   /* de METGEZEL heeft géén Vista-sprite — zijn DOM-figuur (.metgezel-art) ís het beeld,
      óók in 3D. Zonder deze uitzondering waren al zijn poses (incl. de Laatste Sprong-
      offer-cinematic) onzichtbaar zodra het 3D-toneel draaide. */
-  if (!actor || (d3Actief() && !actor.isMetgezel) || !window.laadKarakterAfbeelding) return;
+  /* B2 · B0.6: in 3D stopte pose2D hier stil - de gewone poses krijgt Vista via een eigen
+     aanroep naast pose2D, maar de SIGNATUURPOSES van de bazen hadden er geen (De Roof: de
+     prins speelde jouw kaart in rust). Eén regel hier i.p.v. een fix per aanroep. */
+  if (actor && d3Actief() && !actor.isMetgezel) {
+    if (window.Vista && Vista.pose && POSES_SIGNATUUR_BAAS.includes(state)) Vista.pose(actor, state, duur || 0.8);
+    return;
+  }
+  if (!actor || !window.laadKarakterAfbeelding) return;
   const el = pose2DArtEl(actor); if (!el) return;
   const basis = actor.isSpeler ? huidigeHeld().art
     : (actor.isMetgezel ? METGEZELLEN[actor.id].art : actor.id);
