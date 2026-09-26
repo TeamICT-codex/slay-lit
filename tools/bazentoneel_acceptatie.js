@@ -14,6 +14,19 @@
    Formaten: 800x360 en 846x381 (Thomas' toestel, isMobile/hasTouch), 740x360,
    1440x900 en 1366x768 in 2D en 3D, en 412x915 staand als controle.
    Elk criterium is een getal of een lege lijst, geen oordeel.
+   SLAYIT_TAKEN=<regex> draait een deel (bv. 'rust|dood'); een volledige run duurt ~11 min.
+
+   De eindverificatie van §6, zonder runtime-patches (de code zelf moet het halen):
+   - rust: 3 bazen (+ het hof) x statussen {0, 1, 4, 5, held met 5} x fakkel {100, 0}:
+     pil ~ topbalk 0, chip ~ hand 0, 2D-voet <= 2 px tussen held en baas, eigen label
+     in 3D <= 0,2 % per label (en geen naamlabels), Beurt-botsingen 0;
+   - de overgangen van de DICKtator per 50 ms: spraak ~ titel 0, spraak ~ held 0,
+     spraak ~ spreker <= 250 ms per regel, zijn pil nooit in de topbalk;
+   - de tweede dood -> de outro met de doodregel; de verslagen baas blijft liggen;
+   - nooit twee banners tegelijk (de wachtrij), op elke baas en in de echte overgangen;
+   - de baaspil ook bij fakkel 0 in beeld, zonder ❓, en te lezen onder het vignet;
+   - de intent-assert: elke intent-soort heeft een eigen tak in intentTekst (statisch), en
+     geen zet van een baas, het hof of een gewone vijand valt terug op 'verzwakt jou'.
    ============================================================================ */
 const { chromium } = require('playwright');
 const path = require('path'); const fs = require('fs');
@@ -141,6 +154,7 @@ const HELPER = `(() => {
       pilHeldChips: Math.round(som(pillen, heldChips)), pilHeld: pct(held, pillen), pilBaas: pct(bf, pillen),
       chipsAnderPil: Math.round(som(baasChips, anderPillen)), chipsAnderArt: anderArts.length ? Math.max(...anderArts.map(a => +(100 * som(baasChips, [a]) / ((a.r - a.l) * (a.b - a.t))).toFixed(1))) : 0,
       eigenBaas, eigenHeld, eigenLabel, eigenLabelWie,
+      namen: [...document.querySelectorAll('#vijanden-rij .vijand-naam, #speler-zone .speler-naam')].filter(zicht).length,
       pilN: pillen.length, pilRect: pillen.length ? { l: Math.min(...pillen.map(p => p.l)), t: Math.min(...pillen.map(p => p.t)), r: Math.max(...pillen.map(p => p.r)), b: Math.max(...pillen.map(p => p.b)) } : null,
       spraak: !!sp, spRegels: regels, spBaas: pct(bf, sp ? [sp] : []), spPil: Math.round(som(sp ? [sp] : [], pillen)), spHeld: pct(held, sp ? [sp] : []),
       spBB: bb && sp ? Math.round(snij(sp, bb)) : 0, spTop: tb && sp ? Math.round(snij(sp, tb)) : 0, spUit: sp ? (sp.l < 0 || sp.r > W) : false,
@@ -295,6 +309,7 @@ async function perFormaat(browser, fk) {
           t(w.eigenLabel <= 0.2, `B0.12 ${vp.naam} ${B}: eigen label op eigen lijf <= 0,2 % per label (max ${w.eigenLabel} %${w.eigenLabel ? ', ' + w.eigenLabelWie + ' bij ' + w.st + '/fakkel ' + w.f : ''})`); }
         t(max(rijen, m => m.pilBB) === 0, `B0.12 ${vp.naam} ${B}: pil ~ bazenbalk = 0 (max ${max(rijen, m => m.pilBB)} px2)`);
         t(max(rijen, m => Math.abs(m.voetBaas - m.grondY) / m.H * 100) <= 2, `B0.12 ${vp.naam} ${B}: |voet - grondlijn| <= 2 % vh (max ${max(rijen, m => Math.abs(m.voetBaas - m.grondY) / m.H * 100).toFixed(2)} %)`);
+        t(max(rijen, m => m.namen) === 0, `B0.12 ${vp.naam} ${B}: geen naamlabels in een 3D-baasgevecht (max ${max(rijen, m => m.namen)} zichtbaar)`);
         t(rijen.every(m => m.kader && m.kader.eigen && m.kader.fov <= 70), `B0.12 ${vp.naam} ${B}: eigen kader, fov ${[...new Set(rijen.map(m => m.kader && m.kader.fov.toFixed(1)))].join('/')} (<= 70)`);
       }
       if (mobielLiggend) {
