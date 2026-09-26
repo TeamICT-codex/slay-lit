@@ -32,6 +32,7 @@ const t = (goed, tekst) => { if (goed) { okN++; console.log('   ok   ' + tekst);
 
   console.log('\n== bestaande fase-overgang II -> III (met hof) ==');
   await page.evaluate(() => devDicktator('slachter_mid', { hof: true }));
+  t(await page.evaluate(() => !!S.gevecht && S.gevecht.metgezel === null && !S.metgezel), 'solo (DE NISSEN DICHT): het proces staat zonder metgezel \u2014 S.gevecht.metgezel null');
   for (let i = 0; i < 40; i++) { if (await page.evaluate(() => document.body.dataset.scherm === 'gevecht' && !!S.gevecht && !document.querySelector('#baas-intro'))) break; await slaap(400); }
   await slaap(1500);
   const f2 = await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); return { fase: b.fase, hp: b.hp, hof: S.gevecht.vijanden.filter(v => v.hof && !v.dood).map(v => v.id) }; });

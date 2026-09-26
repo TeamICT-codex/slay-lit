@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v132'; // v132: HET KANTOOR ALS FILM (proloog ronde 3) - inklokken om 06:42 (tik tik TING, KA-TSJONK, de tl-golf), het Glimlachquotum als klein ritmespel, de scheur, de Zingevingsaudit met zelf afstempelen en de buizenpost, Karel, de oproep en de lift omhoog; 36 s of 8 s doortikkend
+const CACHE = 'slayit-v133'; // v133: DE NISSEN DICHT - de metgezellen volledig geparkeerd (vlag METGEZELLEN_AAN uit): ook een Codex met ontwaakte metgezellen speelt solo, een lopende run met een metgezel krijgt een afscheidsregel, de scherven hebben eigen tafelteksten en het orakel spreekt solo
 const BESTANDEN = [
   '.',
   'css/style.css',
