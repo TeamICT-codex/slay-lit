@@ -2728,8 +2728,13 @@ function _spraakVolgende() {
     for (let i = _spraakRij.length - 1; i >= 0; i--) if (!_spraakRij[i].slot) _spraakRij.splice(i, 1);
     if (!_spraakRij.length) return;
   }
+  /* wachten mag, maar niet eindeloos: flavor vervalt na zijn eigen termijn, elke andere
+     regel na 10 s (een laag die ooit zou blijven hangen, mag niet alle baasspraak stilleggen) */
+  const verlopen = it => !it.slot && Date.now() - it.t0 > (it.vervalt || 10000);
+  while (_spraakRij.length && verlopen(_spraakRij[0])) _spraakRij.shift();
+  if (!_spraakRij.length) return;
   if (_spraakGesloten()) { clearTimeout(_spraakT); _spraakT = setTimeout(_spraakVolgende, 120); return; }
-  while (_spraakRij.length && _spraakRij[0].vervalt && Date.now() - _spraakRij[0].t0 > _spraakRij[0].vervalt) _spraakRij.shift();
+  while (_spraakRij.length && verlopen(_spraakRij[0])) _spraakRij.shift();
   if (!_spraakRij.length) return;
   const item = _spraakRij.shift();
   const d = dtempo(item.duur);

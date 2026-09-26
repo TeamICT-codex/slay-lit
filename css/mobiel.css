@@ -1391,7 +1391,7 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] #scherm-gevecht #speler-zone::after { content: ''; display: block; height: 24px; flex: none; }
 
   /* B0.9 — DE BAASPIL NOOIT IN DE TOPBALK. De pil blijft boven het hoofd; alleen als ze
-     daar in de topbalk zou vallen (zetPilZij() in js/game.js meet dat), gaat ze LINKS naast
+     daar in de topbalk zou vallen (zetPilZij() in js/bazentoneel.js meet dat), gaat ze LINKS naast
      zijn hoofd, naar de held gekeerd. Geen klif meer op 400px hoogte en de baas hoeft niet
      te krimpen. Gemeten pil ~ topbalk: 800x360 2 993 px2 -> 0, 846x381 1 548 -> 0. */
   body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-baas.pil-zij .intent-rij { position: absolute; top: 6px; right: calc(100% - 8px); left: auto; z-index: 4; min-height: 0; flex-wrap: nowrap; justify-content: flex-end; width: max-content; }
