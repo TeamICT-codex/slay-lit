@@ -2547,6 +2547,19 @@ body.lite .intent-decreet { animation: none; }
 }
 
 .blok-status { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; min-height: 24px; max-width: 180px; }
+/* B2 · B0.1 — ÉÉN STAPEL ONDER ELKE FIGUUR (laptop, 2D en 3D). De held en de vijanden zijn
+   flex-end-kolommen: een chiprij die naar twee regels wrapt, maakte de kolom hoger en TILDE
+   de figuur op, en de stapel onder held en vijand verschilde (padding, gap). Gemeten liep de
+   zool van de baas tot 46,8px van die van de held (vier statussen). Nu: de chiprij is één
+   chip hoog (30px, de gemeten chiphoogte) en een extra rij loopt naar ONDER over de lege
+   vloer, nooit de figuur omhoog; naam 26px; vijand dezelfde gap als de held. Held en baas
+   krijgen een rij van 300px (vijf chips) - max-width alleen hielp niet, want de rij nam de
+   breedte van haar ouder en in 3D zakte de tweede rij dan achter de handkaarten.
+   Dit is de v97-regel van mobiel (mobiel.css), eindelijk ook voor laptop. */
+body[data-modus="laptop"] #scherm-gevecht .blok-status { height: 30px; min-height: 30px; max-height: 30px; align-content: flex-start; overflow: visible; }
+body[data-modus="laptop"] #scherm-gevecht #vijanden-rij .vijand { padding-bottom: 0; row-gap: 6px; }
+body[data-modus="laptop"] #scherm-gevecht .vijand-naam, body[data-modus="laptop"] #scherm-gevecht .speler-naam { height: 26px; line-height: 26px; }
+body[data-modus="laptop"] #scherm-gevecht :is(#speler-zone, .vijand.is-baas) .blok-status { width: max-content; max-width: 300px; align-self: center; }
 
 /* blok = getekend SVG-schild dat links uit de hp-balk steekt */
 .blok-schild {
