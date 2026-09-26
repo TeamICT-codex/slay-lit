@@ -929,8 +929,20 @@ window.SLAYLIT_AUDIO = (function () {
   // printer: één regel dot-matrix. De naalden ratelen (ruis, gehakt op ±118 Hz), de wagenmotor bromt
   // mee, en op het einde de regelopvoer (drie tandjes) en de terugloop. arg: duur (s) en traag (de
   // jeugddroomregel: de naalden hameren trager, de motor zakt — hij moet er moeite voor doen)
+  // fixer R4 F1: één printkop. Elke regel loopt over een eigen bus; een nieuwe regel (of de vastloper) kapt de
+  // vorige af in 25 ms. Een tik maakt de regel meteen af en print de volgende: het geratel van de oude regel
+  // (tot 2,4 s voor de jeugddroom) liep anders door en stapelde onder de nieuwe.
+  let printerBus = null;
+  function kapPrinter(t) {
+    const b = printerBus; printerBus = null;
+    if (!b) return;
+    try { const g = b.gain; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(0, t + 0.025); } catch (e) {}
+    setTimeout(() => { try { b.disconnect(); } catch (e) {} }, 3000);
+  }
   function printer(duur, traag) {
     if (!speelt()) return false; const t = now();
+    kapPrinter(t);
+    const bus = ctx.createGain(); bus.gain.value = 1; bus.connect(master); printerBus = bus;
     const d = Math.max(0.04, Math.min(2.6, Number(duur) || 0.3));
     const n = ctx.createBufferSource(); n.buffer = ruisBuf(); n.loop = true;
     const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = traag ? 2300 : 2900; bp.Q.value = 2.2;
@@ -940,16 +952,16 @@ window.SLAYLIT_AUDIO = (function () {
     const env = ctx.createGain(); env.gain.value = 0;
     env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(0.075, t + 0.01);
     env.gain.setValueAtTime(0.075, t + Math.max(0.012, d - 0.02)); env.gain.linearRampToValueAtTime(0, t + d);
-    n.connect(bp); bp.connect(hak); hak.connect(env); env.connect(master);
+    n.connect(bp); bp.connect(hak); hak.connect(env); env.connect(bus);
     const m = ctx.createOscillator(); m.type = 'sawtooth'; m.frequency.value = traag ? 72 : 96;
     const ml = ctx.createBiquadFilter(); ml.type = 'lowpass'; ml.frequency.value = 360;
     const mg = ctx.createGain(); mg.gain.value = 0; mg.gain.setValueAtTime(0, t); mg.gain.linearRampToValueAtTime(0.02, t + 0.03);
     mg.gain.setValueAtTime(0.02, t + d); mg.gain.linearRampToValueAtTime(0, t + d + 0.05);
-    m.connect(ml); ml.connect(mg); mg.connect(master);
+    m.connect(ml); ml.connect(mg); mg.connect(bus);
     [n, lfo, m].forEach(x => { x.start(t); x.stop(t + d + 0.08); });
     if (d >= 0.1) {
-      for (let i = 0; i < 3; i++) stoot(t + d + 0.02 + i * 0.022, 0.012, 'bandpass', 1500 + i * 120, 6, 0.04);
-      stoot(t + d + 0.1, 0.05, 'lowpass', 700, 0.7, 0.03);
+      for (let i = 0; i < 3; i++) stoot(t + d + 0.02 + i * 0.022, 0.012, 'bandpass', 1500 + i * 120, 6, 0.04, bus);
+      stoot(t + d + 0.1, 0.05, 'lowpass', 700, 0.7, 0.03, bus);
     }
     return true;
   }
@@ -957,6 +969,7 @@ window.SLAYLIT_AUDIO = (function () {
   // slaat vast (een kleine dreun, familie van de stempel), en twee foutpiepjes
   function vastloper() {
     if (!speelt()) return false; const t = now();
+    kapPrinter(t);   /* fixer R4 F1: de naalden staan stil */
     for (let i = 0, x = t; i < 9; i++) { stoot(x, 0.02, 'bandpass', 2600 + Math.random() * 600, 3, 0.06 * (1 - i / 10)); x += 0.03 + Math.random() * 0.035; }
     const o = ctx.createOscillator(); o.type = 'sawtooth';
     o.frequency.setValueAtTime(92, t + 0.18); o.frequency.linearRampToValueAtTime(56, t + 0.7);

@@ -78,6 +78,7 @@
   let host = null, R = null, app = null, wrap = null, skipEl = null, hintEl = null, klankEl = null;
   let opts = {}, actief = false, herbeleef = false, klaarGeroepen = false, overgeslagen = false;
   let glimOpen = 0;        /* glimlachen van het lopende gesprek: pas geteld als het gesprek eindigt (of bij de skip) */
+  let cijfersVanToen = false;   /* fixer R4 F1: herbeleven vanaf het gesprek leest de glimlachen uit het contract */
   let P = null, contractVers = false;
   let spoel = null;        /* doorspoel-handler van de actieve beat/overlay (null = hier moet je handelen) */
   let sleutels = null;     /* scène-eigen toetsen (gesprek, afgrond) → true als verwerkt */
@@ -170,7 +171,10 @@
      de skip). Het gesprek begint na een herlaad opnieuw; meteen tellen gaf per herlaad dubbele
      glimlachen in het contract (en straks op de factuur van R4). */
   function telGlimlachenBij() {
-    if (glimOpen > 0 && P) P.choices.glimlachen = (P.choices.glimlachen || 0) + glimOpen;
+    /* fixer R4 F1: wie het gesprek herbeleeft, heeft de glimlachen van toen al uit het contract (die bevatten de
+       Glimlach-kaarten van toen): de factuur toont de cijfers van toen, niets telt erbij. Wie vanaf het kantoor
+       herbeleeft, telt opnieuw (kantoor + kaarten), zoals een run. */
+    if (glimOpen > 0 && P && !cijfersVanToen) P.choices.glimlachen = (P.choices.glimlachen || 0) + glimOpen;
     glimOpen = 0;
   }
 
@@ -1677,32 +1681,33 @@
     const FX = window.OutroFX;
     if (!canvas || !FX || typeof FX.init !== 'function' || typeof FX.tekenLucht !== 'function' || typeof FX.updateBliksem !== 'function') return null;
     const stil = !!(o.rustig || o.lite);
-    let W = 320, H = 180, kim = 164, zepAan = true, ctx = null, zep = { x: 120, y: 12 }, raf = 0, gestopt = false, ro = null;
+    let W = 0, H = 0, kim = 164, zepAan = true, ctx = null, zep = { x: 120, y: 12 }, raf = 0, gestopt = false, ro = null, roT = 0;
     const t0 = speelTijd();
-    let vorig = t0, laatst = -1e9, maatSleutel = '';
+    let vorig = t0, laatst = -1e9;
     function maat() {
       const b = canvas.getBoundingClientRect();
       const bw = Math.max(1, b.width || innerWidth), bh = Math.max(1, b.height || innerHeight / 2);
       /* ±3,4 schermpx per pixel op een laptop (de stad zou anders als een muur voor je staan), op een
-         telefoon het canvas van de val (320 breed) */
-      const w = Math.max(320, Math.min(520, Math.round(bw / 3.4)));
-      const h = Math.max(96, Math.min(360, Math.round(w * bh / bw)));
+         telefoon het canvas van de val (320 breed). Fixer R4 F1: in vaste trappen (breed 320/416/520, hoog per
+         24 px): OutroFX bakt per W×H een lucht en een regenvel en geeft ze nooit vrij — wie aan het venster
+         sleepte, liet per maat nieuwe canvassen achter. object-fit: cover vult het vak zoals voorheen. */
+      const w0 = Math.round(bw / 3.4);
+      const w = w0 < 368 ? 320 : w0 < 468 ? 416 : 520;
+      const h = Math.max(96, Math.min(360, Math.ceil(w * bh / bw / 24) * 24));
       const s = Math.max(bw / w, bh / h), zw = bw / s, zh = bh / s;
-      const sleutel = w + 'x' + h + ':' + Math.round(zw) + ':' + Math.round(zh);
-      if (sleutel === maatSleutel && ctx) return;
-      maatSleutel = sleutel;
-      W = w; H = h; canvas.width = W; canvas.height = H;
       /* de stad zakt achter de kim: van op het dak zie je alleen de bovenkant van de torens (de
          dichtste laag is tot 126 px hoog; ze neemt hoogstens ±55 % van de zichtbare lucht) */
-      kim = H - 16 + Math.max(0, Math.round(126 - 0.55 * zh));
-      ctx = canvas.getContext('2d', { alpha: false });
-      FX.init({ breed: W, hoog: H, lite: !!o.lite, rustig: !!o.rustig, tekst: FX.tekst });
-      if (o.lite && typeof FX.zetLite === 'function') FX.zetLite(true);
+      kim = h - 16 + Math.max(0, Math.round(126 - 0.55 * zh));
       /* het zichtbare stuk (object-fit: cover, object-position: onderaan): de zeppelin daarin, rechts van het midden */
-      const links = (W - zw) / 2, boven = H - zh;
+      const links = (w - zw) / 2, boven = h - zh;
       zep = { x: Math.round(links + zw * 0.6 - 66), y: Math.round(boven + Math.max(3, Math.min(24, zh * 0.1))) };
       /* een lage lucht (liggend) heeft geen plaats voor de zeppelin: die zou half het scherm vullen */
       zepAan = zh >= 100;
+      if (w === W && h === H && ctx) return;
+      W = w; H = h; canvas.width = W; canvas.height = H;
+      ctx = canvas.getContext('2d', { alpha: false });
+      FX.init({ breed: W, hoog: H, lite: !!o.lite, rustig: !!o.rustig, tekst: FX.tekst });
+      if (o.lite && typeof FX.zetLite === 'function') FX.zetLite(true);
     }
     function teken(t, dt) {
       if (!ctx) return;
@@ -1721,11 +1726,16 @@
       vorig = nu; laatst = nu;
       try { teken((nu - t0) / 1000, dt); } catch (e) { meldFout(e); stopIt(); }
     }
-    function stopIt() { gestopt = true; if (raf) cancelAnimationFrame(raf); raf = 0; if (ro) { try { ro.disconnect(); } catch (e) {} ro = null; } }
+    function stopIt() { gestopt = true; if (raf) cancelAnimationFrame(raf); raf = 0; clearTimeout(roT); if (ro) { try { ro.disconnect(); } catch (e) {} ro = null; } }
     try { maat(); teken(0, 0); } catch (e) { meldFout(e); return null; }
-    /* de css kan later binnenkomen, het toestel kan draaien: meet opnieuw als het vak verandert */
+    /* de css kan later binnenkomen, het toestel kan draaien: meet opnieuw als het vak verandert (fixer R4 F1:
+       pas als het slepen even stilvalt, 90 ms; tot dan schaalt de browser het vorige beeld) */
     if (window.ResizeObserver) {
-      ro = new ResizeObserver(() => { if (gestopt) return; try { maat(); teken((speelTijd() - t0) / 1000, 0); } catch (e) { meldFout(e); } });
+      ro = new ResizeObserver(() => {
+        if (gestopt) return;
+        clearTimeout(roT);
+        roT = setTimeout(() => { if (gestopt) return; try { maat(); teken((speelTijd() - t0) / 1000, 0); } catch (e) { meldFout(e); } }, 90);
+      });
       ro.observe(canvas);
     }
     if (!stil) raf = requestAnimationFrame(beeld);
@@ -1747,6 +1757,7 @@
       fotoKlaar: false, fotoT: 0
     };
     glimOpen = 0;   /* een (her)start van het gesprek telt van nul */
+    let warmte = 1;  /* fixer R4 F1: de gloed van het kooltje in de borstzak (1 = vol; elke Glimlach −0,15) */
     const binnenT = performance.now();
     regen(true);    /* het regent op het dak (tot de uitweg; de Eindafrekening zet hem uit) */
 
@@ -1930,7 +1941,10 @@
     }
     function legWaaier() {
       const n = st.hand.length, mid = (n - 1) / 2;
-      const rot = mob ? 1.5 : 4, til = mob ? 0 : 7;
+      /* fixer R4 F1: ook kort liggend zonder touch (een laptopvenster van ±1280x560) de platte waaier: met 4° en
+         7 px til per plaats zakten de buitenste kaarten 16 px onder de rand */
+      const plat = mob || kortLiggend();
+      const rot = plat ? 1.5 : 4, til = plat ? 0 : 7;
       st.hand.forEach((h, i) => {
         h.b.style.setProperty('--rot', ((i - mid) * rot).toFixed(2) + 'deg');
         h.b.style.setProperty('--til', (Math.abs(i - mid) * til).toFixed(1) + 'px');
@@ -1950,8 +1964,8 @@
         st.hand.push(h);
         handEl.appendChild(h.b);
         if (!zacht) {
-          h.b.classList.add('nieuw'); h.b.style.animationDelay = (i * 70) + 'ms';
-          T(() => { h.b.classList.remove('nieuw'); h.b.style.animationDelay = ''; }, 440 + i * 70);   /* gedeeld: de kaart ligt in de waaier */
+          h.b.classList.add('nieuw'); h.b.style.animationDelay = (i * 45) + 'ms';
+          T(() => { h.b.classList.remove('nieuw'); h.b.style.animationDelay = ''; }, 330 + i * 45);   /* gedeeld: de kaart ligt in de waaier (fixer R4 F1: 45 ms per kaart, .32 s) */
         }
       });
       st.trek = Math.max(0, st.trek - n);
@@ -1988,7 +2002,12 @@
       if (e.baasFact) { st.fact = Math.min(100, st.fact + e.baasFact); T(() => { fx(kast, S.fx.verantwoord, 'fact'); klank('sfx', 'ding'); herteken(); }, land); }
       if (e.energie) { st.energie += e.energie; T(() => { fx(orb, interp(S.fx.energie, { n: e.energie }), 'energie'); klank('sfx', 'energie'); }, land); }
       if (e.welzijn) { st.welzijn = Math.max(0, st.welzijn + e.welzijn); T(() => { fx(stoel, String(e.welzijn).replace('-', '−'), 'schade'); geraakt(stoel); }, land); }
-      if (k.id === 'glimlach') glimOpen++;   /* telt pas mee bij de uitweg: zie telGlimlachenBij */
+      if (k.id === 'glimlach') {
+        glimOpen++;   /* telt pas mee bij de uitweg: zie telGlimlachenBij */
+        /* fixer R4 F1 (creatief): een Glimlach kost warmte — het kooltje in de borstzak dooft een tikje */
+        warmte = Math.max(0.25, warmte - 0.15);
+        zak.style.setProperty('--warmte', warmte.toFixed(2));
+      }
       const zin = S.zegt[k.id];
       if (zin) T(() => zeg(zin), land + 40);
       legWaaier(); herteken();
@@ -2022,6 +2041,10 @@
       f.style.left = Math.round(r.left + r.width / 2) + 'px';
       f.style.top = Math.round(r.top + r.height * 0.28) + 'px';
       root.appendChild(f);
+      /* fixer R4 F1: binnen het scherm houden. Staand staat de kast tegen de rechterrand, en het getal (±175 px)
+         werd rond haar midden gecentreerd: '+6 % FACTURABILITEI' (.gs-root knipt). De animatie schaalt tot 1,1. */
+      const b = f.offsetWidth * 1.1, vw = root.clientWidth || innerWidth;
+      if (b > 0) f.style.left = Math.round(Math.max(b / 2 + 8, Math.min(vw - b / 2 - 8, r.left + r.width / 2))) + 'px';
       T(() => f.remove(), 1150);
     }
     function herstart(e, cls) { e.classList.remove(cls); void e.offsetWidth; e.classList.add(cls); }
@@ -2029,14 +2052,17 @@
     function tril(e) { if (!zacht) herstart(e, 'tril'); }
     function oneindigPuls() { herstart(hpB, 'puls'); }
     /* B.A.A.S. spreekt (getypt, groen fosfor); geeft de typmachine terug (reeks kan hem afronden) */
-    let ballonTyp = null;
+    let ballonTyp = null, ballonWeg = 0;
     function zeg(tekst) {
       if (ballonTyp) ballonTyp.rond();
+      wisT(ballonWeg);
       ballon.classList.add('toon');
       ballonTyp = typMachine(ballonT, tekst, zacht ? 6 : 22, true, null);
+      /* fixer R4 F1: de ballon dooft na 3,5 s zelf (liggend lag hij een hele beurt over de lift, die de uitweg draagt) */
+      ballonWeg = T(zwijg, 3500);
       return ballonTyp;
     }
-    function zwijg() { if (ballonTyp) ballonTyp.rond(); ballon.classList.remove('toon'); }
+    function zwijg() { wisT(ballonWeg); ballonWeg = 0; if (ballonTyp) ballonTyp.rond(); ballon.classList.remove('toon'); }
 
     /* ── 'Eindig beurt' en de beurt van B.A.A.S. ── */
     function eindigBeurt() {
@@ -2047,36 +2073,50 @@
       st.hand = [];
       herteken();
       const it = S.intenties[Math.min(st.beurt, S.intenties.length - 1)];
-      T(() => baasBeurt(it), zacht ? 150 : 480);
+      /* de beurt van B.A.A.S. in drie momenten: hij zet aan, hij raakt, je nieuwe hand. Fixer R4 F1: een tik
+         (na de tikgrens van 350 ms: de tweede tik van een dubbeltik op de knop telt niet) rondt de beurt meteen af,
+         zoals elke regie in de proloog — de enige wacht zonder handeling (±1,7 s) is zo doortikbaar. */
+      const L = zacht ? [150, 80, 600] : [480, 220, 1250];
+      const stappen = [
+        { t: L[0], fn: () => baasZet(it) },
+        { t: L[0] + L[1], fn: () => baasRaakt(it) },
+        { t: L[0] + L[2], fn: nieuweBeurt }
+      ];
+      stappen.forEach(s => { s.tid = T(() => { s.af = true; s.fn(); }, s.t); });
+      baasSpoel = () => stappen.forEach(s => { if (!s.af) { wisT(s.tid); s.af = true; s.fn(); } });
+      spoelNa(baasSpoel, 350, () => st.bezig && !st.einde && stappen.some(s => !s.af));
     }
-    function baasBeurt(it) {
+    let baasSpoel = null;
+    function baasZet(it) {
       if (!actief || st.einde) return;
       if (it.id === 'optimalisatie') { eindig('geduwd'); return; }
       if (!zacht) herstart(kast, 'valt-aan');
-      T(() => {
-        if (it.id === 'deadline') {
-          const dmg = Math.max(0, (it.schade || 8) - st.blok);
-          if (dmg > 0) { st.welzijn = Math.max(0, st.welzijn - dmg); fx(stoel, '−' + dmg, 'schade'); geraakt(stoel); klank('sfx', 'klap'); }
-          else { fx(stoel, S.fx.geblokt, 'blok'); klank('sfx', 'blok'); }
-          zeg(S.zegt.deadline);
-        } else if (it.id === 'teambuilding') {
-          st.maxEnergie = Math.max(1, st.maxEnergie - 1);
-          fx(orb, S.fx.diefstal, 'schade'); geraakt(orb); klank('sfx', 'debuff');
-          zeg(S.zegt.teambuilding);
-        }
-        st.blok = 0;
-        herteken();
-      }, zacht ? 80 : 220);
-      T(() => {
-        if (!actief || st.einde) return;
-        if (st.welzijn <= 0) { eindig('geduwd'); return; }
-        st.beurt++;
-        st.energie = st.maxEnergie;
-        st.bezig = false;
-        trekHand();
-        herteken();
-        if (S.intenties[st.beurt] && S.intenties[st.beurt].id === 'optimalisatie' && !zacht) herstart(intent, 'dreigt');
-      }, zacht ? 600 : 1250);
+    }
+    function baasRaakt(it) {
+      if (!actief || st.einde) return;
+      if (it.id === 'deadline') {
+        const dmg = Math.max(0, (it.schade || 8) - st.blok);
+        if (dmg > 0) { st.welzijn = Math.max(0, st.welzijn - dmg); fx(stoel, '−' + dmg, 'schade'); geraakt(stoel); klank('sfx', 'klap'); }
+        else { fx(stoel, S.fx.geblokt, 'blok'); klank('sfx', 'blok'); }
+        zeg(S.zegt.deadline);
+      } else if (it.id === 'teambuilding') {
+        st.maxEnergie = Math.max(1, st.maxEnergie - 1);
+        fx(orb, S.fx.diefstal, 'schade'); geraakt(orb); klank('sfx', 'debuff');
+        zeg(S.zegt.teambuilding);
+      }
+      st.blok = 0;
+      herteken();
+    }
+    function nieuweBeurt() {
+      if (spoel && spoel === baasSpoel) spoel = null;   /* je speelt weer: een tik op het dak spoelt niets meer door */
+      if (!actief || st.einde) return;
+      if (st.welzijn <= 0) { eindig('geduwd'); return; }
+      st.beurt++;
+      st.energie = st.maxEnergie;
+      st.bezig = false;
+      trekHand();
+      herteken();
+      if (S.intenties[st.beurt] && S.intenties[st.beurt].id === 'optimalisatie' && !zacht) herstart(intent, 'dreigt');
     }
 
     /* ── de foto in je borstzak: vasthouden (of een tweede tik; laptop: spatie vasthouden) ── */
@@ -2332,11 +2372,15 @@
         const s0 = stoel.getBoundingClientRect(), d = deur.getBoundingClientRect();
         const s = Math.max(0.2, Math.min(0.9, (d.height * 0.72) / Math.max(1, s0.height)));
         const dx = d.left + d.width / 2 - (s0.left + s0.width / 2), dy = d.bottom - 2 - s0.bottom;
+        /* fixer R4 F1: de stoel houdt de groene rand van het oog en dooft pas op de drempel (was: over het hele
+           laatste stuk, naar brightness .35): op een donkere telefoon zie je hem zo echt de lift in rollen */
+        const rand = ' drop-shadow(0 0 2px rgba(150, 255, 140, .9)) drop-shadow(4px 0 6px rgba(106, 211, 106, .6))';
         stoel.animate([
-          { transform: 'none', filter: 'brightness(1)', opacity: 1 },
+          { transform: 'none', filter: 'brightness(.9)' + rand, opacity: 1 },
           { transform: 'translate(' + (dx * 0.35).toFixed(1) + 'px, ' + (dy * 0.35).toFixed(1) + 'px) scale(' + (1 - (1 - s) * 0.35).toFixed(3) + ') rotate(-2deg)', offset: 0.35 },
-          { transform: 'translate(' + (dx * 0.75).toFixed(1) + 'px, ' + (dy * 0.75).toFixed(1) + 'px) scale(' + (1 - (1 - s) * 0.75).toFixed(3) + ') rotate(1.5deg)', offset: 0.72, opacity: 1 },
-          { transform: 'translate(' + dx.toFixed(1) + 'px, ' + dy.toFixed(1) + 'px) scale(' + s.toFixed(3) + ')', filter: 'brightness(.35)', opacity: 0 }
+          { transform: 'translate(' + (dx * 0.75).toFixed(1) + 'px, ' + (dy * 0.75).toFixed(1) + 'px) scale(' + (1 - (1 - s) * 0.75).toFixed(3) + ') rotate(1.5deg)', offset: 0.72 },
+          { transform: 'translate(' + (dx * 0.96).toFixed(1) + 'px, ' + (dy * 0.96).toFixed(1) + 'px) scale(' + (1 - (1 - s) * 0.96).toFixed(3) + ')', offset: 0.93, filter: 'brightness(.75)' + rand, opacity: 1 },
+          { transform: 'translate(' + dx.toFixed(1) + 'px, ' + dy.toFixed(1) + 'px) scale(' + s.toFixed(3) + ')', filter: 'brightness(.5)' + rand, opacity: 0 }
         ], { duration: 1400, easing: 'cubic-bezier(.35, 0, .6, 1)', fill: 'forwards' });
       } catch (e) { stoel.classList.add('weg'); }
     }
@@ -2444,7 +2488,7 @@
         { cls: 'pv-teken', l: O.tekenregel, teken: true }
       ];
       const PERFO = rijen.findIndex(r => r.soort === 'perfo');
-      let idx = 0, bezig = null, tid = 0, af = false, besluitEl = null, tekenvak = null, rijNr = 0;
+      let idx = 0, bezig = null, tid = 0, af = false, besluitEl = null, namensEl = null, tekenvak = null, rijNr = 0;
 
       /* een nieuwe regel onderaan het vel: het papier voert één regel op (de kop staat onderaan) */
       function nieuweRij(cls, stil) {
@@ -2482,7 +2526,13 @@
         const snel = !!(stil || zacht);
         const st = { sub: null, klaar: false };
         const eind = () => { if (st.klaar) return; st.klaar = true; st.sub = null; zetKop(0); klaar(); };
-        const handle = { rond() { let g = 0; while (!st.klaar && st.sub && g++ < 8) { const s = st.sub; st.sub = null; s.rond(); } if (!st.klaar) eind(); } };
+        const handle = { rond() {
+          const liep = !st.klaar;
+          let g = 0; while (!st.klaar && st.sub && g++ < 8) { const s = st.sub; st.sub = null; s.rond(); } if (!st.klaar) eind();
+          /* fixer R4 F1: een tik maakt de regel af, dus ook haar geratel: een korte regelopvoer (printer() kapt de
+             lopende regel af; de vastloper heeft zijn eigen klank) */
+          if (liep && !snel && typeof r.vast !== 'number') klank('sfx', 'printer', 0.1);
+        } };
         if (r.soort === 'perfo') {
           nieuweRij('pv-perfo', stil);
           if (!stil) klank('sfx', 'printer', 0.12);
@@ -2491,7 +2541,9 @@
         }
         if (r.soort === 'stempel') {
           const s = el('div', 'pv-stempel', O.stempel);
-          (besluitEl || papier).appendChild(s);
+          /* fixer R4 F1: de stempel landt op de regel 'Namens de directie:' (rechts, schuin), niet meer over
+             'u was ons dierbaar.' en 'ge-end-of-life’d.': de twee beste zinnen van het vel lees je maar één keer */
+          (namensEl || besluitEl || papier).appendChild(s);
           if (!snel) s.classList.add('slam');
           if (!stil) { klank('sfx', 'prikklok'); vak.classList.remove('dreun'); void vak.offsetWidth; vak.classList.add('dreun'); }
           eind(); return handle;
@@ -2499,6 +2551,7 @@
         const rij = nieuweRij(r.cls, stil);
         if (r.id) rij.dataset.post = r.id;
         if (r.cls === 'pv-besluit') { besluitEl = rij; tekenPasfoto(rij); }
+        if (r.cls === 'pv-namens') namensEl = rij;
         const l = el('span', 'pv-l');
         rij.appendChild(l);
         if (r.teken) {
@@ -2559,18 +2612,22 @@
         const src = P.choices.pasfoto;
         if (typeof src !== 'string' || src.indexOf('data:image/') !== 0) return;
         const cv = document.createElement('canvas');
-        cv.className = 'pv-pasfoto'; cv.width = 40; cv.height = 40;
+        cv.className = 'pv-pasfoto';
         cv.setAttribute('aria-hidden', 'true');
         rij.appendChild(cv);
+        /* fixer R4 F1: het raster op de getoonde maat (±48 of 60 px) in plaats van 40 px opgeschaald: zo blijft de
+           Bayer-rastering regelmatig en leest het gezicht als een krantenfoto */
+        const N = Math.max(24, Math.min(96, cv.clientWidth || 48));
+        cv.width = N; cv.height = N;
         const im = new Image();
         im.onload = () => {
           try {
             const x = cv.getContext('2d');
-            x.drawImage(im, 0, 0, 40, 40);
-            const d = x.getImageData(0, 0, 40, 40), p = d.data;
+            x.drawImage(im, 0, 0, N, N);
+            const d = x.getImageData(0, 0, N, N), p = d.data;
             const B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-            for (let y = 0; y < 40; y++) for (let xx = 0; xx < 40; xx++) {
-              const i = (y * 40 + xx) * 4, g = (p[i] * 0.3 + p[i + 1] * 0.59 + p[i + 2] * 0.11) / 255;
+            for (let y = 0; y < N; y++) for (let xx = 0; xx < N; xx++) {
+              const i = (y * N + xx) * 4, g = (p[i] * 0.3 + p[i + 1] * 0.59 + p[i + 2] * 0.11) / 255;
               const inkt = g < (B[(y & 3) * 4 + (xx & 3)] + 0.5) / 16;
               p[i] = 43; p[i + 1] = 33; p[i + 2] = 20; p[i + 3] = inkt ? 210 : 0;
             }
@@ -3264,10 +3321,11 @@
     if (o.hoofdstuk != null) zetHoofdstuk(o.hoofdstuk);
     /* R4: wie het gesprek of de afrekening herbeleeft, krijgt de cijfers van toen (alleen-lezen): de
        factuur toont dan het echte aantal glimlachen, de foto en het stempelen. Vanaf het kantoor tellen ze opnieuw. */
+    cijfersVanToen = false;
     if (herbeleef && P.scene >= IDX.gesprek) {
       const c = leesContract();
       if (c) {
-        if (typeof c.glimlachen === 'number' && isFinite(c.glimlachen)) P.choices.glimlachen = Math.max(0, Math.min(999, c.glimlachen | 0));
+        if (typeof c.glimlachen === 'number' && isFinite(c.glimlachen)) { P.choices.glimlachen = Math.max(0, Math.min(999, c.glimlachen | 0)); cijfersVanToen = true; }
         if (c.fotoKantoor) P.choices.fotoKantoor = true;
         if (typeof c.zelfGestempeld === 'boolean') P.choices.zelfGestempeld = c.zelfGestempeld;
       }

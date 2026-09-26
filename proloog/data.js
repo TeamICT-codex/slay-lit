@@ -174,7 +174,7 @@ window.SLAYLIT_PROLOOG = (function () {
       held: { naam: 'Medewerker 0042', welzijn: 'WELZIJN', nr: '0042' },
       // art: optioneel (assets/proloog/PROMPTS.txt, baas_kast): zonder plaat tekent de css de beige kast met het groene oog
       baas: { naam: 'B.A.A.S.', waarde: 'AANDEELHOUDERSWAARDE', oneindig: '∞', fact: 'FACT.', art: artAls('baas_kast') },
-      eindig: 'Eindig beurt',
+      eindig: 'Einde beurt',   // fixer R4 F1: letterlijk de knop van het echte gevecht ('Einde beurt ⏳')
       // de intentiepil boven B.A.A.S., per beurt (zoals de pil boven een vijand in het spel)
       intenties: [
         { id: 'deadline',      icoon: '⚔', naam: 'DEADLINE',           waarde: '8',    soort: 'aanval', schade: 8 },
@@ -208,7 +208,10 @@ window.SLAYLIT_PROLOOG = (function () {
       fx: { mailtje: '+6 % FACTURABILITEIT', verantwoord: '+5 % FACTURABILITEIT', blok: '+{n} BLOK', geblokt: 'GEBLOKT', energie: '+{n} ⚡', diefstal: '−1 ⚡' },
       foto: { src: SLOTS.foto.src, stip: 'niet-factureerbaar' },
       // de uitweg van wie springt: drie je-regels met een Ken Burns, dan 'Laat los'
-      kijk: { regels: ['Daar ben je.', 'Het sterretje brandt nog in je hand.', 'Dat licht was nooit te koop.'], cta: 'Laat los', slot: 'Niemand duwt je — je kiest zelf.' },
+      kijk: { regels: ['Daar ben je.', 'Het sterretje brandt nog in je hand.', 'Dat licht was nooit te koop.'], cta: 'Laat los', slot: 'Het licht gaat je voor.' },
+      // fixer R4 F1 (keuze 3): 'Niemand duwt je — je kiest zelf.' las op een dak, na 'Laat los', te dicht bij de
+      // zelfdodingslezing (en zijn rijmpartner 'Je werd geduwd.' bestaat niet meer). Nu over het licht: de foto gaat
+      // letterlijk voor, de schacht in, en wacht in de val naast de knop −∞; het rijmt op 'voor het licht dooft'.
       lift: { bord: 'DAK' },
       krant: 'FUNCTIONERINGSGESPREK  -  UW WELZIJN IS ONZE KPI  -  ',   // de lichtkrant van de zeppelin (pixelfont)
     },
