@@ -14,6 +14,9 @@
    Blokken filteren: SLAYIT_NISSEN=bron,scherven,poorten,doorloop,save,dev,builds,erfprins,beeld,vel,outro
    Het blok 'vel' (M-plan §5, integratie) schrijft contactvel_nissen.jpg in SLAYIT_SHOTS: de
    heldkeuze, de Codex, de scherf-reveal en de afscheidsregel op Thomas' formaten.
+   Stand bij de integratie (26 sep 2026, alle blokken): 376 ok / 0 FOUT in ±4,5 min.
+   Hoort in de suitelijst van elke volgende bazenronde (Erfprins, finale, bazentoneel: M-plan
+   §7.1) — wie als tweede merget, draait haar mee.
    ============================================================================ */
 const { chromium } = require('playwright');
 const path = require('path'); const fs = require('fs');
