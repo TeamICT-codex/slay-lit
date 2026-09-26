@@ -2313,10 +2313,11 @@ function klankReeks(pk, verwacht) {
         /* na de film: regen en zoem uit (R4: in het gesprek regent het opnieuw, op het dak — dat is de
            onweerslucht van de val; de kantoorzoem blijft uit) */
         const eindT = r2.fase.find(f => /^gesprek/.test(f.k));
-        const voorGesprek = p => !eindT || p.t < eindT.t;
-        const naFilm = eindT ? r2.pk.filter(p => p.t >= eindT.t && p.k === 'kantoor' && JSON.parse(p.a)[0] === true) : [];
-        const laatsteRegen = r2.pk.filter(p => p.k === 'regen' && voorGesprek(p)).pop(), laatsteZoem = r2.pk.filter(p => p.k === 'kantoor').pop();
-        const dakRegen = eindT ? r2.pk.filter(p => p.t >= eindT.t && p.k === 'regen' && JSON.parse(p.a)[0] === true && p.scene === 'gesprek').length : 0;
+        /* per aanroep telt de scène waarin ze viel (plek().scene), niet de tijd: de observer van r2.fase
+           schrijft de overgang pas NA de eerste aanroepen van het gesprek */
+        const naFilm = r2.pk.filter(p => p.scene === 'gesprek' && p.k === 'kantoor' && JSON.parse(p.a)[0] === true);
+        const laatsteRegen = r2.pk.filter(p => p.k === 'regen' && p.scene !== 'gesprek').pop(), laatsteZoem = r2.pk.filter(p => p.k === 'kantoor').pop();
+        const dakRegen = r2.pk.filter(p => p.k === 'regen' && JSON.parse(p.a)[0] === true && p.scene === 'gesprek').length;
         t(!!laatsteRegen && laatsteRegen.a === '[false]' && !!laatsteZoem && JSON.parse(laatsteZoem.a)[0] === false && naFilm.length === 0,
           `${L}: na scène 2 zwijgen regen en kantoorzoem (laatste regen ${laatsteRegen && laatsteRegen.a}, laatste kantoor ${laatsteZoem && laatsteZoem.a}), de zoem ${naFilm.length} keer opnieuw aan in het gesprek; de regen op het dak ${dakRegen}x`);
         const jg = r2.klank.filter(k => k.k === 'jingle'), ws = r2.klank.filter(k => k.k === 'start');
@@ -3071,7 +3072,14 @@ function klankReeks(pk, verwacht) {
       const bal = await sr(page, `return R.querySelector('.gs-ballon.toon .gs-ballon-tekst') ? R.querySelector('.gs-ballon-tekst').textContent : null;`);
       t(bal === 'Dank voor uw inzet.', `${L}: B.A.A.S. in groen fosfor: "${bal}"`);
       await r4Kaart(page, vp, 'glimlach');
-      await r4EindBeurt(page, vp);
+      /* de beurt van B.A.A.S. is de enige wacht zonder handeling: korter dan 2,5 s */
+      const tB = Date.now();
+      await tik(page, vp, '[data-actie="eindig"]');
+      await slaap(150);
+      const wB = await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; const b = R.querySelector('[data-actie="eindig"]'); return !!b && !b.disabled; }, 5000);
+      const dB = Date.now() - tB;
+      t(wB >= 0 && dB <= 2500, `${L}: de beurt van B.A.A.S. (de aanval, de nieuwe hand) duurt ${dB} ms (≤ 2,5 s)`);
+      await wachtOp(page, R4_SPEELBAAR, 3000); await slaap(250);
       const b2 = await sr(page, `return { welzijn: R.querySelector('.gs-hp-tekst').textContent, pil: R.querySelector('.gs-intent').textContent, trek: R.querySelector('.gs-trek').textContent, afleg: R.querySelector('.gs-afleg').textContent, hand: R.querySelectorAll('.gs-hand .gs-kaart').length };`);
       t(/37\/40/.test(b2.welzijn) && /TEAMBUILDING/.test(b2.pil) && b2.hand === 5 && /▤ 0/.test(b2.trek) && /▥ 5/.test(b2.afleg),
         `${L}: DEADLINE 8 − 5 Blok = 3 schade (${b2.welzijn}); beurt 2: ${b2.pil}, opnieuw vijf kaarten (${b2.trek}, ${b2.afleg})`);
@@ -3211,6 +3219,66 @@ function klankReeks(pk, verwacht) {
       const u = await page.evaluate(() => window.__r4u);
       const duur = u && u.start && u.eind ? (u.eind - u.start) / 1000 : null;
       t(eind && duur !== null && duur >= 3 && duur <= 8, `${L}: de uitweg (${u && u.via}) in ${duur === null ? '?' : duur.toFixed(1)} s, leesbaar (3-8 s)`);
+      t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+    }
+    /* 15F · herladen midden in het gesprek (het begint opnieuw, niets telt dubbel) en midden in de uitweg
+       (de uitweg ligt vast: je hervat in de Eindafrekening, met het contract van toen) */
+    for (const geval of [{ vp: VPS.thomas, via: 'sprong' }, { vp: VPS.laptop, via: 'geduwd' }]) {
+      const vp = geval.vp, L = `gesprek herladen ${vp.n} ${geval.via}`;
+      kop('15F · ' + L);
+      const { ctx, page } = await open(browser, vp, { opslag: gesprekOpslag(), geenNudge: true });
+      await naarProloog(page, vp, L);
+      await wachtOp(page, R4_SPEELBAAR, 5000);
+      await r4Kaart(page, vp, 'glimlach');
+      await page.reload({ waitUntil: 'load' }); await slaap(800); await volgSchermen(page);
+      await naarProloog(page, vp, L + ' (midden in het gesprek)');
+      const opnieuw = await wachtScene(page, 'gesprek', 5000);
+      await wachtOp(page, R4_SPEELBAAR, 5000);
+      const s1 = await sr(page, `return { welzijn: R.querySelector('.gs-hp-tekst').textContent, beurt: R.querySelector('.gs-beurt').textContent, hand: R.querySelectorAll('.gs-hand .gs-kaart').length };`);
+      const c1 = JSON.parse((await opslag(page)).slayit_proloog || 'null') || {};
+      t(opnieuw && /40\/40/.test(s1.welzijn) && /beurt 1/.test(s1.beurt) && s1.hand === 5 && c1.glimlachen === 5 && !c1.uitweg,
+        `${L}: een herlaad midden in het gesprek: het begint opnieuw (${s1.welzijn}, ${s1.beurt}), de glimlach van toen telt niet (contract ${c1.glimlachen})`);
+      await page.evaluate(R4_UITWEG);
+      if (geval.via === 'geduwd') {
+        for (let b = 0; b < 3; b++) { await wachtOp(page, R4_SPEELBAAR, 5000); await slaap(150); await tik(page, vp, '[data-actie="eindig"]'); await slaap(200); }
+        await wachtOp(page, () => !!(window.__r4u && window.__r4u.start), 5000);
+        await slaap(1800);   /* midden in de regie: de lichten gaan uit */
+      } else {
+        const f = await page.locator('[data-actie="zakfoto"]').boundingBox();
+        await tik(page, vp, '[data-actie="zakfoto"]', { position: { x: f.width / 2, y: f.height * 0.25 } }); await slaap(420);
+        await tik(page, vp, '[data-actie="zakfoto"]', { position: { x: f.width / 2, y: f.height * 0.1 } });
+        await slaap(1500);   /* midden in het kijken */
+      }
+      await page.reload({ waitUntil: 'load' }); await slaap(800); await volgSchermen(page);
+      await naarProloog(page, vp, L + ' (midden in de uitweg)');
+      const fac = await wachtScene(page, 'breekpunt/factuur', 5000);
+      const c2 = JSON.parse((await opslag(page)).slayit_proloog || 'null') || {};
+      t(fac && c2.uitweg === (geval.via === 'geduwd' ? 'geduwd' : 'sprong') && c2.glimlachen === 5,
+        `${L}: een herlaad midden in de uitweg hervat in de Eindafrekening (uitweg "${c2.uitweg}", glimlachen ${c2.glimlachen})`);
+      t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+    }
+    /* 15E · herbeleven ('Het Functioneringsgesprek' in de Codex): spelen, springen, afrekenen — de opslag blijft byte-gelijk */
+    {
+      const vp = VPS.staand, L = 'gesprek herbeleven staand';
+      kop('15E · ' + L);
+      const c = { v: 2, jeugddroom: 'astronaut', uitweg: 'geduwd', held: 'gifmagier', masker: 'gif', glimlachen: 4, fotoKantoor: false, zelfGestempeld: true, wachtToon: -7, echo: 0 };
+      const { ctx, page } = await open(browser, vp, { opslag: { slayit_proloog: JSON.stringify(c), slayit_proloog_klaar: '1' }, geenNudge: true });
+      const voor = await r4Dump(page);
+      await page.evaluate(() => herbeleefProloog(3));
+      t(await wachtScene(page, 'gesprek', 6000), `${L}: de Codex-knop start het gesprek`);
+      await wachtOp(page, R4_SPEELBAAR, 5000);
+      await r4Kaart(page, vp, 'glimlach');
+      const wl = await r4Vasthouden(page, vp, 'vasthouden');
+      const f = await wachtScene(page, 'breekpunt/factuur', 10000);
+      await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pv-regel[data-post="foto"]')); }, 8000);
+      const p = await sr(page, `const o = {}; R.querySelectorAll('.pv-regel[data-post]').forEach(r => { o[r.dataset.post] = r.textContent.replace(/\\s+/g, ' ').trim(); }); return o;`);
+      await page.evaluate(() => Proloog.slaOver());
+      await slaap(600);
+      const na = await r4Dump(page);
+      t(wl >= 0 && f && /5 × 0u06/.test(p.glimlachen || '') && /Foto bekeken: 1×/.test(p.foto || '') && voor === na,
+        `${L}: gesprongen (vasthouden) → de afrekening leest het contract (${p.glimlachen} · ${p.foto}); de opslag byte-gelijk (${voor === na})`);
       t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
       await ctx.close();
     }

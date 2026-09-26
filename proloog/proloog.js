@@ -3262,6 +3262,16 @@
       contractVers = isVers(P);
     }
     if (o.hoofdstuk != null) zetHoofdstuk(o.hoofdstuk);
+    /* R4: wie het gesprek of de afrekening herbeleeft, krijgt de cijfers van toen (alleen-lezen): de
+       factuur toont dan het echte aantal glimlachen, de foto en het stempelen. Vanaf het kantoor tellen ze opnieuw. */
+    if (herbeleef && P.scene >= IDX.gesprek) {
+      const c = leesContract();
+      if (c) {
+        if (typeof c.glimlachen === 'number' && isFinite(c.glimlachen)) P.choices.glimlachen = Math.max(0, Math.min(999, c.glimlachen | 0));
+        if (c.fotoKantoor) P.choices.fotoKantoor = true;
+        if (typeof c.zelfGestempeld === 'boolean') P.choices.zelfGestempeld = c.zelfGestempeld;
+      }
+    }
     bewaar();
 
     luister(window, 'keydown', opToets);
