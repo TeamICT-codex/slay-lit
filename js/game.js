@@ -3052,7 +3052,9 @@ function putVloekUit(c) {
    wegklikbaar + auto-dismiss; toont de kaart-art via de gewone focus-kaart-render. */
 function toonVloekReveal(kaartId, flavor) {
   const c = (typeof nieuweKaart === 'function') ? nieuweKaart(kaartId) : { id: kaartId, uid: 'vloekreveal' };
-  document.querySelectorAll('.vloek-reveal-overlay').forEach(n => n.remove());
+  /* het keuzescherm van het decreet draagt dezelfde klasse (voor de stijl), maar is een
+     wachtende keuze, geen reveal: nooit opruimen (review F6 - de keuze viel dan stil op B) */
+  document.querySelectorAll('.vloek-reveal-overlay:not(.decreet-keuze-overlay)').forEach(n => n.remove());
   const ov = document.createElement('div');
   ov.className = 'vloek-reveal-overlay';
   ov.innerHTML = `
@@ -3082,7 +3084,7 @@ function toonKaartReveal(kaartId, opts) {
   opts = opts || {};
   const c = (typeof nieuweKaart === 'function') ? nieuweKaart(kaartId) : { id: kaartId, uid: 'kreveal' };
   const zeld = (kdef(c) && kdef(c).zeld) || 'gewoon';
-  document.querySelectorAll('.kaart-reveal-overlay, .vloek-reveal-overlay').forEach(n => n.remove());
+  document.querySelectorAll('.kaart-reveal-overlay, .vloek-reveal-overlay:not(.decreet-keuze-overlay)').forEach(n => n.remove());   /* het keuzescherm blijft (F6) */
   const ov = document.createElement('div');
   ov.className = 'kaart-reveal-overlay zeld-' + zeld;
   ov.innerHTML = `
@@ -8142,19 +8144,24 @@ async function dicktatorDecreet(v) {
   const gestopt = () => S.gevecht !== g || g.voorbij;
   const U = UITSPRAKEN._dicktator;
   const dossier = [...(g.aangezegd ? g.aangezegd.values() : [])];
-  let keus = null, kop = '', zelfGekozen = false;
+  /* spraak = zijn eerste regel bij de reveal; null = alleen het kale "AFGESCHREVEN." */
+  let keus = null, kop = '', spraak = null;
   if (dossier.length >= 2) {
     const [a, b] = dossier;
     const gespeeldSinds = d => Math.max(0, ((g.gespeeld && g.gespeeld[d.id]) || 0) - (d.start || 0));
     const kostVan = d => { const c = dicktatorExemplaar(d); return c ? (kval(c, 'kost') || 0) : 0; };
     if (gespeeldSinds(a) > 0 || gespeeldSinds(b) > 0) {
-      keus = await dicktatorKeuze(g, a, b);
+      const r = await dicktatorKeuze(g, a, b);
       if (gestopt()) return;
-      zelfGekozen = true;
-      kop = `U KOOS · ${escSyn(keus.naam)} → AFGESCHREVEN`;
+      keus = r.d;
+      /* review F6: viel de keuze via het vangnet (het scherm verdween zonder klik), dan koos
+         de speler niet - de kop zegt dat ook niet */
+      if (r.bron === 'vangnet') kop = `HET DECREET · ${escSyn(keus.naam)} → AFGESCHREVEN`;
+      else { kop = `U KOOS · ${escSyn(keus.naam)} → AFGESCHREVEN`; spraak = U.decreetGekozen; }
     } else {
       keus = kostVan(a) > kostVan(b) ? a : b;
       kop = `U SPEELDE ZE NIET · ${escSyn(keus.naam)} → AFGESCHREVEN`;
+      spraak = U.decreetZelf;
     }
   }
   /* het EXEMPLAAR: de kaart die op het scherm stond (dicktatorExemplaar, review F2) */
@@ -8184,28 +8191,33 @@ async function dicktatorDecreet(v) {
   pose2D(v, 'decreet', 2.2);   /* de signature-pose (de_dicktator_decreet-art) */
   if (window.Vista) Vista.pose(v, 'cast', 2.2);
   toonDecreetReveal(c, kop);   /* de vernietigde kaart GROOT in beeld: stempel + verbranding */
-  baasSpreekt(zelfGekozen ? U.decreetGekozen : U.decreetZelf);
-  setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(kiesUit(U.decreet)); }, dtempo(1400));
+  if (spraak) {
+    baasSpreekt(spraak);
+    setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(kiesUit(U.decreet)); }, dtempo(1400));
+  } else baasSpreekt(kiesUit(U.decreet));   /* vangnet of geen dossier: niet "u koos", niet "u speelde ze niet" */
   saveSpel();
   renderGevecht();
   /* de beat: altijd oplossen (nooit hangen), en pas als de reveal volledig weg is */
   return new Promise(res => setTimeout(res, dtempo(DECREET_REVEAL.weg + DECREET_REVEAL.uit)));
 }
 
-/* het keuzescherm. Geeft een promise met a of b (de dossier-regels). Vangnetten:
+/* het keuzescherm. Geeft een promise met { d, bron }: d = a of b (de dossier-regels), bron =
+   'klik' (de speler koos), 'harnas' (window.__dickKeuze koos) of 'vangnet' (niemand koos:
+   dan valt B, en de kop zegt geen "U KOOS" - review F6). Vangnetten:
    - window.__dickKeuze(A, B) (het meetharnas): een functie die de gekozen KAART teruggeeft
      (of 'A'/'B', of een uid) - dan geen scherm;
-   - verdwijnt het gevecht (gestopt, herladen, nederlaag) terwijl het scherm openstaat,
-     dan lost de promise op met B, zodat de vijandbeurt nooit blijft hangen.
+   - verdwijnt het gevecht (gestopt, herladen, nederlaag) of het scherm zelf terwijl het
+     openstaat, dan lost de promise op met B, zodat de vijandbeurt nooit blijft hangen.
+     De reveals ruimen het scherm niet meer op (:not(.decreet-keuze-overlay)).
    Knoppen via data-attribuut + één delegated handler (inline-onclick-bugklasse). */
 function dicktatorKeuze(g, a, b) {
   const ka = dicktatorExemplaar(a), kb = dicktatorExemplaar(b);   /* hetzelfde exemplaar dat straks verbrandt (F2) */
-  if (!ka || !kb) return Promise.resolve(ka ? a : b);
+  if (!ka || !kb) return Promise.resolve({ d: ka ? a : b, bron: 'vangnet' });
   if (typeof window.__dickKeuze === 'function') {
     let r = null;
     try { r = window.__dickKeuze(ka, kb); } catch (e) { r = null; }
     const isA = r === ka || r === 'A' || r === a || (r != null && r === ka.uid);
-    return Promise.resolve(isA ? a : b);
+    return Promise.resolve({ d: isA ? a : b, bron: 'harnas' });
   }
   return new Promise(res => {
     document.querySelectorAll('.decreet-overlay').forEach(n => n.remove());
@@ -8227,19 +8239,19 @@ function dicktatorKeuze(g, a, b) {
     Klank.sfx('zwareklap');
     let klaar = false;
     let wacht = null;
-    const sluit = keuze => {
+    const sluit = (keuze, bron) => {
       if (klaar) return;
       klaar = true;
       clearInterval(wacht);
       ov.remove();
-      res(keuze);
+      res({ d: keuze, bron });
     };
     ov.addEventListener('click', e => {
       const k = e.target.closest('[data-decreet]');
       if (!k || !ov.contains(k)) return;
-      sluit(k.dataset.decreet === 'A' ? a : b);
+      sluit(k.dataset.decreet === 'A' ? a : b, 'klik');
     });
-    wacht = setInterval(() => { if (S.gevecht !== g || g.voorbij || !ov.isConnected) sluit(b); }, 250);
+    wacht = setInterval(() => { if (S.gevecht !== g || g.voorbij || !ov.isConnected) sluit(b, 'vangnet'); }, 250);
   });
 }
 

@@ -536,6 +536,54 @@ const sonde = page => page.evaluate(() => {
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
 
+  /* ================= 11 · F6 · HET KEUZESCHERM OVERLEEFT DE REVEALS ================= */
+  /* de reveal-kop van het decreet (niet het keuzescherm zelf) */
+  const decreetKop = async page => {
+    for (let k = 0; k < 40; k++) {
+      const s = await page.evaluate(() => { const e = document.querySelector('.decreet-overlay:not(.decreet-keuze-overlay) .decreet-shortlist'); return e ? e.textContent : null; });
+      if (s) return s;
+      await slaap(50);
+    }
+    return '';
+  };
+  const naarKeuze = async page => {
+    const zi11 = await naarZitting(page);
+    await page.evaluate(() => { const g = S.gevecht; const d = [...g.aangezegd.values()]; g.gespeeld[d[0].id] = (g.gespeeld[d[0].id] || 0) + 1; eindBeurt(); });
+    let open11 = false;
+    for (let k = 0; k < 80 && !open11; k++) { open11 = await page.evaluate(() => !!document.querySelector('.decreet-keuze-overlay')); if (!open11) await slaap(100); }
+    return Object.assign(zi11, { open: open11 });
+  };
+  kop('11 · F6 · een vloek- en een kaart-reveal ruimen het keuzescherm niet op; de klik telt');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  let k11 = await naarKeuze(page);
+  const rv = await page.evaluate(async () => {
+    toonVloekReveal('laster');
+    await new Promise(r => setTimeout(r, 400));
+    const naVloek = !!document.querySelector('.decreet-keuze-overlay') && !!document.querySelector('.vloek-reveal-overlay:not(.decreet-overlay)');
+    toonKaartReveal('slag');
+    await new Promise(r => setTimeout(r, 400));
+    const naKaart = !!document.querySelector('.decreet-keuze-overlay') && !!document.querySelector('.kaart-reveal-overlay');
+    document.querySelectorAll('.kaart-reveal-overlay, .vloek-reveal-overlay:not(.decreet-overlay)').forEach(n => n.remove());   /* de speler klikt ze weg */
+    return { naVloek, naKaart, bezig: S.gevecht.bezig };
+  });
+  t(k11.open && rv.naVloek && rv.naKaart && rv.bezig, `keuzescherm open (${k11.open}) → toonVloekReveal: blijft (${rv.naVloek}) → toonKaartReveal: blijft (${rv.naKaart}), de vijandbeurt wacht nog (${rv.bezig})`);
+  await page.click('.decreet-keuze-overlay .decreet-kies[data-decreet="A"]');
+  let kop11 = await decreetKop(page);
+  await wachtVrij(page);
+  let na11 = await page.evaluate(([a, b]) => ({ a: S.dek.filter(c => c.id === a).length, b: S.dek.filter(c => c.id === b).length }), [k11.A.id, k11.B.id]);
+  t(/^U KOOS/.test(kop11) && na11.a === k11.A.n - 1 && na11.b === k11.B.n, `de klik op A telt: kop "${kop11}", A ${k11.A.n}→${na11.a}, B ${k11.B.n}→${na11.b}`);
+  await ctx.close();
+  kop('11b · F6 · het scherm verdwijnt zonder klik (vangnet) → B valt, de kop zegt geen "U KOOS"');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  k11 = await naarKeuze(page);
+  await page.evaluate(() => { const ov = document.querySelector('.decreet-keuze-overlay'); if (ov) ov.remove(); });
+  kop11 = await decreetKop(page);
+  await wachtVrij(page);
+  na11 = await page.evaluate(([a, b]) => ({ a: S.dek.filter(c => c.id === a).length, b: S.dek.filter(c => c.id === b).length }), [k11.A.id, k11.B.id]);
+  t(k11.open && /^HET DECREET · /.test(kop11) && !/U KOOS/.test(kop11) && na11.b === k11.B.n - 1 && na11.a === k11.A.n, `vangnet: kop "${kop11}", B ${k11.B.n}→${na11.b}, A ${k11.A.n}→${na11.a}`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
   await browser.close();
   console.log('\n============================================');
   console.log(fout === 0 ? `FINALE ACCEPTATIE: ALLES GROEN — ${ok} ok` : `FINALE ACCEPTATIE: ${ok} ok, ${fout} FOUT`);
