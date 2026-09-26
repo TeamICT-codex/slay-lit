@@ -15,6 +15,11 @@
    Het blok 'vel' (M-plan §5, integratie) schrijft contactvel_nissen.jpg in SLAYIT_SHOTS: de
    heldkeuze, de Codex, de scherf-reveal en de afscheidsregel op Thomas' formaten.
    Stand bij de integratie (26 sep 2026, alle blokken): 376 ok / 0 FOUT in ±4,5 min.
+   Na de review-fixes (B1 F1, 26 sep 2026): 403 ok / 0 FOUT in ±5 min — met de fijnmazige
+   grep-wacht (HEEL + PER_STRING), de DEV-schakelaar UIT midden in een gevecht, de DEV-kiezer
+   zonder Codex, de daily-reveal, de nederlaag-duiding, de spookregel, het orakel en de
+   Plagiaatfase in blok F. Elke nieuwe controle is ook tegen de code van vóór F1 gedraaid en
+   gaf daar FOUT (de leegte-wachten niet: die meten dat de vlag-aan-tak nog bestaat).
    Hoort in de suitelijst van elke volgende bazenronde (Erfprins, finale, bazentoneel: M-plan
    §7.1) — wie als tweede merget, draait haar mee.
    ============================================================================ */
@@ -466,7 +471,10 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
     const zonder = poorten.filter(p => !p.ok).map(p => p.n);
     t(zonder.length === 0, `de ${poorten.length} gegate functies lezen metgezellenAan()` + (zonder.length ? ' — ZONDER: ' + zonder.join(', ') : ''));
     const roddel = await page.evaluate(() => ({ tekst: KAARTEN.de_roddel.tekst({ id: 'de_roddel' }), flavor: KAARTEN.de_roddel.flavor }));
-    t(roddel.tekst === 'Onbespeelbaar. Neemt ruimte in je hand in.' && !VERBODEN.test(roddel.flavor), `De Roddel: "${roddel.tekst}" / "${roddel.flavor}"`);
+    t(roddel.tekst === 'Onbespeelbaar. Neemt ruimte in je hand in.' && roddel.flavor === 'Iedereen heeft iets gehoord. Over jou.', `De Roddel: "${roddel.tekst}" / "${roddel.flavor}"`);
+    /* F1: ook de flavor volgt de vlag (M-plan §2.6 vroeg de nieuwe regel alleen voor 'vlag uit') */
+    const roddelAan = await page.evaluate(() => { devMetgezellen(true); const r = { tekst: KAARTEN.de_roddel.tekst({ id: 'de_roddel' }), flavor: KAARTEN.de_roddel.flavor }; devMetgezellen(false); return r; });
+    t(/doet je metgezel niets/.test(roddelAan.tekst) && roddelAan.flavor === 'Hij heeft iets gehoord. Over jou.', `De Roddel met de DEV-schakelaar AAN: de metgezel-tekst en de oude flavor terug ("${roddelAan.flavor}")`);
     const orakel = await page.evaluate(() => UITSPRAKEN._erfprins.orakelSolo);
     t(Array.isArray(orakel) && orakel.length === 4 && !orakel.some(r => VERBODEN.test(r) || /poort|breker|vóédt/i.test(r)), `orakelSolo: ${orakel.length} regels, geen belofte van een breker`);
     t(await page.evaluate(() => metgezellenAan() === false && METGEZELLEN_AAN === false), 'metgezellenAan() === false bij het laden');
@@ -577,6 +585,10 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
       } else {
         await page.evaluate(() => { nieuwSpel('slachter', 'NISSEN-DOORLOOP'); S.act = 1; ['drops_baas', 'vlamwachter_figuur', 'mosgeest_episch'].forEach(s => draagScherf(s)); renderTopbalk(); });
       }
+      /* F1: de scherf-reveal in Act 1 belooft de tafel alleen waar die er is — de daily heeft er geen */
+      const rev1 = await page.evaluate(() => { toonScherfReveal('mosgeest_figuur', { kop: 'TEST' }); const sub = ((document.querySelector('.scherf-reveal-sub') || {}).textContent || '').trim(); document.querySelectorAll('.scherf-reveal-overlay').forEach(nd => nd.remove()); return { sub, act: huidigeAct(), daily: !!S.daily }; });
+      t(rev1.act === 1 && (daily ? /bankt bij het einde van je run/.test(rev1.sub) && !/tafel op de Drempel/.test(rev1.sub) : /drie ervan kopen een plaats aan de tafel op de Drempel/.test(rev1.sub)),
+        `${scen} · scherf-reveal in Act 1${daily ? ' van de daily (geen Drempeltafel)' : ''}: "${rev1.sub}"`);
       await page.evaluate(() => volgendeAct('De Slijmkoning')); await slaap(900);
       if (!daily) {
         await stap(page, scen, 'Drempeltafel (einde Act 1)');
@@ -621,11 +633,31 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
         const keuze = l ? l.opties[0].doe() : '';
         document.querySelectorAll('.scherf-reveal-overlay').forEach(nd => nd.remove());
         const tafel = alleScherfIds().map(sid => scherfDef(sid).tafelTekst);
-        return { lTekst: l ? l.tekst : '', keuze, sTekst: sp ? sp.tekst : '', tafelInKeuze: tafel.some(x => keuze.includes(x)), duiding: mysterieDuiding(1) };
+        /* de nederlaag-duiding in haar drie standen: vers gevonden, niets gevonden (1/3), een vol
+           trio (3/3) — op een maaksel dat in deze Codex NIET ontwaakt is, zodat de leegte-wacht
+           met de vlag aan dezelfde stand meet (een ontwaakt maaksel slaat ze dan over) */
+        const txt = h => h.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+        const duiding = txt(mysterieDuiding(1));
+        const bewaarS = S.scherven.slice(), bewaarC = Codex.scherven.slice();
+        const vrij = ['drops', 'vlamwachter', 'mosgeest'].find(mid => !isOntgrendeld(mid));
+        const trio = MYSTERIES[vrij].vereist.slice();
+        Codex.scherven = [trio[0]]; S.scherven = [];
+        const duiding0 = txt(mysterieDuiding(0));
+        S.scherven = trio.slice(1);
+        const duidingRijp = txt(mysterieDuiding(0));
+        _devMetgezellen = true;   /* rechtstreeks: devMetgezellen() zou een DEV-toast in beeld zetten */
+        const aanRijp = txt(mysterieDuiding(0)); S.scherven = []; const aan0 = txt(mysterieDuiding(0));
+        _devMetgezellen = false;
+        Codex.scherven = bewaarC; S.scherven = bewaarS;
+        return { lTekst: l ? l.tekst : '', keuze, sTekst: sp ? sp.tekst : '', tafelInKeuze: tafel.some(x => keuze.includes(x)), duiding, duiding0, duidingRijp, aanRijp, aan0, vrij };
       });
-      t(/wát je bij je draagt/.test(ev.lTekst) && /ligt straks op tafel/.test(ev.sTekst) && !VERBODEN.test(ev.lTekst + ev.sTekst), `${scen} · Lantaarndrager en Spiegelaar volgen de tafel, niet een wezen`);
+      t(/wát je bij je draagt/.test(ev.lTekst) && /leg je ooit op tafel/.test(ev.sTekst) && !/straks/.test(ev.sTekst) && !VERBODEN.test(ev.lTekst + ev.sTekst), `${scen} · Lantaarndrager en Spiegelaar volgen de tafel, niet een wezen, en de Spiegelaar (Act 2+) belooft geen tafel 'straks'`);
       t(ev.tafelInKeuze && !VERBODEN.test(ev.keuze), `${scen} · het afscheid van de Lantaarndrager is een tafelTekst: "${ev.keuze.slice(0, 110)}"`);
-      t(!VERBODEN.test(ev.duiding), `${scen} · de nederlaag-duiding noemt geen metgezel: "${ev.duiding.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 110)}"`);
+      t(!VERBODEN.test(ev.duiding), `${scen} · de nederlaag-duiding noemt geen metgezel: "${ev.duiding.slice(0, 110)}"`);
+      /* F1: met de metgezellen geparkeerd valt er geen mysterie meer op te lossen */
+      t([ev.duiding0, ev.duidingRijp].every(d => d && !/mysterie|maaksel compleet/i.test(d) && !VERBODEN.test(d)) && /wachten op een volgende tafel/.test(ev.duiding0) && /drie scherven van één maaksel/.test(ev.duidingRijp),
+        `${scen} · de nederlaag-duiding belooft geen mysterie (maaksel ${ev.vrij}): 1/3 "${ev.duiding0.slice(0, 60)}" · 3/3 "${ev.duidingRijp.slice(0, 80)}"`);
+      t(/onopgelost mysterie/.test(ev.aan0) && /maaksel compleet/.test(ev.aanRijp), `${scen} · leegte-wacht: met de DEV-schakelaar AAN keren de mysterie-regels terug ("${ev.aan0.slice(0, 45)}" / "${ev.aanRijp.slice(0, 45)}")`);
       /* de Codex (T7/T9) */
       await page.evaluate(() => toonCodex()); await slaap(500);
       await stap(page, scen, 'Codex');
@@ -705,6 +737,16 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
       const r = await page.evaluate(() => ({ run: S.runMetgezel || null, sMet: S.metgezel ? S.metgezel.id : null }));
       const rlog = (await leesLog(page)).filter(l => /blijft achter/.test(l));
       t(r.run === null && r.sMet === null && rlog.length === 0, `een save met alleen runMetgezel: in het geheugen gewist (${JSON.stringify(r)}), geen afscheidsregel (er stond niemand naast je): ${rlog.length}×`);
+      /* F1: een getamperde save die zelf een _mgAfscheid meebrengt (zonder metgezel) toont geen spookregel */
+      await page.evaluate(() => {
+        nieuwSpel('slachter', 'NISSEN-SPOOK'); S.act = 2; S.metgezel = null; S.runMetgezel = null; saveSpel();
+        const s = JSON.parse(localStorage.getItem('slayit_save_v1')); s._mgAfscheid = 'Iemand'; localStorage.setItem('slayit_save_v1', JSON.stringify(s));
+      });
+      await laad(page);
+      await page.evaluate(() => doorgaan()); await slaap(2300);
+      const spook = (await leesLog(page)).filter(l => /blijft achter/.test(l));
+      const spookS = await page.evaluate(() => !!S && '_mgAfscheid' in S);
+      t(spook.length === 0 && spookS === false, `een getamperde save met _mgAfscheid 'Iemand' en zonder metgezel: ${spook.length}× een afscheidsregel${spook.length ? ' ("' + spook[0].slice(8) + '")' : ''}, sleutel nog in S: ${spookS}`);
       t(page.__f.length === 0, 'geen paginafouten' + (page.__f.length ? ' — ' + page.__f.slice(0, 2).join(' | ') : ''));
       await sluit(ctx, page, 'save V5');
     }
@@ -726,7 +768,19 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
     t(!geweigerd.aan && geweigerd.sMet === null && !geweigerd.gevecht && wlog.length === 2,
       `geparkeerd: devMetgezel('drops') en devDropsLevend() weigeren ZICHTBAAR (${wlog.length}× "geparkeerd"), S.metgezel ${geweigerd.sMet}, geen gevecht gestart`);
     t(normaliseer(cxNa) === normaliseer(cxVoor), 'de geweigerde Drops-boog schreef niets in de Codex');
-    await page.evaluate(() => { devMetgezellen(true); devMetgezel('drops'); startGevecht(['echo'], 'gevecht', 1); });
+    /* F1: de DEV-kiezer zet een metgezel in de run, maar schrijft hem niet in het Codex-roster
+       (vroeger bleef elke geteste metgezel — ook de Witte — voorgoed in je echte Codex staan) */
+    const kiezer = await page.evaluate(() => {
+      devMetgezellen(true);
+      const uit = {};
+      ['vlamwachter', 'drops_wit', 'mosgeest', 'drops'].forEach(id => { devMetgezel(id); uit[id] = S.metgezel ? S.metgezel.id : null; });
+      uit.roster = (Codex.metgezellen || []).slice().sort().join(',');
+      return uit;
+    });
+    const cxKiezer = await leesMgCodex(page);
+    t(kiezer.vlamwachter === 'vlamwachter' && kiezer.drops_wit === 'drops_wit' && kiezer.drops === 'drops' && kiezer.roster === 'drops,mosgeest' && normaliseer(cxKiezer) === normaliseer(cxVoor),
+      `de DEV-kiezer (schakelaar AAN): Vlamwacht, de Witte, Mosgeest en Drops stappen in de run, het Codex-roster blijft "${kiezer.roster}" (in het geheugen én op schijf)`);
+    await page.evaluate(() => { startGevecht(['echo'], 'gevecht', 1); });
     await slaap(1500);
     let st = await staat(page);
     t(await page.evaluate(() => metgezellenAan()) && st.gMet === 'drops' && st.zone === 'ZICHTBAAR' && st.chip === 'ZICHTBAAR',
@@ -741,6 +795,58 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
     t(await page.evaluate(() => metgezellenAan() === false), 'herlaad → weer geparkeerd (de override leeft alleen in het geheugen)');
     t(page.__f.length === 0, 'geen paginafouten' + (page.__f.length ? ' — ' + page.__f.slice(0, 2).join(' | ') : ''));
     await sluit(ctx, page, 'dev');
+
+    /* F1: de schakelaar UIT midden in een gevecht. Vroeger bleef Drops tot het einde van het
+       gevecht staan en schreef zijn offer met de vlag uit toch in de Codex (gevallen,
+       copycatGebroken, dropsOfferRun). Nu: meteen weg uit het gevecht, én offer en signatuurzet
+       lezen zelf de vlag — ook als er toch nog een metgezel in het gevecht zou staan, en ook als
+       de bevestiging van het offer nog openstond. Een verse Codex, zodat elke schrijfactie telt. */
+    kop('E · de schakelaar UIT midden in een Erfprins-gevecht (Codex zonder metgezel)');
+    {
+      const { ctx, page } = await context(browser, { codex: CODEX.nieuw });
+      await laad(page);
+      const cxVoor2 = await leesMgCodex(page);
+      const r = await page.evaluate(async () => {
+        const wacht = ms => new Promise(res => setTimeout(res, ms));
+        let bev = 0, openstaand = null;
+        window.bevestig = (tekst, onJa) => { bev++; openstaand = onJa; };   /* telt; bevestigt zelf niets */
+        devMetgezellen(true);
+        nieuwSpel('slachter', 'NISSEN-DEV-OFFER'); S.act = 2;
+        devMetgezel('drops');
+        startGevecht(['de_erfprins'], 'baas', 15);
+        const g = S.gevecht;
+        await wacht(400);
+        let w = 0; while ((g.ceremonie || g.bezig || g._regieBezig) && w++ < 400) await wacht(15);
+        const baas = g.vijanden.find(v => v.id === 'de_erfprins'); baas.hp = Math.floor(baas.maxHp * 0.4);   /* het offer wordt beschikbaar (baas ≤ 50 %) */
+        const zone = () => { const z = document.getElementById('metgezel-zone'); return !!z && !z.hidden; };
+        const uit = { aanG: g.metgezel ? g.metgezel.id : null, aanZone: zone() };
+        metgezelOpoffering();   /* leegte-wacht: met de vlag AAN vraagt het offer wél om bevestiging */
+        uit.bevAan = bev;
+        const m = g.metgezel;
+        devMetgezellen(false);   /* ← midden in het gevecht */
+        uit.uitG = g.metgezel ? g.metgezel.id : null; uit.uitZone = zone(); uit.sMet = S.metgezel ? S.metgezel.id : null;
+        /* de oude toestand nabootsen: een metgezel die in het gevecht bleef staan */
+        g.metgezel = m;
+        const e0 = g.energie; mgSignatuur();   /* eerst: het offer zet g.bezig en zou de signatuur maskeren */
+        metgezelOpoffering();
+        if (openstaand) openstaand();   /* de bevestiging die nog openstond, alsnog 'ja' */
+        uit.bevUit = bev - uit.bevAan; uit.energie = [e0, g.energie]; uit.gebroken = !!g.copycatGebroken; uit.mDood = !!m.dood; uit.sigRun = !!m.signatuurGebruikt;
+        uit.codex = { gevallen: (Codex.gevallen || []).join(','), copycatGebroken: !!Codex.copycatGebroken, sig: Object.keys(Codex.sigOntdekt || {}).join(','), roster: (Codex.metgezellen || []).join(',') };
+        g.metgezel = null;
+        try { g.voorbij = true; stopGevechtLus(); } catch (e) {}
+        S.gevecht = null;
+        return uit;
+      });
+      t(r.aanG === 'drops' && r.aanZone && r.bevAan === 1, `schakelaar AAN: Drops staat in het Erfprins-gevecht (zone zichtbaar ${r.aanZone}) en zijn offer vraagt bevestiging (${r.bevAan}×) — het offer is echt beschikbaar`);
+      t(r.uitG === null && !r.uitZone && r.sMet === null, `schakelaar UIT midden in het gevecht → g.metgezel ${r.uitG}, zone zichtbaar ${r.uitZone}, S.metgezel ${r.sMet}: meteen weg`);
+      t(r.bevUit === 0 && !r.gebroken && !r.mDood && !r.sigRun && r.energie[0] === r.energie[1],
+        `met de vlag uit doen offer en signatuurzet niets, ook met een achtergebleven metgezel en een openstaande bevestiging (nieuwe bevestiging ${r.bevUit}×, g.copycatGebroken ${r.gebroken}, Drops dood ${r.mDood}, signatuur ${r.sigRun}, energie ${r.energie.join('→')})`);
+      const cxNa2 = await leesMgCodex(page);
+      t(!r.codex.gevallen && !r.codex.copycatGebroken && !r.codex.sig && !r.codex.roster && normaliseer(cxNa2) === normaliseer(cxVoor2),
+        `de Codex bleef leeg: gevallen "${r.codex.gevallen}", copycatGebroken ${r.codex.copycatGebroken}, sigOntdekt "${r.codex.sig}", roster "${r.codex.roster}" (ook op schijf gelijk)`);
+      t(page.__f.length === 0, 'geen paginafouten (ook niet bij de herbouw van het gevecht zonder metgezel)' + (page.__f.length ? ' — ' + page.__f.slice(0, 2).join(' | ') : ''));
+      await sluit(ctx, page, 'dev midden in gevecht');
+    }
   }
 
   /* ============================================================
@@ -777,6 +883,7 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
     const cxVoor = await leesMgCodex(page);
     const solo = await page.evaluate(() => UITSPRAKEN._erfprins.orakelSolo);
     const dossier = await page.evaluate(() => UITSPRAKEN._erfprins.dossier);
+    const plagiaatRegel = await page.evaluate(() => UITSPRAKEN._erfprins.plagiaat);
     await page.evaluate(() => {
       window.slaap = () => Promise.resolve();
       try { Klank.sfx = () => {}; Klank.muziek = () => {}; Klank.duck = () => {}; } catch (e) {}
@@ -786,13 +893,20 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
       window.__ontgrendel = 0;
       const oo = ontgrendelMetgezel; window.ontgrendelMetgezel = function () { window.__ontgrendel++; return oo.apply(this, arguments); };
     });
-    for (const seed of ['NISSEN-ERF-1', 'NISSEN-ERF-2', 'NISSEN-ERF-3']) {
+    /* F1: de derde seed is een STERKE run (meer HP, dranken, licht terug na poort A), zodat
+       minstens één gevecht de Plagiaatfase haalt of wint — anders slagen 'copycatGebroken false'
+       en 'geen oud orakel' ook zonder bewijs. En elk gevecht wacht eerst tot het orakel valt
+       (6,4 s na de start, toonBaasIntro) vóór de bot speelt. */
+    const F_SEEDS = [['NISSEN-ERF-1', false], ['NISSEN-ERF-2', false], ['NISSEN-ERF-3', true]];
+    const fUit = [];
+    for (const [seed, sterk] of F_SEEDS) {
       const r = await Promise.race([
-        page.evaluate(async sd => {
+        page.evaluate(async ([sd, sterk]) => {
           const wacht = ms => new Promise(res => setTimeout(res, ms));
           if (S && S.gevecht) { try { S.gevecht.voorbij = true; stopGevechtLus(); } catch (e) {} }
           nieuwSpel('slachter', sd);
-          S.gevecht = null; S.act = 2; S.fakkel = fakkelMax(); S.pos = null; S.maxHp = 90; S.hp = 80; S.dranken = ['heeldrank'];
+          S.gevecht = null; S.act = 2; S.fakkel = fakkelMax(); S.pos = null;
+          S.maxHp = sterk ? 260 : 90; S.hp = sterk ? 260 : 80; S.dranken = sterk ? ['heeldrank', 'heeldrank', 'heeldrank'] : ['heeldrank'];
           let v = 0; while (S.dek.length < 18 && v++ < 40) S.dek.push(nieuweKaart(kiesUit(heldPool())));
           S.kaart = genereerKaart();
           startGevecht(['de_erfprins'], 'baas', 15);
@@ -801,9 +915,12 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
           const vrij = async () => { let w = 0; while ((g.ceremonie || g.bezig || g._regieBezig) && w++ < 600 && S.gevecht === g && !g.voorbij) await wacht(15); };
           await wacht(300); await vrij();
           document.querySelectorAll('#baas-intro, .baas-intro').forEach(nd => { try { nd.remove(); } catch (e) {} });
+          /* het orakel valt op 6,4 s na de start: eerst laten spreken, dan pas spelen */
+          await wacht(6800); await vrij();
           let gMetOoit = !!g.metgezel, ronde = 0, fout = null;
           /* poort A: gedoofd, en dan weer licht maken (de oude code liet de Witte hier terugkeren) */
           S.fakkel = 0; zetLichtVisueel(); zetFakkel(15); zetFakkel(-15);
+          if (sterk) zetFakkel(fakkelMax());   /* de sterke run vecht daarna in het licht */
           gMetOoit = gMetOoit || !!g.metgezel;
           try {
             while (!g.voorbij && S.gevecht === g && S.hp > 0 && ronde < 30) {
@@ -825,22 +942,58 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
             }
           } catch (e) { fout = String((e && e.stack) || e).slice(0, 300); }
           const b = boss();
-          const uit = { ronde, gewonnen: !!g._gewonnen, verloren: !!g._verloren || S.hp <= 0, gebroken: !!g.copycatGebroken, gMetOoit,
+          const uit = { ronde, gewonnen: !!g._gewonnen, verloren: !!g._verloren || S.hp <= 0, gebroken: !!g.copycatGebroken, gMetOoit, plagiaat: !!(b && b.plagiaat),
             ontgrendel: window.__ontgrendel, wit: !!(Codex.mysteries && Codex.mysteries.drops_wit && Codex.mysteries.drops_wit.voltooid), fout, baasHp: b ? b.hp : null, hp: S.hp };
           try { g.voorbij = true; stopGevechtLus(); } catch (e) {}
           S.gevecht = null;
           document.querySelectorAll('#baas-intro, .baas-flits, .baas-spraak, .roof-overlay, .roof-speel-kaart, .steel-vlieger').forEach(nd => { try { nd.remove(); } catch (e) {} });
           return uit;
-        }, seed),
+        }, [seed, sterk]),
         slaap(150000).then(() => ({ fout: 'TIMEOUT 150 s' }))
       ]);
       const log = (await leesLog(page)).filter(l => l.startsWith('BAAS ')).map(l => l.slice(5));
-      t(!r.fout && (r.gewonnen || r.verloren || r.ronde >= 30), `${seed}: volledig gevecht — ${r.gewonnen ? 'gewonnen' : r.verloren ? 'verloren' : 'na ' + r.ronde + ' rondes gestopt'} in ${r.ronde} rondes (baas ${r.baasHp} HP, jij ${r.hp} HP)` + (r.fout ? ' — ' + r.fout : ''));
+      r.plagiaatGezegd = log.filter(l => l === plagiaatRegel).length;
+      fUit.push(r);
+      t(!r.fout && (r.gewonnen || r.verloren || r.ronde >= 30), `${seed}${sterk ? ' (sterke run)' : ''}: volledig gevecht — ${r.gewonnen ? 'gewonnen' : r.verloren ? 'verloren' : 'na ' + r.ronde + ' rondes gestopt'} in ${r.ronde} rondes (baas ${r.baasHp} HP, jij ${r.hp} HP, Plagiaatfase ${r.plagiaat ? 'gehaald' : 'niet gehaald'})` + (r.fout ? ' — ' + r.fout : ''));
       t(!r.gMetOoit && !r.gebroken && r.ontgrendel === 0 && !r.wit, `${seed}: nooit een metgezel (${r.gMetOoit}), copycatGebroken ${r.gebroken}, de Witte niet teruggekeerd (ontgrendelMetgezel ${r.ontgrendel}×) — ook niet na gedoofd → weer licht`);
       const vreemd = log.filter(l => l === dossier || /pássen|Gooi\. Het\. Weg|DICHT gemoeten|geïndexeerd/.test(l));
       const oudOrakel = log.filter(l => /trouw blíjft zonder loon|wat die poort wakker maakt/.test(l));
-      t(vreemd.length === 0 && oudOrakel.length === 0, `${seed}: geen dossier, geen nudge, geen oud orakel (${log.length} baasregels; orakelSolo gezegd: ${log.filter(l => solo.includes(l)).length}×)`);
+      const soloGezegd = log.filter(l => solo.includes(l));
+      t(vreemd.length === 0 && oudOrakel.length === 0, `${seed}: geen dossier, geen nudge, geen oud orakel (${log.length} baasregels)`);
+      /* F1: het orakel MOET vallen, anders bewijst 'geen oud orakel' niets */
+      t(soloGezegd.length === 1, `${seed}: het orakel viel, als orakelSolo-regel: ${soloGezegd.length}× "${(soloGezegd[0] || '—').slice(0, 70)}"`);
     }
+    const bewijs = fUit.filter(r => r.gewonnen || r.plagiaat);
+    t(bewijs.length >= 1 && bewijs.every(r => !r.gebroken), `minstens één gevecht haalde de Plagiaatfase of won (${fUit.map((r, i) => F_SEEDS[i][0].slice(-5) + ': ' + (r.gewonnen ? 'gewonnen' : '') + (r.plagiaat ? (r.gewonnen ? ' na ' : '') + 'Plagiaatfase (' + r.plagiaatGezegd + '× gezegd)' : '') + (!r.gewonnen && !r.plagiaat ? 'geen' : '')).join(', ')}) — het gevecht liep tot het einde met copycatGebroken false`);
+    /* De PLAGIAATFASE rechtstreeks (de bot haalt haar niet altijd: hij speelt zijn buit vaak op
+       vóór de kill). Hij graait twee echte kaarten uit je trekstapel en krijgt de doodsklap: met
+       copycatGebroken false MOET hij opstaan. Leegte-wacht: met g.copycatGebroken true (wat
+       Drops' offer deed) sterft hij gewoon — de sonde onderscheidt dus echt. */
+    const plag = await page.evaluate(async () => {
+      const wacht = ms => new Promise(res => setTimeout(res, ms));
+      const proef = async (gebroken, sd) => {
+        if (S && S.gevecht) { try { S.gevecht.voorbij = true; stopGevechtLus(); } catch (e) {} }
+        nieuwSpel('slachter', sd); S.gevecht = null; S.act = 2; S.maxHp = 90; S.hp = 90;
+        startGevecht(['de_erfprins'], 'baas', 15);
+        const g = S.gevecht; await wacht(300);
+        let w = 0; while ((g.ceremonie || g.bezig || g._regieBezig) && w++ < 400) await wacht(15);
+        const b = g.vijanden.find(x => x.id === 'de_erfprins');
+        const graai = _copycatGraai(b, g, 2);
+        if (gebroken) g.copycatGebroken = true;
+        b.hp = 5; b.blok = 0;
+        doeSchade(b, 40, sp());
+        const r = { graai, gebroken: !!g.copycatGebroken, plagiaat: !!b.plagiaat, hp: b.hp, dood: !!b.dood || b.hp <= 0, gMet: !!g.metgezel };
+        try { g.voorbij = true; stopGevechtLus(); } catch (e) {}
+        S.gevecht = null;
+        document.querySelectorAll('#baas-intro, .baas-intro, .baas-flits, .baas-spraak, .roof-overlay, .steel-vlieger').forEach(nd => { try { nd.remove(); } catch (e) {} });
+        return r;
+      };
+      return { solo: await proef(false, 'NISSEN-PLAG-1'), gebroken: await proef(true, 'NISSEN-PLAG-2') };
+    });
+    t(plag.solo.graai === 2 && !plag.solo.gebroken && plag.solo.plagiaat && !plag.solo.dood && plag.solo.hp > 0 && !plag.solo.gMet,
+      `de Plagiaatfase speelt solo: ${plag.solo.graai} kaarten geroofd, doodsklap → hij staat op met ${plag.solo.hp} HP (plagiaat ${plag.solo.plagiaat}, copycatGebroken ${plag.solo.gebroken}, geen metgezel)`);
+    t(plag.gebroken.graai === 2 && plag.gebroken.gebroken && !plag.gebroken.plagiaat && plag.gebroken.dood,
+      `leegte-wacht: met g.copycatGebroken true (Drops' oude offer) slaat hij de fase over en sterft (plagiaat ${plag.gebroken.plagiaat}, dood ${plag.gebroken.dood}) — de sonde meet echt`);
     /* poort B: sterven in het donker (de oude code: de Witte springt ertussen en je staat op 40 %) */
     const pb = await page.evaluate(async () => {
       nieuwSpel('slachter', 'NISSEN-POORTB'); S.act = 2; S.maxHp = 90; S.hp = 1; S.relikwieen = [];
