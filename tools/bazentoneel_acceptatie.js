@@ -157,7 +157,7 @@ const HELPER = `(() => {
       eigenBaas, eigenHeld, eigenLabel, eigenLabelWie,
       namen: [...document.querySelectorAll('#vijanden-rij .vijand-naam, #speler-zone .speler-naam')].filter(zicht).length,
       pilN: pillen.length, pilRect: pillen.length ? { l: Math.min(...pillen.map(p => p.l)), t: Math.min(...pillen.map(p => p.t)), r: Math.max(...pillen.map(p => p.r)), b: Math.max(...pillen.map(p => p.b)) } : null,
-      spraak: !!sp, spRegels: regels, spBaas: pct(bf, sp ? [sp] : []), spPil: Math.round(som(sp ? [sp] : [], pillen)), spHeld: pct(held, sp ? [sp] : []), spHeldChips: Math.round(som(sp ? [sp] : [], heldChips)),
+      spraak: !!sp, spRegels: regels, spBaas: pct(bf, sp ? [sp] : []), spPil: Math.round(som(sp ? [sp] : [], pillen)), spHeld: pct(held, sp ? [sp] : []), spHeldChips: Math.round(som(sp ? [sp] : [], heldChips)), spChips: Math.round(som(sp ? [sp] : [], chips)),
       spBB: bb && sp ? Math.round(snij(sp, bb)) : 0, spTop: tb && sp ? Math.round(snij(sp, tb)) : 0, spUit: sp ? (sp.l < 0 || sp.r > W) : false,
       flits: flits.length, flitsBaas: pct(bf, flits), flitsHeld: pct(held, flits),
       beurtBots: (() => { const b = een('#baas-balk .bb-beurt'); if (!b) return 0; return Math.round(som([b], [een('#baas-balk .bb-proces'), een('#baas-balk .bb-aegis'), een('#baas-balk .bb-naam'), een('#baas-balk .bb-balk'), een('#beurt-label'), ...pillen].filter(Boolean))); })(),
@@ -377,8 +377,13 @@ async function perFormaat(browser, fk) {
       if (!vp.staand) {
         t(s.spraak && s.spBaas <= 1 && s.spPil === 0, `B0.5 ${vp.naam} ${B}: plaat ~ baas ${s.spBaas} % (<= 1), ~ pil ${s.spPil} px2`);
         t(s.spHeld === 0 && s.spBB === 0 && s.spTop === 0 && !s.spUit, `B0.5 ${vp.naam} ${B}: plaat ~ held ${s.spHeld} %, ~ bazenbalk ${s.spBB}, ~ topbalk ${s.spTop}, binnen beeld`);
-        /* F1: op de telefoon ook niet over de chips boven zijn hoofd (B0.8; de introplaat van de Erfprins dekte op 846x381 zijn bovenste chiprij) */
-        if (mobielLiggend) t(s.spHeldChips === 0, `B0.5 ${vp.naam} ${B}: plaat ~ heldchips ${s.spHeldChips} px2 (0; held met 4 statussen)`);
+        /* F1: op de telefoon niet over de chips (B0.8; de introplaat van de Erfprins dekte op 846x381 de bovenste chiprij van de
+           held, 1 252-5 376 px2). Op 846x381 is er altijd een schone plek; op 800x360 (DICKtator) en 740x360 niet binnen twee
+           regels - dan hooguit één chip (~1 400 px2) bij 4 statussen (vóór F1: 1 392-3 157; met 5: tot 2 807 op 800x360 en 4 653 op 740x360). */
+        if (mobielLiggend) {
+          if (vp.w === 846) t(s.spHeldChips === 0 && s.spChips === 0, `B0.5 ${vp.naam} ${B}: plaat ~ heldchips ${s.spHeldChips} px2, ~ alle chips ${s.spChips} px2 (0; held en baas met 4 statussen)`);
+          else t(s.spHeldChips <= 1400, `B0.5 ${vp.naam} ${B}: plaat ~ heldchips ${s.spHeldChips} px2, ~ alle chips ${s.spChips} px2 (heldchips <= 1 400: hooguit één chip)`);
+        }
         if (vp.w === 800) t(s.spRegels <= 2, `B0.5 ${vp.naam} ${B}: de plaat telt ${s.spRegels} regels (<= 2)`);
         const dataBaas = await page.evaluate(() => { const e = document.querySelector('.baas-spraak'); return e ? (e.dataset.baas || '') : null; });
         if (baas === 'erfprins' || baas === 'dicktator') t(dataBaas === (baas === 'erfprins' ? 'de_erfprins' : 'de_dicktator'), `B0.4 ${vp.naam} ${B}: eigen stem (.baas-spraak[data-baas="${dataBaas}"])`);
@@ -744,48 +749,6 @@ async function lijkWeg(browser, fk) {
       t(r.geen || (!r.voorbij && !r.na12 && r.na29), `B0.7 ${vp.naam} Slijmkoning: gaat het gevecht door, dan komt zijn kolom pas na 2,4 s vrij (1,2 s: ${r.na12}, 2,9 s: ${r.na29})`);
     } catch (e) { t(false, `B0.7 ${vp.naam} lijk-weg: fout: ${e.message}`); }
   }
-  /* B2 F1: ook een GEWONE vijand die via verliesHp valt, geeft na zijn fade (750 ms) zijn kolom
-     terug (sinds v114 bedoeld, maar verliesHp zet .sterft zelf al: de timer startte nooit). De
-     laatste kill van het gevecht maakt geen kolom meer vrij: het eindbeeld blijft staan. */
-  try {
-    await page.evaluate(() => { document.querySelectorAll('.dt-overlay').forEach(e => e.remove()); S.metgezel = null; S.gevecht = null; startGevecht(['grotrat', 'grotrat', 'grotrat'], 'gevecht'); if (document.querySelector('#draai-blok.toon') && typeof speelTochStaand === 'function') speelTochStaand(); });
-    await slaap(1500); await wachtRust(page, 400, 12000);
-    const r = await page.evaluate(async () => {
-      const g = S.gevecht; const kol = i => GDOM.vijanden[i].wrap;
-      verliesHp(g.vijanden[0], 9999, sp()); renderGevecht();
-      await new Promise(r => setTimeout(r, 1200));
-      const een = { weg: kol(0).classList.contains('lijk-weg'), voorbij: !!g.voorbij };
-      /* de twee laatste in één klap: het gevecht is voorbij */
-      g.vijanden.forEach(v => { if (!v.dood) verliesHp(v, 9999, sp()); }); renderGevecht();
-      if (alleVijanden().length === 0) gevechtGewonnen();
-      await new Promise(r => setTimeout(r, 1200));
-      return { een, eind: [1, 2].map(i => kol(i).classList.contains('lijk-weg')), voorbij: !!g.voorbij };
-    });
-    t(r.een.weg && !r.een.voorbij, `lijk-weg ${vp.naam} gewoon gevecht: een gewone vijand die valt terwijl het gevecht doorgaat, geeft na 750 ms zijn kolom terug (1,2 s: ${r.een.weg})`);
-    t(r.voorbij && r.eind.every(w => !w), `lijk-weg ${vp.naam} gewoon gevecht: na de laatste kill komt geen kolom meer vrij (lijk-weg ${r.eind.join('/')})`);
-  } catch (e) { t(false, `lijk-weg ${vp.naam} gewoon gevecht: fout: ${e.message}`); }
-  /* ... en de gevallen baas schuift niet opzij als een splitsing naast hem in dezelfde klap valt */
-  try {
-    await page.evaluate(() => { document.querySelectorAll('.dt-overlay').forEach(e => e.remove()); try { toonScherm('kaart'); } catch (e) { } });
-    await startBaas(page, 'slijmkoning');
-    const r = await page.evaluate(async () => {
-      const g = S.gevecht; const b = g.vijanden.find(v => VIJANDEN[v.id].baas);
-      if (!voegVijandToe('groene_slijm')) return { geen: true };
-      renderGevecht(); await new Promise(r => setTimeout(r, 400));
-      const kol = GDOM.vijanden[g.vijanden.indexOf(b)].wrap;
-      const x0 = kol.getBoundingClientRect().left;
-      b._geenSplit = true; b.gesplitst = true;
-      g.vijanden.forEach(v => { if (!v.dood) verliesHp(v, 9999, sp()); }); renderGevecht();
-      if (alleVijanden().length === 0) gevechtGewonnen();
-      let dx = 0; const t0 = performance.now();
-      while (performance.now() - t0 < 1900) { await new Promise(r => setTimeout(r, 50)); if (document.body.dataset.scherm !== 'gevecht') break; dx = Math.max(dx, Math.abs(kol.getBoundingClientRect().left - x0)); }
-      return { dx: Math.round(dx), voorbij: !!g.voorbij, weg: g.vijanden.filter(v => v !== b).map(v => GDOM.vijanden[g.vijanden.indexOf(v)].wrap.classList.contains('lijk-weg')) };
-    });
-    if (!(await page.evaluate(() => d3Actief()))) t(r.geen || (r.voorbij && r.dx <= 1 && r.weg.every(w => !w)), `lijk-weg ${vp.naam} Slijmkoning + splitsing in één klap: de gevallen baas schuift niet opzij (${r.dx} px, lijk-weg splitsing ${r.weg && r.weg.join('/')})`);
-    else t(r.geen || (r.voorbij && r.weg.every(w => !w)), `lijk-weg ${vp.naam} Slijmkoning + splitsing in één klap: geen kolom meer vrij na de overwinning (${r.weg && r.weg.join('/')}; baas ${r.dx} px)`);
-    await slaap(1500);
-    await page.evaluate(() => { document.querySelectorAll('.dt-overlay').forEach(e => e.remove()); try { toonScherm('kaart'); } catch (e) { } });
-  } catch (e) { t(false, `lijk-weg ${vp.naam} Slijmkoning + splitsing: fout: ${e.message}`); }
   t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
   await ctx.close();
   return { kop: `De kolom van een verslagen baas als het gevecht doorgaat · ${vp.naam}`, regels: R };

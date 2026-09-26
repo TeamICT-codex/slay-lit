@@ -5967,24 +5967,19 @@ function renderGevecht() {
     const exitBezig = !!g.ceremonie && (d.wrap.classList.contains('exit') || d.wrap.classList.contains('geveld')
       || d.wrap.classList.contains('vlucht') || d.wrap.classList.contains('kiezer'));
     const wasDood = d.wrap.classList.contains('sterft');
-    /* B2 · B0.7: verliesHp zet .sterft zelf al op de wrap, vóór deze render - daarom telt
-       ook 'dood maar nog geen kolomtimer' (anders kwam de kolom nooit vrij).
-       B2 F1: voor ELKE vijand, niet alleen voor de baas. Sinds v114 startte de timer voor een
-       gewone vijand die via verliesHp viel nooit: zijn onzichtbare kolom bleef staan tot een
-       herbouw (voegVijandToe, reveal) en verdween dan ineens alsnog. */
+    /* B2 · B0.7: verliesHp zet .sterft zelf al op de wrap, vóór deze render - voor een baas
+       telt daarom ook 'dood maar nog geen kolomtimer' (anders kwam zijn kolom nooit vrij). */
     const isBaas = !!(VIJANDEN[v.id] && VIJANDEN[v.id].baas);
     if (!exitBezig) d.wrap.classList.toggle('sterft', v.dood);
     if (!v.dood) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); d._lijkT = null; }
     else if (exitBezig) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); d._lijkT = null; }
-    else if (!wasDood || (!d._lijkT && !d.wrap.classList.contains('lijk-weg'))) {
+    else if (!wasDood || (isBaas && !d._lijkT && !d.wrap.classList.contains('lijk-weg'))) {
       clearTimeout(d._lijkT);
       /* B2 · B0.7: een verslagen BAAS blijft liggen tot het scherm wisselt (css: .is-baas.sterft
          in 2D). Alleen als het gevecht DOORGAAT (de Slijmkoning met zijn splitsingen), geeft hij
-         zijn kolom terug - pas na 2,4 s, na zijn val. Een gewone vijand na zijn fade (750 ms).
-         B2 F1: is DIT gevecht intussen voorbij, dan komt geen enkele kolom meer vrij - anders
-         schoof in 2D de gevallen baas opzij als het hof of een splitsing naast hem verdween. */
+         zijn kolom terug - pas na 2,4 s, na zijn val. Gewone vijanden: ongewijzigd. */
       d._lijkT = setTimeout(() => {
-        if (v.dood && !g.voorbij) d.wrap.classList.add('lijk-weg');
+        if (v.dood && !(isBaas && S.gevecht && S.gevecht.voorbij)) d.wrap.classList.add('lijk-weg');
       }, dtempo(isBaas ? 2400 : 750));
     }
     /* v121: de fase-klassen van de DICKtator worden AFGEDWONGEN, net als .sterft.

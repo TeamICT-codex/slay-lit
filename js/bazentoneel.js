@@ -128,45 +128,63 @@ function spraakZone(el) {
      lettertype (een zone < 340px nooit gewoon). De spreker, zijn pil en de bazenbalk wegen
      vier keer zo zwaar als de held; het hof mag een plaat even afdekken. Een plaat houdt
      haar plek zolang die schoon blijft, zodat ze niet heen en weer springt terwijl ze opkomt.
-     B2 F1: ook de statuschips van de held (boven zijn hoofd, B0.8) zijn een hindernis, lichter
-     dan de held zelf (de introplaat van de Erfprins dekte op 846x381 zijn bovenste chiprij).
-     En een plaat die al STAAT, springt niet meer: zie hieronder. */
+     B2 F1 — DE CHIPS. Ook de statuschips zijn een hindernis, lichter dan de held (x0,5): die
+     van de held boven zijn hoofd (B0.8; de introplaat van de Erfprins dekte op 846x381 zijn
+     bovenste chiprij) én die van de vijanden - anders week de plaat naar rechts en legde ze
+     zich over de chipkolom van de baas (800x360: 700-1 256 px2). En een plaat van meer dan
+     twee regels telt als een botsing van 3 000 px2 per extra regel (P: <= 2 regels op
+     800x360): liever één regel over een chip dan drie regels in een smalle strook.
+     Gemeten (introregel, held en baas met 4-5 statussen): op 846x381 alle chips 0 (was
+     heldchips 1 252-5 376 px2), op 800x360 bij de Slijmkoning en de Erfprins heldchips 0 (de
+     rand van de bovenste baaschip, ~400 px2), nooit een derde regel. Bij de DICKtator op
+     800x360 en op 740x360 is er nergens een schone plek van <= 2 regels: dan links, over een
+     deel van de bovenste chiprij (1 138-2 294 px2, was 1 392-4 653).
+     En een plaat die al STAAT, springt niet meer van kant: zie hieronder. */
   const hf = document.getElementById('speler-figuur');
   const held = hf ? hf.getBoundingClientRect() : null;
-  const chips = [...document.querySelectorAll('#speler-zone .blok-status > *')].map(c => c.getBoundingClientRect()).filter(q => q.width > 0);
-  const hindernis = [[art, 4], ...pillen.map(q => [q, 4]), [bbR && bbR.width ? bbR : null, 4], [held, 1], ...chips.map(q => [q, 0.5])].filter(h => h[0]);
+  const chips = [...document.querySelectorAll('#scherm-gevecht .blok-status > *')].map(c => c.getBoundingClientRect()).filter(q => q.width > 0);
+  /* [rechthoek, gewicht, is het de spreker zelf (zijn lijf of zijn pil)] */
+  const hindernis = [[art, 4, 1], ...pillen.map(q => [q, 4, 1]), [bbR && bbR.width ? bbR : null, 4, 0], [held, 1, 0], ...chips.map(q => [q, 0.5, 0])].filter(h => h[0]);
   const sp = el.querySelector('span');
-  /* spreker: alleen wat vier keer telt (zijn lijf, zijn pil, de bazenbalk) */
+  const regels = () => {
+    const cs = getComputedStyle(sp), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2;
+    return Math.round((sp.getBoundingClientRect().height - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)) / lh);
+  };
+  /* spreker = true: alleen zijn lijf en zijn pil (de maat voor een plaat die al staat) */
   const kost = spreker => {
     if (!sp) return 0;
     const q = sp.getBoundingClientRect();
-    return hindernis.reduce((s, [r, w]) => {
-      if (spreker && w < 4) return s;
+    const k = hindernis.reduce((s, [r, w, isSpreker]) => {
+      if (spreker && !isSpreker) return s;
       const x = Math.min(q.right, r.right != null ? r.right : r.r) - Math.max(q.left, r.left != null ? r.left : r.l);
       const y = Math.min(q.bottom, r.bottom != null ? r.bottom : r.b) - Math.max(q.top, r.top != null ? r.top : r.t);
       return s + (x > 0 && y > 0 ? x * y * w : 0);
     }, 0);
+    return spreker ? k : k + Math.max(0, regels() - 2) * 3000;
   };
   const zA2 = [L, art.l - 12];
   const volg = [];
-  for (const [z, kant] of [bB >= 200 ? [zB, 'B'] : (bA >= bB ? [zA, 'A'] : [zB, 'B']), [zA2, 'A2'], bA >= bB ? [zA, 'A'] : [zB, 'B'], [zB, 'B'], [zA, 'A']]) {
+  /* kant: L (links van de spreker, A en A2) of R (rechts, B) */
+  for (const [z, kant] of [bB >= 200 ? [zB, 'R'] : (bA >= bB ? [zA, 'L'] : [zB, 'R']), [zA2, 'L'], bA >= bB ? [zA, 'L'] : [zB, 'R'], [zB, 'R'], [zA, 'L']]) {
     if (z[1] - z[0] >= 110 && !volg.some(v => v.z[0] === z[0] && v.z[1] === z[1])) volg.push({ z, kant });
   }
   if (!volg.length) return;
-  /* B2 F1 — EEN STAANDE PLAAT SPRINGT NIET. toneelWacht rekent elke 150 ms opnieuw, en vroeger
-     zocht een plaat die ergens iets raakte (ook de held) meteen een nieuwe zone: op 800x360
-     sprong „Herverkozen. Unaniem…" midden in de regel 431 px van kant, toen de DICKtator
-     oprees. Nu houdt ze haar zone zolang de SPREKER haar niet raakt. Raakt hij haar wel, dan
-     eerst een kleinere letter op dezelfde plek, dan dezelfde kant op de nieuwe maat, en pas
-     als ook dat niet schoon kan een andere kant - alleen naar een plek waar hij haar niet raakt. */
+  /* B2 F1 — EEN STAANDE PLAAT SPRINGT NIET VAN KANT. toneelWacht rekent elke 150 ms opnieuw,
+     en vroeger zocht een plaat die ergens iets raakte meteen een nieuwe zone: op 800x360
+     sprong „Herverkozen. Unaniem…" midden in de regel 431 px, op 846x381 413 px - toen de
+     DICKtator oprees en toen zijn bazenbalk bij de herverkiezing 117 px breder werd. Nu houdt
+     ze haar zone zolang de SPREKER (zijn lijf, zijn pil) haar niet raakt; wat er verder over
+     schuift (de bazenbalk, een chip), ligt er ten hoogste de rest van die ene regel onder.
+     Raakt hij haar wel, dan eerst een kleinere letter op dezelfde plek, dan dezelfde kant
+     met de nieuwe grenzen, en alleen als ook dat niet schoon kan een plek waar hij haar
+     niet raakt. */
   const o = el._zone;
   if (o) {
     for (const maat of [0, 1, 2].filter(m => m >= o.maat)) { zet(o.z, maat); if (kost(true) === 0) { o.maat = maat; return; } }
-    const zk = volg.find(v => v.kant === o.kant);
-    if (zk) for (const maat of [0, 1, 2].filter(m => m >= o.maat)) {
+    for (const zk of volg.filter(v => v.kant === o.kant)) for (const maat of [0, 1, 2].filter(m => m >= o.maat)) {
       if (maat === 0 && zk.z[1] - zk.z[0] < 340) continue;
       zet(zk.z, maat);
-      if (kost(true) === 0) { el._zone = { z: zk.z, maat, k: kost(), kant: zk.kant }; return; }
+      if (kost(true) === 0) { el._zone = { z: zk.z, maat, kant: zk.kant }; return; }
     }
   }
   let best = null;
@@ -179,7 +197,7 @@ function spraakZone(el) {
   }
   /* een staande plaat verhuist alleen als de spreker haar op de nieuwe plek niet raakt */
   if (o && best.ks > 0) { zet(o.z, o.maat); return; }
-  el._zone = best;
+  el._zone = { z: best.z, maat: best.maat, kant: best.kant };
   zet(best.z, best.maat);
 }
 
