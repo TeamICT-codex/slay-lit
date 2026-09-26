@@ -99,7 +99,8 @@
                de hint, Z-8 liggend bovenaan, het amber, het bonnetje, Karels kegel, het avatarje, de
                lift (lichtband + etagenamen); het toetsenbord in scène 0 (pasfoto, klankknop) en bij
                STEMPEL; de collega-art zonder webp (silhouet, geen puntje); de skip op drie momenten
-               met een bronnenregister (de lussen van het kantoor stoppen echt).
+               met een bronnenregister (de lussen van het kantoor stoppen echt); herladen MIDDEN in
+               een handeling (kaart, foto, scheur, 'noteer', buizenpost, collega's, lift: 14E).
    Het script heeft GEEN server nodig: het bedient de worktree rechtstreeks vanaf
    schijf via route.fulfill op http://localhost:4173/** (ook onder /slay-lit/).
    Elke regel toont de GEMETEN waarde. Exit 1 bij minstens één fout.
@@ -2501,6 +2502,7 @@ function klankReeks(pk, verwacht) {
        14C de collega-art die het manifest belooft maar die er niet is (404): het silhouet, geen puntje.
        14D de skip op drie momenten, met een bronnenregister (AudioScheduledSourceNode.start/stop met
            een stack per bron): de lussen van het kantoor (regen, zoem) stoppen ECHT, niets klinkt na.
+       14E staand en laptop: herladen MIDDEN in een handeling hervat op het laatste checkpoint, niets dubbel.
      ========================================================================== */
   if (doe('breek')) {
     const dubbel = async (page, vp, sel) => {
@@ -2557,6 +2559,13 @@ function klankReeks(pk, verwacht) {
       const nietOverZak = m.hint.bottom <= m.zakTop + 1 || m.hintR <= m.zakL || m.hintL >= m.zakR;
       const nietOverLog = m.hint.top >= m.logBottom - 1 || m.hint.bottom <= 0;
       t(pil && nietOverZak && nietOverLog, `${L}: de hint is een donkere pil met amberen letters (${m.hint.bg}, ${m.hint.kleur}), niet over de borstzak (hint ${Math.round(m.hint.top)}-${Math.round(m.hint.bottom)}, zak vanaf ${Math.round(m.zakTop)}) en niet over de log (die eindigt op ${Math.round(m.logBottom)})`);
+      /* fixer R3 F1 (hervat): de log vervaagt aan de bovenrand (geen afgeknipt staartje als 'flexibiliteit.'),
+         en 'KAREL · 7' staat vrij van de pijp van de buizenpost (staand stak ze door de 7), met zijn kegel erboven */
+      const lk = await sr(page, `const l = R.querySelector('.br-scherm .term-log'), cs = getComputedStyle(l), mk = cs.maskImage || cs.webkitMaskImage || '';
+        const p = R.querySelector('.br-naamplaat[data-wie="karel"]').getBoundingClientRect(), pi = R.querySelector('.br-buis-pijp').getBoundingClientRect(), kg = R.querySelector('.br-kegel').getBoundingClientRect();
+        return { mk, p: [p.left, p.right].map(Math.round), pi: [pi.left, pi.right].map(Math.round), vrij: p.right <= pi.left || p.left >= pi.right || p.bottom <= pi.top || p.top >= pi.bottom, kegel: Math.round(Math.abs((kg.left + kg.right) / 2 - (p.left + p.right) / 2)) };`);
+      t(/linear-gradient/.test(lk.mk) && lk.vrij && lk.kegel <= 1,
+        `${L}: de log vervaagt aan de bovenrand (${lk.mk.slice(0, 60)}); 'KAREL · 7' [${lk.p}] vrij van de pijp [${lk.pi}] (${lk.vrij}), de kegel erboven (${lk.kegel} px uit het midden)`);
       /* 2 · de foto: de tweede tik springt niet door 'Dat kleine gezicht.' heen */
       for (let i = 0; i < 2; i++) { await tik(page, vp, '[data-actie="glimlach"]'); await slaap(280); }
       await dubbel(page, vp, '[data-actie="foto"]');
@@ -2705,6 +2714,10 @@ function klankReeks(pk, verwacht) {
     /* ---- 14D · de skip op drie momenten, met een bronnenregister: de lussen stoppen ECHT ---- */
     const BRONNEN = () => {
       window.__bronnen = [];
+      /* fixer R3 F1 (hervat): diepe stacks (klank() → lus → probeer → ...) — met de standaard van 10
+         frames viel de naam van de lus soms af; 'startDrone' is de eigen muziekdrone van de game
+         (js/audio.js, sinds het eerste gebaar), niet van het kantoor */
+      try { Error.stackTraceLimit = 40; } catch (e) {}
       const S = AudioScheduledSourceNode.prototype, s0 = S.start, st0 = S.stop;
       S.start = function (...a) { const rec = { stack: (new Error().stack || ''), stopped: false, osc: this instanceof OscillatorNode, loop: !!this.loop }; this.__rb = rec; window.__bronnen.push(rec); return s0.apply(this, a); };
       S.stop = function (...a) { if (this.__rb) this.__rb.stopped = true; return st0.apply(this, a); };
@@ -2714,7 +2727,7 @@ function klankReeks(pk, verwacht) {
         window.__bronnen.forEach(r => {
           if (r.stopped || !(r.osc || r.loop)) return;
           const m = r.stack.split('\n').slice(2).map(l => { const x = /at (?:Object\.)?([\w$.]+) /.exec(l); return x ? x[1] : null; }).filter(Boolean);
-          const f = m.find(n => /^(regen|kantoor|humOn|droneOn|noiseOn|liftBrom|heartStart|lusStart|maat|wacht)/.test(n)) || m[0] || '?';
+          const f = m.find(n => /^(regen|kantoor|humOn|droneOn|noiseOn|liftBrom|heartStart|lusStart|maat|wacht|startDrone)/.test(n)) || m[0] || '?';
           uit[f] = (uit[f] || 0) + 1;
         });
         return uit;
@@ -2764,6 +2777,129 @@ function klankReeks(pk, verwacht) {
       t(afg && voor > 0 && !levR3.length && aud.licht === 0 && !rest.length && !laat.length && c.uitweg === 'geduwd',
         `${L}: de Afgrond (${afg}); vóór de skip ${voor} lus(sen) van het kantoor, erna ${levR3.length} (${JSON.stringify(lev)}); licht ${aud.licht}; restanten ${rest.join(',') || 'geen'}; nagalm ${laat.join(' | ') || 'geen'}; uitweg "${c.uitweg}"`);
       t(page.__f.length === 0 && (await page.evaluate(() => window.__acN)) === 1, `${L}: 0 paginafouten, 1 AudioContext` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+    }
+
+    /* ---- 14E · fixer R3 F1 (hervat): herladen MIDDEN in een handeling (13C herlaadt op de checkpoints):
+       in de tikgrens na de kaart, in de foto-close-up, in de scheur, in de tikgrens na 'noteer', in de
+       buizenpost, tijdens de collega's en in de lift. Telkens hervat de proloog op het laatste checkpoint,
+       nooit midden in de handeling; de meter en de glimlachteller gaan mee (glimCp) en niets telt dubbel. ---- */
+    for (const vp of [VPS.staand, VPS.laptop]) {
+      const L = `breek herlaad ${vp.n}`;
+      kop(`14E · ${L} · herladen midden in de kaart, de foto, de scheur, 'noteer', de buizenpost, de collega's en de lift`);
+      const { ctx, page } = await open(browser, vp, { geenNudge: true });
+      const save = () => page.evaluate(() => JSON.parse(localStorage.getItem('slaylit_proloog_v3') || 'null') || {});
+      const contract = () => page.evaluate(() => JSON.parse(localStorage.getItem('slayit_proloog') || 'null') || {});
+      const wSr = async (src, ms) => { const t0 = Date.now(); while (Date.now() - t0 < (ms || 8000)) { if (await sr(page, src)) return Date.now() - t0; await slaap(60); } return -1; };
+      const herstart = async () => {
+        await page.reload({ waitUntil: 'load' }); await slaap(700); await volgSchermen(page);
+        await klikNieuw(page, vp);
+        return wachtOp(page, () => document.body.dataset.scherm === 'proloog' && !!(window.Proloog && Proloog.actief), 8000);
+      };
+      const glimKan = `const b = R.querySelector('[data-actie="glimlach"]'); return !!b && !b.disabled && !b.closest('[inert]');`;
+      const totGlim = () => tot(page, vp, glimKan);
+      const glimN = async n => { for (let i = 0; i < n; i++) { await tik(page, vp, '[data-actie="glimlach"]'); await slaap(280); } };
+      const totFormulier = () => tot(page, vp, `return !!R.querySelector('.z8-invoer');`);
+      const noteerEnKan = async () => {
+        await tik(page, vp, '[data-actie="noteer"]');
+        return wSr(`const b = R.querySelector('[data-actie="stempel"]'); return !!b && !b.disabled;`, 3000);
+      };
+      await klikNieuw(page, vp);
+      await wachtOp(page, () => document.body.dataset.scherm === 'proloog' && !!(window.Proloog && Proloog.actief), 8000);
+      await wSr(`return R.getElementById('scene').classList.contains('ik-aan');`, 5000);
+      /* A · de kaart zit in de gleuf (KA-TSJONK, de tikgrens loopt): de save staat nog op scène 0 */
+      await tik(page, vp, '.ik-kaart[data-actie="kaart"]');
+      await slaap(200);
+      let s = await save();
+      t(s.scene === 0 && s.checkpoint === 'start', `${L} A: in de tikgrens na de kaart staat de save nog op scène 0 (${s.scene}/${s.checkpoint})`);
+      await herstart();
+      await wSr(`return R.getElementById('scene').classList.contains('ik-aan');`, 5000);
+      const naA = await sr(page, `const k = R.querySelector('.ik-kaart'); return { scene: R.host.dataset.plScene, dis: k.disabled, in: k.classList.contains('in'), tf: k.style.transform };`);
+      t(naA.scene === 'overzicht' && !naA.dis && !naA.in && !naA.tf, `${L} A: na de herlaad de kaart terug in het rek, klaar om in te klokken (${JSON.stringify(naA)})`);
+      await naarKantoor(page, vp, L);
+      await totGlim();
+      /* B · in de foto-close-up (twee glimlachen, dan het lijstje; herladen binnen de tikgrens van de zin) */
+      await glimN(2);
+      await tik(page, vp, '[data-actie="foto"]');
+      await wSr(`return !!R.querySelector('.br-kijk');`, 3000);
+      s = await save(); let c = await contract();
+      t(s.choices.fotoKantoor === true && c.fotoKantoor === true && s.choices.glimlachen === 2 && c.glimlachen === 2,
+        `${L} B: in de foto: save foto ${s.choices.fotoKantoor}, glimlachen ${s.choices.glimlachen}; contract foto ${c.fotoKantoor}, glimlachen ${c.glimlachen}`);
+      await herstart();
+      await totGlim();
+      s = await save();
+      const naB = await sr(page, `const l = R.querySelector('[data-actie="foto"]'); return { dis: l.disabled, gem: l.classList.contains('gemarkeerd'), kijk: !!R.querySelector('.br-kijk'), q: R.querySelector('.vu-quotum').textContent, m: R.querySelector('.vu-label b').textContent };`);
+      t(s.checkpoint === 'glimlach' && s.choices.glimlachen === 0 && naB.dis && naB.gem && !naB.kijk && /0\/5/.test(naB.q) && naB.m === '78%',
+        `${L} B: hervat op 'glimlach': glimlachen ${s.choices.glimlachen} (glimCp), het lijstje gemarkeerd en dicht (${naB.gem}/${naB.dis}), ${naB.q}, meter ${naB.m}`);
+      /* C · in de scheur (na vijf) */
+      await glimN(5);
+      await wSr(`return !!R.querySelector('.scheur');`, 2000);
+      s = await save(); c = await contract();
+      t(s.choices.glimlachen === 5 && c.glimlachen === 5 && s.checkpoint === 'glimlach' && s.choices.glimCp === 0,
+        `${L} C: in de scheur: save ${s.choices.glimlachen}, checkpoint '${s.checkpoint}' (glimCp ${s.choices.glimCp}); contract ${c.glimlachen}`);
+      await herstart();
+      await totGlim();
+      s = await save();
+      t(s.checkpoint === 'glimlach' && s.choices.glimlachen === 0, `${L} C: hervat op 'glimlach' met ${s.choices.glimlachen} glimlachen (terug op glimCp)`);
+      await glimN(5);
+      c = await contract();
+      t(c.glimlachen === 5, `${L} C: opnieuw vijf → contract ${c.glimlachen} (niet 10)`);
+      /* D · in de tikgrens na 'noteer' (STEMPEL staat er nog uitgeschakeld) */
+      await totFormulier();
+      await slaap(450);
+      const droom = vp.droom + ' 14';
+      await page.locator('.z8-invoer').fill(droom);
+      await tik(page, vp, '[data-actie="noteer"]');
+      await slaap(150);
+      const dis = await sr(page, `const b = R.querySelector('[data-actie="stempel"]'); return b ? b.disabled : 'geen';`);
+      s = await save(); c = await contract();
+      t(dis === true && s.checkpoint === 'audit' && c.jeugddroom === droom && s.choices.zelfGestempeld === undefined,
+        `${L} D: in de tikgrens na 'noteer': STEMPEL nog uit (${dis}), checkpoint '${s.checkpoint}', droom "${c.jeugddroom}", zelfGestempeld nog niet gekozen (save ${s.choices.zelfGestempeld}; het contract houdt zijn standaard ${c.zelfGestempeld})`);
+      await herstart();
+      await wSr(`return !!R.querySelector('.z8-invoer');`, 6000);
+      const naD = await sr(page, `return { v: R.querySelector('.z8-invoer').value, st: !!R.querySelector('[data-actie="stempel"]'), m: R.querySelector('.vu-label b').textContent, glim: !!R.querySelector('[data-actie="glimlach"]') };`);
+      s = await save();
+      t(naD.v === droom && !naD.st && naD.m === '98%' && !naD.glim && s.choices.glimlachen === 5,
+        `${L} D: hervat op het formulier, ingevuld ("${naD.v}"), nog geen STEMPEL, meter ${naD.m}, glimlachen ${s.choices.glimlachen}`);
+      /* E · in de buizenpost */
+      const kanE = await noteerEnKan();
+      await tik(page, vp, '[data-actie="stempel"]');
+      const zuigt = await wSr(`return !!R.querySelector('.br-buis.zuigt');`, 3000);
+      s = await save(); c = await contract();
+      t(kanE >= 0 && zuigt >= 0 && c.zelfGestempeld === true && s.checkpoint === 'audit', `${L} E: in de buizenpost: zelfGestempeld ${c.zelfGestempeld}, checkpoint '${s.checkpoint}'`);
+      await herstart();
+      await wSr(`return !!R.querySelector('.z8-invoer');`, 6000);
+      const naE = await sr(page, `return { v: R.querySelector('.z8-invoer').value, zuigt: !!R.querySelector('.br-buis.zuigt'), coll: R.querySelectorAll('.tl-collega[data-wie="karel"]').length };`);
+      t(naE.v === droom && !naE.zuigt && naE.coll === 0, `${L} E: hervat op het formulier, ingevuld, geen buizenpost, nog geen Karel (${JSON.stringify(naE)})`);
+      /* F · tijdens de collega's */
+      await noteerEnKan();
+      await tik(page, vp, '[data-actie="stempel"]');
+      await wSr(`return !!R.querySelector('.tl-collega[data-wie="karel"]');`, 6000);
+      s = await save();
+      t(s.checkpoint === 'audit', `${L} F: tijdens de collega's staat het checkpoint nog op '${s.checkpoint}' (de oproep is het volgende)`);
+      await herstart();
+      const f = await wSr(`return !!R.querySelector('.z8-invoer');`, 6000);
+      t(f >= 0, `${L} F: herladen tijdens de collega's → terug op het formulier`);
+      /* G · in de lift */
+      await noteerEnKan();
+      await tik(page, vp, '[data-actie="stempel"]');
+      await tot(page, vp, `const b = R.querySelector('[data-actie="bevestig"]'); return !!b && !b.disabled;`, 120);
+      s = await save();
+      t(s.checkpoint === 'oproep' && s.choices.glimCp === 5 && s.choices.meter === 98, `${L} G: de oproep: checkpoint '${s.checkpoint}', glimCp ${s.choices.glimCp}, meter ${s.choices.meter}`);
+      await tik(page, vp, '[data-actie="bevestig"]');
+      await wSr(`return !!R.querySelector('.lift-etage.aan');`, 3000);
+      s = await save();
+      await herstart();
+      const bev = await wSr(`const b = R.querySelector('[data-actie="bevestig"]'); return !!b;`, 6000);
+      const naG = await sr(page, `return { oproep: !!R.querySelector('.oproep'), lift: !!R.querySelector('.lift'), karel: !!R.querySelector('.hoofd-karel.uit') };`);
+      t(s.checkpoint === 'oproep' && bev >= 0 && naG.oproep && !naG.lift && naG.karel, `${L} G: in de lift herladen → hervat in de oproep (checkpoint '${s.checkpoint}'), BEVESTIG terug, geen halve lift, Karel blijft uit`);
+      await tik(page, vp, '[data-actie="bevestig"]');
+      const ges = await wachtScene(page, 'gesprek', 6000);
+      c = await contract();
+      const acN = await page.evaluate(() => window.__acN);
+      t(ges && c.glimlachen === 5 && c.fotoKantoor === true && c.jeugddroom === droom && c.zelfGestempeld === true,
+        `${L}: de lift → het gesprek; contract ${JSON.stringify({ glimlachen: c.glimlachen, fotoKantoor: c.fotoKantoor, jeugddroom: c.jeugddroom, zelfGestempeld: c.zelfGestempeld })}`);
+      t(acN === 1 && page.__f.length === 0, `${L}: ${acN} AudioContext, ${page.__f.length} paginafouten over zeven herlaadbeurten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
       await ctx.close();
     }
   }
