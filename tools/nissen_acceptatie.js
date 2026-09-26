@@ -11,7 +11,7 @@
      NODE_PATH="$PWD/node_modules" SLAYIT_WORKTREE='C:\...\SLAY-IT-nissen' \
        SLAYIT_SHOTS="$PWD/nissen_shots" node "C:\...\SLAY-IT-nissen\tools\nissen_acceptatie.js"
    Geen server: route.fulfill vanaf schijf op localhost:4173, service workers geblokkeerd.
-   Blokken filteren: SLAYIT_NISSEN=bron,scherven,doorloop,save,dev,builds,erfprins,beeld
+   Blokken filteren: SLAYIT_NISSEN=bron,scherven,doorloop,save,dev,builds,erfprins,beeld,outro
    ============================================================================ */
 const { chromium } = require('playwright');
 const path = require('path'); const fs = require('fs');
@@ -19,7 +19,7 @@ const path = require('path'); const fs = require('fs');
 const WT = process.env.SLAYIT_WORKTREE || path.resolve(__dirname, '..');
 const HOST = 'localhost:4173';
 const UIT = process.env.SLAYIT_SHOTS || path.join(__dirname, 'nissen_shots'); fs.mkdirSync(UIT, { recursive: true });
-const BLOKKEN = (process.env.SLAYIT_NISSEN || 'bron,scherven,doorloop,save,dev,builds,erfprins,beeld').split(',').map(s => s.trim());
+const BLOKKEN = (process.env.SLAYIT_NISSEN || 'bron,scherven,doorloop,save,dev,builds,erfprins,beeld,outro').split(',').map(s => s.trim());
 const doe = b => BLOKKEN.includes(b);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff', '.txt': 'text/plain; charset=utf-8', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav', '.glb': 'model/gltf-binary' };
 const UA = 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36';
@@ -670,6 +670,38 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
       t(bijna(a.held, b.held) && bijna(a.vijand, b.vijand), `${f.id}: held ${JSON.stringify(a.held)} en vijand ${JSON.stringify(a.vijand)} staan waar ze bij een verse Codex staan (${JSON.stringify(b.held)} / ${JSON.stringify(b.vijand)}, ±1 px)`);
       if (f.d3 !== undefined && !f.mobiel) t(a.d3 === !!f.d3, `${f.id}: het toneel draait ${a.d3 ? '3D' : '2D'} zoals gevraagd`);
     }
+  }
+
+  /* ============================================================
+     I · DE OUTRO-EPILOOG (T18): geen witte hond, geen pootafdrukken
+     outro.js leest de hond-vlaggen (Codex.metgezellen 'drops_wit' / Codex.gevallen 'drops') alleen
+     met de metgezellen aan. Een sonde telt die lezingen bij de start van de epiloog; met de
+     DEV-schakelaar AAN moet ze ze wél zien (leegte-wacht: anders meet de sonde niets).
+     ============================================================ */
+  if (doe('outro')) {
+    kop('I · de outro-epiloog (T18): geen witte hond, geen pootafdrukken');
+    const { ctx, page } = await context(browser, { codex: { metgezellen: ['drops', 'drops_wit'], gevallen: ['drops'], mysteries: { drops: { voltooid: true } },
+      runs: 5, wins: 2, relikwieen: [], dranken: [], opgeladen: [], gezien: [] } });
+    await laad(page);
+    await page.evaluate(() => devOutro()); await slaap(1500);
+    const epiloog = (aan, mg, gv) => page.evaluate(([aan, mg, gv]) => {
+      devMetgezellen(aan);
+      const m = mg.slice(), g = gv.slice(); let n = 0;
+      const spion = a => new Proxy(a, { get(o, k) { return k === 'includes' ? (...x) => { n++; return o.includes(...x); } : o[k]; } });
+      Codex.metgezellen = spion(m); Codex.gevallen = spion(g);
+      try { Outro._devEpiloog(6); } finally { Codex.metgezellen = m; Codex.gevallen = g; }
+      return { n, staat: Outro._staat, aan: metgezellenAan() };
+    }, [aan, mg, gv]);
+    let r = await epiloog(false, ['drops', 'drops_wit'], ['drops']);
+    await slaap(4200); await page.screenshot({ path: path.join(UIT, 'outro-epiloog-witte-geparkeerd.png') });
+    t(r.staat === 'epiloog' && r.aan === false && r.n === 0, `Codex waarin de Witte terugkeerde, geparkeerd: de epiloog leest de hond-vlaggen ${r.n}× (geen witte hond; staat ${r.staat})`);
+    r = await epiloog(false, ['drops'], ['drops']);
+    t(r.staat === 'epiloog' && r.aan === false && r.n === 0, `Codex waarin Drops viel, geparkeerd: de epiloog leest de hond-vlaggen ${r.n}× (geen pootafdrukken; staat ${r.staat})`);
+    r = await epiloog(true, ['drops', 'drops_wit'], ['drops']);
+    const r2 = await epiloog(true, ['drops'], ['drops']);
+    t(r.aan === true && r.n >= 1 && r2.n >= 1, `leegte-wacht: met de DEV-schakelaar AAN leest de epiloog ze wél (Witte ${r.n}×, gevallen ${r2.n}×) — de sonde meet echt`);
+    await page.evaluate(() => devMetgezellen(false));
+    await sluit(ctx, page, 'outro');
   }
 
   /* ============================================================ */
