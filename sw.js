@@ -20,6 +20,7 @@ const BESTANDEN = [
   'js/game.js',
   'js/proloog-brug.js',     // proloog R1: de naad (laadt ná game.js; haalt proloog/*.js lui binnen)
   'js/drempeltafel.js',     // v128: DE DREMPELTAFEL (laadt ná game.js)
+  'js/bazentoneel.js',      // B2: HET BAZENTONEEL (laadt ná game.js)
   'js/wereld-terrein.js',
   'js/wereld.js',
   'assets/fonts/fonts.css',
