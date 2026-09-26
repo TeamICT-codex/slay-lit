@@ -1289,8 +1289,10 @@ body.lite .lb-daily-cta { animation: none; }
   font-style: italic;
   font-size: .95rem;
 }
-/* bij een baasgevecht zweeft de bazenbalk bovenaan: beurt-label eronder */
-#scherm-gevecht.baas-actief #beurt-label { margin-top: 102px; }
+/* B2 · B0.2: in een baasgevecht staat 'Beurt N' IN de bazenbalk (.bb-beurt, achter de
+   fase-pips) in plaats van met een vaste marge (102px) eronder - daar botste het met de
+   Geroofd-pil en de beleidsstrook. Mobiel verborg het label al sinds 13 jun. */
+#scherm-gevecht.baas-actief #beurt-label { display: none; }
 
 #strijdveld {
   flex: 1;
@@ -4195,6 +4197,11 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
 body:not([data-scherm="gevecht"]) #baas-balk { display: none !important; }
 body:has(#baas-intro, .baas-doodflits) #baas-balk { visibility: hidden; }
 #baas-balk .bb-fases { pointer-events: auto; display: flex; gap: 7px; justify-content: center; margin-top: 5px; cursor: help; }
+/* B2 · B0.2: 'Beurt N' achter de fase-pips - klein, cursief, gedimd; de regie dooft het
+   net als vroeger #beurt-label (body.ceremonie). Mobiel toont het niet (mobiel.css). */
+#baas-balk .bb-beurt { font-family: 'Alegreya', serif; font-style: italic; font-size: .8rem; line-height: 11px; color: var(--perkament-dof); margin-left: 8px; text-shadow: 0 1px 3px #000; white-space: nowrap; transition: opacity .25s ease; }
+body.ceremonie #baas-balk .bb-beurt { opacity: 0; }
+body.lite #baas-balk .bb-beurt { transition: none; }
 /* DE BELEIDSPIL IS AANRAAKBAAR (v121-fix bij P1). #baas-balk staat op pointer-events:none
    en dat ERFT door: .bb-fases zet het één regel hoger terug op auto, de beleidspil deed
    dat niet - en juist die pil draagt sinds P1 de duiding van HET MANDAAT ("Hij int nu

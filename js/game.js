@@ -5844,7 +5844,7 @@ function renderGevecht() {
             <span class="bb-tekst"></span>
           </div>
           <div class="bb-fases" data-tip="De baas vecht in drie bedrijven — verzwak hem en zie wat er gebeurt... en wie hem velt, ziet hem herkozen worden.">
-            ${[1, 2, 3].map(() => `<span class="bb-pip"></span>`).join('')}<span class="bb-pip kroon"></span>
+            ${[1, 2, 3].map(() => `<span class="bb-pip"></span>`).join('')}<span class="bb-pip kroon"></span><span class="bb-beurt"></span>
           </div>
           <div class="bb-extra"></div>`;
       }
@@ -6016,6 +6016,12 @@ function renderGevecht() {
   $('#stapel-afleg').innerHTML = `🗂️ ${g.afleg.length}`;
   $('#knop-eindbeurt').disabled = g.bezig || !!g.ceremonie;
   $('#beurt-label').textContent = 'Beurt ' + (g.beurt + 1);
+  /* B2 · B0.2: in een baasgevecht staat 'Beurt N' IN de bazenbalk, achter de fase-pips
+     (#beurt-label is daar verborgen). Het label hing met een vaste marge van 102px onder
+     de balk en botste met alles wat daar groeit (Geroofd-pil, beleidsstrook): 20 van de
+     30 gemeten staten per laptopformaat. */
+  const bbBeurt = $('#baas-balk .bb-beurt');
+  if (bbBeurt) bbBeurt.textContent = 'Beurt ' + (g.beurt + 1);
   renderTopbalk();
 }
 

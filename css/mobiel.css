@@ -268,6 +268,7 @@ body[data-modus="mobiel"] #baas-balk .bb-naam { font-size: .9rem; line-height: 1
 body[data-modus="mobiel"] #baas-balk .bb-titel { display: none; }
 body[data-modus="mobiel"] #baas-balk .bb-fases { justify-content: flex-end; margin-top: 4px; gap: 5px; }
 body[data-modus="mobiel"] #baas-balk .bb-pip { width: 8px; height: 8px; }
+body[data-modus="mobiel"] #baas-balk .bb-beurt { display: none; }   /* B2 · B0.2: mobiel toont geen beurtnummer (ook #beurt-label niet, sinds 13 jun) */
 /* de balk → hart-gauge (fractie links, hart rechts) */
 body[data-modus="mobiel"] #baas-balk .bb-balk {
   width: auto; height: auto; background: none; border: none; box-shadow: none; border-radius: 0;
