@@ -5718,7 +5718,12 @@ function intentTekst(v) {
   /* de Fluisterende Schedel ziet wat jij niet ziet; Drops de Witte is je levende licht
      (ook blind zie je elke intent zolang hij leeft) */
   const witLeeft = !!(gMet() && !gMet().dood && gMet().id === 'drops_wit');
-  const niveau = (witLeeft || heeftRelikwie('fluisterende_schedel')) ? 'helder' : lichtNiveau();
+  /* B2 · B0.11 (beslissing Thomas): een BAAS telegrafeert altijd, ook bij fakkel 0. Een
+     bazengevecht is de toets van je build: De Roof, de plagiaatzet en de Factuur zijn beurten
+     waarop je moet kunnen reageren - blind worden ze onzichtbare regels (❓ bij de Erfprins,
+     screenshot 14 sep). Gewone vijanden (ook het hof) blijven in het donker. */
+  const isBaas = !!(VIJANDEN[v.id] && VIJANDEN[v.id].baas);
+  const niveau = (witLeeft || heeftRelikwie('fluisterende_schedel') || isBaas) ? 'helder' : lichtNiveau();
   if (niveau === 'gedoofd') {
     return `<span class="intent intent-duister" data-tip="Het is te donker om de bedoeling te zien">❓</span>`;
   }
