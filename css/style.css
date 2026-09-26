@@ -4156,6 +4156,14 @@ body.lite .kv-geest { animation: none; opacity: .45; }
   box-shadow: 0 8px 26px rgba(0, 0, 0, .55);
   text-shadow: 0 0 22px rgba(120, 200, 60, .55), 0 4px 12px #000, 0 0 6px #000;
 }
+/* B2 · B0.4 — EEN EIGEN STEM PER BAAS (data-baas komt uit #baas-balk, zie _spraakVolgende).
+   De Slijmkoning houdt de groene standaardplaat; de Erfprins spreekt paars, de DICKtator goud. */
+.baas-spraak[data-baas="de_erfprins"] span { color: #e2c4ff; border-color: rgba(196, 140, 255, .38); background: rgba(16, 8, 24, .86); text-shadow: 0 0 22px rgba(168, 90, 240, .6), 0 4px 12px #000, 0 0 6px #000; }
+.baas-spraak[data-baas="de_dicktator"] span { color: #ffd98a; border-color: rgba(255, 200, 96, .38); background: rgba(20, 10, 4, .86); text-shadow: 0 0 22px rgba(230, 140, 40, .55), 0 4px 12px #000, 0 0 6px #000; }
+/* B2 · B0.4 — DE TEKSTSLUIS: staat er een titel, banner of cinematic, dan PAUZEERT de plaat
+   (onzichtbaar, animatie stil; de klok in _spraakVolgende staat dan ook stil). Dezelfde
+   lijst als _SPRAAK_SLUIS in js/game.js - pas ze samen aan. */
+body:has(.vonnis, .baas-flits, #baas-intro, .roof-overlay, .roof-speel-kaart, .decreet-overlay) .baas-spraak { opacity: 0 !important; animation-play-state: paused !important; }
 /* v95: op laptop hangt de plaat ONDER de bazenbalk — die is daar breed en eindigt op
    134-168px (Erfprins met arsenaalpil); de v89-plaat op 12% dekte HP-balk + fase-pips af.
    Op mobiel is de bazenbalk een compact hart rechtsboven, daar blijft de plaat waar hij staat. */

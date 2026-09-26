@@ -2683,11 +2683,27 @@ function spreek(actor, pool, kans) {
    De remove-timer loopt nu ook door dtempo, en --spraak-duur voedt de CSS-animatie,
    anders lopen JS en CSS bij DICK.tempo != 1 uit elkaar. */
 let _spraakRij = [], _spraakBezig = false, _spraakT = null;
-function baasSpreekt(tekst, duurMs) {
+/* B2 · B0.4 — opts: { slot, vervalt }.
+   - slot: het SLOTWOORD (de doodregel). Mag nog na g.voorbij, en veegt het bord: een gewone
+     regel die nog stond, zou hem anders voorbij het einde van het gevecht wegduwen.
+   - vervalt (ms): flavor (orakel, scherven-nudge) die langer dan dit op de sluis moet
+     wachten, vervalt - liever niets dan mosterd na de maaltijd. */
+function baasSpreekt(tekst, duurMs, opts) {
   if (INST.spraak === false || !tekst) return;
-  _spraakRij.push({ tekst, duur: duurMs || 3200 });
+  const o = opts || {};
+  if (o.slot) _spraakStop();
+  _spraakRij.push({ tekst, duur: duurMs || 3200, t0: Date.now(), vervalt: o.vervalt || 0, slot: !!o.slot });
   _spraakVolgende();
 }
+/* B2 · B0.4 — DE TEKSTSLUIS: één regel voor álle baasspraak. Zolang er een scènetitel
+   (.vonnis - een BODY-kind, dus documentbreed zoeken), een fasebanner, de intro, De Roof,
+   de speelkaart van de Erfprins of het decreet staat, start er geen nieuwe plaat, en een
+   plaat die al stond PAUZEERT (css: body:has(...) .baas-spraak - onzichtbaar, animatie
+   stil; hier: de klok stil). Gemeten in de finale-overgangen: 250-1053 ms plaat-over-titel
+   in 10 van de 14 -> 0 ms, en elke regel daarna nog volledig leesbaar.
+   Dezelfde lijst staat in css/style.css bij .baas-spraak: pas ze samen aan. */
+const _SPRAAK_SLUIS = '.vonnis, .baas-flits, #baas-intro, .roof-overlay, .roof-speel-kaart, .decreet-overlay';
+function _spraakGesloten() { return !!document.querySelector(_SPRAAK_SLUIS); }
 /* HET TONEEL NEEMT HET OVER. v121-fix: de wachtrij houdt netjes één plaat tegelijk, maar
    een GEWONE baasregel die net vóór de fasegrens viel (standaardduur 3200ms) kon de eerste
    regieregel tot 3,2s van zijn beat wegduwen. Elke regie wist daarom eerst het bord: de
@@ -2701,17 +2717,40 @@ function _spraakStop() {
 function _spraakVolgende() {
   if (_spraakBezig || !_spraakRij.length) return;
   const sc = $('#scherm-gevecht');
-  if (!sc || !S.gevecht || S.gevecht.voorbij) { _spraakRij.length = 0; return; }
+  if (!sc || !S.gevecht) { _spraakRij.length = 0; return; }
+  /* na g.voorbij praat alleen het slotwoord nog. Vóór B2 (sinds v121, 483f1dd) wiste deze
+     guard ÉLKE regel, ook de doodregel die gevechtGewonnen pas na g.voorbij aanvraagt: de
+     laatste woorden van elke baas werden nooit getoond (0 van 21 gemeten doodreeksen). */
+  if (S.gevecht.voorbij) {
+    for (let i = _spraakRij.length - 1; i >= 0; i--) if (!_spraakRij[i].slot) _spraakRij.splice(i, 1);
+    if (!_spraakRij.length) return;
+  }
+  if (_spraakGesloten()) { clearTimeout(_spraakT); _spraakT = setTimeout(_spraakVolgende, 120); return; }
+  while (_spraakRij.length && _spraakRij[0].vervalt && Date.now() - _spraakRij[0].t0 > _spraakRij[0].vervalt) _spraakRij.shift();
+  if (!_spraakRij.length) return;
   const item = _spraakRij.shift();
   const d = dtempo(item.duur);
   _spraakBezig = true;
   const el = document.createElement('div');
   el.className = 'baas-spraak';
+  /* B0.4: een eigen stem per baas - de kleur komt uit css (.baas-spraak[data-baas]) */
+  const bbS = $('#baas-balk');
+  if (bbS && bbS.dataset.baas) el.dataset.baas = bbS.dataset.baas;
   el.style.setProperty('--spraak-duur', d + 'ms');
   el.innerHTML = `<span>${item.tekst}</span>`;
   sc.appendChild(el);
   clearTimeout(_spraakT);
-  _spraakT = setTimeout(() => { el.remove(); _spraakBezig = false; _spraakVolgende(); }, d);
+  /* de klok loopt alleen terwijl de sluis open is: een onderbroken plaat brandde vroeger
+     onzichtbaar op achter de titel ("U bent ONTSLAGEN." nog 86 ms leesbaar op 1366x768) */
+  let rest = d, vorig = Date.now();
+  const tik = () => {
+    const nu = Date.now();
+    if (!_spraakGesloten()) rest -= nu - vorig;
+    vorig = nu;
+    if (rest <= 0 || !el.isConnected) { el.remove(); _spraakBezig = false; _spraakVolgende(); }
+    else _spraakT = setTimeout(tik, Math.min(120, rest));
+  };
+  _spraakT = setTimeout(tik, Math.min(120, d));
 }
 /* het juiste baas-script (per baas een eigen stem) */
 function baasUitspraken(id) {
@@ -5168,7 +5207,7 @@ function toonErfprinsInventaris(g, b, el) {
     Klank.sfx('zwareklap');
     setTimeout(() => { if (el.isConnected) { Klank.sfx('dood'); schudScherm(); } }, 480);
     timers.push(setTimeout(() => { if (S && S.gevecht === g && !g.voorbij) baasSpreekt(baasUitspraken(b.id).intro); }, 1600));
-    timers.push(setTimeout(() => { if (S && S.gevecht === g && !g.voorbij && UITSPRAKEN._erfprins.orakel) baasSpreekt(UITSPRAKEN._erfprins.orakel[0]); }, 5200));
+    timers.push(setTimeout(() => { if (S && S.gevecht === g && !g.voorbij && UITSPRAKEN._erfprins.orakel) baasSpreekt(UITSPRAKEN._erfprins.orakel[0], 3200, { vervalt: 2500 }); }, 5200));   /* B0.4: flavor vervalt op de sluis */
     timers.push(setTimeout(() => { el.classList.add('weg'); setTimeout(() => el.remove(), 500); }, 4600));
   };
   beats.forEach((bt, i) => timers.push(setTimeout(() => { if (!el._klaar) toonBeat(i); }, 140 + i * STAP)));
@@ -5268,7 +5307,7 @@ function toonBaasIntro(g) {
   if (b.id === 'de_erfprins' && UITSPRAKEN._erfprins.orakel && !isOntgrendeld('drops')) {
     const ork = UITSPRAKEN._erfprins.orakel;
     const idx = Math.max(0, Math.min((Codex.erfprinsOntmoetingen || 1) - 1, ork.length - 1));
-    setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(ork[idx]); }, 6400);
+    setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(ork[idx], 3200, { vervalt: 2500 }); }, 6400);   /* B0.4: flavor vervalt op de sluis */
   }
   /* scherven-nudge op ÉCHTE voortgang: draagt de speler ≥2 passende scherven, dan verraadt
      de Erfprins nerveus dat ze sámen ergens op passen (reverse psychology — de Drempel).
@@ -5282,7 +5321,7 @@ function toonBaasIntro(g) {
       const fluister = rijp
         ? '„Drie die pássen?! Wie heeft je dat verteld?! Die poort had DICHT gemoeten."'
         : '„Je sleept daar iets mee dat op iets anders past. Gooi. Het. Weg."';
-      setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(fluister); }, 9200);
+      setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(fluister, 3200, { vervalt: 2500 }); }, 9200);   /* B0.4: flavor vervalt op de sluis */
     }
   }
   /* GRIEF: heb je Drops geofferd maar is de Witte nog niet terug? De Erfprins claimt de
@@ -9016,7 +9055,8 @@ async function gevechtGewonnen() {
     /* de doodsklap van een baas verdient een flits en een stilte */
     const verslagenBaas = huidigeBaas().naam;
     const _du = baasUitspraken(huidigeBaas().id);
-    baasSpreekt(g.copycatGebroken && _du.doodGebroken ? _du.doodGebroken : _du.dood);
+    /* B0.4: het SLOTWOORD - mag na g.voorbij en veegt het bord (sinds v121 nooit getoond) */
+    baasSpreekt(g.copycatGebroken && _du.doodGebroken ? _du.doodGebroken : _du.dood, 2600, { slot: true });
     const flits = document.createElement('div');
     flits.className = 'baas-doodflits';
     $('#scherm-gevecht').appendChild(flits);
