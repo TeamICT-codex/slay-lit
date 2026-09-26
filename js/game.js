@@ -8123,18 +8123,29 @@ function jeugddroomTekst() {
    Daarna de bekende reveal (stempel + verbranding). De promise lost pas op als de reveal
    weg is (DECREET_REVEAL), zodat er geen klap onder het doek valt. */
 const DECREET_REVEAL = { stempel: 1200, brand: 2100, weg: 3600, uit: 400 };
+/* HET EXEMPLAAR van een dossierregel (review F2): de kaart met de uid uit het dossier - precies
+   de kaart met het zegel, die het keuzescherm toont en die daarna verbrandt. Alleen als die
+   kaart intussen weg is, het beste exemplaar met dezelfde id (eerst de opgewaardeerde). Eén
+   functie voor het scherm, de vuistregel van de duurste en de verbranding: je verliest nooit
+   een andere kaart dan je zag (vroeger verbrandde de opgewaardeerde kopie). */
+function dicktatorExemplaar(d) {
+  if (!d || !S || !S.dek) return null;
+  const eigen = S.dek.find(x => x.uid === d.uid);
+  if (eigen) return eigen;
+  const zelfde = S.dek.filter(x => x.id === d.id);
+  return zelfde.sort((x, y) => (y.up ? 1 : 0) - (x.up ? 1 : 0))[0] || null;
+}
 async function dicktatorDecreet(v) {
   const g = S.gevecht;
   if (!g || g.voorbij) return;
   const gestopt = () => S.gevecht !== g || g.voorbij;
   const U = UITSPRAKEN._dicktator;
   const dossier = [...(g.aangezegd ? g.aangezegd.values() : [])];
-  const kaartVan = d => (d && (S.dek.find(x => x.uid === d.uid) || S.dek.find(x => x.id === d.id))) || null;
   let keus = null, kop = '', zelfGekozen = false;
   if (dossier.length >= 2) {
     const [a, b] = dossier;
     const gespeeldSinds = d => Math.max(0, ((g.gespeeld && g.gespeeld[d.id]) || 0) - (d.start || 0));
-    const kostVan = d => { const c = kaartVan(d); return c ? (kval(c, 'kost') || 0) : 0; };
+    const kostVan = d => { const c = dicktatorExemplaar(d); return c ? (kval(c, 'kost') || 0) : 0; };
     if (gespeeldSinds(a) > 0 || gespeeldSinds(b) > 0) {
       keus = await dicktatorKeuze(g, a, b);
       if (gestopt()) return;
@@ -8145,12 +8156,8 @@ async function dicktatorDecreet(v) {
       kop = `U SPEELDE ZE NIET · ${escSyn(keus.naam)} → AFGESCHREVEN`;
     }
   }
-  /* het EXEMPLAAR: bij kopieën eerst de opgewaardeerde ("uw beste exemplaar") */
-  let verliezer = null;
-  if (keus) {
-    const zelfde = S.dek.filter(x => x.id === keus.id);
-    verliezer = zelfde.slice().sort((x, y) => (y.up ? 1 : 0) - (x.up ? 1 : 0))[0] || kaartVan(keus);
-  }
+  /* het EXEMPLAAR: de kaart die op het scherm stond (dicktatorExemplaar, review F2) */
+  let verliezer = keus ? dicktatorExemplaar(keus) : null;
   /* vangnet: geen bruikbaar dossier meer (dek gekrompen) → pak de duurste niet-vloek */
   if (!verliezer) {
     const kand = S.dek.filter(c => kdef(c).type !== 'vloek');
@@ -8191,8 +8198,7 @@ async function dicktatorDecreet(v) {
      dan lost de promise op met B, zodat de vijandbeurt nooit blijft hangen.
    Knoppen via data-attribuut + één delegated handler (inline-onclick-bugklasse). */
 function dicktatorKeuze(g, a, b) {
-  const kaartVan = d => S.dek.find(x => x.uid === d.uid) || S.dek.find(x => x.id === d.id) || null;
-  const ka = kaartVan(a), kb = kaartVan(b);
+  const ka = dicktatorExemplaar(a), kb = dicktatorExemplaar(b);   /* hetzelfde exemplaar dat straks verbrandt (F2) */
   if (!ka || !kb) return Promise.resolve(ka ? a : b);
   if (typeof window.__dickKeuze === 'function') {
     let r = null;

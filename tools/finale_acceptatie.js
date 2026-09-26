@@ -342,6 +342,59 @@ const sonde = page => page.evaluate(() => {
     await ctx.close();
   }
 
+  /* ================= 7 · F2 · HETZELFDE EXEMPLAAR (review R1+R2) ================= */
+  /* het dossier noemt één EXEMPLAAR (uid, de kaart met het zegel). Het scherm toont dat
+     exemplaar en precies dat exemplaar verbrandt - ook als er een opgewaardeerde kopie naast
+     ligt (vroeger verbrandde altijd de opgewaardeerde). */
+  const dossierOp = (page, up) => page.evaluate(up => {
+    const g = S.gevecht, b = dicktatorBaas(g);
+    const slag = S.dek.find(c => c.id === 'slag' && !!c.up === up);
+    const ander = S.dek.find(c => c.id !== 'slag' && kdef(c).type !== 'vloek');
+    g.aangezegd.clear();
+    g.aangezegd.set(slag.uid, { uid: slag.uid, id: slag.id, naam: knaam(slag), start: 0, reden: 'suite' });
+    g.aangezegd.set(ander.uid, { uid: ander.uid, id: ander.id, naam: knaam(ander), start: 0, reden: 'suite' });
+    g.gespeeld.slag = 1;   /* gespeeld sinds de aanzegging → het keuzescherm */
+    b.intent = VIJANDEN[b.id].kies(b, b.beurtTeller); dicktatorHersync(false);
+    const slagen = S.dek.filter(c => c.id === 'slag');
+    return { intent: b.intent.naam, uid: slag.uid, n: slagen.length, nUp: slagen.filter(c => c.up).length };
+  }, up);
+  const slagNa = (page, uid) => page.evaluate(uid => {
+    const slagen = S.dek.filter(c => c.id === 'slag');
+    return { weg: !S.dek.some(c => c.uid === uid), n: slagen.length, nUp: slagen.filter(c => c.up).length };
+  }, uid);
+  for (const up of [false, true]) {
+    kop('7 · F2 · dossier op ' + (up ? 'Slag+' : 'Slag') + ' (met ' + (up ? 'Slag' : 'Slag+') + ' ernaast) → scherm en verbranding hetzelfde exemplaar');
+    ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+    await naarZitting(page);
+    const o = await dossierOp(page, up);
+    t(o.intent === 'HET DECREET' && o.n >= 2 && o.nUp >= 1 && o.nUp < o.n, `de zitting staat op de pil ("${o.intent}"), het dek heeft ${o.n}× Slag waarvan ${o.nUp} opgewaardeerd`);
+    await page.evaluate(() => { eindBeurt(); });
+    let ov = null;
+    for (let k = 0; k < 80 && !ov; k++) { ov = await page.$('.decreet-keuze-overlay'); if (!ov) await slaap(100); }
+    const knop = ov ? await page.evaluate(() => (document.querySelector('.decreet-keuze-overlay .decreet-kies[data-decreet="A"]') || {}).textContent || '') : '';
+    t(!!ov && (up ? /Schrap Slag\+/.test(knop) : /Schrap Slag(?!\+)/.test(knop)), `het scherm toont het exemplaar uit het dossier: "${knop.trim()}"`);
+    if (ov) await page.click('.decreet-keuze-overlay .decreet-kies[data-decreet="A"]');
+    await wachtVrij(page);
+    const na7 = await slagNa(page, o.uid);
+    t(na7.weg && na7.n === o.n - 1 && na7.nUp === o.nUp - (up ? 1 : 0),
+      `precies dat exemplaar verbrandde: uid weg ${na7.weg}, Slag ${o.n}→${na7.n}, waarvan opgewaardeerd ${o.nUp}→${na7.nUp}`);
+    t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+    await ctx.close();
+  }
+  kop('7b · F2 · het meetharnas (__dickKeuze) krijgt hetzelfde exemplaar');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await naarZitting(page);
+  const o7 = await dossierOp(page, false);
+  await page.evaluate(() => { window.__zag = null; window.__dickKeuze = (A, B) => { window.__zag = { uid: A.uid, up: !!A.up }; return A; }; eindBeurt(); });
+  await slaap(300);
+  await wachtVrij(page);
+  const zag = await page.evaluate(() => window.__zag);
+  const na7b = await slagNa(page, o7.uid);
+  t(zag && zag.uid === o7.uid && !zag.up, `de hook kreeg het exemplaar uit het dossier (uid gelijk: ${zag && zag.uid === o7.uid}, opgewaardeerd ${zag && zag.up})`);
+  t(na7b.weg && na7b.nUp === o7.nUp, `en dat exemplaar verbrandde, de opgewaardeerde kopieën bleven (${o7.nUp}→${na7b.nUp})`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
   await browser.close();
   console.log('\n============================================');
   console.log(fout === 0 ? `FINALE ACCEPTATIE: ALLES GROEN — ${ok} ok` : `FINALE ACCEPTATIE: ${ok} ok, ${fout} FOUT`);
