@@ -480,7 +480,8 @@ async function overgang(browser, fk) {
       document.querySelectorAll('#meldingen .toast').forEach(t => t.remove());
       const R = e => { const q = e.getBoundingClientRect(); return { l: q.left, t: q.top, r: q.right, b: q.bottom }; };
       const snij = (a, b) => { const l = Math.max(a.l, b.l), t = Math.max(a.t, b.t), r = Math.min(a.r, b.r), bb = Math.min(a.b, b.b); return (r > l && bb > t) ? (r - l) * (bb - t) : 0; };
-      const o = { titel: 0, baas: 0, baasMax: 0, baasPct: 0, pil: 0, held: 0, regels: {}, banners: 0 };
+      const o = { titel: 0, baas: 0, baasMax: 0, baasPct: 0, pil: 0, held: 0, regels: {}, banners: 0, pilTop: 0, pilTopMax: 0 };
+      const tbEl = document.getElementById('topbalk');
       let vorig = performance.now(); const t0 = vorig;
       const iv = setInterval(() => {
         const nu = performance.now(), dt = nu - vorig; vorig = nu;
@@ -492,6 +493,8 @@ async function overgang(browser, fk) {
         let br = null;
         if (b) { if (d3Actief() && window.Vista) { const p = Vista.schermPos(b); if (p) { const h = p.voetY - p.topY; br = { l: p.x - h * 0.36, r: p.x + h * 0.36, t: p.topY, b: p.voetY }; } } else { const a = GDOM.vijanden[g.vijanden.indexOf(b)].wrap.querySelector('.vijand-art'); if (a) br = R(a); } }
         const pil = b ? [...GDOM.vijanden[g.vijanden.indexOf(b)].wrap.querySelectorAll('.intent')].map(R) : [];
+        /* B0.9: zijn pil valt ook tijdens de overgang (oprijzen, het hof dat opkomt) niet in de topbalk */
+        if (b && tbEl) { const tb = R(tbEl); const zp = b ? [...GDOM.vijanden[g.vijanden.indexOf(b)].wrap.querySelectorAll('.intent')].filter(e => { for (let q = e; q && q !== document.body; q = q.parentElement) { const c = getComputedStyle(q); if (c.display === 'none' || c.visibility === 'hidden' || +c.opacity < 0.05) return false; } return true; }) : []; const x = zp.reduce((a, e) => a + snij(R(e), tb), 0); if (x > 0) { o.pilTop += dt; o.pilTopMax = Math.max(o.pilTopMax, Math.round(x)); } }
         let hr = null; if (d3Actief() && window.Vista) { const p = Vista.schermPos(g.speler); if (p) { const h = p.voetY - p.topY; hr = { l: p.x - h * 0.3, r: p.x + h * 0.3, t: p.topY, b: p.voetY }; } } else { const hf = document.getElementById('speler-figuur'); if (hf) hr = R(hf); }
         for (const e of spEls) {
           const s = R(e.querySelector('span') || e);
@@ -519,6 +522,7 @@ async function overgang(browser, fk) {
     const perRegel = Math.round(Math.max(0, ...Object.values(o.regels).map(r => r.baas)));
     t(perRegel <= 250 && o.baasPct <= 1 && o.pil <= 250, `B0.5 ${vp.naam} ${naam}: plaat ~ DICKtator ${perRegel} ms per regel (${o.baas} ms samen, max ${o.baasMax} px2 = ${o.baasPct} % van zijn doos), ~ zijn pil ${o.pil} ms (<= 250 ms, <= 1 %)`);
     t(o.held === 0, `B0.5 ${vp.naam} ${naam}: plaat ~ held ${o.held} ms (0)`);
+    if (vp.mobiel && !vp.staand) t(o.pilTop === 0, `B0.9 ${vp.naam} ${naam}: zijn pil ~ topbalk ${Math.round(o.pilTop)} ms (max ${o.pilTopMax} px2) tijdens de overgang (0)`);
     t(o.banners <= 1, `bannerwachtrij ${vp.naam} ${naam}: nooit meer dan één banner tegelijk in de echte overgang (max ${o.banners})`);
   }
   t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
