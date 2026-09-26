@@ -6050,11 +6050,27 @@ function renderGevecht() {
   /* LEES-fase: pas NA alle DOM-schrijfacties de hoogtes meten — zo dwingt de
      infoblok-/onderbalk-meting hoogstens één layout-flush af i.p.v. een reflow
      per vijand. infoH voedt de 2D-spacer-klem (gelezen in positioneerActors). */
+  /* B2 F1 · B0.12: een chiprij die naar ONDER overloopt (laptop: de vaste rij van 30px, B0.1)
+     telt mee in de stapel - anders hielden de spacer-klem van gevechtTik en kaderFit3D in 3D
+     alleen de eerste rij boven de kaarten (1366-3D, held met 6-7 statussen: 874-1 933 px2
+     chips achter de hand). Het kader (kaderFit3D, js/bazentoneel.js) rekent met de HOOGSTE
+     stapel van dit gevecht (infoHMax, bijgehouden op de figuur zelf): groeit die met een
+     chiprij, dan past het kader één keer opnieuw; krimpt hij, dan blijft het staan - anders
+     pompte de camera elke beurt mee met een Zwak dat komt en gaat. */
+  const overloop = w => { const b = w.querySelector('.blok-status'); return b ? Math.max(0, b.scrollHeight - b.clientHeight) : 0; };
+  let groei = false;
+  const stapel = (actor, d, ov) => {
+    d.infoH = d.wrap.offsetHeight - d.spacer.offsetHeight + ov;
+    if (ov > (actor._ovMax || 0)) { if (actor._ovMax != null) groei = true; actor._ovMax = ov; }
+    else if (actor._ovMax == null) actor._ovMax = ov;
+    d.infoHMax = d.infoH - ov + actor._ovMax;
+  };
   g.vijanden.forEach((v, i) => {
     const d = GDOM.vijanden[i];
-    if (d) d.infoH = d.wrap.offsetHeight - d.spacer.offsetHeight;
+    if (d) stapel(v, d, v.dood ? 0 : overloop(d.wrap));
   });
-  ds.infoH = ds.wrap.offsetHeight - ds.spacer.offsetHeight;
+  stapel(g.speler, ds, overloop(ds.wrap));
+  if (groei && typeof kaderNaOverloop === 'function') kaderNaOverloop();
   const ob = $('#onderbalk');
   if (ob) GDOM.onderbalkH = ob.offsetHeight;
 

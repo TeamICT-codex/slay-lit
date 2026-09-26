@@ -1385,9 +1385,18 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      lijf van de eerste hoveling (846x381, bedrijf II: '📋 dossier' half bedekt) */
   body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-baas:not(:last-child):has(.blok-status > *) { margin-right: 46px; }
   body[data-modus="mobiel"] #scherm-gevecht #speler-zone { position: relative; }
-  /* --wijk: de chipblok schuift naar links voor een baaspil die opzij hangt (B0.9;
-     heldChipsWijken() in js/bazentoneel.js) */
+  /* --wijk: de chipblok schuift naar links voor een baaspil die opzij hangt (B0.9), en naar
+     rechts als hij links uit beeld of onder de inzage-knop zou vallen (x < 44, bij 3-4
+     vijanden staat de held tegen de rand) - heldChipsWijken() in js/bazentoneel.js.
+     B2 F1: tussen de topbalk en het hoofd van de held passen maar twee rijen (34px per rij).
+     Met 3 per rij liep de derde rij vanaf 7 statussen de topbalk in (934-1 602 px2, over HP
+     en fakkel), op elke baas en in gewone gevechten. Nu wordt de rij alleen breder als het
+     moet: tot 6 chips 3 per rij (200px, zoals voorheen: smal genoeg om naast een pil te
+     passen), vanaf 7 vier, vanaf 9 vijf, vanaf 11 zes - altijd twee rijen. */
   body[data-modus="mobiel"] #scherm-gevecht #speler-zone .blok-status { position: absolute; left: 50%; bottom: calc(100% - 6px); translate: calc(-50% - var(--wijk, 0px)) 0; width: max-content; max-width: 200px; height: auto; min-height: 0; flex-wrap: wrap-reverse; justify-content: center; z-index: 3; }
+  body[data-modus="mobiel"] #scherm-gevecht #speler-zone .blok-status:has(> :nth-child(7)) { max-width: 256px; }
+  body[data-modus="mobiel"] #scherm-gevecht #speler-zone .blok-status:has(> :nth-child(9)) { max-width: 318px; }
+  body[data-modus="mobiel"] #scherm-gevecht #speler-zone .blok-status:has(> :nth-child(11)) { max-width: 380px; }
   body[data-modus="mobiel"] #scherm-gevecht #speler-zone::after { content: ''; display: block; height: 24px; flex: none; }
 
   /* B0.9 — DE BAASPIL NOOIT IN DE TOPBALK. De pil blijft boven het hoofd; alleen als ze

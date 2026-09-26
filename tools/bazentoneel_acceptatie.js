@@ -152,6 +152,7 @@ const HELPER = `(() => {
       chipsN: chips.length, chipsHand: Math.round(som(chips, hand)), chipsUit: chips.filter(c => c.l < -1 || c.t < -1 || c.r > W + 1 || c.b > H + 1).length, chipsBB: bb ? Math.round(som(chips, [bb])) : 0,
       pilTop: tb ? Math.round(som(pillen, [tb])) : 0, pilRel: Math.round(som(pillen, rel)), pilBB: bb ? Math.round(som(pillen, [bb])) : 0,
       pilHeldChips: Math.round(som(pillen, heldChips)), pilHeld: pct(held, pillen), pilBaas: pct(bf, pillen),
+      heldTB: tb ? Math.round(som(heldChips, [tb])) : 0, heldUit: heldChips.filter(c => c.l < -0.5 || c.t < -0.5 || c.r > W + 0.5).length, heldChipsN: heldChips.length,
       chipsAnderPil: Math.round(som(baasChips, anderPillen)), chipsAnderArt: anderArts.length ? Math.max(...anderArts.map(a => +(100 * som(baasChips, [a]) / ((a.r - a.l) * (a.b - a.t))).toFixed(1))) : 0,
       eigenBaas, eigenHeld, eigenLabel, eigenLabelWie,
       namen: [...document.querySelectorAll('#vijanden-rij .vijand-naam, #speler-zone .speler-naam')].filter(zicht).length,
@@ -238,7 +239,9 @@ const STATUS = {
   een: { baas: { kracht: 2 }, held: { kracht: 2 } },
   vier: { baas: { gif: 9, zwak: 2, kwetsbaar: 2, kracht: 2 }, held: { kracht: 2, zwak: 1, kwetsbaar: 1, gif: 3 } },
   vijf: { baas: { gif: 9, zwak: 2, kwetsbaar: 2, kracht: 2, doornen: 2 }, held: { kracht: 2, zwak: 1, kwetsbaar: 1, gif: 3, doornen: 2 } },
-  held5: { baas: {}, held: { kracht: 2, zwak: 1, kwetsbaar: 1, gif: 3, doornen: 2 } }
+  held5: { baas: {}, held: { kracht: 2, zwak: 1, kwetsbaar: 1, gif: 3, doornen: 2 } },
+  /* B2 F1: een power-build (Metaalhuid, Demonenvorm): 7 statussen op de held, 5 op de baas */
+  held7: { baas: { gif: 9, zwak: 2, kwetsbaar: 2, kracht: 2, doornen: 2 }, held: { kracht: 2, zwak: 1, kwetsbaar: 1, gif: 3, doornen: 2, metaalhuid: 3, demonenvorm: 2 } }
 };
 async function zetStatus(page, soort) {
   await page.evaluate(s => {
@@ -301,7 +304,7 @@ async function perFormaat(browser, fk) {
   const { ctx, page, vp } = await open(browser, fk);
   const laptop = !vp.mobiel, mobielLiggend = vp.mobiel && !vp.staand;
   /* §6: {0, 4, 5 statussen, held met 5} op held en baas, plus 1 (B0.1) */
-  const statussen = ['geen', 'een', 'vier', 'vijf', 'held5'];
+  const statussen = ['geen', 'een', 'vier', 'vijf', 'held5'].concat(laptop ? ['held7'] : []);   /* F1: laptop tot 7 statussen (B0.12); mobiel: zie held7Mobiel */
   for (const baas of ['slijmkoning', 'erfprins', 'dicktator', 'hof']) {
     const B = BAZEN[baas];
     try {
@@ -337,7 +340,7 @@ async function perFormaat(browser, fk) {
         t(max(rijen, m => m.pilBB) === 0, `B0.12 ${vp.naam} ${B}: pil ~ bazenbalk = 0 (max ${max(rijen, m => m.pilBB)} px2)`);
         t(max(rijen, m => Math.abs(m.voetBaas - m.grondY) / m.H * 100) <= 2, `B0.12 ${vp.naam} ${B}: |voet - grondlijn| <= 2 % vh (max ${max(rijen, m => Math.abs(m.voetBaas - m.grondY) / m.H * 100).toFixed(2)} %)`);
         t(max(rijen, m => m.namen) === 0, `B0.12 ${vp.naam} ${B}: geen naamlabels in een 3D-baasgevecht (max ${max(rijen, m => m.namen)} zichtbaar)`);
-        t(rijen.every(m => m.kader && m.kader.eigen && m.kader.fov <= 70), `B0.12 ${vp.naam} ${B}: eigen kader, fov ${[...new Set(rijen.map(m => m.kader && m.kader.fov.toFixed(1)))].join('/')} (<= 70)`);
+        t(rijen.every(m => m.kader && m.kader.eigen && m.kader.fov <= (m.st === 'held7' ? 75 : 70)), `B0.12 ${vp.naam} ${B}: eigen kader, fov ${[...new Set(rijen.map(m => m.kader && m.kader.fov.toFixed(1)))].join('/')} (<= 70; <= 75 met een tweede chiprij onder de held, F1)`);
       }
       if (mobielLiggend) {
         t(max(rijen, m => m.chipsHand) === 0 && max(rijen, m => m.chipsUit) === 0 && max(rijen, m => m.chipsBB) === 0, `B0.8 ${vp.naam} ${B}: chips ~ hand 0, uit beeld 0, ~ bazenbalk 0 over ${n} staten (max ${max(rijen, m => m.chipsHand)}/${max(rijen, m => m.chipsUit)}/${max(rijen, m => m.chipsBB)})`);
@@ -529,6 +532,8 @@ async function overgang(browser, fk) {
         for (const e of spEls) {
           const s = R(e.querySelector('span') || e);
           const k = e.textContent.slice(0, 30); const r = o.regels[k] || (o.regels[k] = { van: nu - t0, tot: nu - t0, baas: 0 }); r.tot = nu - t0;
+          /* F1: een staande plaat springt niet (grootste sprong van haar midden tussen twee metingen) */
+          const lx = parseFloat(e.style.left); if (isFinite(lx)) { if (r.lx != null) o.sprong = Math.max(o.sprong || 0, Math.abs(lx - r.lx)); r.lx = lx; }
           if (tit.some(x => snij(s, x) > 0)) o.titel += dt;
           if (br) { const x = snij(s, br); if (x > 0) { o.baas += dt; r.baas += dt; if (x > o.baasMax) { o.baasMax = Math.round(x); o.baasPct = +(100 * x / ((br.r - br.l) * (br.b - br.t))).toFixed(2); } } }
           if (pil.some(p => snij(s, p) > 0)) o.pil += dt;
@@ -552,6 +557,7 @@ async function overgang(browser, fk) {
     const perRegel = Math.round(Math.max(0, ...Object.values(o.regels).map(r => r.baas)));
     t(perRegel <= 250 && o.baasPct <= 1 && o.pil <= 250, `B0.5 ${vp.naam} ${naam}: plaat ~ DICKtator ${perRegel} ms per regel (${o.baas} ms samen, max ${o.baasMax} px2 = ${o.baasPct} % van zijn doos), ~ zijn pil ${o.pil} ms (<= 250 ms, <= 1 %)`);
     t(o.held === 0, `B0.5 ${vp.naam} ${naam}: plaat ~ held ${o.held} ms (0)`);
+    t((o.sprong || 0) <= 40, `B0.5 ${vp.naam} ${naam}: een staande plaat springt niet - grootste verschuiving tussen twee metingen (50 ms) ${Math.round(o.sprong || 0)} px (<= 40; F1: 431 px van kant op 800x360)`);
     if (vp.mobiel && !vp.staand) t(o.pilTop === 0, `B0.9 ${vp.naam} ${naam}: zijn pil ~ topbalk ${Math.round(o.pilTop)} ms (max ${o.pilTopMax} px2) tijdens de overgang (0)`);
     t(o.banners <= 1, `bannerwachtrij ${vp.naam} ${naam}: nooit meer dan één banner tegelijk in de echte overgang (max ${o.banners})`);
   }
@@ -739,6 +745,47 @@ async function lijkWeg(browser, fk) {
   t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
   await ctx.close();
   return { kop: `De kolom van een verslagen baas als het gevecht doorgaat · ${vp.naam}`, regels: R };
+}
+
+/* B2 F1 · B0.8 op mobiel liggend met een power-build: 7 en 9 statussen op de held. Tussen de
+   topbalk en zijn hoofd passen twee chiprijen; met 3 per rij liep de derde rij de topbalk in
+   (934-1 602 px2), en bij 4 vijanden viel de blok links uit beeld. Nu: de rij wordt breder
+   waar het moet (css C2) en de blok blijft op x >= 44 (heldChipsWijken). Op elke baas en in
+   gewone gevechten met 1, 3 en 4 vijanden (die zelf 3 statussen dragen). */
+async function held7Mobiel(browser, fk) {
+  const R = []; const t = (g, s) => R.push([!!g, s]);
+  const { ctx, page, vp } = await open(browser, fk);
+  const thomas = vp.w === 800 || vp.w === 846;
+  const HELD = { h7: STATUS.held7.held, h9: Object.assign({ ritueel: 1, regeneratie: 2 }, STATUS.held7.held) };
+  const zet = async hs => { await page.evaluate(hs => { const g = S.gevecht; g.speler.status = Object.assign({}, hs); g.vijanden.forEach(v => { if (!v.dood) v.status = (VIJANDEN[v.id] && VIJANDEN[v.id].baas) ? { gif: 9, zwak: 2, kwetsbaar: 2, kracht: 2, doornen: 2 } : { gif: 4, zwak: 1, kwetsbaar: 2 }; }); renderGevecht(); }, hs); await slaap(700); return page.evaluate(() => __BT.meet()); };
+  for (const baas of ['slijmkoning', 'erfprins', 'dicktator']) {
+    try {
+      await startBaas(page, baas);
+      for (const [hn, hs] of Object.entries(HELD)) {
+        const m = await zet(hs);
+        if (hn === 'h7') await shot(page, `${vp.naam}_${baas}_held7`);
+        t(m.heldChipsN >= 7 && m.heldTB === 0 && m.heldUit === 0, `B0.8 ${vp.naam} ${BAZEN[baas]} ${hn}: heldchips (${m.heldChipsN}) ~ topbalk ${m.heldTB} px2, uit beeld ${m.heldUit} (0; F1: was 934-1 602 px2)`);
+        t(m.chipsHand === 0 && m.chipsBB === 0, `B0.8 ${vp.naam} ${BAZEN[baas]} ${hn}: chips ~ hand ${m.chipsHand}, ~ bazenbalk ${m.chipsBB} (0)`);
+        if (thomas) t(m.pilHeldChips === 0, `B0.8xB0.9 ${vp.naam} ${BAZEN[baas]} ${hn}: baaspil ~ heldchips ${m.pilHeldChips} px2 (0)`);
+      }
+    } catch (e) { t(false, `${vp.naam} ${BAZEN[baas]}: fout in de meting: ${e.message}`); }
+  }
+  for (const comp of [['grotrat'], ['grotrat', 'grotrat', 'grotrat'], ['grotrat', 'grotrat', 'grotrat', 'grotrat']]) {
+    try {
+      await page.evaluate(c => { S.metgezel = null; S.gevecht = null; startGevecht(c, 'gevecht'); if (document.querySelector('#draai-blok.toon') && typeof speelTochStaand === 'function') speelTochStaand(); }, comp);
+      await slaap(1800); await wachtRust(page, 600, 12000);
+      for (const [hn, hs] of Object.entries(HELD)) {
+        const m = await zet(hs);
+        const pil = await page.evaluate(() => { const R = e => { const q = e.getBoundingClientRect(); return { l: q.left, t: q.top, r: q.right, b: q.bottom }; }; const snij = (a, b) => { const w = Math.min(a.r, b.r) - Math.max(a.l, b.l), h = Math.min(a.b, b.b) - Math.max(a.t, b.t); return (w > 0 && h > 0) ? w * h : 0; }; const hc = [...document.querySelectorAll('#speler-zone .blok-status > *')].map(R); const p = [...document.querySelectorAll('#vijanden-rij .vijand:not(.sterft) .intent')].map(R); return Math.round(hc.reduce((s, c) => s + p.reduce((u, q) => u + snij(c, q), 0), 0)); });
+        if (hn === 'h7') await shot(page, `${vp.naam}_gewoon${comp.length}_held7`);
+        t(m.heldChipsN >= 7 && m.heldTB === 0 && m.heldUit === 0, `B0.8 ${vp.naam} gewoon gevecht, ${comp.length} vijand(en), ${hn}: heldchips (${m.heldChipsN}) ~ topbalk ${m.heldTB} px2, uit beeld ${m.heldUit} (0)${pil ? ` [bekend: ~ vijandpil ${pil} px2 - de blok staat al tegen x = 44]` : ''}`);
+        if (comp.length === 1) t(pil === 0, `B0.8 ${vp.naam} gewoon gevecht, 1 vijand, ${hn}: heldchips ~ vijandpil ${pil} px2 (0)`);
+      }
+    } catch (e) { t(false, `${vp.naam} gewoon ${comp.length}: fout in de meting: ${e.message}`); }
+  }
+  t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+  await ctx.close();
+  return { kop: `B0.8 met 7 en 9 statussen op de held (mobiel liggend) · ${vp.naam}`, regels: R };
 }
 
 /* B2 F1 · B0.1 in een GEWOON gevecht (laptop): 3 en 4 vijanden met 5 en 6 statussen, de held
@@ -966,6 +1013,7 @@ async function intents(browser) {
     ...['M800', 'L1440'].map(fk => ['lijkweg ' + fk, () => lijkWeg(browser, fk)]),
     ...['M800', 'L1440', 'L1440d3'].map(fk => ['bannerdood ' + fk, () => bannerDood(browser, fk)]),
     ...['L1440', 'L1366', 'L1440d3', 'L1366d3'].map(fk => ['gewoon ' + fk, () => gewoonChips(browser, fk)]),
+    ...['M800', 'M846', 'M740'].map(fk => ['held7 ' + fk, () => held7Mobiel(browser, fk)]),
     ...[['M846', 1500], ['M800', 400], ['L1440', 0], ['L1440d3', 6000]].map(([fk, tik]) => ['orakel ' + fk, () => orakel(browser, fk, tik)]),
     ...['L1440d3', 'L1366d3'].map(fk => ['3d ' + fk, () => driedee(browser, fk)]),
     ...['M800', 'L1440'].map(fk => ['hud ' + fk, () => hudEnHof(browser, fk)]),

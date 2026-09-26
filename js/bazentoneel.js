@@ -41,17 +41,26 @@ function zetPilZij() {
    (B0.8), de pil links naast het hoofd van de baas (B0.9). Met vier of vijf statussen op de
    held (twee rijen) en een brede pil ('🪑 delegeert') lag de pil over een chip - gezien op
    800x360 tegen de DICKtator. De chipblok schuift dan naar links (--wijk, css C2), weg van
-   de pil, maar nooit onder de inzage-knop (x < 44). */
+   de pil, maar nooit onder de inzage-knop (x < 44).
+   B2 F1: die klem op x >= 44 geldt nu ALTIJD, ook zonder pil opzij. Bij 3-4 vijanden staat de
+   held tegen de linkerrand en viel zijn (bredere, 4 per rij) chipblok links uit beeld; dan
+   schuift hij naar rechts (een negatieve --wijk). En hij wijkt voor ELKE vijandpil op zijn
+   hoogte, niet alleen voor de baaspil opzij: de brede blok liep anders over de pil van de
+   eerste vijand (2-4 vijanden: 85-511 px2). Botsen beide, dan wint de klem (niets uit beeld). */
 function heldChipsWijken() {
   const hs = document.querySelector('#speler-zone .blok-status'); if (!hs) return;
   const oud = parseFloat(hs.style.getPropertyValue('--wijk')) || 0;
-  const pil = document.querySelector('#vijanden-rij .vijand.is-baas.pil-zij .intent-rij');
   let wijk = 0;
-  if (pil && hs.childElementCount) {
-    const p = pil.getBoundingClientRect(), c = hs.getBoundingClientRect();
+  if (hs.childElementCount) {
+    const c = hs.getBoundingClientRect();
     /* de chipblok zoals hij zonder wijk zou staan */
     const l0 = c.left + oud, r0 = c.right + oud;
-    if (c.top < p.bottom + 4 && c.bottom > p.top - 4 && r0 > p.left - 6) wijk = Math.min(r0 - (p.left - 6), Math.max(0, l0 - 44));
+    let nodig = 0;
+    document.querySelectorAll('#vijanden-rij .vijand:not(.sterft) .intent').forEach(e => {
+      const p = e.getBoundingClientRect();
+      if (p.width && c.top < p.bottom + 4 && c.bottom > p.top - 4 && r0 > p.left - 6 && l0 < p.right) nodig = Math.max(nodig, r0 - (p.left - 6));
+    });
+    wijk = Math.min(nodig, l0 - 44);
   }
   if (Math.abs(wijk - oud) >= 1) hs.style.setProperty('--wijk', Math.round(wijk) + 'px');
 }
@@ -99,7 +108,11 @@ function spraakZone(el) {
   if (!mob) {
     /* laptop: de band boven de (kleine) held is vrij -> links, anders de bredere kant */
     let z = bA >= 200 ? zA : (bA >= bB ? zA : zB);
+    /* B2 F1: een plaat die al staat, wisselt niet van kant zolang haar kant breed genoeg blijft
+       (toneelWacht rekent elke 150 ms opnieuw; een baas die oprijst, verschoof de grens) */
+    if (el._kant) { const zk = el._kant === 'A' ? zA : zB; if (zk[1] - zk[0] >= 160) z = zk; }
     if (z[1] - z[0] < 160) return;   /* nergens plaats: dan de standaardplek (gecentreerd) */
+    el._kant = z === zA ? 'A' : 'B';
     zet(z, 0);
     return;
   }
@@ -114,15 +127,21 @@ function spraakZone(el) {
      Elke kandidaat met het gewone, het smalle en - als niets anders schoon is - het krappe
      lettertype (een zone < 340px nooit gewoon). De spreker, zijn pil en de bazenbalk wegen
      vier keer zo zwaar als de held; het hof mag een plaat even afdekken. Een plaat houdt
-     haar plek zolang die schoon blijft, zodat ze niet heen en weer springt terwijl ze opkomt. */
+     haar plek zolang die schoon blijft, zodat ze niet heen en weer springt terwijl ze opkomt.
+     B2 F1: ook de statuschips van de held (boven zijn hoofd, B0.8) zijn een hindernis, lichter
+     dan de held zelf (de introplaat van de Erfprins dekte op 846x381 zijn bovenste chiprij).
+     En een plaat die al STAAT, springt niet meer: zie hieronder. */
   const hf = document.getElementById('speler-figuur');
   const held = hf ? hf.getBoundingClientRect() : null;
-  const hindernis = [[art, 4], ...pillen.map(q => [q, 4]), [bbR && bbR.width ? bbR : null, 4], [held, 1]].filter(h => h[0]);
+  const chips = [...document.querySelectorAll('#speler-zone .blok-status > *')].map(c => c.getBoundingClientRect()).filter(q => q.width > 0);
+  const hindernis = [[art, 4], ...pillen.map(q => [q, 4]), [bbR && bbR.width ? bbR : null, 4], [held, 1], ...chips.map(q => [q, 0.5])].filter(h => h[0]);
   const sp = el.querySelector('span');
-  const kost = () => {
+  /* spreker: alleen wat vier keer telt (zijn lijf, zijn pil, de bazenbalk) */
+  const kost = spreker => {
     if (!sp) return 0;
     const q = sp.getBoundingClientRect();
     return hindernis.reduce((s, [r, w]) => {
+      if (spreker && w < 4) return s;
       const x = Math.min(q.right, r.right != null ? r.right : r.r) - Math.max(q.left, r.left != null ? r.left : r.l);
       const y = Math.min(q.bottom, r.bottom != null ? r.bottom : r.b) - Math.max(q.top, r.top != null ? r.top : r.t);
       return s + (x > 0 && y > 0 ? x * y * w : 0);
@@ -130,19 +149,36 @@ function spraakZone(el) {
   };
   const zA2 = [L, art.l - 12];
   const volg = [];
-  for (const z of [bB >= 200 ? zB : (bA >= bB ? zA : zB), zA2, bA >= bB ? zA : zB, zB, zA]) {
-    if (z[1] - z[0] >= 110 && !volg.some(v => v[0] === z[0] && v[1] === z[1])) volg.push(z);
+  for (const [z, kant] of [bB >= 200 ? [zB, 'B'] : (bA >= bB ? [zA, 'A'] : [zB, 'B']), [zA2, 'A2'], bA >= bB ? [zA, 'A'] : [zB, 'B'], [zB, 'B'], [zA, 'A']]) {
+    if (z[1] - z[0] >= 110 && !volg.some(v => v.z[0] === z[0] && v.z[1] === z[1])) volg.push({ z, kant });
   }
   if (!volg.length) return;
-  if (el._zone) { zet(el._zone.z, el._zone.maat); if (kost() === 0) return; }
+  /* B2 F1 — EEN STAANDE PLAAT SPRINGT NIET. toneelWacht rekent elke 150 ms opnieuw, en vroeger
+     zocht een plaat die ergens iets raakte (ook de held) meteen een nieuwe zone: op 800x360
+     sprong „Herverkozen. Unaniem…" midden in de regel 431 px van kant, toen de DICKtator
+     oprees. Nu houdt ze haar zone zolang de SPREKER haar niet raakt. Raakt hij haar wel, dan
+     eerst een kleinere letter op dezelfde plek, dan dezelfde kant op de nieuwe maat, en pas
+     als ook dat niet schoon kan een andere kant - alleen naar een plek waar hij haar niet raakt. */
+  const o = el._zone;
+  if (o) {
+    for (const maat of [0, 1, 2].filter(m => m >= o.maat)) { zet(o.z, maat); if (kost(true) === 0) { o.maat = maat; return; } }
+    const zk = volg.find(v => v.kant === o.kant);
+    if (zk) for (const maat of [0, 1, 2].filter(m => m >= o.maat)) {
+      if (maat === 0 && zk.z[1] - zk.z[0] < 340) continue;
+      zet(zk.z, maat);
+      if (kost(true) === 0) { el._zone = { z: zk.z, maat, k: kost(), kant: zk.kant }; return; }
+    }
+  }
   let best = null;
-  zoek: for (const maat of [0, 1, 2]) for (const z of volg) {
-    if (maat === 0 && z[1] - z[0] < 340) continue;
-    zet(z, maat);
+  zoek: for (const maat of [0, 1, 2]) for (const v of volg) {
+    if (maat === 0 && v.z[1] - v.z[0] < 340) continue;
+    zet(v.z, maat);
     const k = kost();
-    if (!best || k < best.k) best = { z, maat, k };
+    if (!best || k < best.k) best = { z: v.z, maat, k, kant: v.kant, ks: kost(true) };
     if (k === 0) break zoek;
   }
+  /* een staande plaat verhuist alleen als de spreker haar op de nieuwe plek niet raakt */
+  if (o && best.ks > 0) { zet(o.z, o.maat); return; }
   el._zone = best;
   zet(best.z, best.maat);
 }
@@ -231,8 +267,11 @@ function kaderFit3D() {
      direct onder de voeten; een vijand draagt 34px pilruimte boven zijn kruin mee */
   const lijn = innerHeight - ((GDOM.onderbalkH || 235) - 25), ADEM = 2;
   const grenzen = [];
-  if (GDOM.speler) grenzen.push({ a: g.speler, max: lijn - (GDOM.speler.infoH || 0) - ADEM });
-  g.vijanden.forEach((v, i) => { const d = GDOM.vijanden[i]; if (d && !v.dood) grenzen.push({ a: v, max: lijn - ((d.infoH || 130) - 34) - ADEM }); });
+  /* B2 F1: met de hoogste stapel van dit gevecht (infoHMax: een chiprij die naar onder
+     overloopt, telt mee - zie renderGevecht) */
+  const stapelH = d => d.infoHMax != null ? d.infoHMax : d.infoH;
+  if (GDOM.speler) grenzen.push({ a: g.speler, max: lijn - (stapelH(GDOM.speler) || 0) - ADEM });
+  g.vijanden.forEach((v, i) => { const d = GDOM.vijanden[i]; if (d && !v.dood) grenzen.push({ a: v, max: lijn - ((stapelH(d) || 130) - 34) - ADEM }); });
   /* > 0: een voet staat lager dan zijn grens (de hp-balk zou over het lijf schuiven) */
   const teLaag = () => Math.max(...grenzen.map(x => { const p = Vista.schermPos(x.a); return p ? p.voetY - x.max : -Infinity; }));
   const zet = (fov, kijkY) => Vista.zetKader({ fov, kijkY });
@@ -271,6 +310,15 @@ window.addEventListener('vista:gevechtstart', () => {
   else if (window.Vista && Vista.kaderStand && Vista.kaderStand().eigen) Vista.zetKader(null);
 });
 window.addEventListener('resize', () => { _vrijBoven = null; planKaderFit(180); });
+/* B2 F1: renderGevecht meldt het als de chipstapel van een figuur HOGER wordt dan ooit in dit
+   gevecht (er komt een chiprij bij, de overloop onder de vaste rij). In een 3D-baasgevecht
+   past het kader zich dan één keer aan, anders klemde gevechtTik de stapel omhoog en lag de
+   hp-balk van de held tot 7 % over zijn benen (1366-3D, 6-7 statussen). Krimpt de stapel,
+   dan blijft het kader staan (geen camera die elke beurt meepompt). */
+function kaderNaOverloop() {
+  const sc = document.getElementById('scherm-gevecht');
+  if (sc && sc.classList.contains('d3-actief') && S && S.gevecht && S.gevecht.soort === 'baas') planKaderFit(120);
+}
 
 /* ---------- de toneelwacht: één lichte lus (150 ms), alleen tijdens een gevecht ----------
    Figuren bewegen buiten renderGevecht om (entree, oprijzen, het hof dat opkomt, de adem),
