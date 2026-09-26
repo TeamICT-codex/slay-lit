@@ -1762,6 +1762,7 @@
     const kim = el('div', 'gs-kim');
     ['gs-vent gs-vent-a', 'gs-vent gs-vent-b', 'gs-tank', 'gs-mast'].forEach(c => kim.appendChild(el('span', c)));
     toneel.appendChild(kim);
+    toneel.appendChild(el('div', 'gs-nacht'));   /* geduwd: de lichten gaan uit (de lift blijft net zichtbaar) */
     const lift = el('div', 'gs-lift');
     lift.appendChild(el('span', 'gs-lift-bord', S.lift.bord));
     lift.appendChild(el('span', 'gs-lift-lamp'));
@@ -2196,7 +2197,7 @@
       function stap() {
         tid = 0;
         if (weg) return;
-        if (i < K.regels.length) { regel(); tid = T(stap, zacht ? 1100 : 1400); return; }
+        if (i < K.regels.length) { regel(); tid = T(stap, i < K.regels.length ? (zacht ? 1100 : 1250) : (zacht ? 800 : 1050)); return; }
         toonLos();
       }
       function toonLos() {
@@ -2211,17 +2212,18 @@
         if (weg) return;
         if (kanLos) { laatLos(); return; }
         wisT(tid); tid = 0;
-        if (i < K.regels.length) { regel(); tid = T(stap, zacht ? 1100 : 1400); }
+        if (i < K.regels.length) { regel(); tid = T(stap, i < K.regels.length ? (zacht ? 1100 : 1250) : (zacht ? 800 : 1050)); }
         else toonLos();
       }
       function spoelKijk() { volgende(); if (!weg && !spoel) spoel = spoelKijk; }
-      tid = T(stap, zacht ? 300 : 820);
+      tid = T(stap, zacht ? 300 : 650);
       spoelNa(spoelKijk, 400, () => !weg);   /* de tweede tik van een dubbeltik op de foto slaat de eerste regel niet over */
       function laatLos() {
         if (weg || !kanLos) return;
         weg = true; kanLos = false; spoel = null; wisT(tid);
         losKnop.remove();
         laag.classList.add('los');
+        root.classList.add('gs-na');   /* het gesprek is voorbij: de hand, de bol en de knoppen gaan weg; het dak blijft */
         root.dataset.losgelaten = '1';
         const r = reeks([
           { doe: scheur, ms: zacht ? 250 : 480 },

@@ -928,7 +928,8 @@ img { max-width: 100%; display: block; }
 .gs-kaart.te-duur { filter: grayscale(.7) brightness(.62); }
 .gs-kaart:disabled { opacity: 1; cursor: default; }
 /* touch: de eerste tik tilt de kaart op om te lezen (voorbeeldKaart in het spel), de tweede speelt hem */
-.gs-kaart.voorbeeld { z-index: 99 !important; transform: translateY(calc(var(--kaart-h) * -.36)) scale(1.28); box-shadow: 0 0 0 3px var(--amber), 0 18px 34px rgba(0, 0, 0, .8); }
+/* staand (de basis) blijft de opgetilde kaart laag genoeg: de foto in je borstzak (erboven) blijft raak */
+.gs-kaart.voorbeeld { z-index: 99 !important; transform: translateY(calc(var(--kaart-h) * -.18)) scale(1.2); box-shadow: 0 0 0 3px var(--amber), 0 18px 34px rgba(0, 0, 0, .8); }
 :host(:not([data-modus="mobiel"])) .gs-kaart:not(:disabled):hover { z-index: 99 !important; transform: translateY(-36px) scale(1.16); box-shadow: 0 18px 34px rgba(0, 0, 0, .8), 0 0 20px rgba(255, 220, 150, .35); }
 /* laptop: de sneltoets van de kaart, klein rechtsboven */
 .gs-kaart[data-toets]::after { content: attr(data-toets); position: absolute; top: 4px; right: 5px; padding: 1px 3px; border-radius: 3px; font-family: var(--f-crt); font-size: .78rem; line-height: 1;
@@ -983,7 +984,13 @@ img { max-width: 100%; display: block; }
 .gs-sweep { position: absolute; top: 0; bottom: 0; right: -18%; width: 16%; z-index: 20; pointer-events: none; animation: plSweep .75s cubic-bezier(.4, 0, .6, 1) forwards;
   background: linear-gradient(90deg, transparent, rgba(200, 255, 200, .12) 40%, rgba(220, 255, 220, .35) 50%, rgba(200, 255, 200, .12) 60%, transparent); }
 @keyframes plSweep { to { transform: translateX(-130vw); } }
-.gs-uit .gs-toneel { filter: brightness(.2) saturate(.5); }
+.gs-nacht { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: rgba(4, 4, 8, .84); transition: opacity 1.1s ease; }
+.gs-uit .gs-nacht { opacity: 1; }
+/* de open lift blijft net zichtbaar: geen lamp meer, alleen het groene schijnsel van B.A.A.S. op de kast */
+.gs-uit .gs-lift { filter: brightness(.62) saturate(.7); transition: filter 1.1s ease; }
+.gs-uit .gs-lift-lamp { opacity: .12; box-shadow: none; }
+.gs-uit .gs-lift-lamp::after { opacity: 0; }
+.gs-uit .gs-lift::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(270deg, rgba(106, 211, 106, .28), rgba(106, 211, 106, .04) 70%); }
 .gs-uit .gs-onder { background: none; }
 .gs-uit .gs-onder > :not(.gs-zak), .gs-uit .gs-beurt { opacity: 0; pointer-events: none; }
 .gs-uit .gs-onder > .gs-orb { transition-delay: .26s; }
@@ -991,12 +998,15 @@ img { max-width: 100%; display: block; }
 .gs-uit .gs-onder > .gs-trek { transition-delay: .78s; }
 .gs-uit .gs-zak { filter: brightness(.5); transition: filter .8s ease .6s; }
 .gs-uit .gs-held .gs-naam, .gs-uit .gs-held .gs-hp { opacity: 0; transition-delay: .4s; }
-.gs-uit .gs-stoel { filter: brightness(.6) drop-shadow(3px 0 4px rgba(106, 211, 106, .5)); transition: filter .9s ease; }
+.gs-uit .gs-stoel { filter: brightness(.8) drop-shadow(4px 0 5px rgba(106, 211, 106, .6)); transition: filter .9s ease; }
 .gs-uit .gs-baas::before { content: ''; position: absolute; left: 50%; top: 45%; width: 420%; height: 280%; transform: translate(-50%, -50%); pointer-events: none; z-index: 0;
   background: radial-gradient(circle, rgba(106, 211, 106, .2), rgba(106, 211, 106, .05) 40%, transparent 62%); animation: plVerschijn 1s ease both; }
 .gs-uit .gs-oog { box-shadow: 0 0 0 4px #3b3528, 0 0 0 6px #1f1b14, 0 0 44px 12px rgba(106, 211, 106, .7), inset 0 0 14px rgba(0, 0, 0, .8); }
 .gs-uit .gs-mast::after { animation: none; opacity: 0; }
 .gs-stoel.weg { opacity: 0; transition: opacity .4s ease; }
+/* sprong: na 'Laat los' is het gesprek voorbij — de hand, de bol, de stapels en de knop gaan weg (de zak is leeg) */
+.gs-na .gs-onder > *, .gs-na .gs-beurt, .gs-na .gs-intent-rij { opacity: 0; pointer-events: none; transition: opacity .5s ease; }
+.gs-na .gs-onder { background: none; transition: background .6s ease; }
 .gs-held.rolt .gs-schaduw { opacity: 0; transition: opacity .8s ease .3s; }
 .gs-uit .gs-toets { display: none; }
 
@@ -1019,8 +1029,8 @@ img { max-width: 100%; display: block; }
 .pv-vel { position: relative; z-index: 1; flex: 1 1 auto; min-height: 0; width: min(94vw, 560px); overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end;
   -webkit-mask-image: linear-gradient(180deg, transparent calc(env(safe-area-inset-top) + 34px), #000 calc(env(safe-area-inset-top) + 96px));
   mask-image: linear-gradient(180deg, transparent calc(env(safe-area-inset-top) + 34px), #000 calc(env(safe-area-inset-top) + 96px)); }
-.pv-papier { position: relative; flex: none; padding: 8px 30px 4px; background: #f3eedd; color: #2b2114; box-shadow: 0 0 30px rgba(0, 0, 0, .6);
-  font-family: var(--f-crt); font-size: 1.08rem; line-height: 1.12; }
+.pv-papier { position: relative; flex: none; padding: 8px 28px 4px; background: #f3eedd; color: #2b2114; box-shadow: 0 0 30px rgba(0, 0, 0, .6);
+  font-family: var(--f-crt); font-size: min(1.08rem, 4.1vw); line-height: 1.12; }
 .pv-papier::before, .pv-papier::after { content: ''; position: absolute; top: 0; bottom: 0; width: 22px; background: radial-gradient(circle at 11px 11px, #0b0910 0 4.2px, transparent 4.8px) 0 0 / 22px 22px repeat-y, #ece5cf; }
 .pv-papier::before { left: 0; border-right: 1px dashed rgba(43, 33, 20, .25); }
 .pv-papier::after { right: 0; border-left: 1px dashed rgba(43, 33, 20, .25); }
@@ -1034,7 +1044,6 @@ img { max-width: 100%; display: block; }
 .pv-warmte .pv-w { color: #a41f1f; }
 .pv-blok { animation: plCaret .5s steps(1) infinite; }
 .pv-totaal { margin-top: 4px; padding-top: 5px; border-top: 3px double #2b2114; font-size: 1.08em; text-shadow: .7px 0 #2b2114; }
-.pv-totaal .pv-w { min-width: 6.4em; text-align: right; }
 .pv-afgerond { font-size: .9em; color: #5d4c34; }
 .pv-perfo { min-height: 0; height: 16px; margin: 6px -36px 2px; background: none !important; border-top: 2px dashed rgba(43, 33, 20, .5); }
 .pv-perfo::before { content: '✂'; position: absolute; left: 26px; top: -13px; font-size: .8rem; color: rgba(43, 33, 20, .6); }
@@ -1333,6 +1342,7 @@ img { max-width: 100%; display: block; }
   .gs-badge-nr { font-size: .95rem; }
   .gk-kost { width: 32px; height: 32px; top: -10px; left: -10px; font-size: 1.2rem; }
   .gs-kaart { padding: 8px 8px 7px; gap: 4px; border-radius: 11px; }
+  .gs-kaart.voorbeeld { transform: translateY(-40px) scale(1.18); }
   .gk-naam { font-size: .98rem; }
   .gk-tekst { font-size: .8rem; line-height: 1.2; }
   .gk-type { font-size: .6rem; }
@@ -1472,6 +1482,7 @@ img { max-width: 100%; display: block; }
   .gk-naam { font-size: .62rem; }
   .gk-tekst { font-size: .54rem; line-height: 1.08; }
   .gk-type { display: none; }
+  .gs-kaart.voorbeeld { transform: translateY(calc(var(--kaart-h) * -.36)) scale(1.3); }
   /* de ballon links van de kast (in de lucht, boven de lift) */
   .gs-ballon { right: calc(100% + 10px); bottom: auto; top: 2%; max-width: min(36vw, 290px); padding: 5px 9px 6px; }
   .gs-ballon::after { right: auto; left: 100%; top: 10px; border-top-color: transparent; border-left-color: rgba(106, 211, 106, .45); }
