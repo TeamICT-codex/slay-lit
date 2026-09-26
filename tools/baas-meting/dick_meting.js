@@ -82,7 +82,9 @@
      MEET_CAP=45 of '{"2":45,...}' (verkenning: plafond per ronde)   MEET_SPILL=1 (probe: het hof vangt)
      MEET_TAFEL=kroon,zeldzaam,verlies [MEET_TAFEL_ST=gemiddeld,sterk]   MEET_ABL='{"thoverk/sterk":{...}}'
      MEET_METGEZEL=drops (alleen de terugkeer van de metgezellen)
-   Uitvoer: <werkboom>/.claude/notities/baas-meting/uit/<label>.json (gitignored, niet gedeployd;
+     MEET_GEMNORM=1 (de gemiddelde builds volgens GEM_NORM: max-HP = basis + 14, geen defensief
+       run-relikwie; zonder de vlag de oude gemiddelde builds van E en F)
+   Uitvoer:<werkboom>/.claude/notities/baas-meting/uit/<label>.json (gitignored, niet gedeployd;
    of MEET_UIT=<pad>) + een samenvatting op de console. Analyse: python tools/baas-meting/doeltabel.py
    <json> (alle doelen in één tabel), populatie.py, breekpunt.py, oorzaak.py, stilstand.py,
    kaarten.py, pool_winst.py, vat_samen.py; mdtabel.py zet dezelfde doeltabel als markdown in
@@ -152,6 +154,15 @@ const STARTREL = { slachter: 'brandend_bloed', gifmagier: 'slangenamulet', thove
 /* defensief = verkleint de schade die je krijgt of geeft je HP/Blok in het gevecht */
 const DEF_RELIKWIEEN = ['mosamulet', 'anker', 'warme_mantel', 'martelaarskroon', 'dossierklem', 'indexkaart', 'was_zegel', 'hartsteen', 'carbon_afdruk', 'feniksveer', 'verlopen_contract', 'houten_been'];
 const STERK_NORM = { hpPlus: 18, relikwieen: 6, defensief: ['mosamulet'], kaarten: 22, upgrades: [13, 13], laster: 0 };
+/* GEM_NORM (Finale B4 stap 1, 26 sep 2026; alleen met MEET_GEMNORM=1): de gemiddelde builds van E en F
+   zijn niet gelijk opgebouwd: max-HP basis +18 / +10 / +14 (Sla 88, Gif 72, Kol 80) en alleen de
+   Kolendruïde draagt een defensief run-relikwie (het Anker). Onder DE ZITTING LOOPT beslist verdediging,
+   dus dat buildverschil verschijnt als heldspreiding (meting_finale_R3.md §11: 32 pp → 15 pp op EV2s).
+   Met de vlag krijgt elke gemiddelde build max-HP = basis + 14 (Sla 84, Gif 76, Kol 80) en geen
+   defensief run-relikwie; dek, upgrades, laster en Slachtblok blijven. Zonder de vlag blijven de oude
+   builds staan (het ijkpunt van F's EV2s en van de nulmeting). */
+const GEMNORM = process.env.MEET_GEMNORM === '1';
+const GEM_NORM = { hpPlus: 14 };
 const BUILDS = {
   slachter: {
     sterk: {
@@ -1044,6 +1055,13 @@ async function main() {
     if (cacheB[sleutel]) return cacheB[sleutel];
     const basis = ruweBuild(held, st);
     if (st === 'sterk') toetsNorm(held, basis);
+    /* GEM_NORM (MEET_GEMNORM=1): zelfde max-HP-opbouw en geen defensief run-relikwie voor elke held */
+    if (st === 'gemiddeld' && GEMNORM) {
+      basis.hp = basisHp[held] + GEM_NORM.hpPlus;
+      const weg = basis.relikwieen.filter(r => r !== STARTREL[held] && DEF_RELIKWIEEN.includes(r));
+      basis.relikwieen = basis.relikwieen.filter(r => !weg.includes(r));
+      basis.label = (basis.label || '') + ` [gemiddeld-norm: ${basis.hp} HP${weg.length ? ', −' + weg.join('/') : ''}]`;
+    }
     const sm = (SMEED[held] || {})[st === 'sterk_oud' ? 'sterk' : st];
     if (sm && sm.length) { basis.smeed = sm; basis.label = (basis.label || '') + ' + ' + sm.length + ' Slachtblok'; }
     /* SOLO IS DE STANDAARD (Thomas, 25 sep: "we doen eerst zonder metgezellen"; DE NISSEN DICHT):
@@ -1081,7 +1099,7 @@ async function main() {
   /* elke build één keer vooraf opbouwen: een norm- of variantfout breekt de meting vóór de eerste job */
   for (const j of jobs) buildVan(j.held, j.st, j.pv);
   console.log(`HET PROCES-meting '${LABEL}' · ${versie} · ${jobs.length} gevechten · ${WERKERS} werkers · ${N} seeds per cel · seeds ${SEEDBASE}-${SEEDBASE + N - 1}` +
-    ` · ${MEET_METGEZEL ? 'MET metgezel ' + MEET_METGEZEL : 'SOLO'}${POP ? ' · populatie ' + POP_VAR.join('/') + ' op ' + POP_ST.join('/') : ''}${BREEK.length ? ' · breekpuntzwaai x' + BREEK.join('/') : ''}${DMGX !== 1 ? ' · druk x' + DMGX : ''}`);
+    ` · ${MEET_METGEZEL ? 'MET metgezel ' + MEET_METGEZEL : 'SOLO'}${GEMNORM ? ' · gemiddeld-norm' : ''}${POP ? ' · populatie ' + POP_VAR.join('/') + ' op ' + POP_ST.join('/') : ''}${BREEK.length ? ' · breekpuntzwaai x' + BREEK.join('/') : ''}${DMGX !== 1 ? ' · druk x' + DMGX : ''}`);
   const resultaten = [];
   let volgende = 0, klaar = 0, soloFout = 0;
   /* [planner F] VEERKRACHT: sterft de browser (parallelle sessies ruimen soms chrome-processen
