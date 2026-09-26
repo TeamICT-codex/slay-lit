@@ -2687,12 +2687,14 @@ let _spraakRij = [], _spraakBezig = false, _spraakT = null;
    - slot: het SLOTWOORD (de doodregel). Mag nog na g.voorbij, en veegt het bord: een gewone
      regel die nog stond, zou hem anders voorbij het einde van het gevecht wegduwen.
    - vervalt (ms): flavor (orakel, scherven-nudge) die langer dan dit op de sluis moet
-     wachten, vervalt - liever niets dan mosterd na de maaltijd. */
+     wachten, vervalt - liever niets dan mosterd na de maaltijd. De termijn telt alleen de
+     tijd dat de regel VOORAAN staat en de sluis dicht is (wacht, in _spraakVolgende), niet
+     de tijd achter een andere plaat. */
 function baasSpreekt(tekst, duurMs, opts) {
   if (INST.spraak === false || !tekst) return;
   const o = opts || {};
   if (o.slot) _spraakStop();
-  _spraakRij.push({ tekst, duur: duurMs || 3200, t0: Date.now(), vervalt: o.vervalt || 0, slot: !!o.slot });
+  _spraakRij.push({ tekst, duur: duurMs || 3200, wacht: 0, sluisT: null, vervalt: o.vervalt || 0, slot: !!o.slot });
   _spraakVolgende();
 }
 /* B2 · B0.4 — DE TEKSTSLUIS: één regel voor álle baasspraak. Zolang er een scènetitel
@@ -2729,13 +2731,20 @@ function _spraakVolgende() {
     if (!_spraakRij.length) return;
   }
   /* wachten mag, maar niet eindeloos: flavor vervalt na zijn eigen termijn, elke andere
-     regel na 10 s (een laag die ooit zou blijven hangen, mag niet alle baasspraak stilleggen) */
-  const verlopen = it => !it.slot && Date.now() - it.t0 > (it.vervalt || 10000);
-  while (_spraakRij.length && verlopen(_spraakRij[0])) _spraakRij.shift();
-  if (!_spraakRij.length) return;
-  if (_spraakGesloten()) { clearTimeout(_spraakT); _spraakT = setTimeout(_spraakVolgende, 120); return; }
-  while (_spraakRij.length && verlopen(_spraakRij[0])) _spraakRij.shift();
-  if (!_spraakRij.length) return;
+     regel na 10 s (een laag die ooit zou blijven hangen, mag niet alle baasspraak stilleggen).
+     B2 F1: de termijn telt alleen de tijd dat de regel VOORAAN staat en de sluis DICHT is.
+     Vroeger telde hij vanaf de aanvraag, ook achter een andere plaat: het orakel bij de
+     eerste ontmoeting met de Erfprins (aangevraagd op +5,2 s, achter de introregel die pas op
+     ~+5,1 s uit de sluis kwam) wachtte zo altijd > 2,5 s en verviel altijd (0 van 4 in beeld).
+     En een regel die achter drie platen van 3,2 s stond, verviel na 10 s zonder ooit te wachten. */
+  const verlopen = it => !it.slot && it.wacht > (it.vervalt || 10000);
+  if (_spraakGesloten()) {
+    const kop = _spraakRij[0], nu = Date.now();
+    if (kop.sluisT != null) kop.wacht += nu - kop.sluisT;
+    kop.sluisT = nu;
+    if (verlopen(kop)) { _spraakRij.shift(); _spraakVolgende(); return; }
+    clearTimeout(_spraakT); _spraakT = setTimeout(_spraakVolgende, 120); return;
+  }
   const item = _spraakRij.shift();
   const d = dtempo(item.duur);
   _spraakBezig = true;

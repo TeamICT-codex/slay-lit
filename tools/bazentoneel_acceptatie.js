@@ -687,6 +687,35 @@ async function bannerDood(browser, fk) {
   return { kop: `De genadeklap vlak na een banner · ${vp.naam}`, regels: R };
 }
 
+/* B2 F1 · B0.4: de eerste ontmoeting met de Erfprins (de Inventaris-intro). orakel[0] wordt
+   aangevraagd terwijl de introregel nog staat; de vervaltermijn (2,5 s) mag alleen de tijd
+   aan de dichte sluis tellen, niet de tijd achter die plaat. Vroeger 0 van 4 in beeld.
+   tik: na hoeveel ms de speler de intro wegtikt (0 = de intro loopt vanzelf af). */
+async function orakel(browser, fk, tik) {
+  const R = []; const t = (g, s) => R.push([!!g, s]);
+  const { ctx, page, vp } = await open(browser, fk);
+  const r = await page.evaluate(async tik => {
+    S.metgezel = null; if (typeof DICK !== 'undefined') DICK.tempo = 1;
+    const ork = (UITSPRAKEN._erfprins.orakel || [])[0] || '';
+    const intro = baasUitspraken('de_erfprins').intro || '';
+    const rec = []; const t0 = performance.now();
+    const iv = setInterval(() => rec.push({ t: Math.round(performance.now() - t0), sp: [...document.querySelectorAll('.baas-spraak')].filter(e => +getComputedStyle(e).opacity > 0.2).map(e => e.textContent.trim()) }), 50);
+    devErfprinsIntro();
+    if (document.querySelector('#draai-blok.toon') && typeof speelTochStaand === 'function') speelTochStaand();
+    const inv = !!document.querySelector('.baas-intro-inventaris');
+    if (tik) setTimeout(() => { const b = document.getElementById('baas-intro'); if (b) b.click(); }, tik);
+    await new Promise(r => setTimeout(r, tik ? tik + 13000 : 24000));   /* intro weg ~5,1 s na de tik, dan twee platen van 3,2 s */
+    clearInterval(iv);
+    const duur = tx => { const z = rec.filter(x => x.sp.some(s => s.startsWith(tx.trim().slice(0, 20)))); return z.length ? z[z.length - 1].t - z[0].t : 0; };
+    return { inv, ork: duur(ork), intro: duur(intro), orkTekst: ork.slice(0, 30) };
+  }, tik);
+  t(r.inv, `B0.4 ${vp.naam} eerste ontmoeting (tik ${tik ? tik + ' ms' : 'geen'}): de Inventaris-intro speelt`);
+  t(r.intro >= 1500 && r.ork >= 1500, `B0.4 ${vp.naam} eerste ontmoeting (tik ${tik ? tik + ' ms' : 'geen'}): de introregel ${r.intro} ms en orakel[0] ${r.ork} ms in beeld (elk >= 1,5 s; "${r.orkTekst}…")`);
+  t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+  await ctx.close();
+  return { kop: `Het orakel bij de eerste ontmoeting · ${vp.naam} · tik ${tik || 'geen'}`, regels: R };
+}
+
 /* het gevecht gaat DOOR (Slijmkoning met een levende splitsing): na 2,4 s komt zijn kolom vrij */
 async function lijkWeg(browser, fk) {
   const R = []; const t = (g, s) => R.push([!!g, s]);
@@ -862,6 +891,7 @@ async function intents(browser) {
     ...['M800', 'M846', 'L1440', 'L1440d3', 'L1366d3'].map(fk => ['dood ' + fk, () => dood(browser, fk)]),
     ...['M800', 'L1440'].map(fk => ['lijkweg ' + fk, () => lijkWeg(browser, fk)]),
     ...['M800', 'L1440', 'L1440d3'].map(fk => ['bannerdood ' + fk, () => bannerDood(browser, fk)]),
+    ...[['M846', 1500], ['M800', 400], ['L1440', 0], ['L1440d3', 6000]].map(([fk, tik]) => ['orakel ' + fk, () => orakel(browser, fk, tik)]),
     ...['L1440d3', 'L1366d3'].map(fk => ['3d ' + fk, () => driedee(browser, fk)]),
     ...['M800', 'L1440'].map(fk => ['hud ' + fk, () => hudEnHof(browser, fk)]),
     ['intents', () => intents(browser)]
