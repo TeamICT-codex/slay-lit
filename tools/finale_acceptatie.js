@@ -582,7 +582,8 @@ const sonde = page => page.evaluate(() => {
     return { naVloek, naKaart, bezig: S.gevecht.bezig };
   });
   t(k11.open && rv.naVloek && rv.naKaart && rv.bezig, `keuzescherm open (${k11.open}) → toonVloekReveal: blijft (${rv.naVloek}) → toonKaartReveal: blijft (${rv.naKaart}), de vijandbeurt wacht nog (${rv.bezig})`);
-  await page.click('.decreet-keuze-overlay .decreet-kies[data-decreet="A"]');
+  /* is het scherm toch weg (de regressie), dan geen klik in het niets: de controle hieronder faalt */
+  if (await page.$('.decreet-keuze-overlay .decreet-kies[data-decreet="A"]')) await page.click('.decreet-keuze-overlay .decreet-kies[data-decreet="A"]');
   let kop11 = await decreetKop(page);
   await wachtVrij(page);
   let na11 = await page.evaluate(([a, b]) => ({ a: S.dek.filter(c => c.id === a).length, b: S.dek.filter(c => c.id === b).length }), [k11.A.id, k11.B.id]);
@@ -639,7 +640,9 @@ const sonde = page => page.evaluate(() => {
   ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
   const tx = await page.evaluate(() => {
     const oud = { A: DICK.APPLAUS, D: DICK.decreetCap, K: DICK.krachtPerKiezer };
-    const lees = () => ({ claq: dickTekst(BESTIARIUM.de_claqueur.notitie), dick: dickTekst(BESTIARIUM.de_dicktator.notitie), herv: dickTekst(UITSPRAKEN._dicktator.duiding.herverkiezing) });
+    /* zonder dickTekst (de regressie) blijft de tekst ruw: de controles hieronder falen, de suite breekt niet af */
+    const vul = s => (typeof dickTekst === 'function' ? dickTekst(s) : String(s));
+    const lees = () => ({ claq: vul(BESTIARIUM.de_claqueur.notitie), dick: vul(BESTIARIUM.de_dicktator.notitie), herv: vul(UITSPRAKEN._dicktator.duiding.herverkiezing) });
     const nu = lees();
     DICK.APPLAUS = oud.A + 2; DICK.decreetCap = oud.D + 1; DICK.krachtPerKiezer = oud.K + 3;
     const gedraaid = lees();
