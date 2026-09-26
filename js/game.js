@@ -5351,15 +5351,21 @@ function gevechtTik(dt) {
   /* veilige lijn: naam/hp/statussen mogen nooit de handzone in zakken.
      Afgeleid van de werkelijke onderbalk-hoogte (235px desktop = 252 zoals
      voorheen; 270px telefoon → klopt mee) i.p.v. een vaste 252. */
-  const lijn = window.innerHeight - ((GDOM.onderbalkH || 235) + 17);
+  /* B2 · B0.12: in een BAASGEVECHT is de veilige lijn de bovenrand van de kaarten zelf (de
+     namen zijn daar weg, css), en blijft de pil onder de HUD (topbalk of bazenbalk): een
+     hoge baas duwt zijn labelkolom dan niet meer in de bazenbalk. vrijeBovenrand() is een
+     gecachte maat (js/bazentoneel.js), dus hier geen layout per frame. */
+  const baasKader = !!(g.soort === 'baas' && typeof vrijeBovenrand === 'function');
+  const lijn = window.innerHeight - ((GDOM.onderbalkH || 235) + (baasKader ? -25 : 17));
+  const vrijBoven = baasKader ? vrijeBovenrand() : -Infinity;
   g.vijanden.forEach((v, i) => {
     const d = GDOM.vijanden[i];
     const p = Vista.schermPos(v);
     if (!d || !p) return;
-    const top = p.topY - 34;
+    const top = Math.max(p.topY - 34, vrijBoven);
     d.wrap.style.left = p.x + 'px';
     d.wrap.style.top = top + 'px';
-    const spacerH = Math.max(0, p.voetY - p.topY);
+    const spacerH = Math.max(0, p.voetY - (top + 34));
     const maxSpacer = Math.max(36, lijn - top - (d.infoH || 130));
     d.spacer.style.height = Math.min(spacerH, maxSpacer) + 'px';
   });

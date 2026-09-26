@@ -17,6 +17,23 @@ const Vista = (() => {
      en gevechten zónder plaat zien er exact uit als in v115. */
   const KIJK_Y = 1.8;
   let kijkY = KIJK_Y;
+  /* B2 · B0.12 — HET KADER VAN EEN BAASGEVECHT. De vaste camera (fov 50, KIJK_Y) liet op
+     1366x768 de labels tot 45% over het eigen lijf van de baas lopen en zijn pil in de
+     bazenbalk. kaderFit3D() (js/bazentoneel.js) zoekt per scherm de kleinste fov (>= 50)
+     waarbij de kruin van de hoogste figuur onder de HUD blijft en de voetlijn op de
+     labelstapel valt, en zet die hier. null = de gewone camera. De stand overleeft een
+     gevechtStart (een nieuwkomer), zodat het toneel dan niet verspringt. */
+  let kaderOverride = null;
+  function zetKader(k) {
+    kaderOverride = k || null;
+    if (!camera) return;
+    camera.fov = (k && k.fov) || 50;
+    camera.updateProjectionMatrix();
+    kijkY = (k && k.kijkY != null) ? k.kijkY : KIJK_Y;
+    camera.lookAt(0, kijkY, 0);
+    camera.updateMatrixWorld(true);
+  }
+  function kaderStand() { return { fov: camera ? camera.fov : null, kijkY, eigen: !!kaderOverride }; }
   /* De vloer van het toneel: elke acteur staat met zijn GETEKENDE voeten op deze
      wereldhoogte (zie voetmarge() en maakActeur). Dat is meteen de bron van
      voetlijnY() — de lijn waar plaatsGevechtsplaat() de geschilderde vloerrand
@@ -429,8 +446,9 @@ const Vista = (() => {
     if (stof) stof.visible = !eigenAchtergrond;   /* stof hoort bij de procedurele zaal; achter een geschilderde plaat weg (+ spaart de per-frame update-lus) */
     renderer.setClearColor(0x0d0a12, eigenAchtergrond ? 0 : 1);
     /* v116: de camera staat vast (KIJK_Y). De plaat komt naar de figuren toe —
-       plaatsGevechtsplaat() zet haar vloerrand op Vista.voetlijnY(). */
-    kijkY = KIJK_Y;
+       plaatsGevechtsplaat() zet haar vloerrand op Vista.voetlijnY().
+       B2 · B0.12: behalve als een baasgevecht zijn eigen kader kreeg (zetKader). */
+    kijkY = (kaderOverride && kaderOverride.kijkY != null) ? kaderOverride.kijkY : KIJK_Y;
     maakActeur(g.speler, g.heldArt || 'speler', { teken: '🤺', spiegel: true }, -3.7, 0.4, 2.5);
     /* enkel LEVENDE vijanden als sprite opbouwen: dode blijven in g.vijanden staan (v.dood=true,
        voor de sterft-fade), maar een herbouw (voegVijandToe — Doorslag-kopie / Mal-gietsel) mag een
@@ -446,6 +464,9 @@ const Vista = (() => {
       maakActeur(v, v.id, { teken: def.art, spiegel: false }, x, z, schaal);
     });
     actief = true;
+    /* B2 · B0.12: het toneel staat - het bazentoneel (js/bazentoneel.js) past het kader aan
+       (start, nieuwkomer, de 3D-knop: alle drie de aanroepers lopen hierlangs) */
+    window.dispatchEvent(new CustomEvent('vista:gevechtstart'));
   }
 
   function gevechtEind() {
@@ -875,6 +896,7 @@ const Vista = (() => {
   return {
     beschikbaar, start, gevechtStart, gevechtEind, raak, aanval, sterf, pose, tik, schermPos, resize, zwaai, zetLicht, schud,
     voetlijnY, voetlijnInfo, voetMeting,
+    zetKader, kaderStand,   /* B2 · B0.12 */
     get actief() { return actief; },
     get klaar() { return klaar; }
   };

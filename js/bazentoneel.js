@@ -12,6 +12,10 @@
    niets hier raakt de spelstaat of de seeded RNG.
    ============================================================================ */
 
+/* gedeelde toestand (bovenaan: de IIFE's hieronder lopen al tijdens het laden) */
+let _vrijBoven = null;   /* B0.12: gecachte vrije bovenrand onder de HUD (vrijeBovenrand) */
+let _kaderT = null;      /* B0.12: de geplande kaderfit (planKaderFit) */
+
 /* ---------- B0.9 — de baaspil nooit in de topbalk (mobiel liggend) ----------
    De intentpil van een baas hangt boven zijn hoofd. Alleen als ze daar in de topbalk zou
    vallen (bovenkant van de art − 34px < onderkant topbalk), krijgt de kolom .pil-zij en
@@ -115,6 +119,10 @@ function zetBazenbalkOnder() {
   const bb = document.getElementById('baas-balk'); if (!bb) return;
   const r = bb.getBoundingClientRect();
   document.body.style.setProperty('--bb-onder', Math.round(r.height ? r.bottom : 60) + 'px');
+  /* B0.12: de vrije bovenrand verschuift mee, en in een 3D-baasgevecht het kader ook */
+  _vrijBoven = null;
+  const sc = document.getElementById('scherm-gevecht');
+  if (sc && sc.classList.contains('d3-actief') && typeof S !== 'undefined' && S && S.gevecht && S.gevecht.soort === 'baas') planKaderFit(120);
 }
 (function volgBazenbalk() {
   const bb = document.getElementById('baas-balk'); if (!bb) return;
@@ -122,6 +130,83 @@ function zetBazenbalkOnder() {
   window.addEventListener('resize', zetBazenbalkOnder);
   zetBazenbalkOnder();
 })();
+
+/* ---------- B0.12 — het 3D-kader van een baasgevecht ----------
+   vrijeBovenrand(): de eerste vrije pixelrij onder de HUD (topbalk, en de bazenbalk als die
+   staat) + 4px. gevechtTik leest haar elk frame, dus ze is GECACHET en wordt herberekend als
+   de bazenbalk van maat verandert, bij resize en bij elke kaderfit. */
+function _meetVrijeBovenrand() {
+  const tb = document.getElementById('topbalk'), bb = document.getElementById('baas-balk');
+  let y = tb ? tb.getBoundingClientRect().bottom : 52;
+  if (bb && bb.style.display !== 'none' && getComputedStyle(bb).display !== 'none') {
+    /* computed top + layouthoogte: immuun voor de animaties op de balk (hart, pips) */
+    y = Math.max(y, (parseFloat(getComputedStyle(bb).top) || 0) + bb.offsetHeight);
+  }
+  _vrijBoven = y + 4;
+  return _vrijBoven;
+}
+function vrijeBovenrand() { return _vrijBoven == null ? _meetVrijeBovenrand() : _vrijBoven; }
+
+/* kaderFit3D(): de camera van een 3D-baasgevecht, per scherm uitgerekend.
+   - voetDoel: de voetlijn valt op de bovenrand van de kaarten min de labelstapel (hp, chips);
+   - kopDoel: de kruin van de HOOGSTE figuur blijft onder vrijeBovenrand() + 35 (de pil);
+   - de kleinste fov (>= 50) die beide haalt, met per fov de kijkhoogte (kijkY) die de
+     voeten precies op voetDoel zet.
+   Gemeten (P, rook_fit): fov 53,4 op 1440x900 en 64,0 op 1366x768. Eigen label op eigen
+   lijf 45,4% -> <= 0,2% (1366-3D), pil in de bazenbalk 2 905 px2 -> 0. De prijs op
+   1366x768: de figuren worden een kwart kleiner, nog altijd groter dan in 2D (beslissing
+   Thomas: de kaderfit). Een gewoon gevecht krijgt de vaste camera terug. */
+function kaderFit3D() {
+  const sc = document.getElementById('scherm-gevecht');
+  if (!sc || !sc.classList.contains('d3-actief') || !window.Vista || !Vista.zetKader) return null;
+  const g = S && S.gevecht; if (!g) return null;
+  if (g.soort !== 'baas') { if (Vista.kaderStand().eigen) { Vista.zetKader(null); plaatsGevechtsplaat(); } return null; }
+  const lev = g.vijanden.filter(v => !v.dood); if (!lev.length) return null;
+  renderGevecht();   /* labels (en dus infoH) op de huidige stand */
+  Vista.zetKader(null);
+  let hoogste = lev[0], hoogsteTop = Infinity;
+  lev.forEach(v => { const p = Vista.schermPos(v); if (p && p.topY < hoogsteTop) { hoogsteTop = p.topY; hoogste = v; } });
+  const kopDoel = _meetVrijeBovenrand() + 35;
+  let labels = 0;
+  GDOM.vijanden.forEach((d, i) => { const v = g.vijanden[i]; if (d && v && !v.dood) labels = Math.max(labels, (d.infoH || 130) - 35); });
+  if (GDOM.speler) labels = Math.max(labels, GDOM.speler.infoH || 0);
+  const voetDoel = innerHeight - ((GDOM.onderbalkH || 235) - 25) - labels;
+  const zet = (fov, kijkY) => Vista.zetKader({ fov, kijkY });
+  /* per fov: de kijkhoogte die de voetlijn op voetDoel legt (bisectie; de voetlijn zakt
+     monotoon als de camera hoger kijkt) */
+  const kijkVoor = fov => {
+    let lo = -4, hi = 8;
+    for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; zet(fov, m); if (Vista.voetlijnY() > voetDoel) hi = m; else lo = m; }
+    return (lo + hi) / 2;
+  };
+  const kopBij = fov => { const k = kijkVoor(fov); zet(fov, k); return { k, top: Vista.schermPos(hoogste).topY }; };
+  let best = { fov: 50, ...kopBij(50) };
+  if (best.top < kopDoel) {
+    let lo = 50, hi = 95; best = null;
+    for (let i = 0; i < 22; i++) {
+      const f = (lo + hi) / 2, r = kopBij(f);
+      if (r.top < kopDoel) lo = f; else { hi = f; best = { fov: f, ...r }; }
+    }
+    if (!best) best = { fov: 95, ...kopBij(95) };
+  }
+  zet(best.fov, best.k);
+  plaatsGevechtsplaat();
+  return { fov: +best.fov.toFixed(2), kijkY: +best.k.toFixed(3), kopDoel: Math.round(kopDoel), voetDoel: Math.round(voetDoel), top: Math.round(best.top) };
+}
+/* de fit loopt VANZELF: na elke Vista.gevechtStart (start, nieuwkomer, de 3D-knop), bij
+   resize, en als de bazenbalk van hoogte verandert (Geroofd-pil, beleidsstrook) */
+function planKaderFit(ms) {
+  clearTimeout(_kaderT);
+  _kaderT = setTimeout(() => { try { window.__kaderLaatst = kaderFit3D(); } catch (e) { } }, ms);
+}
+window.addEventListener('vista:gevechtstart', () => {
+  const g = typeof S !== 'undefined' && S && S.gevecht;
+  /* een gewoon gevecht: meteen de vaste camera terug (vóór plaatsGevechtsplaat zijn voetlijn
+     leest), een baasgevecht: fitten zodra het DOM staat */
+  if (g && g.soort === 'baas') planKaderFit(60);
+  else if (window.Vista && Vista.kaderStand && Vista.kaderStand().eigen) Vista.zetKader(null);
+});
+window.addEventListener('resize', () => { _vrijBoven = null; planKaderFit(180); });
 
 /* ---------- de toneelwacht: één lichte lus (150 ms), alleen tijdens een gevecht ----------
    Figuren bewegen buiten renderGevecht om (entree, oprijzen, het hof dat opkomt, de adem),

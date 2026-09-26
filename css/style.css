@@ -5113,6 +5113,11 @@ body[data-scherm="einde"] #licht-vignet { opacity: 0 !important; }
   z-index: 2;
 }
 .d3-actief .vijand.sterft { opacity: 0; transform: translateX(-50%); }
+/* B2 · B0.12 (beslissing Thomas): in een 3D-BAASGEVECHT geen naamlabels, zoals op mobiel -
+   de baas staat in de bazenbalk, de held in de topbalk. Dat maakt de labelstapel 31px lager,
+   en dat heeft de kaderfit (kaderFit3D, js/bazentoneel.js) nodig. */
+#scherm-gevecht.d3-actief.baas-actief .vijand-naam,
+#scherm-gevecht.d3-actief.baas-actief .speler-naam { display: none; }
 
 /* ---------- held-FX: effectlagen over de spelersprite ----------
    (choreografie overgenomen uit het aangeleverde handoff-pakket) */
