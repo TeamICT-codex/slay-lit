@@ -264,6 +264,33 @@ async function helderheid(page, r) {   /* p98-luminantie van een rechthoek (scre
 }
 async function shot(page, naam) { if (SHOTS) { try { await page.screenshot({ path: path.join(SHOTS, naam.replace(/[^\w.-]+/g, '_') + '.png') }); } catch (e) { } } }
 
+/* B0.3: schudScherm en dan .slowmo, per animatieframe gemeten (in de pagina). Plaat, canvas en
+   bazenbalk tegenover hun rustpositie; in 3D ook elke labelkolom (fixed in #strijdveld)
+   tegenover de style.left/top die gevechtTik zet - in rust gelijk. B2 F1: een translate of
+   filter op #strijdveld maakte hem hun containing block (140-177 px). */
+async function labelSchok() {
+  const top = id => { const e = document.getElementById(id); return e ? e.getBoundingClientRect().top : null; };
+  const bbTop = () => document.getElementById('baas-balk').getBoundingClientRect().top;
+  const d3 = document.getElementById('scherm-gevecht').classList.contains('d3-actief');
+  const kol = () => [...document.querySelectorAll('#vijanden-rij .vijand:not(.sterft)'), document.getElementById('speler-zone')].filter(e => e && e.style.top);
+  const afw = () => kol().map(e => { const q = e.getBoundingClientRect(); return Math.max(Math.abs(q.top - parseFloat(e.style.top)), Math.abs(q.left + q.width / 2 - parseFloat(e.style.left))); });
+  const rust = { bg: top('gevecht-achtergrond'), cv: top('vista-canvas'), bb: bbTop() };
+  const lab0 = d3 ? afw() : [];
+  let bg = 0, cv = 0, bb = 0, lab = 0;
+  const neem = () => {
+    bg = Math.max(bg, Math.abs(top('gevecht-achtergrond') - rust.bg)); cv = Math.max(cv, Math.abs(top('vista-canvas') - rust.cv)); bb = Math.max(bb, Math.abs(bbTop() - rust.bb));
+    if (d3) afw().forEach((a, i) => { if (isFinite(a)) lab = Math.max(lab, Math.abs(a - (lab0[i] || 0))); });
+  };
+  const lus = async ms => { const t0 = performance.now(); while (performance.now() - t0 < ms) { await new Promise(r => requestAnimationFrame(r)); neem(); } };
+  schudScherm();
+  await lus(420);
+  await new Promise(r => setTimeout(r, 300));
+  const sc = document.getElementById('scherm-gevecht'); sc.classList.add('slowmo');
+  await lus(330);
+  sc.classList.remove('slowmo');
+  return { bg: +bg.toFixed(1), cv: +cv.toFixed(1), bb: +bb.toFixed(1), lab: Math.round(lab), n: lab0.length };
+}
+
 /* ---------- de secties: elke taak geeft { kop, regels: [[goed, tekst]] } terug ---------- */
 const max = (a, f) => a.length ? Math.max(...a.map(f)) : 0;
 
@@ -382,21 +409,9 @@ async function perFormaat(browser, fk) {
 
       /* --- B0.3: de schok schudt het toneel, niet het scherm (laptop) --- */
       if (laptop && baas !== 'hof') {
-        const sch = await page.evaluate(async () => {
-          const top = id => { const e = document.getElementById(id); return e ? e.getBoundingClientRect().top : null; };
-          const bbTop = () => document.getElementById('baas-balk').getBoundingClientRect().top;
-          const rust = { bg: top('gevecht-achtergrond'), cv: top('vista-canvas'), bb: bbTop() };
-          let bg = 0, cv = 0, bb = 0;
-          const neem = () => { bg = Math.max(bg, Math.abs(top('gevecht-achtergrond') - rust.bg)); cv = Math.max(cv, Math.abs(top('vista-canvas') - rust.cv)); bb = Math.max(bb, Math.abs(bbTop() - rust.bb)); };
-          schudScherm();
-          for (let i = 0; i < 8; i++) { await new Promise(r => setTimeout(r, 45)); neem(); }
-          await new Promise(r => setTimeout(r, 400));
-          const sc = document.getElementById('scherm-gevecht'); sc.classList.add('slowmo');
-          for (let i = 0; i < 6; i++) { await new Promise(r => setTimeout(r, 45)); neem(); }
-          sc.classList.remove('slowmo');
-          return { bg: +bg.toFixed(1), cv: +cv.toFixed(1), bb: +bb.toFixed(1) };
-        });
+        const sch = await page.evaluate(labelSchok);
         t(sch.bg <= 9 && sch.cv <= 9 && sch.bb === 0, `B0.3 ${vp.naam} ${B}: schok + slowmo: plaat ${sch.bg} px, canvas ${sch.cv} px (<= 9, was 52), bazenbalk ${sch.bb} px (0)`);
+        if (vp.d3) t(sch.n > 0 && sch.lab === 0, `B0.3 ${vp.naam} ${B}: in 3D wijkt geen labelkolom (${sch.n}) af van de plek die gevechtTik zet, per frame tijdens schok en slowmo: max ${sch.lab} px (0; F1 mat 140-177)`);
       }
     } catch (e) { t(false, `${vp.naam} ${B}: fout in de meting: ${e.message}`); }
   }
@@ -665,6 +680,12 @@ async function driedee(browser, fk) {
     return { voor, na: Vista.kaderStand(), namen: [...document.querySelectorAll('#vijanden-rij .vijand-naam')].filter(e => getComputedStyle(e).display !== 'none').length };
   });
   t(!gewoon.err && gewoon.voor.eigen && !gewoon.na.eigen && Math.abs(gewoon.na.fov - 50) < 0.01 && gewoon.namen > 0, `B0.12 ${vp.naam}: een gewoon gevecht krijgt de vaste camera terug (fov ${gewoon.voor && gewoon.voor.fov.toFixed(1)} -> ${gewoon.na && gewoon.na.fov}) en zijn naamlabels (${gewoon.namen})${gewoon.err ? ' — ' + gewoon.err : ''}`);
+  /* B0.3 (F1) ook in een gewoon 3D-gevecht: de labels blijven bij hun sprites tijdens schok en slowmo */
+  if (!gewoon.err) {
+    await wachtRust(page, 600, 15000);
+    const sch = await page.evaluate(labelSchok);
+    t(sch.n > 0 && sch.lab === 0, `B0.3 ${vp.naam} gewoon gevecht: geen labelkolom (${sch.n}) wijkt af tijdens schok en slowmo, per frame: max ${sch.lab} px (0)`);
+  }
   t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
   await ctx.close();
   return { kop: `3D: signatuurposes en de camera · ${vp.naam}`, regels: R };

@@ -1271,10 +1271,15 @@ body.lite .lb-daily-cta { animation: none; }
    de inline parallax-transform die gevechtTik() in 3D elke frame op plaat en canvas zet.
    Een plaat die net een eigen stoot speelt (.plaat-dreun/-kantel/-instort/-inzoom) laten
    we met rust: de animation-property is één waarde, en de beef zou die stoot afbreken en
-   daarna laten herstarten. Idem #strijdveld tijdens de .toneelschok van de regie. */
+   daarna laten herstarten. Idem #strijdveld tijdens de .toneelschok van de regie.
+   B2 F1: #strijdveld schudt alleen in 2D (:not(.d3-actief)), net als bij de hitstop en de
+   toneelschok (zie daar). In 3D staan alle labelkolommen position:fixed IN #strijdveld;
+   een translate op #strijdveld maakte hem hun containing block, en hp-balken, pillen,
+   chips en spraakballonnen sprongen 140-177px los van hun sprites (1366-3D, 1440-3D), bij
+   elke schok en elke banner. In 3D draagt de camerakick van Vista (raak) de klap al. */
 #scherm-gevecht.beef :is(#gevecht-achtergrond, #gevecht-achtergrond-2):not(.plaat-dreun, .plaat-kantel, .plaat-instort, .plaat-inzoom),
 #scherm-gevecht.beef :is(#vista-canvas, #arena-tint),
-#scherm-gevecht.beef #strijdveld:not(.toneelschok) { animation: beef .35s; }
+#scherm-gevecht:not(.d3-actief).beef #strijdveld:not(.toneelschok) { animation: beef .35s; }
 @keyframes beef {
   0%, 100% { translate: 0 0; }
   20% { translate: -9px 3px; }
@@ -4334,9 +4339,12 @@ body.lite #baas-balk .bb-beurt { transition: none; }
 /* HET ONTSLAG: een halve tel slow-motion op de klap.
    B2 · B0.3: de flits zit op de toneellagen, niet op #scherm-gevecht - een filter op het
    scherm zelf maakt het net als .beef het containing block van zijn fixed kinderen (52px
-   sprong). Een plaat die een eigen stoot speelt, houdt die (zie .beef bij 'gevecht'). */
+   sprong). Een plaat die een eigen stoot speelt, houdt die (zie .beef bij 'gevecht').
+   B2 F1: op #strijdveld alleen in 2D - in 3D maakt een filter hem het containing block
+   van de fixed labelkolommen (dezelfde sprong als bij .beef, zie daar). */
 #scherm-gevecht.slowmo :is(#gevecht-achtergrond, #gevecht-achtergrond-2):not(.plaat-dreun, .plaat-kantel, .plaat-instort, .plaat-inzoom),
-#scherm-gevecht.slowmo :is(#vista-canvas, #strijdveld) { animation: slowmoPuls .32s ease-out; }
+#scherm-gevecht.slowmo #vista-canvas,
+#scherm-gevecht:not(.d3-actief).slowmo #strijdveld { animation: slowmoPuls .32s ease-out; }
 @keyframes slowmoPuls { 0% { filter: brightness(1.55) saturate(.5); } 100% { filter: none; } }
 
 /* ============================================================
