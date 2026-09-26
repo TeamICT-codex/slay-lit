@@ -2449,6 +2449,16 @@ body.lite .pb-skelet, body.lite .pb-lijst .pb-rij.pb-skelet:nth-child(odd) { bac
 .is-elite .vijand-naam { color: var(--bloed); }
 .is-baas .vijand-naam { color: var(--goud); font-size: 1.25rem; }
 .vijand.sterft { opacity: 0; transform: scale(.6) rotate(8deg); pointer-events: none; }
+/* B2 · B0.7 — DE VERSLAGEN BAAS BLIJFT LIGGEN. Hij krimpt en vervaagt niet meer in een halve
+   seconde (scale .6, tot 18px boven de vloer zwevend): hij blijft op volle maat in zijn
+   doodspose staan (pose2D keert voor een dode actor niet terug) tot het scherm wisselt - na
+   de doodsklap, zijn slotwoord (B0.4) en de doodsflits. Geen vaste fade-timer: onder last
+   viel zo'n fade vóór de flits. Pil, HP, chips en naam gaan wél meteen weg. De kolom komt
+   alleen vrij als het gevecht doorgaat (renderGevecht, lijk-weg na 2,4 s). 3D blijft bij
+   Vista.sterf, een bewuste val. Gemeten op de DICKtator (tweede dood -> outro) vóór dit
+   generiek werd: zijn eigen regie (knielen, doek) hoort bij de herverkiezing, niet hier. */
+#scherm-gevecht:not(.d3-actief) .vijand.is-baas.sterft { opacity: 1; transform: none; transition: none; pointer-events: none; }
+#scherm-gevecht:not(.d3-actief) .vijand.is-baas.sterft :is(.intent-rij, .hp-balk, .blok-status, .vijand-naam) { visibility: hidden; }
 /* v114 (HET TONEEL): ná de sterf-fade verdwijnt de kolom écht — met alleen opacity:0
    bleven kolombreedte én flex-gap staan. In portret duwde dat de vijandenrij een hele
    regel omhoog (baas achter de topbalk). renderGevecht zet de klasse met vertraging. */

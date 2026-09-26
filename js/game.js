@@ -5936,7 +5936,13 @@ function renderGevecht() {
     else if (exitBezig) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); }
     else if (!wasDood) {
       clearTimeout(d._lijkT);
-      d._lijkT = setTimeout(() => { if (v.dood) d.wrap.classList.add('lijk-weg'); }, dtempo(750));
+      /* B2 · B0.7: een verslagen BAAS blijft liggen tot het scherm wisselt (css: .is-baas.sterft
+         in 2D). Alleen als het gevecht DOORGAAT (de Slijmkoning met zijn splitsingen), geeft hij
+         zijn kolom terug - pas na 2,4 s, na zijn val. Gewone vijanden: ongewijzigd. */
+      const isBaas = !!(VIJANDEN[v.id] && VIJANDEN[v.id].baas);
+      d._lijkT = setTimeout(() => {
+        if (v.dood && !(isBaas && S.gevecht && S.gevecht.voorbij)) d.wrap.classList.add('lijk-weg');
+      }, dtempo(isBaas ? 2400 : 750));
     }
     /* v121: de fase-klassen van de DICKtator worden AFGEDWONGEN, net als .sterft.
        bouwGevechtDom() doet rij.innerHTML = '' en wist elke handmatig gezette klasse -
