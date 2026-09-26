@@ -801,6 +801,27 @@ async function driedee(browser, fk) {
       await slaap(1600);
     }
   }
+  /* B2 F1 · B0.6 in de ECHTE flow: dicktatorDecreet en dicktatorHerverkiezing zelf. Daar volgt
+     op de signatuurpose meteen een Vista.pose(…, 'cast'), die haar vroeger in hetzelfde frame
+     overschreef (poseNu: alleen 'cast'). Per 50 ms opgenomen. */
+  const flow = async fn => page.evaluate(async fn => {
+    const g = S.gevecht; const b = g.vijanden.find(v => v.id === 'de_dicktator');
+    const rec = []; const t0 = performance.now();
+    const iv = setInterval(() => { const p = Vista.poseNu(b); if (!rec.length || rec[rec.length - 1].p !== p) rec.push({ t: Math.round(performance.now() - t0), p }); }, 50);
+    try { if (fn === 'decreet') dicktatorDecreet(b); else { b.hp = 0; dicktatorHerverkiezing(g, b); } } catch (e) { rec.push({ t: -1, p: 'FOUT ' + e.message }); }
+    await new Promise(r => setTimeout(r, fn === 'decreet' ? 2600 : 7000)); clearInterval(iv);
+    const doel = fn === 'decreet' ? 'decreet' : 'herkozen';
+    const i = rec.findIndex(x => x.p === doel);
+    return { rec: rec.map(x => x.t + ':' + x.p).join(' '), van: i >= 0 ? rec[i].t : null, duur: i >= 0 ? ((rec[i + 1] || { t: fn === 'decreet' ? 2600 : 7000 }).t - rec[i].t) : 0 };
+  }, fn);
+  try {
+    const d = await flow('decreet');
+    t(d.van != null && d.van <= 300 && d.duur >= 1500, `B0.6 ${vp.naam} DICKtator: in dicktatorDecreet zelf staat de textuur 'decreet' na ${d.van} ms, ${d.duur} ms lang (<= 300, >= 1,5 s; ${d.rec})`);
+    await wachtRust(page, 1000, 20000);
+    const h = await flow('herverkiezing');
+    t(h.van != null && h.duur >= 1500, `B0.6 ${vp.naam} DICKtator: in dicktatorHerverkiezing zelf staat de textuur 'herkozen' ${h.duur} ms (>= 1,5 s; ${h.rec})`);
+    await wachtRust(page, 1000, 30000);
+  } catch (e) { t(false, `B0.6 ${vp.naam}: fout in de echte flow: ${e.message}`); }
   /* een gewoon 3D-gevecht na een baas: de vaste camera terug */
   const gewoon = await page.evaluate(async () => {
     const voor = Vista.kaderStand();
@@ -815,6 +836,18 @@ async function driedee(browser, fk) {
     const sch = await page.evaluate(labelSchok);
     t(sch.n > 0 && sch.lab === 0, `B0.3 ${vp.naam} gewoon gevecht: geen labelkolom (${sch.n}) wijkt af tijdens schok en slowmo, per frame: max ${sch.lab} px (0)`);
   }
+  /* een signatuurpose zonder art zet niets: de kaats van De Spiegelwachter ('plagiaat') liet
+     vroeger een lopende gif-reactie vallen */
+  const kaats = await page.evaluate(async () => {
+    try { startGevecht(['spiegelwachter'], 'gevecht', 1); } catch (e) { return { err: e.message }; }
+    await new Promise(r => setTimeout(r, 2500));
+    const v = S.gevecht.vijanden.find(x => x.id === 'spiegelwachter'); if (!v) return { err: 'geen spiegelwachter' };
+    Vista.pose(v, 'gif', 1.6); await new Promise(r => setTimeout(r, 150));
+    const voor = Vista.poseNu(v);
+    pose2D(v, 'plagiaat', 0.7); await new Promise(r => setTimeout(r, 200));
+    return { voor, na: Vista.poseNu(v) };
+  });
+  t(!kaats.err && kaats.voor === 'gif' && kaats.na === 'gif', `B0.6 ${vp.naam} De Spiegelwachter: een 'plagiaat' zonder art onderbreekt zijn gifreactie niet (${kaats.voor} -> ${kaats.na})${kaats.err ? ' — ' + kaats.err : ''}`);
   t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
   await ctx.close();
   return { kop: `3D: signatuurposes en de camera · ${vp.naam}`, regels: R };

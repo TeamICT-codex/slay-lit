@@ -513,9 +513,20 @@ const Vista = (() => {
   }
 
   /* tijdelijke pose tonen (block/victory/cast) als die afbeelding bestaat */
+  /* B2 F1 · B0.6 — de signatuurposes van de bazen in de ECHTE flow. Twee regels:
+     - een lopende signatuurpose wint van een generieke 'cast' die in hetzelfde moment komt.
+       Het decreet en de herverkiezing roepen na pose2D(v, 'decreet'/'herkozen') meteen
+       Vista.pose(v, 'cast') aan; die overschreef de signatuur in hetzelfde frame, en de
+       textuur 'decreet'/'herkozen' kwam in 3D nooit (gemeten met poseNu: alleen 'cast');
+     - een signatuurpose zonder eigen art zet niets: de gifkaats van een gewone vijand (De
+       Spiegelwachter) vroeg 'plagiaat' aan, toonde niets en onderdrukte 0,7 s zijn hit- of
+       gifreactie. */
+  const SIGNATUUR = new Set(['plagiaat', 'plagiaat_variant', 'decreet', 'factuur', 'herkozen']);
   function pose(actor, naam, duur) {
     const a = acteurs.get(actor);
     if (!a) return;
+    if (SIGNATUUR.has(naam) && !a.stateTex[naam]) return;
+    if (naam === 'cast' && SIGNATUUR.has(a.pose) && a.poseTot && tijd < a.poseTot) return;
     a.pose = naam;
     a.poseTot = tijd + (duur || 0.8);
   }
