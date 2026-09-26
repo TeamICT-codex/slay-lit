@@ -85,7 +85,8 @@
    Uitvoer: <werkboom>/.claude/notities/baas-meting/uit/<label>.json (gitignored, niet gedeployd;
    of MEET_UIT=<pad>) + een samenvatting op de console. Analyse: python tools/baas-meting/doeltabel.py
    <json> (alle doelen in één tabel), populatie.py, breekpunt.py, oorzaak.py, stilstand.py,
-   kaarten.py, pool_winst.py, vat_samen.py. */
+   kaarten.py, pool_winst.py, vat_samen.py; mdtabel.py zet dezelfde doeltabel als markdown in
+   .claude/notities/baas-meting/meting_finale_R3.md (de voor/na-tabellen van R3). */
 const fs = require('fs'), path = require('path');
 function laadPlaywright() {
   const kandidaten = [process.env.SLAYIT_PLAYWRIGHT, 'playwright',
