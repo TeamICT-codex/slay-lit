@@ -628,6 +628,65 @@ async function dood(browser, fk) {
   await ctx.close();
   return { kop: `De dood en het slotwoord · ${vp.naam}`, regels: R };
 }
+/* B2 F1: de genadeklap vlak na een banner. Geen banner meer na g.voorbij (ook niet uit de
+   rij), en het slotwoord komt en staat >= 1,0 s. (a) De Slijmkoning van 60 % naar 20 % in één
+   klap (DE KONING SPLIJT + KONINKLIJKE WOEDE in de rij) en 300 ms later alles dood; (b) de
+   Erfprins sterft, herrijst in DE PLAGIAATFASE (banner na ~950 ms) en valt opnieuw na 1,2 s. */
+async function bannerDood(browser, fk) {
+  const R = []; const t = (g, s) => R.push([!!g, s]);
+  const { ctx, page, vp } = await open(browser, fk);
+  const OPNAME = () => {
+    const g = S.gevecht; const du = baasUitspraken(g.vijanden.find(v => VIJANDEN[v.id].baas).id);
+    window.__bd = { rec: [], t0: performance.now(), vb: null, dood: [du.dood, du.doodGebroken].filter(Boolean).map(x => x.trim().slice(0, 24)) };
+    window.__bd.iv = setInterval(() => {
+      const t = Math.round(performance.now() - window.__bd.t0);
+      if (window.__bd.vb == null && g.voorbij) window.__bd.vb = t;
+      window.__bd.rec.push({ t, fl: [...document.querySelectorAll('.baas-flits h2')].map(e => e.textContent), beef: document.getElementById('scherm-gevecht').classList.contains('beef'), sp: [...document.querySelectorAll('.baas-spraak')].filter(e => +getComputedStyle(e).opacity > 0.2).map(e => e.textContent.trim().slice(0, 24)), sg: S.gevecht === g });
+    }, 50);
+  };
+  const scen = [
+    ['Slijmkoning, SPLIJT + WOEDE in de rij, kill na 300 ms', 'slijmkoning', async () => {
+      const g = S.gevecht; const b = g.vijanden.find(v => VIJANDEN[v.id].baas);
+      b.hp = Math.round(b.maxHp * 0.6); renderGevecht();
+      b.hp = Math.round(b.maxHp * 0.2); checkBaasFase(); renderGevecht();
+      window.__bd.klapNa = Math.round(performance.now() - window.__bd.t0);
+      await new Promise(r => setTimeout(r, 300));
+      g.vijanden.forEach(v => { if (!v.dood) verliesHp(v, 9999); }); renderGevecht();
+      if (alleVijanden().length === 0) gevechtGewonnen();
+    }],
+    ['Erfprins, kill 1,2 s na zijn schijndood (DE PLAGIAATFASE)', 'erfprins', async () => {
+      const g = S.gevecht; const b = g.vijanden.find(v => v.id === 'de_erfprins');
+      b.gestolen = S.dek.slice(0, 3).map(c => ({ id: c.id, soort: 'geroofd' }));
+      verliesHp(b, 9999); renderGevecht();
+      await new Promise(r => setTimeout(r, 1200));
+      verliesHp(b, 9999); renderGevecht(); if (alleVijanden().length === 0) gevechtGewonnen();
+    }]
+  ];
+  for (const [naam, baas, klap] of scen) {
+    try {
+      await startBaas(page, baas);
+      await page.evaluate(OPNAME);
+      await page.evaluate(klap);
+      await slaap(4600);
+      const r = await page.evaluate(() => { clearInterval(window.__bd.iv); return window.__bd; });
+      const na = r.rec.filter(x => r.vb != null && x.t > r.vb + 60 && x.sg);
+      const nieuw = [...new Set(na.flatMap(x => x.fl))].filter(tt => !r.rec.some(x => x.t <= r.vb && x.fl.includes(tt)));
+      const isSlot = tx => r.dood.some(d => tx === d || tx.startsWith(d.slice(0, 18)));
+      const slot = na.filter(x => x.sp.some(isSlot));
+      const slotMs = slot.length ? slot[slot.length - 1].t - slot[0].t : 0;
+      /* een banner die bij de kill al stond, mag blijven tot het slotwoord komt - daarna niets meer */
+      const bannerNa = slot.length ? r.rec.filter(x => x.t >= slot[0].t && x.fl.length) : [];
+      t(r.vb != null && nieuw.length === 0 && bannerNa.length === 0, `bannerwachtrij ${vp.naam} ${naam}: geen nieuwe banner na de overwinning ([${nieuw.join(', ')}]), en geen enkele meer zodra het slotwoord staat (${bannerNa.length ? bannerNa.map(x => x.fl[0]).slice(0, 1) + ' op ' + (bannerNa[0].t - r.vb) + ' ms' : '-'})`);
+      t(slotMs >= 1000, `B0.4 ${vp.naam} ${naam}: het slotwoord komt en staat ${slotMs} ms in beeld (>= 1,0 s${slot.length ? ', "' + slot[0].sp.find(isSlot) + '…"' : ', NOOIT'})`);
+    } catch (e) { t(false, `${vp.naam} ${naam}: fout in de meting: ${e.message}`); }
+    await slaap(500);
+    await page.evaluate(() => { document.querySelectorAll('.dt-overlay').forEach(e => e.remove()); try { toonScherm('kaart'); } catch (e) { } });
+  }
+  t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+  await ctx.close();
+  return { kop: `De genadeklap vlak na een banner · ${vp.naam}`, regels: R };
+}
+
 /* het gevecht gaat DOOR (Slijmkoning met een levende splitsing): na 2,4 s komt zijn kolom vrij */
 async function lijkWeg(browser, fk) {
   const R = []; const t = (g, s) => R.push([!!g, s]);
@@ -802,6 +861,7 @@ async function intents(browser) {
     ...['M800', 'M846', 'L1366', 'L1366d3', 'L1440d3'].map(fk => ['overgang ' + fk, () => overgang(browser, fk)]),
     ...['M800', 'M846', 'L1440', 'L1440d3', 'L1366d3'].map(fk => ['dood ' + fk, () => dood(browser, fk)]),
     ...['M800', 'L1440'].map(fk => ['lijkweg ' + fk, () => lijkWeg(browser, fk)]),
+    ...['M800', 'L1440', 'L1440d3'].map(fk => ['bannerdood ' + fk, () => bannerDood(browser, fk)]),
     ...['L1440d3', 'L1366d3'].map(fk => ['3d ' + fk, () => driedee(browser, fk)]),
     ...['M800', 'L1440'].map(fk => ['hud ' + fk, () => hudEnHof(browser, fk)]),
     ['intents', () => intents(browser)]

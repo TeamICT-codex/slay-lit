@@ -8754,10 +8754,22 @@ function _bannerDoof() {
   b.el.classList.add('bf-weg');
   b.t = setTimeout(_bannerVolgende, dtempo(BANNER_UIT_MS));
 }
+/* B2 F1: de overwinning ruimt het toneel voor het slotwoord - de rij leeg en een staande
+   banner meteen weg (de doodsflits van gevechtGewonnen valt op hetzelfde moment en dekt de
+   knip; een uitdoving van 180 ms kostte het slotwoord 0,3 s van zijn ~1,4 s). Zonder dit
+   speelde een banner uit de rij (SPLIJT -> KONINKLIJKE WOEDE, of DE PLAGIAATFASE vlak voor
+   de genadeklap) nog 1,3-3,9 s na de kill, met schok en klank, en hield de sluis het
+   slotwoord zo lang tegen dat het nooit kwam. */
+function bannerRuim() {
+  _bannerRij.length = 0;
+  _bannerVolgende();   /* haalt de staande weg en vindt niets meer */
+}
 function _bannerVolgende() {
   if (_banner) { clearTimeout(_banner.t); _banner.el.remove(); _banner = null; }
+  /* een banner voor een ander gevecht, of voor een gevecht dat intussen gewonnen is, vervalt */
+  const geldig = it => it.g === (S && S.gevecht) && !(it.g && it.g.voorbij);
   let item = _bannerRij.shift();
-  while (item && item.g !== (S && S.gevecht)) item = _bannerRij.shift();
+  while (item && !geldig(item)) item = _bannerRij.shift();
   const sc = $('#scherm-gevecht');
   if (!item || !sc) return;
   schudScherm();
@@ -9139,7 +9151,9 @@ async function gevechtGewonnen() {
     /* de doodsklap van een baas verdient een flits en een stilte */
     const verslagenBaas = huidigeBaas().naam;
     const _du = baasUitspraken(huidigeBaas().id);
-    /* B0.4: het SLOTWOORD - mag na g.voorbij en veegt het bord (sinds v121 nooit getoond) */
+    /* B0.4: het SLOTWOORD - mag na g.voorbij en veegt het bord (sinds v121 nooit getoond).
+       F1: eerst de bannerrij leeg en de staande banner weg, anders houdt de sluis het tegen. */
+    bannerRuim();
     baasSpreekt(g.copycatGebroken && _du.doodGebroken ? _du.doodGebroken : _du.dood, 2600, { slot: true });
     const flits = document.createElement('div');
     flits.className = 'baas-doodflits';
