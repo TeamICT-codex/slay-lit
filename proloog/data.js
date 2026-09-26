@@ -161,7 +161,7 @@ window.SLAYLIT_PROLOOG = (function () {
     // Links 0042: de naamkaart aan een rood koord op een lege bureaustoel, met WELZIJN 40. Rechts
     // B.A.A.S. (een beige mainframekast met het groene oog) met AANDEELHOUDERSWAARDE ∞ en een
     // intentiepil. Onderaan de energiebol, de trekstapel, de borstzak met de foto (altijd in beeld),
-    // een waaier van vijf kantoorkaarten, 'Eindig beurt' en de aflegstapel. Geen uitlegregels.
+    // een waaier van vijf kantoorkaarten, 'Einde beurt' en de aflegstapel. Geen uitlegregels.
     // 4 · DE UITWEG — sprong: houd de foto vast (touch/muis: vasthouden of een tweede tik; laptop:
     // spatie vasthouden); geduwd: na beurt 3 (of WELZIJN 0) vuurt de OPTIMALISATIERONDE.
     // Keuze 3: de lift daalt, de mens valt niet — geen dakrand, geen blik omlaag, het hek dicht.

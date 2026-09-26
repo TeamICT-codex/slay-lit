@@ -124,7 +124,8 @@
    R4 (integrator) — deel 15 'gesprek' krijgt de hele strook gesprek → uitweg → afrekening per formaat, alles
    IN de pagina gemeten (window.__r4i, R4_METER), met een speler-robot vanaf de save van het kantoor op scène 3:
   15G natuurlijk (handelt 0,6 s nadat het kan) en 15H doortikkend (tikt om de 150 ms), op 1440x900, 1366x768,
-               800x360 en 846x381 (touch), 412x915, plus reduced motion, lite, 812x365 en 360x640: (1) intentie, bol, borstzak en
+               800x360 en 846x381 (touch), 412x915, plus reduced motion, lite, 812x365 en 360x640 (fixer R4 F1: ook een
+               tablet staand 768x1024 en een half laptopvenster 960x1000): (1) intentie, bol, borstzak en
                'Eindig beurt' in ELK gemonsterd beeld in beeld en, zolang je kunt spelen, raak (R.elementFromPoint en
                document.elementFromPoint), net als elke kaart; de ballon, de foto, de je-regels, 'Laat los', de
                nieuwste printregel boven de kop en de pen in beeld; nergens scroll, geen draai-blok; (2) spatie,
@@ -3950,7 +3951,12 @@ function r4iToets(uit) {
       { vp: VPS.thomas, modus: 'doortik', lite: true, uitweg: 'tweede tik', sprongBeurt: 2, kaarten: [['glimlach'], ['glimlach', 'overuren']], herlaad: ['droom'], tag: 'lite',
         seed: { glimlachen: 1, fotoKantoor: false, zelfGestempeld: false, jeugddroom: 'uitvinder' } },
       { vp: KLEINE_TEL, modus: 'doortik', uitweg: 'vasthouden', sprongBeurt: 2, kaarten: [['glimlach', 'mailtje'], ['koffie']], herlaad: ['vastloper'],
-        seed: { glimlachen: 4, fotoKantoor: true, zelfGestempeld: false, jeugddroom: 'wereldkampioen verstoppertje' } }
+        seed: { glimlachen: 4, fotoKantoor: true, zelfGestempeld: false, jeugddroom: 'wereldkampioen verstoppertje' } },
+      /* fixer R4 F1: de smal-brede layout (700-1079 px breed): een tablet staand en een half laptopvenster, de hele strook */
+      { vp: { n: 'tablet', w: 768, h: 1024, m: true }, modus: 'natuurlijk', uitweg: 'vasthouden', sprongBeurt: 2, kaarten: [['glimlach', 'mailtje'], ['koffie', 'mailtje']],
+        seed: { glimlachen: 3, fotoKantoor: true, zelfGestempeld: true, jeugddroom: 'dokter' } },
+      { vp: { n: 'half-laptop', w: 960, h: 1000 }, modus: 'doortik', uitweg: 'geduwd', kaarten: [['mailtje'], ['glimlach'], []], pen: 'tik', herlaad: ['droom'],
+        seed: { glimlachen: 9, fotoKantoor: false, zelfGestempeld: false, jeugddroom: 'zanger' } }
     ];
     for (const g of runs) {
       const vp = g.vp;

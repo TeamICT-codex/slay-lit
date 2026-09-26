@@ -699,7 +699,7 @@ img { max-width: 100%; display: block; }
 /* ═══════════════ SCÈNE 3 · HET FUNCTIONERINGSGESPREK (R4) ═══════════════
    De indeling van het ECHTE gevechtstoneel (#scherm-gevecht in css/style.css + css/mobiel.css):
    de figuren op één grondlijn (0042 links, B.A.A.S. rechts met de intentiepil erboven), de
-   energiebol linksonder met de trekstapel, 'Eindig beurt' rechtsonder met de aflegstapel, de
+   energiebol linksonder met de trekstapel, 'Einde beurt' rechtsonder met de aflegstapel, de
    waaier van kaarten onderaan in het midden. Hier in beige, op het dak in onweer: de lucht is het
    canvas van de val (OutroFX), het dak een beige tegelvloer, in het midden de goederenlift.
    Drie layouts (basis = staand, breed, kort liggend), allemaal zonder scroll: alles staat absoluut
@@ -880,7 +880,7 @@ img { max-width: 100%; display: block; }
 .gs-ballon.naast { right: calc(100% + 10px); bottom: auto; top: 0; }
 .gs-ballon.naast::after { right: auto; left: 100%; top: 10px; border-top-color: transparent; border-left-color: rgba(106, 211, 106, .45); }
 
-/* — #onderbalk: bol, stapels, borstzak, hand, 'Eindig beurt' — */
+/* — #onderbalk: bol, stapels, borstzak, hand, 'Einde beurt' — */
 .gs-onder { position: absolute; left: 0; right: 0; bottom: 0; height: var(--onder); z-index: 3; pointer-events: none; background: linear-gradient(180deg, transparent, rgba(22, 17, 10, .72) 40%); transition: background .6s ease; }
 .gs-onder > * { pointer-events: auto; transition: opacity .45s ease; }
 .gs-orb { position: absolute; left: calc(12px + env(safe-area-inset-left)); bottom: calc(var(--kaart-h) + 22px); width: var(--orb); height: var(--orb); border-radius: 50%;
@@ -890,7 +890,7 @@ img { max-width: 100%; display: block; }
 .gs-stapel { position: absolute; padding: 3px 9px; border-radius: 8px; white-space: nowrap; font-family: var(--f-serif); font-size: .88rem; color: #e6d9b5; background: rgba(20, 14, 8, .62); border: 1px solid rgba(216, 203, 162, .35); }
 .gs-trek { left: calc(12px + env(safe-area-inset-left)); bottom: calc(var(--kaart-h) + 28px + var(--orb)); }
 .gs-afleg { right: calc(12px + env(safe-area-inset-right)); bottom: calc(var(--kaart-h) + 92px); }
-/* staand: 'Eindig beurt' 12 px hoger dan de opgetilde kaart reikt (integrator R4) */
+/* staand: 'Einde beurt' 12 px hoger dan de opgetilde kaart reikt (integrator R4) */
 .gs-eind { position: absolute; right: calc(12px + env(safe-area-inset-right)); bottom: calc(var(--kaart-h) + 36px); white-space: nowrap;
   font-family: var(--f-black); font-size: 1rem; line-height: 1.1; color: #1a140c; padding: 9px 14px; min-height: 44px;
   background: linear-gradient(180deg, #d8c08a, #a8946f); border-radius: 10px; border: 2px solid #4a3a20; box-shadow: 0 4px 0 #4a3a20; }
@@ -950,7 +950,7 @@ img { max-width: 100%; display: block; }
 /* touch: de eerste tik tilt de kaart op om te lezen (voorbeeldKaart in het spel), de tweede speelt hem */
 /* staand (de basis) blijft de opgetilde kaart laag genoeg: de foto in je borstzak (erboven) blijft raak.
    Integrator R4: ze groeit alleen vanuit haar onderrand (geen extra til). Met de til van 18 % dekte de buitenste
-   kaart links de energiebol en rechts 'Eindig beurt' af: wie dan 'Eindig beurt' tikte, speelde de opgetilde
+   kaart links de energiebol en rechts 'Einde beurt' af: wie dan 'Einde beurt' tikte, speelde de opgetilde
    kaart. De buitenste kaarten groeien naar binnen, zodat ze in beeld blijven. */
 .gs-kaart.voorbeeld { z-index: 99 !important; transform: scale(1.2); box-shadow: 0 0 0 3px var(--amber), 0 18px 34px rgba(0, 0, 0, .8); }
 .gs-kaart.voorbeeld:first-child { transform: translateX(calc(var(--kaart-w) * .1)) scale(1.2); }
@@ -1527,7 +1527,7 @@ img { max-width: 100%; display: block; }
   .bs-titel { padding-top: calc(6px + env(safe-area-inset-top)); font-size: 1.25rem; }
   .bs-vak { gap: 8px; padding: 4px calc(12px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left)); }
   /* R4 · het gesprek kort liggend (800x360, Thomas' 846x381): de indeling van #scherm-gevecht in
-     css/mobiel.css blok C/D — een platte hand onderaan, de bol en 'Eindig beurt' ernaast, de figuren
+     css/mobiel.css blok C/D — een platte hand onderaan, de bol en 'Einde beurt' ernaast, de figuren
      erboven op één grondlijn; de borstzak naast de bol */
   /* fixer R4 F1: de hand past ook op de kleinste liggende telefoon (568x320) tussen de borstzak en 'Einde beurt':
      de waaier is 5 x kaart-w − 64 px breed en krijgt 100vw − 312 px (de zak links, de knop rechts) */

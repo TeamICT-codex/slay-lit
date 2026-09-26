@@ -51,7 +51,7 @@
    R4 "GESPREK EN AFREKENING": scène 3 is een beige kopie van het ECHTE gevechtstoneel (de indeling
    van #scherm-gevecht) op het dak in onweer — 0042 als naamkaart op een lege bureaustoel, B.A.A.S.
    met AANDEELHOUDERSWAARDE ∞ en een intentiepil, de energiebol, de trekstapel, de borstzak met de
-   foto, een waaier van vijf kantoorkaarten en 'Eindig beurt'. De uitweg (scène 4) speelt in hetzelfde
+   foto, een waaier van vijf kantoorkaarten en 'Einde beurt'. De uitweg (scène 4) speelt in hetzelfde
    decor: de foto vasthouden (touch/muis: vasthouden of een tweede tik; laptop: spatie vasthouden) of
    geduwd worden door de OPTIMALISATIERONDE. De Eindafrekening (scène 5) is een matrixprinter met een
    kettingvel vol eigen cijfers, een vastloper en na de perforatie het BESLUIT (checkpoint 'ontslag'). */
@@ -1635,7 +1635,7 @@
      op een lege bureaustoel, WELZIJN 40 eronder. Rechts B.A.A.S.: een beige mainframekast met het
      groene oog, de intentiepil erboven (DEADLINE 8 · TEAMBUILDING −1 ⚡ · OPTIMALISATIERONDE met
      schedel) en AANDEELHOUDERSWAARDE ∞ als balk. Onderaan: de energiebol, de trekstapel, de
-     BORSTZAK met de foto (altijd in beeld), de waaier van vijf kantoorkaarten, 'Eindig beurt' en de
+     BORSTZAK met de foto (altijd in beeld), de waaier van vijf kantoorkaarten, 'Einde beurt' en de
      aflegstapel. Kaarten spelen zoals in het spel: klik op laptop (of 1-5, E = eindig beurt), tik-tik
      op touch (de eerste tik tilt de kaart op). Een mailtje laat ∞ niet zakken: '+6 % FACTURABILITEIT',
      een belletje, 'Dank voor uw inzet.' Geen uitlegregels, geen 'Verder'. Achter het strijdveld de
@@ -1870,7 +1870,7 @@
     veld.appendChild(baas);
     root.appendChild(veld);
 
-    /* ── #onderbalk: energiebol, trekstapel, borstzak, hand, 'Eindig beurt', aflegstapel ── */
+    /* ── #onderbalk: energiebol, trekstapel, borstzak, hand, 'Einde beurt', aflegstapel ── */
     const onder = el('div', 'gs-onder');
     const orb = el('div', 'gs-orb');
     const trekEl = el('div', 'gs-stapel gs-trek');
@@ -2081,7 +2081,7 @@
     }
     function zwijg() { wisT(ballonWeg); ballonWeg = 0; if (ballonTyp) ballonTyp.rond(); ballon.classList.remove('toon'); }
 
-    /* ── 'Eindig beurt' en de beurt van B.A.A.S. ── */
+    /* ── 'Einde beurt' en de beurt van B.A.A.S. ── */
     function eindigBeurt() {
       if (!magSpelen()) return;
       st.bezig = true; st.voorbeeld = null; st.fotoKlaar = false;
