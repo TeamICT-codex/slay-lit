@@ -4188,7 +4188,7 @@ body.lite .kv-geest { animation: none; opacity: .45; }
 /* B2 · B0.4 — DE TEKSTSLUIS: staat er een titel, banner of cinematic, dan PAUZEERT de plaat
    (onzichtbaar, animatie stil; de klok in _spraakVolgende staat dan ook stil). Dezelfde
    lijst als _SPRAAK_SLUIS in js/game.js - pas ze samen aan. */
-body:has(.vonnis, .baas-flits, #baas-intro, .roof-overlay, .roof-speel-kaart, .decreet-overlay) .baas-spraak { opacity: 0 !important; animation-play-state: paused !important; }
+body:has(.vonnis, .baas-flits, #baas-intro, .roof-overlay:not(.dt-overlay, .slachtblok-overlay), .roof-speel-kaart, .decreet-overlay) .baas-spraak { opacity: 0 !important; animation-play-state: paused !important; }
 /* v95: op laptop hangt de plaat ONDER de bazenbalk — die is daar breed en eindigt op
    134-168px (Erfprins met arsenaalpil); de v89-plaat op 12% dekte HP-balk + fase-pips af.
    Op mobiel is de bazenbalk een compact hart rechtsboven, daar blijft de plaat waar hij staat.

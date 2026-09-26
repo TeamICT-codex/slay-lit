@@ -2701,8 +2701,11 @@ function baasSpreekt(tekst, duurMs, opts) {
    plaat die al stond PAUZEERT (css: body:has(...) .baas-spraak - onzichtbaar, animatie
    stil; hier: de klok stil). Gemeten in de finale-overgangen: 250-1053 ms plaat-over-titel
    in 10 van de 14 -> 0 ms, en elke regel daarna nog volledig leesbaar.
-   Dezelfde lijst staat in css/style.css bij .baas-spraak: pas ze samen aan. */
-const _SPRAAK_SLUIS = '.vonnis, .baas-flits, #baas-intro, .roof-overlay, .roof-speel-kaart, .decreet-overlay';
+   Dezelfde lijst staat in css/style.css bij .baas-spraak: pas ze samen aan.
+   .roof-overlay is alleen De Roof zelf: de Drempeltafel (.dt-overlay) en het Slachtblok
+   (.slachtblok-overlay) lenen dezelfde klasse, en een open tafel hield zo de doodregel van
+   de volgende baas tegen. */
+const _SPRAAK_SLUIS = '.vonnis, .baas-flits, #baas-intro, .roof-overlay:not(.dt-overlay, .slachtblok-overlay), .roof-speel-kaart, .decreet-overlay';
 function _spraakGesloten() { return !!document.querySelector(_SPRAAK_SLUIS); }
 /* HET TONEEL NEEMT HET OVER. v121-fix: de wachtrij houdt netjes één plaat tegelijk, maar
    een GEWONE baasregel die net vóór de fasegrens viel (standaardduur 3200ms) kon de eerste
@@ -5950,15 +5953,17 @@ function renderGevecht() {
     const exitBezig = !!g.ceremonie && (d.wrap.classList.contains('exit') || d.wrap.classList.contains('geveld')
       || d.wrap.classList.contains('vlucht') || d.wrap.classList.contains('kiezer'));
     const wasDood = d.wrap.classList.contains('sterft');
+    /* B2 · B0.7: verliesHp zet .sterft zelf al op de wrap, vóór deze render - voor een baas
+       telt daarom ook 'dood maar nog geen kolomtimer' (anders kwam zijn kolom nooit vrij). */
+    const isBaas = !!(VIJANDEN[v.id] && VIJANDEN[v.id].baas);
     if (!exitBezig) d.wrap.classList.toggle('sterft', v.dood);
-    if (!v.dood) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); }
-    else if (exitBezig) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); }
-    else if (!wasDood) {
+    if (!v.dood) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); d._lijkT = null; }
+    else if (exitBezig) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); d._lijkT = null; }
+    else if (!wasDood || (isBaas && !d._lijkT && !d.wrap.classList.contains('lijk-weg'))) {
       clearTimeout(d._lijkT);
       /* B2 · B0.7: een verslagen BAAS blijft liggen tot het scherm wisselt (css: .is-baas.sterft
          in 2D). Alleen als het gevecht DOORGAAT (de Slijmkoning met zijn splitsingen), geeft hij
          zijn kolom terug - pas na 2,4 s, na zijn val. Gewone vijanden: ongewijzigd. */
-      const isBaas = !!(VIJANDEN[v.id] && VIJANDEN[v.id].baas);
       d._lijkT = setTimeout(() => {
         if (v.dood && !(isBaas && S.gevecht && S.gevecht.voorbij)) d.wrap.classList.add('lijk-weg');
       }, dtempo(isBaas ? 2400 : 750));

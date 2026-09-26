@@ -183,7 +183,7 @@ async function wachtRust(page, minMs = 0, max = 30000) {
       if (document.querySelector('#draai-blok.toon') && typeof speelTochStaand === 'function') speelTochStaand();
       const g = S.gevecht; if (!g) return true;
       const sc = document.getElementById('scherm-gevecht');
-      return !g.bezig && !g.ceremonie && !document.getElementById('baas-intro') && !document.querySelector('.decreet-overlay, .roof-overlay, .roof-speel-kaart, .vonnis, .baas-flits, .baas-spraak')
+      return !g.bezig && !g.ceremonie && !document.getElementById('baas-intro') && !document.querySelector('.decreet-overlay, .roof-overlay:not(.dt-overlay, .slachtblok-overlay), .roof-speel-kaart, .vonnis, .baas-flits, .baas-spraak')
         && !sc.classList.contains('beef') && !sc.classList.contains('slowmo');
     });
     if (rust && Date.now() - t0 >= minMs) return true;
@@ -530,7 +530,8 @@ async function dood(browser, fk) {
       await shot(page, `${vp.naam}_${baas}_na_dood`);
     } catch (e) { t(false, `B0.7 ${vp.naam} ${B}: fout in de meting: ${e.message}`); }
     await slaap(400);
-    if (baas !== 'dicktator') { await page.evaluate(() => { try { toonScherm('kaart'); } catch (e) { } }); }
+    /* na de Slijmkoning opent de Drempeltafel: dicht, zodat de volgende baas een schoon toneel heeft */
+    if (baas !== 'dicktator') { await page.evaluate(() => { document.querySelectorAll('.dt-overlay').forEach(e => e.remove()); try { toonScherm('kaart'); } catch (e) { } }); }
   }
   t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
   await ctx.close();
