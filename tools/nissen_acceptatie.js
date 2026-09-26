@@ -11,7 +11,7 @@
      NODE_PATH="$PWD/node_modules" SLAYIT_WORKTREE='C:\...\SLAY-IT-nissen' \
        SLAYIT_SHOTS="$PWD/nissen_shots" node "C:\...\SLAY-IT-nissen\tools\nissen_acceptatie.js"
    Geen server: route.fulfill vanaf schijf op localhost:4173, service workers geblokkeerd.
-   Blokken filteren: SLAYIT_NISSEN=bron,scherven,doorloop,save,dev,builds,erfprins,beeld,vel,outro
+   Blokken filteren: SLAYIT_NISSEN=bron,scherven,poorten,doorloop,save,dev,builds,erfprins,beeld,vel,outro
    Het blok 'vel' (M-plan §5, integratie) schrijft contactvel_nissen.jpg in SLAYIT_SHOTS: de
    heldkeuze, de Codex, de scherf-reveal en de afscheidsregel op Thomas' formaten.
    ============================================================================ */
@@ -21,7 +21,7 @@ const path = require('path'); const fs = require('fs');
 const WT = process.env.SLAYIT_WORKTREE || path.resolve(__dirname, '..');
 const HOST = 'localhost:4173';
 const UIT = process.env.SLAYIT_SHOTS || path.join(__dirname, 'nissen_shots'); fs.mkdirSync(UIT, { recursive: true });
-const BLOKKEN = (process.env.SLAYIT_NISSEN || 'bron,scherven,doorloop,save,dev,builds,erfprins,beeld,vel,outro').split(',').map(s => s.trim());
+const BLOKKEN = (process.env.SLAYIT_NISSEN || 'bron,scherven,poorten,doorloop,save,dev,builds,erfprins,beeld,vel,outro').split(',').map(s => s.trim());
 const doe = b => BLOKKEN.includes(b);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff', '.txt': 'text/plain; charset=utf-8', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav', '.glb': 'model/gltf-binary' };
 const UA = 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36';
@@ -43,8 +43,12 @@ const normaliseer = c => {
   c = c || {};
   const lijst = x => (Array.isArray(x) ? x.slice().sort() : []);
   const obj = x => (x && typeof x === 'object' && !Array.isArray(x) ? x : {});
+  /* mys(mid) (game.js r~322) vult bij elke LEZING een mysterie aan met lege legacy-velden
+     (scherven/rite/rijp, voltooid false) — ook voor een mysterie dat er nog niet was. Gelezen
+     wordt alleen 'voltooid': de inhoud is dus de lijst van voltooide mysteries */
+  const mysterie = x => Object.keys(obj(x)).filter(k => obj(x[k]).voltooid === true).sort();
   return JSON.stringify({
-    metgezellen: lijst(c.metgezellen), gevallen: lijst(c.gevallen), mysteries: obj(c.mysteries),
+    metgezellen: lijst(c.metgezellen), gevallen: lijst(c.gevallen), mysteries: mysterie(c.mysteries),
     copycatGebroken: !!c.copycatGebroken, sigOntdekt: obj(c.sigOntdekt),
     dropsOfferRun: Math.max(0, +c.dropsOfferRun || 0), dropsZaadjeNul: !!c.dropsZaadjeNul, drops_wit_keerde: !!c.drops_wit_keerde
   });
@@ -338,7 +342,88 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
   }
 
   /* ============================================================
-     C · DE DOORLOOP — drie Codexen, van heldkeuze tot de Codex
+     K · DE POORTEN ÉÉN VOOR ÉÉN (integratie) — elk van V2-V8 op zijn eigen gedrag, met een
+     Codex in rouw (Drops gevallen, de Mosgeest ontwaakt) en een STALE S.metgezel die de oude
+     code wél zou laten meevechten. Leegte-wacht: dezelfde aanroepen met de DEV-schakelaar AAN
+     moeten de metgezel wél opleveren — anders meet een 'uit' niets.
+     ============================================================ */
+  if (doe('poorten')) {
+    kop('K · de poorten één voor één (V2-V8), met een stale metgezel in de run');
+    const { ctx, page } = await context(browser, { codex: CODEX.rouw });
+    await laad(page);
+    const cxVoor = await leesMgCodex(page);
+    const meet = () => page.evaluate(async () => {
+      nieuwSpel('slachter', 'NISSEN-POORTEN'); S.act = 2; S.kaart = genereerKaart();
+      S.metgezel = { id: 'mosgeest', hp: 10, maxHp: 20, vluchtig: false };   /* stale: zoals een oude save hem droeg */
+      const uit = {};
+      uit.v2 = heeftMetgezel();
+      renderTopbalk();
+      const chip = document.getElementById('tb-metgezel');
+      uit.v8 = !!chip && chip.style.display !== 'none';
+      uit.v4 = kiesRunMetgezel();
+      uit.v6rouw = dropsInRouw();
+      startGevecht(['echo'], 'gevecht', 1);
+      await new Promise(r => setTimeout(r, 400));
+      uit.v2g = S.gevecht && S.gevecht.metgezel ? S.gevecht.metgezel.id : null;
+      const mz = document.getElementById('metgezel-zone'); uit.zone = !!mz && !mz.hidden;
+      try { S.gevecht.voorbij = true; stopGevechtLus(); } catch (e) {}
+      S.gevecht = null;
+      startGevecht(['de_erfprins'], 'baas', 15);
+      await new Promise(r => setTimeout(r, 300));
+      uit.v6wit = magWitTerugkeren();
+      try { S.gevecht.voorbij = true; stopGevechtLus(); } catch (e) {}
+      S.gevecht = null;
+      document.querySelectorAll('#baas-intro, .baas-intro, .baas-flits, .baas-spraak').forEach(nd => { try { nd.remove(); } catch (e) {} });
+      toonRust();
+      uit.v7 = !!document.getElementById('kv-geest');
+      uit.ontgrendeld = ontgrendeldeMetgezellen().length;
+      return uit;
+    });
+    const uit = await meet();
+    t(uit.ontgrendeld >= 1, `de Codex heeft echt een vrijgespeelde metgezel (${uit.ontgrendeld}) en Drops is gevallen — de poorten hebben iets om tegen te houden`);
+    t(uit.v2 === false && uit.v2g === null && !uit.zone, `V2 heeftMetgezel(): ${uit.v2} met een stale Mosgeest in de run → het gevecht bouwt g.metgezel ${uit.v2g}, zone zichtbaar ${uit.zone}`);
+    const v3 = await page.evaluate(() => {
+      nieuwSpel('slachter', 'NISSEN-V3'); S.metgezel = null;
+      const voor = JSON.stringify(Codex.metgezellen); const n = document.querySelectorAll('#meldingen .toast').length;
+      geefMetgezel('vlamwachter');
+      return { sMet: S.metgezel ? S.metgezel.id : null, codexGelijk: JSON.stringify(Codex.metgezellen) === voor, toasts: document.querySelectorAll('#meldingen .toast').length - n };
+    });
+    t(v3.sMet === null && v3.codexGelijk && v3.toasts === 0, `V3 geefMetgezel('vlamwachter') → S.metgezel ${v3.sMet}, Codex.metgezellen ongewijzigd ${v3.codexGelijk}, ${v3.toasts} meldingen`);
+    t(uit.v4 === null, `V4 kiesRunMetgezel() → ${uit.v4} (geen heldkeuze-band, geen rotatie)`);
+    t(uit.v6rouw === false && uit.v6wit === false, `V6 dropsInRouw() ${uit.v6rouw}, magWitTerugkeren() in het Erfprins-gevecht ${uit.v6wit}`);
+    const v6r = await page.evaluate(async () => {
+      nieuwSpel('slachter', 'NISSEN-V6'); S.act = 2; startGevecht(['de_erfprins'], 'baas', 15);
+      await new Promise(r => setTimeout(r, 300));
+      const g = S.gevecht; revealDropsWit(g, 'licht');
+      const r = { wit: (Codex.metgezellen || []).includes('drops_wit') || !!(Codex.mysteries && Codex.mysteries.drops_wit && Codex.mysteries.drops_wit.voltooid), gMet: g.metgezel ? g.metgezel.id : null };
+      try { g.voorbij = true; stopGevechtLus(); } catch (e) {}
+      S.gevecht = null;
+      return r;
+    });
+    t(!v6r.wit && v6r.gMet === null, `V6 revealDropsWit() is een no-op: de Witte niet ontgrendeld (${v6r.wit}), g.metgezel ${v6r.gMet}`);
+    t(uit.v7 === false, `V7 kampvuur: geen geest van Drops (#kv-geest ${uit.v7})`);
+    t(uit.v8 === false, `V8 topbalk-chip: verborgen met een stale metgezel in de run (zichtbaar ${uit.v8})`);
+    /* de leegte-wacht: met de DEV-schakelaar AAN openen dezelfde poorten wél (alleen lezende aanroepen) */
+    const aan = await page.evaluate(() => {
+      devMetgezellen(true);
+      nieuwSpel('slachter', 'NISSEN-POORTEN-AAN'); S.act = 2;
+      S.metgezel = { id: 'mosgeest', hp: 10, maxHp: 20, vluchtig: false };
+      renderTopbalk();
+      const chip = document.getElementById('tb-metgezel');
+      const r = { v2: heeftMetgezel(), v4: kiesRunMetgezel(), v6rouw: dropsInRouw(), v8: !!chip && chip.style.display !== 'none' };
+      devMetgezellen(false);
+      return r;
+    });
+    t(aan.v2 === true && !!aan.v4 && aan.v6rouw === true && aan.v8 === true,
+      `leegte-wacht: met de DEV-schakelaar AAN gaan dezelfde poorten open (heeftMetgezel ${aan.v2}, kiesRunMetgezel ${aan.v4}, dropsInRouw ${aan.v6rouw}, chip ${aan.v8})`);
+    const cxNa = await leesMgCodex(page);
+    t(normaliseer(cxNa) === normaliseer(cxVoor), 'de metgezelsleutels van de Codex zijn na de poortproeven inhoudelijk gelijk' + (normaliseer(cxNa) === normaliseer(cxVoor) ? '' : ` — voor ${normaliseer(cxVoor)} na ${normaliseer(cxNa)}`));
+    t(page.__f.length === 0, 'geen paginafouten' + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+    await sluit(ctx, page, 'poorten');
+  }
+
+  /* ============================================================
+     C · DE DOORLOOP — drie Codexen + de daily, van heldkeuze tot de Codex
      ============================================================ */
   if (doe('doorloop')) {
     for (const scen of ['ontwaakt', 'rouw', 'nieuw', 'daily']) {
