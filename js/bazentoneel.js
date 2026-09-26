@@ -52,6 +52,61 @@ function heldChipsWijken() {
   if (Math.abs(wijk - oud) >= 1) hs.style.setProperty('--wijk', Math.round(wijk) + 'px');
 }
 
+/* ---------- B0.5 — de spraakplaat nooit over de spreker: een berekende vrije zone ----------
+   De plaat hangt in de bovenband (mobiel onder de topbalk, laptop onder de bazenbalk: css).
+   Horizontaal kiest spraakZone() een VRIJE zone naast de spreker. De spreker is de baas
+   PLUS zijn pil: in 2D zijn art, in 3D zijn sprite (Vista.schermPos). Zone A ligt links van
+   hem (boven de held), zone B rechts van hem (tot de rand, of op mobiel tot het hart).
+   - laptop: A wint als ze >= 200px breed is - de band boven de kleine held is vrij;
+   - mobiel: B wint als ze >= 200px breed is - daar staat het hof, en een plaat mag een
+     hoveling even afdekken, de spreker nooit; anders de bredere kant;
+   - in een smalle mobiele zone (< 340px) een kleiner lettertype (.smal), zodat de plaat
+     twee regels blijft en boven het hoofd van de held.
+   De eerste versie (vast op 34-36% van links) lag in de finale op laptop-3D 1-3,4 s over de
+   DICKtator; deze zone haalt <= 179 ms randpixels, en 0 op mobiel. Na de doodsklap telt de
+   gevallen baas nog mee: zijn slotwoord hoort naast hem, niet op hem. */
+function spraakZone(el) {
+  const g = S && S.gevecht; if (!g || !el) return;
+  const isBaas = v => VIJANDEN[v.id] && VIJANDEN[v.id].baas;
+  const b = g.vijanden.find(v => !v.dood && isBaas(v)) || g.vijanden.find(isBaas); if (!b) return;
+  const i = g.vijanden.indexOf(b);
+  const wrap = GDOM.vijanden[i] && GDOM.vijanden[i].wrap;
+  let links = null, rechts = null;
+  if (d3Actief() && window.Vista) {
+    const p = Vista.schermPos(b);
+    if (p) { const h = p.voetY - p.topY; links = p.x - h * 0.36; rechts = p.x + h * 0.36; }
+  } else {
+    const a = wrap && wrap.querySelector('.vijand-art');
+    if (a) { const q = a.getBoundingClientRect(); links = q.left; rechts = q.right; }
+  }
+  if (links == null) return;
+  /* de pil hoort bij de spreker (op mobiel hangt ze soms links naast zijn hoofd, B0.9) */
+  if (wrap) wrap.querySelectorAll('.intent').forEach(p => {
+    const q = p.getBoundingClientRect();
+    if (q.width > 0 && q.top < innerHeight * 0.5) { links = Math.min(links, q.left); rechts = Math.max(rechts, q.right); }
+  });
+  const W = innerWidth, mob = document.body.dataset.modus === 'mobiel';
+  const bb = document.getElementById('baas-balk');
+  const bbR = bb ? bb.getBoundingClientRect() : null;
+  const hartL = (mob && bbR && bbR.width) ? bbR.left : W;
+  const L = Math.max(12, W * 0.03);
+  const zA = [L, links - 12], zB = [rechts + 12, Math.min(W - 12, hartL - 8)];
+  const bA = zA[1] - zA[0], bB = zB[1] - zB[0];
+  const z = mob ? (bB >= 200 ? zB : (bA >= bB ? zA : zB)) : (bA >= 200 ? zA : (bA >= bB ? zA : zB));
+  if (z[1] - z[0] < 160) return;   /* nergens plaats: dan de standaardplek (gecentreerd) */
+  el.style.left = Math.round((z[0] + z[1]) / 2) + 'px';
+  el.style.maxWidth = Math.round(z[1] - z[0]) + 'px';
+  if (!mob) { el.classList.remove('smal'); return; }
+  /* Mobiel: een lange regel in een brede zone (846x381, 354px) werd drie regels en zakte tot
+     op het hoofd van de held. Raakt de plaat de held, dan wordt ze .smal - en dat blijft ze
+     voor de rest van haar leven, anders klapt ze elke 150 ms heen en weer. */
+  if (!el._smal && (z[1] - z[0]) >= 340) {
+    const sp = el.querySelector('span'), hf = document.getElementById('speler-figuur');
+    if (sp && hf && sp.getBoundingClientRect().bottom > hf.getBoundingClientRect().top - 2) el._smal = true;
+  }
+  el.classList.toggle('smal', (z[1] - z[0]) < 340 || !!el._smal);
+}
+
 /* ---------- --bb-onder: de onderrand van de bazenbalk als CSS-variabele ----------
    Op laptop beginnen de fasebanner (B0.13) en de spraakplaat (B0.5) net onder de bazenbalk.
    Die groeit mee met wat hij toont (Geroofd-pil, beleidsstrook), dus een ResizeObserver
@@ -74,5 +129,7 @@ function zetBazenbalkOnder() {
 function toneelWacht() {
   if (typeof S === 'undefined' || !S || !S.gevecht || document.body.dataset.scherm !== 'gevecht') return;
   if (document.body.dataset.modus === 'mobiel') { zetPilZij(); heldChipsWijken(); }
+  /* een staande spraakplaat volgt de zone mee (het hof komt op, de pil wisselt) */
+  document.querySelectorAll('.baas-spraak').forEach(spraakZone);
 }
 setInterval(toneelWacht, 150);

@@ -2739,6 +2739,7 @@ function _spraakVolgende() {
   el.style.setProperty('--spraak-duur', d + 'ms');
   el.innerHTML = `<span>${item.tekst}</span>`;
   sc.appendChild(el);
+  if (typeof spraakZone === 'function') spraakZone(el);   /* B0.5: in een vrije zone naast de spreker (js/bazentoneel.js) */
   clearTimeout(_spraakT);
   /* de klok loopt alleen terwijl de sluis open is: een onderbroken plaat brandde vroeger
      onzichtbaar op achter de titel ("U bent ONTSLAGEN." nog 86 ms leesbaar op 1366x768) */

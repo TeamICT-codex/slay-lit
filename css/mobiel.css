@@ -1404,6 +1404,14 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"]:has(.baas-flits) #speler-zone .blok-status { opacity: .12; transition: opacity .2s; }
   body[data-modus="mobiel"] .baas-flits h2 { font-size: clamp(1.3rem, 4.4vw, 2rem); }
   body[data-modus="mobiel"] .baas-flits span { font-size: clamp(.8rem, 2.4vw, 1.05rem); }
+
+  /* B0.5 — DE SPRAAKPLAAT IN EEN VRIJE ZONE. Direct onder de topbalk (var(--sat), niet
+     env(top): de v97-regel), horizontaal in de zone die spraakZone() berekent (naast de
+     baas en zijn pil, nooit erover). In een smalle zone (< 340px) een kleiner lettertype,
+     zodat de plaat twee regels blijft en boven het hoofd van de held. */
+  body[data-modus="mobiel"] .baas-spraak { top: calc(var(--tbh, 40px) + var(--sat) + 4px); }
+  body[data-modus="mobiel"] .baas-spraak span { font-size: clamp(.85rem, 2.3vw, 1.2rem); letter-spacing: 1.5px; padding: 5px 12px; }
+  body[data-modus="mobiel"] .baas-spraak.smal span { font-size: .8rem; letter-spacing: .8px; padding: 4px 9px; line-height: 1.25; }
 }
 
 /* ---------- D. liggend gevecht op een KORTE telefoon (≤440px hoog) ----------

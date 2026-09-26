@@ -4181,8 +4181,13 @@ body.lite .kv-geest { animation: none; opacity: .45; }
 body:has(.vonnis, .baas-flits, #baas-intro, .roof-overlay, .roof-speel-kaart, .decreet-overlay) .baas-spraak { opacity: 0 !important; animation-play-state: paused !important; }
 /* v95: op laptop hangt de plaat ONDER de bazenbalk — die is daar breed en eindigt op
    134-168px (Erfprins met arsenaalpil); de v89-plaat op 12% dekte HP-balk + fase-pips af.
-   Op mobiel is de bazenbalk een compact hart rechtsboven, daar blijft de plaat waar hij staat. */
-body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: calc(178px + env(safe-area-inset-top)); }
+   Op mobiel is de bazenbalk een compact hart rechtsboven, daar blijft de plaat waar hij staat.
+   B2 · B0.5: niet meer op een vaste 178px maar net onder de GEMETEN onderrand van de balk
+   (--bb-onder, die groeit met Geroofd-pil en beleidsstrook), en iets kleiner: de plaat staat
+   nu in een vrije zone naast de spreker (spraakZone, js/bazentoneel.js), niet gecentreerd
+   over hem - gecentreerd en groot dekte ze de pil van de prins en raakte ze zijn kroon. */
+body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: calc(var(--bb-onder, 170px) + 8px); }
+body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak span { font-size: clamp(1.05rem, 2.2vw, 1.7rem); }
 @keyframes spraakKoning {
   0% { opacity: 0; transform: translateX(-50%) scale(.9); }
   12% { opacity: 1; transform: translateX(-50%) scale(1.04); }
