@@ -998,6 +998,16 @@
     echoWis();
     E.dev = !!dev;
     try { laatsteSpraak = performance.now(); } catch (e) { /* een game.js zonder die teller: dan mag de slijm ook blubben */ }
+    /* de eenmalige inzage-hint van het eerste mobiele gevecht ('👁 Nieuw: het oog links…', een melding
+       bovenaan op 1,4 s, 2,6 s lang) viel precies over de zin — op 846x381 las je alleen 'Fijn'. Hij schuift
+       door naar het volgende gevecht: de vlag staat alleen tijdens startGevecht aan (in het geheugen; de
+       microtaak zet hem terug vóór iemand hem kan bewaren). */
+    try {
+      if (typeof INST !== 'undefined' && INST && INST.inzageHintGezien === false) {
+        INST.inzageHintGezien = true;
+        Promise.resolve().then(() => { INST.inzageHintGezien = false; });
+      }
+    } catch (e) { /* dan valt de hint over de zin, niet erger */ }
     voorlaadKantoor();
     Promise.resolve().then(echoLeg);
   }

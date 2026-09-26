@@ -6320,6 +6320,10 @@ body.pl-landt.pl-onthul #kaart-vlak .knoop:not(.kan) { animation: plOpkomen .8s 
    plaatanimatie (3,6 s), alleen een korte inkomst */
 body.lite .baas-spraak.pl-echo-zin { animation: plEchoZin .3s ease both; }
 @keyframes plEchoZin { from { opacity: 0; } }
+/* rustig ook het fakkelvignet: de landing en de eerste kamer wisselen allebei van scherm, en dan vloeit
+   het vignet (zetLichtVisueel) in 1,2 s naar zijn nieuwe stand — reduced motion en lite: hoogstens 800 ms.
+   Niet in de tirade van de DICKtator (die heeft haar eigen .5 s). */
+body.lite:not(.tirade) #licht-vignet { transition-duration: .8s; }
 
 /* lite / reduced motion: de brug kiest dan zelf het rustige pad (geen schaal, geen vonken);
    hier alleen de lussen die dan nog zouden bewegen */
@@ -6327,6 +6331,7 @@ body.lite .pl-kooltje::after, body.lite .held-kaart.voorkeur { animation: none !
 @media (prefers-reduced-motion: reduce) {
   .pl-kooltje::after, .held-kaart.voorkeur { animation: none !important; }
   .baas-spraak.pl-echo-zin { animation: plEchoZin .3s ease both; }
+  body:not(.tirade) #licht-vignet { transition-duration: .8s; }
   body.pl-dooft #scherm-titel .titel-groot { animation: none !important; opacity: 0; transition: opacity .3s ease; }
   .held-kaart.voorkeur { box-shadow: 0 0 0 1px rgba(255, 156, 63, .7), 0 0 40px rgba(255, 140, 50, .45); }
 }
