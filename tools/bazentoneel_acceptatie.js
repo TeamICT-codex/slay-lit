@@ -741,6 +741,47 @@ async function lijkWeg(browser, fk) {
   return { kop: `De kolom van een verslagen baas als het gevecht doorgaat · ${vp.naam}`, regels: R };
 }
 
+/* B2 F1 · B0.1 in een GEWOON gevecht (laptop): 3 en 4 vijanden met 5 en 6 statussen, de held
+   met 7 en 8. Geen chip achter een handkaart, en in 2D geen chip over die van een buurman.
+   Vóór F1 kreeg een gewone vijand 2 chips per rij en zakte zijn derde rij achter de hand
+   (1440-2D en 1366-2D: 3-6 chips, 4 095-7 734 px2). */
+async function gewoonChips(browser, fk) {
+  const R = []; const t = (g, s) => R.push([!!g, s]);
+  const { ctx, page, vp } = await open(browser, fk);
+  await wachtRust(page, 800, 15000);
+  const SETS = {
+    v5h7: { v: { gif: 5, zwak: 2, kwetsbaar: 2, kracht: 2, doornen: 1 }, h: { kracht: 2, zwak: 1, kwetsbaar: 1, gif: 3, doornen: 2, metaalhuid: 3, demonenvorm: 2 } },
+    v6h8: { v: { gif: 5, zwak: 2, kwetsbaar: 2, kracht: 2, doornen: 1, metaalhuid: 2 }, h: { kracht: 2, zwak: 1, kwetsbaar: 1, gif: 3, doornen: 2, metaalhuid: 3, demonenvorm: 2, ritueel: 1 } }
+  };
+  for (const n of [3, 4]) {
+    const echt = await page.evaluate(n => { S.metgezel = null; let k = 0; while (S.gevecht.vijanden.filter(v => !v.dood).length < n && k++ < 6) voegVijandToe('grotrat'); return S.gevecht.vijanden.filter(v => !v.dood).length; }, n);
+    await slaap(1500);
+    for (const [naam, s] of Object.entries(SETS)) {
+      const r = await page.evaluate(async s => {
+        const g = S.gevecht; g.speler.status = Object.assign({}, s.h);
+        g.vijanden.forEach(v => { if (!v.dood) v.status = Object.assign({}, s.v); });
+        renderGevecht();
+        await new Promise(r => setTimeout(r, 400));
+        const R = e => { const q = e.getBoundingClientRect(); return { l: q.left, t: q.top, r: q.right, b: q.bottom }; };
+        const zicht = e => { let p = e; while (p && p !== document.body) { const c = getComputedStyle(p); if (c.display === 'none' || c.visibility === 'hidden' || +c.opacity < 0.05) return false; p = p.parentElement; } const q = e.getBoundingClientRect(); return q.width > 0 && q.height > 0; };
+        const snij = (a, b) => { const w = Math.min(a.r, b.r) - Math.max(a.l, b.l), h = Math.min(a.b, b.b) - Math.max(a.t, b.t); return (w > 0 && h > 0) ? w * h : 0; };
+        const hand = [...document.querySelectorAll('#hand .kaart')].filter(zicht).map(R);
+        const perKol = [...document.querySelectorAll('#scherm-gevecht #vijanden-rij .vijand:not(.sterft), #scherm-gevecht #speler-zone')].map(k => [...k.querySelectorAll('.blok-status > *')].filter(zicht).map(R));
+        const chips = perKol.flat();
+        let buur = 0; for (let i = 0; i < perKol.length; i++) for (let j = i + 1; j < perKol.length; j++) for (const a of perKol[i]) for (const b of perKol[j]) buur += snij(a, b);
+        const perRij = (() => { const k = [...document.querySelectorAll('#vijanden-rij .vijand:not(.sterft):not(.is-baas) .blok-status')][0]; if (!k) return 0; const tops = [...k.children].map(c => Math.round(c.getBoundingClientRect().top)); return tops.filter(x => x === tops[0]).length; })();
+        return { chips: chips.length, hand: Math.round(chips.reduce((s, c) => s + hand.reduce((u, k) => u + snij(c, k), 0), 0)), handN: chips.filter(c => hand.some(k => snij(c, k) > 0)).length, buur: Math.round(buur), perRij };
+      }, s);
+      await shot(page, `${vp.naam}_gewoon_${echt}v_${naam}`);
+      t(r.chips > 0 && r.hand === 0, `B0.1 ${vp.naam} gewoon gevecht, ${echt} vijanden, ${naam}: geen statuschip achter een handkaart (${r.handN} van ${r.chips} chips, ${r.hand} px2; ${r.perRij} chips per rij bij een vijand)`);
+      if (!vp.d3) t(r.buur === 0 && r.perRij >= 3, `B0.1 ${vp.naam} gewoon gevecht, ${echt} vijanden, ${naam}: 3 chips per rij (${r.perRij}) en geen chip over die van een buurman (${r.buur} px2)`);
+    }
+  }
+  t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+  await ctx.close();
+  return { kop: `B0.1 in een gewoon gevecht · ${vp.naam}`, regels: R };
+}
+
 /* 5 · 3D: signatuurposes (B0.6) en de gewone camera buiten een baasgevecht (B0.12) */
 async function driedee(browser, fk) {
   const R = []; const t = (g, s) => R.push([!!g, s]);
@@ -891,6 +932,7 @@ async function intents(browser) {
     ...['M800', 'M846', 'L1440', 'L1440d3', 'L1366d3'].map(fk => ['dood ' + fk, () => dood(browser, fk)]),
     ...['M800', 'L1440'].map(fk => ['lijkweg ' + fk, () => lijkWeg(browser, fk)]),
     ...['M800', 'L1440', 'L1440d3'].map(fk => ['bannerdood ' + fk, () => bannerDood(browser, fk)]),
+    ...['L1440', 'L1366', 'L1440d3', 'L1366d3'].map(fk => ['gewoon ' + fk, () => gewoonChips(browser, fk)]),
     ...[['M846', 1500], ['M800', 400], ['L1440', 0], ['L1440d3', 6000]].map(([fk, tik]) => ['orakel ' + fk, () => orakel(browser, fk, tik)]),
     ...['L1440d3', 'L1366d3'].map(fk => ['3d ' + fk, () => driedee(browser, fk)]),
     ...['M800', 'L1440'].map(fk => ['hud ' + fk, () => hudEnHof(browser, fk)]),
