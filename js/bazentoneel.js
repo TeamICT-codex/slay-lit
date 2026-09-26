@@ -75,20 +75,18 @@ function spraakZone(el) {
   const b = g.vijanden.find(v => !v.dood && isBaas(v)) || g.vijanden.find(isBaas); if (!b) return;
   const i = g.vijanden.indexOf(b);
   const wrap = GDOM.vijanden[i] && GDOM.vijanden[i].wrap;
-  let links = null, rechts = null;
+  let art = null;   /* de spreker zelf: {l, t, r, b} */
   if (d3Actief() && window.Vista) {
     const p = Vista.schermPos(b);
-    if (p) { const h = p.voetY - p.topY; links = p.x - h * 0.36; rechts = p.x + h * 0.36; }
+    if (p) { const h = p.voetY - p.topY; art = { l: p.x - h * 0.36, r: p.x + h * 0.36, t: p.topY, b: p.voetY }; }
   } else {
     const a = wrap && wrap.querySelector('.vijand-art');
-    if (a) { const q = a.getBoundingClientRect(); links = q.left; rechts = q.right; }
+    if (a) { const q = a.getBoundingClientRect(); art = { l: q.left, r: q.right, t: q.top, b: q.bottom }; }
   }
-  if (links == null) return;
+  if (!art) return;
   /* de pil hoort bij de spreker (op mobiel hangt ze soms links naast zijn hoofd, B0.9) */
-  if (wrap) wrap.querySelectorAll('.intent').forEach(p => {
-    const q = p.getBoundingClientRect();
-    if (q.width > 0 && q.top < innerHeight * 0.5) { links = Math.min(links, q.left); rechts = Math.max(rechts, q.right); }
-  });
+  const pillen = wrap ? [...wrap.querySelectorAll('.intent')].map(p => p.getBoundingClientRect()).filter(q => q.width > 0 && q.top < innerHeight * 0.5) : [];
+  const links = Math.min(art.l, ...pillen.map(q => q.left)), rechts = Math.max(art.r, ...pillen.map(q => q.right));
   const W = innerWidth, mob = document.body.dataset.modus === 'mobiel';
   const bb = document.getElementById('baas-balk');
   const bbR = bb ? bb.getBoundingClientRect() : null;
@@ -96,19 +94,57 @@ function spraakZone(el) {
   const L = Math.max(12, W * 0.03);
   const zA = [L, links - 12], zB = [rechts + 12, Math.min(W - 12, hartL - 8)];
   const bA = zA[1] - zA[0], bB = zB[1] - zB[0];
-  const z = mob ? (bB >= 200 ? zB : (bA >= bB ? zA : zB)) : (bA >= 200 ? zA : (bA >= bB ? zA : zB));
-  if (z[1] - z[0] < 160) return;   /* nergens plaats: dan de standaardplek (gecentreerd) */
-  el.style.left = Math.round((z[0] + z[1]) / 2) + 'px';
-  el.style.maxWidth = Math.round(z[1] - z[0]) + 'px';
-  if (!mob) { el.classList.remove('smal'); return; }
-  /* Mobiel: een lange regel in een brede zone (846x381, 354px) werd drie regels en zakte tot
-     op het hoofd van de held. Raakt de plaat de held, dan wordt ze .smal - en dat blijft ze
-     voor de rest van haar leven, anders klapt ze elke 150 ms heen en weer. */
-  if (!el._smal && (z[1] - z[0]) >= 340) {
-    const sp = el.querySelector('span'), hf = document.getElementById('speler-figuur');
-    if (sp && hf && sp.getBoundingClientRect().bottom > hf.getBoundingClientRect().top - 2) el._smal = true;
+  /* maat: 0 = gewoon, 1 = .smal, 2 = .smal.krap (alleen mobiel) */
+  const zet = (z, maat) => { el.style.left = Math.round((z[0] + z[1]) / 2) + 'px'; el.style.maxWidth = Math.round(z[1] - z[0]) + 'px'; el.classList.toggle('smal', maat >= 1); el.classList.toggle('krap', maat >= 2); };
+  if (!mob) {
+    /* laptop: de band boven de (kleine) held is vrij -> links, anders de bredere kant */
+    let z = bA >= 200 ? zA : (bA >= bB ? zA : zB);
+    if (z[1] - z[0] < 160) return;   /* nergens plaats: dan de standaardplek (gecentreerd) */
+    zet(z, 0);
+    return;
   }
-  el.classList.toggle('smal', (z[1] - z[0]) < 340 || !!el._smal);
+  /* Mobiel: een paar kandidaten, in volgorde van voorkeur, en de eerste die niemand raakt
+     wint - gemeten op de plaat zelf, na het zetten (een lange regel wordt drie regels).
+     1. P's keuze: rechts (over het hof) als daar >= 200px is, anders de bredere kant;
+     2. links tot de art zelf: een pil-zij hangt lager dan de plaat en hoeft haar niet te
+        blokkeren (800x360 na de herverkiezing: '🗳️ DE REDE' links, de lange beleidsstrook
+        rechts - zonder deze kandidaat viel de plaat terug op de standaardplek, gecentreerd
+        precies op de DICKtator: 840 ms);
+     3. de bredere kant, ook als ze smaller is dan 160px (>= 110).
+     Elke kandidaat met het gewone, het smalle en - als niets anders schoon is - het krappe
+     lettertype (een zone < 340px nooit gewoon). De spreker, zijn pil en de bazenbalk wegen vier keer zo zwaar als de held; het
+     hof mag een plaat even afdekken. Een plaat houdt haar plek zolang die schoon blijft,
+     zodat ze niet heen en weer springt terwijl ze opkomt. */
+  const hf = document.getElementById('speler-figuur');
+  const held = hf ? hf.getBoundingClientRect() : null;
+  const hindernis = [[art, 4], ...pillen.map(q => [q, 4]), [bbR && bbR.width ? bbR : null, 4], [held, 1]].filter(h => h[0]);
+  const sp = el.querySelector('span');
+  const kost = () => {
+    if (!sp) return 0;
+    const q = sp.getBoundingClientRect();
+    return hindernis.reduce((s, [r, w]) => {
+      const x = Math.min(q.right, r.right != null ? r.right : r.r) - Math.max(q.left, r.left != null ? r.left : r.l);
+      const y = Math.min(q.bottom, r.bottom != null ? r.bottom : r.b) - Math.max(q.top, r.top != null ? r.top : r.t);
+      return s + (x > 0 && y > 0 ? x * y * w : 0);
+    }, 0);
+  };
+  const zA2 = [L, art.l - 12];
+  const volg = [];
+  for (const z of [bB >= 200 ? zB : (bA >= bB ? zA : zB), zA2, bA >= bB ? zA : zB, zB, zA]) {
+    if (z[1] - z[0] >= 110 && !volg.some(v => v[0] === z[0] && v[1] === z[1])) volg.push(z);
+  }
+  if (!volg.length) return;
+  if (el._zone) { zet(el._zone.z, el._zone.maat); if (kost() === 0) return; }
+  let best = null;
+  zoek: for (const maat of [0, 1, 2]) for (const z of volg) {
+    if (maat === 0 && z[1] - z[0] < 340) continue;
+    zet(z, maat);
+    const k = kost();
+    if (!best || k < best.k) best = { z, maat, k };
+    if (k === 0) break zoek;
+  }
+  el._zone = best;
+  zet(best.z, best.maat);
 }
 
 /* ---------- B0.13 — de fasebanner blijft boven het hoofd van de held (mobiel liggend) ----------

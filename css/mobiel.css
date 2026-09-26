@@ -1422,6 +1422,9 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] .baas-spraak { top: calc(var(--tbh, 40px) + var(--sat) + 4px); }
   body[data-modus="mobiel"] .baas-spraak span { font-size: clamp(.85rem, 2.3vw, 1.2rem); letter-spacing: 1.5px; padding: 5px 12px; }
   body[data-modus="mobiel"] .baas-spraak.smal span { font-size: .8rem; letter-spacing: .8px; padding: 4px 9px; line-height: 1.25; }
+  /* .krap: alleen als geen enkele zone schoon is met .smal (800x360 na de herverkiezing:
+     de brede pil '🗳️ DE REDE' en de lange beleidsstrook laten 158px links over) */
+  body[data-modus="mobiel"] .baas-spraak.smal.krap span { font-size: .72rem; letter-spacing: .4px; padding: 3px 8px; line-height: 1.15; }
 }
 
 /* ---------- D. liggend gevecht op een KORTE telefoon (≤440px hoog) ----------
