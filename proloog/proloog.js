@@ -2490,8 +2490,8 @@
           rij.appendChild(tekenvak);
           eind(); return handle;
         }
-        const cps = r.cps || 16;
-        if (!stil) klank('sfx', 'printer', Math.min(2.4, ((r.l || '').length + (r.w || '').length) * (zacht ? 2 : cps) / 1000 + 0.06), cps > 30);
+        const cps = snel ? 0 : (r.cps || 16);   /* stil (hervatten) of rustig: de regel staat er in één keer */
+        if (!stil) klank('sfx', 'printer', Math.min(2.4, ((r.l || '').length + (r.w || '').length) * (cps || 2) / 1000 + 0.06), cps > 30);
         const waarde = () => {
           if (r.hand) { rij.appendChild(el('span', 'pv-hand', r.hand)); eind(); return; }
           if (r.w == null && !r.rol) { eind(); return; }
@@ -2505,7 +2505,7 @@
           }
           st.sub = tikTekst(w, r.w, cps, eind);
         };
-        st.sub = tikTekst(l, r.l || '', snel ? 0 : cps, waarde);
+        st.sub = tikTekst(l, r.l || '', cps, waarde);
         return handle;
       }
       /* de printer loopt vast: de kop blijft hangen, ERROR knippert, het vel rukt; na ±1 s geeft hij op */
@@ -2516,7 +2516,7 @@
         pr.classList.add('vast');
         vak.classList.add('vast');
         klank('sfx', 'vastloper');
-        t = T(los, snel ? 300 : 1150);
+        t = T(los, snel ? 800 : 1150);
         return { rond: los };
       }
       /* het totaal zakt: € 9.131,00 … € 0,00 (de printer slaat de cijfers over, stap voor stap) */
@@ -2571,13 +2571,13 @@
       }
 
       /* ── de regie: één regel per moment; een tik = de regel meteen helemaal, en de volgende ── */
+      /* rustig (reduced motion, lite): de regel staat er in één keer, maar je krijgt dezelfde leestijd */
       function pauzeNa(r) {
-        if (zacht) return 120;
-        if (r.soort === 'stempel') return 650;
-        if (r.soort === 'perfo') return 320;
-        if (r.cls === 'pv-titel') return 80;
-        if (r.id === 'droom') return 420;
-        return 260;
+        if (r.soort === 'stempel') return zacht ? 800 : 650;
+        if (r.soort === 'perfo') return zacht ? 400 : 320;
+        if (r.cls === 'pv-titel') return zacht ? 250 : 80;
+        if (r.id === 'droom') return zacht ? 1100 : 420;
+        return zacht ? 650 : 260;
       }
       function volgende() {
         tid = 0;
