@@ -114,15 +114,20 @@ function spraakZone(el) {
 /* ---------- B0.13 — de fasebanner blijft boven het hoofd van de held (mobiel liggend) ----------
    De banner staat links in de bovenband (css). Een lange ondertitel (DE ROOF: "7 van je beste
    kaarten — nu MÍJN werk. Je dek sluit zich.") wrapte op 800x360 naar twee regels en liep
-   over het hoofd van de held (10,9% van zijn silhouet). Na het tonen meten we de onderrand:
-   raakt die de held, dan een maat kleiner (.bf-klein), en zo nodig nog een (.bf-kleinst). */
+   over het hoofd van de held (10,9% van zijn silhouet). Na het tonen meten we of titel of
+   ondertitel de figuur van de held raakt (zijn art heeft bovenaan maar 1-2% lucht, dus de
+   doos volstaat); zo ja, een maat kleiner (.bf-klein), en zo nodig nog een (.bf-kleinst).
+   Een korte banner links van de held blijft op volle maat. */
 function bannerFit(el) {
   if (!el || document.body.dataset.modus !== 'mobiel' || innerHeight > innerWidth) return;
   const hf = document.getElementById('speler-figuur'); if (!hf) return;
-  const kop = hf.getBoundingClientRect().top - 2;
-  const onder = () => Math.max(0, ...[...el.children].map(c => c.getBoundingClientRect().bottom));
-  if (onder() > kop) el.classList.add('bf-klein');
-  if (onder() > kop) el.classList.add('bf-kleinst');
+  const h = hf.getBoundingClientRect();
+  const raakt = () => [...el.children].some(c => {
+    const q = c.getBoundingClientRect();
+    return q.bottom > h.top - 2 && q.top < h.bottom && q.right > h.left && q.left < h.right;
+  });
+  if (raakt()) el.classList.add('bf-klein');
+  if (raakt()) el.classList.add('bf-kleinst');
 }
 
 /* ---------- --bb-onder: de onderrand van de bazenbalk als CSS-variabele ----------

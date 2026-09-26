@@ -432,50 +432,57 @@ async function sluisEnWachtrij(browser, fk) {
   return { kop: `Tekstsluis, pauze, vervallen en bannerwachtrij · ${vp.naam}`, regels: R };
 }
 
-/* 3 · een echte bedrijfsovergang (DICKtator I->II): plaat ~ titel, ~ spreker, ~ held per 50 ms */
+/* 3 · de echte bedrijfsovergangen van de DICKtator (I->II, II->III, de herverkiezing):
+   plaat ~ titel, ~ spreker, ~ held, per 50 ms in de pagina (zoals r_overgang2 van het P-harnas) */
 async function overgang(browser, fk) {
   const R = []; const t = (g, s) => R.push([!!g, s]);
   const { ctx, page, vp } = await open(browser, fk);
-  await page.evaluate(() => { DEV_BUILDS.slachter_mid.metgezel = null; DICK.tempo = 1; devDicktator('slachter_mid', { netVoor: 2 }); if (document.querySelector('#draai-blok.toon') && typeof speelTochStaand === 'function') speelTochStaand(); });
-  await slaap(800); await page.evaluate(() => { const b = document.getElementById('baas-intro'); if (b) b.click(); });
-  await wachtRust(page, 9000, 45000);
-  const o = await page.evaluate(async () => {
-    document.querySelectorAll('#meldingen .toast').forEach(t => t.remove());
-    const R = e => { const q = e.getBoundingClientRect(); return { l: q.left, t: q.top, r: q.right, b: q.bottom }; };
-    const snij = (a, b) => { const l = Math.max(a.l, b.l), t = Math.max(a.t, b.t), r = Math.min(a.r, b.r), bb = Math.min(a.b, b.b); return (r > l && bb > t) ? (r - l) * (bb - t) : 0; };
-    const o = { titel: 0, baas: 0, baasMax: 0, pil: 0, held: 0, regels: {} };
-    let vorig = performance.now(); const t0 = vorig;
-    const iv = setInterval(() => {
-      const nu = performance.now(), dt = nu - vorig; vorig = nu;
-      const sp = [...document.querySelectorAll('.baas-spraak')].filter(e => +getComputedStyle(e).opacity > 0.2).map(e => R(e.querySelector('span') || e));
-      const tit = [...document.querySelectorAll('.vonnis h2, .vonnis span, .baas-flits h2, .baas-flits span')].map(R);
-      const g = S.gevecht; const b = g && g.vijanden.find(v => !v.dood && v.id === 'de_dicktator');
-      let br = null;
-      if (b) { if (d3Actief() && window.Vista) { const p = Vista.schermPos(b); if (p) { const h = p.voetY - p.topY; br = { l: p.x - h * 0.36, r: p.x + h * 0.36, t: p.topY, b: p.voetY }; } } else { const a = GDOM.vijanden[g.vijanden.indexOf(b)].wrap.querySelector('.vijand-art'); if (a) br = R(a); } }
-      const pil = b ? [...GDOM.vijanden[g.vijanden.indexOf(b)].wrap.querySelectorAll('.intent')].map(R) : [];
-      let hr = null; if (d3Actief() && window.Vista) { const p = Vista.schermPos(g.speler); if (p) { const h = p.voetY - p.topY; hr = { l: p.x - h * 0.3, r: p.x + h * 0.3, t: p.topY, b: p.voetY }; } } else { const hf = document.getElementById('speler-figuur'); if (hf) hr = R(hf); }
-      for (const s of sp) {
-        if (tit.some(x => snij(s, x) > 0)) o.titel += dt;
-        if (br) { const x = snij(s, br); if (x > 0) { o.baas += dt; o.baasMax = Math.max(o.baasMax, Math.round(x)); } }
-        if (pil.some(p => snij(s, p) > 0)) o.pil += dt;
-        if (hr && snij(s, hr) > 0) o.held += dt;
-      }
-      [...document.querySelectorAll('.baas-spraak')].filter(e => +getComputedStyle(e).opacity > 0.2).forEach(e => { const k = e.textContent.slice(0, 30); const r = o.regels[k] || (o.regels[k] = { van: nu - t0, tot: nu - t0 }); r.tot = nu - t0; });
-    }, 50);
-    _devKlapNu(DEV_KLAP);
-    await new Promise(r => setTimeout(r, 7000));
-    clearInterval(iv);
-    for (const k of ['titel', 'baas', 'pil', 'held']) o[k] = Math.round(o[k]);
-    return o;
-  });
-  const regels = Object.entries(o.regels).map(([k, r]) => `${k.slice(0, 18)}… ${Math.round(r.tot - r.van)} ms`).join(', ');
-  t(o.titel === 0, `B0.4 ${vp.naam} I->II: plaat ~ scènetitel/banner ${o.titel} ms (0)`);
-  t(Object.keys(o.regels).length >= 1 && Object.values(o.regels).every(r => r.tot - r.van >= 900), `B0.4 ${vp.naam} I->II: elke regel volledig leesbaar (${regels})`);
-  t(o.baas <= 250 && o.pil <= 250, `B0.5 ${vp.naam} I->II: plaat ~ DICKtator ${o.baas} ms (max ${o.baasMax} px2), ~ zijn pil ${o.pil} ms (<= 250)`);
-  t(o.held === 0, `B0.5 ${vp.naam} I->II: plaat ~ held ${o.held} ms (0)`);
+  for (const [nv, naam, venster] of [[2, 'I->II', 7000], [3, 'II->III', 7500], [4, 'III->IV', 9000]]) {
+    await page.evaluate(nv => { DEV_BUILDS.slachter_mid.metgezel = null; DICK.tempo = 1; devDicktator('slachter_mid', { netVoor: nv }); if (document.querySelector('#draai-blok.toon') && typeof speelTochStaand === 'function') speelTochStaand(); }, nv);
+    await slaap(800); await page.evaluate(() => { const b = document.getElementById('baas-intro'); if (b) b.click(); });
+    await wachtRust(page, 9000, 45000);
+    const o = await page.evaluate(async venster => {
+      document.querySelectorAll('#meldingen .toast').forEach(t => t.remove());
+      const R = e => { const q = e.getBoundingClientRect(); return { l: q.left, t: q.top, r: q.right, b: q.bottom }; };
+      const snij = (a, b) => { const l = Math.max(a.l, b.l), t = Math.max(a.t, b.t), r = Math.min(a.r, b.r), bb = Math.min(a.b, b.b); return (r > l && bb > t) ? (r - l) * (bb - t) : 0; };
+      const o = { titel: 0, baas: 0, baasMax: 0, pil: 0, held: 0, regels: {} };
+      let vorig = performance.now(); const t0 = vorig;
+      const iv = setInterval(() => {
+        const nu = performance.now(), dt = nu - vorig; vorig = nu;
+        const sp = [...document.querySelectorAll('.baas-spraak')].filter(e => +getComputedStyle(e).opacity > 0.2).map(e => R(e.querySelector('span') || e));
+        const tit = [...document.querySelectorAll('.vonnis h2, .vonnis span, .baas-flits h2, .baas-flits span')].map(R);
+        const g = S.gevecht; if (!g) return;
+        const b = g.vijanden.find(v => !v.dood && v.id === 'de_dicktator');
+        let br = null;
+        if (b) { if (d3Actief() && window.Vista) { const p = Vista.schermPos(b); if (p) { const h = p.voetY - p.topY; br = { l: p.x - h * 0.36, r: p.x + h * 0.36, t: p.topY, b: p.voetY }; } } else { const a = GDOM.vijanden[g.vijanden.indexOf(b)].wrap.querySelector('.vijand-art'); if (a) br = R(a); } }
+        const pil = b ? [...GDOM.vijanden[g.vijanden.indexOf(b)].wrap.querySelectorAll('.intent')].map(R) : [];
+        let hr = null; if (d3Actief() && window.Vista) { const p = Vista.schermPos(g.speler); if (p) { const h = p.voetY - p.topY; hr = { l: p.x - h * 0.3, r: p.x + h * 0.3, t: p.topY, b: p.voetY }; } } else { const hf = document.getElementById('speler-figuur'); if (hf) hr = R(hf); }
+        for (const s of sp) {
+          if (tit.some(x => snij(s, x) > 0)) o.titel += dt;
+          if (br) { const x = snij(s, br); if (x > 0) { o.baas += dt; o.baasMax = Math.max(o.baasMax, Math.round(x)); } }
+          if (pil.some(p => snij(s, p) > 0)) o.pil += dt;
+          if (hr && snij(s, hr) > 0) o.held += dt;
+        }
+        [...document.querySelectorAll('.baas-spraak')].filter(e => +getComputedStyle(e).opacity > 0.2).forEach(e => { const k = e.textContent.slice(0, 30); const r = o.regels[k] || (o.regels[k] = { van: nu - t0, tot: nu - t0 }); r.tot = nu - t0; });
+      }, 50);
+      _devKlapNu(DEV_KLAP);
+      await new Promise(r => setTimeout(r, venster));
+      clearInterval(iv);
+      for (const k of ['titel', 'baas', 'pil', 'held']) o[k] = Math.round(o[k]);
+      o.venster = venster;
+      return o;
+    }, venster);
+    /* een regel die aan het einde van het meetvenster nog stond, telt niet voor de leesduur */
+    const af = Object.entries(o.regels).filter(([, r]) => r.tot < o.venster - 300);
+    const regels = Object.entries(o.regels).map(([k, r]) => `${k.slice(0, 16)}… ${Math.round(r.tot - r.van)} ms`).join(', ');
+    t(o.titel === 0, `B0.4 ${vp.naam} ${naam}: plaat ~ scènetitel/banner ${o.titel} ms (0)`);
+    t(Object.keys(o.regels).length >= 1 && af.every(([, r]) => r.tot - r.van >= 700), `B0.4 ${vp.naam} ${naam}: elke regel leesbaar, >= 0,7 s (${regels})`);
+    t(o.baas <= 250 && o.pil <= 250, `B0.5 ${vp.naam} ${naam}: plaat ~ DICKtator ${o.baas} ms (max ${o.baasMax} px2), ~ zijn pil ${o.pil} ms (<= 250)`);
+    t(o.held === 0, `B0.5 ${vp.naam} ${naam}: plaat ~ held ${o.held} ms (0)`);
+  }
   t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
   await ctx.close();
-  return { kop: `Bedrijfsovergang I->II (DICKtator) · ${vp.naam}`, regels: R };
+  return { kop: `Bedrijfsovergangen van de DICKtator · ${vp.naam}`, regels: R };
 }
 
 /* 4 · de dood: de verslagen baas blijft liggen, het slotwoord staat erbij (B0.7 + B0.4) */
