@@ -759,6 +759,7 @@
       if (fase === 'weg' || !actief) return;
       fase = 'weg';
       spoel = null;
+      removeEventListener('resize', opResize);   /* fixer R3 F1 (hervat): niet wachten op de volgende resize */
       verder();
     }
   }

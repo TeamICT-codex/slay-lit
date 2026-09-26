@@ -418,7 +418,7 @@ img { max-width: 100%; display: block; }
 
 /* de collega's: hoofden boven de scheidingswand (de wand dekt hun schouders) */
 .br-hoofden { position: absolute; left: 0; right: 0; top: 0; height: var(--wl); z-index: 1; }
-.hoofd { position: absolute; left: calc(var(--x) * 100%); bottom: calc(var(--h) * -.3); width: var(--h); height: var(--h); transform: translateX(-50%); transition: transform .3s ease, filter .3s ease; }
+.hoofd { position: absolute; left: calc(var(--x) * 100% + var(--kx, 0px)); bottom: calc(var(--h) * -.3); width: var(--h); height: var(--h); transform: translateX(-50%); transition: transform .3s ease, filter .3s ease; }
 .hd-kop { position: absolute; inset: 0; }
 .hd-art { border-radius: 46% 46% 18% 18%; overflow: hidden; box-shadow: 0 -2px 10px rgba(0, 0, 0, .5); }
 .hd-art .art-img { object-position: 50% 22%; transform: scale(1.35); transform-origin: 50% 25%; filter: sepia(.25) brightness(.92); }
@@ -460,15 +460,19 @@ img { max-width: 100%; display: block; }
 .br-wand { position: absolute; left: 0; right: 0; top: var(--wl); bottom: 0; z-index: 2;
   background: repeating-linear-gradient(90deg, rgba(0, 0, 0, .05) 0 2px, transparent 2px 5px), linear-gradient(180deg, #7d7157, #6e634c);
   border-top: 4px solid #9b8e6c; box-shadow: 0 -2px 0 #4a4232, inset 0 6px 10px rgba(0, 0, 0, .25); }
-.br-naamplaat { position: absolute; top: 6px; left: calc(var(--x) * 100%); transform: translateX(-50%); padding: 1px 6px; font-family: var(--f-type); font-size: .6rem; letter-spacing: .12em; color: #2b2114; background: #c9b98f; border-radius: 2px; white-space: nowrap; box-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
+.br-naamplaat { position: absolute; top: 6px; left: calc(var(--x) * 100% + var(--kx, 0px)); transform: translateX(-50%); padding: 1px 6px; font-family: var(--f-type); font-size: .6rem; letter-spacing: .12em; color: #2b2114; background: #c9b98f; border-radius: 2px; white-space: nowrap; box-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
 /* fixer R3 F1 · Karels buis werpt een koude kegel over de wand en zijn naamplaatje 'KAREL · 7'; klakt
    de buis uit, dan gaan kegel en plaatje in één klap op zwart (60 ms: een uitval, geen fade) */
-.br-kegel { position: absolute; left: calc(var(--x) * 100%); top: calc(var(--h) * -.7 + 3px); width: calc(var(--h) * 1.7); height: calc(var(--h) * .7 + 30px); transform: translateX(-50%); pointer-events: none;
+.br-kegel { position: absolute; left: calc(var(--x) * 100% + var(--kx, 0px)); top: calc(var(--h) * -.7 + 3px); width: calc(var(--h) * 1.7); height: calc(var(--h) * .7 + 30px); transform: translateX(-50%); pointer-events: none;
   clip-path: polygon(34% 0, 66% 0, 100% 100%, 0 100%);
   background: linear-gradient(180deg, rgba(228, 240, 255, .5), rgba(228, 240, 255, .22) 60%, rgba(228, 240, 255, .1)); transition: opacity .06s linear; }
 .br-kegel.uit { opacity: 0; }
 .br-naamplaat.belicht { background: #e6ddc4; box-shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 -3px 10px rgba(215, 235, 255, .45); transition: background .06s linear, box-shadow .06s linear, color .06s linear; }
 .br-naamplaat.belicht.uit { background: #6d6450; color: #2f281c; box-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
+/* fixer R3 F1 (hervat): staand (de basis) stak de pijp van de buizenpost door 'KAREL · 7' (x .85 = 350
+   van 412; de pijp op 377-393). Karel schuift daar 16 px naar links: hoofd, kegel en plaatje samen.
+   Breed en kort (liggend) staat hij vrij en blijft --kx 0. */
+.hoofd-karel, .br-kegel, .br-naamplaat[data-wie="karel"] { --kx: -16px; }
 
 /* jouw tl, boven je bureau: feller per glimlach, pulseert op de tel */
 .br-tl { position: absolute; left: 50%; top: 0; width: min(44%, 420px); height: 11px; transform: translateX(-50%); z-index: 6; border-radius: 0 0 4px 4px; background: #2e302c; pointer-events: none; }
@@ -1072,6 +1076,7 @@ img { max-width: 100%; display: block; }
     grid-template-areas: "wand wand wand wand wand" ". foto crt vu ." ". foto actie vu ." ". zak zak zak .";
   }
   .br-kopvak { --wl: 50%; --h: clamp(78px, 12vh, 110px); }
+  .hoofd-karel, .br-kegel, .br-naamplaat[data-wie="karel"] { --kx: 0px; }   /* fixer R3 F1: breed staat Karel vrij van de pijp */
   .br-naamplaat { font-size: .6rem; top: 8px; }
   .br-oprichter { width: 92px; margin: 0 0 14px max(24px, calc(50% - 560px)); }
   .br-plaquette { display: block; font-size: .56rem; }   /* integrator R3: alleen breed; staand is het portret 39 px en las de plaquette '◆ De Op' */
@@ -1149,6 +1154,7 @@ img { max-width: 100%; display: block; }
     grid-template-areas: "wand wand wand wand wand" ". foto crt vu ." ". zak actie . .";
   }
   .br-kopvak { --wl: 64%; --h: 40px; }
+  .hoofd-karel, .br-kegel, .br-naamplaat[data-wie="karel"] { --kx: 0px; }   /* fixer R3 F1: liggend staat Karel vrij van de pijp */
   .br-naamplaat { top: 2px; font-size: .57rem; padding: 0 4px; }   /* fixer R3 F1: 9,1 px (was 6,7) */
   .br-memo { display: none; }
   .br-oprichter { grid-area: vu; align-self: start; justify-self: center; margin: 0; width: 52px; padding: 3px; }
