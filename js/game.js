@@ -3113,7 +3113,7 @@ function toonScherfReveal(sid, opts) {
       <div class="scherf-reveal-kop">${opts.kop || '🜂 EEN SCHERF KIEST JOU'}</div>
       <div class="scherf-reveal-art" data-shart="${sid}">${d ? bronIcoon(d.bron) : '🜂'}</div>
       <div class="scherf-reveal-flavor"><i>${(d && scherfTekst(sid)) || 'Een fragment van iets groters…'}</i></div>
-      <div class="scherf-reveal-sub">${huidigeAct() <= 1
+      <div class="scherf-reveal-sub">${huidigeAct() <= 1 && !(S && S.daily)   /* de daily heeft geen Drempeltafel (volgendeAct) — hij bankt wel bij het einde */
         ? 'Je draagt nu een scherf — drie ervan kopen een plaats aan de tafel op de Drempel.'
         : 'Je draagt nu een scherf — hij bankt bij het einde van je run, voor de tafel van een volgende afdaling.'}</div>
       <button class="knop-stil scherf-reveal-sluit">Verder ↓</button>
@@ -3534,13 +3534,15 @@ function synergieBoekHtml(mgid) {
   return h;
 }
 
-/* werf een metgezel voor de rest van de run (HP gaat mee tussen gevechten) */
-function geefMetgezel(id) {
+/* werf een metgezel voor de rest van de run (HP gaat mee tussen gevechten).
+   opts.codex === false: NIET in het Codex-roster schrijven (de DEV-kiezer: een test mag de
+   echte Codex van een playtester niet vullen — review B1 F1) */
+function geefMetgezel(id, opts) {
   const def = METGEZELLEN[id];
   if (!def || !metgezellenAan()) return;   /* poort V3: geparkeerd → niemand werft, niets naar de Codex */
   const mx = metgezelMaxHp(id);
   S.metgezel = { id, hp: mx, maxHp: mx, vluchtig: false };
-  ontdek('metgezellen', id);
+  if (!(opts && opts.codex === false)) ontdek('metgezellen', id);
   const lab = synergieLabel(id);
   if (lab) melding(`${def.icoon || '🜂'} ${def.naam} — ${lab} met ${HELDNAAM(S.held)}.`);
   renderTopbalk();
@@ -3638,6 +3640,7 @@ function mgSliert(m) {
    gevecht) voor zijn unieke zet. Cryptisch tot de eerste keer (Codex.sigOntdekt);
    De Roddel-vloek blokkeert hem, net als zijn gewone beurt. */
 function mgSignatuur() {
+  if (!metgezellenAan()) return;   /* geparkeerd: schrijft nooit Codex.sigOntdekt (review B1 F1) */
   const g = S.gevecht, m = gMet();
   if (!g || g.bezig || g.voorbij || !m || m.dood) return;
   const def = METGEZELLEN[m.id];
@@ -3729,14 +3732,16 @@ function bevestig(tekst, onJa, jaLabel) {
 /* DE OPOFFERING — bewuste, PERMANENTE keuze (geen vlucht; voorgoed weg).
    Generiek: elke metgezel met een opoffering-blok kan dit. */
 function metgezelOpoffering() {
+  if (!metgezellenAan()) return;   /* geparkeerd: het offer schrijft nooit gevallen/copycatGebroken (review B1 F1) */
   const g = S.gevecht, m = gMet();
   if (!g || g.voorbij || g.bezig || !m || m.dood) return;
   const def = METGEZELLEN[m.id];
-  if (!def.opoffering || !def.opoffering.beschikbaar(g)) return;
+  if (!def || !def.opoffering || !def.opoffering.beschikbaar(g)) return;
   bevestig(
     `<b>${def.naam} — ${def.opoffering.naam}</b><br><br>${def.opoffering.tekst}<br><br>Hierna is ${def.naam} <b>VOORGOED</b> weg. Geen terugkeer.`,
     () => {
-      if (S.gevecht !== g || g.voorbij || !gMet() || gMet().dood) return;
+      /* ook hier de vlag: de DEV-schakelaar kan uitgaan terwijl de bevestiging openstaat */
+      if (!metgezellenAan() || S.gevecht !== g || g.voorbij || !gMet() || gMet().dood) return;
       def.opoffering.doe(m, g);
       baasFaseMoment('DE LAATSTE SPRONG', `${def.naam} offert zich op — de diepte onthoudt zijn moed.`);
       /* TOON de dood: speel eerst de offer-pose (<art>_death) zichtbaar af — de sprong
@@ -4285,7 +4290,9 @@ function laadSpel() {
     if (S.runMetgezel === 'drops_wit') S.runMetgezel = null;   /* stale cache uit oude saves: de Witte hoort nooit in de auto-rotatie (enkel via het grief-moment) */
     /* DE NISSEN DICHT: een run van vóór de parkering stuurt zijn metgezel netjes weg (één regel,
        één keer). laadSpel markeert alleen; doorgaan() toont de regel en bewaart meteen, zodat
-       hij bij een volgende herlaad niet terugkomt. */
+       hij bij een volgende herlaad niet terugkomt. De markering komt ALLEEN van hier: een
+       _mgAfscheid die al in de save staat (getamperd) wordt eerst gewist, zoals de seed. */
+    delete S._mgAfscheid;
     if (!metgezellenAan() && (S.metgezel || S.runMetgezel)) {
       const weg = S.metgezel && METGEZELLEN[S.metgezel.id];
       S.metgezel = null; S.runMetgezel = null;
@@ -6135,13 +6142,17 @@ function mysterieDuiding(versAantal) {
      dus toonEinde geeft de stand van vóór het wissen mee (debug-sweep 27 aug) */
   const loadout = (S && Array.isArray(S.loadoutScherven)) ? S.loadoutScherven : [];
   const vers = (versAantal !== undefined) ? versAantal : gedragen().filter(sid => !loadout.includes(sid)).length;
+  /* DE NISSEN DICHT: met de metgezellen geparkeerd valt er geen mysterie (geen maaksel dat
+     ontwaakt) meer op te lossen — de regels spreken dan alleen over de inleg en de tafel */
+  const mg = metgezellenAan();
   const regel = best.rijp
-    ? 'Je hebt een maaksel compleet — drie scherven zijn een inleg, en de tafel aan de Drempel wacht.'
+    ? (mg ? 'Je hebt een maaksel compleet — drie scherven zijn een inleg, en de tafel aan de Drempel wacht.'
+      : 'Je hebt drie scherven van één maaksel — een volle inleg, en de tafel aan de Drempel wacht.')
     : vers > 0
       ? (vers === 1
         ? 'Dit was geen einde: je draagt een scherf uit het donker mee — je vondst overleeft je val.'
         : `Dit was geen einde: je draagt ${vers} scherven uit het donker mee — je vondsten overleven je val.`)
-      : 'Een onopgelost mysterie wacht in de diepte.';
+      : (mg ? 'Een onopgelost mysterie wacht in de diepte.' : 'Je scherven wachten op een volgende tafel.');
   return `<p class="einde-mysterie einde-mysterie-tik" onclick="toonCodex()">🜂 ${regel} <b>(${best.aantal}/${totaal})</b>
     <small>Scherven zijn je inleg: met drie koop je een plaats aan De Drempeltafel (Act 1→2). Tik voor je Codex.</small></p>`;
 }
@@ -10842,11 +10853,17 @@ function devSlijmkoning() {
 
 /* DEV-SHORTCUT (DE NISSEN DICHT): de geparkeerde metgezellen voor DEZE sessie aanzetten.
    Leeft alleen in het geheugen (zoals DICK.tempo): een herlaad parkeert ze weer. Bij uit
-   verdwijnt ook een lopende metgezel uit de run; een metgezel die al in het huidige gevecht
-   staat, blijft tot het einde van dat gevecht (g.metgezel wordt bij startGevecht gebouwd). */
+   verdwijnt de metgezel METEEN: uit de run én uit het lopende gevecht (zone weg, zelfde
+   herbouw als revealDropsWit). Anders bleef hij tot het einde van het gevecht staan en kon
+   zijn offer of signatuurzet met de vlag uit nog in de Codex schrijven (review B1 F1);
+   metgezelOpoffering en mgSignatuur lezen de vlag daarom ook zelf. */
 function devMetgezellen(aan) {
   _devMetgezellen = !!aan;
-  if (!aan && S) { S.metgezel = null; S.runMetgezel = null; }
+  if (!aan && S) {
+    S.metgezel = null; S.runMetgezel = null;
+    const g = S.gevecht;
+    if (g && g.metgezel) { g.metgezel = null; bouwGevechtDom(g); renderGevecht(); }
+  }
   if (S) renderTopbalk();
   melding(aan ? '⚡ DEV: metgezellen AAN (alleen deze sessie).' : '⚡ DEV: metgezellen weer geparkeerd.');
 }
@@ -10859,13 +10876,15 @@ function _devMgMag() {
 /* DEV-SHORTCUT: metgezel aan/uit voor tests (synergie, Roddel-vloek, topbalk-chip,
    victory-poses). In een lopend gevecht stapt hij pas het VOLGENDE gevecht in
    (g.metgezel wordt bij startGevecht gebouwd — de v70-les). Wegsturen (id null) mag
-   altijd, ook geparkeerd: opruimen mag altijd. */
+   altijd, ook geparkeerd: opruimen mag altijd. Raakt je save, niet je Codex-roster
+   (geefMetgezel met codex:false — vroeger bleef elke geteste metgezel voorgoed in je
+   Codex staan, ook de Witte, die de outro met de metgezellen aan als witte hond toont). */
 function devMetgezel(id) {
   if (id && !_devMgMag()) return;
   if (!S) nieuwSpel('slachter');
   if (!id) { S.metgezel = null; renderTopbalk(); melding('⚡ DEV: metgezel weggestuurd.'); return; }
   if (!METGEZELLEN[id]) { melding('⚡ DEV: onbekende metgezel: ' + id); return; }
-  geefMetgezel(id);
+  geefMetgezel(id, { codex: false });
   melding(`⚡ DEV: ${METGEZELLEN[id].naam} stapt in${inGevecht() ? ' — vanaf het volgende gevecht' : ''}.`);
 }
 
@@ -11243,11 +11262,11 @@ const DEV_MENU = [
   {
     kop: '🐾 Metgezel (geparkeerd) — in gevecht: vanaf het volgende',
     items: [
-      { soort: 'schakel', label: '🐾 Metgezellen (geparkeerd)', tip: 'Zet de geparkeerde metgezellen AAN voor deze sessie (niet bewaard: een herlaad parkeert ze weer). Raakt je save niet; de Drops-boog hieronder schrijft wel in je Codex.', stand: () => metgezellenAan(), doe: aan => devMetgezellen(aan) },
-      { label: '🐕 Drops', tip: 'Zet Drops in je lopende run (raakt je save, niet je Codex). In een gevecht stapt hij pas vanaf het volgende mee.', doe: () => devMetgezel('drops') },
-      { label: '🛡️ Vlamwacht', tip: 'Zet de Vlamwacht in je lopende run (raakt je save, niet je Codex).', doe: () => devMetgezel('vlamwachter') },
-      { label: '🍃 Mosgeest', tip: 'Zet de Mosgeest in je lopende run (raakt je save, niet je Codex).', doe: () => devMetgezel('mosgeest') },
-      { label: '🤍 De Witte', tip: 'Zet Drops de Witte in je lopende run. Let op: hij hoort normaal NOOIT in de gewone rotatie — alleen via het grief-moment.', doe: () => devMetgezel('drops_wit') },
+      { soort: 'schakel', label: '🐾 Metgezellen (geparkeerd)', tip: 'Zet de geparkeerde metgezellen AAN voor deze sessie (niet bewaard: een herlaad parkeert ze weer). UIT haalt de metgezel ook meteen uit een lopend gevecht. Raakt je save niet; de Drops-boog hieronder schrijft wel in je Codex.', stand: () => metgezellenAan(), doe: aan => devMetgezellen(aan) },
+      { label: '🐕 Drops', tip: 'Zet Drops in je lopende run (raakt je save, niet je Codex-roster; zijn signatuurzet of offer in een gevecht schrijft wel in je Codex). In een gevecht stapt hij pas vanaf het volgende mee.', doe: () => devMetgezel('drops') },
+      { label: '🛡️ Vlamwacht', tip: 'Zet de Vlamwacht in je lopende run (raakt je save, niet je Codex-roster; zijn signatuurzet in een gevecht schrijft wel in je Codex).', doe: () => devMetgezel('vlamwachter') },
+      { label: '🍃 Mosgeest', tip: 'Zet de Mosgeest in je lopende run (raakt je save, niet je Codex-roster; zijn signatuurzet in een gevecht schrijft wel in je Codex).', doe: () => devMetgezel('mosgeest') },
+      { label: '🤍 De Witte', tip: 'Zet Drops de Witte in je lopende run (raakt je save, niet je Codex-roster). Let op: hij hoort normaal NOOIT in de gewone rotatie — alleen via het grief-moment.', doe: () => devMetgezel('drops_wit') },
       { label: '✕ weg', tip: 'Stuurt je metgezel weg (raakt je save, niet je Codex).', doe: () => devMetgezel(null) }
     ]
   },

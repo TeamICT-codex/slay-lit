@@ -34,8 +34,13 @@ let okN = 0, foutN = 0;
 const t = (goed, tekst) => { if (goed) { okN++; console.log('   ok   ' + tekst); } else { foutN++; console.log('   FOUT ' + tekst); } };
 const kop = s => console.log('\n== ' + s + ' ==');
 
-/* wat een speler met de metgezellen geparkeerd NOOIT mag lezen (zichtbare tekst + data-tips) */
-const VERBODEN = /metgezel|\bdrops\b|bondgenoot|\bhond\b|daalt deze run met je mee|\btrouw|poort had|vlamwacht|mosgeest|nissen zijn dichtgelast/i;
+/* wat een speler met de metgezellen geparkeerd NOOIT mag lezen (zichtbare tekst + data-tips).
+   Eén kern voor het beeld (VERBODEN) én de bron (WOORD, de grep-wacht hieronder), zodat ze niet
+   uit elkaar groeien (review B1 F1: de grep-wacht zag 'trouw' en 'poort had' niet). Een kale
+   'poort' staat er bewust NIET in: de Drempeltafel, de Steenwachter en de wereldkaart spreken
+   terecht over een poort. */
+const KERN = 'metgezel|\\bdrops\\b|bondgenoot|\\bhond\\b|daalt deze run met je mee|\\btrouw|poort had|poort onderin|die poort wakker|vlamwacht|mosgeest|nissen zijn dichtgelast';
+const VERBODEN = new RegExp(KERN, 'i');
 /* een scherftekst noemt geen vindplaats: dezelfde scherf valt uit een elite, een kist, een baas of de tafel */
 const VINDPLAATS = /\bbaas\b|raadsel|geschenk|gevecht|\bfiguur\b|\belite\b|\bkist/i;
 /* de metgezelsleutels van de Codex: nooit gewist, nooit bijgeschreven zolang de vlag uit staat */
@@ -71,12 +76,17 @@ const codexVan = scen => CODEX[scen === 'daily' ? 'ontwaakt' : scen];
 
 /* ============================================================================
    DE GREP-WACHT — een mini-lexer over de bron (strings, templates met ${}, commentaar,
-   regex-literals). Elke string of template met een spatie die een metgezel noemt, moet in
-   een functie staan waarvan we WETEN dat ze achter de vlag zit (of DEV is). Een nieuwe
-   verwijzing ergens anders — ook in proloog/*.js — is FOUT: de bazen- en proloogrondes mogen
-   er geen binnensmokkelen.
+   regex-literals). Elke string of template met een spatie die een metgezel noemt (plus elke
+   string met een 🐾, ook zonder spatie: dat is nooit een sleutel of CSS-klasse), moet in de
+   ALLOWLIST staan: in een functie die als geheel achter de vlag zit (HEEL), of — in een
+   gemengde functie — als GEKENDE string met zijn vingerafdruk (PER_STRING). Een nieuwe
+   verwijzing ergens anders — ook in proloog/*.js, of een nieuwe string in een grote gemengde
+   functie als toonCodex — is FOUT: de bazen- en proloogrondes mogen er geen binnensmokkelen.
    ============================================================================ */
-const WOORD = /metgezel|\bdrops\b|bondgenoot|\bhond\b|vlamwacht|mosgeest/i;
+const WOORD = new RegExp(KERN + '|🐾', 'i');
+const crypto = require('crypto');
+/* de vingerafdruk van één stuk bron-tekst: sha1 van de genormaliseerde regel, 10 tekens */
+const vinger = s => crypto.createHash('sha1').update(s.replace(/\s+/g, ' ').trim(), 'utf8').digest('hex').slice(0, 10);
 function literals(src) {
   const uit = [];
   let i = 0, regel = 1, vorige = '';
@@ -158,38 +168,37 @@ function grepWacht(rel) {
   const ctx = contexten(src);
   const uit = [];
   literals(src).forEach(x => {
-    if (!/\s/.test(x.tekst) || !WOORD.test(x.tekst)) return;
+    if (!((/\s/.test(x.tekst) && WOORD.test(x.tekst)) || /🐾/.test(x.tekst))) return;
     x.tekst.split('\n').forEach((stuk, k) => {
-      if (WOORD.test(stuk)) uit.push({ rel, regel: x.regel + k, sleutel: rel + ':' + ctx[x.regel + k - 1], s: stuk.replace(/\s+/g, ' ').trim().slice(0, 100) });
+      if (WOORD.test(stuk)) uit.push({ rel, regel: x.regel + k, sleutel: rel + ':' + ctx[x.regel + k - 1], hash: vinger(stuk), s: stuk.replace(/\s+/g, ' ').trim().slice(0, 100) });
     });
   });
   return uit;
 }
-/* De ALLOWLIST: bestand:functie(.datasleutel) → waarom die tekst met de vlag uit onbereikbaar is.
-   Een nieuwe sleutel hier toevoegen = bewust bewijzen dat hij achter metgezellenAan() zit. */
-const TOEGESTAAN = {
-  'js/data.js:KAARTEN.de_roddel': 'tekst leest metgezellenAan() (T16)',
+/* De ALLOWLIST, in twee soorten (review B1 F1: per hele functie was te grof — een nieuwe
+   string in toonCodex of renderTopbalk viel erdoor):
+   - HEEL: een functie of datasleutel die met de vlag uit ALS GEHEEL onbereikbaar is
+     (metgezel-data, metgezel-functies achter een poort, DEV-functies die geparkeerd weigeren).
+     Elke string erin mag. Een sleutel toevoegen = bewijzen dat de hele functie gegate is.
+   - PER_STRING: een GEMENGDE functie (ook solo bereikbaar). Alleen de gekende strings mogen,
+     elk met zijn vingerafdruk (vinger(): sha1 van de genormaliseerde regel). Een nieuwe of
+     gewijzigde string is FOUT tot iemand bewijst dat hij achter de vlag zit (of bewust solo
+     mag, zoals het hof dat 'bondgenoot' is) en de vingerafdruk toevoegt. De FOUT-regel drukt
+     de ontbrekende regels plakklaar af; SLAYIT_NISSEN=bron met SLAYIT_ALLOWLIST=druk drukt de
+     hele tabel opnieuw. De tekst na de vingerafdruk is alleen leeshulp. */
+const HEEL = {
   'js/data.js:METGEZELLEN.drops': 'metgezel-data: alleen via een metgezel (V2-V4)',
   'js/data.js:METGEZELLEN.drops_wit': 'metgezel-data (V2-V6)',
   'js/data.js:METGEZELLEN.vlamwachter': 'metgezel-data (V2-V4)',
   'js/data.js:METGEZELLEN.mosgeest': 'metgezel-data (V2-V4)',
-  'js/data.js:UITSPRAKEN._erfprins': 'dossier (T15) en orakel (T13 → orakelSolo) zijn vlag-gegate in toonBaasIntro',
-  'js/data.js:BESTIARIUM.het_klapvee': '"bondgenoot" = het hof van de vijand, geen metgezel',
-  'js/game.js:vijandAanval': 'Vlamwacht vangt de klap: alleen met g.metgezel (V2)',
-  'js/game.js:copycatSpeelTerug': 'Vlamwacht vangt de klap: alleen met g.metgezel (V2)',
   'js/game.js:synergieBoekHtml': 'metgezelboek: onbereikbaar (roster en chip weg, T7/T8)',
   'js/game.js:toonMetgezelBoek': 'metgezelboek: onbereikbaar (T8)',
   'js/game.js:metgezelInstapMelding': 'alleen uit het act-instapblok (V5)',
   'js/game.js:metgezelVlucht': 'alleen met g.metgezel (V2)',
+  'js/game.js:metgezelOpoffering': 'leest zelf metgezellenAan() (review B1 F1) + alleen met g.metgezel (V2)',
+  'js/game.js:toonRouwPoot': 'alleen in rouw: dropsInRouw() (V6)',
+  'js/game.js:pootSpoorPayoff': 'alleen uit revealDropsWit (V6)',
   'js/game.js:revealDropsWit': 'poort V6',
-  'js/game.js:zetVoetschaduwen': 'CSS-selector, geen speler-tekst',
-  'js/game.js:wisselInzage': 'CSS-selector, geen speler-tekst',
-  'js/game.js:renderTopbalk': 'chip (V8) + scherven-tip leest metgezellenAan() (T19)',
-  'js/game.js:bouwGevechtDom': 'de metgezel-zone: alleen met g.metgezel (V2)',
-  'js/game.js:intentTekst': 'it.doelMetgezel: wordt nooit gezet (impactkaart A2)',
-  'js/game.js:toonCodex': 'het Metgezellen-blok zit achter metgezellenAan() (T7)',
-  'js/game.js:rustGenees': 'heeftMetgezel() (V2)',
-  'js/game.js:devErfprins': 'DEV',
   'js/game.js:devMetgezellen': 'DEV-schakelaar',
   'js/game.js:_devMgMag': 'DEV-weigering',
   'js/game.js:devMetgezel': 'DEV (weigert geparkeerd)',
@@ -197,8 +206,119 @@ const TOEGESTAAN = {
   'js/game.js:devDropsGrief': 'DEV (weigert geparkeerd)',
   'js/game.js:devDropsReunie': 'DEV (weigert geparkeerd)',
   'js/game.js:devDropsWitVecht': 'DEV (weigert geparkeerd)',
-  'js/game.js:devDropsWis': 'DEV (opruimen)',
-  'js/game.js:DEV_MENU': 'DEV-menu'
+  'js/game.js:devDropsWis': 'DEV (opruimen)'
+};
+const PER_STRING = {
+  'js/data.js:BESTIARIUM.het_klapvee': { waarom: '"bondgenoot" = het hof van de vijand, geen metgezel (mag solo)', s: {
+    '50205c7204': "Klapt harder per levende bondgenoot. Dun eerst de kudde uit.",
+  } },
+  'js/data.js:KAARTEN.de_roddel': { waarom: 'de metgezel-tak van tekst(): alleen met metgezellenAan() (T16)', s: {
+    '2b1ca49676': "`Onbespeelbaar. Zolang ze in je hand zit, doet je metgezel n",
+  } },
+  'js/data.js:MYSTERIES.drops': { waarom: 'codexTekst (lore): alleen via scherfTekst() met de vlag aan (T9-T11); de tafelTekst ernaast mag geen treffer zijn', s: {
+    '88e7ff2e57': "„Wat trouw blijft zonder loon, kun je niet kopen — en niet n",
+    '49cbc452c0': "„Drie stukken van één trouw. De poort onderin weet welke sam",
+  } },
+  'js/data.js:RELIKWIEEN.gelukspoot': { waarom: 'de Gelukspoot is een relikwie (goud), geen metgezel (mag solo)', s: {
+    'a1a791b3f5': "🐾",
+  } },
+  'js/data.js:UITSPRAKEN._erfprins': { waarom: "doodGebroken (alleen met g.copycatGebroken: enige schrijver Drops' offer, latent tot de Erfprins-ronde, M-plan §2.9), het oude orakel (T13) en het dossier (T15): vlag-gegate in toonBaasIntro", s: {
+    '7de26135b7': "„Trouw... dát stond niet in mijn catalogus... dát kon ik nie",
+    'c87e9d04be': "„Eén ding namaken lukt me niet: wat trouw blíjft zonder loon",
+    'e76a1eb432': "„Hoe beter jij speelt, hoe sterker ík word... maar wat die p",
+    '327825eac0': "„Ik heb je hond geïndexeerd. Dossier gesloten.\"",
+  } },
+  'js/game.js:DEV_MENU': { waarom: 'DEV: de metgezel-sectie (schakelaar + kiezer, die geparkeerd weigert), de Drops-boog (weigert geparkeerd) en de devErfprins-tip die SOLO zegt', s: {
+    'e9d1957eab': "Overschrijft je lopende run en start het Act 2-baasgevecht S",
+    '4a39b4e5e3': "🐾 Metgezel (geparkeerd) — in gevecht: vanaf het volgende",
+    '570d22b688': "🐾 Metgezellen (geparkeerd)",
+    'c66b3e5356': "Zet de geparkeerde metgezellen AAN voor deze sessie (niet be",
+    '6ce36cdcf0': "🐕 Drops",
+    '457a57d3bc': "Zet Drops in je lopende run (raakt je save, niet je Codex-ro",
+    'db9b2ed5aa': "🛡️ Vlamwacht",
+    '33367b3674': "Zet de Vlamwacht in je lopende run (raakt je save, niet je C",
+    'e5991288df': "🍃 Mosgeest",
+    'e6580059cb': "Zet de Mosgeest in je lopende run (raakt je save, niet je Co",
+    '49832616f1': "Zet Drops de Witte in je lopende run (raakt je save, niet je",
+    'a19b6724b0': "Stuurt je metgezel weg (raakt je save, niet je Codex).",
+    '0f3db5e406': "🦴 Drops-boog — schrijft in de Codex",
+    'b892d98a48': "⚠ Reset de Drops-Codex, wekt Drops en start het Erfprins-gev",
+    'a8960c6cde': "⚠ Reset de Drops-Codex, zet Drops als gevallen (run 2) en st",
+    '428e24d036': "⚠ Reset de Drops-Codex en laat de Witte 900 ms na de start v",
+    '8c51961285': "⚠ Reset de Drops-Codex, ontgrendelt Drops + de Witte en star",
+    '98fd18ee9e': "⚠ 5 · Drops-Codex resetten",
+    '45cdc0f6af': "⚠ Drops-Codex wissen",
+    'b2cefe0c6f': "⚠ DESTRUCTIEF: wist gevallen/mysterie/Witte/zaadje/offer uit",
+  } },
+  'js/game.js:bouwGevechtDom': { waarom: 'de metgezel-zone: alleen met g.metgezel (V2)', s: {
+    '4f4a081b45': "`<span class=\"metgezel-syn syn-optimaal\" data-tip=\"✨ Deze tw",
+    '98b7047573': "`<span class=\"metgezel-syn syn-goed\" data-tip=\"◆ Ze begrijpe",
+    '4499bd4124': "` style=\"--voetc:${VOETMARGE[g.metgezel.id]}%\"`",
+    '5b5b48196f': "<div class=\"metgezel-intent\"></div>",
+    '5cba38999d': "<div class=\"metgezel-art\" data-tip=\"${md.naam} — ${md.fluist",
+    '304cfba3fc': "<div class=\"metgezel-naam\">${md.naam}</div>",
+    'd80c4d7382': "<div class=\"hp-balk metgezel-hp\"><div class=\"hp-vulling\"></d",
+    'fee7a44e7d': "<button class=\"metgezel-offer\" type=\"button\" onclick=\"metgez",
+  } },
+  'js/game.js:copycatBalk': { waarom: "de pil 'machine gebroken': alleen met g.copycatGebroken (enige schrijver Drops' offer, latent tot de Erfprins-ronde, M-plan §2.9)", s: {
+    '883151a2ae': "`<div class=\"bb-aegis bb-gebroken\" data-tip=\"De kopieermachi",
+  } },
+  'js/game.js:copycatSpeelTerug': { waarom: 'Vlamwacht vangt de klap: alleen met g.metgezel (V2)', s: {
+    '63ef8ba482': "`🛡️ ${METGEZELLEN[doelC.id].naam} vangt de klap voor je op!",
+  } },
+  'js/game.js:devErfprins': { waarom: 'DEV-melding die juist zegt dat het gevecht SOLO is', s: {
+    '1228446c44': "⚡ DEV: meteen tegen de Erfprins (SOLO, geen metgezel) — 150 ",
+  } },
+  'js/game.js:doorgaan': { waarom: 'de afscheidsregel (M-plan §3.2): alleen met een _mgAfscheid die laadSpel zelf zette', s: {
+    'a1a791b3f5': "🐾",
+  } },
+  'js/game.js:intentTekst': { waarom: 'it.doelMetgezel: wordt nooit gezet (impactkaart A2)', s: {
+    '3cd069852a': "` → ${METGEZELLEN[mDoel.id].icoon}`",
+  } },
+  'js/game.js:renderTopbalk': { waarom: "de scherven-tip leest metgezellenAan() (T19): geparkeerd 'Scherven'", s: {
+    '3877699cb8': "`${metgezellenAan() ? 'Mysterie-scherven' : 'Scherven'}: ${g",
+  } },
+  'js/game.js:rustGenees': { waarom: 'heeftMetgezel() (V2)', s: {
+    '98b791f331': "`${metgezelDef().naam} rust mee uit (+${m} HP).`",
+  } },
+  'js/game.js:toonBaasIntro': { waarom: 'de scherven-nudge: alleen met metgezellenAan() (T14)', s: {
+    'ff7e5cebc9': "„Drie die pássen?! Wie heeft je dat verteld?! Die poort had ",
+  } },
+  'js/game.js:toonCodex': { waarom: 'het Metgezellen-blok zit achter metgezellenAan() (T7)', s: {
+    '52f577094c': "<h3 class=\"codex-kop\">🐾 Metgezellen <small>${mgOntdekt} / $",
+    'edef2a978a': "`<div class=\"codex-slot rel-${d.zeld} ${gevallen && !wit ? '",
+    '9102cac40a': "<p class=\"codex-scherf-uitleg\">De nissen zijn dichtgelast. D",
+  } },
+  'js/game.js:toonHeldKeuze': { waarom: 'de metgezel-band: alleen met runMgDef = kiesRunMetgezel() (V4)', s: {
+    '8f1871b0e2': "`<p class=\"held-mg-regel\">${runMgDef.icoon} <b>${runMgDef.na",
+    'cee6910f37': "${runMgDef ? `<p class=\"held-mg-regel\">${runMgDef.icoon} <b>",
+  } },
+  'js/game.js:vijandAanval': { waarom: 'Vlamwacht vangt de klap: alleen met g.metgezel (V2)', s: {
+    '0cc0ea788e': "`🛡️ ${METGEZELLEN[doel.id].naam} vangt de klap voor je op!`",
+  } },
+  'js/game.js:wisselInzage': { waarom: 'CSS-selector, geen speler-tekst', s: {
+    '8ccd01af9e': ".vijand, #speler-zone, #metgezel-zone, #onderbalk, #topbalk,",
+  } },
+  'js/game.js:zetVoetschaduwen': { waarom: 'CSS-selector, geen speler-tekst', s: {
+    'f6fac2012f': "#metgezel-zone .metgezel-art",
+    'cb099b55f4': "#metgezel-zone .voetschaduw",
+  } },
+  'js/wereld.js:Wereld': { waarom: 'de wereld-volger #w-metgezel: alleen met heeftMetgezel() (V2)', s: {
+    'a1a791b3f5': "🐾",
+    '64afb13520': "`<div class=\"w-mfig\"><span class=\"w-schaduw\"></span><img alt",
+  } },
+  'proloog/data.js:(top)': { waarom: "'25 jaar trouwe dienst' = de kantoorsatire van de proloog, geen metgezel", s: {
+    'b37b02afda': "Loyaliteitsbonus (25 jaar trouwe dienst)",
+  } }
+};
+/* is een treffer toegestaan? */
+const magTreffer = x => !!HEEL[x.sleutel] || !!(PER_STRING[x.sleutel] && PER_STRING[x.sleutel].s[x.hash]);
+/* plakklare allowlist-regels voor een lijst treffers, per sleutel gegroepeerd */
+const plakklaar = lijst => {
+  const per = {};
+  lijst.forEach(x => { (per[x.sleutel] = per[x.sleutel] || []).push(x); });
+  return Object.keys(per).sort().map(k => `  '${k}': { waarom: '…', s: {\n` +
+    per[k].map(x => `    '${x.hash}': ${JSON.stringify(x.s.slice(0, 60))},`).join('\n') + '\n  } },').join('\n');
 };
 
 /* ============================================================================
@@ -301,13 +421,22 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
     const bestanden = fs.readdirSync(path.join(WT, 'js')).filter(f => f.endsWith('.js')).map(f => 'js/' + f)
       .concat(fs.existsSync(path.join(WT, 'proloog')) ? fs.readdirSync(path.join(WT, 'proloog')).filter(f => f.endsWith('.js')).map(f => 'proloog/' + f) : []);
     const treffers = [].concat(...bestanden.map(grepWacht));
-    const vreemd = treffers.filter(x => !TOEGESTAAN[x.sleutel]);
-    t(vreemd.length === 0, `grep-wacht over ${bestanden.length} bestanden (js/*.js + proloog/*.js): ${treffers.length} metgezel-strings, allemaal in een vlag-gegate of DEV-functie` +
-      (vreemd.length ? ' — BUITEN DE ALLOWLIST: ' + vreemd.slice(0, 6).map(x => `${x.rel}:${x.regel} [${x.sleutel.split(':')[1]}] "${x.s}"`).join(' || ') : ''));
+    if (process.env.SLAYIT_ALLOWLIST === 'druk') console.log('   (druk) PER_STRING-kandidaten (alles buiten HEEL):\n' + plakklaar(treffers.filter(x => !HEEL[x.sleutel])));
+    const vreemd = treffers.filter(x => !magTreffer(x));
+    const nHeel = treffers.filter(x => HEEL[x.sleutel]).length;
+    t(vreemd.length === 0, `grep-wacht over ${bestanden.length} bestanden (js/*.js + proloog/*.js): ${treffers.length} metgezel-strings — ${nHeel} in een functie die als geheel gegate is, ${treffers.length - nHeel} als gekende string (vingerafdruk) in een gemengde functie` +
+      (vreemd.length ? ' — BUITEN DE ALLOWLIST: ' + vreemd.slice(0, 6).map(x => `${x.rel}:${x.regel} [${x.sleutel.split(':')[1]}#${x.hash}] "${x.s}"`).join(' || ') : ''));
+    if (vreemd.length) console.log('   (plakklaar, pas na bewijs dat ze achter de vlag zitten):\n' + plakklaar(vreemd));
+    /* de proloog: elke treffer daar moet als gekende string (niet als hele functie) verantwoord zijn */
     const proloog = treffers.filter(x => /^proloog\/|proloog-brug/.test(x.rel));
-    t(proloog.length === 0, `de proloog (proloog/*.js + js/proloog-brug.js) noemt geen metgezel: ${proloog.length} treffers`);
-    const ongebruikt = Object.keys(TOEGESTAAN).filter(k => !treffers.some(x => x.sleutel === k));
-    console.log('   (info) allowlist-sleutels zonder treffer vandaag: ' + (ongebruikt.join(', ') || '—'));
+    const proloogVreemd = proloog.filter(x => !magTreffer(x) || HEEL[x.sleutel]);
+    t(proloogVreemd.length === 0, `de proloog (proloog/*.js + js/proloog-brug.js) noemt geen metgezel: ${proloog.length} treffers, ${proloog.length - proloogVreemd.length} daarvan gekend en verantwoord (${proloog.map(x => '"' + x.s.slice(0, 40) + '"').join(', ') || '—'})`);
+    /* de fijnmazigheid zelf: een verzonnen nieuwe string in een grote gemengde functie valt NIET door */
+    const nep = { rel: 'js/game.js', sleutel: 'js/game.js:toonCodex', hash: vinger('🐾 Je metgezel wacht hier op je.'), s: '🐾 Je metgezel wacht hier op je.' };
+    t(WOORD.test(nep.s) && !magTreffer(nep) && !HEEL['js/game.js:toonCodex'], 'de allowlist is fijnmazig: een nieuwe metgezel-string in toonCodex zou FOUT geven (niet per hele functie toegestaan)');
+    const ongebruikt = Object.keys(HEEL).filter(k => !treffers.some(x => x.sleutel === k))
+      .concat(...Object.keys(PER_STRING).map(k => Object.keys(PER_STRING[k].s).filter(h => !treffers.some(x => x.sleutel === k && x.hash === h)).map(h => k + '#' + h)));
+    console.log('   (info) allowlist-regels zonder treffer vandaag: ' + (ongebruikt.join(', ') || '—'));
     /* de zelftest van de lexer: een meerregelige template met een geneste template en een regex */
     const proef = literals("const a = `x\n ${b ? 'c d' : `e ${f} g`} h`; // 'nee'\n/* 'nee' */ const r = /ab'c/g; 'ja'").map(x => x.tekst);
     t(proef.includes('c d') && proef.includes('ja') && !proef.includes('nee') && proef.some(x => /^`x/.test(x)), `de lexer leest strings en templates, slaat commentaar en regex over: ${JSON.stringify(proef)}`);

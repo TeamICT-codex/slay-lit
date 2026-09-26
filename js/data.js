@@ -657,7 +657,12 @@ const KAARTEN = {
     tekst: () => (typeof metgezellenAan === 'function' && metgezellenAan())
       ? `Onbespeelbaar. Zolang ze in je hand zit, doet je metgezel niets — hij twijfelt aan je.`
       : `Onbespeelbaar. Neemt ruimte in je hand in.`,
-    flavor: 'Iedereen heeft iets gehoord. Over jou.',
+    /* ook de flavor volgt de vlag (M-plan §2.6 vroeg de nieuwe regel alleen voor 'vlag uit'; de
+       oude 'Hij' is de metgezel). Een getter, zodat elke lezer een string krijgt. NB: de
+       kaart-flavor heeft vandaag geen lezer in het spel (review B1 F1) */
+    get flavor() {
+      return (typeof metgezellenAan === 'function' && metgezellenAan()) ? 'Hij heeft iets gehoord. Over jou.' : 'Iedereen heeft iets gehoord. Over jou.';
+    },
     speel: () => {}
   },
   het_dossier: {
@@ -2215,7 +2220,7 @@ const EVENTS = [
   {
     id: 'spiegelaar', titel: 'De Naamloze Spiegelaar', icoon: '🪞',
     toon: () => huidigeAct() >= 2 && typeof scherfTeVinden === 'function' && scherfTeVinden('figuur'),
-    tekst: 'Een gestalte houdt je een blinde spiegel voor. „Alles hierbeneden is na te maken," zegt ze. „Op één ding na — en dát ligt straks op tafel. Kijk goed."',
+    tekst: 'Een gestalte houdt je een blinde spiegel voor. „Alles hierbeneden is na te maken," zegt ze. „Op één ding na — en dát leg je ooit op tafel. Kijk goed."',
     opties: [
       {
         label: 'Tuur in de blinde spiegel', detail: 'Een scherf van een groter geheim.',
