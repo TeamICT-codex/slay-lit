@@ -37,6 +37,11 @@ const STERKTES = lijst('MEET_STERKTES', ['sterk', 'gemiddeld', 'matig']);
 const BELEID = lijst('MEET_BELEID', ['gebalanceerd', 'bewust']);
 const REF = process.env.MEET_REF !== '0';
 const WERKERS = parseInt(process.env.MEET_WERKERS || '4', 10);
+/* DE NISSEN DICHT (M-plan §6): de metgezellen zijn geparkeerd, dus SOLO is de standaard en elk
+   gevecht toetst dat (g.metgezel na startGevecht). MEET_METGEZEL=drops is alleen voor de TERUGKEER:
+   de pagina zet ze dan aan via devMetgezellen(true) en elke build krijgt die metgezel. */
+const MEET_METGEZEL = process.env.MEET_METGEZEL || '';
+const metMetgezel = b => (MEET_METGEZEL ? Object.assign({}, b, { metgezel: MEET_METGEZEL }) : b);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff', '.txt': 'text/plain; charset=utf-8', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav' };
 
 /* ============================================================
@@ -49,7 +54,7 @@ const BUILDS = {
     sterk: {
       held: 'slachter', hp: 92, label: 'Slachter sterk (22 kaarten, 6 relikwieën)',
       relikwieen: ['brandend_bloed', 'krachtsteen', 'oorlogsbanier', 'stalen_vuist', 'brandmerkijzer', 'stempelkussen'],
-      dranken: ['heeldrank'], laster: 0, metgezel: 'drops',
+      dranken: ['heeldrank'], laster: 0, metgezel: null,   /* solo: metgezellen geparkeerd (DE NISSEN DICHT) */
       dek: [['slag', 1], ['slag', 1], ['verdediging', 1], ['verdediging', 1], ['verdediging', 0],
             ['knal', 1], ['zware_klap', 1], ['zware_klap', 0], ['uithaal', 1], ['executie', 1], ['afgekeurd', 1],
             ['ontslagbrief', 1], ['in_drievoud', 1], ['originele_handtekening', 0], ['genadeslag', 0],
@@ -70,7 +75,7 @@ const BUILDS = {
     gemiddeld: {
       held: 'gifmagier', hp: 72, label: 'Gifmagiër gemiddeld (22 kaarten, 4 relikwieën)',
       relikwieen: ['slangenamulet', 'smaragden_ring', 'oorlogsbanier', 'stempelkussen'],
-      dranken: ['heeldrank'], laster: 1, metgezel: 'drops',
+      dranken: ['heeldrank'], laster: 1, metgezel: null,   /* solo: metgezellen geparkeerd (DE NISSEN DICHT) */
       dek: [['prik', 1], ['prik', 0], ['prik', 0], ['verdediging', 1], ['verdediging', 0], ['verdediging', 0],
             ['dodelijke_kus', 1], ['gifflits', 1], ['gifflits', 0], ['giftige_steek', 0], ['slangenbeet', 0], ['gifpamflet', 0],
             ['giftand', 0], ['venijnregen', 0], ['sluiproute', 1], ['sluiproute', 0], ['verlammend_gif', 0], ['lastercampagne', 0],
@@ -88,7 +93,7 @@ const BUILDS = {
     sterk: {
       held: 'thoverk', hp: 84, label: 'Kolendruïde sterk (22 kaarten, 6 relikwieën)',
       relikwieen: ['houten_been', 'bronzen_schub', 'krachtsteen', 'oorlogsbanier', 'stempelkussen', 'mosamulet'],
-      dranken: ['heeldrank'], laster: 0, metgezel: 'drops',
+      dranken: ['heeldrank'], laster: 0, metgezel: null,   /* solo: metgezellen geparkeerd (DE NISSEN DICHT) */
       dek: [['takkenslag', 1], ['takkenslag', 1], ['verdediging', 1], ['verdediging', 1], ['verdediging', 0],
             ['vonkenbeet', 1], ['wurgwortels', 1], ['sporenstoot', 1], ['doorslag_doornen', 1], ['perkamentslag', 1],
             ['het_origineel_kaart', 0], ['doornmantel', 1], ['duivelspact', 0], ['kolenstempel', 0], ['bastvel', 1], ['bastvel', 0],
@@ -97,7 +102,7 @@ const BUILDS = {
     gemiddeld: {
       held: 'thoverk', hp: 80, label: 'Kolendruïde gemiddeld (22 kaarten, 5 relikwieën)',
       relikwieen: ['houten_been', 'bronzen_schub', 'oorlogsbanier', 'stempelkussen', 'anker'],
-      dranken: ['heeldrank'], laster: 1, metgezel: 'drops',
+      dranken: ['heeldrank'], laster: 1, metgezel: null,   /* solo: metgezellen geparkeerd (DE NISSEN DICHT) */
       dek: [['takkenslag', 1], ['takkenslag', 0], ['takkenslag', 0], ['verdediging', 1], ['verdediging', 0], ['verdediging', 0],
             ['vonkenbeet', 0], ['wurgwortels', 0], ['sporenstoot', 0], ['perkamentslag', 0], ['doorslag_doornen', 0],
             ['bastvel', 1], ['bastvel', 0], ['tegenvuur', 0], ['asregen', 0], ['eikenhuid', 0], ['kolengloed', 0],
@@ -260,6 +265,8 @@ async function eenGevecht({ build, job }) {
   S.dek = build.dek.map(([id, up]) => { const c = nieuweKaart(id); c.up = !!up; return c; });
   S.dranken = (build.dranken || []).slice();
   for (let i = 0; i < (build.laster || 0); i++) S.dek.push(nieuweKaart('laster'));
+  /* alleen via MEET_METGEZEL (terugkeer): de geparkeerde metgezellen eerst aanzetten, anders weigert geefMetgezel stil */
+  if (build.metgezel && typeof metgezellenAan === 'function' && !metgezellenAan() && typeof devMetgezellen === 'function') devMetgezellen(true);
   S.metgezel = null;
   if (build.metgezel) { geefMetgezel(build.metgezel); if (S.metgezel) S.metgezel.hp = Math.max(1, Math.round(metgezelMaxHp(build.metgezel) * 0.6)); }
   S.kaart = genereerKaart();
@@ -267,6 +274,7 @@ async function eenGevecht({ build, job }) {
   const T = window.__T = { bron: {}, bronBd: {}, inBd: {}, uitBd: {}, uitBaas: 0, uitHof: 0, uitSoort: {}, rawIn: 0, geblokt: 0, metgezelVing: 0, decreten: [], rondeIn: 0, _zelf: false, _bewaar: null };
   startGevecht([job.baas], 'baas', bz.rij);
   const g = S.gevecht;
+  const gMetStart = g && g.metgezel ? g.metgezel.id : null;   /* DE NISSEN DICHT: solo wordt GEMETEN, niet aangenomen (M-plan §6) */
   const isBaas = v => VIJANDEN[v.id] && VIJANDEN[v.id].baas;
   /* de levende baas; is hij dood maar leeft zijn gevolg nog (de Slijmkoning splijt), dan het eerste levende doelwit */
   const boss = () => g.vijanden.find(v => isBaas(v) && !v.dood) || alleVijanden()[0] || g.vijanden.find(isBaas);
@@ -577,7 +585,7 @@ async function eenGevecht({ build, job }) {
     sterfBedrijf: dood ? (rondes.length ? rondes[rondes.length - 1].bd : window.__bedrijf()) : null,
     eindBedrijf: window.__bedrijf(), bossHpOver: b ? Math.max(0, b.hp) : null,
     bron: T.bron, bronBd: T.bronBd, inBd: T.inBd, uitBd: T.uitBd, uitBaas: T.uitBaas, uitHof: T.uitHof, uitSoort: T.uitSoort,
-    rawIn: T.rawIn, geblokt: T.geblokt, metgezelVing: T.metgezelVing, drank: T.drank || 0, offerRonde: T.offer || null,
+    rawIn: T.rawIn, geblokt: T.geblokt, metgezelVing: T.metgezelVing, drank: T.drank || 0, offerRonde: T.offer || null, gMet: gMetStart,
     decreten: T.decreten, dekVerlies: T.decreten.length, lasters: b ? (b.lasters || 0) : 0,   /* de Laster van DE VACATURE landt in g.trek, niet in S.dek */
     kiezers: b && b._kiezers != null ? b._kiezers : null, krachtVast: b ? (b.krachtVast || 0) : 0, herrezen: !!(b && b.herrezen),
     log: rondes
@@ -633,10 +641,12 @@ async function main() {
   await Promise.all(paginas.map(async page => {
     while (volgende < jobs.length) {
       const job = jobs[volgende++];
-      const build = buildVan(job.held, job.st);
+      const build = metMetgezel(buildVan(job.held, job.st));
       let r;
       try { r = await page.evaluate(eenGevecht, { build, job }); }
       catch (e) { r = { cel: job.cel, seed: job.seed, fout: 'evaluate: ' + String(e.message || e).slice(0, 300) }; }
+      /* de solo-toets: zonder MEET_METGEZEL staat er nooit een metgezel in het gevecht */
+      if (!r.fout && (r.gMet || null) !== (build.metgezel || null)) r.fout = `metgezel-toets: verwacht ${build.metgezel || 'solo'}, gemeten g.metgezel ${r.gMet || null}`;
       resultaten.push(r);
       if (r.fout) console.log(`  FOUT ${job.cel} ${job.seed}: ${String(r.fout).split('\n')[0]}`);
       if (++klaar % 25 === 0) console.log(`  ${klaar}/${jobs.length} (${((Date.now() - t0) / 1000).toFixed(0)} s)`);

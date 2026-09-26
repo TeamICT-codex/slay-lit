@@ -100,6 +100,7 @@ const tussen = (log, a, b2) => log.filter(r => r.t >= a && r.t <= b2);
   // vers baasgevecht met compleet hof, wachten tot de intro weg is
   const opzet = async () => {
     await page.evaluate(() => { devDicktator('slachter_mid'); });
+    t(await page.evaluate(() => !!S.gevecht && S.gevecht.metgezel === null && !S.metgezel), 'solo (DE NISSEN DICHT): het proces staat zonder metgezel \u2014 S.gevecht.metgezel null');
     for (let i = 0; i < 40; i++) { if (await page.evaluate(() => document.body.dataset.scherm === 'gevecht' && !!S.gevecht && !document.querySelector('#baas-intro'))) break; await slaap(400); }
     await slaap(1000);
     await page.evaluate(() => { dicktatorRoep('de_griffier'); dicktatorRoep('de_deurwaarder'); });

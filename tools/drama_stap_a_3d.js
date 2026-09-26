@@ -30,6 +30,7 @@ const t = (goed, tekst) => { if (goed) { okN++; console.log('   ok   ' + tekst);
   await page.evaluate(() => { const k = document.querySelector('.held-kies'); if (k) k.click(); }); await slaap(300);
   await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => /toch beginnen/i.test(x.textContent)); if (b) b.click(); }); await slaap(800);
   await page.evaluate(() => { devDicktator('slachter_mid'); });
+  t(await page.evaluate(() => !!S.gevecht && S.gevecht.metgezel === null && !S.metgezel), 'solo (DE NISSEN DICHT): het proces staat zonder metgezel \u2014 S.gevecht.metgezel null');
   for (let i = 0; i < 50; i++) { if (await page.evaluate(() => document.body.dataset.scherm === 'gevecht' && !!S.gevecht && !document.querySelector('#baas-intro') && window.Vista && Vista.actief && Vista.klaar)) break; await slaap(400); }
   await slaap(2000);
   await page.evaluate(() => { dicktatorRoep('de_griffier'); dicktatorRoep('de_deurwaarder'); }); await slaap(1200);
@@ -122,7 +123,7 @@ const t = (goed, tekst) => { if (goed) { okN++; console.log('   ok   ' + tekst);
       ['speler-zone', document.getElementById('speler-zone')],
       ['metgezel-zone', document.getElementById('metgezel-zone')],
       ...[...document.querySelectorAll('#vijanden-rij .vijand')].map((e, i) => ['vijand' + i, e])
-    ].filter(x => x[1] && getComputedStyle(x[1]).position === 'fixed')
+    ].filter(x => x[1] && !x[1].hidden && getComputedStyle(x[1]).position === 'fixed')   /* DE NISSEN DICHT: een verborgen #metgezel-zone (op 0,0) is geen kolom */
      .map(([n, e]) => { const r = e.getBoundingClientRect(); return { n, top: Math.round(r.top), left: Math.round(r.left) }; });
     const rust = kols();
     hitstop(400); schokToneel(1.8, 600);

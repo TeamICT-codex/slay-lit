@@ -53,5 +53,9 @@ Nederlands.
 
 - `ACTS_MAX = 3`: alle drie de acts zijn live, inclusief Act 3 (het Slachtblok)
   met eindbaas de DICKtator en de outro erna. Balans blijft playtest-tunebaar.
+- `METGEZELLEN_AAN = false` (js/game.js, gelezen via `metgezellenAan()`): de
+  metgezellen zijn geparkeerd (DE NISSEN DICHT); alle balans- en toneelmetingen
+  gebeuren SOLO; terugkeer = §8 van
+  `.claude/notities/bazen_onderzoek/ontwerp/M_metgezel_parkering_plan.md`.
 - DEV-shortcuts zitten er bewust nog in voor het playtesten; zie
   RELEASE-CHECKLIST.md vóór een echte release.

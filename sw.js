@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v131'; // v131: DE VAL IN DE WACHT (proloog ronde 2) - 0042 daalt in de goederenlift door de etages van de outro, elk licht dooft en de wachtmuziek zakt per etage een halve toon; de jingle in de boot; de outro hervat de wacht op -7 en de reunie zegt IK HEB HET LICHT NOG.
+const CACHE = 'slayit-v133'; // v133: DE NISSEN DICHT - de metgezellen volledig geparkeerd (vlag METGEZELLEN_AAN uit): ook een Codex met ontwaakte metgezellen speelt solo, een lopende run met een metgezel krijgt een afscheidsregel, de scherven hebben eigen tafelteksten en het orakel spreekt solo
 const BESTANDEN = [
   '.',
   'css/style.css',

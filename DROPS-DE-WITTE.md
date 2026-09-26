@@ -1,5 +1,8 @@
 # Drops de Witte — ontwerp ("De Vonk die Twee Wegen Terug Kent")
 
+> **GEPARKEERD sinds DE NISSEN DICHT (B1)** — `METGEZELLEN_AAN = false`: de grief-terugkeer is
+> onbereikbaar (poort V6). Zie `.claude/notities/bazen_onderzoek/ontwerp/M_metgezel_parkering_plan.md`.
+
 > Uit een 10-agent ontwerp-jurypanel (6 concepten · 3 juryleden · synthese). De jury
 > zette unaniem Concept 1 (**De Weigering**) én Concept 2 (**De Laatste Sprong, andersom**)
 > in hun top-2 en vroeg om een fusie. Resultaat: **één wonder, twee geheime poorten**, met
