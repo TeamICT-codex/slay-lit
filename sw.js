@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v134'; // v134: GESPREK EN AFREKENING (proloog ronde 4) - het Functioneringsgesprek als beige kopie van het gevechtstoneel op het dak, de foto die je vasthoudt tot je loslaat, en de Eindafrekening als matrixprinter met je eigen cijfers, de vastloper, het ontslagbesluit en de lege pen
+const CACHE = 'slayit-v135'; // v135: HET BAZENTONEEL - dertien plaatsingsregels voor alle bazen: geen zwevende figuren door statuschips, geen tekst over de figuren, een stem en een slotwoord per baas, de baaspil nooit in de topbalk, een baas telegrafeert ook in het donker, signatuurposes en een kaderfit in 3D, de verslagen baas blijft liggen
 const BESTANDEN = [
   '.',
   'css/style.css',
