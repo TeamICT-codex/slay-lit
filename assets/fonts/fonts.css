@@ -54,3 +54,14 @@
   font-display: swap;
   src: url('SpecialElite-400-normal.woff2') format('woff2');
 }
+
+/* R1 proloog (sep 2026): de CRT-letter van de proloog. Die draait nu in een shadow root
+   op de game-pagina, en een shadow root negeert @font-face — daarom staat hij hier, in
+   het document (vroeger in proloog/proloog.css). */
+@font-face {
+  font-family: 'VT323';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('VT323-400-normal.woff2') format('woff2');
+}

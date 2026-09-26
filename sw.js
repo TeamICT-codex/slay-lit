@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v128'; // v128: DE DREMPELTAFEL - de scherven worden ingezet aan de tafel (vijf spellen, uitbetaling, parkering), vervangt De Scherpe Kamer
+const CACHE = 'slayit-v133'; // v133: DE NISSEN DICHT - de metgezellen volledig geparkeerd (vlag METGEZELLEN_AAN uit): ook een Codex met ontwaakte metgezellen speelt solo, een lopende run met een metgezel krijgt een afscheidsregel, de scherven hebben eigen tafelteksten en het orakel spreekt solo
 const BESTANDEN = [
   '.',
   'css/style.css',
@@ -14,9 +14,11 @@ const BESTANDEN = [
   'js/audio.js',
   'js/scene3d.js',
   'js/data.js',
+  'js/outro-fx.js',
   'js/outro.js',
   'js/online.js',
   'js/game.js',
+  'js/proloog-brug.js',     // proloog R1: de naad (laadt ná game.js; haalt proloog/*.js lui binnen)
   'js/drempeltafel.js',     // v128: DE DREMPELTAFEL (laadt ná game.js)
   'js/wereld-terrein.js',
   'js/wereld.js',
@@ -31,6 +33,7 @@ const BESTANDEN = [
   'proloog/proloog.css',
   'proloog/data.js',
   'proloog/audio.js',
+  'proloog/val.js',         // proloog R2: de val 'in de wacht' (het liftcanvas)
   'proloog/proloog.js',
   'assets/icoon.svg',
   'assets/icoon-180.png',
@@ -40,8 +43,9 @@ const BESTANDEN = [
   'manifest.webmanifest'
 ];
 /* De proloog-CODE is sinds de vanilla-herbouw klein en zit hierboven atomair in
-   BESTANDEN (onder de URL 'proloog/' — waar de gate en de titelknop echt naartoe
-   navigeren; cache.match is exact). Alleen de proloog-ART (±1 MB webp) blijft
+   BESTANDEN. Sinds R1 draait ze in de game-pagina (js/proloog-brug.js laadt
+   proloog/*.js lui); 'proloog/' blijft erin voor de stub die oude links en
+   bladwijzers doorstuurt naar '../?proloog=1' (cache.match is exact). Alleen de proloog-ART (±1 MB webp) blijft
    BEST-EFFORT: een hapering mag de kern-install niet laten mislukken; de
    cache-first /assets/-tak vangt gemiste platen bij het eerste echte bezoek. */
 const ZWAAR = [

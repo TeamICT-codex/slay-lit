@@ -4,29 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>SLAY LIT — Proloog: Een Productief Leven™</title>
-  <meta name="theme-color" content="#0a0e08">
+  <meta name="theme-color" content="#16111f">
   <link rel="icon" href="../assets/icoon-192.png">
   <link rel="apple-touch-icon" href="../assets/icoon-180.png">
-  <link rel="stylesheet" href="proloog.css">
-  <!-- Vanilla-herbouw (aug 2026): de vroegere React+Babel-bundel van 2,9 MB is
-       vervangen door deze dunne schil + data.js/audio.js/proloog.js en echte
-       WebP-art in ../assets/proloog/. Zelfde verhaal, zelfde localStorage-
-       contract met de game ('slayit_proloog' / 'slayit_proloog_over'). -->
+  <!-- R1 "de naad" (sep 2026): de proloog draait niet meer op een eigen pagina maar IN het
+       spel (scherm 'proloog', shadow root op #scherm-proloog). Deze pagina blijft bestaan
+       zodat oude links, bladwijzers en de offline-cache ('proloog/') blijven werken: ze
+       stuurt meteen door naar het spel, dat ?proloog=1 opvangt en de proloog start. -->
+  <script>location.replace('../?proloog=1');</script>
+  <style>
+    html, body { height: 100%; margin: 0; background: #0d0a12; color: #e8d5ae; font-family: Georgia, serif; }
+    body { display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; box-sizing: border-box; }
+    a { color: #ffc46b; }
+  </style>
 </head>
 <body>
-  <div id="scene" class="scene"></div>
-
-  <div id="crt-scanlines" class="crt-laag" aria-hidden="true"></div>
-  <div id="crt-glow" class="crt-laag" aria-hidden="true"></div>
-  <div id="crt-vignette" class="crt-laag" aria-hidden="true"></div>
-
-  <button id="knop-skip">⏭ Rechtstreeks afdalen</button>
-  <button id="knop-daalaf">⚔️ DAAL AF ▸</button>
-
-  <nav id="proloog-nav"></nav>
-
-  <script src="audio.js"></script>
-  <script src="data.js"></script>
-  <script src="proloog.js"></script>
+  <noscript>
+    <p>De proloog van SLAY LIT speelt zich af in het spel zelf, en daarvoor is JavaScript nodig.</p>
+    <p><a href="../">Naar het spel</a></p>
+  </noscript>
 </body>
 </html>

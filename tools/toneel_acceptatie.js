@@ -222,7 +222,8 @@ async function meetPlaat(page, pad, grond) {
   ]) {
     const { ctx, page } = await open(browser, f);
     await naarGevecht(page); await slaap(300);
-    await page.evaluate(() => { try { devMetgezel('drops'); } catch (e) {} S.act = 3; startGevecht(['de_dicktator', 'de_griffier', 'de_deurwaarder', 'de_zondebok'], 'baas'); });
+    /* DE NISSEN DICHT: SOLO (de metgezellen zijn geparkeerd); de metgezel-ovaal meet §9.5c via DEV */
+    await page.evaluate(() => { S.act = 3; startGevecht(['de_dicktator', 'de_griffier', 'de_deurwaarder', 'de_zondebok'], 'baas'); });
     await slaap(2600);
     const r = await page.evaluate(() => {
       const d3 = document.getElementById('scherm-gevecht').classList.contains('d3-actief');
@@ -245,8 +246,13 @@ async function meetPlaat(page, pad, grond) {
       /* drop-shadow-vrij: de ovaal zelf mag geen filter dragen */
       const s0 = document.querySelector('.voetschaduw');
       const filter = s0 ? getComputedStyle(s0).filter : 'none';
-      return { d3, rij, filter };
+      return { d3, rij, filter, nVijanden: document.querySelectorAll('#vijanden-rij .vijand').length,
+        gMet: S.gevecht && S.gevecht.metgezel ? S.gevecht.metgezel.id : null, mzHidden: !!(mz && mz.hidden) };
     });
+    /* leegte-wacht: de meting MOET elke figuur gezien hebben (held + alle vijanden, solo) —
+       anders slaagt ze stil op een lege rij */
+    t(r.rij.length === 1 + r.nVijanden && r.nVijanden >= 4 && r.gMet === null && r.mzHidden,
+      f.naam + ': solo gemeten over ' + r.rij.length + ' figuren (held + ' + r.nVijanden + ' vijanden), g.metgezel ' + r.gMet + ', #metgezel-zone verborgen ' + r.mzHidden);
     const moet = n => r.d3 ? n === 'metgezel' : true;
     const mis = r.rij.filter(x => x.zicht !== moet(x.naam) ||
       (x.zicht && (Math.abs(x.vsB - Math.round(x.breed * 0.7)) > 1 || Math.abs(x.ovaalY - x.voet) > 3)));
@@ -255,6 +261,43 @@ async function meetPlaat(page, pad, grond) {
     await ctx.close();
   }
 
+
+  /* ---- §9.5c — terugkeer (geparkeerd, via DEV): de metgezel-contactschaduw ----
+     DE NISSEN DICHT: de metgezellen staan geparkeerd, dus §9.5 meet solo. Dit blok zet ze via
+     de DEV-schakelaar AAN en bewaakt zo de metgezel-CSS voor de terugkeer (M-plan §8.6). In 3D
+     is de metgezel de enige DOM-figuur met een eigen ovaal. Leegte-wacht: staat hij niet echt
+     in beeld, dan is dat FOUT — geen stil geslaagde meting. */
+  kop('§9.5c metgezel-contactschaduw (geparkeerd, via DEV)');
+  for (const f of [
+    { naam: 'laptop 1440x900 d3 uit', w: 1440, h: 900, dpr: 1, mobiel: false, d3: false },
+    { naam: 'laptop 1440x900 d3 aan', w: 1440, h: 900, dpr: 1, mobiel: false, d3: true },
+    { naam: 'telefoon 412x915', w: 412, h: 915, dpr: 3, mobiel: true }
+  ]) {
+    const { ctx, page } = await open(browser, f);
+    await naarGevecht(page); await slaap(300);
+    await page.evaluate(() => { try { devMetgezellen(true); devMetgezel('drops'); } catch (e) {} S.act = 3; startGevecht(['de_dicktator', 'de_griffier', 'de_deurwaarder', 'de_zondebok'], 'baas'); });
+    await slaap(2600);
+    const r = await page.evaluate(() => {
+      const mz = document.getElementById('metgezel-zone');
+      const zicht = !!(mz && !mz.hidden);
+      const fig = zicht ? mz.querySelector('.metgezel-art') : null;
+      const sch = zicht ? mz.querySelector('.voetschaduw') : null;
+      const uit = { gMet: S.gevecht && S.gevecht.metgezel ? S.gevecht.metgezel.id : null, zicht, fig: !!fig, ovaal: false };
+      if (fig && sch && getComputedStyle(sch).display !== 'none') {
+        const kl = parseFloat(getComputedStyle(fig).scale);
+        uit.ovaal = true;
+        uit.breed = Math.round(fig.offsetWidth * (isFinite(kl) && kl > 0 ? kl : 1));
+        uit.voet = Math.round(fig.getBoundingClientRect().bottom);
+        uit.vsB = parseFloat(getComputedStyle(sch).getPropertyValue('--vs-b'));
+        uit.ovaalY = Math.round(sch.getBoundingClientRect().top);
+      }
+      return uit;
+    });
+    t(r.gMet === 'drops' && r.zicht && r.fig, f.naam + ': via DEV staat de metgezel echt in beeld (g.metgezel ' + r.gMet + ', #metgezel-zone zichtbaar ' + r.zicht + ')');
+    t(r.ovaal && Math.abs(r.vsB - Math.round(r.breed * 0.7)) <= 1 && Math.abs(r.ovaalY - r.voet) <= 3,
+      f.naam + ': de metgezel heeft zijn ovaal op de voetlijn, op maat' + (r.ovaal ? ' (vs-b ' + r.vsB + ' van ' + Math.round(r.breed * 0.7) + ', dy ' + (r.ovaalY - r.voet) + ')' : ' — GEEN ovaal'));
+    await ctx.close();
+  }
 
   /* ---- §9.5b — de wegen waarop de suite eerder BLIND was ----
      (1) de arena-crossfade van Het Proces MIDDEN in de fade: beide lagen moeten op
@@ -274,8 +317,7 @@ async function meetPlaat(page, pad, grond) {
     const { ctx, page } = await open(browser, f);
     await naarGevecht(page); await slaap(300);
     await page.evaluate(async () => {
-      try { devMetgezel('drops'); } catch (e) {}
-      S.act = 3; startGevecht(['de_dicktator'], 'baas');
+      S.act = 3; startGevecht(['de_dicktator'], 'baas');   /* SOLO (DE NISSEN DICHT) */
       await new Promise(r => setTimeout(r, 2000));
     });
     /* (1) crossfade, gemeten op vier momenten TIJDENS de fade */
@@ -309,7 +351,7 @@ async function meetPlaat(page, pad, grond) {
     t(sprong / xf.vh * 100 <= 1 && afw / xf.vh * 100 <= 2,
       f.naam + ': de arena-crossfade springt niet (sprong ' + sprong.toFixed(1) + 'px = ' + (sprong / xf.vh * 100).toFixed(2) + '% vh, max afwijking van de voetlijn ' + afw.toFixed(1) + 'px)');
     /* (2) nieuwkomers midden in het gevecht */
-    const nieuw = await page.evaluate(async () => {
+    const { uit: nieuw, verwacht } = await page.evaluate(async () => {
       voegVijandToe('de_griffier'); voegVijandToe('de_deurwaarder');
       await new Promise(r => setTimeout(r, 900));
       const uit = [];
@@ -325,10 +367,10 @@ async function meetPlaat(page, pad, grond) {
       const mz = document.getElementById('metgezel-zone');
       if (mz && !mz.hidden) kijk('metgezel', mz.querySelector('.metgezel-art'), mz.querySelector('.voetschaduw'));
       document.querySelectorAll('#vijanden-rij .vijand').forEach((v, i) => kijk('vijand' + i, v.querySelector('.vijand-art'), v.querySelector('.voetschaduw')));
-      return uit;
+      return { uit, verwacht: 1 + document.querySelectorAll('#vijanden-rij .vijand').length };   /* leegte-wacht: held + elke vijand */
     });
     const stuk = nieuw.filter(x => !x.vsB || Math.abs(parseFloat(x.vsB) - Math.round(x.breed * 0.7)) > 1 || Math.abs(x.dy) > 3);
-    t(nieuw.length > 0 && stuk.length === 0,
+    t(nieuw.length === verwacht && verwacht >= 4 && stuk.length === 0,
       f.naam + ': na voegVijandToe staat elke contactschaduw nog op maat en op de voetlijn (' + nieuw.length + ' figuren)' +
       (stuk.length ? ' — ' + stuk.map(x => x.naam + ' vs-b=' + x.vsB + ' dy=' + x.dy).join(', ') : ''));
     /* (3) de 3D-knop tijdens het gevecht */
@@ -367,7 +409,7 @@ async function meetPlaat(page, pad, grond) {
   }
 
   /* ---- §9.6 — portret-matrix + lijk-kolom ---- */
-  kop('§9.6 portret-matrix (412x915 / 360x800 x 3/4/5 figuren x met/zonder metgezel)');
+  kop('§9.6 portret-matrix (412x915 / 360x800 x 3/4/5 figuren x zonder/met metgezel — met = geparkeerd, via DEV)');
   for (const s of [{ w: 412, h: 915 }, { w: 360, h: 800 }]) {
     const { ctx, page } = await open(browser, { w: s.w, h: s.h, dpr: 3, mobiel: true });
     await naarGevecht(page); await slaap(300);
@@ -378,7 +420,7 @@ async function meetPlaat(page, pad, grond) {
     ]) {
       for (const mg of [false, true]) {
         const r = await page.evaluate(async ([ids, dood, mg]) => {
-          try { devMetgezel(mg ? 'drops' : null); } catch (e) {}
+          try { devMetgezellen(mg); devMetgezel(mg ? 'drops' : null); } catch (e) {}   /* DE NISSEN DICHT: 'met' kan alleen nog via de DEV-schakelaar */
           S.act = 3; startGevecht(ids, 'baas');
           await new Promise(r => setTimeout(r, 600));
           if (dood >= 0 && S.gevecht.vijanden[dood]) { const v = S.gevecht.vijanden[dood]; verliesHp(v, v.hp + 50); renderGevecht(); }
@@ -390,13 +432,15 @@ async function meetPlaat(page, pad, grond) {
             const a = v.querySelector('.vijand-art').getBoundingClientRect();
             return { lijk: v.classList.contains('sterft'), weg: getComputedStyle(v).display === 'none', top: a.top, bot: a.bottom, l: a.left, r: a.right };
           });
-          return { tbh, vw: innerWidth, vh: innerHeight, balkTop: br ? br.top : null, kols, docW: document.documentElement.scrollWidth };
+          const mz = document.getElementById('metgezel-zone');
+          return { tbh, vw: innerWidth, vh: innerHeight, balkTop: br ? br.top : null, kols, docW: document.documentElement.scrollWidth, mgZicht: !!(mz && !mz.hidden) };
         }, [o.ids, o.dood, mg]);
         const levend = r.kols.filter(k => !k.lijk);
         const goed = levend.every(k => k.top >= r.tbh && k.bot <= r.vh && k.l >= 0 && k.r <= r.vw) &&
           (r.balkTop === null || r.balkTop >= r.tbh) && r.docW <= r.vw &&
-          (o.dood < 0 || r.kols.filter(k => k.lijk).every(k => k.weg));
-        t(goed, s.w + 'x' + s.h + ' · ' + o.n + ' figuren · ' + (mg ? 'met' : 'zonder') + ' metgezel' + (o.dood >= 0 ? ' (incl. lijk)' : ''));
+          (o.dood < 0 || r.kols.filter(k => k.lijk).every(k => k.weg)) &&
+          r.mgZicht === mg;   /* leegte-wacht: 'met' moet de metgezel écht tonen, 'zonder' nooit */
+        t(goed, s.w + 'x' + s.h + ' · ' + o.n + ' figuren · ' + (mg ? 'met metgezel (geparkeerd, DEV)' : 'zonder metgezel') + (o.dood >= 0 ? ' (incl. lijk)' : '') + ' — #metgezel-zone zichtbaar ' + r.mgZicht);
       }
     }
     await ctx.close();

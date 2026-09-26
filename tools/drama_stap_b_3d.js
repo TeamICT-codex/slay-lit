@@ -70,6 +70,7 @@ const bij = (log, ms) => log.reduce((a, r) => Math.abs(r.t - ms) < Math.abs(a.t 
 
   const opzet = async () => {
     await page.evaluate(() => { devDicktator('slachter_mid'); });
+    t(await page.evaluate(() => !!S.gevecht && S.gevecht.metgezel === null && !S.metgezel), 'solo (DE NISSEN DICHT): het proces staat zonder metgezel \u2014 S.gevecht.metgezel null');
     for (let i = 0; i < 50; i++) { if (await page.evaluate(() => document.body.dataset.scherm === 'gevecht' && !!S.gevecht && !document.querySelector('#baas-intro') && window.Vista && Vista.actief && Vista.klaar)) break; await slaap(400); }
     await slaap(2000);
     await page.evaluate(() => { dicktatorRoep('de_griffier'); dicktatorRoep('de_deurwaarder'); });

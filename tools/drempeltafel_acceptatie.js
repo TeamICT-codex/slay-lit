@@ -263,7 +263,8 @@ async function zetIn(page, gedwongen) {
     taint: !!S._devRun,
     uitNiets: ((S._devScherven || []).length),
     scherven: (S.scherven || []).length,
-    kop: (document.querySelector('.dt-kop h2') || {}).textContent || ''
+    kop: (document.querySelector('.dt-kop h2') || {}).textContent || '',
+    lore: (document.querySelector('#overlay-drempeltafel') || {}).textContent || ''
   }));
   t(opening.scherm === 'einde', `de tafel staat op het einde-scherm (gemeten '${opening.scherm}')`);
   t(/achtergronddrempel/.test(opening.bg || ''), 'de poortplaat achtergronddrempel.webp ligt eronder');
@@ -273,6 +274,10 @@ async function zetIn(page, gedwongen) {
   t(opening.taint === true, 'devDrempeltafel zet de dev-taint S._devRun');
   t(opening.uitNiets === 0, `de drie scherven komen uit de ECHTE stash, niet uit het niets (gemeten ${opening.uitNiets} getoverd)`);
   t(opening.scherven === 3 && /DREMPELTAFEL/.test(opening.kop), 'drie scherven in de tas en de kop leest DE DREMPELTAFEL');
+  /* DE NISSEN DICHT (T17): de lore van de nissen belooft geen bondgenoot meer */
+  const loreFout = (opening.lore.match(/bondgenoot|\btrouw|poort onderin|neem 'm mee naar de Drempel/gi) || []);
+  t(opening.lore.length > 40 && /tafel/i.test(opening.lore) && loreFout.length === 0,
+    `de nissen-lore noemt geen bondgenoot/trouw/poort onderin (${opening.lore.length} tekens, treffers: ${JSON.stringify(loreFout)})`);
   await page.screenshot({ path: path.join(SHOTS, '01-nissen.png') });
 
   /* ==========================================================================
@@ -665,11 +670,16 @@ async function zetIn(page, gedwongen) {
     bKaarten: S.beloning && S.beloning.kaarten, bDrank: S.beloning && S.beloning.drank,
     verderUit: !!(document.querySelector('#scherm-beloning .knop-groot') || {}).disabled,
     scherven: (S.scherven || []).length,
-    scherfKop: (document.querySelector('.scherf-reveal-kop') || {}).textContent || ''
+    scherfKop: (document.querySelector('.scherf-reveal-kop') || {}).textContent || '',
+    scherfReveal: (document.querySelector('.scherf-reveal-overlay') || {}).textContent || ''
   }));
   t(buit.goud === gev4.goud && buit.bGoud === 0 && !buit.bRel && !buit.bKaarten && !buit.bDrank,
     `geen standaard elite-buit: goud blijft ${buit.goud}, geen relikwie/kaart/drank`);
   t(buit.scherven === 1 && /SCHERF TERUG/.test(buit.scherfKop), `100 % één scherf terug — kop '${buit.scherfKop.trim()}'`);
+  /* DE NISSEN DICHT (T10): de reveal leest de tafelTekst en belooft geen Drempel die al voorbij is */
+  const revealFout = (buit.scherfReveal.match(/bondgenoot|\btrouw|poort onderin|neem 'm mee naar de Drempel/gi) || []);
+  t(buit.scherfReveal.length > 40 && revealFout.length === 0,
+    `de scherf-reveal noemt geen bondgenoot/trouw en geen 'neem 'm mee naar de Drempel' (treffers: ${JSON.stringify(revealFout)}) — '${buit.scherfReveal.replace(/\s+/g, ' ').trim().slice(0, 150)}'`);
   t(buit.tafel === true && buit.bezig === true && buit.verderUit === true, "de Verder-knop staat op slot zolang de pot uitbetaalt");
   t(await page.evaluate(() => !!(S.drempeltafel && S.drempeltafel.dubbel)),
     'de sport IV-intentie S.drempeltafel.dubbel staat METEEN aan, vóór het blok opengaat');
