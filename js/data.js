@@ -1352,7 +1352,7 @@ const VIJANDEN = {
   de_griffier: {
     naam: 'De Griffier', art: '🖋️', artId: 'de_omroeper', hp: [21, 24], hof: true,   /* → 34-39 in Act 3 */
     kies: (v, beurt) => hofIntent(v, beurt),
-    bijDood: () => dicktatorHersync(true)   /* zonder griffier geen decreet: de zitting-pil slaat om naar EIGENHANDIG VONNIS */
+    bijDood: () => dicktatorGriffierDood()   /* zonder griffier geen decreet: een open dossier sluit meteen en de zitting-pil slaat om naar EIGENHANDIG VONNIS (game.js, review F4) */
   },
   de_deurwaarder: {
     naam: 'De Deurwaarder', art: '🧾', artId: 'de_aanklager', hp: [24, 28], hof: true,   /* → 39-45 in Act 3 */

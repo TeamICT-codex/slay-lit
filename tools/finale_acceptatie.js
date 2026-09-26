@@ -510,6 +510,32 @@ const sonde = page => page.evaluate(() => {
   t(d9.scene === 2 && d9.n === 2 && d9.dossierScene === 2, `devDicktator({hof}) landt in II met een dossier van II (${d9.n} kaarten, scène ${d9.dossierScene})`);
   await ctx.close();
 
+  /* ================= 10 · F4 · ZONDER GRIFFIER GEEN DOSSIER ================= */
+  kop('10 · F4 · de griffier sterft met een open dossier → dicht; in II geen shortlist, de zitting is EIGENHANDIG VONNIS');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page);
+  let z10 = await beurt(page, 0);
+  let d10 = await dossierStand(page);
+  t(z10.naam === 'DE AANZEGGING' && d10.n === 2 && /griffier/.test((await sonde(page)).hof), `I: de aanzegging roept de griffier en zet een dossier (${d10.n} kaarten)`);
+  const gd = await page.evaluate(() => {
+    const g = S.gevecht; document.querySelectorAll('#meldingen .toast').forEach(e => e.remove());
+    verliesHp(hofLid(g, 'de_griffier'), 999, sp()); renderGevecht();
+    return { n: g.aangezegd.size, zegels: S.dek.filter(c => kaartAangezegd(c)).length, toast: [...document.querySelectorAll('#meldingen .toast')].map(e => e.textContent).join(' | '), dood: !hofLid(g, 'de_griffier') };
+  });
+  d10 = await dossierStand(page);
+  t(gd.dood && gd.n === 0 && gd.zegels === 0 && !/📜/.test(d10.strook) && /griffier is dood/.test(gd.toast), `de griffier sterft → het dossier verdwijnt meteen (${gd.n} kaarten, ${gd.zegels} zegels, strook "${d10.strook}"), één melding: "${gd.toast}"`);
+  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, 999, sp()); checkBaasFase(); renderGevecht(); });
+  await wachtVrij(page);
+  const zet10 = [];
+  for (let i = 0; i < 4; i++) { const r = await beurt(page, 0); const d = await dossierStand(page); zet10.push({ naam: r.naam, dmg: r.dmg, n: d.n, strook: d.strook }); }
+  const EIG = await page.evaluate(() => DICK.EIGENHANDIG);
+  console.log('   II zonder griffier: ' + zet10.map(x => x.naam + (x.dmg ? '(' + x.dmg + ')' : '') + ' · dossier ' + x.n).join(' → '));
+  t(zet10[1].naam === 'KARAKTERMOORD' && zet10.every(x => x.n === 0 && !/📜/.test(x.strook)), `II: de KARAKTERMOORD zet geen shortlist, nergens een 📜 (${zet10.map(x => x.n).join('/')})`);
+  const zit10 = zet10.find(x => /VONNIS|DECREET/.test(x.naam));
+  t(zit10 && zit10.naam === 'EIGENHANDIG VONNIS' && zit10.dmg === EIG, `de zitting van II is EIGENHANDIG VONNIS met het getal uit DICK.EIGENHANDIG (${zit10 && zit10.naam} ${zit10 && zit10.dmg}, DICK ${EIG})`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
   await browser.close();
   console.log('\n============================================');
   console.log(fout === 0 ? `FINALE ACCEPTATIE: ALLES GROEN — ${ok} ok` : `FINALE ACCEPTATIE: ${ok} ok, ${fout} FOUT`);

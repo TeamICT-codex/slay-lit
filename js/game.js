@@ -8397,6 +8397,11 @@ function dicktatorAanzeg(v, g, scene) {
     baasSpreekt(UITSPRAKEN._dicktator.delegatie);
     dicktatorRoep('de_griffier');
   }
+  /* zonder griffier geen dossier (review F4): de zitting wordt dan EIGENHANDIG VONNIS, en een
+     shortlist die "speel er één, dan kies jij wat valt" belooft, zou liegen. Niet in
+     dicktatorDecreetMogelijk: die kiest in dicktatorKies ook tussen HET VONNIS en EIGENHANDIG,
+     en daar zou de beloning voor de dode griffier een zwáárdere klap worden. */
+  if (!hofLid(g, 'de_griffier')) return;
   if (!dicktatorDecreetMogelijk(v, scene)) return;
   const open = g.aangezegd && g.aangezegd.size > 0;
   if (scene === 2 ? !(open && v.dossierScene === 2) : !open) {
@@ -8417,6 +8422,18 @@ function dicktatorDecreetMogelijk(v, scene) {
 function dicktatorSluitDossier(b, g) {
   if (g && g.aangezegd && g.aangezegd.size) g.aangezegd.clear();
   if (b) b.dossierScene = null;
+}
+/* DE GRIFFIER STERFT (review F4, VIJANDEN.de_griffier.bijDood): zonder griffier geen decreet,
+   dus ook geen dossier. Een open dossier sluit meteen, met één melding; de zitting-pil slaat
+   om naar EIGENHANDIG VONNIS (de hersync). Zijn executie in de Tirade loopt buiten verliesHp
+   (geen bijDood); daar sluit de scènewissel het dossier al. */
+function dicktatorGriffierDood() {
+  const g = S.gevecht; if (!g || g.voorbij) return;
+  if (g.aangezegd && g.aangezegd.size) {
+    dicktatorSluitDossier(dicktatorBaas(g), g);
+    melding('📜 De griffier is dood: het dossier is gesloten, er valt geen decreet meer.');
+  }
+  dicktatorHersync(true);
 }
 /* de zitting van deze scène is gehouden - welke vorm ze ook kreeg. Het dossier sluit. */
 function dicktatorZittingGehouden(v, g, scene) {
