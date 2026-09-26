@@ -849,7 +849,8 @@ img { max-width: 100%; display: block; }
 @keyframes plGeraaktH { 20% { translate: -6px 0; rotate: -3deg; filter: brightness(1.5) sepia(.6) hue-rotate(-30deg); } 55% { translate: 4px 0; } }
 
 /* — de intentiepil boven B.A.A.S. (zoals .intent in het spel) — */
-.gs-intent-rij { height: 34px; display: flex; align-items: flex-end; justify-content: center; }
+/* integrator R4: de pil ligt boven de antenne van de kast (die stak door 'DEADLINE 8': liggend las je 'DEADLIN 8') */
+.gs-intent-rij { position: relative; z-index: 2; height: 34px; display: flex; align-items: flex-end; justify-content: center; }
 .gs-intent { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; line-height: 1.2; border-radius: 20px; white-space: nowrap;
   font-family: var(--f-crt); font-size: 1rem; color: #efe2bf; background: rgba(20, 14, 8, .74); border: 1px solid rgba(216, 203, 162, .45); animation: plZweef 2s ease-in-out infinite; }
 @keyframes plZweef { 50% { translate: 0 -4px; } }
@@ -881,8 +882,9 @@ img { max-width: 100%; display: block; }
 .gs-orb b { font-size: 1.55em; font-weight: 400; margin-right: 1px; }
 .gs-stapel { position: absolute; padding: 3px 9px; border-radius: 8px; white-space: nowrap; font-family: var(--f-serif); font-size: .88rem; color: #e6d9b5; background: rgba(20, 14, 8, .62); border: 1px solid rgba(216, 203, 162, .35); }
 .gs-trek { left: calc(12px + env(safe-area-inset-left)); bottom: calc(var(--kaart-h) + 28px + var(--orb)); }
-.gs-afleg { right: calc(12px + env(safe-area-inset-right)); bottom: calc(var(--kaart-h) + 80px); }
-.gs-eind { position: absolute; right: calc(12px + env(safe-area-inset-right)); bottom: calc(var(--kaart-h) + 24px); white-space: nowrap;
+.gs-afleg { right: calc(12px + env(safe-area-inset-right)); bottom: calc(var(--kaart-h) + 92px); }
+/* staand: 'Eindig beurt' 12 px hoger dan de opgetilde kaart reikt (integrator R4) */
+.gs-eind { position: absolute; right: calc(12px + env(safe-area-inset-right)); bottom: calc(var(--kaart-h) + 36px); white-space: nowrap;
   font-family: var(--f-black); font-size: 1rem; line-height: 1.1; color: #1a140c; padding: 9px 14px; min-height: 44px;
   background: linear-gradient(180deg, #d8c08a, #a8946f); border-radius: 10px; border: 2px solid #4a3a20; box-shadow: 0 4px 0 #4a3a20; }
 .gs-eind:active:not(:disabled) { translate: 0 2px; box-shadow: 0 1px 0 #4a3a20; }
@@ -932,13 +934,20 @@ img { max-width: 100%; display: block; }
 .gs-kaart.te-duur { filter: grayscale(.7) brightness(.62); }
 .gs-kaart:disabled { opacity: 1; cursor: default; }
 /* touch: de eerste tik tilt de kaart op om te lezen (voorbeeldKaart in het spel), de tweede speelt hem */
-/* staand (de basis) blijft de opgetilde kaart laag genoeg: de foto in je borstzak (erboven) blijft raak */
-.gs-kaart.voorbeeld { z-index: 99 !important; transform: translateY(calc(var(--kaart-h) * -.18)) scale(1.2); box-shadow: 0 0 0 3px var(--amber), 0 18px 34px rgba(0, 0, 0, .8); }
+/* staand (de basis) blijft de opgetilde kaart laag genoeg: de foto in je borstzak (erboven) blijft raak.
+   Integrator R4: ze groeit alleen vanuit haar onderrand (geen extra til). Met de til van 18 % dekte de buitenste
+   kaart links de energiebol en rechts 'Eindig beurt' af: wie dan 'Eindig beurt' tikte, speelde de opgetilde
+   kaart. De buitenste kaarten groeien naar binnen, zodat ze in beeld blijven. */
+.gs-kaart.voorbeeld { z-index: 99 !important; transform: scale(1.2); box-shadow: 0 0 0 3px var(--amber), 0 18px 34px rgba(0, 0, 0, .8); }
+.gs-kaart.voorbeeld:first-child { transform: translateX(calc(var(--kaart-w) * .1)) scale(1.2); }
+.gs-kaart.voorbeeld:last-child { transform: translateX(calc(var(--kaart-w) * -.1)) scale(1.2); }
 :host(:not([data-modus="mobiel"])) .gs-kaart:not(:disabled):hover { z-index: 99 !important; transform: translateY(-36px) scale(1.16); box-shadow: 0 18px 34px rgba(0, 0, 0, .8), 0 0 20px rgba(255, 220, 150, .35); }
 /* laptop: de sneltoets van de kaart, klein rechtsboven */
 .gs-kaart[data-toets]::after { content: attr(data-toets); position: absolute; top: 4px; right: 5px; padding: 1px 3px; border-radius: 3px; font-family: var(--f-crt); font-size: .78rem; line-height: 1;
   color: rgba(43, 33, 20, .55); border: 1px solid rgba(43, 33, 20, .3); }
-.gs-kaart.nieuw { animation: plDeel .42s cubic-bezier(.3, 1.3, .5, 1) backwards; }
+/* integrator R4: een kaart die nog binnenvliegt, vangt geen tik: ze komt van de trekstapel over de bol en de borstzak
+   (±0,4 s), en een klik op de foto mocht zo nooit een kaart spelen */
+.gs-kaart.nieuw { animation: plDeel .42s cubic-bezier(.3, 1.3, .5, 1) backwards; pointer-events: none; }
 @keyframes plDeel { from { translate: -40vw 50px; rotate: -30deg; opacity: 0; } }
 .gs-kaart.tril { animation: plTril .3s ease; }
 @keyframes plTril { 25% { translate: -5px 0; } 75% { translate: 5px 0; } }
@@ -1346,7 +1355,7 @@ img { max-width: 100%; display: block; }
   .gs-badge-nr { font-size: .95rem; }
   .gk-kost { width: 32px; height: 32px; top: -10px; left: -10px; font-size: 1.2rem; }
   .gs-kaart { padding: 8px 8px 7px; gap: 4px; border-radius: 11px; }
-  .gs-kaart.voorbeeld { transform: translateY(-40px) scale(1.18); }
+  .gs-kaart.voorbeeld, .gs-kaart.voorbeeld:first-child, .gs-kaart.voorbeeld:last-child { transform: translateY(-40px) scale(1.18); }
   .gk-naam { font-size: .98rem; }
   .gk-tekst { font-size: .8rem; line-height: 1.2; }
   .gk-type { font-size: .6rem; }
@@ -1488,7 +1497,7 @@ img { max-width: 100%; display: block; }
   .gk-naam { font-size: .62rem; }
   .gk-tekst { font-size: .54rem; line-height: 1.08; }
   .gk-type { display: none; }
-  .gs-kaart.voorbeeld { transform: translateY(calc(var(--kaart-h) * -.36)) scale(1.3); }
+  .gs-kaart.voorbeeld, .gs-kaart.voorbeeld:first-child, .gs-kaart.voorbeeld:last-child { transform: translateY(calc(var(--kaart-h) * -.36)) scale(1.3); }
   /* de ballon links van de kast (in de lucht, boven de lift) */
   .gs-ballon { right: calc(100% + 10px); bottom: auto; top: 2%; max-width: min(36vw, 290px); padding: 5px 9px 6px; }
   .gs-ballon::after { right: auto; left: 100%; top: 10px; border-top-color: transparent; border-left-color: rgba(106, 211, 106, .45); }

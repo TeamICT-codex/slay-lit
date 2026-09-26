@@ -10,7 +10,7 @@
        NODE_PATH="$PWD/node_modules" SLAYIT_WORKTREE="...\SLAY-IT-proloog" \
        SLAYIT_SHOTS="$PWD/proloog_shots" node "...\SLAY-IT-proloog\tools\proloog_acceptatie.js"
    Optioneel een filter als argument: hoofd | skip | herbeleef | wipe | poort | stub | rustig |
-   glimlach | lite | val | outro | kantoor | breek | gesprek | afrekening | statisch (meerdere mogen,
+   glimlach | lite | val | outro | kantoor | breek | gesprek | integratie | afrekening | statisch (meerdere mogen,
    komma-gescheiden).
    Zonder argument draait alles (±27 min).
 
@@ -121,6 +121,25 @@
                KA-TSJONK; geduwd: de lege pen (tik, of zelf trekken met muis en touch) laat alleen een groef, na
                6 s de machine; sprong: 'U tekende niet.'; herbeleven byte-gelijk; doortikken ≤ 7 s; rustig en lite
                met leestijd.
+   R4 (integrator) — deel 15 'gesprek' krijgt de hele strook gesprek → uitweg → afrekening per formaat, alles
+   IN de pagina gemeten (window.__r4i, R4_METER), met een speler-robot vanaf de save van het kantoor op scène 3:
+  15G natuurlijk (handelt 0,6 s nadat het kan) en 15H doortikkend (tikt om de 150 ms), op 1440x900, 1366x768,
+               800x360 en 846x381 (touch), 412x915, plus reduced motion en lite: (1) intentie, bol, borstzak en
+               'Eindig beurt' in ELK gemonsterd beeld in beeld en, zolang je kunt spelen, raak (R.elementFromPoint en
+               document.elementFromPoint), net als elke kaart; de ballon, de foto, de je-regels, 'Laat los', de
+               nieuwste printregel boven de kop en de pen in beeld; nergens scroll, geen draai-blok; (2) spatie,
+               vasthouden (muis en vinger), tweede tik (muis en vinger), Enter en geduwd schrijven het contract
+               (uitweg, jeugddroom, glimlachen = kantoor + gespeelde Glimlach-kaarten, fotoKantoor, zelfGestempeld);
+               (3) het kettingvel toont die ECHTE cijfers letterlijk voor twaalf contracten, ook na een herlaad
+               in de eerste regels, de trage droomregel, de vastloper, het zakkende totaal, op 'ontslag' en in de
+               uitweg; (4) natuurlijk: speelbaar ≤ 2 s, de beurt van B.A.A.S. ≤ 2,5 s, de uitweg 5-9 s, de
+               afrekening 12-16 s, de droomregel trager; doortikkend: de langste GEDWONGEN wacht ≤ 2,5 s; (5) elke
+               sfx-aanroep in scènes 3-5 klonk, samen roepen de runs elke klanknaam van scènes 3-5 aan; (6) 1
+               AudioContext per pagina, 0 paginafouten.
+  15J          herbeleven (het gesprek geduwd met de pen tot de landing; 'ontslag' op touch): ALLE opslag byte-gelijk.
+  15K          de klanknamen van scènes 3-5 in proloog.js bestaan en klinken (ProloogKlank.sfx → true).
+   1 hoofd     (integrator R4) de factuur toont letterlijk de cijfers van de doorloop zelf: de gehoorde klikken op
+               GLIMLACH + de Glimlach-kaart, de foto, de getypte droom, zelf gestempeld.
    Het script heeft GEEN server nodig: het bedient de worktree rechtstreeks vanaf
    schijf via route.fulfill op http://localhost:4173/** (ook onder /slay-lit/).
    Elke regel toont de GEMETEN waarde. Exit 1 bij minstens één fout.
@@ -770,7 +789,7 @@ async function speelGesprek(page, vp, pad, label, o) {
   t(await wachtScene(page, 'breekpunt/factuur', 9000), `${label}: de uitweg loopt zelf door naar de Eindafrekening`);
 }
 /* R4 · de Eindafrekening: de printer voert het kettingvel (een tik = één regel); geduwd: teken met de lege pen */
-async function speelBreekpunt(page, vp, pad, label) {
+async function speelBreekpunt(page, vp, pad, label, verwacht) {
   await slaap(1500);
   await sonde(page, `${label} de afrekening (de printer ratelt)`);
   await shot(page, `${vp.n}-08-factuur`);
@@ -786,6 +805,12 @@ async function speelBreekpunt(page, vp, pad, label) {
   const regels = await sr(page, `const o = {}; R.querySelectorAll('.pv-regel[data-post]').forEach(r => { o[r.dataset.post] = r.textContent.replace(/\\s+/g, ' ').trim(); }); return o;`);
   t(/Glimlachen vandaag: \d+ × 0u06/.test(regels.glimlachen || '') && /IN BESL█/.test(regels.warmte || '') && /€ 0,00/.test(regels.totaal || ''),
     `${label}: de factuur: ${regels.glimlachen} · ${regels.droom} · ${regels.warmte} · ${regels.totaal}`);
+  /* integrator R4: het kettingvel toont letterlijk de cijfers van DEZE doorloop (de klikken in het kantoor, de kaart, de foto, de droom) */
+  if (verwacht) {
+    const p = await sr(page, `const o = {}; R.querySelectorAll('.pv-regel[data-post]').forEach(r => { const l = r.querySelector('.pv-l'), w = r.querySelector('.pv-w'); o[r.dataset.post] = { l: l ? l.textContent : '', w: w ? w.textContent : null, n: R.querySelectorAll('.pv-regel[data-post="' + r.dataset.post + '"]').length }; }); return o;`);
+    const pf = r4iVergelijkPosten(p, r4iVerwacht(verwacht.n, verwacht.fotoN, verwacht.droom, verwacht.zelf));
+    t(!pf.length, `${label}: de factuur toont de echte cijfers van deze doorloop (${verwacht.bron}): ${p.glimlachen ? p.glimlachen.l + ' …… ' + p.glimlachen.w : '?'} · ${p.foto ? p.foto.l + ' …… ' + p.foto.w : '?'} · ${p.droom ? p.droom.l : '?'}` + (pf.length ? ' — ' + pf.join(' ;; ') : ''));
+  }
   if (pad !== 'sprong' && await sr(page, `const b = R.querySelector('[data-actie="teken"]'); return !!b && !b.disabled;`)) await tik(page, vp, '[data-actie="teken"]', { position: { x: 24, y: 16 }, timeout: 3000 });
   t(await wachtScene(page, 'breekpunt/val', 8000), `${label}: naar de val`);
   await slaap(1200);
@@ -1247,6 +1272,562 @@ function klankReeks(pk, verwacht) {
   return { gevonden, mis };
 }
 
+/* ---------- INTEGRATOR R4: de meter van de hele strook gesprek → uitweg → afrekening ----------
+   Alles in window.__r4i, met tijden op performance.now() relatief aan t0 (het eerste beeld van het
+   gesprek, of — na een herlaad — van de afrekening):
+   fasen   scène/fase door de tijd (rAF)
+   kan     welke HANDELINGEN beschikbaar zijn (in beeld, niet inert, zichtbaar, raak via R.elementFromPoint
+           en document.elementFromPoint = de host): 'eindig', 'kaart', 'zakfoto' (alleen als je kunt
+           spelen: de foto is altijd raak, maar doet tijdens de beurt van B.A.A.S. niets), 'laatlos', 'teken'
+   tik     elke doorspoeltik (laptop: ArrowRight → deed de proloog preventDefault; touch: veranderde de
+           shadow root tijdens de dispatch van de klik) — zoals deel 13 (integrator R3)
+   lay     elke 120 ms zolang het gesprek loopt: intentie, bol, borstzak en 'Eindig beurt' volledig in beeld;
+           zolang je kunt spelen ook raak, net als elke kaart van de hand (een opgetilde kaart mag haar
+           buren bedekken: dan telt alleen zij); de ballon van B.A.A.S. in beeld; tijdens het kijken de foto,
+           de drie je-regels en 'Laat los' in beeld; in de afrekening de nieuwste regel in beeld en boven de
+           printerkop (zodra hij 200 ms staat), de pen in beeld
+   scroll  document, host, #pl-app en #scene lopen nooit over; draai: het draai-blok van de game;
+           pauze: pl-gepauzeerd (de proloog mag nooit onverwacht pauzeren)
+   uit     het begin (de sluier / de OPTIMALISATIERONDE) en het einde (de afrekening) van de uitweg,
+           en de variant (.gs-root[data-uitweg])
+   afr     de afrekening: de eerste regel, het slot (sprong: 'U tekende niet'; geduwd: de pen kan), de
+           posten (label + waarde, per regel het eerste en het laatste moment dat hij veranderde), het
+           besluit, de stempel, de slotzin en wie tekende */
+const R4_METER = () => {
+  if (window.__r4i) return;
+  const m = window.__r4i = { t0: null, eind: null, laatst: 0, start: null, fasen: [], kan: [], tik: [], scroll: [], draai: 0, pauze: 0,
+    lay: { n: 0, nSpeel: 0, fout: [], mis: {} }, uit: { start: null, via: null, eind: null }, speelbaar: null,
+    afr: { eerste: null, slot: null, pen: null, posten: {}, volgorde: [], besluit: null, stempel: null, sprong: null, geduwd: null, getekend: null, fax: false, besluitNa: null } };
+  const nu = () => performance.now();
+  const rel = t => Math.round(t - (m.t0 === null ? t : m.t0));
+  const zicht = (R, e) => { for (let x = e; x && x !== R; x = x.parentNode) { if (x.nodeType !== 1) continue; const cs = getComputedStyle(x); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.05) return false; } return true; };
+  const binnen = r => r.width > 0 && r.height > 0 && r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1;
+  const raak = (R, e, knop) => {
+    if (!e || (knop && e.disabled)) return false;
+    const r = e.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2 || !binnen(r)) return false;
+    for (let x = e; x && x !== R; x = x.parentNode) if (x.nodeType === 1 && x.inert) return false;
+    if (!zicht(R, e)) return false;
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const hit = R.elementFromPoint(cx, cy), top = document.elementFromPoint(cx, cy);
+    return !!hit && (hit === e || e.contains(hit)) && top === R.host;
+  };
+  const desc = e => e ? (e.tagName.toLowerCase() + (e.classList && e.classList.length ? '.' + [...e.classList].slice(0, 2).join('.') : '')) : 'niets';
+  const fout = (t, s) => { m.lay.mis[s.split(' ')[0]] = (m.lay.mis[s.split(' ')[0]] || 0) + 1; if (m.lay.fout.length < 12) m.lay.fout.push(rel(t) + ' ms: ' + s); };
+  const eerstGezien = new WeakMap();
+  let wortel = null, vorigK = null, vorigKan = null, laatsteMonster = -1e9;
+  let inTik = null;
+  const moTik = new MutationObserver(recs => { if (inTik) inTik.n += recs.length; });
+  const loopt = () => m.t0 !== null && m.eind === null;
+  addEventListener('keydown', e => {
+    if (e.key !== 'ArrowRight' || !loopt()) return;
+    const t = rel(nu());
+    setTimeout(() => m.tik.push({ t, gebruikt: e.defaultPrevented, via: 'toets' }), 0);   /* na de hele dispatch */
+  });
+  addEventListener('click', e => {
+    if (!loopt() || !wortel) return;
+    const bron = (e.composedPath && e.composedPath()[0]) || e.target;
+    if (!bron || bron.nodeType !== 1 || !wortel.contains(bron) || bron.closest('button, input, a')) return;   /* een knop is een handeling, geen tik */
+    moTik.takeRecords();
+    inTik = { t: rel(nu()), n: 0 };
+  }, true);
+  addEventListener('click', () => {
+    if (!inTik) return;
+    const n = inTik.n + moTik.takeRecords().length;
+    m.tik.push({ t: inTik.t, gebruikt: n > 0, via: 'tik' });
+    inTik = null;
+  });
+  const monster = (R, h, app, sc, speelbaar, t) => {
+    const q = s => R.querySelector(s);
+    /* scroll, het draai-blok en de pauze */
+    const se = document.scrollingElement, scEl = R.getElementById('scene'), over = [];
+    if (se.scrollHeight > se.clientHeight + 1 || se.scrollWidth > se.clientWidth + 1 || scrollX || scrollY) over.push('document ' + se.scrollWidth + 'x' + se.scrollHeight);
+    [h, app, scEl].forEach(e => { if (e && (e.scrollHeight > e.clientHeight + 1 || e.scrollWidth > e.clientWidth + 1 || e.scrollTop || e.scrollLeft)) over.push((e.id || e.tagName) + ' ' + e.scrollWidth + 'x' + e.scrollHeight + '>' + e.clientWidth + 'x' + e.clientHeight); });
+    if (over.length && m.scroll.length < 8) m.scroll.push(rel(t) + ' ms [' + sc + ']: ' + over.join(' | '));
+    const db = document.getElementById('draai-blok');
+    if (db && db.classList.contains('toon')) m.draai++;
+    if (app && app.classList.contains('pl-gepauzeerd')) m.pauze++;
+    if (sc === 'gesprek') {
+      const g = q('.gs-root');
+      const na = !!(g && (g.classList.contains('gs-na') || g.classList.contains('gs-uit')));
+      if (!na && !q('.gs-kijk')) {
+        m.lay.n++;
+        const delen = { intentie: q('.gs-intent'), bol: q('.gs-orb'), borstzak: q('[data-actie="zakfoto"]'), eindig: q('[data-actie="eindig"]') };
+        Object.entries(delen).forEach(([k, e]) => {
+          if (!e) { fout(t, k + ' ontbreekt'); return; }
+          const r = e.getBoundingClientRect();
+          if (!binnen(r)) { fout(t, k + ' buiten beeld [' + [r.left, r.top, r.right, r.bottom].map(Math.round) + ']'); return; }
+          if (speelbaar && !raak(R, e, false)) { const hit = R.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); fout(t, k + ' niet raak (' + desc(hit) + ')'); }
+        });
+        if (speelbaar) {
+          m.lay.nSpeel++;
+          const kaarten = [...R.querySelectorAll('.gs-hand .gs-kaart')];
+          const vb = kaarten.find(k => k.classList.contains('voorbeeld'));
+          kaarten.forEach(k => {
+            if (k.classList.contains('nieuw')) return;   /* ze vliegt nog binnen van de trekstapel (plDeel, ±0,4 s) */
+            const r = k.getBoundingClientRect();
+            if (!binnen(r)) fout(t, 'kaart-' + k.dataset.kaart + ' buiten beeld [' + [r.left, r.top, r.right, r.bottom].map(Math.round) + ']');
+            else if ((!vb || vb === k) && !raak(R, k, true)) { const hit = R.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); fout(t, 'kaart-' + k.dataset.kaart + ' niet raak (' + desc(hit) + ')'); }
+          });
+        }
+      }
+      /* B.A.A.S. spreekt: ook in de geduwd-regie ('Optimalisatieronde.', 'U bent vrijgesteld.') */
+      const bal = q('.gs-ballon.toon');
+      if (bal && !binnen(bal.getBoundingClientRect())) { const r = bal.getBoundingClientRect(); fout(t, 'ballon buiten beeld [' + [r.left, r.top, r.right, r.bottom].map(Math.round) + ']'); }
+      const kijk = q('.gs-kijk');
+      if (kijk && !kijk.classList.contains('los')) {
+        [q('.gs-kijk-kader'), ...R.querySelectorAll('.gs-kijk-regel')].forEach(e => {
+          if (!e) return;
+          if (!eerstGezien.has(e)) eerstGezien.set(e, t);
+          if (t - eerstGezien.get(e) < 800) return;   /* de foto vliegt eerst uit je zak (FLIP 720 ms) */
+          const r = e.getBoundingClientRect();
+          if (!binnen(r)) fout(t, 'kijk ' + desc(e) + ' buiten beeld [' + [r.left, r.top, r.right, r.bottom].map(Math.round) + ']');
+        });
+        const los = q('[data-actie="laatlos"]');
+        if (los && !los.hidden) {
+          if (!eerstGezien.has(los)) eerstGezien.set(los, t);
+          if (t - eerstGezien.get(los) >= 400 && !raak(R, los, true)) {   /* hij vloeit even in */
+            const r = los.getBoundingClientRect(), hit = R.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+            fout(t, "'Laat los' niet raak of buiten beeld [" + [r.left, r.top, r.right, r.bottom].map(Math.round) + '] ← ' + desc(hit) + ', opacity ' + getComputedStyle(los).opacity);
+          }
+        }
+      }
+      const slot = q('.gs-slotzin');
+      if (slot && !binnen(slot.getBoundingClientRect())) fout(t, 'slotzin buiten beeld');
+    }
+    if (sc === 'breekpunt') {
+      const rijen = R.querySelectorAll('.pv-regel');
+      const pr = q('.pv-printer');
+      const laatste = rijen[rijen.length - 1];
+      if (laatste) {
+        if (!eerstGezien.has(laatste)) eerstGezien.set(laatste, t);
+        if (t - eerstGezien.get(laatste) >= 200) {
+          const r = laatste.getBoundingClientRect(), p = pr ? pr.getBoundingClientRect() : null;
+          if (!binnen(r) || (p && r.bottom > p.top + 2)) fout(t, 'nieuwste regel ' + desc(laatste) + ' niet in beeld boven de printer [' + [r.left, r.top, r.right, r.bottom].map(Math.round) + ']' + (p ? ' kop ' + Math.round(p.top) : ''));
+        }
+      }
+      const pen = q('[data-actie="teken"]');
+      if (pen && !binnen(pen.getBoundingClientRect())) fout(t, 'de pen buiten beeld');
+      /* de posten: label en waarde, en wanneer ze veranderden */
+      rijen.forEach(r => {
+        const id = r.dataset.post;
+        if (!id) return;
+        const l = r.querySelector('.pv-l'), w = r.querySelector('.pv-w');
+        const tx = (l ? l.textContent : '') + '|' + (w ? w.textContent : '');
+        const p = m.afr.posten[id] = m.afr.posten[id] || { l: '', w: null, begin: rel(t), eind: rel(t), n: 0, tx: '' };
+        p.n = R.querySelectorAll('.pv-regel[data-post="' + id + '"]').length;
+        if (tx !== p.tx) { p.tx = tx; p.l = l ? l.textContent : ''; p.w = w ? w.textContent : null; p.eind = rel(t); }
+      });
+      const volg = [...R.querySelectorAll('.pv-regel[data-post]')].map(r => r.dataset.post).join(',');
+      if (volg.length > m.afr.volgorde.join(',').length) m.afr.volgorde = volg.split(',');
+      const pap = q('.pv-papier');
+      if (pap) {
+        const b = q('.pv-besluit .pv-l'); if (b) m.afr.besluit = b.textContent.replace(/\s+/g, ' ').trim();
+        const st = q('.pv-stempel'); if (st) m.afr.stempel = st.textContent;
+        const h2 = q('.pv-hand'); if (h2) m.afr.hand = h2.textContent;
+        const sp = q('.pv-sprong'); if (sp) m.afr.sprong = sp.textContent.replace(/\s+/g, ' ').trim();
+        const ge = q('.pv-geduwd'); if (ge) m.afr.geduwd = ge.textContent.replace(/\s+/g, ' ').trim();
+        if (pap.dataset.getekend) m.afr.getekend = pap.dataset.getekend;
+        if (q('.pv-facsimile')) m.afr.fax = true;
+        const txt = pap.textContent, ib = txt.indexOf('BESLUIT'), io = txt.indexOf('In ons voordeel');
+        if (ib !== -1) m.afr.besluitNa = io !== -1 && ib > io;
+      }
+    }
+  };
+  const lus = () => {
+    const h = document.getElementById('scherm-proloog'), R = h && h.shadowRoot;
+    if (R && R !== wortel) { wortel = R; moTik.observe(R, { childList: true, subtree: true, attributes: true, characterData: true }); }
+    const app = R && R.getElementById('pl-app');
+    const sc = (h && h.dataset.plScene) || null, fase = (app && app.dataset.fase) || '';
+    const k = sc === 'breekpunt' ? 'breekpunt/' + fase : (sc || '');
+    const t = nu();
+    /* tot de css van de proloog binnen is, staat #scene verborgen (het zwarte vangnet van R1): pas daarna meten */
+    const scEl = R && R.getElementById('scene');
+    const klaarVoorBeeld = !!scEl && getComputedStyle(scEl).visibility !== 'hidden';
+    if (m.t0 === null && klaarVoorBeeld && (k === 'gesprek' || k === 'breekpunt/factuur' || k === 'breekpunt/ontslag')) { m.t0 = t; m.start = k; }
+    if (m.t0 !== null && k !== vorigK) { m.fasen.push({ t: rel(t), k }); vorigK = k; }
+    if (loopt() && (fase === 'val' || fase === 'afgrond' || (sc !== 'gesprek' && sc !== 'breekpunt'))) m.eind = rel(t);
+    if (R && loopt()) {
+      m.laatst = rel(t);
+      const q = s => R.querySelector(s);
+      const eind = q('[data-actie="eindig"]');
+      const speelbaar = sc === 'gesprek' && !!eind && !eind.disabled;
+      if (speelbaar && m.speelbaar === null && !q('.gs-hand .gs-kaart.nieuw') && q('.gs-hand .gs-kaart')) m.speelbaar = rel(t);
+      const kan = [];
+      if (sc === 'gesprek') {
+        if (speelbaar && raak(R, eind, true)) kan.push('eindig');
+        if (speelbaar && [...R.querySelectorAll('.gs-hand .gs-kaart')].some(c => raak(R, c, true))) kan.push('kaart');
+        if (speelbaar && raak(R, q('[data-actie="zakfoto"]'), true)) kan.push('zakfoto');
+        const los = q('[data-actie="laatlos"]');
+        if (los && !los.hidden && raak(R, los, true)) kan.push('laatlos');
+        const g = q('.gs-root');
+        if (m.uit.start === null && (q('.gs-kijk') || (g && g.classList.contains('gs-uit')) || q('.gs-intent.vuurt'))) { m.uit.start = rel(t); m.uit.via = (g && g.dataset.uitweg) || 'geduwd'; }
+      }
+      if (sc === 'breekpunt') {
+        if (m.uit.start !== null && m.uit.eind === null) m.uit.eind = rel(t);
+        const pen = q('[data-actie="teken"]');
+        if (raak(R, pen, true)) kan.push('teken');
+        if (m.afr.eerste === null && q('.pv-regel')) m.afr.eerste = rel(t);
+        if (m.afr.pen === null && pen && !pen.disabled) m.afr.pen = rel(t);
+        if (m.afr.slot === null && (q('.pv-sprong') || (pen && !pen.disabled))) m.afr.slot = rel(t);
+      }
+      const kk = kan.join(',');
+      if (kk !== vorigKan) { m.kan.push({ t: rel(t), kan: kk, sc: k }); vorigKan = kk; }
+      if (t - laatsteMonster >= 120) { laatsteMonster = t; try { monster(R, h, app, sc, speelbaar, t); } catch (e) { m.lay.fout.push('meterfout ' + e.message); } }
+    }
+    if (m.eind === null) requestAnimationFrame(lus);
+  };
+  requestAnimationFrame(lus);
+};
+/* de toestand voor de speler-robot (één beeld oud; vlak vóór een handeling wordt ze opnieuw gelezen) */
+const R4I_LEES = () => {
+  const h = document.getElementById('scherm-proloog'), R = h && h.shadowRoot, m = window.__r4i;
+  const q = s => R ? R.querySelector(s) : null;
+  const app = R && R.getElementById('pl-app');
+  const eind = q('[data-actie="eindig"]'), los = q('[data-actie="laatlos"]'), pen = q('[data-actie="teken"]'), pap = q('.pv-papier');
+  const beurt = q('.gs-beurt'), bm = beurt && /(\d+)/.exec(beurt.textContent);
+  const post = id => { const r = q('.pv-regel[data-post="' + id + '"]'); if (!r) return null; const l = r.querySelector('.pv-l'), w = r.querySelector('.pv-w'); return { l: l ? l.textContent : '', w: w ? w.textContent : null }; };
+  return {
+    scene: (h && h.dataset.plScene) || null, fase: (app && app.dataset.fase) || null,
+    speelbaar: !!eind && !eind.disabled && !q('.gs-hand .gs-kaart.nieuw') && !!q('.gs-hand .gs-kaart'),
+    beurt: bm ? +bm[1] : 0,
+    hand: R ? [...R.querySelectorAll('.gs-hand .gs-kaart')].map(k => k.dataset.kaart) : [],
+    kijk: !!q('.gs-kijk'), los: !!los && !los.hidden, losgelaten: !!(q('.gs-root') && q('.gs-root').dataset.losgelaten),
+    uitStart: !!(m && m.uit.start !== null),
+    pen: !!pen && !pen.disabled && !(pap && pap.dataset.getekend), penEr: !!pen, getekend: pap ? (pap.dataset.getekend || null) : null,
+    droom: post('droom'), bonus: post('bonus'), warmte: post('warmte'), totaal: post('totaal'), regels: R ? R.querySelectorAll('.pv-regel').length : 0, vast: !!q('.pv-printer.vast'),
+    eind: m ? m.eind : null, t0: !!(m && m.t0 !== null)
+  };
+};
+/* de opslag waarmee een run in het gesprek begint (zoals het kantoor ze schrijft: de save op scène 3 'start'
+   met de keuzes en glimCp, en het contract dat stap voor stap meeschreef) */
+function r4iOpslag(z) {
+  const ch = { glimlachen: z.glimlachen, glimCp: z.glimlachen, meter: 98 };
+  if (z.jeugddroom) ch.jeugddroom = z.jeugddroom;
+  if (z.fotoKantoor) ch.fotoKantoor = true;
+  ch.zelfGestempeld = !!z.zelfGestempeld;
+  const c = { v: 2, jeugddroom: z.jeugddroom || null, uitweg: null, held: null, masker: null, glimlachen: z.glimlachen, fotoKantoor: !!z.fotoKantoor, zelfGestempeld: !!z.zelfGestempeld, wachtToon: -7, echo: 0 };
+  return { slaylit_proloog_v3: JSON.stringify({ scene: 3, checkpoint: 'start', choices: ch, gezien: [0, 1, 2, 3] }), slayit_proloog: JSON.stringify(c) };
+}
+const r4iCanon = o => JSON.stringify(Object.keys(o || {}).sort().reduce((a, k) => { a[k] = o[k]; return a; }, {}));
+const r4iTijdU = min => Math.floor(min / 60) + 'u' + String(min % 60).padStart(2, '0');
+/* het kettingvel dat bij deze cijfers hoort, letterlijk uit het plan (§2 scène 5) */
+function r4iVerwacht(n, fotoN, droom, zelf) {
+  const D = (droom || 'iets belangrijks').toLocaleUpperCase('nl');
+  return {
+    glimlachen: { l: `Glimlachen vandaag: ${n} × 0u06`, w: r4iTijdU(n * 6) },
+    foto: { l: `Foto bekeken: ${fotoN}×`, w: fotoN ? 'gemarkeerd' : 'in orde' },
+    droom: { l: `“${D}” — ${zelf ? 'zelf' : 'machinaal'} afgestempeld`, w: 'voorziening getroffen' },
+    bonus: { l: 'Loyaliteitsbonus 25 jaar', w: '1 (één) pen, leeg' },
+    warmte: { l: 'Niet-factureerbare warmte — borstzak', w: 'IN BESL█' },
+    totaal: { l: 'TOTAAL VERSCHULDIGD AAN U', w: '€ 0,00' },
+    afgerond: { l: 'Facturabiliteit afgerond: 80 %. In ons voordeel.', w: null }
+  };
+}
+const R4I_VOLGORDE = ['glimlachen', 'foto', 'droom', 'bonus', 'warmte', 'totaal', 'afgerond'];
+function r4iVergelijkPosten(posten, verw) {
+  const fout = [];
+  R4I_VOLGORDE.forEach(id => {
+    const p = posten[id], v = verw[id];
+    if (!p) { fout.push(id + ' ontbreekt'); return; }
+    if (p.n !== 1) fout.push(id + ' staat er ' + p.n + 'x');
+    if (p.l !== v.l) fout.push(id + ': "' + p.l + '" ≠ "' + v.l + '"');
+    if ((p.w === null ? null : p.w) !== v.w) fout.push(id + ': waarde "' + p.w + '" ≠ "' + v.w + '"');
+  });
+  return fout;
+}
+/* de klanknamen van scènes 3-5 (de gevechtsklanken van het spel + R4) */
+const R4I_KLANK = ['trek', 'kaart', 'klik', 'blok', 'klap', 'ding', 'energie', 'debuff', 'tik', 'warm', 'papierscheur', 'fotoValt',
+  'optimalisatie', 'tlDooft', 'schaarhek', 'stoel', 'grendel', 'bliksem', 'printer', 'vastloper', 'prikklok', 'groef'];
+/* de foto in de borstzak: waar je hem vastpakt (het stuk dat uit de zak steekt) */
+async function r4iZak(page) { const b = await page.locator('[data-actie="zakfoto"]').boundingBox(); return { x: b.x + b.width / 2, y: b.y + b.height * 0.3, b }; }
+/* vasthouden met muis of vinger (CDP); geeft de loslaat-functie terug */
+async function r4iHoud(page, vp, x, y) {
+  if (vp.m) {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+    return async () => { await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await cdp.detach(); };
+  }
+  await page.mouse.move(x, y); await page.mouse.down();
+  return async () => { await page.mouse.up(); };
+}
+/* zelf een handtekening trekken met de lege pen (muis, of een vinger via CDP) */
+async function r4iTrek(page, vp) {
+  const b = await page.locator('[data-actie="teken"]').boundingBox();
+  const pt = i => ({ x: b.x + 12 + i * Math.min(6, (b.width - 24) / 30), y: b.y + b.height * (0.6 - 0.3 * Math.sin(i / 3)) });
+  if (vp.m) {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [pt(0)] });
+    for (let i = 1; i < 30; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [pt(i)] }); await slaap(14); }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await cdp.detach();
+  } else {
+    await page.mouse.move(pt(0).x, pt(0).y); await page.mouse.down();
+    for (let i = 1; i < 30; i++) { await page.mouse.move(pt(i).x, pt(i).y); await slaap(12); }
+    await page.mouse.up();
+  }
+}
+/* doorspoelen zoals een speler: laptop een toets (niet spatie: die is de foto), touch een tik bovenaan */
+async function r4iSpoel(page, vp) {
+  if (!vp.m) await page.keyboard.press('ArrowRight');
+  else await page.touchscreen.tap(Math.round(vp.w / 2), Math.max(6, Math.round(vp.h * 0.04))).catch(() => {});
+}
+/* een kaart spelen zoals in het spel: klik op laptop, tik-tik op touch */
+async function r4iKaart(page, vp, id, nat) {
+  const sel = `.gs-hand .gs-kaart[data-kaart="${id}"]`;
+  if (vp.m) { await page.locator(sel).first().tap({ timeout: 3000 }); await slaap(nat ? 400 : 120); await page.locator(sel).first().tap({ timeout: 3000 }); }
+  else await page.locator(sel).first().click({ timeout: 3000 });
+}
+
+/* één run van het gesprek tot de val, als speler-robot. g = { vp, L, modus: 'natuurlijk'|'doortik', seed, kaarten: [[per beurt]],
+   uitweg: 'geduwd'|'spatie'|'vasthouden'|'tweede tik'|'toets', sprongBeurt, pen: 'trekken'|'tik'|'machine', herlaad: [punten],
+   rustig, lite, bliksem }. Geeft alles terug wat de toetsen nodig hebben. */
+async function r4iRun(browser, g) {
+  const vp = g.vp, nat = g.modus === 'natuurlijk', REACTIE = nat ? 600 : 0;
+  const sprong = g.uitweg !== 'geduwd';
+  const opsl = r4iOpslag(g.seed);
+  if (g.lite) opsl.slayit_inst = JSON.stringify({ lite: true, d3: false, mobielHersteld2: true });
+  const { ctx, page } = await open(browser, vp, { opslag: opsl, geenNudge: true, rustig: !!g.rustig });
+  const uit = { segmenten: [], herladen: [], acties: [], vp, g, page, ctx };
+  const installeer = async () => { await r2Spion(page); await page.evaluate(R4_METER); };
+  await installeer();
+  await naarProloog(page, vp, g.L);
+  const gespeeld = {};
+  const herlaadRest = (g.herlaad || []).slice();
+  let sinds = null, uitGezien = null, gesprongen = false, penGedaan = false, losGedaan = false, bliksemGedaan = false;
+  const lees = () => page.evaluate(R4I_LEES);
+  const t00 = Date.now();
+  for (let i = 0; i < 3000 && Date.now() - t00 < 120000; i++) {
+    const s = await lees();
+    if (s.eind !== null) break;
+    if (!s.t0) { await slaap(40); continue; }
+    /* een herlaad op een afgesproken moment (de afrekening moet daarna dezelfde cijfers tonen) */
+    const punt = herlaadRest[0];
+    if (punt) {
+      if (punt === 'uitweg' && s.uitStart && uitGezien === null) uitGezien = Date.now();
+      const nu1 = punt === 'uitweg' ? (uitGezien !== null && Date.now() - uitGezien > 700)
+        : punt === 'begin' ? (s.scene === 'breekpunt' && s.regels >= 3)
+        : punt === 'droom' ? (!!s.droom && !s.bonus)
+        : punt === 'vastloper' ? s.vast
+        : punt === 'totaal' ? (!!s.totaal && s.totaal.w !== '€ 0,00')
+        : punt === 'ontslag' ? (s.scene === 'breekpunt' && s.fase === 'ontslag')
+        : false;
+      if (nu1) {
+        herlaadRest.shift();
+        const m = await page.evaluate(() => window.__r4i);
+        const r2 = await r2Lees(page);
+        const lsVoor = await opslag(page);
+        uit.segmenten.push({ m, r2, acN: await page.evaluate(() => window.__acN) });
+        await page.reload({ waitUntil: 'load' }); await slaap(800); await volgSchermen(page);
+        const lsNa = await opslag(page);
+        await installeer();
+        await naarProloog(page, vp, `${g.L} (herladen: ${punt})`);
+        const f = await wachtOp(page, () => { const m2 = window.__r4i; return !!(m2 && m2.t0 !== null); }, 6000);
+        const s2 = await page.evaluate(() => { const h = document.getElementById('scherm-proloog'); const a = h.shadowRoot.getElementById('pl-app'); return (h.dataset.plScene || '') + '/' + (a.dataset.fase || ''); });
+        uit.herladen.push({ punt, s: `${s.scene}/${s.fase || ''}`, droom: s.droom, totaal: s.totaal, vast: s.vast, voor: m.afr.posten, contractVoor: lsVoor.slayit_proloog, contractNa: lsNa.slayit_proloog,
+          saveVoor: JSON.parse(lsVoor.slaylit_proloog_v3 || 'null'), hervat: s2, hervatOk: f >= 0 });
+        sinds = null;
+        continue;
+      }
+    }
+    /* wie de vastloper wil zien, tikt niet door de warmte-regel (een tik maakt de regel én de vastloper meteen af) */
+    const wachtOpVast = punt === 'vastloper' && !!s.warmte && !s.vast;
+    if (g.bliksem && !bliksemGedaan && s.scene === 'gesprek' && s.speelbaar) {
+      /* het onweer laten inslaan (OutroFX.forceerBliksem: dezelfde functie die de val gebruikt) — zo klinkt 'bliksem' zeker */
+      bliksemGedaan = await page.evaluate(() => { if (window.OutroFX && typeof OutroFX.forceerBliksem === 'function') { OutroFX.forceerBliksem(); return true; } return false; });
+    }
+    /* HET GESPREK: kaarten spelen, dan de foto of 'Eindig beurt' */
+    if (s.scene === 'gesprek' && !s.uitStart && !s.kijk) {
+      if (!s.speelbaar) { sinds = null; if (!nat) { await r4iSpoel(page, vp); await slaap(150); } else await slaap(40); continue; }
+      if (sinds === null) sinds = Date.now();
+      if (Date.now() - sinds < REACTIE) { await slaap(30); continue; }
+      sinds = null;
+      const b = s.beurt, lijst = (g.kaarten[b - 1] || []), n = gespeeld[b] || 0;
+      if (n < lijst.length) {
+        gespeeld[b] = n + 1;
+        if (s.hand.indexOf(lijst[n]) === -1) { uit.acties.push('ONTBREEKT ' + lijst[n]); continue; }
+        try { await r4iKaart(page, vp, lijst[n], nat); uit.acties.push(b + ':' + lijst[n]); } catch (e) { uit.acties.push('MISLUKT ' + lijst[n] + ': ' + e.message.split('\n')[0]); }
+        await slaap(nat ? 80 : 60);
+        continue;
+      }
+      if (sprong && !gesprongen && b === (g.sprongBeurt || 1)) {
+        gesprongen = true;
+        const z = await r4iZak(page);
+        uit.acties.push(b + ':foto(' + g.uitweg + ')');
+        const kijkEr = () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!R.querySelector('.gs-kijk'); };
+        const losEr = () => { const R = document.getElementById('scherm-proloog').shadowRoot; const l = R.querySelector('[data-actie="laatlos"]'); return !!l && !l.hidden; };
+        if (g.uitweg === 'spatie') {
+          await page.keyboard.down(' ');
+          await wachtOp(page, kijkEr, 2500);
+          if (nat) { await wachtOp(page, losEr, 9000); await slaap(REACTIE); losGedaan = true; }
+          await page.keyboard.up(' ');
+        } else if (g.uitweg === 'vasthouden') {
+          const los = await r4iHoud(page, vp, z.x, z.y);
+          await wachtOp(page, kijkEr, 2500);
+          if (nat) { await wachtOp(page, losEr, 9000); await slaap(REACTIE); losGedaan = true; }
+          await los();
+        } else if (g.uitweg === 'tweede tik') {
+          if (vp.m) await page.touchscreen.tap(z.x, z.y); else await page.mouse.click(z.x, z.y);
+          await slaap(nat ? REACTIE : 330);
+          if (vp.m) await page.touchscreen.tap(z.x, z.y - z.b.height * 0.1); else await page.mouse.click(z.x, z.y - z.b.height * 0.1);
+        } else if (g.uitweg === 'toets') {
+          await page.locator('[data-actie="zakfoto"]').focus();
+          await page.keyboard.press('Enter');
+          await slaap(nat ? REACTIE : 330);
+          await page.keyboard.press('Enter');
+        }
+        await slaap(80);
+        continue;
+      }
+      try { await tik(page, vp, '[data-actie="eindig"]', { timeout: 3000 }); uit.acties.push(b + ':eindig'); } catch (e) { uit.acties.push('MISLUKT eindig'); }
+      await slaap(200);
+      continue;
+    }
+    /* DE UITWEG: 'Laat los' (sprong) of de regie laten lopen / wegtikken */
+    if (s.scene === 'gesprek') {
+      if (s.los && !losGedaan && !s.losgelaten) {
+        if (sinds === null) sinds = Date.now();
+        if (Date.now() - sinds < REACTIE) { await slaap(30); continue; }
+        sinds = null; losGedaan = true;
+        if (g.uitweg === 'toets') await page.keyboard.press('Enter');
+        else await tik(page, vp, '[data-actie="laatlos"]', { timeout: 3000 }).catch(() => {});
+        uit.acties.push('laat los');
+        await slaap(60);
+        continue;
+      }
+      if (!nat) { await r4iSpoel(page, vp); await slaap(150); } else await slaap(40);
+      continue;
+    }
+    /* DE AFREKENING: de printer laten lopen of doortikken; geduwd: de lege pen */
+    if (s.scene === 'breekpunt') {
+      if (s.pen && !penGedaan && g.pen !== 'machine') {
+        if (sinds === null) sinds = Date.now();
+        if (Date.now() - sinds < REACTIE) { await slaap(30); continue; }
+        sinds = null; penGedaan = true;
+        try {
+          if (g.pen === 'trekken') await r4iTrek(page, vp);
+          else { const b = await page.locator('[data-actie="teken"]').boundingBox(); await tik(page, vp, '[data-actie="teken"]', { position: { x: 24, y: b.height / 2 }, timeout: 3000 }); }
+          uit.acties.push('pen:' + g.pen);
+        } catch (e) { uit.acties.push('MISLUKT pen: ' + e.message.split('\n')[0]); }
+        continue;
+      }
+      /* wie zelf wil tekenen, tikt niet meer door zodra de pen er is (een tik naast het vel = de machine) */
+      const wachtOpPen = s.penEr && !s.getekend && g.pen !== 'machine';
+      if (!nat && !wachtOpVast && !wachtOpPen) { await r4iSpoel(page, vp); await slaap(150); } else await slaap(40);
+      continue;
+    }
+    await slaap(40);
+  }
+  await slaap(250);
+  const m = await page.evaluate(() => window.__r4i);
+  const r2 = await r2Lees(page);
+  uit.segmenten.push({ m, r2, acN: await page.evaluate(() => window.__acN) });
+  uit.ls = await opslag(page);
+  uit.fouten = page.__f.slice();
+  uit.val = await wachtScene(page, 'breekpunt/val', 1500);
+  return uit;
+}
+/* de toetsen van één run */
+function r4iToets(uit) {
+  const g = uit.g, vp = g.vp, L = g.L, nat = g.modus === 'natuurlijk', sprong = g.uitweg !== 'geduwd';
+  const z = g.seed, k = g.kaarten.reduce((s, b, i) => s + ((!sprong || i + 1 <= (g.sprongBeurt || 1)) ? b.filter(x => x === 'glimlach').length : 0), 0);
+  const n = z.glimlachen + k, fotoN = (z.fotoKantoor ? 1 : 0) + (sprong ? 1 : 0);
+  const laatste = uit.segmenten[uit.segmenten.length - 1], ms = uit.segmenten.map(s => s.m);
+  /* (0) de run liep tot de val */
+  t(uit.val && laatste.m.eind !== null && !uit.acties.some(a => /MISLUKT|ONTBREEKT/.test(a)),
+    `${L}: van het gesprek tot de val (${uit.acties.join(' · ')})`);
+  /* (1) in beeld en raak, zonder scroll, zonder draai-blok of pauze */
+  const lay = ms.reduce((a, m) => ({ n: a.n + m.lay.n, s: a.s + m.lay.nSpeel, f: a.f.concat(m.lay.fout) }), { n: 0, s: 0, f: [] });
+  t(lay.n >= (nat ? 15 : 8) && lay.s >= (nat ? 8 : 3) && !lay.f.length,
+    `${L}: intentie, bol, borstzak en 'Eindig beurt' in elk van ${lay.n} beelden in beeld, en met de hand raak in alle ${lay.s} beelden waarin je kunt spelen; de ballon, de foto, de je-regels, 'Laat los', de nieuwste regel boven de printerkop en de pen in beeld` + (lay.f.length ? ' — ' + lay.f.slice(0, 6).join(' | ') : ''));
+  const scroll = ms.reduce((a, m) => a.concat(m.scroll), []), draai = ms.reduce((a, m) => a + m.draai, 0), pauze = ms.reduce((a, m) => a + m.pauze, 0);
+  t(!scroll.length && !draai && !pauze, `${L}: nergens scroll (document, host, #pl-app, #scene), geen draai-blok (${draai}), nooit gepauzeerd (${pauze})` + (scroll.length ? ' — ' + scroll.slice(0, 3).join(' | ') : ''));
+  /* (2) het contract en de save */
+  const c = JSON.parse(uit.ls.slayit_proloog || 'null') || {}, s3 = JSON.parse(uit.ls.slaylit_proloog_v3 || 'null') || {};
+  const verwC = { v: 2, jeugddroom: z.jeugddroom || null, uitweg: sprong ? 'sprong' : 'geduwd', held: null, masker: null, glimlachen: n, fotoKantoor: !!z.fotoKantoor, zelfGestempeld: !!z.zelfGestempeld, wachtToon: -7, echo: 0 };
+  t(r4iCanon(c) === r4iCanon(verwC), `${L}: het contract: uitweg "${c.uitweg}", jeugddroom "${c.jeugddroom}", glimlachen ${c.glimlachen} (${z.glimlachen} kantoor + ${k} Glimlach-kaart${k === 1 ? '' : 'en'}), fotoKantoor ${c.fotoKantoor}, zelfGestempeld ${c.zelfGestempeld}` + (r4iCanon(c) === r4iCanon(verwC) ? '' : ' — verwacht ' + r4iCanon(verwC) + ', kreeg ' + r4iCanon(c)));
+  t(s3.scene === 4 && ['factuur', 'ontslag', 'val'].includes(s3.checkpoint) && s3.choices && s3.choices.val === (sprong ? 'gesprongen' : 'geduwd') && s3.choices.glimlachen === n,
+    `${L}: de save staat op de Eindafrekening (${s3.scene}/${s3.checkpoint}, val "${s3.choices && s3.choices.val}", glimlachen ${s3.choices && s3.choices.glimlachen})`);
+  const via = ms.map(m => m.uit.via).filter(Boolean)[0] || null;
+  t(sprong ? via === 'sprong:' + g.uitweg : via === 'geduwd', `${L}: de uitweg: ${via} (${sprong ? '.gs-root[data-uitweg]' : 'de OPTIMALISATIERONDE'})`);
+  /* (3) het kettingvel met de ECHTE cijfers */
+  const verw = r4iVerwacht(n, fotoN, z.jeugddroom, z.zelfGestempeld);
+  const pf = r4iVergelijkPosten(laatste.m.afr.posten, verw);
+  const volg = laatste.m.afr.volgorde.join(',') === R4I_VOLGORDE.join(',');
+  t(!pf.length && volg, `${L}: het kettingvel: ${R4I_VOLGORDE.map(id => { const p = laatste.m.afr.posten[id]; return p ? p.l + (p.w ? ' …… ' + p.w : '') : '?'; }).join(' | ')}` + (pf.length || !volg ? ' — ' + pf.concat(volg ? [] : ['volgorde ' + laatste.m.afr.volgorde.join(',')]).join(' ;; ') : ''));
+  const A = laatste.m.afr;
+  const slotOk = sprong ? A.sprong === 'U tekende niet. U had al losgelaten.' && !A.getekend
+    : A.geduwd === 'Uw handtekening is niet vereist. Wij hadden hem al.' && A.getekend === (g.pen === 'machine' ? 'machine' : 'zelf') && A.fax;
+  t(A.besluit === 'BESLUIT TOT BEËINDIGING' && A.besluitNa === true && A.hand === 'J. Devroe' && A.stempel === 'ONMIDDELLIJK ONTSLAG' && slotOk,
+    `${L}: na de perforatie het besluit ("${A.besluit}", ${A.hand}, stempel "${A.stempel}"); ${sprong ? `"${A.sprong}"` : `de pen: "${A.geduwd}" (getekend: ${A.getekend}, facsimile ${A.fax})`}`);
+  /* (4) de herlaadpunten: dezelfde cijfers, hetzelfde contract, hervat op het juiste checkpoint */
+  for (const h of uit.herladen) {
+    /* wat vóór de herlaad al (deels) geprint was, staat er daarna letterlijk zo (een half geprinte regel is een begin
+       van dezelfde regel; het rollende totaal telt pas als het op € 0,00 stond) */
+    const ids = Object.keys(h.voor || {});
+    const na = laatste.m.afr.posten;
+    const pre = (a, b) => typeof b === 'string' && b.indexOf(a) === 0;
+    const zelfde = ids.every(id => na[id] && pre(h.voor[id].l, na[id].l) && (h.voor[id].w === null || (id === 'totaal' && h.voor[id].w !== '€ 0,00') || pre(h.voor[id].w, na[id].w)));
+    const gelijk = ids.filter(id => na[id] && h.voor[id].l === na[id].l && h.voor[id].w === na[id].w);
+    const cp = h.hervat;
+    const verwCp = h.punt === 'ontslag' ? 'breekpunt/ontslag' : 'breekpunt/factuur';
+    t(h.hervatOk && cp === verwCp && h.contractVoor === h.contractNa && zelfde,
+      `${L}: herladen ${h.punt === 'uitweg' ? 'midden in de uitweg' : h.punt === 'begin' ? 'in de eerste regels' : h.punt === 'droom' ? 'midden in de trage droomregel ("' + (h.droom ? h.droom.l : '') + '")' : h.punt === 'vastloper' ? 'terwijl de printer vastloopt' : h.punt === 'totaal' ? 'terwijl het totaal zakt (' + ((h.totaal && h.totaal.w) || 'het label print nog') + ')' : "op 'ontslag'"} (${h.s}) → hervat in ${cp}; het contract byte-gelijk (${h.contractVoor === h.contractNa}); de ${ids.length} al (deels) geprinte posten ongewijzigd (${zelfde}; ${gelijk.length} volledig)`);
+  }
+  /* (5) de tijd: natuurlijk binnen het plan, doortikkend vlot en zonder gedwongen wacht */
+  const m1 = uit.segmenten[0].m;
+  const baas = [];
+  ms.forEach(m => {
+    const kanG = m.kan.filter(x => x.sc === 'gesprek' && (m.uit.start === null || x.t < m.uit.start));
+    for (let i = 0; i < kanG.length; i++) {
+      if (kanG[i].kan || m.speelbaar === null || kanG[i].t < m.speelbaar) continue;
+      const vlg = kanG.slice(i + 1).find(x => x.kan);
+      if (vlg) baas.push(vlg.t - kanG[i].t);
+    }
+  });
+  const baasMax = baas.length ? Math.max(...baas) : null;
+  if (m1.start === 'gesprek') t(m1.speelbaar !== null && m1.speelbaar <= (g.rustig || g.lite ? 900 : 2000) && (baasMax === null || baasMax <= 2500),
+    `${L}: speelbaar na ${m1.speelbaar} ms (≤ ${g.rustig || g.lite ? '0,9' : '2'} s); ${baas.length ? 'de beurt van B.A.A.S. duurt ' + baas.map(x => (x / 1000).toFixed(2)).join(' / ') + ' s (≤ 2,5 s: de enige wacht zonder handeling)' : 'gesprongen vóór de beurt van B.A.A.S.'}`);
+  const mU = ms.find(m => m.uit.start !== null && m.uit.eind !== null);
+  const dU = mU ? (mU.uit.eind - mU.uit.start) / 1000 : null;
+  const mAvol = uit.segmenten.map(s => s.m).filter(m => m.afr.eerste !== null && m.afr.slot !== null && m.fasen.some(f => f.k === 'breekpunt/factuur')).pop();
+  const dA = mAvol ? (mAvol.afr.slot - mAvol.afr.eerste) / 1000 : null;
+  const zacht = !!(g.rustig || g.lite);
+  const herlaadUitweg = uit.herladen.some(h => h.punt === 'uitweg');
+  if (nat) {
+    const uRange = zacht ? [3, 8] : [4.5, 9.5], aRange = zacht ? [7, 17] : [11.5, 16.5];
+    t(dU !== null && dU >= uRange[0] && dU <= uRange[1], `${L}: de uitweg duurt ${dU === null ? '?' : dU.toFixed(1)} s natuurlijk (plan 5-9 s${zacht ? '; rustig/lite: ' + uRange.join('-') + ' s, leesbaar' : ''}; ${sprong ? 'van de sluier tot de afrekening, met 0,6 s om \'Laat los\' te zien' : 'de OPTIMALISATIERONDE, de lichten, de stoel, het hek'})`);
+    t(dA !== null && dA >= aRange[0] && dA <= aRange[1], `${L}: de afrekening duurt ${dA === null ? '?' : dA.toFixed(1)} s natuurlijk, van de eerste regel tot ${sprong ? "'U tekende niet'" : 'de lege pen'} (plan 12-16 s${zacht ? '; rustig/lite ' + aRange.join('-') + ' s met leestijd' : ''})`);
+    if (!zacht && mAvol) {
+      const P = mAvol.afr.posten, d = id => P[id] ? P[id].eind - P[id].begin : null;
+      t(d('droom') > 1.8 * Math.max(d('glimlachen'), d('bonus')), `${L}: de jeugddroomregel print trager: ${d('droom')} ms tegenover ${d('glimlachen')} en ${d('bonus')} ms`);
+    }
+  } else {
+    if (!herlaadUitweg) t(dU !== null && dU <= (sprong ? 3.6 : 3.2), `${L}: doorgetikt is de uitweg na ${dU === null ? '?' : dU.toFixed(1)} s voorbij (≤ ${sprong ? '3,6' : '3,2'} s)`);
+    if (dA !== null) t(dA <= 7.5, `${L}: doorgetikt staat het slot van de afrekening er na ${dA.toFixed(1)} s (≤ 7,5 s; één tik = één regel)`);
+    const gw = uit.segmenten.map(sg => gedwongenWacht(sg.m.kan.map(x => ({ t: x.t, kan: x.kan })), sg.m.tik, sg.m.eind !== null ? sg.m.eind : sg.m.laatst));
+    const max = gw.reduce((a, x) => x.ms > a.ms ? x : a, { ms: 0, waar: '' });
+    const nT = gw.reduce((a, x) => a + x.tikken, 0), nG = gw.reduce((a, x) => a + x.gebruikt, 0), nN = gw.reduce((a, x) => a + x.nutteloos, 0);
+    t(nG >= 4 && max.ms <= 2500, `${L}: de langste gedwongen wacht is ${(max.ms / 1000).toFixed(2)} s (≤ 2,5 s; ${max.waar || 'geen'}) — ${nT} doorspoeltikken, ${nG} deden iets, ${nN} niets zonder handeling in beeld`);
+  }
+  /* (6) de klank: elke aanroep in scènes 3-5 klonk; de regen, de stille wacht bij het kijken */
+  const pk = uit.segmenten.reduce((a, sg) => a.concat((sg.r2 ? sg.r2.pk : []).filter(p => (p.scene === 'gesprek' || p.scene === 'breekpunt') && p.fase !== 'val' && p.fase !== 'afgrond')), []);
+  const sfx = pk.filter(p => p.k === 'sfx').map(p => ({ n: JSON.parse(p.a)[0], r: p.r }));
+  const stil = sfx.filter(x => x.r !== true).map(x => x.n);
+  const namen = [...new Set(sfx.map(x => x.n))];
+  const regenAan = pk.some(p => p.k === 'regen' && p.a === '[true]' && p.scene === 'gesprek');
+  const lPk = ((laatste.r2 ? laatste.r2.pk : []).filter(p => p.k === 'regen'));
+  const regenUit = !lPk.length || lPk[lPk.length - 1].a === '[false]';
+  const ws = uit.segmenten.reduce((a, sg) => a.concat((sg.r2 ? sg.r2.pk : []).filter(p => p.k === 'wachtStart')), []);
+  const pz = pk.filter(p => p.k === 'pauzeer').map(p => p.a);
+  const kijkOk = !sprong || (pz.indexOf('[true]') !== -1 && pz.lastIndexOf('[false]') > pz.indexOf('[true]'));
+  t(sfx.length >= 10 && !stil.length && (m1.start !== 'gesprek' || regenAan) && regenUit && ws.length === uit.segmenten.length && ws.every(p => p.r === true) && kijkOk,
+    `${L}: de klank: ${sfx.length} sfx-aanroepen, alle ${stil.length ? 'BEHALVE ' + stil.join(',') : ''} klonken (${namen.join(', ')}); regen op het dak ${regenAan}, uit in de afrekening ${regenUit}; de wacht ${ws.length}x gestart; ${sprong ? 'stil tijdens het kijken (' + pz.join(' ') + ')' : 'geduwd'}`);
+  /* (7) één AudioContext per pagina, geen paginafouten */
+  t(uit.segmenten.every(sg => sg.acN === 1) && !uit.fouten.length, `${L}: ${uit.segmenten.map(sg => sg.acN).join('/')} AudioContext (per geladen pagina), ${uit.fouten.length} paginafouten` + (uit.fouten.length ? ' — ' + uit.fouten.slice(0, 3).join(' | ') : ''));
+  return { namen: sfx.filter(x => x.r === true).map(x => x.n), dU, dA, baas, speelbaar: m1.speelbaar };
+}
+
 /* ============================================================================ */
 (async () => {
   const browser = await chromium.launch();
@@ -1303,9 +1884,16 @@ function klankReeks(pk, verwacht) {
     t(opKantoor, `${L}: de tijdkaart in de gleuf → de CRT degausst → het bureau`);
     await speelKantoor(page, vp, vp.droom, L);
     t(await wachtScene(page, 'gesprek', 5000), `${L}: de oproep → het gesprek`);
+    /* integrator R4: de echte cijfers van deze doorloop — de klikken op GLIMLACH in het kantoor (gehoord via de spion:
+       één d-ding per glimlach) + de ene Glimlach-kaart van speelGesprek; de foto en het stempel zoals speelKantoor ze deed */
+    const kantoorGlim = await page.evaluate(() => (window.__r2 ? window.__r2.pk : []).filter(p => p.k === 'sfx' && p.scene === 'kantoor' && JSON.parse(p.a)[0] === 'glimlach').length);
+    const v3g = (JSON.parse((await opslag(page)).slaylit_proloog_v3 || 'null') || {}).choices || {};
+    t(kantoorGlim >= 1 && v3g.glimlachen === kantoorGlim && v3g.fotoKantoor === true && v3g.zelfGestempeld === true && v3g.jeugddroom === vp.droom,
+      `${L}: het kantoor telde ${kantoorGlim} glimlachen (gehoord) = de save (${v3g.glimlachen}); foto ${v3g.fotoKantoor}, zelf gestempeld ${v3g.zelfGestempeld}, "${v3g.jeugddroom}"`);
     await speelGesprek(page, vp, vp.pad, L);
     await meetAfgrondArt(page);
-    await speelBreekpunt(page, vp, vp.pad, L);
+    await speelBreekpunt(page, vp, vp.pad, L, { n: kantoorGlim + 1, fotoN: 1 + (vp.pad === 'sprong' ? 1 : 0), droom: vp.droom, zelf: true,
+      bron: `${kantoorGlim} glimlachen in het kantoor + 1 Glimlach-kaart, de foto in het kantoor${vp.pad === 'sprong' ? ' en de sprong' : ''}, "${vp.droom}" zelf gestempeld` });
     const afgArt = await page.evaluate(() => window.__afgArt);
     t(!!afgArt && afgArt.klaar === afgArt.n, `${L}: de Afgrond-art is al geladen in haar eerste frame (${afgArt ? afgArt.klaar + '/' + afgArt.n : 'niet gemeten'} beelden klaar, voorgeladen tijdens de val)`);
     const zin = vp.masker === 'vlucht' ? new RegExp('Ik wou ' + vp.droom.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' worden') : null;
@@ -3280,6 +3868,175 @@ function klankReeks(pk, verwacht) {
       t(wl >= 0 && f && /5 × 0u06/.test(p.glimlachen || '') && /Foto bekeken: 1×/.test(p.foto || '') && voor === na,
         `${L}: gesprongen (vasthouden) → de afrekening leest het contract (${p.glimlachen} · ${p.foto}); de opslag byte-gelijk (${voor === na})`);
       t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+    }
+  }
+
+  /* ==========================================================================
+     15 (integrator R4) · DE HELE STROOK GESPREK → UITWEG → AFREKENING, PER FORMAAT
+          (plan §5 R4 'klaar als', scherper). Een speler-robot speelt vanaf het gesprek (de save van het kantoor
+          op scène 3) tot de val; alles wordt IN de pagina gemeten (window.__r4i, R4_METER; klank: window.__r2).
+          15G natuurlijk (handelt 0,6 s nadat het kan, tikt nooit door) en 15H doortikkend (handelt meteen, tikt om
+          de 150 ms), elk op 1440x900, 1366x768, 800x360 en 846x381 (touch) en 412x915, plus reduced motion en lite:
+          (1) intentie, bol, borstzak en 'Eindig beurt' in ELK gemonsterd beeld (120 ms) in beeld, en zolang je kunt
+          spelen raak (R.elementFromPoint én document.elementFromPoint), net als elke kaart; de ballon, de foto, de
+          je-regels, 'Laat los', de nieuwste printregel (boven de kop) en de pen in beeld; nergens scroll, geen
+          draai-blok; (2) elke sprongvariant (spatie, vasthouden met muis en vinger, tweede tik met muis en vinger,
+          Enter) en de geduwd-route schrijven het contract (uitweg, jeugddroom, glimlachen = kantoor + de gespeelde
+          Glimlach-kaarten, fotoKantoor, zelfGestempeld) en de save; (3) het kettingvel toont die ECHTE cijfers
+          letterlijk (twaalf contracten: 0-13 glimlachen, foto 0-2x, zelf/machinaal, geen/lange/trema/apostrof/
+          HTML-tekens), ook na een herlaad midden in de afrekening (de eerste regels, de trage droomregel, de
+          vastloper, het zakkende totaal, 'ontslag') of in de uitweg; (4) natuurlijk: speelbaar ≤ 2 s, de beurt van
+          B.A.A.S. ≤ 2,5 s, de uitweg 5-9 s, de afrekening 12-16 s, de droomregel trager; doortikkend: de
+          langste GEDWONGEN wacht ≤ 2,5 s (zoals deel 13), de uitweg ≤ 3,6 s, de afrekening ≤ 7,5 s; (5) elke
+          sfx-aanroep in scènes 3-5 klonk (true), de regen, de stille wacht tijdens het kijken; samen roepen de
+          runs ELKE klanknaam van scènes 3-5 werkelijk aan; (6) 1 AudioContext per pagina, 0 paginafouten.
+          15J herbeleven (het gesprek geduwd met de pen tot de landing; 'ontslag' op touch) laat ALLE opslag
+          byte-gelijk en toont de cijfers van het contract. 15K de klanknamen van scènes 3-5 in proloog.js
+          bestaan en klinken (ProloogKlank.sfx → true). 'integratie' als filter draait alleen dit deel.
+     ========================================================================== */
+  if (doe('gesprek') || doe('integratie')) {
+    const KLEIN = { n: 'klein', w: 1366, h: 768 };
+    /* de onderkant van Thomas' toestel liggend (≈810-845 x 365-380) en een kleine telefoon staand */
+    const THOMAS_S = { n: 'thomas-s', w: 812, h: 365, m: true }, KLEINE_TEL = { n: 'klein-staand', w: 360, h: 640, m: true };
+    const alleNamen = new Set();
+    const tabel = [];
+    const runs = [
+      /* 15G · natuurlijk */
+      { vp: VPS.laptop, modus: 'natuurlijk', uitweg: 'geduwd', kaarten: [['glimlach', 'mailtje', 'koffie'], ['overuren', 'verantwoord'], ['glimlach']], pen: 'trekken', bliksem: true,
+        seed: { glimlachen: 7, fotoKantoor: true, zelfGestempeld: true, jeugddroom: 'brandweerman' } },
+      { vp: KLEIN, modus: 'natuurlijk', uitweg: 'spatie', sprongBeurt: 1, kaarten: [['glimlach']],
+        seed: { glimlachen: 4, fotoKantoor: false, zelfGestempeld: false, jeugddroom: 'dierenarts' } },
+      { vp: VPS.liggend, modus: 'natuurlijk', uitweg: 'geduwd', kaarten: [['mailtje', 'glimlach'], ['glimlach', 'koffie'], ['verantwoord']], pen: 'tik',
+        seed: { glimlachen: 5, fotoKantoor: true, zelfGestempeld: false } },
+      { vp: VPS.thomas, modus: 'natuurlijk', uitweg: 'tweede tik', sprongBeurt: 2, kaarten: [['glimlach', 'mailtje'], ['overuren']], bliksem: true,
+        seed: { glimlachen: 8, fotoKantoor: true, zelfGestempeld: true, jeugddroom: "zeeën bevaren met d'Artagnan" } },
+      { vp: VPS.staand, modus: 'natuurlijk', uitweg: 'vasthouden', sprongBeurt: 3, kaarten: [['glimlach'], ['glimlach'], ['glimlach', 'mailtje']],
+        seed: { glimlachen: 0, fotoKantoor: false, zelfGestempeld: true, jeugddroom: 'astronaut' } },
+      { vp: VPS.staand, modus: 'natuurlijk', rustig: true, uitweg: 'geduwd', kaarten: [['glimlach'], [], ['mailtje']], pen: 'trekken', tag: 'reduced motion',
+        seed: { glimlachen: 3, fotoKantoor: false, zelfGestempeld: false, jeugddroom: 'boswachter' } },
+      { vp: THOMAS_S, modus: 'natuurlijk', uitweg: 'geduwd', kaarten: [['glimlach', 'koffie', 'mailtje'], ['verantwoord'], ['glimlach']], pen: 'trekken',
+        seed: { glimlachen: 10, fotoKantoor: false, zelfGestempeld: true, jeugddroom: 'goochelaar' } },
+      /* 15H · doortikkend, met een herlaad midden in de afrekening of de uitweg */
+      { vp: VPS.laptop, modus: 'doortik', uitweg: 'toets', sprongBeurt: 1, kaarten: [['glimlach', 'mailtje']], herlaad: ['droom'],
+        seed: { glimlachen: 12, fotoKantoor: true, zelfGestempeld: false, jeugddroom: 'kapitein van een schip dat nooit aankomt' } },
+      { vp: KLEIN, modus: 'doortik', uitweg: 'geduwd', kaarten: [['glimlach'], ['glimlach'], ['glimlach']], pen: 'tik', herlaad: ['vastloper'],
+        seed: { glimlachen: 0, fotoKantoor: false, zelfGestempeld: true, jeugddroom: '<i>astronaut</i> & "co"' } },
+      { vp: VPS.liggend, modus: 'doortik', uitweg: 'vasthouden', sprongBeurt: 2, kaarten: [['koffie', 'mailtje'], ['glimlach']], herlaad: ['ontslag'],
+        seed: { glimlachen: 6, fotoKantoor: false, zelfGestempeld: true, jeugddroom: 'piloot' } },
+      { vp: VPS.thomas, modus: 'doortik', uitweg: 'geduwd', kaarten: [['glimlach', 'verantwoord'], ['mailtje'], ['koffie']], pen: 'machine', herlaad: ['uitweg', 'totaal'],
+        seed: { glimlachen: 5, fotoKantoor: true, zelfGestempeld: false, jeugddroom: 'kok' } },
+      { vp: VPS.staand, modus: 'doortik', uitweg: 'tweede tik', sprongBeurt: 1, kaarten: [['mailtje']], herlaad: ['begin', 'ontslag'],
+        seed: { glimlachen: 2, fotoKantoor: true, zelfGestempeld: true, jeugddroom: 'zanger' } },
+      { vp: VPS.thomas, modus: 'doortik', lite: true, uitweg: 'tweede tik', sprongBeurt: 2, kaarten: [['glimlach'], ['glimlach', 'overuren']], herlaad: ['droom'], tag: 'lite',
+        seed: { glimlachen: 1, fotoKantoor: false, zelfGestempeld: false, jeugddroom: 'uitvinder' } },
+      { vp: KLEINE_TEL, modus: 'doortik', uitweg: 'vasthouden', sprongBeurt: 2, kaarten: [['glimlach', 'mailtje'], ['koffie']], herlaad: ['vastloper'],
+        seed: { glimlachen: 4, fotoKantoor: true, zelfGestempeld: false, jeugddroom: 'wereldkampioen verstoppertje' } }
+    ];
+    for (const g of runs) {
+      const vp = g.vp;
+      g.L = `strook ${g.modus === 'natuurlijk' ? 'natuurlijk' : 'doortikkend'}${g.tag ? ' ' + g.tag : ''} ${vp.n} ${vp.w}x${vp.h} ${g.uitweg === 'geduwd' ? 'geduwd' : 'sprong:' + g.uitweg}`;
+      kop(`15${g.modus === 'natuurlijk' ? 'G' : 'H'} · ${g.L}${g.herlaad ? ' · herladen: ' + g.herlaad.join(', ') : ''}`);
+      let uit = null;
+      try { uit = await r4iRun(browser, g); }
+      catch (e) { t(false, `${g.L}: de run brak af — ${e.message.split('\n')[0]}`); continue; }
+      try {
+        const r = r4iToets(uit);
+        r.namen.forEach(x => alleNamen.add(x));
+        tabel.push({ L: g.L, r });
+        await shot(uit.page, `r4i-${vp.n}-${g.modus}-${g.uitweg.replace(/\s/g, '')}`);
+      } catch (e) { t(false, `${g.L}: de toetsen braken af — ${e.message.split('\n')[0]}`); }
+      await uit.ctx.close();
+    }
+    /* samen: elke klanknaam van scènes 3-5 werd werkelijk aangeroepen en klonk */
+    const mist = R4I_KLANK.filter(x => !alleNamen.has(x));
+    t(!mist.length, `strook: samen roepen de runs elke klanknaam van scènes 3-5 aan en die klinkt: ${R4I_KLANK.map(x => x + (alleNamen.has(x) ? '' : ' ✗')).join(', ')}`);
+    console.log('   info strook: ' + tabel.map(x => `${x.L.replace('strook ', '')}: speelbaar ${x.r.speelbaar} ms, B.A.A.S. ${x.r.baas.map(b => (b / 1000).toFixed(2)).join('/')} s, uitweg ${x.r.dU === null ? '?' : x.r.dU.toFixed(1)} s, afrekening ${x.r.dA === null ? '—' : x.r.dA.toFixed(1)} s`).join(' ;; '));
+
+    /* 15J · herbeleven: alleen in het geheugen — ALLE opslag byte-gelijk, de cijfers van het contract */
+    const alles = page => page.evaluate(() => JSON.stringify(Object.keys(localStorage).sort().map(k => [k, localStorage.getItem(k)])));
+    {
+      const vp = VPS.laptop, L = 'herbeleven laptop: het gesprek, geduwd, de pen, tot de landing';
+      kop('15J · ' + L);
+      const c = { v: 2, jeugddroom: 'kok', uitweg: 'sprong', held: 'slachter', masker: 'woede', glimlachen: 11, fotoKantoor: true, zelfGestempeld: false, wachtToon: -7, echo: 0 };
+      const { ctx, page } = await open(browser, vp, { opslag: { slayit_proloog: JSON.stringify(c), slayit_proloog_klaar: '1' }, geenNudge: true });
+      await page.evaluate(R4_METER);
+      const voor = await alles(page);
+      await page.evaluate(() => herbeleefProloog(3));
+      t(await wachtScene(page, 'gesprek', 6000), `${L}: de Codex-knop start het gesprek`);
+      await wachtOp(page, R4_SPEELBAAR, 5000);
+      await r4Kaart(page, vp, 'glimlach');
+      await r4Kaart(page, vp, 'mailtje');
+      for (let b = 0; b < 3; b++) { await wachtOp(page, R4_SPEELBAAR, 5000); await slaap(150); await tik(page, vp, '[data-actie="eindig"]'); await slaap(200); }
+      const f = await wachtScene(page, 'breekpunt/factuur', 12000);
+      const pen = await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; const b = R && R.querySelector('[data-actie="teken"]'); return !!b && !b.disabled; }, 22000);
+      if (pen >= 0) await r4iTrek(page, vp);
+      await wachtOp(page, () => !!(window.__r4i && window.__r4i.afr.getekend), 3000);
+      const m = await page.evaluate(() => window.__r4i);
+      const pf = r4iVergelijkPosten(m.afr.posten, r4iVerwacht(12, 1, 'kok', false));
+      t(f && pen >= 0 && !pf.length && m.afr.getekend === 'zelf', `${L}: de afrekening leest het contract (11 + 1 Glimlach-kaart, foto 1x, KOK machinaal; ${m.afr.posten.glimlachen ? m.afr.posten.glimlachen.l : '?'}), de pen tekent (${m.afr.getekend})` + (pf.length ? ' — ' + pf.join(' ;; ') : ''));
+      const val = await wachtScene(page, 'breekpunt/val', 9000);
+      for (let i = 0; i < 40 && !(await wachtScene(page, 'breekpunt/afgrond', 50)); i++) { await page.keyboard.press('Space'); await slaap(250); }
+      const afg = await wachtScene(page, 'breekpunt/afgrond', 6000);
+      await slaap(900);
+      await page.mouse.move(2, 2); await page.locator('.afg-masker[data-masker="gif"]').hover(); await slaap(500);
+      await page.locator('.afg-masker[data-masker="gif"]').click();
+      const terug = await wachtOp(page, () => !(window.Proloog && Proloog.actief) && document.body.dataset.scherm !== 'proloog', 15000);
+      await slaap(1200);
+      const na = await alles(page);
+      const verschil = (() => { const a = new Map(JSON.parse(voor)), b = new Map(JSON.parse(na)); return [...new Set([...a.keys(), ...b.keys()])].filter(k => a.get(k) !== b.get(k)); })();
+      t(val && afg && terug >= 0 && voor === na, `${L}: de val, de Afgrond, een masker, terug op "${await page.evaluate(() => document.body.dataset.scherm)}" — ALLE opslag byte-gelijk (${voor === na}${verschil.length ? ': ' + verschil.join(', ') : ''})`);
+      t(page.__f.length === 0 && (await page.evaluate(() => window.__acN)) === 1, `${L}: 0 paginafouten, 1 AudioContext` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+    }
+    {
+      const vp = VPS.staand, L = "herbeleven staand: 'ontslag' (touch), sprong";
+      kop('15J · ' + L);
+      const c = { v: 2, jeugddroom: 'zeeën bevaren', uitweg: 'sprong', held: 'thoverk', masker: 'vlucht', glimlachen: 13, fotoKantoor: true, zelfGestempeld: true, wachtToon: -7, echo: 0 };
+      const { ctx, page } = await open(browser, vp, { opslag: { slayit_proloog: JSON.stringify(c), slayit_proloog_klaar: '1' }, geenNudge: true });
+      await page.evaluate(R4_METER);
+      const voor = await alles(page);
+      await page.evaluate(() => herbeleefProloog('ontslag'));
+      const o = await wachtScene(page, 'breekpunt/ontslag', 6000);
+      await wachtOp(page, () => !!(window.__r4i && /losgelaten\.$/.test(window.__r4i.afr.sprong || '')), 16000);
+      await slaap(200);
+      const m = await page.evaluate(() => window.__r4i);
+      const pf = r4iVergelijkPosten(m.afr.posten, r4iVerwacht(13, 2, 'zeeën bevaren', true));
+      t(o && !pf.length && m.afr.sprong === 'U tekende niet. U had al losgelaten.' && m.lay.fout.length === 0,
+        `${L}: de afrekening staat er stil met de cijfers van het contract (${m.afr.posten.glimlachen ? m.afr.posten.glimlachen.l + ' …… ' + m.afr.posten.glimlachen.w : '?'}; ${m.afr.posten.droom ? m.afr.posten.droom.l : '?'}), het besluit print verder: "${m.afr.sprong}"` + (pf.length ? ' — ' + pf.join(' ;; ') : '') + (m.lay.fout.length ? ' — ' + m.lay.fout.slice(0, 3).join(' | ') : ''));
+      await page.evaluate(() => Proloog.slaOver());
+      await slaap(700);
+      const na = await alles(page);
+      t(voor === na, `${L}: overgeslagen → terug; ALLE opslag byte-gelijk (${voor === na})`);
+      t(page.__f.length === 0 && (await page.evaluate(() => window.__acN)) <= 1, `${L}: 0 paginafouten, hoogstens 1 AudioContext` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+    }
+
+    /* 15K · de klanknamen van scènes 3-5 (proloog.js, sceneGesprek t/m de afrekening) bestaan en klinken */
+    {
+      const L = 'klanknamen scènes 3-5';
+      kop('15K · ' + L);
+      const bron = fs.readFileSync(path.join(WORKTREE, 'proloog', 'proloog.js'), 'utf8');
+      const i0 = bron.indexOf('function sceneGesprek('), i1 = bron.indexOf('function faseVal(');
+      const stuk = i0 > 0 && i1 > i0 ? bron.slice(i0, i1) : '';
+      const namen = [...new Set([...stuk.matchAll(/klank\('sfx',\s*'([A-Za-z]+)'/g)].map(x => x[1]))].sort();
+      const lussen = [...new Set([...stuk.matchAll(/klank\('([A-Za-z]+)'/g)].map(x => x[1]).filter(x => x !== 'sfx'))].sort();
+      const { ctx, page } = await open(browser, VPS.laptop, { opslag: r4iOpslag({ glimlachen: 1, jeugddroom: 'x', zelfGestempeld: true }), geenNudge: true });
+      await naarProloog(page, VPS.laptop, L);
+      await wachtScene(page, 'gesprek', 5000);
+      await slaap(400);
+      const ARGS = { printer: [0.1, false], tlDooft: [0] };
+      const r = await page.evaluate(([nm, lu, A]) => ({
+        sfx: nm.map(n => [n, window.ProloogKlank.sfx(n, ...(A[n] || []))]),
+        lus: lu.map(n => [n, typeof window.ProloogKlank[n] === 'function']),
+        ctx: Klank.koppel().ctx.state
+      }), [namen, lussen, ARGS]);
+      const stil = r.sfx.filter(x => x[1] !== true).map(x => x[0]), weg = r.lus.filter(x => !x[1]).map(x => x[0]);
+      t(namen.length >= 20 && !stil.length, `${L}: ${namen.length} sfx-namen in proloog.js (sceneGesprek t/m de afrekening) klinken via ProloogKlank.sfx (context ${r.ctx}): ${namen.join(', ')}` + (stil.length ? ' — STIL: ' + stil.join(', ') : ''));
+      t(!weg.length, `${L}: de andere klankaanroepen bestaan op ProloogKlank: ${lussen.join(', ')}` + (weg.length ? ' — ONTBREEKT: ' + weg.join(', ') : ''));
+      const nietGehoord = namen.filter(x => !alleNamen.has(x) && !['fout'].includes(x));
+      console.log(`   info ${L}: in de strook-runs niet gehoord: ${nietGehoord.join(', ') || 'geen'}; 'fout' (te duur) is met dit dek onbereikbaar: hoogstens twee kaarten kosten 1 ⚡ en je hebt er altijd ≥ 2`);
+      t(page.__f.length === 0, `${L}: geen paginafouten`);
       await ctx.close();
     }
   }
