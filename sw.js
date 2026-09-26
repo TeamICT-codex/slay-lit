@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v133'; // v133: DE NISSEN DICHT - de metgezellen volledig geparkeerd (vlag METGEZELLEN_AAN uit): ook een Codex met ontwaakte metgezellen speelt solo, een lopende run met een metgezel krijgt een afscheidsregel, de scherven hebben eigen tafelteksten en het orakel spreekt solo
+const CACHE = 'slayit-v134'; // v134: GESPREK EN AFREKENING (proloog ronde 4) - het Functioneringsgesprek als beige kopie van het gevechtstoneel op het dak, de foto die je vasthoudt tot je loslaat, en de Eindafrekening als matrixprinter met je eigen cijfers, de vastloper, het ontslagbesluit en de lege pen
 const BESTANDEN = [
   '.',
   'css/style.css',
