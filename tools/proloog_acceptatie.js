@@ -12,7 +12,7 @@
    Optioneel een filter als argument: hoofd | skip | herbeleef | wipe | poort | stub | rustig |
    glimlach | lite | val | outro | kantoor | breek | gesprek | integratie | afrekening | statisch (meerdere mogen,
    komma-gescheiden).
-   Zonder argument draait alles (±27 min).
+   Zonder argument draait alles (±34 min; alleen de integrator-delen van R4: 'integratie', ±7,5 min).
 
    WAT HET MEET (plan §5 R1 'klaar als', per formaat waar het ertoe doet):
    1 hoofd     de hele proloog gespeeld (drie formaten, sprong/geduwd/sprong, drie maskers):
