@@ -111,6 +111,10 @@ const HELPER = `(() => {
     const heldChips = alle('#speler-zone .blok-status > *'), baasChips = kol ? [...kol.querySelectorAll('.blok-status > *')].filter(zicht).map(R) : [];
     const pillen = kol ? [...kol.querySelectorAll('.intent')].filter(zicht).map(R) : [];
     const tb = een('#topbalk'), bb = een('#baas-balk'), rel = alle('#tb-relikwieen > *');
+    /* de andere levende vijanden (het hof, een splitsing): hun pillen en hun art-doos */
+    const anderen = g.vijanden.filter(v => v !== baas && !v.dood).map(v => GDOM.vijanden[g.vijanden.indexOf(v)]).filter(Boolean);
+    const anderPillen = anderen.flatMap(d => [...d.wrap.querySelectorAll('.intent')].filter(zicht).map(R));
+    const anderArts = anderen.map(d => d.wrap.querySelector('.vijand-art')).filter(zicht).map(R);
     const som = (A, B) => A.reduce((s, a) => s + B.reduce((t, b) => t + snij(a, b), 0), 0);
     const pct = (f, rs) => f ? +(100 * rs.reduce((s, r) => s + opaakIn(f, r), 0) / f.opaakPx).toFixed(2) : 0;
     /* eigen labels op het eigen lijf (3D: naam/hp/chips/pil van de baas, hp/chips van de held) */
@@ -129,6 +133,7 @@ const HELPER = `(() => {
       chipsN: chips.length, chipsHand: Math.round(som(chips, hand)), chipsUit: chips.filter(c => c.l < -1 || c.t < -1 || c.r > W + 1 || c.b > H + 1).length, chipsBB: bb ? Math.round(som(chips, [bb])) : 0,
       pilTop: tb ? Math.round(som(pillen, [tb])) : 0, pilRel: Math.round(som(pillen, rel)), pilBB: bb ? Math.round(som(pillen, [bb])) : 0,
       pilHeldChips: Math.round(som(pillen, heldChips)), pilHeld: pct(held, pillen), pilBaas: pct(bf, pillen),
+      chipsAnderPil: Math.round(som(baasChips, anderPillen)), chipsAnderArt: anderArts.length ? Math.max(...anderArts.map(a => +(100 * som(baasChips, [a]) / ((a.r - a.l) * (a.b - a.t))).toFixed(1))) : 0,
       eigenBaas, eigenHeld,
       spraak: !!sp, spRegels: regels, spBaas: pct(bf, sp ? [sp] : []), spPil: Math.round(som(sp ? [sp] : [], pillen)), spHeld: pct(held, sp ? [sp] : []),
       spBB: bb && sp ? Math.round(snij(sp, bb)) : 0, spTop: tb && sp ? Math.round(snij(sp, tb)) : 0, spUit: sp ? (sp.l < 0 || sp.r > W) : false,
@@ -284,6 +289,7 @@ async function perFormaat(browser, fk) {
         t(max(rijen, m => m.pilBaas) <= 2, `B0.9 ${vp.naam} ${B}: pil ~ baassilhouet <= 2 % (max ${max(rijen, m => m.pilBaas)} %)`);
         t(max(rijen, m => m.pilHeldChips) === 0 && max(rijen, m => m.pilHeld) === 0, `B0.8xB0.9 ${vp.naam} ${B}: pil ~ heldchips 0 en ~ held 0 (max ${max(rijen, m => m.pilHeldChips)} px2 / ${max(rijen, m => m.pilHeld)} %)`);
         t(max(rijen, m => m.scroll) <= 0, `${vp.naam} ${B}: geen horizontale scroll`);
+        if (baas === 'hof') t(max(rijen, m => m.chipsAnderPil) === 0 && max(rijen, m => m.chipsAnderArt) <= 2, `B0.8 ${vp.naam} ${B}: de chipkolom van de baas ligt niet over het hof (pil ${max(rijen, m => m.chipsAnderPil)} px2, lijf ${max(rijen, m => m.chipsAnderArt)} % van een art-doos)`);
       }
       if (vp.staand) t(max(rijen, m => m.chipsUit) === 0, `controle ${vp.naam} ${B}: geen chip uit beeld (noodpad)`);
 
