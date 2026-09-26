@@ -114,6 +114,7 @@
     if (typeof c.meter === 'number' && isFinite(c.meter)) u.meter = Math.max(0, Math.min(100, c.meter));
     if (typeof c.glimlachen === 'number' && isFinite(c.glimlachen)) u.glimlachen = Math.max(0, Math.min(999, c.glimlachen | 0));
     if (typeof c.glimCp === 'number' && isFinite(c.glimCp)) u.glimCp = Math.max(0, Math.min(999, c.glimCp | 0));
+    if (typeof c.mailtjes === 'number' && isFinite(c.mailtjes)) u.mailtjes = Math.max(0, Math.min(99, c.mailtjes | 0));   /* fixer R4 F1 */
     if (c.fotoKantoor) u.fotoKantoor = true;
     if (typeof c.zelfGestempeld === 'boolean') u.zelfGestempeld = c.zelfGestempeld;
     if (typeof c.held === 'string') u.held = c.held;
@@ -1667,6 +1668,20 @@
     + '<rect class="st-arm" x="66" y="62" width="30" height="6" rx="3"/><rect class="st-arm" x="84" y="66" width="5" height="14" rx="2"/>'
     + '<path class="st-koord" d="M40 10 L48.5 44 L57 11"/>'
     + '</svg>';
+  /* B.A.A.S. als beige mainframekast (css): antenne, lampjes, het groene oog, twee bandspoelen (het gesprek, en
+     sinds fixer R4 F1 ook gedimd achter de printer van de afrekening). Geeft true (terugval van art()). */
+  function vulKast(kast) {
+    kast.classList.remove('gs-kast-art');
+    kast.appendChild(el('span', 'gs-kast-antenne'));
+    kast.appendChild(el('span', 'gs-kast-lampen'));
+    const oog = el('span', 'gs-oog');
+    oog.appendChild(el('span', 'gs-oog-kern'));
+    kast.appendChild(oog);
+    kast.appendChild(el('span', 'gs-spoel gs-spoel-l'));
+    kast.appendChild(el('span', 'gs-spoel gs-spoel-r'));
+    kast.appendChild(el('span', 'gs-kast-voet'));
+    return true;
+  }
   /* het blokschild van de game (links uit de welzijnsbalk), vaste markup */
   const SCHILD_SVG = '<svg viewBox="0 0 24 28" aria-hidden="true"><path d="M12 1 L22 5 V12 C22 19.5 17.5 24.8 12 27 C6.5 24.8 2 19.5 2 12 V5 Z"/></svg>';
 
@@ -1684,7 +1699,7 @@
     let W = 0, H = 0, kim = 164, zepAan = true, ctx = null, zep = { x: 120, y: 12 }, raf = 0, gestopt = false, ro = null, roT = 0;
     const t0 = speelTijd();
     let vorig = t0, laatst = -1e9;
-    function maat() {
+    function maat(forceer) {
       const b = canvas.getBoundingClientRect();
       const bw = Math.max(1, b.width || innerWidth), bh = Math.max(1, b.height || innerHeight / 2);
       /* ±3,4 schermpx per pixel op een laptop (de stad zou anders als een muur voor je staan), op een
@@ -1703,7 +1718,7 @@
       zep = { x: Math.round(links + zw * 0.6 - 66), y: Math.round(boven + Math.max(3, Math.min(24, zh * 0.1))) };
       /* een lage lucht (liggend) heeft geen plaats voor de zeppelin: die zou half het scherm vullen */
       zepAan = zh >= 100;
-      if (w === W && h === H && ctx) return;
+      if (!forceer && w === W && h === H && ctx) return;
       W = w; H = h; canvas.width = W; canvas.height = H;
       ctx = canvas.getContext('2d', { alpha: false });
       FX.init({ breed: W, hoog: H, lite: !!o.lite, rustig: !!o.rustig, tekst: FX.tekst });
@@ -1734,7 +1749,9 @@
       ro = new ResizeObserver(() => {
         if (gestopt) return;
         clearTimeout(roT);
-        roT = setTimeout(() => { if (gestopt) return; try { maat(); teken((speelTijd() - t0) / 1000, 0); } catch (e) { meldFout(e); } }, 90);
+        /* een stilstaand beeld (rustig, lite, de afrekening) tekent opnieuw vanaf een eigen init: OutroFX is één
+           gedeelde staat, en tijdens de afrekening bakt de val er al zijn eigen maat in (voorbak) */
+        roT = setTimeout(() => { if (gestopt) return; try { maat(stil); teken((speelTijd() - t0) / 1000, 0); } catch (e) { meldFout(e); } }, 90);
       });
       ro.observe(canvas);
     }
@@ -1754,7 +1771,8 @@
       energie: S.start.energie, maxEnergie: S.start.energie, beurt: 0,
       fact: S.facturabiliteit, trek: S.hand.length * 2, afleg: 0,
       hand: [], voorbeeld: null, bezig: true, einde: null,
-      fotoKlaar: false, fotoT: 0
+      fotoKlaar: false, fotoT: 0,
+      mailtjes: 0   /* fixer R4 F1: de verstuurde mailtjes (de factuur bedankt je ervoor) */
     };
     glimOpen = 0;   /* een (her)start van het gesprek telt van nul */
     let warmte = 1;  /* fixer R4 F1: de gloed van het kooltje in de borstzak (1 = vol; elke Glimlach −0,15) */
@@ -1824,18 +1842,7 @@
     baas.appendChild(intentRij);
     const kast = el('div', 'gs-figuur gs-kast');
     /* de beige mainframekast (css): antenne, lampjes, het groene oog, twee bandspoelen */
-    const tekenKast = () => {
-      kast.classList.remove('gs-kast-art');
-      kast.appendChild(el('span', 'gs-kast-antenne'));
-      kast.appendChild(el('span', 'gs-kast-lampen'));
-      const oog = el('span', 'gs-oog');
-      oog.appendChild(el('span', 'gs-oog-kern'));
-      kast.appendChild(oog);
-      kast.appendChild(el('span', 'gs-spoel gs-spoel-l'));
-      kast.appendChild(el('span', 'gs-spoel gs-spoel-r'));
-      kast.appendChild(el('span', 'gs-kast-voet'));
-      return true;
-    };
+    const tekenKast = () => vulKast(kast);
     /* optionele art (baas_kast, kijkt naar LINKS zoals elke vijand): pas als het manifest haar kent;
        laadt ze niet, dan alsnog de css-kast */
     if (S.baas.art) { kast.classList.add('gs-kast-art'); kast.appendChild(art(S.baas.art, '', 'gs-kast-plaat', d => { d.remove(); return tekenKast(); })); }
@@ -1943,7 +1950,7 @@
       const n = st.hand.length, mid = (n - 1) / 2;
       /* fixer R4 F1: ook kort liggend zonder touch (een laptopvenster van ±1280x560) de platte waaier: met 4° en
          7 px til per plaats zakten de buitenste kaarten 16 px onder de rand */
-      const plat = mob || kortLiggend();
+      const plat = mob || kortBlok();
       const rot = plat ? 1.5 : 4, til = plat ? 0 : 7;
       st.hand.forEach((h, i) => {
         h.b.style.setProperty('--rot', ((i - mid) * rot).toFixed(2) + 'deg');
@@ -2002,6 +2009,7 @@
       if (e.baasFact) { st.fact = Math.min(100, st.fact + e.baasFact); T(() => { fx(kast, S.fx.verantwoord, 'fact'); klank('sfx', 'ding'); herteken(); }, land); }
       if (e.energie) { st.energie += e.energie; T(() => { fx(orb, interp(S.fx.energie, { n: e.energie }), 'energie'); klank('sfx', 'energie'); }, land); }
       if (e.welzijn) { st.welzijn = Math.max(0, st.welzijn + e.welzijn); T(() => { fx(stoel, String(e.welzijn).replace('-', '−'), 'schade'); geraakt(stoel); }, land); }
+      if (k.id === 'mailtje') st.mailtjes++;
       if (k.id === 'glimlach') {
         glimOpen++;   /* telt pas mee bij de uitweg: zie telGlimlachenBij */
         /* fixer R4 F1 (creatief): een Glimlach kost warmte — het kooltje in de borstzak dooft een tikje */
@@ -2057,6 +2065,13 @@
       if (ballonTyp) ballonTyp.rond();
       wisT(ballonWeg);
       ballon.classList.add('toon');
+      /* fixer R4 F1: past de volle zin niet boven de pil (een laag venster in de smal-brede layout, 1024x600:
+         de ballon stak 7 px boven de rand uit), dan staat hij naast de kast, zoals kort liggend. Gemeten met de
+         hele tekst: de ballon groeit tijdens het typen (max-content, aan zijn onderrand verankerd). */
+      ballon.classList.remove('naast');
+      ballonT.textContent = tekst;
+      if (ballon.getBoundingClientRect().top < 10) ballon.classList.add('naast');
+      ballonT.textContent = '';
       ballonTyp = typMachine(ballonT, tekst, zacht ? 6 : 22, true, null);
       /* fixer R4 F1: de ballon dooft na 3,5 s zelf (liggend lag hij een hele beurt over de lift, die de uitweg draagt) */
       ballonWeg = T(zwijg, 3500);
@@ -2076,7 +2091,9 @@
       /* de beurt van B.A.A.S. in drie momenten: hij zet aan, hij raakt, je nieuwe hand. Fixer R4 F1: een tik
          (na de tikgrens van 350 ms: de tweede tik van een dubbeltik op de knop telt niet) rondt de beurt meteen af,
          zoals elke regie in de proloog — de enige wacht zonder handeling (±1,7 s) is zo doortikbaar. */
-      const L = zacht ? [150, 80, 600] : [480, 220, 1250];
+      /* fixer R4 F1: de nieuwe hand na 1,1 s (was 1,25): met het delen (0,33 s + 4 x 45 ms) is de hele hand na ±2,1 s
+         weer speelbaar (was 2,46-2,49 s, vlak onder de grens van 2,5 s); de klap van B.A.A.S. staat er dan 0,9 s */
+      const L = zacht ? [150, 80, 600] : [480, 220, 1100];
       const stappen = [
         { t: L[0], fn: () => baasZet(it) },
         { t: L[0] + L[1], fn: () => baasRaakt(it) },
@@ -2198,6 +2215,10 @@
          een herlaad tijdens de uitweg hervat daar, niet in het gesprek */
       P.choices.val = hoe;
       telGlimlachenBij();
+      /* fixer R4 F1: het gesprek op de factuur ('Mailtjes verstuurd: n …… dank voor uw inzet'). Alleen in de save
+         (niet in het contract met de game): een herlaad in de afrekening kent het getal; wie de afrekening
+         rechtstreeks herbeleeft, heeft het niet, en dan print die regel niet. */
+      P.choices.mailtjes = st.mailtjes;
       P.scene = IDX.breekpunt; P.checkpoint = 'factuur';
       bewaar();
       const delta = { uitweg: uitwegVan(hoe), glimlachen: P.choices.glimlachen || 0,
@@ -2416,6 +2437,7 @@
     function zetFase(naam) {
       wisAlleT('scene');
       stopVal();
+      stopLucht();   /* fixer R4 F1: de lucht achter de printer; de val tekent met OutroFX zijn eigen lucht */
       klank('brom', false);   /* fixer R2: de lift-brom hoort alleen bij de val */
       if (naam === 'afgrond') { wachtUit(); klank('stilteWeg'); }   /* wie in de stilte overslaat: de Afgrond klinkt meteen */
       else zorgWacht();
@@ -2452,6 +2474,23 @@
       const c = afrekenCijfers();
       const droom = (c.droom || F.droom.leeg).toLocaleUpperCase('nl');
       const hoe = c.zelf === true ? F.droom.zelf : c.zelf === false ? F.droom.machine : '';
+      /* fixer R4 F1 (creatief): de afrekening gebeurt op het dak. Achter de printer, gedimd, het dak van het gesprek
+         in dezelfde storm (één stilstaand beeld van de lucht van de val: geen tweede lus naast de printer), met
+         B.A.A.S. die meekijkt met zijn groene oog. De val begint in precies die storm: één plek, geen twee snitten. */
+      const dakA = el('div', 'pv-dak');
+      dakA.setAttribute('aria-hidden', 'true');
+      const luchtA = document.createElement('canvas');
+      luchtA.className = 'pv-lucht';
+      dakA.appendChild(luchtA);
+      dakA.appendChild(el('div', 'pv-dakvloer'));
+      const baasA = el('div', 'pv-baas');
+      const kastA = el('div', 'gs-kast');
+      const G = STORY.scenes[IDX.gesprek] || {};
+      if (G.baas && G.baas.art) { kastA.classList.add('gs-kast-art'); kastA.appendChild(art(G.baas.art, '', 'gs-kast-plaat', d => { d.remove(); return vulKast(kastA); })); }
+      else vulKast(kastA);
+      baasA.appendChild(kastA);
+      dakA.appendChild(baasA);
+      vak.appendChild(dakA);
       vak.appendChild(el('div', 'pv-kamer'));
       const vel = el('div', 'pv-vel');
       const papier = el('div', 'pv-papier');
@@ -2469,11 +2508,16 @@
       pr.appendChild(leds);
       pr.appendChild(el('span', 'pv-merk', 'B.A.A.S.'));
       vak.appendChild(pr);
+      /* de storm achter de printer: één stilstaand beeld (rustig: geen regen, geen bliksem, geen lus), de lichtkrant
+         van de zeppelin zoals in het eerste beeld van de val */
+      lucht = startLucht(luchtA, { rustig: true, lite: isLite(), krant: (S.val && S.val.zeppelin) || '' });
 
       const rijen = [
         { cls: 'pv-titel', l: F.kop, cps: 7 },
         { cls: 'pv-sub', l: F.sub, cps: 4 },
         { cls: 'pv-post', id: 'glimlachen', l: interp(F.glimlachen, { n: c.n }), w: tijdU(c.n * 6) },
+        /* fixer R4 F1 (creatief): het gesprek staat op de rekening — wat je in het gevecht deed, wordt bedankt, niet betaald */
+        ...(F.mailtjes && c.mailtjes !== null ? [{ cls: 'pv-post', id: 'mailtjes', l: interp(F.mailtjes.label, { n: c.mailtjes }), w: F.mailtjes.waarde }] : []),
         { cls: 'pv-post', id: 'foto', l: interp(F.foto.label, { n: c.fotoN }), w: c.fotoN ? F.foto.ja : F.foto.nee },
         { cls: 'pv-post pv-droom', id: 'droom', l: interp(F.droom.label, { droom, hoe }).replace(/\s{2,}/g, ' '), w: F.droom.waarde, cps: 36 },
         { cls: 'pv-post', id: 'bonus', l: F.bonus.label, w: F.bonus.waarde },
@@ -2801,7 +2845,9 @@
       const fotoK = ch.fotoKantoor ? true : !!c.fotoKantoor;
       const zelf = typeof ch.zelfGestempeld === 'boolean' ? ch.zelfGestempeld : (typeof c.zelfGestempeld === 'boolean' ? c.zelfGestempeld : null);
       const droom = (typeof ch.jeugddroom === 'string' && ch.jeugddroom.trim()) || (typeof c.jeugddroom === 'string' && c.jeugddroom.trim()) || '';
-      return { n: Math.max(0, n | 0), fotoN: (fotoK ? 1 : 0) + (sprong ? 1 : 0), zelf, droom: droom.slice(0, 60) };
+      /* fixer R4 F1: de mailtjes van het gesprek staan alleen in de save (null = onbekend: die regel print niet) */
+      const mailtjes = typeof ch.mailtjes === 'number' && isFinite(ch.mailtjes) ? Math.max(0, ch.mailtjes | 0) : null;
+      return { n: Math.max(0, n | 0), fotoN: (fotoK ? 1 : 0) + (sprong ? 1 : 0), zelf, droom: droom.slice(0, 60), mailtjes };
     }
     function tijdU(min) { min = Math.max(0, Math.round(min)); return Math.floor(min / 60) + 'u' + String(min % 60).padStart(2, '0'); }
     function euro(v) {
@@ -3146,6 +3192,11 @@
     });
   }
   function kortLiggend() { return innerHeight <= 560 && innerWidth > innerHeight; }
+  /* fixer R4 F1: het kort-blok van proloog.css zelf (liggend en lager dan 600 px): de platte waaier van het gesprek
+     hoort bij die layout, ook zonder touch (een laptopvenster van 1280x560-599) */
+  function kortBlok() {
+    try { return matchMedia('(orientation: landscape) and (max-height: 599px)').matches; } catch (e) { return kortLiggend(); }
+  }
   function tokenMaat() { return kortLiggend() ? 72 : innerWidth < 700 ? 64 : 104; }
   function eindMaat() { return (kortLiggend() || innerWidth < 700 || isMobiel()) ? 4 : 8; }
 

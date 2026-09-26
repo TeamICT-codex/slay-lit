@@ -876,6 +876,9 @@ img { max-width: 100%; display: block; }
 .gs-ballon::after { content: ''; position: absolute; right: 22px; top: 100%; border: 7px solid transparent; border-top-color: rgba(106, 211, 106, .45); }
 .gs-ballon-tekst { font-family: var(--f-crt); font-size: 1.05rem; line-height: 1.15; color: var(--groen); text-shadow: 0 0 6px rgba(106, 211, 106, .35); }
 .gs-ballon-tekst::before { content: '> '; opacity: .6; }
+/* fixer R4 F1: past de zin niet boven de pil (een laag venster, 1024x600), dan links naast de kast (proloog.js zeg()) */
+.gs-ballon.naast { right: calc(100% + 10px); bottom: auto; top: 0; }
+.gs-ballon.naast::after { right: auto; left: 100%; top: 10px; border-top-color: transparent; border-left-color: rgba(106, 211, 106, .45); }
 
 /* — #onderbalk: bol, stapels, borstzak, hand, 'Eindig beurt' — */
 .gs-onder { position: absolute; left: 0; right: 0; bottom: 0; height: var(--onder); z-index: 3; pointer-events: none; background: linear-gradient(180deg, transparent, rgba(22, 17, 10, .72) 40%); transition: background .6s ease; }
@@ -1053,6 +1056,19 @@ img { max-width: 100%; display: block; }
    scrollbalk, en de nieuwste regel staat altijd net boven de kop. Groenbalkpapier met tractorgaatjes
    die met het papier meelopen (de achtergrond hangt aan de bovenkant van het vel, dat naar boven groeit). */
 .fase-afrekening { padding: 0; gap: 0; justify-content: flex-end; align-items: center; overflow: hidden; background: #0b0910; }
+/* fixer R4 F1 (creatief): de afrekening gebeurt op het dak — gedimd achter de printer het dak van het gesprek in
+   dezelfde storm (één stilstaand beeld van de lucht), B.A.A.S. rechts op de kim met zijn groene oog dat meekijkt.
+   Het vel groeit eroverheen; de val begint in die storm (bij pv-uit blijft het dak staan tot de lift het overneemt). */
+.pv-dak { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; --kim: 62%;
+  --kast-h: min(170px, 22vh); --kast-w: calc(var(--kast-h) * .78); }
+.pv-lucht { position: absolute; left: 0; top: 0; width: 100%; height: var(--kim); display: block; object-fit: cover; object-position: 50% 100%; background: #120d1c; opacity: .36;
+  image-rendering: crisp-edges; image-rendering: pixelated; }
+.pv-dakvloer { position: absolute; left: 0; right: 0; top: var(--kim); bottom: 0; opacity: .3; background: linear-gradient(180deg, #2c2833 0%, #48433f 14%, #686050 50%, #837760 100%); }
+.pv-baas { position: absolute; right: max(4%, calc(50% - 620px)); top: calc(var(--kim) + 6px); transform: translateY(-100%); }
+.pv-baas .gs-kast { position: relative; filter: brightness(.34) saturate(.6); }
+.pv-baas .gs-oog { filter: brightness(2.9) saturate(1.4); }   /* het oog brandt door het donker (2,9 x ,34 ≈ 1) */
+.pv-baas::after { content: ''; position: absolute; left: 50%; top: 42%; width: 360%; height: 260%; transform: translate(-50%, -50%); pointer-events: none;
+  background: radial-gradient(circle, rgba(106, 211, 106, .13), rgba(106, 211, 106, .03) 42%, transparent 64%); }
 .pv-kamer { position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(ellipse 60% 55% at 50% 100%, rgba(255, 236, 190, .11), transparent 70%), radial-gradient(ellipse 80% 40% at 50% 0%, rgba(110, 80, 150, .16), transparent 70%); }
 .pv-vel { position: relative; z-index: 1; flex: 1 1 auto; min-height: 0; width: min(94vw, 560px); overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end;
@@ -1082,7 +1098,7 @@ img { max-width: 100%; display: block; }
 .pv-stempel { position: absolute; right: 7%; top: 120%; z-index: 3; padding: 2px 10px; white-space: nowrap; pointer-events: none;
   font-family: var(--f-black); font-size: 1.2rem; line-height: 1.1; color: #a41f1f; border: 3px solid #a41f1f; border-radius: 6px; opacity: .86; transform: rotate(-9deg); mix-blend-mode: multiply; }
 /* fixer R4 F1: op de regel 'Namens de directie:', rechts (over het einde van de regel en J. Devroe) */
-.pv-namens > .pv-stempel { top: 50%; right: 1%; translate: 0 -46%; }
+.pv-namens > .pv-stempel { top: 50%; right: 1%; translate: 0 -30%; }
 .pv-stempel.slam { animation: plStempel2 .32s cubic-bezier(.2, 2.4, .4, 1); }
 @keyframes plStempel2 { 0% { transform: rotate(-9deg) scale(2.6); opacity: 0; } 100% { transform: rotate(-9deg) scale(1); opacity: .86; } }
 .pv-teken { align-items: flex-end; margin-top: 8px; }

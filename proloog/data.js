@@ -228,6 +228,8 @@ window.SLAYLIT_PROLOOG = (function () {
         kop: 'EINDAFREKENING · MEDEWERKER 0042',
         sub: 'Een Productief Leven™ · Afd. Loon & Lot · ingeklokt MA 06:42',
         glimlachen: 'Glimlachen vandaag: {n} × 0u06',   // waarde: n × 6 minuten (7 → 0u42)
+        // fixer R4 F1: het gesprek op de rekening (de mailtjes van het Functioneringsgesprek; alleen als de save ze kent)
+        mailtjes: { label: 'Mailtjes verstuurd: {n}', waarde: 'dank voor uw inzet' },
         foto: { label: 'Foto bekeken: {n}×', ja: 'gemarkeerd', nee: 'in orde' },
         droom: { label: '“{droom}” — {hoe} afgestempeld', zelf: 'zelf', machine: 'machinaal', waarde: 'voorziening getroffen', leeg: 'iets belangrijks' },
         bonus: { label: 'Loyaliteitsbonus 25 jaar', waarde: '1 (één) pen, leeg' },

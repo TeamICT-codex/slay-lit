@@ -10,8 +10,8 @@
        NODE_PATH="$PWD/node_modules" SLAYIT_WORKTREE="...\SLAY-IT-proloog" \
        SLAYIT_SHOTS="$PWD/proloog_shots" node "...\SLAY-IT-proloog\tools\proloog_acceptatie.js"
    Optioneel een filter als argument: hoofd | skip | herbeleef | wipe | poort | stub | rustig |
-   glimlach | lite | val | outro | kantoor | breek | gesprek | integratie | afrekening | statisch (meerdere mogen,
-   komma-gescheiden).
+   glimlach | lite | val | outro | kantoor | breek | gesprek | integratie | fixer | afrekening | statisch (meerdere
+   mogen, komma-gescheiden; 'fixer' = alleen deel 15L van fixer R4 F1).
    Zonder argument draait alles (±34 min; alleen de integrator-delen van R4: 'integratie', ±7,5 min).
 
    WAT HET MEET (plan §5 R1 'klaar als', per formaat waar het ertoe doet):
@@ -140,6 +140,15 @@
   15K          de klanknamen van scènes 3-5 in proloog.js bestaan en klinken (ProloogKlank.sfx → true).
    1 hoofd     (integrator R4) de factuur toont letterlijk de cijfers van de doorloop zelf: de gehoorde klikken op
                GLIMLACH + de Glimlach-kaart, de foto, de getypte droom, zelf gestempeld.
+   FIXER R4 F1 (review-fixes; filter 'fixer', draait ook met 'gesprek'):
+  15L          raak op zestien formaten (ook 700-1080 px breed, een tablet staand, 1024x600, 1280x560/590 zonder
+               touch, 568x320) met AANDEELHOUDERSWAARDE ∞, 'Einde beurt ⏳', B.A.A.S. in VT323 en de opgetilde
+               kaarten BOVEN de borstzak (beeldcontrole); '+6 % FACTURABILITEIT' staand heel; de ballon dooft; de
+               beurt van B.A.A.S. ≤ 2,2 s en doortikbaar; de Glimlach kost warmte; geduwd op een telefoon; de stempel
+               naast de punchlines; de afrekening op het dak (stil, ≥ 45 beelden/s); de lucht bakt niet per
+               vensterformaat; de regelopvoer na een tik; de pasfoto op de getoonde maat; de dakzin. Daarnaast: de
+               factuur print 'Mailtjes verstuurd: n …… dank voor uw inzet' (15G/H, 16A/B; herbeleven: 15E/J, 16D) en
+               herbeleven toont de cijfers van toen (15E: 4, 15J: 11 — de Glimlach van de herbeleving telt niet bij).
    Het script heeft GEEN server nodig: het bedient de worktree rechtstreeks vanaf
    schijf via route.fulfill op http://localhost:4173/** (ook onder /slay-lit/).
    Elke regel toont de GEMETEN waarde. Exit 1 bij minstens één fout.
@@ -808,7 +817,7 @@ async function speelBreekpunt(page, vp, pad, label, verwacht) {
   /* integrator R4: het kettingvel toont letterlijk de cijfers van DEZE doorloop (de klikken in het kantoor, de kaart, de foto, de droom) */
   if (verwacht) {
     const p = await sr(page, `const o = {}; R.querySelectorAll('.pv-regel[data-post]').forEach(r => { const l = r.querySelector('.pv-l'), w = r.querySelector('.pv-w'); o[r.dataset.post] = { l: l ? l.textContent : '', w: w ? w.textContent : null, n: R.querySelectorAll('.pv-regel[data-post="' + r.dataset.post + '"]').length }; }); return o;`);
-    const pf = r4iVergelijkPosten(p, r4iVerwacht(verwacht.n, verwacht.fotoN, verwacht.droom, verwacht.zelf));
+    const pf = r4iVergelijkPosten(p, r4iVerwacht(verwacht.n, verwacht.fotoN, verwacht.droom, verwacht.zelf, verwacht.mailtjes));
     t(!pf.length, `${label}: de factuur toont de echte cijfers van deze doorloop (${verwacht.bron}): ${p.glimlachen ? p.glimlachen.l + ' …… ' + p.glimlachen.w : '?'} · ${p.foto ? p.foto.l + ' …… ' + p.foto.w : '?'} · ${p.droom ? p.droom.l : '?'}` + (pf.length ? ' — ' + pf.join(' ;; ') : ''));
   }
   if (pad !== 'sprong' && await sr(page, `const b = R.querySelector('[data-actie="teken"]'); return !!b && !b.disabled;`)) await tik(page, vp, '[data-actie="teken"]', { position: { x: 24, y: 16 }, timeout: 3000 });
@@ -1512,10 +1521,12 @@ function r4iOpslag(z) {
 const r4iCanon = o => JSON.stringify(Object.keys(o || {}).sort().reduce((a, k) => { a[k] = o[k]; return a; }, {}));
 const r4iTijdU = min => Math.floor(min / 60) + 'u' + String(min % 60).padStart(2, '0');
 /* het kettingvel dat bij deze cijfers hoort, letterlijk uit het plan (§2 scène 5) */
-function r4iVerwacht(n, fotoN, droom, zelf) {
+function r4iVerwacht(n, fotoN, droom, zelf, mailtjes) {
   const D = (droom || 'iets belangrijks').toLocaleUpperCase('nl');
   return {
     glimlachen: { l: `Glimlachen vandaag: ${n} × 0u06`, w: r4iTijdU(n * 6) },
+    /* fixer R4 F1: het gesprek op de rekening — alleen als de save de mailtjes kent (null: de regel print niet) */
+    mailtjes: typeof mailtjes === 'number' ? { l: `Mailtjes verstuurd: ${mailtjes}`, w: 'dank voor uw inzet' } : null,
     foto: { l: `Foto bekeken: ${fotoN}×`, w: fotoN ? 'gemarkeerd' : 'in orde' },
     droom: { l: `“${D}” — ${zelf ? 'zelf' : 'machinaal'} afgestempeld`, w: 'voorziening getroffen' },
     bonus: { l: 'Loyaliteitsbonus 25 jaar', w: '1 (één) pen, leeg' },
@@ -1524,11 +1535,14 @@ function r4iVerwacht(n, fotoN, droom, zelf) {
     afgerond: { l: 'Facturabiliteit afgerond: 80 %. In ons voordeel.', w: null }
   };
 }
-const R4I_VOLGORDE = ['glimlachen', 'foto', 'droom', 'bonus', 'warmte', 'totaal', 'afgerond'];
+const R4I_VOLGORDE = ['glimlachen', 'mailtjes', 'foto', 'droom', 'bonus', 'warmte', 'totaal', 'afgerond'];
+/* de volgorde die bij deze verwachting hoort (zonder mailtjes als de save ze niet kent) */
+const r4iVolgorde = verw => R4I_VOLGORDE.filter(id => verw[id] !== null);
 function r4iVergelijkPosten(posten, verw) {
   const fout = [];
   R4I_VOLGORDE.forEach(id => {
     const p = posten[id], v = verw[id];
+    if (v === null) { if (p) fout.push(id + ' staat er, maar hoort er niet ("' + p.l + '")'); return; }
     if (!p) { fout.push(id + ' ontbreekt'); return; }
     if (p.n !== 1) fout.push(id + ' staat er ' + p.n + 'x');
     if (p.l !== v.l) fout.push(id + ': "' + p.l + '" ≠ "' + v.l + '"');
@@ -1732,6 +1746,8 @@ function r4iToets(uit) {
   const g = uit.g, vp = g.vp, L = g.L, nat = g.modus === 'natuurlijk', sprong = g.uitweg !== 'geduwd';
   const z = g.seed, k = g.kaarten.reduce((s, b, i) => s + ((!sprong || i + 1 <= (g.sprongBeurt || 1)) ? b.filter(x => x === 'glimlach').length : 0), 0);
   const n = z.glimlachen + k, fotoN = (z.fotoKantoor ? 1 : 0) + (sprong ? 1 : 0);
+  /* fixer R4 F1: de gespeelde mailtjes (zoals de glimlachen: tot de uitweg) staan op de factuur */
+  const mailN = g.kaarten.reduce((s, b, i) => s + ((!sprong || i + 1 <= (g.sprongBeurt || 1)) ? b.filter(x => x === 'mailtje').length : 0), 0);
   const laatste = uit.segmenten[uit.segmenten.length - 1], ms = uit.segmenten.map(s => s.m);
   /* (0) de run liep tot de val */
   t(uit.val && laatste.m.eind !== null && !uit.acties.some(a => /MISLUKT|ONTBREEKT/.test(a)),
@@ -1751,10 +1767,10 @@ function r4iToets(uit) {
   const via = ms.map(m => m.uit.via).filter(Boolean)[0] || null;
   t(sprong ? via === 'sprong:' + g.uitweg : via === 'geduwd', `${L}: de uitweg: ${via} (${sprong ? '.gs-root[data-uitweg]' : 'de OPTIMALISATIERONDE'})`);
   /* (3) het kettingvel met de ECHTE cijfers */
-  const verw = r4iVerwacht(n, fotoN, z.jeugddroom, z.zelfGestempeld);
+  const verw = r4iVerwacht(n, fotoN, z.jeugddroom, z.zelfGestempeld, mailN);
   const pf = r4iVergelijkPosten(laatste.m.afr.posten, verw);
-  const volg = laatste.m.afr.volgorde.join(',') === R4I_VOLGORDE.join(',');
-  t(!pf.length && volg, `${L}: het kettingvel: ${R4I_VOLGORDE.map(id => { const p = laatste.m.afr.posten[id]; return p ? p.l + (p.w ? ' …… ' + p.w : '') : '?'; }).join(' | ')}` + (pf.length || !volg ? ' — ' + pf.concat(volg ? [] : ['volgorde ' + laatste.m.afr.volgorde.join(',')]).join(' ;; ') : ''));
+  const volg = laatste.m.afr.volgorde.join(',') === r4iVolgorde(verw).join(',');
+  t(!pf.length && volg, `${L}: het kettingvel: ${r4iVolgorde(verw).map(id => { const p = laatste.m.afr.posten[id]; return p ? p.l + (p.w ? ' …… ' + p.w : '') : '?'; }).join(' | ')}` + (pf.length || !volg ? ' — ' + pf.concat(volg ? [] : ['volgorde ' + laatste.m.afr.volgorde.join(',')]).join(' ;; ') : ''));
   const A = laatste.m.afr;
   const slotOk = sprong ? A.sprong === 'U tekende niet. U had al losgelaten.' && !A.getekend
     : A.geduwd === 'Uw handtekening is niet vereist. Wij hadden hem al.' && A.getekend === (g.pen === 'machine' ? 'machine' : 'zelf') && A.fax;
@@ -1892,7 +1908,7 @@ function r4iToets(uit) {
       `${L}: het kantoor telde ${kantoorGlim} glimlachen (gehoord) = de save (${v3g.glimlachen}); foto ${v3g.fotoKantoor}, zelf gestempeld ${v3g.zelfGestempeld}, "${v3g.jeugddroom}"`);
     await speelGesprek(page, vp, vp.pad, L);
     await meetAfgrondArt(page);
-    await speelBreekpunt(page, vp, vp.pad, L, { n: kantoorGlim + 1, fotoN: 1 + (vp.pad === 'sprong' ? 1 : 0), droom: vp.droom, zelf: true,
+    await speelBreekpunt(page, vp, vp.pad, L, { n: kantoorGlim + 1, fotoN: 1 + (vp.pad === 'sprong' ? 1 : 0), droom: vp.droom, zelf: true, mailtjes: 1,
       bron: `${kantoorGlim} glimlachen in het kantoor + 1 Glimlach-kaart, de foto in het kantoor${vp.pad === 'sprong' ? ' en de sprong' : ''}, "${vp.droom}" zelf gestempeld` });
     const afgArt = await page.evaluate(() => window.__afgArt);
     t(!!afgArt && afgArt.klaar === afgArt.n, `${L}: de Afgrond-art is al geladen in haar eerste frame (${afgArt ? afgArt.klaar + '/' + afgArt.n : 'niet gemeten'} beelden klaar, voorgeladen tijdens de val)`);
@@ -3865,8 +3881,10 @@ function r4iToets(uit) {
       await page.evaluate(() => Proloog.slaOver());
       await slaap(600);
       const na = await r4Dump(page);
-      t(wl >= 0 && f && /5 × 0u06/.test(p.glimlachen || '') && /Foto bekeken: 1×/.test(p.foto || '') && voor === na,
-        `${L}: gesprongen (vasthouden) → de afrekening leest het contract (${p.glimlachen} · ${p.foto}); de opslag byte-gelijk (${voor === na})`);
+      /* fixer R4 F1: de cijfers van toen — het contract (4) bevat de Glimlach-kaarten van toen al; de Glimlach van de
+         herbeleving telt er niet bij (was 5). De mailtjes van de herbeleving zelf (0) staan erop. */
+      t(wl >= 0 && f && /Glimlachen vandaag: 4 × 0u06/.test(p.glimlachen || '') && /Mailtjes verstuurd: 0/.test(p.mailtjes || '') && /Foto bekeken: 1×/.test(p.foto || '') && voor === na,
+        `${L}: gesprongen (vasthouden) → de afrekening leest het contract, de cijfers van toen (${p.glimlachen} · ${p.mailtjes} · ${p.foto}); de opslag byte-gelijk (${voor === na})`);
       t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
       await ctx.close();
     }
@@ -3974,8 +3992,9 @@ function r4iToets(uit) {
       if (pen >= 0) await r4iTrek(page, vp);
       await wachtOp(page, () => !!(window.__r4i && window.__r4i.afr.getekend), 3000);
       const m = await page.evaluate(() => window.__r4i);
-      const pf = r4iVergelijkPosten(m.afr.posten, r4iVerwacht(12, 1, 'kok', false));
-      t(f && pen >= 0 && !pf.length && m.afr.getekend === 'zelf', `${L}: de afrekening leest het contract (11 + 1 Glimlach-kaart, foto 1x, KOK machinaal; ${m.afr.posten.glimlachen ? m.afr.posten.glimlachen.l : '?'}), de pen tekent (${m.afr.getekend})` + (pf.length ? ' — ' + pf.join(' ;; ') : ''));
+      /* fixer R4 F1: de cijfers van toen (11: de Glimlach van de herbeleving telt niet bij), het mailtje van de herbeleving wel */
+      const pf = r4iVergelijkPosten(m.afr.posten, r4iVerwacht(11, 1, 'kok', false, 1));
+      t(f && pen >= 0 && !pf.length && m.afr.getekend === 'zelf', `${L}: de afrekening leest het contract (de cijfers van toen: 11, niet 11 + 1 Glimlach-kaart; foto 1x, KOK machinaal; ${m.afr.posten.glimlachen ? m.afr.posten.glimlachen.l : '?'}; ${m.afr.posten.mailtjes ? m.afr.posten.mailtjes.l : 'geen mailtjesregel'}), de pen tekent (${m.afr.getekend})` + (pf.length ? ' — ' + pf.join(' ;; ') : ''));
       const val = await wachtScene(page, 'breekpunt/val', 9000);
       for (let i = 0; i < 40 && !(await wachtScene(page, 'breekpunt/afgrond', 50)); i++) { await page.keyboard.press('Space'); await slaap(250); }
       const afg = await wachtScene(page, 'breekpunt/afgrond', 6000);
@@ -4002,7 +4021,7 @@ function r4iToets(uit) {
       await wachtOp(page, () => !!(window.__r4i && /losgelaten\.$/.test(window.__r4i.afr.sprong || '')), 16000);
       await slaap(200);
       const m = await page.evaluate(() => window.__r4i);
-      const pf = r4iVergelijkPosten(m.afr.posten, r4iVerwacht(13, 2, 'zeeën bevaren', true));
+      const pf = r4iVergelijkPosten(m.afr.posten, r4iVerwacht(13, 2, 'zeeën bevaren', true, null));   /* alleen het contract: geen mailtjesregel */
       t(o && !pf.length && m.afr.sprong === 'U tekende niet. U had al losgelaten.' && m.lay.fout.length === 0,
         `${L}: de afrekening staat er stil met de cijfers van het contract (${m.afr.posten.glimlachen ? m.afr.posten.glimlachen.l + ' …… ' + m.afr.posten.glimlachen.w : '?'}; ${m.afr.posten.droom ? m.afr.posten.droom.l : '?'}), het besluit print verder: "${m.afr.sprong}"` + (pf.length ? ' — ' + pf.join(' ;; ') : '') + (m.lay.fout.length ? ' — ' + m.lay.fout.slice(0, 3).join(' | ') : ''));
       await page.evaluate(() => Proloog.slaOver());
@@ -4043,6 +4062,325 @@ function r4iToets(uit) {
   }
 
   /* ==========================================================================
+     15L · FIXER R4 F1 — per review-fix een regressiecontrole (filter 'fixer'; draait ook met 'gesprek')
+          (a) intentie, bol, foto, 'Einde beurt' en de hand in beeld en raak op zestien formaten, ook tussen 700 en 1080
+              px breed (een tablet staand, een half laptopvenster: daar lag de hand over de foto), een laag venster
+              (1024x600: de ballon naast de kast), kort liggend zonder touch (1280x560/590: de platte waaier) en de
+              kleinste liggende telefoon; AANDEELHOUDERSWAARDE ∞ in de balk op elk formaat; 'Einde beurt ⏳' zoals
+              in het spel; B.A.A.S. in de CRT-letter; op touch elke opgetilde kaart met naam en kostbol BOVEN de
+              borstzak (beeldcontrole: de zaklagen even raakbaar); op een tablet tilt een tik op de foto de foto op;
+          (b) '+6 % FACTURABILITEIT' blijft staand heel in beeld; de ballon dooft na ±3,5 s;
+          (c) de beurt van B.A.A.S.: de hele hand ≤ 2,2 s weer speelbaar, en een tik rondt de beurt af;
+          (d) een Glimlach kost warmte (het kooltje dooft), de foto laat het opvlammen; geduwd op een telefoon: de
+              nacht .8, de stoel met de groene rand van het oog, tot op de drempel zichtbaar;
+          (e) de stempel ONMIDDELLIJK ONTSLAG op 'Namens de directie:', niet over 'u was ons dierbaar.' en
+              'ge-end-of-life’d.'; (f) de afrekening op het dak (de storm stil achter de printer, het oog van B.A.A.S.,
+              ≥ 45 beelden/s); de val neemt over; (g) de lucht van het gesprek bakt niet per vensterformaat nieuwe
+              canvassen; (h) een tik maakt het printergeratel af (regelopvoer 0,1 s); (i) de gerasterde pasfoto op de
+              getoonde maat; (j) de dakzin 'Het licht gaat je voor.'
+     ========================================================================== */
+  if (doe('gesprek') || doe('fixer')) {
+    const v3F = { scene: 3, checkpoint: 'start', choices: { jeugddroom: 'brandweerman', glimlachen: 5, glimCp: 5, fotoKantoor: true, zelfGestempeld: true, meter: 98 }, gezien: [0, 1, 2, 3] };
+    const cF = { v: 2, jeugddroom: 'brandweerman', uitweg: null, held: null, masker: null, glimlachen: 5, fotoKantoor: true, zelfGestempeld: true, wachtToon: -7, echo: 0 };
+    const opslagF = () => ({ slaylit_proloog_v3: JSON.stringify(v3F), slayit_proloog: JSON.stringify(cF) });
+    const naarGesprek = async (vp, L, o) => {
+      const { ctx, page } = await open(browser, vp, Object.assign({ opslag: opslagF(), geenNudge: true }, o || {}));
+      await naarProloog(page, vp, L);
+      const w = await wachtOp(page, R4_SPEELBAAR, 6000);
+      await slaap(300);
+      return { ctx, page, w };
+    };
+    const F1_SONDE = () => {
+      const h = document.getElementById('scherm-proloog'), R = h.shadowRoot, q = s => R.querySelector(s);
+      const uit = [];
+      const binnen = r => r.width > 0 && r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1;
+      const raakPt = (e, x, y) => { const hit = R.elementFromPoint(x, y); return !!hit && (hit === e || e.contains(hit)) && document.elementFromPoint(x, y) === h; };
+      const vb = q('.gs-kaart.voorbeeld');
+      const deel = (e, naam, min) => {
+        if (!e) { uit.push(naam + ' ontbreekt'); return; }
+        const r = e.getBoundingClientRect();
+        if (!binnen(r)) { uit.push(naam + ' buiten beeld [' + [r.left, r.top, r.right, r.bottom].map(Math.round) + ']'); return; }
+        const n = [[.5, .5], [.25, .25], [.75, .25], [.25, .75], [.75, .75]].filter(([fx, fy]) => raakPt(e, r.left + r.width * fx, r.top + r.height * fy)).length;
+        if (!raakPt(e, r.left + r.width / 2, r.top + r.height / 2) || n < min) { const hit = R.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); uit.push(naam + ' niet raak (' + n + '/5, midden ' + (hit ? (hit.className || hit.tagName) : '-') + ')'); }
+      };
+      deel(q('.gs-intent'), 'intentie', 4);
+      deel(q('.gs-orb'), 'bol', vb ? 3 : 4);
+      deel(q('[data-actie="zakfoto"]'), 'foto', vb ? 3 : 4);
+      deel(q('[data-actie="eindig"]'), 'eindig', 4);
+      R.querySelectorAll('.gs-hand .gs-kaart').forEach(k => { if (!vb || vb === k) deel(k, 'kaart ' + k.dataset.kaart, 1); });
+      if (vb) {
+        const lagen = [...R.querySelectorAll('.gs-zak-voor, .gs-stip, .gs-kool, .gs-toets')];
+        lagen.forEach(l => { l.style.pointerEvents = 'auto'; });
+        ['.gk-naam', '.gk-kost'].forEach(s => {
+          const e = vb.querySelector(s), r = e.getBoundingClientRect();
+          [[.5, .35], [.2, .55], [.8, .55]].forEach(([fx, fy]) => { const hit = R.elementFromPoint(r.left + r.width * fx, r.top + r.height * fy); if (!(hit && vb.contains(hit))) uit.push('opgetild ' + vb.dataset.kaart + ' ' + s + ' bedekt door ' + (hit ? hit.className : '-')); });
+        });
+        lagen.forEach(l => { l.style.pointerEvents = ''; });
+      }
+      const lab = q('.gs-hp-label'), hb = q('.gs-hp-baas'), oo = q('.gs-oneindig');
+      const la = lab.getBoundingClientRect(), ba = hb.getBoundingClientRect(), oa = oo.getBoundingClientRect();
+      const label = { tekst: lab.textContent.trim(), display: getComputedStyle(lab).display, px: parseFloat(getComputedStyle(lab).fontSize) };
+      if (label.tekst !== 'AANDEELHOUDERSWAARDE' || label.display === 'none' || la.width < 20 || la.left < ba.left - 0.5 || oa.right > ba.right + 0.5 || !binnen(ba))
+        uit.push('AANDEELHOUDERSWAARDE ∞ onzichtbaar of buiten de balk ' + JSON.stringify([la.left, oa.right, ba.left, ba.right].map(Math.round)));
+      const bal = q('.gs-ballon.toon');
+      if (bal && !binnen(bal.getBoundingClientRect())) { const r = bal.getBoundingClientRect(); uit.push('ballon buiten beeld [' + [r.left, r.top, r.right, r.bottom].map(Math.round) + ']'); }
+      const se = document.scrollingElement, app = R.getElementById('pl-app'), sc = R.getElementById('scene'), gr = q('.gs-root');
+      if ([se.scrollHeight > se.clientHeight + 1, se.scrollWidth > se.clientWidth + 1, app.scrollHeight > app.clientHeight + 1, sc.scrollHeight > sc.clientHeight + 1, gr.scrollHeight > gr.clientHeight + 1, gr.scrollWidth > gr.clientWidth + 1].some(Boolean))
+        uit.push('scroll of overloop (.gs-root ' + gr.scrollWidth + 'x' + gr.scrollHeight + ' > ' + gr.clientWidth + 'x' + gr.clientHeight + ')');
+      const eind = q('[data-actie="eindig"]');
+      const kaarten = [...R.querySelectorAll('.gs-hand .gs-kaart')];
+      const rot = kaarten.length ? Math.max(...kaarten.map(k => Math.abs(parseFloat(k.style.getPropertyValue('--rot')) || 0))) : 0;
+      return { uit, label, naam: getComputedStyle(q('.gs-baas .gs-naam')).fontFamily, eind: eind.textContent, titel: eind.title || '', rot, naast: bal ? bal.classList.contains('naast') : null };
+    };
+    /* (a) */
+    const F1_FORMATEN = [
+      { n: 'tablet-staand', w: 768, h: 1024, m: true, opgetild: true, foto: true }, { n: 'tablet-groot', w: 820, h: 1180, m: true, foto: true },
+      { n: 'half-laptopvenster', w: 960, h: 1000 }, { n: 'venster', w: 800, h: 700 }, { n: 'venster-vierkant', w: 700, h: 700 },
+      { n: 'laag-venster', w: 1024, h: 600, naast: true }, { n: 'kort-zonder-touch', w: 1280, h: 560, plat: true }, { n: 'kort-zonder-touch', w: 1280, h: 590, plat: true },
+      { n: 'kleinste-liggend', w: 568, h: 320, m: true, opgetild: true }, { n: 'staand-390', w: 390, h: 844, m: true },
+      { n: 'staand', w: 412, h: 915, m: true, opgetild: true }, { n: 'klein-staand', w: 360, h: 640, m: true, opgetild: true },
+      { n: 'thomas', w: 846, h: 381, m: true, opgetild: true }, { n: 'liggend', w: 800, h: 360, m: true }, { n: 'laptop', w: 1440, h: 900 }, { n: 'klein', w: 1366, h: 768 }
+    ];
+    for (const vp of F1_FORMATEN) {
+      const L = `F1 raak ${vp.n} ${vp.w}x${vp.h}${vp.m ? ' touch' : ''}`;
+      kop('15L · ' + L);
+      const { ctx, page, w } = await naarGesprek(vp, L);
+      const s = await page.evaluate(F1_SONDE);
+      t(w >= 0 && !s.uit.length, `${L}: intentie, bol, foto, 'Einde beurt' en de hand in beeld en raak; AANDEELHOUDERSWAARDE ∞ in de balk (${s.label.px} px); de ballon in beeld${s.naast ? ' (naast de kast)' : ''}; geen scroll` + (s.uit.length ? ' — ' + s.uit.join(' | ') : ''));
+      t(s.eind === 'Einde beurt ⏳' && /VT323/.test(s.naam) && (vp.m || s.titel === 'Einde beurt (E)'), `${L}: de knop heet zoals in het spel ("${s.eind}"${vp.m ? '' : ', title "' + s.titel + '"'}); B.A.A.S. in de CRT-letter (${s.naam.split(',')[0]})`);
+      if (vp.naast) t(s.naast === true, `${L}: de zin past niet boven de pil: de ballon staat naast de kast (${s.naast}) en in beeld`);
+      if (vp.plat) t(s.rot <= 3.01, `${L}: kort liggend zonder touch de platte waaier (buitenste kaart ${s.rot}°; met 8° zakte ze onder de rand)`);
+      if (vp.opgetild) {
+        const mis = [];
+        for (const id of ['glimlach', 'mailtje', 'koffie', 'overuren', 'verantwoord']) {
+          await tik(page, vp, `.gs-hand .gs-kaart[data-kaart="${id}"]`); await slaap(260);
+          const o = await page.evaluate(F1_SONDE);
+          if (o.uit.length) mis.push(id + ': ' + o.uit.join(' | '));
+          await page.touchscreen.tap(Math.round(vp.w / 2), Math.round(vp.h * 0.2)); await slaap(220);
+        }
+        t(!mis.length, `${L}: elke opgetilde kaart (5) raak, met naam en kostbol BOVEN de borstzak; de foto, de bol en 'Einde beurt' blijven raak` + (mis.length ? ' — ' + mis.join(' ;; ') : ''));
+        if (vp.n === 'staand') { await tik(page, vp, '.gs-hand .gs-kaart[data-kaart="mailtje"]'); await slaap(300); await shot(page, 'f1-staand-opgetild-mailtje'); await page.touchscreen.tap(Math.round(vp.w / 2), Math.round(vp.h * 0.2)); await slaap(220); }
+      }
+      if (vp.foto) {
+        const f = await page.locator('[data-actie="zakfoto"]').boundingBox();
+        await page.touchscreen.tap(Math.round(f.x + f.width / 2), Math.round(f.y + f.height / 2));
+        await slaap(300);
+        const z = await sr(page, `return { op: R.querySelector('.gs-zak').classList.contains('opgetild'), vb: !!R.querySelector('.gs-kaart.voorbeeld') };`);
+        t(z.op && !z.vb, `${L}: een tik midden op de foto tilt de foto op (${z.op}), geen kaart (${!z.vb}): op een tablet kun je springen`);
+      }
+      await shot(page, `f1-raak-${vp.w}x${vp.h}`);
+      t(page.__f.length === 0, `${L}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+    }
+
+    /* (b) '+6 % FACTURABILITEIT' staand heel in beeld; de ballon dooft zelf */
+    for (const vp of [VPS.staand, { n: 'klein-staand', w: 360, h: 640, m: true }]) {
+      const L = `F1 FACTURABILITEIT ${vp.n} ${vp.w}x${vp.h}`;
+      kop('15L · ' + L);
+      const { ctx, page } = await naarGesprek(vp, L);
+      await page.evaluate(() => {
+        window.__fx = []; const R = document.getElementById('scherm-proloog').shadowRoot, t0 = performance.now();
+        const lus = () => { R.querySelectorAll('.gs-fx-fact').forEach(f => { const r = f.getBoundingClientRect(); window.__fx.push({ t: f.textContent, l: r.left, r: r.right, w: innerWidth }); }); if (performance.now() - t0 < 5000) requestAnimationFrame(lus); };
+        requestAnimationFrame(lus);
+      });
+      await tik(page, vp, '.gs-kaart[data-kaart="mailtje"]'); await slaap(260); await tik(page, vp, '.gs-kaart[data-kaart="mailtje"]');
+      await slaap(1300);
+      const fx = await page.evaluate(() => window.__fx);
+      const l = fx.length ? Math.min(...fx.map(x => x.l)) : NaN, r = fx.length ? Math.max(...fx.map(x => x.r)) : NaN;
+      t(fx.length > 5 && fx.every(x => x.t === '+6 % FACTURABILITEIT') && l >= -0.5 && r <= fx[0].w + 0.5,
+        `${L}: '+6 % FACTURABILITEIT' blijft heel in beeld in alle ${fx.length} beelden (x ${Math.round(l)}-${Math.round(r)} van ${fx.length ? fx[0].w : '?'}; vóór de fix 244-419 van 412)`);
+      const b1 = await sr(page, `const b = R.querySelector('.gs-ballon'); return { toon: b.classList.contains('toon'), tekst: b.textContent };`);
+      await slaap(3000);
+      const b2 = await sr(page, `return R.querySelector('.gs-ballon').classList.contains('toon');`);
+      t(b1.toon && b1.tekst === 'Dank voor uw inzet.' && !b2, `${L}: B.A.A.S. zegt "${b1.tekst}", daarna dooft de ballon zelf (±3,5 s: ${b2 ? 'STAAT ER NOG' : 'weg'}); liggend lag hij anders een hele beurt over de lift`);
+      t(page.__f.length === 0, `${L}: geen paginafouten`);
+      await ctx.close();
+    }
+
+    /* (c) de beurt van B.A.A.S.: de hele hand terug ≤ 2,2 s; een tik (na de tikgrens) rondt de beurt af */
+    const HAND_TERUG = () => new Promise(res => {
+      const R = document.getElementById('scherm-proloog').shadowRoot;
+      const klaar = () => {
+        const kaarten = [...R.querySelectorAll('.gs-hand .gs-kaart')], b = R.querySelector('[data-actie="eindig"]');
+        return kaarten.length === 5 && b && !b.disabled && kaarten.every(k => { if (k.classList.contains('nieuw')) return false; const r = k.getBoundingClientRect(); const hit = R.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!hit && k.contains(hit); });
+      };
+      const lus = () => { if (window.__eb && klaar()) return res(Math.round(performance.now() - window.__eb)); if (window.__eb && performance.now() - window.__eb > 6000) return res(-1); requestAnimationFrame(lus); };
+      requestAnimationFrame(lus);
+    });
+    for (const vp of [VPS.laptop, VPS.thomas]) {
+      const L = `F1 de beurt van B.A.A.S. ${vp.n} ${vp.w}x${vp.h}`;
+      kop('15L · ' + L);
+      const { ctx, page } = await naarGesprek(vp, L);
+      await sr(page, `R.querySelector('[data-actie="eindig"]').addEventListener('click', () => { window.__eb = performance.now(); }, true);`);
+      await tik(page, vp, '[data-actie="eindig"]');
+      const d1 = await page.evaluate(HAND_TERUG);
+      t(d1 > 0 && d1 <= 2200, `${L}: na 'Einde beurt' is de HELE hand (vijf kaarten, raak) weer speelbaar na ${d1} ms (≤ 2,2 s; was 2,46-2,49 s)`);
+      await slaap(300);
+      await page.evaluate(() => { window.__eb = 0; });
+      await tik(page, vp, '[data-actie="eindig"]');
+      await slaap(450);
+      if (vp.m) await page.touchscreen.tap(Math.round(vp.w / 2), 30); else await page.keyboard.press('ArrowRight');
+      const d2 = await page.evaluate(HAND_TERUG);
+      const b3 = await sr(page, `return { orb: R.querySelector('.gs-orb').textContent, pil: R.querySelector('.gs-intent').textContent };`);
+      t(d2 > 0 && d2 <= 1400 && b3.orb === '2/2' && /OPTIMALISATIERONDE/.test(b3.pil), `${L}: een tik tijdens de beurt van B.A.A.S. rondt ze af: de hand is er na ${d2} ms (≤ 1,4 s), de TEAMBUILDING nam toch een ⚡ (${b3.orb}), beurt 3: ${b3.pil.trim()}`);
+      t(page.__f.length === 0, `${L}: geen paginafouten`);
+      await ctx.close();
+    }
+
+    /* (d) warmte en het nachtbeeld op een telefoon */
+    {
+      const vp = VPS.thomas, L = `F1 warmte en geduwd ${vp.n} ${vp.w}x${vp.h}`;
+      kop('15L · ' + L);
+      const { ctx, page } = await naarGesprek(vp, L);
+      const kool = () => sr(page, `const z = R.querySelector('.gs-zak'); return { w: z.style.getPropertyValue('--warmte'), o: +getComputedStyle(R.querySelector('.gs-kool')).opacity };`);
+      const k0 = await kool();
+      await r4Kaart(page, vp, 'glimlach'); await slaap(700);
+      const k1 = await kool();
+      const f = await page.locator('[data-actie="zakfoto"]').boundingBox();
+      await page.touchscreen.tap(Math.round(f.x + f.width / 2), Math.round(f.y + f.height * 0.3)); await slaap(750);
+      const k2 = await kool();
+      t(k0.o > 0.99 && k1.w === '0.85' && Math.abs(k1.o - 0.895) < 0.03 && k2.o > 0.99, `${L}: een Glimlach kost warmte: het kooltje van ${k0.o} naar ${k1.o.toFixed(3)} (--warmte ${k1.w}); de foto optillen laat het opvlammen (${k2.o})`);
+      await r4EindBeurt(page, vp); await r4EindBeurt(page, vp);
+      await tik(page, vp, '[data-actie="eindig"]');
+      await wachtOp(page, () => !!document.getElementById('scherm-proloog').shadowRoot.querySelector('.gs-root.gs-uit'), 4000);
+      await slaap(1300);
+      const nacht = await sr(page, `return +getComputedStyle(R.querySelector('.gs-nacht')).opacity;`);
+      await wachtOp(page, () => !!document.getElementById('scherm-proloog').shadowRoot.querySelector('.gs-held.rolt'), 4000);
+      await slaap(950);   /* ±70 % van de rit (1,4 s) */
+      const stoel = await sr(page, `const s = R.querySelector('.gs-stoel'), cs = getComputedStyle(s); return { f: cs.filter, o: +cs.opacity };`);
+      await shot(page, 'f1-thomas-geduwd-stoel');
+      t(Math.abs(nacht - 0.8) < 0.02 && /drop-shadow/.test(stoel.f) && stoel.o > 0.95, `${L}: geduwd op een telefoon: de nacht ${nacht} (laptop .84 zonder lift-dimming op .62); de stoel rolt met de groene rand van het oog (${/drop-shadow/.test(stoel.f)}) en is op 70 % van de rit nog helemaal zichtbaar (opacity ${stoel.o})`);
+      t(page.__f.length === 0, `${L}: geen paginafouten`);
+      await ctx.close();
+    }
+
+    /* (e) de stempel en (f) de afrekening op het dak; (h) de regelopvoer na een tik */
+    const factuurF = (ch, pasfoto) => {
+      const choices = Object.assign({}, ch); if (pasfoto) choices.pasfoto = pasfoto;
+      return { slaylit_proloog_v3: JSON.stringify({ scene: 4, checkpoint: 'factuur', choices, gezien: [0, 1, 2, 3, 4] }),
+        slayit_proloog: JSON.stringify({ v: 2, jeugddroom: ch.jeugddroom || null, uitweg: ch.val === 'gesprongen' ? 'sprong' : 'geduwd', held: null, masker: null,
+          glimlachen: ch.glimlachen || 0, fotoKantoor: !!ch.fotoKantoor, zelfGestempeld: !!ch.zelfGestempeld, wachtToon: -7, echo: 0 }) };
+    };
+    const STEMPEL = () => {
+      const R = document.getElementById('scherm-proloog').shadowRoot, s = R.querySelector('.pv-stempel');
+      if (!s) return null;
+      const b = s.getBoundingClientRect(), cx = (b.left + b.right) / 2, cy = (b.top + b.bottom) / 2, hw = s.offsetWidth / 2, hh = s.offsetHeight / 2;
+      const th = -9 * Math.PI / 180, c = Math.cos(th), si = Math.sin(th);
+      const inStempel = (x, y) => { const dx = x - cx, dy = y - cy; return Math.abs(dx * c + dy * si) <= hw && Math.abs(-dx * si + dy * c) <= hh; };
+      const regels = [...R.querySelectorAll('.pv-brief:not(.pv-sprong):not(.pv-geduwd) .pv-l')].map(l => {
+        let n = 0, tot = 0;
+        [...l.getClientRects()].forEach(r => { for (let x = r.left + 2; x < r.right - 1; x += 3) for (const fy of [0.35, 0.5, 0.65]) { tot++; if (inStempel(x, r.top + r.height * fy)) n++; } });
+        return { tekst: l.textContent, n, tot };
+      });
+      const nm = R.querySelector('.pv-namens').getBoundingClientRect();
+      return { regels, opNamens: cy >= nm.top - 2 && cy <= nm.bottom + nm.height, ouder: s.parentElement.className, r: [b.left, b.top, b.right, b.bottom].map(Math.round) };
+    };
+    const tikAfr = async (page, vp) => { if (vp.m) await page.locator('.pv-kamer').first().tap({ position: { x: 16, y: 70 }, force: true, timeout: 1500 }).catch(() => {}); else await page.keyboard.press('ArrowRight'); };
+    for (const g of [{ vp: VPS.staand, val: 'geduwd' }, { vp: VPS.thomas, val: 'gesprongen' }, { vp: VPS.laptop, val: 'gesprongen', dak: true }, { vp: VPS.liggend, val: 'geduwd', dak: true }]) {
+      const vp = g.vp, L = `F1 afrekening ${vp.n} ${vp.w}x${vp.h} ${g.val}`;
+      kop('15L · ' + L);
+      const { ctx, page } = await open(browser, vp, { opslag: factuurF({ jeugddroom: 'brandweerman', glimlachen: 7, fotoKantoor: true, zelfGestempeld: true, val: g.val, mailtjes: 2 }), geenNudge: true });
+      await r2Spion(page);
+      await naarProloog(page, vp, L);
+      await wachtScene(page, 'breekpunt/factuur', 5000);
+      await slaap(900);
+      /* (f) het dak achter de printer: een stilstaand beeld van de storm, het oog van B.A.A.S. */
+      const DAK = () => {
+        const R = document.getElementById('scherm-proloog').shadowRoot, c = R.querySelector('.pv-lucht'), oog = R.querySelector('.pv-baas .gs-oog');
+        if (!c || !oog || !c.width) return null;
+        const px = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, kl = new Set(); let som = 0;
+        for (let i = 0; i < px.length; i += 4 * 7) { kl.add(px[i] >> 3 << 10 | px[i + 1] >> 3 << 5 | px[i + 2] >> 3); som += px[i] + px[i + 1] + px[i + 2]; }
+        const r = oog.getBoundingClientRect(), v = R.querySelector('.pv-vel').getBoundingClientRect();
+        return { w: c.width, h: c.height, kleuren: kl.size, som, oogIn: r.width > 0 && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight, naastVel: r.left >= v.right || r.right <= v.left, op: +getComputedStyle(c).opacity };
+      };
+      const d1 = await page.evaluate(DAK);
+      await slaap(700);
+      const d2 = await page.evaluate(DAK);
+      t(!!d1 && d1.kleuren >= 12 && d1.som === d2.som && d1.op < 0.5 && (!g.dak || (d1.oogIn && d1.naastVel)),
+        `${L}: de afrekening op het dak: achter de printer de storm (${d1 ? d1.w + 'x' + d1.h + ', ' + d1.kleuren + ' kleuren, opacity ' + d1.op : 'GEEN canvas'}), stil (geen tweede lus: ${d1 && d2 && d1.som === d2.som})${g.dak ? '; het oog van B.A.A.S. kijkt mee naast het vel (' + (d1 && d1.oogIn && d1.naastVel) + ')' : ''}`);
+      /* (h) een tik midden in de trage droomregel maakt de regel én haar geratel af: een korte regelopvoer (printer 0,1 s) */
+      const droomLoopt = await wachtOp(page, () => { const d = document.getElementById('scherm-proloog').shadowRoot.querySelector('.pv-regel[data-post="droom"]'); return !!d && !d.querySelector('.pv-w'); }, 12000);
+      const tT = await page.evaluate(() => performance.now());
+      await tikAfr(page, vp); await slaap(200);
+      const pk = (await r2Lees(page)).pk.filter(p => p.k === 'sfx' && p.t >= tT).map(p => JSON.parse(p.a));
+      t(droomLoopt >= 0 && pk.some(a => a[0] === 'printer' && a[1] === 0.1), `${L}: een tik midden in de droomregel maakt de regel én haar geratel af: een regelopvoer van 0,1 s (printer ${pk.filter(a => a[0] === 'printer').map(a => a[1]).join(', ')}; de lopende regel kapt audio.js af)`);
+      if (g.dak) {
+        await shot(page, `f1-afrekening-dak-${vp.n}`);
+        const fps = async () => page.evaluate(() => new Promise(res => { let n = 0; const t0 = performance.now(); const lus = () => { n++; if (performance.now() - t0 < 2000) requestAnimationFrame(lus); else res(n / ((performance.now() - t0) / 1000)); }; requestAnimationFrame(lus); }));
+        let f = await fps(); if (f < 45) f = await fps();   /* andere workflows op deze machine: één keer herhalen */
+        t(f >= 45, `${L}: ${f.toFixed(0)} beelden/s tijdens het printen (≥ 45; het dak kost geen lus)`);
+      }
+      /* (e) de stempel */
+      for (let i = 0; i < 40 && !(await sr(page, `return !!R.querySelector('.pv-stempel');`)); i++) { await tikAfr(page, vp); await slaap(160); }
+      await slaap(600);
+      const st = await page.evaluate(STEMPEL);
+      await shot(page, `f1-stempel-${vp.n}`);
+      t(!!st && st.opNamens && /pv-namens/.test(st.ouder) && st.regels.length === 2 && st.regels.every(r => r.n === 0),
+        `${L}: de stempel landt op 'Namens de directie:' (${st && st.opNamens}) en dekt de punchlines niet: ${st ? st.regels.map(r => '"' + r.tekst + '" ' + r.n + '/' + r.tot).join(', ') : 'GEEN stempel'}`);
+      /* de val neemt over: het dak van de afrekening is weg, de val tekent zijn eigen storm */
+      for (let i = 0; i < 60 && !(await wachtScene(page, 'breekpunt/val', 50)); i++) {
+        if (await sr(page, `const b = R.querySelector('[data-actie="teken"]'); return !!b && !b.disabled;`)) await tik(page, vp, '[data-actie="teken"]', { position: { x: 24, y: 16 }, timeout: 3000 }).catch(() => {});
+        else await tikAfr(page, vp);
+        await slaap(200);
+      }
+      const val = await wachtScene(page, 'breekpunt/val', 6000);
+      await slaap(500);
+      const na = await sr(page, `return { dak: !!R.querySelector('.pv-dak'), val: !!R.querySelector('.val-scherm') };`);
+      t(val && !na.dak && na.val, `${L}: dan de val (R2): het dak van de afrekening is weg (${!na.dak}), het liftcanvas tekent (${na.val})`);
+      t(page.__f.length === 0 && (await page.evaluate(() => window.__acN)) === 1, `${L}: 0 paginafouten, 1 AudioContext` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+    }
+
+    /* (g) de lucht van het gesprek: slepen aan het venster bakt geen canvassen per formaat */
+    {
+      const vp = VPS.laptop, L = 'F1 de lucht bij het slepen aan het venster (laptop)';
+      kop('15L · ' + L);
+      const { ctx, page } = await naarGesprek(vp, L);
+      await page.evaluate(() => {
+        window.__cv = 0; const o = Document.prototype.createElement;
+        Document.prototype.createElement = function (tag, ...a) { if (String(tag).toLowerCase() === 'canvas' && /outro-fx/.test(new Error().stack || '')) window.__cv++; return o.call(this, tag, ...a); };
+      });
+      const maten = [];
+      for (let i = 0; i < 30; i++) maten.push({ width: 900 + i * 21, height: i % 2 ? 860 : 740 - i * 3 });
+      for (const m of maten) { await page.setViewportSize(m); await slaap(150); }
+      await page.setViewportSize({ width: vp.w, height: vp.h }); await slaap(400);
+      const n = await page.evaluate(() => window.__cv);
+      const s = await page.evaluate(F1_SONDE);
+      t(n <= 40 && !s.uit.length, `${L}: 30 vensterformaten → ${n} nieuwe canvassen uit OutroFX (≤ 40; vóór de fix 129: een lucht en regenvellen per W×H, nooit vrijgegeven); daarna alles weer raak` + (s.uit.length ? ' — ' + s.uit.join(' | ') : ''));
+      t(page.__f.length === 0, `${L}: geen paginafouten`);
+      await ctx.close();
+    }
+
+    /* (i) de gerasterde pasfoto op het besluit: het raster op de getoonde maat */
+    {
+      const vp = VPS.laptop, L = 'F1 de pasfoto op het besluit (laptop)';
+      kop('15L · ' + L);
+      const { ctx, page } = await open(browser, vp, { geenNudge: true });
+      const pf = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); const g = x.createRadialGradient(32, 26, 4, 32, 32, 34); g.addColorStop(0, '#f0d8b0'); g.addColorStop(0.5, '#8a6a4a'); g.addColorStop(1, '#201810'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return c.toDataURL('image/png'); });
+      await page.evaluate(o => { Object.entries(o).forEach(([k, v]) => localStorage.setItem(k, v)); }, factuurF({ jeugddroom: 'piloot', glimlachen: 3, zelfGestempeld: true, val: 'gesprongen' }, pf));
+      await page.reload({ waitUntil: 'load' }); await slaap(800); await volgSchermen(page);
+      await naarProloog(page, vp, L);
+      await wachtScene(page, 'breekpunt/factuur', 5000);
+      for (let i = 0; i < 40 && !(await sr(page, `return !!R.querySelector('.pv-pasfoto');`)); i++) { await page.keyboard.press('ArrowRight'); await slaap(160); }
+      await slaap(500);
+      const c = await sr(page, `const c = R.querySelector('.pv-pasfoto'); if (!c) return null; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let inkt = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) inkt++; return { w: c.width, cw: c.clientWidth, inkt, tot: c.width * c.height };`);
+      t(!!c && c.w === c.cw && c.w === 60 && c.inkt > c.tot * 0.1 && c.inkt < c.tot * 0.95, `${L}: het Bayer-raster op de getoonde maat: ${c ? c.w + ' inktpunten breed op ' + c.cw + ' px (was 40 opgeschaald), ' + c.inkt + '/' + c.tot + ' inktpunten' : 'GEEN pasfoto'}`);
+      t(page.__f.length === 0, `${L}: geen paginafouten`);
+      await ctx.close();
+    }
+
+    /* (j) de dakzin (keuze 3): over het licht, niet over duwen of kiezen */
+    {
+      const L = 'F1 de dakzin (keuze 3)';
+      kop('15L · ' + L);
+      const data = fs.readFileSync(path.join(WORKTREE, 'proloog', 'data.js'), 'utf8');
+      const code = data.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+      t(/slot: 'Het licht gaat je voor\.'/.test(code) && !/Niemand duwt je/.test(code) && /eindig: 'Einde beurt'/.test(code) && /mailtjes: \{ label: 'Mailtjes verstuurd: \{n\}', waarde: 'dank voor uw inzet' \}/.test(code),
+        `${L}: 'Het licht gaat je voor.' staat op het dak (niet meer 'Niemand duwt je — je kiest zelf.'); de knop heet 'Einde beurt'; de factuur kent 'Mailtjes verstuurd: {n} …… dank voor uw inzet'`);
+    }
+  }
+
+  /* ==========================================================================
      16 · R4 · DE EINDAFREKENING: de matrixprinter met JOUW cijfers (het echte aantal glimlachen, de foto,
           de echte jeugddroom, zelf of machinaal afgestempeld), de vastloper, het besluit na de perforatie;
           geduwd: de lege pen (tik of trek zelf) en na 6 s de machine; sprong: 'U tekende niet.'; herladen
@@ -4064,7 +4402,7 @@ function r4iToets(uit) {
     {
       const vp = VPS.laptop, L = 'afrekening natuurlijk laptop';
       kop('16A · ' + L);
-      const { ctx, page } = await open(browser, vp, { opslag: factuurSave({ jeugddroom: 'brandweerman', glimlachen: 7, fotoKantoor: true, zelfGestempeld: true, val: 'gesprongen' }), geenNudge: true });
+      const { ctx, page } = await open(browser, vp, { opslag: factuurSave({ jeugddroom: 'brandweerman', glimlachen: 7, fotoKantoor: true, zelfGestempeld: true, val: 'gesprongen', mailtjes: 2 }), geenNudge: true });
       await r2Spion(page);
       await page.evaluate(() => {
         window.__r4a = { rijen: {} };
@@ -4100,9 +4438,9 @@ function r4iToets(uit) {
       const rd = k => a.rijen[k] ? (a.rijen[k].eind - a.rijen[k].begin) : null;
       t(rd('droom') > 1.8 * Math.max(rd('glimlachen'), rd('bonus')), `${L}: de jeugddroomregel print trager: ${Math.round(rd('droom'))} ms tegenover ${Math.round(rd('glimlachen'))} en ${Math.round(rd('bonus'))} ms`);
       const p = await posten(page);
-      t(/Glimlachen vandaag: 7 × 0u06.*0u42/.test(p.glimlachen) && /Foto bekeken: 2×.*gemarkeerd/.test(p.foto) && /“BRANDWEERMAN” — zelf afgestempeld.*voorziening getroffen/.test(p.droom) && /Loyaliteitsbonus 25 jaar.*1 \(één\) pen, leeg/.test(p.bonus)
+      t(/Glimlachen vandaag: 7 × 0u06.*0u42/.test(p.glimlachen) && /^Mailtjes verstuurd: 2.*dank voor uw inzet$/.test(p.mailtjes || '') && /Foto bekeken: 2×.*gemarkeerd/.test(p.foto) && /“BRANDWEERMAN” — zelf afgestempeld.*voorziening getroffen/.test(p.droom) && /Loyaliteitsbonus 25 jaar.*1 \(één\) pen, leeg/.test(p.bonus)
         && /Niet-factureerbare warmte — borstzak.*IN BESL█/.test(p.warmte) && /€ 0,00/.test(p.totaal) && /Facturabiliteit afgerond: 80 %\. In ons voordeel\./.test(p.afgerond),
-        `${L}: het kettingvel: ${[p.glimlachen, p.foto, p.droom, p.bonus, p.warmte, p.totaal, p.afgerond].join(' | ')}`);
+        `${L}: het kettingvel: ${[p.glimlachen, p.mailtjes, p.foto, p.droom, p.bonus, p.warmte, p.totaal, p.afgerond].join(' | ')}`);
       const besluit = await sr(page, `const t = R.querySelector('.pv-papier').textContent; return { kop: /BESLUIT TOT BEËINDIGING/.test(t), devroe: !!R.querySelector('.pv-hand'), stempel: (R.querySelector('.pv-stempel') || {}).textContent, na: t.indexOf('BESLUIT') > t.indexOf('In ons voordeel') };`);
       t(besluit.kop && besluit.devroe && besluit.stempel === 'ONMIDDELLIJK ONTSLAG' && besluit.na, `${L}: na de perforatie het BESLUIT (J. Devroe, stempel "${besluit.stempel}")`);
       const r2 = await r2Lees(page);
@@ -4117,14 +4455,14 @@ function r4iToets(uit) {
 
     /* 16B · de eigen cijfers per contract, ook na een herlaad midden in de afrekening en op 'ontslag' */
     const gevallen = [
-      { n: 'A 7 glimlachen, foto, zelf', vp: VPS.liggend, ch: { jeugddroom: 'brandweerman', glimlachen: 7, fotoKantoor: true, zelfGestempeld: true, val: 'geduwd' },
-        re: { glimlachen: /7 × 0u06.*0u42/, foto: /1×.*gemarkeerd/, droom: /“BRANDWEERMAN” — zelf afgestempeld/ } },
+      { n: 'A 7 glimlachen, foto, zelf, 3 mailtjes', vp: VPS.liggend, ch: { jeugddroom: 'brandweerman', glimlachen: 7, fotoKantoor: true, zelfGestempeld: true, val: 'geduwd', mailtjes: 3 },
+        re: { glimlachen: /7 × 0u06.*0u42/, mailtjes: /^Mailtjes verstuurd: 3.*dank voor uw inzet$/, foto: /1×.*gemarkeerd/, droom: /“BRANDWEERMAN” — zelf afgestempeld/ } },
       { n: 'B 0 glimlachen, geen droom, machinaal, sprong', vp: VPS.thomas, ch: { glimlachen: 0, zelfGestempeld: false, val: 'gesprongen' },
         re: { glimlachen: /0 × 0u06.*0u00/, foto: /1×.*gemarkeerd/, droom: /“IETS BELANGRIJKS” — machinaal afgestempeld/ } },
       { n: 'C 3 glimlachen, lange droom, geen foto', vp: VPS.staand, ch: { jeugddroom: 'kapitein van een schip dat nooit aankomt', glimlachen: 3, zelfGestempeld: true, val: 'geduwd' },
         re: { glimlachen: /3 × 0u06.*0u18/, foto: /0×.*in orde/, droom: /“KAPITEIN VAN EEN SCHIP DAT NOOIT AANKOMT” — zelf afgestempeld/ } },
-      { n: "D 12 glimlachen, trema en apostrof", vp: VPS.laptop, ch: { jeugddroom: "zeeën bevaren met d'Artagnan", glimlachen: 12, fotoKantoor: true, zelfGestempeld: false, val: 'gesprongen' },
-        re: { glimlachen: /12 × 0u06.*1u12/, foto: /2×.*gemarkeerd/, droom: /“ZEEËN BEVAREN MET D'ARTAGNAN” — machinaal afgestempeld/ } }
+      { n: "D 12 glimlachen, trema en apostrof, 0 mailtjes", vp: VPS.laptop, ch: { jeugddroom: "zeeën bevaren met d'Artagnan", glimlachen: 12, fotoKantoor: true, zelfGestempeld: false, val: 'gesprongen', mailtjes: 0 },
+        re: { glimlachen: /12 × 0u06.*1u12/, mailtjes: /^Mailtjes verstuurd: 0.*dank voor uw inzet$/, foto: /2×.*gemarkeerd/, droom: /“ZEEËN BEVAREN MET D'ARTAGNAN” — machinaal afgestempeld/ } }
     ];
     for (const g of gevallen) {
       const vp = g.vp, L = `afrekening ${vp.n} ${g.n}`;
@@ -4216,8 +4554,8 @@ function r4iToets(uit) {
       await page.evaluate(() => Proloog.slaOver());
       await slaap(500);
       const na = await r4Dump(page);
-      t(/9 × 0u06.*0u54/.test(p.glimlachen || '') && /Foto bekeken: 1×/.test(p.foto || '') && /“ZEEËN BEVAREN” — machinaal afgestempeld/.test(p.droom || '') && voor === na,
-        `${L}: de factuur leest het contract (${p.glimlachen} · ${p.foto} · ${p.droom}); de opslag byte-gelijk (${voor === na})`);
+      t(/9 × 0u06.*0u54/.test(p.glimlachen || '') && /Foto bekeken: 1×/.test(p.foto || '') && /“ZEEËN BEVAREN” — machinaal afgestempeld/.test(p.droom || '') && !p.mailtjes && voor === na,
+        `${L}: de factuur leest het contract (${p.glimlachen} · ${p.foto} · ${p.droom}; het contract kent geen mailtjes, dus geen mailtjesregel: ${!p.mailtjes}); de opslag byte-gelijk (${voor === na})`);
       t(page.__f.length === 0, `${L}: geen paginafouten`);
       await ctx.close();
     }
