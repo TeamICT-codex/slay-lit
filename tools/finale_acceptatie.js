@@ -584,6 +584,37 @@ const sonde = page => page.evaluate(() => {
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
 
+  /* ================= 12 · F7 · SCHADE TELT NA HET SLOT ================= */
+  kop('12 · F7 · S.stats.schade en de overkill-uitspraak tellen alleen wat echt viel');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page);
+  /* aanvalOp = de klap van een kaart (Kracht, relikwieën en Kwetsbaar erbij); de spion
+     telt elke overkill-oproep, los van de toevalskans in spreek() */
+  const klap12 = (page, voorbereid) => page.evaluate(v => {
+    const g = S.gevecht, b = dicktatorBaas(g);
+    b.blok = 0; b.status = {};
+    if (v.hp) b.hp = v.hp;
+    b._geschorst = !!v.geschorst;
+    if (!window.__overkill) {
+      window.__overkill = 0;
+      const o = window.spreek;
+      window.spreek = function (actor, pool, kans) { if (pool === UITSPRAKEN._held.overkill) window.__overkill++; return o.apply(this, arguments); };
+    }
+    const ok0 = window.__overkill, st0 = S.stats.schade, hp0 = b.hp;
+    aanvalOp(b, 30);
+    return { viel: hp0 - b.hp, stats: S.stats.schade - st0, overkill: window.__overkill - ok0, hp0, hp: b.hp };
+  }, voorbereid);
+  const vrij12 = await klap12(page, {});
+  t(vrij12.viel >= 18 && vrij12.stats === vrij12.viel && vrij12.overkill === 1, `vrije klap: ${vrij12.hp0} → ${vrij12.hp} (viel ${vrij12.viel}), stats +${vrij12.stats}, overkill-oproepen ${vrij12.overkill}`);
+  const drempel12 = await page.evaluate(() => dicktatorDrempel(dicktatorBaas(S.gevecht), 2));
+  const deel12 = await klap12(page, { hp: drempel12 + 5 });
+  t(deel12.viel === 5 && deel12.stats === 5 && deel12.overkill === 0, `klap tot op de drempel: ${deel12.hp0} → ${deel12.hp} (viel ${deel12.viel}), stats +${deel12.stats}, overkill ${deel12.overkill}`);
+  await wachtVrij(page);
+  const gesch12 = await klap12(page, { geschorst: true });
+  t(gesch12.viel === 0 && gesch12.stats === 0 && gesch12.overkill === 0, `geschorste baas, klap 30: viel ${gesch12.viel}, stats +${gesch12.stats}, overkill ${gesch12.overkill}`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
   await browser.close();
   console.log('\n============================================');
   console.log(fout === 0 ? `FINALE ACCEPTATIE: ALLES GROEN — ${ok} ok` : `FINALE ACCEPTATIE: ${ok} ok, ${fout} FOUT`);

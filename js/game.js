@@ -3236,9 +3236,14 @@ function aanvalOp(doel, basis) {
   /* Het Brandmerkijzer: je merk drukt door waar het pantser al openligt */
   if (heeftRelikwie('brandmerkijzer') && (doel.status.kwetsbaar || 0) > 0) dmg += 3;
   if (S.gevecht) S.gevecht.laatsteSpelerDmg = dmg;   /* Het Origineel kaatst dit terug */
+  doel._slotWegLaatst = 0;
   const echt = doeSchade(doel, Math.max(0, dmg), sp());
-  S.stats.schade += echt;
-  if (echt >= 18) spreek(sp(), UITSPRAKEN._held.overkill, 0.5);
+  /* review F7: wat het scèneslot van de DICKtator wegknipte (een geschorste baas, een klap tot
+     op zijn drempel), viel niet - het telt niet als schade en draagt geen overkill-uitspraak */
+  const netto = Math.max(0, echt - (doel._slotWegLaatst || 0));
+  doel._slotWegLaatst = 0;
+  S.stats.schade += netto;
+  if (netto >= 18) spreek(sp(), UITSPRAKEN._held.overkill, 0.5);
   /* Etterende Wonden: aanvallen vergiftigen het doelwit */
   if (!doel.dood && (sp().status.etterende || 0) > 0) geefGif(doel, sp().status.etterende);
 }
@@ -7513,9 +7518,16 @@ function dicktatorFase(v) {
    - geschorst → 0 (met de fx '⚖️ geschorst'), tot het begin van jouw volgende beurt;
    - een klap die hem op of onder de volgende drempel brengt → stopt OP de drempel en
      schorst hem. De overgang zelf vuurt daarna via checkBaasFase, zoals altijd.
-   Vanaf III (80 → 0) en in vorm 2 is er geen slot: de doodsklap is de herverkiezing. */
+   Vanaf III (80 → 0) en in vorm 2 is er geen slot: de doodsklap is de herverkiezing.
+   b._slotWegLaatst = wat het slot van DEZE klap wegknipte (review F7): aanvalOp telt alleen
+   wat echt viel in S.stats.schade en in de overkill-uitspraak. */
 function dicktatorSlot(b, n) {
   if (!b || b.dood) return n;
+  const r = dicktatorSlotRest(b, n);
+  b._slotWegLaatst = Math.max(0, n - r);
+  return r;
+}
+function dicktatorSlotRest(b, n) {
   if (b._geschorst) {
     fxNummer(actorEl(b), '⚖️ geschorst', 'fx-blok');
     return 0;
