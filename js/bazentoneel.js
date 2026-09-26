@@ -63,9 +63,9 @@ function heldChipsWijken() {
    hem (boven de held), zone B rechts van hem (tot de rand, of op mobiel tot het hart).
    - laptop: A wint als ze >= 200px breed is - de band boven de kleine held is vrij;
    - mobiel: B wint als ze >= 200px breed is - daar staat het hof, en een plaat mag een
-     hoveling even afdekken, de spreker nooit; anders de bredere kant;
-   - in een smalle mobiele zone (< 340px) een kleiner lettertype (.smal), zodat de plaat
-     twee regels blijft en boven het hoofd van de held.
+     hoveling even afdekken, de spreker nooit; anders de bredere kant. Mobiel wordt de
+     plaatsing bovendien NAGEMETEN (zie hieronder): een kleiner lettertype (.smal, .krap)
+     of een andere zone als de geplaatste plaat de spreker, zijn pil of de held raakt.
    De eerste versie (vast op 34-36% van links) lag in de finale op laptop-3D 1-3,4 s over de
    DICKtator; deze zone haalt <= 179 ms randpixels, en 0 op mobiel. Na de doodsklap telt de
    gevallen baas nog mee: zijn slotwoord hoort naast hem, niet op hem. */
@@ -112,9 +112,9 @@ function spraakZone(el) {
         precies op de DICKtator: 840 ms);
      3. de bredere kant, ook als ze smaller is dan 160px (>= 110).
      Elke kandidaat met het gewone, het smalle en - als niets anders schoon is - het krappe
-     lettertype (een zone < 340px nooit gewoon). De spreker, zijn pil en de bazenbalk wegen vier keer zo zwaar als de held; het
-     hof mag een plaat even afdekken. Een plaat houdt haar plek zolang die schoon blijft,
-     zodat ze niet heen en weer springt terwijl ze opkomt. */
+     lettertype (een zone < 340px nooit gewoon). De spreker, zijn pil en de bazenbalk wegen
+     vier keer zo zwaar als de held; het hof mag een plaat even afdekken. Een plaat houdt
+     haar plek zolang die schoon blijft, zodat ze niet heen en weer springt terwijl ze opkomt. */
   const hf = document.getElementById('speler-figuur');
   const held = hf ? hf.getBoundingClientRect() : null;
   const hindernis = [[art, 4], ...pillen.map(q => [q, 4]), [bbR && bbR.width ? bbR : null, 4], [held, 1]].filter(h => h[0]);
