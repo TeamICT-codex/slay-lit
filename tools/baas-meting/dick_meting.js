@@ -17,9 +17,6 @@
      MEET_HELDEN=slachter,gifmagier,thoverk   MEET_STERKTES=sterk,gemiddeld,matig
      MEET_BELEID=gebalanceerd,bewust          MEET_REF=0 (Act 1/2-referentie overslaan)
      MEET_WERKERS=4 (parallelle pagina's)     SLAYIT_PLAYWRIGHT=<pad naar node_modules/playwright>
-     MEET_METGEZEL=drops (alleen voor de TERUGKEER: de metgezellen zijn geparkeerd — DE NISSEN DICHT —
-       dus standaard meet alles SOLO en elk gevecht toetst dat; deze optie zet ze in de pagina aan
-       via devMetgezellen(true) en geeft elke build die metgezel)
    Uitvoer: <label>.json naast het script (of MEET_UIT=<pad>) + een samenvatting op de console. */
 const fs = require('fs'), path = require('path');
 function laadPlaywright() {
@@ -40,7 +37,9 @@ const STERKTES = lijst('MEET_STERKTES', ['sterk', 'gemiddeld', 'matig']);
 const BELEID = lijst('MEET_BELEID', ['gebalanceerd', 'bewust']);
 const REF = process.env.MEET_REF !== '0';
 const WERKERS = parseInt(process.env.MEET_WERKERS || '4', 10);
-/* DE NISSEN DICHT: SOLO is de standaard; MEET_METGEZEL is de terugkeer-variant (M-plan §6) */
+/* DE NISSEN DICHT (M-plan §6): de metgezellen zijn geparkeerd, dus SOLO is de standaard en elk
+   gevecht toetst dat (g.metgezel na startGevecht). MEET_METGEZEL=drops is alleen voor de TERUGKEER:
+   de pagina zet ze dan aan via devMetgezellen(true) en elke build krijgt die metgezel. */
 const MEET_METGEZEL = process.env.MEET_METGEZEL || '';
 const metMetgezel = b => (MEET_METGEZEL ? Object.assign({}, b, { metgezel: MEET_METGEZEL }) : b);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff', '.txt': 'text/plain; charset=utf-8', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav' };
@@ -266,12 +265,10 @@ async function eenGevecht({ build, job }) {
   S.dek = build.dek.map(([id, up]) => { const c = nieuweKaart(id); c.up = !!up; return c; });
   S.dranken = (build.dranken || []).slice();
   for (let i = 0; i < (build.laster || 0); i++) S.dek.push(nieuweKaart('laster'));
+  /* alleen via MEET_METGEZEL (terugkeer): de geparkeerde metgezellen eerst aanzetten, anders weigert geefMetgezel stil */
+  if (build.metgezel && typeof metgezellenAan === 'function' && !metgezellenAan() && typeof devMetgezellen === 'function') devMetgezellen(true);
   S.metgezel = null;
-  if (build.metgezel) {
-    /* alleen via MEET_METGEZEL (terugkeer): de geparkeerde metgezellen eerst aanzetten, anders weigert geefMetgezel stil */
-    if (typeof metgezellenAan === 'function' && !metgezellenAan() && typeof devMetgezellen === 'function') devMetgezellen(true);
-    geefMetgezel(build.metgezel); if (S.metgezel) S.metgezel.hp = Math.max(1, Math.round(metgezelMaxHp(build.metgezel) * 0.6));
-  }
+  if (build.metgezel) { geefMetgezel(build.metgezel); if (S.metgezel) S.metgezel.hp = Math.max(1, Math.round(metgezelMaxHp(build.metgezel) * 0.6)); }
   S.kaart = genereerKaart();
   const hpStart = S.hp, dekStart = S.dek.length;
   const T = window.__T = { bron: {}, bronBd: {}, inBd: {}, uitBd: {}, uitBaas: 0, uitHof: 0, uitSoort: {}, rawIn: 0, geblokt: 0, metgezelVing: 0, decreten: [], rondeIn: 0, _zelf: false, _bewaar: null };
