@@ -188,7 +188,7 @@ window.SLAYLIT_PROLOOG = (function () {
         { id: 'mailtje',     naam: 'Snel een mailtje',         kost: 1, type: 'aanval',      label: 'AANVAL',      src: A('kaart-mailtje.webp'),             tekst: 'Doe <b>6</b> schade. Cc: iedereen.',     eff: { schade: 6 } },
         { id: 'koffie',      naam: 'Koffie',                   kost: 0, type: 'vaardigheid', label: 'VAARDIGHEID', src: A('kaart-koffie.webp'),              tekst: 'Krijg <b>1</b> ⚡.',                      eff: { energie: 1 } },
         { id: 'overuren',    naam: 'Overuren',                 kost: 0, type: 'verbrand',    label: 'VERBRAND',    src: A('kaart-overuren.webp'),            tekst: 'Verbrand <b>6</b> Welzijn. Krijg <b>2</b> ⚡.', eff: { welzijn: -6, energie: 2 } },
-        { id: 'verantwoord', naam: '“Verantwoordelijkheid”', kost: 1, type: 'vloek',       label: 'VLOEK',       src: A('kaart-verantwoordelijkheid.webp'), tekst: 'Doet niets. B.A.A.S. <b>+5</b> %.',      eff: { baasFact: 5 } },
+        { id: 'verantwoord', naam: '“Verantwoorde\u00ADlijkheid”', kost: 1, type: 'vloek',       label: 'VLOEK',       src: A('kaart-verantwoordelijkheid.webp'), tekst: 'Doet niets. B.A.A.S. <b>+5</b> %.',      eff: { baasFact: 5 } },
       ],
       // B.A.A.S. spreekt in groen fosfor, in een ballon bij zijn kast (het systeem zegt u)
       zegt: {
@@ -208,10 +208,11 @@ window.SLAYLIT_PROLOOG = (function () {
       fx: { mailtje: '+6 % FACTURABILITEIT', verantwoord: '+5 % FACTURABILITEIT', blok: '+{n} BLOK', geblokt: 'GEBLOKT', energie: '+{n} ⚡', diefstal: '−1 ⚡' },
       foto: { src: SLOTS.foto.src, stip: 'niet-factureerbaar' },
       // de uitweg van wie springt: drie je-regels met een Ken Burns, dan 'Laat los'
-      kijk: { regels: ['Daar ben je.', 'Het sterretje brandt nog in je hand.', 'Dat licht was nooit te koop.'], cta: 'Laat los', slot: 'Het licht gaat je voor.' },
-      // fixer R4 F1 (keuze 3): 'Niemand duwt je — je kiest zelf.' las op een dak, na 'Laat los', te dicht bij de
-      // zelfdodingslezing (en zijn rijmpartner 'Je werd geduwd.' bestaat niet meer). Nu over het licht: de foto gaat
-      // letterlijk voor, de schacht in, en wacht in de val naast de knop −∞; het rijmt op 'voor het licht dooft'.
+      kijk: { regels: ['Daar ben je.', 'Het sterretje brandt nog in je hand.', 'Dat licht was nooit te koop.'], cta: 'Laat los', slot: 'Wat je vasthield, is niet meer van hen.' },
+      // fixer R4 F1 + slot R4 (keuze 3): 'Niemand duwt je — je kiest zelf.' las op een dak, na 'Laat los', te dicht
+      // bij de zelfdodingslezing; 'Het licht gaat je voor.' ook ('voorgaan' = een eufemisme voor sterven). Nu over
+      // het bedrijf, niet over vallen: wat je vasthield (de foto, het licht) is niet meer van hén. De foto valt
+      // de schacht in en wacht in de val naast de knop −∞; het rijmt op 'LOSGELATEN.' en 'U had al losgelaten.'.
       lift: { bord: 'DAK' },
       krant: 'FUNCTIONERINGSGESPREK  -  UW WELZIJN IS ONZE KPI  -  ',   // de lichtkrant van de zeppelin (pixelfont)
     },

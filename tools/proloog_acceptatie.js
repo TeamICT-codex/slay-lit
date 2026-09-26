@@ -4083,7 +4083,7 @@ function r4iToets(uit) {
               'ge-end-of-life’d.'; (f) de afrekening op het dak (de storm stil achter de printer, het oog van B.A.A.S.,
               ≥ 45 beelden/s); de val neemt over; (g) de lucht van het gesprek bakt niet per vensterformaat nieuwe
               canvassen; (h) een tik maakt het printergeratel af (regelopvoer 0,1 s); (i) de gerasterde pasfoto op de
-              getoonde maat; (j) de dakzin 'Het licht gaat je voor.'
+              getoonde maat; (j) de dakzin 'Wat je vasthield, is niet meer van hen.' (slot R4: niet 'gaat je voor')
      ========================================================================== */
   if (doe('gesprek') || doe('fixer')) {
     const v3F = { scene: 3, checkpoint: 'start', choices: { jeugddroom: 'brandweerman', glimlachen: 5, glimCp: 5, fotoKantoor: true, zelfGestempeld: true, meter: 98 }, gezien: [0, 1, 2, 3] };
@@ -4401,8 +4401,8 @@ function r4iToets(uit) {
       kop('15L · ' + L);
       const data = fs.readFileSync(path.join(WORKTREE, 'proloog', 'data.js'), 'utf8');
       const code = data.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-      t(/slot: 'Het licht gaat je voor\.'/.test(code) && !/Niemand duwt je/.test(code) && /eindig: 'Einde beurt'/.test(code) && /mailtjes: \{ label: 'Mailtjes verstuurd: \{n\}', waarde: 'dank voor uw inzet' \}/.test(code),
-        `${L}: 'Het licht gaat je voor.' staat op het dak (niet meer 'Niemand duwt je — je kiest zelf.'); de knop heet 'Einde beurt'; de factuur kent 'Mailtjes verstuurd: {n} …… dank voor uw inzet'`);
+      t(/slot: 'Wat je vasthield, is niet meer van hen\.'/.test(code) && !/Niemand duwt je/.test(code) && !/gaat je voor/.test(code) && /eindig: 'Einde beurt'/.test(code) && /mailtjes: \{ label: 'Mailtjes verstuurd: \{n\}', waarde: 'dank voor uw inzet' \}/.test(code),
+        `${L}: 'Wat je vasthield, is niet meer van hen.' staat op het dak (niet 'Niemand duwt je — je kiest zelf.' en niet 'Het licht gaat je voor.' — voorgaan = sterven); de knop heet 'Einde beurt'; de factuur kent 'Mailtjes verstuurd: {n} …… dank voor uw inzet'`);
     }
   }
 
