@@ -8,6 +8,9 @@ cel = defaultdict(list)
 for r in d['resultaten']:
     if r.get('baas') != 'de_dicktator':
         continue
+    # sinds v4 (Finale B4): alleen de basisbuilds op druk x1, zonder foute jobs (zie meetlib.py)
+    if (r.get('pv') or 'basis') != 'basis' or float(r.get('dmgx') or 1) != 1.0 or r.get('fout'):
+        continue
     cel[(r['held'], r['st'], r.get('hpPct'))].append(r)
 
 def rondes_per_bd(rs):
