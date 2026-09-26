@@ -275,8 +275,9 @@ async function perFormaat(browser, fk) {
         /* B0.11: de baaspil is ook bij fakkel 0 te LEZEN (p98 van de pil, onder het vignet) */
         if (baas !== 'hof' && (st === 'geen' || st === 'vijf')) m.pilLum = await helderheid(page, m.pilRect);
         rijen.push(m);
+        if ((st === 'vijf' || (baas === 'hof' && st === 'vier')) && f === 'max') await shot(page, `${vp.naam}_${baas}_${st}`);
+        if (st === 'vijf' && f === 0) await shot(page, `${vp.naam}_${baas}_${st}_f0`);
       }
-      await shot(page, `${vp.naam}_${baas}_vijf`);
       const n = rijen.length;
       if (laptop && !vp.d3 && baas !== 'hof') {
         t(max(rijen, m => Math.abs(m.voetBaas - m.voetHeld)) <= 2, `B0.1 ${vp.naam} ${B}: |zool baas - zool held| <= 2 px over ${n} staten (0-5 statussen, fakkel 100/0): max ${max(rijen, m => Math.abs(m.voetBaas - m.voetHeld)).toFixed(1)}`);
@@ -434,28 +435,33 @@ async function sluisEnWachtrij(browser, fk) {
     return { gezien };
   });
   t(!c.gezien, `B0.4 ${vp.naam}: een flavorregel die > 2,5 s moet wachten, vervalt (gezien: ${c.gezien})`);
-  /* de bannerwachtrij: drie banners binnen een halve seconde */
-  const d = await page.evaluate(async () => {
-    const rec = []; const t0 = performance.now(); let beefs = 0, wasBeef = false;
-    const iv = setInterval(() => {
-      const fl = [...document.querySelectorAll('.baas-flits')];
-      const beef = document.getElementById('scherm-gevecht').classList.contains('beef'); if (beef && !wasBeef) beefs++; wasBeef = beef;
-      rec.push({ t: Math.round(performance.now() - t0), n: fl.length, titels: fl.map(f => f.querySelector('h2').textContent) });
-    }, 40);
-    baasFaseMoment('EEN', '1'); await new Promise(r => setTimeout(r, 250));
-    baasFaseMoment('TWEE', '2'); await new Promise(r => setTimeout(r, 200));
-    baasFaseMoment('DRIE', '3');
-    await new Promise(r => setTimeout(r, 6400));
-    clearInterval(iv);
-    const van = {}; rec.forEach(x => x.titels.forEach(tt => { if (!van[tt]) van[tt] = [x.t, x.t]; van[tt][1] = x.t; }));
-    return { maxN: Math.max(...rec.map(x => x.n)), van, beefs, html: (() => { baasFaseMoment('X', 'y'); const e = document.querySelector('.baas-flits'); return e ? e.outerHTML : ''; })() };
-  });
-  const v = d.van;
-  t(d.maxN === 1, `bannerwachtrij ${vp.naam}: nooit meer dan één banner tegelijk (max ${d.maxN})`);
-  t(v.EEN && v.TWEE && v.DRIE && v.EEN[0] < v.TWEE[0] && v.TWEE[0] < v.DRIE[0], `bannerwachtrij ${vp.naam}: volgorde behouden (EEN ${v.EEN && v.EEN[0]}, TWEE ${v.TWEE && v.TWEE[0]}, DRIE ${v.DRIE && v.DRIE[0]} ms)`);
-  t(['EEN', 'TWEE'].every(k => v[k] && v[k][1] - v[k][0] >= 1300), `bannerwachtrij ${vp.naam}: elke banner >= 1,4 s leesbaar (EEN ${v.EEN && v.EEN[1] - v.EEN[0]}, TWEE ${v.TWEE && v.TWEE[1] - v.TWEE[0]} ms)`);
-  t(d.beefs === 3, `bannerwachtrij ${vp.naam}: elke banner schudt pas als hij verschijnt (${d.beefs} schokken, verwacht 3)`);
-  t(d.html === '<div class="baas-flits"><h2>X</h2><span>y</span></div>', `bannerwachtrij ${vp.naam}: de DOM van een banner is onveranderd (${d.html})`);
+  /* de bannerwachtrij: drie banners binnen een halve seconde, op elke baas (jury W4, les 6) */
+  for (const baas of ['erfprins', 'slijmkoning', 'dicktator']) {
+    if (baas !== 'erfprins') await startBaas(page, baas);
+    const B = BAZEN[baas];
+    const d = await page.evaluate(async () => {
+      const rec = []; const t0 = performance.now(); let beefs = 0, wasBeef = false;
+      const iv = setInterval(() => {
+        const fl = [...document.querySelectorAll('.baas-flits')];
+        const beef = document.getElementById('scherm-gevecht').classList.contains('beef'); if (beef && !wasBeef) beefs++; wasBeef = beef;
+        rec.push({ t: Math.round(performance.now() - t0), n: fl.length, titels: fl.map(f => f.querySelector('h2').textContent) });
+      }, 40);
+      baasFaseMoment('EEN', '1'); await new Promise(r => setTimeout(r, 250));
+      baasFaseMoment('TWEE', '2'); await new Promise(r => setTimeout(r, 200));
+      baasFaseMoment('DRIE', '3');
+      await new Promise(r => setTimeout(r, 6400));
+      clearInterval(iv);
+      const van = {}; rec.forEach(x => x.titels.forEach(tt => { if (!van[tt]) van[tt] = [x.t, x.t]; van[tt][1] = x.t; }));
+      return { maxN: Math.max(...rec.map(x => x.n)), van, beefs, html: (() => { baasFaseMoment('X', 'y'); const e = document.querySelector('.baas-flits'); return e ? e.outerHTML : ''; })() };
+    });
+    const v = d.van;
+    t(d.maxN === 1, `bannerwachtrij ${vp.naam} ${B}: nooit meer dan één banner tegelijk (max ${d.maxN})`);
+    t(v.EEN && v.TWEE && v.DRIE && v.EEN[0] < v.TWEE[0] && v.TWEE[0] < v.DRIE[0], `bannerwachtrij ${vp.naam} ${B}: volgorde behouden (EEN ${v.EEN && v.EEN[0]}, TWEE ${v.TWEE && v.TWEE[0]}, DRIE ${v.DRIE && v.DRIE[0]} ms)`);
+    t(['EEN', 'TWEE'].every(k => v[k] && v[k][1] - v[k][0] >= 1300), `bannerwachtrij ${vp.naam} ${B}: elke banner >= 1,4 s leesbaar (EEN ${v.EEN && v.EEN[1] - v.EEN[0]}, TWEE ${v.TWEE && v.TWEE[1] - v.TWEE[0]} ms)`);
+    t(d.beefs === 3, `bannerwachtrij ${vp.naam} ${B}: elke banner schudt pas als hij verschijnt (${d.beefs} schokken, verwacht 3)`);
+    t(d.html === '<div class="baas-flits"><h2>X</h2><span>y</span></div>', `bannerwachtrij ${vp.naam} ${B}: de DOM van een banner is onveranderd (${d.html})`);
+    await page.evaluate(() => new Promise(r => setTimeout(r, 2600)));
+  }
   t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
   await ctx.close();
   return { kop: `Tekstsluis, pauze, vervallen en bannerwachtrij · ${vp.naam}`, regels: R };
@@ -474,12 +480,12 @@ async function overgang(browser, fk) {
       document.querySelectorAll('#meldingen .toast').forEach(t => t.remove());
       const R = e => { const q = e.getBoundingClientRect(); return { l: q.left, t: q.top, r: q.right, b: q.bottom }; };
       const snij = (a, b) => { const l = Math.max(a.l, b.l), t = Math.max(a.t, b.t), r = Math.min(a.r, b.r), bb = Math.min(a.b, b.b); return (r > l && bb > t) ? (r - l) * (bb - t) : 0; };
-      const o = { titel: 0, baas: 0, baasMax: 0, pil: 0, held: 0, regels: {}, banners: 0 };
+      const o = { titel: 0, baas: 0, baasMax: 0, baasPct: 0, pil: 0, held: 0, regels: {}, banners: 0 };
       let vorig = performance.now(); const t0 = vorig;
       const iv = setInterval(() => {
         const nu = performance.now(), dt = nu - vorig; vorig = nu;
         o.banners = Math.max(o.banners, document.querySelectorAll('.baas-flits').length);
-        const sp = [...document.querySelectorAll('.baas-spraak')].filter(e => +getComputedStyle(e).opacity > 0.2).map(e => R(e.querySelector('span') || e));
+        const spEls = [...document.querySelectorAll('.baas-spraak')].filter(e => +getComputedStyle(e).opacity > 0.2);
         const tit = [...document.querySelectorAll('.vonnis h2, .vonnis span, .baas-flits h2, .baas-flits span')].map(R);
         const g = S.gevecht; if (!g) return;
         const b = g.vijanden.find(v => !v.dood && v.id === 'de_dicktator');
@@ -487,13 +493,14 @@ async function overgang(browser, fk) {
         if (b) { if (d3Actief() && window.Vista) { const p = Vista.schermPos(b); if (p) { const h = p.voetY - p.topY; br = { l: p.x - h * 0.36, r: p.x + h * 0.36, t: p.topY, b: p.voetY }; } } else { const a = GDOM.vijanden[g.vijanden.indexOf(b)].wrap.querySelector('.vijand-art'); if (a) br = R(a); } }
         const pil = b ? [...GDOM.vijanden[g.vijanden.indexOf(b)].wrap.querySelectorAll('.intent')].map(R) : [];
         let hr = null; if (d3Actief() && window.Vista) { const p = Vista.schermPos(g.speler); if (p) { const h = p.voetY - p.topY; hr = { l: p.x - h * 0.3, r: p.x + h * 0.3, t: p.topY, b: p.voetY }; } } else { const hf = document.getElementById('speler-figuur'); if (hf) hr = R(hf); }
-        for (const s of sp) {
+        for (const e of spEls) {
+          const s = R(e.querySelector('span') || e);
+          const k = e.textContent.slice(0, 30); const r = o.regels[k] || (o.regels[k] = { van: nu - t0, tot: nu - t0, baas: 0 }); r.tot = nu - t0;
           if (tit.some(x => snij(s, x) > 0)) o.titel += dt;
-          if (br) { const x = snij(s, br); if (x > 0) { o.baas += dt; o.baasMax = Math.max(o.baasMax, Math.round(x)); } }
+          if (br) { const x = snij(s, br); if (x > 0) { o.baas += dt; r.baas += dt; if (x > o.baasMax) { o.baasMax = Math.round(x); o.baasPct = +(100 * x / ((br.r - br.l) * (br.b - br.t))).toFixed(2); } } }
           if (pil.some(p => snij(s, p) > 0)) o.pil += dt;
           if (hr && snij(s, hr) > 0) o.held += dt;
         }
-        [...document.querySelectorAll('.baas-spraak')].filter(e => +getComputedStyle(e).opacity > 0.2).forEach(e => { const k = e.textContent.slice(0, 30); const r = o.regels[k] || (o.regels[k] = { van: nu - t0, tot: nu - t0 }); r.tot = nu - t0; });
       }, 50);
       _devKlapNu(DEV_KLAP);
       await new Promise(r => setTimeout(r, venster));
@@ -507,7 +514,10 @@ async function overgang(browser, fk) {
     const regels = Object.entries(o.regels).map(([k, r]) => `${k.slice(0, 16)}… ${Math.round(r.tot - r.van)} ms`).join(', ');
     t(o.titel === 0, `B0.4 ${vp.naam} ${naam}: plaat ~ scènetitel/banner ${o.titel} ms (0)`);
     t(Object.keys(o.regels).length >= 1 && af.every(([, r]) => r.tot - r.van >= 700), `B0.4 ${vp.naam} ${naam}: elke regel leesbaar, >= 0,7 s (${regels})`);
-    t(o.baas <= 250 && o.pil <= 250, `B0.5 ${vp.naam} ${naam}: plaat ~ DICKtator ${o.baas} ms (max ${o.baasMax} px2), ~ zijn pil ${o.pil} ms (<= 250)`);
+    /* §3 B0.5: plaat ~ spreker <= 250 ms PER REGEL en <= 1 % van zijn figuur (hier de doos rond de
+       art of de 3D-sprite, ruimer dan het silhouet: wat overblijft, zijn randpixels) */
+    const perRegel = Math.round(Math.max(0, ...Object.values(o.regels).map(r => r.baas)));
+    t(perRegel <= 250 && o.baasPct <= 1 && o.pil <= 250, `B0.5 ${vp.naam} ${naam}: plaat ~ DICKtator ${perRegel} ms per regel (${o.baas} ms samen, max ${o.baasMax} px2 = ${o.baasPct} % van zijn doos), ~ zijn pil ${o.pil} ms (<= 250 ms, <= 1 %)`);
     t(o.held === 0, `B0.5 ${vp.naam} ${naam}: plaat ~ held ${o.held} ms (0)`);
     t(o.banners <= 1, `bannerwachtrij ${vp.naam} ${naam}: nooit meer dan één banner tegelijk in de echte overgang (max ${o.banners})`);
   }
@@ -749,8 +759,8 @@ async function intents(browser) {
   const taken = [
     ...['M800', 'M846', 'M740', 'L1440', 'L1440d3', 'L1366', 'L1366d3', 'P412'].map(fk => ['rust ' + fk, () => perFormaat(browser, fk)]),
     ...['M800', 'L1440'].map(fk => ['sluis ' + fk, () => sluisEnWachtrij(browser, fk)]),
-    ...['M800', 'M846', 'L1366', 'L1366d3'].map(fk => ['overgang ' + fk, () => overgang(browser, fk)]),
-    ...['M800', 'L1440', 'L1366d3'].map(fk => ['dood ' + fk, () => dood(browser, fk)]),
+    ...['M800', 'M846', 'L1366', 'L1366d3', 'L1440d3'].map(fk => ['overgang ' + fk, () => overgang(browser, fk)]),
+    ...['M800', 'M846', 'L1440', 'L1440d3', 'L1366d3'].map(fk => ['dood ' + fk, () => dood(browser, fk)]),
     ...['M800', 'L1440'].map(fk => ['lijkweg ' + fk, () => lijkWeg(browser, fk)]),
     ...['L1440d3', 'L1366d3'].map(fk => ['3d ' + fk, () => driedee(browser, fk)]),
     ...['M800', 'L1440'].map(fk => ['hud ' + fk, () => hudEnHof(browser, fk)]),
