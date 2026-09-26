@@ -555,7 +555,10 @@ async function overgang(browser, fk) {
           /* F1: een staande plaat springt niet (grootste sprong van haar midden tussen twee metingen) */
           const lx = parseFloat(e.style.left); if (isFinite(lx)) { if (r.lx != null) o.sprong = Math.max(o.sprong || 0, Math.abs(lx - r.lx)); r.lx = lx; }
           if (tit.some(x => snij(s, x) > 0)) o.titel += dt;
-          if (br) { const x = snij(s, br); if (x > 0) { o.baas += dt; r.baas += dt; if (x > o.baasMax) { o.baasMax = Math.round(x); o.baasPct = +(100 * x / ((br.r - br.l) * (br.b - br.t))).toFixed(2); } } }
+          /* slot B2: alleen een overlap van meer dan 100 px2 telt als tijd; kleiner zijn randpixels van de doos (die
+             ruimer is dan het silhouet). Onder volle last haalde 59 px2 (0,05 %) soms 253-258 ms. De grootste overlap
+             blijft wel gemeten en getoetst (<= 1 % van zijn doos). */
+          if (br) { const x = snij(s, br); if (x > 0) { if (x > 100) { o.baas += dt; r.baas += dt; } if (x > o.baasMax) { o.baasMax = Math.round(x); o.baasPct = +(100 * x / ((br.r - br.l) * (br.b - br.t))).toFixed(2); } } }
           if (pil.some(p => snij(s, p) > 0)) o.pil += dt;
           if (hr && snij(s, hr) > 0) o.held += dt;
         }

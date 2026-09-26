@@ -6060,6 +6060,10 @@ function renderGevecht() {
   const overloop = w => { const b = w.querySelector('.blok-status'); return b ? Math.max(0, b.scrollHeight - b.clientHeight) : 0; };
   let groei = false;
   const stapel = (actor, d, ov) => {
+    /* slot B2 (verificatie): de overloop telt alleen in een BAASgevecht, waar het 3D-kader hem volgt. In een
+       gewoon 3D-gevecht zonder kaderfit tilde hij de labelstapel hoger op het lijf van de held (1366-3D, held
+       met 7 statussen: eigen label 34 → 45 %). */
+    if (g.soort !== 'baas') ov = 0;
     d.infoH = d.wrap.offsetHeight - d.spacer.offsetHeight + ov;
     if (ov > (actor._ovMax || 0)) { if (actor._ovMax != null) groei = true; actor._ovMax = ov; }
     else if (actor._ovMax == null) actor._ovMax = ov;
