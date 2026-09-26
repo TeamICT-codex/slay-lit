@@ -773,7 +773,7 @@ img { max-width: 100%; display: block; }
 
 /* — #strijdveld: de figuren op één grondlijn — */
 .gs-veld { position: absolute; left: var(--rand); right: var(--rand); bottom: var(--onder); z-index: 2; display: flex; justify-content: space-between; align-items: flex-end; pointer-events: none; }
-.gs-held, .gs-baas { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.gs-held, .gs-baas { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: auto; }   /* de figuren zijn raak (zoals in het spel), het veld ertussen niet */
 .gs-figuur { position: relative; z-index: 1; }
 .gs-schaduw { position: relative; width: 70%; height: 0; margin-top: -4px; }
 .gs-schaduw::after { content: ''; position: absolute; left: 50%; top: 0; width: 110%; height: 14px; transform: translate(-50%, -60%); background: radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, .55), rgba(0, 0, 0, .25) 55%, transparent 78%); }
@@ -1494,7 +1494,7 @@ img { max-width: 100%; display: block; }
   .gs-kijk-kader { width: min(58vh, 200px); padding: 6px 6px 16px; }
   .gs-kijk-regels { align-items: flex-start; text-align: left; max-width: min(48vw, 420px); min-height: 0; }
   .gs-kijk-regel { font-size: 1rem; }
-  .gs-laatlos { position: absolute; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom)); translate: -50% 0; min-height: 40px; padding: 7px 22px; font-size: 1.02rem; }
+  .gs-laatlos { min-height: 40px; padding: 7px 22px; font-size: 1.02rem; }   /* op een eigen rij onder foto en regels */
   .gs-slotzin { bottom: 10%; font-size: 1.05rem; }
 
   /* R4 · de afrekening kort liggend: een smaller, lager vel; de printer ondiep */

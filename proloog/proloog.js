@@ -89,6 +89,7 @@
   let hintGezien = {};
   let val = null;          /* R2: de lopende val (window.ProloogVal-handle) */
   let wachtAan = false;    /* R2: loopt de wachtmuziek (sinds de oproep)? */
+  let kijkStil = false;    /* R4: de wachtmuziek zwijgt terwijl je naar de foto kijkt (sprong) */
   const opruimers = [];
   const objectUrls = new Set();
 
@@ -217,7 +218,7 @@
     });
     if (app) app.classList.toggle('pl-gepauzeerd', aan);
     if (AU && AU.pauzeer) AU.pauzeer(aan);
-    klank('pauzeer', aan);   /* fixer R2: de klok staat stil, dus de wachtmuziek en de lift-brom ook */
+    klank('pauzeer', aan || kijkStil);   /* fixer R2: de klok staat stil, dus de wachtmuziek en de lift-brom ook (R4: en tijdens de foto blijft ze stil) */
   }
   function draaiBlokToont() {
     const db = document.getElementById('draai-blok');
@@ -415,6 +416,7 @@
     stopCamera();
     stopVal();
     stopLucht();
+    if (kijkStil) { kijkStil = false; klank('pauzeer', klok.pauze); }   /* R4: wie tijdens de foto overslaat, hoort de Afgrond */
     if (AU) { AU.heartStop(); AU.noiseOff(); AU.droneOff(); }
     const scene = STORY.scenes[P.scene];
     if (scene.kind === 'gesprek') zorgWacht();   /* R2: in de wacht, al sinds de oproep */
@@ -1938,7 +1940,10 @@
         const h = maakKaart(k);
         st.hand.push(h);
         handEl.appendChild(h.b);
-        if (!zacht) { h.b.classList.add('nieuw'); h.b.style.animationDelay = (i * 70) + 'ms'; }
+        if (!zacht) {
+          h.b.classList.add('nieuw'); h.b.style.animationDelay = (i * 70) + 'ms';
+          T(() => { h.b.classList.remove('nieuw'); h.b.style.animationDelay = ''; }, 440 + i * 70);   /* gedeeld: de kaart ligt in de waaier */
+        }
       });
       st.trek = Math.max(0, st.trek - n);
       legWaaier();
@@ -2118,6 +2123,7 @@
     /* laptop: 1-5 speelt een kaart, E eindigt de beurt, spatie vasthouden = de foto */
     sleutels = e => {
       if (kijk) return kijk.toets(e);
+      if (st.einde) return false;   /* de uitweg is regie: elke toets spoelt door (de gewone regel) */
       const spatie = e.key === ' ' || e.key === 'Spacebar';
       if (spatie) {
         if (!e.repeat && magSpelen() && performance.now() - binnenT > GESPREK_BINNEN_MS + 200) fotoDruk('spatie');
@@ -2164,6 +2170,7 @@
     function kijkRegie() {
       const K = S.kijk;
       regen(false);          /* de wereld valt weg: alleen de warmte */
+      kijkStil = true; klank('pauzeer', true);   /* ook de wachtmuziek zwijgt zolang je kijkt (ze komt terug als je loslaat) */
       zwijg();
       klank('sfx', 'warm');
       toonHint('uitweg');
@@ -2228,13 +2235,14 @@
         const r = reeks([
           { doe: scheur, ms: zacht ? 250 : 480 },
           { doe: valFoto, ms: zacht ? 450 : 1300 },
-          { doe: () => { laag.appendChild(el('p', 'gs-slotzin', K.slot)); }, ms: zacht ? 1400 : 1900 }
+          { doe: () => { laag.appendChild(el('p', 'gs-slotzin', K.slot)); }, ms: zacht ? 1400 : 1650 }
         ], () => render());
         spoel = null;
         spoelNa(r.spoel, 350, () => !r.af);
       }
       /* de stippellijn scheurt over het hele scherm; de kleuren komen terug (de storm) */
       function scheur() {
+        kijkStil = false; klank('pauzeer', klok.pauze);   /* het systeem hervat: de wacht loopt door */
         klank('sfx', 'papierscheur');
         const k = kader.getBoundingClientRect();
         const lijn = el('div', 'gs-scheurlijn');
@@ -2293,15 +2301,15 @@
             klank('sfx', 'optimalisatie');
             if (!zacht) { const sw = el('div', 'gs-sweep'); root.appendChild(sw); T(() => sw.remove(), 900); }
             return zeg(S.zegt.optimalisatie);
-          }, ms: zacht ? 450 : 950 },
+          }, ms: zacht ? 700 : 950 },
         { doe: () => {
             root.classList.add('gs-uit');
             [0, 1, 2, 3].forEach(i => T(() => klank('sfx', 'tlDooft', 3 - i), zacht ? 0 : i * 260));
-          }, ms: zacht ? 450 : 1250 },
-        { doe: () => { zwijg(); lift.classList.add('open'); klank('sfx', 'schaarhek'); }, ms: zacht ? 250 : 520 },
-        { doe: rolStoel, ms: zacht ? 450 : 1500 },
-        { doe: () => zeg(S.zegt.vrijgesteld), ms: zacht ? 1000 : 1500 },
-        { doe: () => { lift.classList.remove('open'); lift.classList.add('dicht'); klank('sfx', 'grendel'); }, ms: zacht ? 350 : 650 }
+          }, ms: zacht ? 700 : 1250 },
+        { doe: () => { zwijg(); lift.classList.add('open'); klank('sfx', 'schaarhek'); }, ms: zacht ? 350 : 520 },
+        { doe: rolStoel, ms: zacht ? 600 : 1500 },
+        { doe: () => zeg(S.zegt.vrijgesteld), ms: 1500 },
+        { doe: () => { lift.classList.remove('open'); lift.classList.add('dicht'); klank('sfx', 'grendel'); }, ms: zacht ? 450 : 650 }
       ], () => render());
       spoel = null;
       spoelNa(r.spoel, 350, () => !r.af);
@@ -2411,10 +2419,10 @@
 
       const rijen = [
         { cls: 'pv-titel', l: F.kop, cps: 7 },
-        { cls: 'pv-sub', l: F.sub, cps: 5 },
+        { cls: 'pv-sub', l: F.sub, cps: 4 },
         { cls: 'pv-post', id: 'glimlachen', l: interp(F.glimlachen, { n: c.n }), w: tijdU(c.n * 6) },
         { cls: 'pv-post', id: 'foto', l: interp(F.foto.label, { n: c.fotoN }), w: c.fotoN ? F.foto.ja : F.foto.nee },
-        { cls: 'pv-post pv-droom', id: 'droom', l: interp(F.droom.label, { droom, hoe }).replace(/\s{2,}/g, ' '), w: F.droom.waarde, cps: 46 },
+        { cls: 'pv-post pv-droom', id: 'droom', l: interp(F.droom.label, { droom, hoe }).replace(/\s{2,}/g, ' '), w: F.droom.waarde, cps: 36 },
         { cls: 'pv-post', id: 'bonus', l: F.bonus.label, w: F.bonus.waarde },
         { cls: 'pv-post pv-warmte', id: 'warmte', l: F.warmte.label, w: F.warmte.waarde, vast: F.warmte.tot },
         { cls: 'pv-totaal', id: 'totaal', l: F.totaal.label, rol: [F.totaal.van, F.totaal.naar] },
@@ -2490,7 +2498,7 @@
           rij.appendChild(tekenvak);
           eind(); return handle;
         }
-        const cps = snel ? 0 : (r.cps || 16);   /* stil (hervatten) of rustig: de regel staat er in één keer */
+        const cps = snel ? 0 : (r.cps || 12);   /* stil (hervatten) of rustig: de regel staat er in één keer */
         if (!stil) klank('sfx', 'printer', Math.min(2.4, ((r.l || '').length + (r.w || '').length) * (cps || 2) / 1000 + 0.06), cps > 30);
         const waarde = () => {
           if (r.hand) { rij.appendChild(el('span', 'pv-hand', r.hand)); eind(); return; }
@@ -2516,7 +2524,7 @@
         pr.classList.add('vast');
         vak.classList.add('vast');
         klank('sfx', 'vastloper');
-        t = T(los, snel ? 800 : 1150);
+        t = T(los, snel ? 800 : 1000);
         return { rond: los };
       }
       /* het totaal zakt: € 9.131,00 … € 0,00 (de printer slaat de cijfers over, stap voor stap) */
@@ -2576,8 +2584,8 @@
         if (r.soort === 'stempel') return zacht ? 800 : 650;
         if (r.soort === 'perfo') return zacht ? 400 : 320;
         if (r.cls === 'pv-titel') return zacht ? 250 : 80;
-        if (r.id === 'droom') return zacht ? 1100 : 420;
-        return zacht ? 650 : 260;
+        if (r.id === 'droom') return zacht ? 1100 : 380;
+        return zacht ? 650 : 200;
       }
       function volgende() {
         tid = 0;
@@ -2608,10 +2616,12 @@
         if (af) return;
         af = true; spoel = null; bezig = null;
         if (sprong) {
-          drukRij({ cls: 'pv-brief pv-sprong', l: O.sprong, cps: 24 }, () => {});
+          let rijKlaar = false;
+          const rij = drukRij({ cls: 'pv-brief pv-sprong', l: O.sprong, cps: 22 }, () => { rijKlaar = true; });
           const door = () => { wisT(tv); naarVal(); };
-          const tv = T(door, zacht ? 1300 : 2100);
-          spoelNa(door, 450);
+          const tv = T(door, zacht ? 1300 : 2600);
+          /* een tik maakt eerst de regel af (zoals elke regel), de volgende gaat naar de val */
+          spoelNa(() => { if (rijKlaar) door(); else { rij.rond(); spoelNa(door, 350); } }, 450);
           return;
         }
         /* de lege pen: een tik laat hem zelf een lus trekken, of je trekt zelf je handtekening */
@@ -2698,14 +2708,16 @@
           klaar1 = true; spoel = null; wisT(tMachine);
           pen.disabled = true;
           papier.dataset.getekend = getekend ? 'zelf' : 'machine';
-          drukRij({ cls: 'pv-brief pv-geduwd', l: O.geduwd, cps: 20 }, () => {
+          let rijKlaar = false;
+          const rij = drukRij({ cls: 'pv-brief pv-geduwd', l: O.geduwd, cps: 20 }, () => {
+            rijKlaar = true;
             if (!tekenvak) return;
             tekenvak.appendChild(el('span', 'pv-facsimile', '0042'));
             klank('sfx', 'printer', 0.35);
           });
           const door = () => { wisT(tv); naarVal(); };
-          const tv = T(door, zacht ? 1600 : 2500);
-          spoelNa(door, 450);
+          const tv = T(door, zacht ? 1600 : 2900);
+          spoelNa(() => { if (rijKlaar) door(); else { rij.rond(); spoelNa(door, 350); } }, 450);
         }
       }
       function naarVal() {
@@ -3213,7 +3225,7 @@
     if (!host) return false;
     opts = o;
     herbeleef = !!o.herbeleef;
-    klaarGeroepen = false; overgeslagen = false; glimOpen = 0; spoel = null; sleutels = null; sleutelsOp = null; hintGezien = {}; wachtAan = false;
+    kijkStil = false; klaarGeroepen = false; overgeslagen = false; glimOpen = 0; spoel = null; sleutels = null; sleutelsOp = null; hintGezien = {}; wachtAan = false;
     regenAan = false; zoemAan = false;
     spiegelModus();
     if (!maakRoot()) return false;
