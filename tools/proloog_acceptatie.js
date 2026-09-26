@@ -3328,7 +3328,8 @@ function klankReeks(pk, verwacht) {
       if (!sprong) {
         const zak = await sr(page, `const b = R.querySelector('[data-actie="teken"]').getBoundingClientRect(); const pr = R.querySelector('.pv-printer').getBoundingClientRect(); return { pen: b.bottom <= pr.top + 1 && b.top >= 0, b: [b.left, b.top, b.right, b.bottom].map(Math.round) };`);
         t(zak.pen, `${L}: de lege pen staat in beeld boven de printer [${zak.b}]`);
-        const m = await wachtOp(page, () => /Wij hadden hem al/.test(document.getElementById('scherm-proloog').shadowRoot.querySelector('.pv-papier').textContent), 9000);
+        const m = await wachtOp(page, () => /Wij hadden hem al\./.test(document.getElementById('scherm-proloog').shadowRoot.querySelector('.pv-papier').textContent), 9000);
+        await slaap(120);
         const wie = await sr(page, `return { getekend: R.querySelector('.pv-papier').dataset.getekend, fax: !!R.querySelector('.pv-facsimile') };`);
         t(m >= 5200 && m <= 7200 && wie.getekend === 'machine' && wie.fax, `${L}: wie niet tekent: na ${((m + 450) / 1000).toFixed(1)} s 'Uw handtekening is niet vereist. Wij hadden hem al.', de printer zet hem er zelf op (${wie.getekend}, facsimile ${wie.fax})`);
       }

@@ -1812,14 +1812,23 @@
     intentRij.appendChild(intent);
     baas.appendChild(intentRij);
     const kast = el('div', 'gs-figuur gs-kast');
-    kast.appendChild(el('span', 'gs-kast-antenne'));
-    kast.appendChild(el('span', 'gs-kast-lampen'));
-    const oog = el('span', 'gs-oog');
-    oog.appendChild(el('span', 'gs-oog-kern'));
-    kast.appendChild(oog);
-    kast.appendChild(el('span', 'gs-spoel gs-spoel-l'));
-    kast.appendChild(el('span', 'gs-spoel gs-spoel-r'));
-    kast.appendChild(el('span', 'gs-kast-voet'));
+    /* de beige mainframekast (css): antenne, lampjes, het groene oog, twee bandspoelen */
+    const tekenKast = () => {
+      kast.classList.remove('gs-kast-art');
+      kast.appendChild(el('span', 'gs-kast-antenne'));
+      kast.appendChild(el('span', 'gs-kast-lampen'));
+      const oog = el('span', 'gs-oog');
+      oog.appendChild(el('span', 'gs-oog-kern'));
+      kast.appendChild(oog);
+      kast.appendChild(el('span', 'gs-spoel gs-spoel-l'));
+      kast.appendChild(el('span', 'gs-spoel gs-spoel-r'));
+      kast.appendChild(el('span', 'gs-kast-voet'));
+      return true;
+    };
+    /* optionele art (baas_kast, kijkt naar LINKS zoals elke vijand): pas als het manifest haar kent;
+       laadt ze niet, dan alsnog de css-kast */
+    if (S.baas.art) { kast.classList.add('gs-kast-art'); kast.appendChild(art(S.baas.art, '', 'gs-kast-plaat', d => { d.remove(); return tekenKast(); })); }
+    else tekenKast();
     baas.appendChild(kast);
     baas.appendChild(el('div', 'gs-schaduw'));
     baas.appendChild(el('div', 'gs-naam', S.baas.naam));

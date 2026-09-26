@@ -836,6 +836,10 @@ img { max-width: 100%; display: block; }
 .gs-spoel-r { right: 12%; animation-duration: 7.5s; }
 @keyframes plSpoel { to { rotate: 360deg; } }
 .gs-kast-voet { position: absolute; left: -4%; right: -4%; bottom: -6px; height: 8px; border-radius: 2px; background: #3a342a; }
+/* met de optionele plaat baas_kast (een cut-out): geen css-kast, wel dezelfde maat en grondlijn */
+.gs-kast.gs-kast-art { background: none; box-shadow: none; width: calc(var(--kast-h) * .9); }
+.gs-kast-plaat, .gs-kast-plaat .art-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; }
+.gs-uit .gs-kast-art { filter: drop-shadow(0 0 18px rgba(106, 211, 106, .6)); }
 /* raak, aanval, schok (uitval-vijand/-speler in het spel) */
 .gs-kast.geraakt, .gs-orb.geraakt { animation: plGeraakt .32s ease; }
 @keyframes plGeraakt { 20% { translate: 6px 0; filter: brightness(1.8); } 45% { translate: -4px 0; } 70% { translate: 2px 0; } }

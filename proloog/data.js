@@ -46,7 +46,7 @@ window.SLAYLIT_PROLOOG = (function () {
   // Zonder art — of als een beloofde plaat toch niet laadt — tekent proloog.js een silhouet
   // met één attribuut (Marleen: de warme lamp, Rudi: bril en archiefdoos, Karel: alleen zijn
   // tl-buis en zijn stem).
-  const NIEUWE_ART = { collega_marleen: false, collega_rudi: false, collega_karel: false };
+  const NIEUWE_ART = { collega_marleen: false, collega_rudi: false, collega_karel: false, baas_kast: false };   // R4: baas_kast (B.A.A.S. als figuur in het gesprek)
   function heeftArt(stam) {
     const m = window.ART_MANIFEST && window.ART_MANIFEST.proloog;
     if (Array.isArray(m)) return m.indexOf(stam) !== -1;
@@ -172,7 +172,8 @@ window.SLAYLIT_PROLOOG = (function () {
       start: { welzijn: 40, energie: 3 },
       facturabiliteit: 78,
       held: { naam: 'Medewerker 0042', welzijn: 'WELZIJN', nr: '0042' },
-      baas: { naam: 'B.A.A.S.', waarde: 'AANDEELHOUDERSWAARDE', oneindig: '∞', fact: 'FACT.' },
+      // art: optioneel (assets/proloog/PROMPTS.txt, baas_kast): zonder plaat tekent de css de beige kast met het groene oog
+      baas: { naam: 'B.A.A.S.', waarde: 'AANDEELHOUDERSWAARDE', oneindig: '∞', fact: 'FACT.', art: artAls('baas_kast') },
       eindig: 'Eindig beurt',
       // de intentiepil boven B.A.A.S., per beurt (zoals de pil boven een vijand in het spel)
       intenties: [
