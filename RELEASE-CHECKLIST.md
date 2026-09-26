@@ -29,6 +29,7 @@ patcht, devOutro bij de outro — plus index.html en de twee CSS-sporen.
 | `DICK.tempo` (ceremonieschaal voor het meetharnas) | `js/game.js`, `const DICK` | Mag blijven staan (hij is 1 in het spel — alleen `devInstZet`/`devInstWis` en de bootregel van het dev-blok raakten hem aan, en die gaan mee weg). Zet hem niet in een instellingenmenu |
 | De haak op het versielabel | zit IN het dev-blok (`devVersieHaak`, `DEV_LANGEDRUK_MS`, `DEV_TIKKEN`, `DEV_TIKVENSTER`) | Verdwijnt vanzelf met het blok. Controleer daarna dat `#inst-versie` in `index.html:229` geen listeners meer krijgt — het label zelf blijft (v116) |
 | De acceptatiesuite van het menu | `tools/devmenu_acceptatie.js` | Mag blijven (tools/ gaat niet mee in de shell), maar hij faalt na het wissen — schrap hem samen met het blok |
+| Het meetharnas van de eindbaas (Finale B4) leest twee dev-haken: `DEV_BUILDS` (`slachter_mid` = gemiddeld-Slachter, `gif_opt` = `sterk_oud`-Gifmagiër) en `devMetgezellen` (alleen met `MEET_METGEZEL`) | `tools/baas-meting/dick_meting.js` (`BUILDS` en `eenGevecht`) | Geen spelcode: mag blijven. Wis je het dev-blok, zet dan eerst die twee builds letterlijk in `BUILDS` van het harnas (anders faalt elke meting op `dev:`), en laat de metgezel-terugkeer via `METGEZELLEN_AAN` lopen. De meetuitvoer staat in `.claude/notities/baas-meting/uit/` (gitignored) en nooit in `tools/` |
 
 **Waarom kritisch:** alles staat op `window`, dus elke speler kan via de console
 `devSprongAct2()` aanroepen of — erger — de logo-klik per ongeluk raken. Op mobiel opent
