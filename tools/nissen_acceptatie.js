@@ -19,7 +19,9 @@
    grep-wacht (HEEL + PER_STRING), de DEV-schakelaar UIT midden in een gevecht, de DEV-kiezer
    zonder Codex, de daily-reveal, de nederlaag-duiding, de spookregel, het orakel en de
    Plagiaatfase in blok F. Elke nieuwe controle is ook tegen de code van vóór F1 gedraaid en
-   gaf daar FOUT (de leegte-wachten niet: die meten dat de vlag-aan-tak nog bestaat).
+   gaf daar FOUT (de leegte-wachten niet: die meten dat de vlag-aan-tak nog bestaat). Ook
+   groen op de merge-tree main (v132) + nissen (blokken bron t/m erfprins, 87 ok) en de
+   grep-wacht op de merges met finale en bazentoneel.
    Hoort in de suitelijst van elke volgende bazenronde (Erfprins, finale, bazentoneel: M-plan
    §7.1) — wie als tweede merget, draait haar mee.
    ============================================================================ */
