@@ -7400,9 +7400,12 @@ const DICK = {
   speelbaarGuard: 6,      /* onder 7 speelbare kaarten geen decreet meer (dan HET VONNIS) */
   lasterCap: 2, dekMinLaster: 16,
   kiezersCap: 3, krachtPerKiezer: 2,
-  /* DE ZITTING LOOPT (R3): elke scène na een overgang duurt minstens zoveel van zijn zetten
-     (HERSCHIKT niet meegeteld) - één volle cyclus. Tot dan houdt hij stand op drempel + 1
-     (in III en IV op 1 HP). Per scène; een ontbrekende sleutel of 0 = geen minimum. */
+  /* DE ZITTING LOOPT (R3): elke scène na een overgang duurt minstens N = minZetten[scène] van
+     zijn eigen zetten (HERSCHIKT niet meegeteld). N is een eigen knop, los van de lengte van
+     zijn cyclus (3 zetten in I-III, 2 in IV): met N = 2 speelt II of III niet elke zet. Tot
+     dan houdt hij stand op drempel + 1 (in III en IV op 1 HP). Een speler-tekst noemt N
+     altijd uit DICK (dicktatorMinZetten / dicktatorZittingNog), nooit "een cyclus" (review
+     F11). Per scène; een ontbrekende sleutel of 0 = geen minimum. */
   minZetten: { 2: 3, 3: 3, 4: 2 },
   claqueurHp: 16,
   gifRest: 0.5,           /* DE HERVERKIEZING: dit deel van zijn Gif overleeft (naar beneden afgerond) */

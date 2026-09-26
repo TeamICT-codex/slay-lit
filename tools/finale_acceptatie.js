@@ -658,6 +658,21 @@ const sonde = page => page.evaluate(() => {
   t(tx.pagina.includes(tx.oud.A + ' schade per beurt') && !/[{}]/.test(tx.pagina), `de Bestiarium-pagina van de claqueur: "${tx.pagina.trim()}"`);
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
+  kop('14b · F11 · niets belooft "één volle cyclus": DE ZITTING LOOPT telt DICK.minZetten zetten');
+  const bron14 = ['js/game.js', 'js/data.js'].map(f => fs.readFileSync(path.join(WORKTREE, f), 'utf8')).join('\n');
+  const cyclus = (bron14.match(/[^\n]*volle cyclus[^\n]*/gi) || []);
+  t(cyclus.length === 0, `"volle cyclus" in game.js/data.js: ${cyclus.length}× ${cyclus.map(r => r.trim().slice(0, 70)).join(' | ')}`);
+  /* de teller die stap 3 zichtbaar maakt, rekent met het getal uit DICK - niet met de cyclus
+     van drie: met minZetten[2] = 2 zegt hij na de overgang 2, na zijn eerste zet 1, dan 0 */
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page);
+  const nog = [];
+  nog.push(await page.evaluate(() => { DICK.minZetten = Object.assign({}, DICK.minZetten, { 2: 2 }); const b = dicktatorBaas(S.gevecht); verliesHp(b, 999, sp()); checkBaasFase(); return dicktatorZittingNog(b); }));
+  await wachtVrij(page);
+  for (let i = 0; i < 3; i++) { await beurt(page, 0); nog.push(await page.evaluate(() => dicktatorZittingNog(dicktatorBaas(S.gevecht)))); }
+  t(JSON.stringify(nog) === JSON.stringify([2, 2, 1, 0]), `met DICK.minZetten[2] = 2: nog ${nog.join(' → ')} (overgang → HERSCHIKT → 1e zet → 2e zet; verwacht 2 → 2 → 1 → 0)`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
 
   await browser.close();
   console.log('\n============================================');
