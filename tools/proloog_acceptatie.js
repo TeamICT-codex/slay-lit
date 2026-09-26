@@ -774,17 +774,19 @@ async function speelBreekpunt(page, vp, pad, label) {
   await slaap(1500);
   await sonde(page, `${label} de afrekening (de printer ratelt)`);
   await shot(page, `${vp.n}-08-factuur`);
-  const doorspoel = async () => { if (vp.m) await page.locator('.pv-kamer').first().tap({ position: { x: 16, y: 70 }, force: true }).catch(() => {}); else await page.keyboard.press('Space'); };
+  const doorspoel = async () => { if (vp.m) await page.locator('.pv-kamer').first().tap({ position: { x: 16, y: 70 }, force: true, timeout: 1500 }).catch(() => {}); else await page.keyboard.press('Space'); };
+  /* doortikken tot het slot. Geduwd: tot de pen kan — of tot de machine al tekende (een tik die net na de
+     tikgrens valt, is 'naast het vel': dan tekent de machine, zoals bij Z-8) */
   const klaar = pad === 'sprong'
     ? () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pv-sprong')) || !(R && R.querySelector('.pv-papier')); }
-    : () => { const R = document.getElementById('scherm-proloog').shadowRoot; const b = R && R.querySelector('[data-actie="teken"]'); return !!b && !b.disabled; };
+    : () => { const R = document.getElementById('scherm-proloog').shadowRoot; const b = R && R.querySelector('[data-actie="teken"]'), p = R && R.querySelector('.pv-papier'); return (!!b && !b.disabled) || !p || !!p.dataset.getekend; };
   for (let i = 0; i < 40 && !(await page.evaluate(klaar)); i++) { await doorspoel(); await slaap(200); }
   await sonde(page, `${label} het besluit`);
   await shot(page, `${vp.n}-08b-besluit`);
   const regels = await sr(page, `const o = {}; R.querySelectorAll('.pv-regel[data-post]').forEach(r => { o[r.dataset.post] = r.textContent.replace(/\\s+/g, ' ').trim(); }); return o;`);
   t(/Glimlachen vandaag: \d+ × 0u06/.test(regels.glimlachen || '') && /IN BESL█/.test(regels.warmte || '') && /€ 0,00/.test(regels.totaal || ''),
     `${label}: de factuur: ${regels.glimlachen} · ${regels.droom} · ${regels.warmte} · ${regels.totaal}`);
-  if (pad !== 'sprong') await tik(page, vp, '[data-actie="teken"]', { position: { x: 24, y: 16 } });
+  if (pad !== 'sprong' && await sr(page, `const b = R.querySelector('[data-actie="teken"]'); return !!b && !b.disabled;`)) await tik(page, vp, '[data-actie="teken"]', { position: { x: 24, y: 16 }, timeout: 3000 });
   t(await wachtScene(page, 'breekpunt/val', 8000), `${label}: naar de val`);
   await slaap(1200);
   await sonde(page, `${label} de val`);
@@ -3222,9 +3224,11 @@ function klankReeks(pk, verwacht) {
      ========================================================================== */
   if (doe('afrekening')) {
     const posten = page => sr(page, `const o = {}; R.querySelectorAll('.pv-regel[data-post]').forEach(r => { o[r.dataset.post] = r.textContent.replace(/\\s+/g, ' ').trim(); }); return o;`);
-    const doorspoel = async (page, vp) => { if (vp.m) await page.locator('.pv-kamer').first().tap({ position: { x: 16, y: 70 }, force: true }).catch(() => {}); else await page.keyboard.press('Space'); };
+    const doorspoel = async (page, vp) => { if (vp.m) await page.locator('.pv-kamer').first().tap({ position: { x: 16, y: 70 }, force: true, timeout: 1500 }).catch(() => {}); else await page.keyboard.press('Space'); };
     const tikTot = async (page, vp, fn, max) => { for (let i = 0; i < (max || 60); i++) { if (await page.evaluate(fn)) return true; await doorspoel(page, vp); await slaap(150); } return page.evaluate(fn); };
     const PEN = () => { const R = document.getElementById('scherm-proloog').shadowRoot; const b = R && R.querySelector('[data-actie="teken"]'); return !!b && !b.disabled; };
+    /* doortikken tot vlak vóór de pen: stop zodra hij er is (ook uitgeschakeld), zodat geen tik net na de tikgrens de machine laat tekenen */
+    const PEN_ER = () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('[data-actie="teken"]')); };
     const AF = () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pv-regel[data-post="afgerond"]')); };
     const factuurSave = ch => ({ slaylit_proloog_v3: JSON.stringify({ scene: 4, checkpoint: 'factuur', choices: ch, gezien: [0, 1, 2, 3, 4] }),
       slayit_proloog: JSON.stringify({ v: 2, jeugddroom: ch.jeugddroom || null, uitweg: ch.val === 'gesprongen' ? 'sprong' : 'geduwd', held: null, masker: null,
@@ -3321,7 +3325,8 @@ function klankReeks(pk, verwacht) {
       const na2 = await posten(page);
       t(o2 && na2.glimlachen === na.glimlachen && na2.droom === na.droom && /€ 0,00/.test(na2.totaal), `${L}: herladen op 'ontslag' hervat in het besluit, de afrekening staat er al (${na2.glimlachen})`);
       const sprong = g.ch.val === 'gesprongen';
-      await tikTot(page, vp, sprong ? () => { const R = document.getElementById('scherm-proloog').shadowRoot; const p = R.querySelector('.pv-papier'); return !p || /losgelaten/.test(p.textContent); } : PEN, 40);
+      await tikTot(page, vp, sprong ? () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!R.querySelector('.pv-sprong') || !R.querySelector('.pv-papier'); } : PEN_ER, 40);
+      if (!sprong) await wachtOp(page, PEN, 2000);
       await slaap(500);
       await sonde(page, `${L} het besluit (${sprong ? 'U tekende niet' : 'de lege pen'})`);
       await shot(page, `r4-afrekening-${vp.n}-${g.n.split(' ')[0]}`);
@@ -3345,7 +3350,8 @@ function klankReeks(pk, verwacht) {
       const { ctx, page } = await open(browser, vp, { opslag: factuurSave({ jeugddroom: 'piloot', glimlachen: 5, zelfGestempeld: true, val: 'geduwd' }), geenNudge: true });
       await naarProloog(page, vp, L);
       await wachtScene(page, 'breekpunt/factuur', 5000);
-      await tikTot(page, vp, PEN, 60);
+      await tikTot(page, vp, PEN_ER, 60);
+      await wachtOp(page, PEN, 2000);
       await slaap(300);
       const b = await page.locator('[data-actie="teken"]').boundingBox();
       if (geval.hoe === 'tik') await tik(page, vp, '[data-actie="teken"]', { position: { x: 24, y: b.height / 2 } });
@@ -3407,7 +3413,7 @@ function klankReeks(pk, verwacht) {
         const anim = await sr(page, `return getComputedStyle(R.querySelector('.pv-stempel')).animationName;`);
         t(anim === 'none', `${L}: de stempel slaat zonder zoom (${anim})`);
       } else {
-        const ok = await tikTot(page, vp, PEN, 60);
+        const ok = await tikTot(page, vp, PEN_ER, 60) && (await wachtOp(page, PEN, 2000)) >= 0;
         const s = (Date.now() - t0) / 1000;
         t(ok && s <= 7, `${L}: doorgetikt staat de lege pen er na ${s.toFixed(1)} s (≤ 7 s, één tik = één regel)`);
       }
