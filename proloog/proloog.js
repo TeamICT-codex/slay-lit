@@ -1729,6 +1729,8 @@
       FX.updateBliksem(dt, !stil, () => { if (typeof o.opBliksem === 'function') { try { o.opBliksem(); } catch (e) { meldFout(e); } } }, null);
       FX.tekenLucht(ctx, { lucht: 'storm', horizon: kim, camX: 0, t, regen: !stil, zoeklicht: false, zeppelin: zepAan,
         krant: o.krant, zepX: zep.x, zepY: zep.y, y0: 0, y1: H });
+      /* fixer R4 F1: gedimd in het canvas zelf (de afrekening): een ondoorzichtig vlak is goedkoper dan css-opacity */
+      if (o.dim) { ctx.fillStyle = o.dim; ctx.fillRect(0, 0, W, H); }
     }
     function beeld() {
       raf = 0;
@@ -2510,7 +2512,7 @@
       vak.appendChild(pr);
       /* de storm achter de printer: één stilstaand beeld (rustig: geen regen, geen bliksem, geen lus), de lichtkrant
          van de zeppelin zoals in het eerste beeld van de val */
-      lucht = startLucht(luchtA, { rustig: true, lite: isLite(), krant: (S.val && S.val.zeppelin) || '' });
+      lucht = startLucht(luchtA, { rustig: true, lite: isLite(), krant: (S.val && S.val.zeppelin) || '', dim: 'rgba(11, 9, 16, .64)' });
 
       const rijen = [
         { cls: 'pv-titel', l: F.kop, cps: 7 },

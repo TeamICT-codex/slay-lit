@@ -1061,11 +1061,15 @@ img { max-width: 100%; display: block; }
    Het vel groeit eroverheen; de val begint in die storm (bij pv-uit blijft het dak staan tot de lift het overneemt). */
 .pv-dak { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; --kim: 62%;
   --kast-h: min(170px, 22vh); --kast-w: calc(var(--kast-h) * .78); }
-.pv-lucht { position: absolute; left: 0; top: 0; width: 100%; height: var(--kim); display: block; object-fit: cover; object-position: 50% 100%; background: #120d1c; opacity: .36;
+/* alles ondoorzichtig en stil (geen opacity, geen lussen): het vel en de printer bewegen erboven, en elke laag
+   met doorzichtigheid of een animatie eronder zou elk beeld mee opnieuw samengesteld worden. De lucht dimt
+   proloog.js in het canvas zelf (dim ,64), de vloer is vooraf gemengd met het zwart van de kamer (,3). */
+.pv-lucht { position: absolute; left: 0; top: 0; width: 100%; height: var(--kim); display: block; object-fit: cover; object-position: 50% 100%; background: #120d1c;
   image-rendering: crisp-edges; image-rendering: pixelated; }
-.pv-dakvloer { position: absolute; left: 0; right: 0; top: var(--kim); bottom: 0; opacity: .3; background: linear-gradient(180deg, #2c2833 0%, #48433f 14%, #686050 50%, #837760 100%); }
+.pv-dakvloer { position: absolute; left: 0; right: 0; top: var(--kim); bottom: 0; background: linear-gradient(180deg, #151219 0%, #1d1a1e 14%, #272323 50%, #2f2a28 100%); }
 .pv-baas { position: absolute; right: max(4%, calc(50% - 620px)); top: calc(var(--kim) + 6px); transform: translateY(-100%); }
 .pv-baas .gs-kast { position: relative; filter: brightness(.34) saturate(.6); }
+.pv-baas * { animation: none !important; }
 .pv-baas .gs-oog { filter: brightness(2.9) saturate(1.4); }   /* het oog brandt door het donker (2,9 x ,34 ≈ 1) */
 .pv-baas::after { content: ''; position: absolute; left: 50%; top: 42%; width: 360%; height: 260%; transform: translate(-50%, -50%); pointer-events: none;
   background: radial-gradient(circle, rgba(106, 211, 106, .13), rgba(106, 211, 106, .03) 42%, transparent 64%); }

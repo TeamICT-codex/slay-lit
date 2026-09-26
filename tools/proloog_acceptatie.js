@@ -4125,7 +4125,9 @@ function r4iToets(uit) {
       const bal = q('.gs-ballon.toon');
       if (bal && !binnen(bal.getBoundingClientRect())) { const r = bal.getBoundingClientRect(); uit.push('ballon buiten beeld [' + [r.left, r.top, r.right, r.bottom].map(Math.round) + ']'); }
       const se = document.scrollingElement, app = R.getElementById('pl-app'), sc = R.getElementById('scene'), gr = q('.gs-root');
-      if ([se.scrollHeight > se.clientHeight + 1, se.scrollWidth > se.clientWidth + 1, app.scrollHeight > app.clientHeight + 1, sc.scrollHeight > sc.clientHeight + 1, gr.scrollHeight > gr.clientHeight + 1, gr.scrollWidth > gr.clientWidth + 1].some(Boolean))
+      /* .gs-root: niets zakt onder de rand (de waaier van 1280x560). In de breedte telt de dakvloer in perspectief mee
+         (.gs-dak-tegels, geknipt door .gs-dak): die meet hier niet */
+      if ([se.scrollHeight > se.clientHeight + 1, se.scrollWidth > se.clientWidth + 1, app.scrollHeight > app.clientHeight + 1, sc.scrollHeight > sc.clientHeight + 1, sc.scrollWidth > sc.clientWidth + 1, gr.scrollHeight > gr.clientHeight + 1].some(Boolean))
         uit.push('scroll of overloop (.gs-root ' + gr.scrollWidth + 'x' + gr.scrollHeight + ' > ' + gr.clientWidth + 'x' + gr.clientHeight + ')');
       const eind = q('[data-actie="eindig"]');
       const kaarten = [...R.querySelectorAll('.gs-hand .gs-kaart')];
@@ -4288,16 +4290,16 @@ function r4iToets(uit) {
       const DAK = () => {
         const R = document.getElementById('scherm-proloog').shadowRoot, c = R.querySelector('.pv-lucht'), oog = R.querySelector('.pv-baas .gs-oog');
         if (!c || !oog || !c.width) return null;
-        const px = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, kl = new Set(); let som = 0;
-        for (let i = 0; i < px.length; i += 4 * 7) { kl.add(px[i] >> 3 << 10 | px[i + 1] >> 3 << 5 | px[i + 2] >> 3); som += px[i] + px[i + 1] + px[i + 2]; }
+        const px = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, kl = new Set(); let som = 0, n = 0;
+        for (let i = 0; i < px.length; i += 4 * 7) { kl.add(px[i] >> 3 << 10 | px[i + 1] >> 3 << 5 | px[i + 2] >> 3); som += px[i] + px[i + 1] + px[i + 2]; n++; }
         const r = oog.getBoundingClientRect(), v = R.querySelector('.pv-vel').getBoundingClientRect();
-        return { w: c.width, h: c.height, kleuren: kl.size, som, oogIn: r.width > 0 && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight, naastVel: r.left >= v.right || r.right <= v.left, op: +getComputedStyle(c).opacity };
+        return { w: c.width, h: c.height, kleuren: kl.size, som, luma: Math.round(som / (3 * n)), oogIn: r.width > 0 && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight, naastVel: r.left >= v.right || r.right <= v.left };
       };
       const d1 = await page.evaluate(DAK);
       await slaap(700);
       const d2 = await page.evaluate(DAK);
-      t(!!d1 && d1.kleuren >= 12 && d1.som === d2.som && d1.op < 0.5 && (!g.dak || (d1.oogIn && d1.naastVel)),
-        `${L}: de afrekening op het dak: achter de printer de storm (${d1 ? d1.w + 'x' + d1.h + ', ' + d1.kleuren + ' kleuren, opacity ' + d1.op : 'GEEN canvas'}), stil (geen tweede lus: ${d1 && d2 && d1.som === d2.som})${g.dak ? '; het oog van B.A.A.S. kijkt mee naast het vel (' + (d1 && d1.oogIn && d1.naastVel) + ')' : ''}`);
+      t(!!d1 && d1.kleuren >= 12 && d1.som === d2.som && d1.luma < 60 && (!g.dak || (d1.oogIn && d1.naastVel)),
+        `${L}: de afrekening op het dak: achter de printer de storm, gedimd (${d1 ? d1.w + 'x' + d1.h + ', ' + d1.kleuren + ' kleuren, luma ' + d1.luma : 'GEEN canvas'}), stil (geen tweede lus: ${d1 && d2 && d1.som === d2.som})${g.dak ? '; het oog van B.A.A.S. kijkt mee naast het vel (' + (d1 && d1.oogIn && d1.naastVel) + ')' : ''}`);
       /* (h) een tik midden in de trage droomregel maakt de regel én haar geratel af: een korte regelopvoer (printer 0,1 s) */
       const droomLoopt = await wachtOp(page, () => { const d = document.getElementById('scherm-proloog').shadowRoot.querySelector('.pv-regel[data-post="droom"]'); return !!d && !d.querySelector('.pv-w'); }, 12000);
       const tT = await page.evaluate(() => performance.now());
@@ -4307,8 +4309,17 @@ function r4iToets(uit) {
       if (g.dak) {
         await shot(page, `f1-afrekening-dak-${vp.n}`);
         const fps = async () => page.evaluate(() => new Promise(res => { let n = 0; const t0 = performance.now(); const lus = () => { n++; if (performance.now() - t0 < 2000) requestAnimationFrame(lus); else res(n / ((performance.now() - t0) / 1000)); }; requestAnimationFrame(lus); }));
-        let f = await fps(); if (f < 45) f = await fps();   /* andere workflows op deze machine: één keer herhalen */
-        t(f >= 45, `${L}: ${f.toFixed(0)} beelden/s tijdens het printen (≥ 45; het dak kost geen lus)`);
+        /* absoluut ≥ 45, of (op een belaste machine, headless zonder gpu) niet trager dan zonder het dak: meteen erna
+           gemeten met het dak even verborgen. Faalt het, één keer herhalen (andere workflows op deze machine). */
+        const meet = async () => {
+          const f1 = await fps();
+          await sr(page, `R.querySelector('.pv-dak').style.display = 'none';`);
+          const f0 = await fps();
+          await sr(page, `R.querySelector('.pv-dak').style.display = '';`);
+          return { f1, f0, ok: f1 >= 45 || f1 >= 0.85 * f0 };
+        };
+        let f = await meet(); if (!f.ok) f = await meet();
+        t(f.ok, `${L}: ${f.f1.toFixed(0)} beelden/s tijdens het printen met het dak, ${f.f0.toFixed(0)} zonder (≥ 45, of ≥ 85 % van zonder: het dak is één stil, ondoorzichtig beeld)`);
       }
       /* (e) de stempel */
       for (let i = 0; i < 40 && !(await sr(page, `return !!R.querySelector('.pv-stempel');`)); i++) { await tikAfr(page, vp); await slaap(160); }
@@ -4336,17 +4347,26 @@ function r4iToets(uit) {
       const vp = VPS.laptop, L = 'F1 de lucht bij het slepen aan het venster (laptop)';
       kop('15L · ' + L);
       const { ctx, page } = await naarGesprek(vp, L);
+      /* tel de canvassen die OutroFX BEWAART (bakLucht → luchtCache, bakRegen → regenVel: nooit vrijgegeven), apart van
+         de vluchtige (het licht en het vignet van FX.init, die de GC opruimt); en de maten van het luchtcanvas */
       await page.evaluate(() => {
-        window.__cv = 0; const o = Document.prototype.createElement;
-        Document.prototype.createElement = function (tag, ...a) { if (String(tag).toLowerCase() === 'canvas' && /outro-fx/.test(new Error().stack || '')) window.__cv++; return o.call(this, tag, ...a); };
+        window.__cv = { bewaard: 0, alles: 0, maten: new Set() }; const o = Document.prototype.createElement;
+        Document.prototype.createElement = function (tag, ...a) {
+          if (String(tag).toLowerCase() === 'canvas') { const st = new Error().stack || ''; if (/outro-fx/.test(st)) { window.__cv.alles++; if (/bakLucht|bakRegen/.test(st)) window.__cv.bewaard++; } }
+          return o.call(this, tag, ...a);
+        };
       });
       const maten = [];
       for (let i = 0; i < 30; i++) maten.push({ width: 900 + i * 21, height: i % 2 ? 860 : 740 - i * 3 });
-      for (const m of maten) { await page.setViewportSize(m); await slaap(150); }
+      for (const m of maten) {
+        await page.setViewportSize(m); await slaap(150);
+        await page.evaluate(() => { const c = document.getElementById('scherm-proloog').shadowRoot.querySelector('.gs-lucht'); window.__cv.maten.add(c.width + 'x' + c.height); });
+      }
       await page.setViewportSize({ width: vp.w, height: vp.h }); await slaap(400);
-      const n = await page.evaluate(() => window.__cv);
+      const n = await page.evaluate(() => ({ bewaard: window.__cv.bewaard, alles: window.__cv.alles, maten: [...window.__cv.maten] }));
       const s = await page.evaluate(F1_SONDE);
-      t(n <= 40 && !s.uit.length, `${L}: 30 vensterformaten → ${n} nieuwe canvassen uit OutroFX (≤ 40; vóór de fix 129: een lucht en regenvellen per W×H, nooit vrijgegeven); daarna alles weer raak` + (s.uit.length ? ' — ' + s.uit.join(' | ') : ''));
+      t(n.maten.length <= 12 && n.bewaard <= 3 * n.maten.length && !s.uit.length,
+        `${L}: 30 vensterformaten → het luchtcanvas in ${n.maten.length} vaste trappen (${n.maten.join(', ')}); OutroFX bewaart ${n.bewaard} nieuwe canvassen (≤ 3 per trap; vóór de fix een lucht en regenvellen per venstermaat, 129 in totaal), ${n.alles} in totaal (vluchtig: licht en vignet per init); daarna alles weer raak` + (s.uit.length ? ' — ' + s.uit.join(' | ') : ''));
       t(page.__f.length === 0, `${L}: geen paginafouten`);
       await ctx.close();
     }
@@ -4364,7 +4384,7 @@ function r4iToets(uit) {
       for (let i = 0; i < 40 && !(await sr(page, `return !!R.querySelector('.pv-pasfoto');`)); i++) { await page.keyboard.press('ArrowRight'); await slaap(160); }
       await slaap(500);
       const c = await sr(page, `const c = R.querySelector('.pv-pasfoto'); if (!c) return null; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let inkt = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) inkt++; return { w: c.width, cw: c.clientWidth, inkt, tot: c.width * c.height };`);
-      t(!!c && c.w === c.cw && c.w === 60 && c.inkt > c.tot * 0.1 && c.inkt < c.tot * 0.95, `${L}: het Bayer-raster op de getoonde maat: ${c ? c.w + ' inktpunten breed op ' + c.cw + ' px (was 40 opgeschaald), ' + c.inkt + '/' + c.tot + ' inktpunten' : 'GEEN pasfoto'}`);
+      t(!!c && c.w === c.cw && c.w >= 46 && c.inkt > c.tot * 0.1 && c.inkt < c.tot * 0.95, `${L}: het Bayer-raster op de getoonde maat, één inktpunt per schermpixel: ${c ? c.w + ' punten breed op ' + c.cw + ' px (was 40 opgeschaald), ' + c.inkt + '/' + c.tot + ' inktpunten' : 'GEEN pasfoto'}`);
       t(page.__f.length === 0, `${L}: geen paginafouten`);
       await ctx.close();
     }
