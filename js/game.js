@@ -8757,6 +8757,7 @@ function _bannerVolgende() {
   el.className = 'baas-flits';
   el.innerHTML = `<h2>${item.titel}</h2><span>${item.sub}</span>`;
   sc.appendChild(el);
+  if (typeof bannerFit === 'function') bannerFit(el);   /* B0.13: boven het hoofd van de held (js/bazentoneel.js) */
   /* wacht er nog een, dan krijgt ook deze alleen zijn leestijd */
   _banner = { el, t0: performance.now(), t: _bannerRij.length ? setTimeout(_bannerDoof, dtempo(BANNER_LEES_MS)) : setTimeout(_bannerVolgende, BANNER_MS) };
 }

@@ -310,12 +310,15 @@ async function perFormaat(browser, fk) {
 
       /* --- B0.13: de fasebanner dekt de figuren niet --- */
       if (!vp.staand && baas !== 'hof') {
-        await page.evaluate(() => baasFaseMoment('WOEDE', '„Au — je SLÁÁT me?! Onbeschofte parvenu. Goed dan."'));
-        await slaap(500);
-        const b = await page.evaluate(() => __BT.meet());
-        await shot(page, `${vp.naam}_${baas}_banner`);
-        t(b.flits > 0 && b.flitsBaas <= 2 && b.flitsHeld <= 2, `B0.13 ${vp.naam} ${B}: bannertekst ~ baas ${b.flitsBaas} %, ~ held ${b.flitsHeld} % (<= 2)`);
-        await wachtRust(page, 0, 6000);
+        /* een korte (WOEDE) en de langste echte ondertitel (DE ROOF) */
+        for (const [titel, sub] of [['WOEDE', '„Au — je SLÁÁT me?! Onbeschofte parvenu. Goed dan."'], ['DE ROOF', '🎭 7 van je beste kaarten — nu MÍJN werk. Je dek sluit zich.']]) {
+          await page.evaluate(([a, b]) => baasFaseMoment(a, b), [titel, sub]);
+          await slaap(500);
+          const b = await page.evaluate(() => __BT.meet());
+          await shot(page, `${vp.naam}_${baas}_banner_${titel.replace(' ', '')}`);
+          t(b.flits > 0 && b.flitsBaas <= 2 && b.flitsHeld <= 2, `B0.13 ${vp.naam} ${B}: bannertekst '${titel}' ~ baas ${b.flitsBaas} %, ~ held ${b.flitsHeld} % (<= 2)`);
+          await wachtRust(page, 0, 6000);
+        }
       }
 
       /* --- B0.10 + B0.11: fakkel 0 zonder daglicht --- */
