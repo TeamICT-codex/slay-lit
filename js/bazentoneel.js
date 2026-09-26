@@ -203,14 +203,19 @@ function _meetVrijeBovenrand() {
 function vrijeBovenrand() { return _vrijBoven == null ? _meetVrijeBovenrand() : _vrijBoven; }
 
 /* kaderFit3D(): de camera van een 3D-baasgevecht, per scherm uitgerekend.
-   - voetDoel: de voetlijn valt op de bovenrand van de kaarten min de labelstapel (hp, chips);
+   - de voeten: ELKE figuur staat met zijn voeten boven zijn eigen labelstapel (hp, chips),
+     die op de bovenrand van de kaarten rust. gevechtTik hangt die stapel onder de voeten en
+     klemt hem op die lijn; staat een voet lager, dan schuift de hp-balk over het eigen lijf.
+     Per figuur dus, niet de voetlijn van het toneel: de held staat vooraan (z +0,4) en zijn
+     voeten vallen op het scherm 7-11px lager dan die lijn (integratie B2: zijn hp-balk lag
+     tot 0,7% over zijn laarzen, 1440-3D). 2px speling voor de adem.
    - kopDoel: de kruin van de HOOGSTE figuur blijft onder vrijeBovenrand() + 35 (de pil);
    - de kleinste fov (>= 50) die beide haalt, met per fov de kijkhoogte (kijkY) die de
-     voeten precies op voetDoel zet.
-   Gemeten (P, rook_fit): fov 53,4 op 1440x900 en 64,0 op 1366x768. Eigen label op eigen
-   lijf 45,4% -> <= 0,2% (1366-3D), pil in de bazenbalk 2 905 px2 -> 0. De prijs op
-   1366x768: de figuren worden een kwart kleiner, nog altijd groter dan in 2D (beslissing
-   Thomas: de kaderfit). Een gewoon gevecht krijgt de vaste camera terug. */
+     laagste voet precies op zijn grens zet.
+   Gemeten: fov 52-55 op 1440x900 en 61-66 op 1366x768 (P's toneelvoetlijn: 53,4 en 64,0).
+   Eigen label op eigen lijf 45,4% -> 0% (1366-3D), pil in de bazenbalk 2 905 px2 -> 0. De
+   prijs op 1366x768: de figuren worden ruim een kwart kleiner, nog altijd groter dan in 2D
+   (beslissing Thomas: de kaderfit). Een gewoon gevecht krijgt de vaste camera terug. */
 function kaderFit3D() {
   const sc = document.getElementById('scherm-gevecht');
   if (!sc || !sc.classList.contains('d3-actief') || !window.Vista || !Vista.zetKader) return null;
@@ -222,16 +227,20 @@ function kaderFit3D() {
   let hoogste = lev[0], hoogsteTop = Infinity;
   lev.forEach(v => { const p = Vista.schermPos(v); if (p && p.topY < hoogsteTop) { hoogsteTop = p.topY; hoogste = v; } });
   const kopDoel = _meetVrijeBovenrand() + 35;
-  let labels = 0;
-  GDOM.vijanden.forEach((d, i) => { const v = g.vijanden[i]; if (d && v && !v.dood) labels = Math.max(labels, (d.infoH || 130) - 35); });
-  if (GDOM.speler) labels = Math.max(labels, GDOM.speler.infoH || 0);
-  const voetDoel = innerHeight - ((GDOM.onderbalkH || 235) - 25) - labels;
+  /* de grens per figuur, dezelfde rekensom als gevechtTik: de held hangt zijn stapel (infoH)
+     direct onder de voeten; een vijand draagt 34px pilruimte boven zijn kruin mee */
+  const lijn = innerHeight - ((GDOM.onderbalkH || 235) - 25), ADEM = 2;
+  const grenzen = [];
+  if (GDOM.speler) grenzen.push({ a: g.speler, max: lijn - (GDOM.speler.infoH || 0) - ADEM });
+  g.vijanden.forEach((v, i) => { const d = GDOM.vijanden[i]; if (d && !v.dood) grenzen.push({ a: v, max: lijn - ((d.infoH || 130) - 34) - ADEM }); });
+  /* > 0: een voet staat lager dan zijn grens (de hp-balk zou over het lijf schuiven) */
+  const teLaag = () => Math.max(...grenzen.map(x => { const p = Vista.schermPos(x.a); return p ? p.voetY - x.max : -Infinity; }));
   const zet = (fov, kijkY) => Vista.zetKader({ fov, kijkY });
-  /* per fov: de kijkhoogte die de voetlijn op voetDoel legt (bisectie; de voetlijn zakt
-     monotoon als de camera hoger kijkt) */
+  /* per fov: de kijkhoogte die de laagste voet op zijn grens legt (bisectie; de voeten
+     zakken monotoon als de camera hoger kijkt) */
   const kijkVoor = fov => {
     let lo = -4, hi = 8;
-    for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; zet(fov, m); if (Vista.voetlijnY() > voetDoel) hi = m; else lo = m; }
+    for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; zet(fov, m); if (teLaag() > 0) hi = m; else lo = m; }
     return (lo + hi) / 2;
   };
   const kopBij = fov => { const k = kijkVoor(fov); zet(fov, k); return { k, top: Vista.schermPos(hoogste).topY }; };
@@ -246,7 +255,7 @@ function kaderFit3D() {
   }
   zet(best.fov, best.k);
   plaatsGevechtsplaat();
-  return { fov: +best.fov.toFixed(2), kijkY: +best.k.toFixed(3), kopDoel: Math.round(kopDoel), voetDoel: Math.round(voetDoel), top: Math.round(best.top) };
+  return { fov: +best.fov.toFixed(2), kijkY: +best.k.toFixed(3), kopDoel: Math.round(kopDoel), voetSpeling: +(-teLaag()).toFixed(1), top: Math.round(best.top) };
 }
 /* de fit loopt VANZELF: na elke Vista.gevechtStart (start, nieuwkomer, de 3D-knop), bij
    resize, en als de bazenbalk van hoogte verandert (Geroofd-pil, beleidsstrook) */

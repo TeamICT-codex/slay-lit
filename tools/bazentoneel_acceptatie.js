@@ -118,8 +118,14 @@ const HELPER = `(() => {
     const som = (A, B) => A.reduce((s, a) => s + B.reduce((t, b) => t + snij(a, b), 0), 0);
     const pct = (f, rs) => f ? +(100 * rs.reduce((s, r) => s + opaakIn(f, r), 0) / f.opaakPx).toFixed(2) : 0;
     /* eigen labels op het eigen lijf (3D: naam/hp/chips/pil van de baas, hp/chips van de held) */
-    const eigenBaas = kol ? pct(bf, [kol.querySelector('.vijand-naam'), kol.querySelector('.hp-balk'), ...kol.querySelectorAll('.blok-status > *'), ...kol.querySelectorAll('.intent')].filter(zicht).map(R)) : 0;
-    const eigenHeld = pct(held, [...document.querySelectorAll('#speler-zone .hp-balk, #speler-zone .blok-status > *')].filter(zicht).map(R));
+    const eigenBaasEls = kol ? [kol.querySelector('.vijand-naam'), kol.querySelector('.hp-balk'), ...kol.querySelectorAll('.blok-status > *'), ...kol.querySelectorAll('.intent')].filter(zicht) : [];
+    const eigenHeldEls = [...document.querySelectorAll('#speler-zone .hp-balk, #speler-zone .blok-status > *')].filter(zicht);
+    const eigenBaas = kol ? pct(bf, eigenBaasEls.map(R)) : 0;
+    const eigenHeld = pct(held, eigenHeldEls.map(R));
+    /* per label (zoals het P-harnas: het grootste stuk lijf onder één naam, hp-balk, chip of pil) */
+    let eigenLabel = 0, eigenLabelWie = '';
+    const perLabel = (f, els, wie) => { if (!f) return; for (const e of els) { const p = pct(f, [R(e)]); if (p > eigenLabel) { eigenLabel = p; eigenLabelWie = wie + ':' + (e.className || e.tagName).toString().split(' ')[0] + ' "' + e.textContent.trim().slice(0, 12) + '"'; } } };
+    perLabel(bf, eigenBaasEls, 'baas'); perLabel(held, eigenHeldEls, 'held');
     const spraak = alle('.baas-spraak span').filter((r, i) => +getComputedStyle(document.querySelectorAll('.baas-spraak')[i] || document.body).opacity > 0.2);
     const sp = spraak[0] || null;
     let regels = 0; const spEl = document.querySelector('.baas-spraak span');
@@ -134,7 +140,8 @@ const HELPER = `(() => {
       pilTop: tb ? Math.round(som(pillen, [tb])) : 0, pilRel: Math.round(som(pillen, rel)), pilBB: bb ? Math.round(som(pillen, [bb])) : 0,
       pilHeldChips: Math.round(som(pillen, heldChips)), pilHeld: pct(held, pillen), pilBaas: pct(bf, pillen),
       chipsAnderPil: Math.round(som(baasChips, anderPillen)), chipsAnderArt: anderArts.length ? Math.max(...anderArts.map(a => +(100 * som(baasChips, [a]) / ((a.r - a.l) * (a.b - a.t))).toFixed(1))) : 0,
-      eigenBaas, eigenHeld,
+      eigenBaas, eigenHeld, eigenLabel, eigenLabelWie,
+      pilN: pillen.length, pilRect: pillen.length ? { l: Math.min(...pillen.map(p => p.l)), t: Math.min(...pillen.map(p => p.t)), r: Math.max(...pillen.map(p => p.r)), b: Math.max(...pillen.map(p => p.b)) } : null,
       spraak: !!sp, spRegels: regels, spBaas: pct(bf, sp ? [sp] : []), spPil: Math.round(som(sp ? [sp] : [], pillen)), spHeld: pct(held, sp ? [sp] : []),
       spBB: bb && sp ? Math.round(snij(sp, bb)) : 0, spTop: tb && sp ? Math.round(snij(sp, tb)) : 0, spUit: sp ? (sp.l < 0 || sp.r > W) : false,
       flits: flits.length, flitsBaas: pct(bf, flits), flitsHeld: pct(held, flits),
@@ -252,7 +259,8 @@ async function perFormaat(browser, fk) {
   const R = []; const t = (g, s) => R.push([!!g, s]);
   const { ctx, page, vp } = await open(browser, fk);
   const laptop = !vp.mobiel, mobielLiggend = vp.mobiel && !vp.staand;
-  const statussen = laptop ? ['geen', 'een', 'vier', 'vijf'] : ['geen', 'een', 'vier', 'vijf', 'held5'];
+  /* §6: {0, 4, 5 statussen, held met 5} op held en baas, plus 1 (B0.1) */
+  const statussen = ['geen', 'een', 'vier', 'vijf', 'held5'];
   for (const baas of ['slijmkoning', 'erfprins', 'dicktator', 'hof']) {
     const B = BAZEN[baas];
     try {
@@ -263,7 +271,10 @@ async function perFormaat(browser, fk) {
         await zetStatus(page, st); await zetFakkel(page, f);
         if (vp.d3) await page.evaluate(() => kaderFit3D());   /* de fit loopt vanzelf; hier synchroon, zodat de meting niet wacht */
         await slaap(vp.d3 ? 300 : 150);
-        const m = await page.evaluate(() => __BT.meet()); m.st = st; m.f = f; rijen.push(m);
+        const m = await page.evaluate(() => __BT.meet()); m.st = st; m.f = f;
+        /* B0.11: de baaspil is ook bij fakkel 0 te LEZEN (p98 van de pil, onder het vignet) */
+        if (baas !== 'hof' && (st === 'geen' || st === 'vijf')) m.pilLum = await helderheid(page, m.pilRect);
+        rijen.push(m);
       }
       await shot(page, `${vp.naam}_${baas}_vijf`);
       const n = rijen.length;
@@ -278,7 +289,9 @@ async function perFormaat(browser, fk) {
         t(rijen.every(m => m.bbBeurt === null), `B0.2 ${vp.naam} ${B}: mobiel toont geen beurtnummer (zoals voorheen)`);
       }
       if (vp.d3) {
-        t(max(rijen, m => Math.max(m.eigenBaas, m.eigenHeld)) <= 1, `B0.12 ${vp.naam} ${B}: eigen label op eigen lijf <= 1 % (max ${max(rijen, m => Math.max(m.eigenBaas, m.eigenHeld))} %)`);
+        t(max(rijen, m => Math.max(m.eigenBaas, m.eigenHeld)) <= 1, `B0.12 ${vp.naam} ${B}: alle eigen labels samen op het eigen lijf <= 1 % (max ${max(rijen, m => Math.max(m.eigenBaas, m.eigenHeld))} %)`);
+        { const w = rijen.reduce((a, m) => (m.eigenLabel > a.eigenLabel ? m : a), rijen[0]);
+          t(w.eigenLabel <= 0.2, `B0.12 ${vp.naam} ${B}: eigen label op eigen lijf <= 0,2 % per label (max ${w.eigenLabel} %${w.eigenLabel ? ', ' + w.eigenLabelWie + ' bij ' + w.st + '/fakkel ' + w.f : ''})`); }
         t(max(rijen, m => m.pilBB) === 0, `B0.12 ${vp.naam} ${B}: pil ~ bazenbalk = 0 (max ${max(rijen, m => m.pilBB)} px2)`);
         t(max(rijen, m => Math.abs(m.voetBaas - m.grondY) / m.H * 100) <= 2, `B0.12 ${vp.naam} ${B}: |voet - grondlijn| <= 2 % vh (max ${max(rijen, m => Math.abs(m.voetBaas - m.grondY) / m.H * 100).toFixed(2)} %)`);
         t(rijen.every(m => m.kader && m.kader.eigen && m.kader.fov <= 70), `B0.12 ${vp.naam} ${B}: eigen kader, fov ${[...new Set(rijen.map(m => m.kader && m.kader.fov.toFixed(1)))].join('/')} (<= 70)`);
@@ -291,7 +304,23 @@ async function perFormaat(browser, fk) {
         t(max(rijen, m => m.scroll) <= 0, `${vp.naam} ${B}: geen horizontale scroll`);
         if (baas === 'hof') t(max(rijen, m => m.chipsAnderPil) === 0 && max(rijen, m => m.chipsAnderArt) <= 2, `B0.8 ${vp.naam} ${B}: de chipkolom van de baas ligt niet over het hof (pil ${max(rijen, m => m.chipsAnderPil)} px2, lijf ${max(rijen, m => m.chipsAnderArt)} % van een art-doos)`);
       }
-      if (vp.staand) t(max(rijen, m => m.chipsUit) === 0, `controle ${vp.naam} ${B}: geen chip uit beeld (noodpad)`);
+      if (vp.staand) {
+        t(max(rijen, m => m.chipsUit) === 0, `controle ${vp.naam} ${B}: geen chip uit beeld (noodpad)`);
+        t(max(rijen, m => m.pilTop) === 0 && max(rijen, m => m.chipsHand) === 0, `controle ${vp.naam} ${B}: pil ~ topbalk ${max(rijen, m => m.pilTop)} px2, chips ~ hand ${max(rijen, m => m.chipsHand)} px2 (noodpad, 0)`);
+      }
+      /* B0.11: de baaspil staat er ook bij fakkel 0 - zichtbaar, zonder ❓, en te lezen onder het vignet */
+      if (baas !== 'hof') {
+        const donker = rijen.filter(m => m.f === 0);
+        t(donker.length && donker.every(m => m.pilN >= 1 && !/❓/.test(m.intent)), `B0.11 ${vp.naam} ${B}: bij fakkel 0 staat de baaspil in beeld in ${donker.filter(m => m.pilN >= 1).length}/${donker.length} staten, zonder ❓ ("${donker.length ? donker[0].intent : ''}")`);
+        /* het vignet mag de pil niet onleesbaar maken: p98 bij fakkel 0 tegenover dezelfde staat
+           bij fakkel 100 (een absolute drempel kan niet: de 🌀-pil is van zichzelf al donker, ~110).
+           Ter vergelijking: de bazenbalk viel vóór B0.10 onder het vignet naar ~1/3. */
+        const paren = ['geen', 'vijf'].map(st => [rijen.find(m => m.st === st && m.f === 0), rijen.find(m => m.st === st && m.f === 'max')]).filter(([a, b]) => a && b && a.pilLum && b.pilLum);
+        if (paren.length) {
+          const verh = Math.min(...paren.map(([a, b]) => a.pilLum / b.pilLum));
+          t(verh >= 0.7, `B0.11 ${vp.naam} ${B}: de baaspil blijft bij fakkel 0 te lezen, p98 ${paren.map(([a, b]) => a.pilLum + '/' + b.pilLum).join(', ')} (fakkel 0 / 100: >= 0,7, min ${verh.toFixed(2)})`);
+        }
+      }
 
       /* --- B0.5: de spraakplaat in rust (de echte introregel van de baas) --- */
       await zetStatus(page, 'vier'); await zetFakkel(page, 'max');
@@ -445,10 +474,11 @@ async function overgang(browser, fk) {
       document.querySelectorAll('#meldingen .toast').forEach(t => t.remove());
       const R = e => { const q = e.getBoundingClientRect(); return { l: q.left, t: q.top, r: q.right, b: q.bottom }; };
       const snij = (a, b) => { const l = Math.max(a.l, b.l), t = Math.max(a.t, b.t), r = Math.min(a.r, b.r), bb = Math.min(a.b, b.b); return (r > l && bb > t) ? (r - l) * (bb - t) : 0; };
-      const o = { titel: 0, baas: 0, baasMax: 0, pil: 0, held: 0, regels: {} };
+      const o = { titel: 0, baas: 0, baasMax: 0, pil: 0, held: 0, regels: {}, banners: 0 };
       let vorig = performance.now(); const t0 = vorig;
       const iv = setInterval(() => {
         const nu = performance.now(), dt = nu - vorig; vorig = nu;
+        o.banners = Math.max(o.banners, document.querySelectorAll('.baas-flits').length);
         const sp = [...document.querySelectorAll('.baas-spraak')].filter(e => +getComputedStyle(e).opacity > 0.2).map(e => R(e.querySelector('span') || e));
         const tit = [...document.querySelectorAll('.vonnis h2, .vonnis span, .baas-flits h2, .baas-flits span')].map(R);
         const g = S.gevecht; if (!g) return;
@@ -479,6 +509,7 @@ async function overgang(browser, fk) {
     t(Object.keys(o.regels).length >= 1 && af.every(([, r]) => r.tot - r.van >= 700), `B0.4 ${vp.naam} ${naam}: elke regel leesbaar, >= 0,7 s (${regels})`);
     t(o.baas <= 250 && o.pil <= 250, `B0.5 ${vp.naam} ${naam}: plaat ~ DICKtator ${o.baas} ms (max ${o.baasMax} px2), ~ zijn pil ${o.pil} ms (<= 250)`);
     t(o.held === 0, `B0.5 ${vp.naam} ${naam}: plaat ~ held ${o.held} ms (0)`);
+    t(o.banners <= 1, `bannerwachtrij ${vp.naam} ${naam}: nooit meer dan één banner tegelijk in de echte overgang (max ${o.banners})`);
   }
   t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
   await ctx.close();
@@ -679,10 +710,31 @@ async function intents(browser) {
       return uit;
     }));
   }
+  /* en élke andere vijand uit VIJANDEN: zijn eigen zetten over 12 beurten, bij volle fakkel */
+  const alle = await page.evaluate(() => {
+    const uit = [], fout = [];
+    S.fakkel = fakkelMax();
+    for (const id of Object.keys(VIJANDEN)) {
+      const def = VIJANDEN[id]; if (def.baas || typeof def.kies !== 'function') continue;
+      let v; try { v = maakVijand(id, 0); } catch (e) { fout.push(id + ': ' + e.message); continue; }
+      for (let b = 0; b < 12; b++) {
+        let it; try { it = def.kies(v, b); } catch (e) { fout.push(id + ': ' + e.message); break; }
+        if (!it) continue;
+        v.intent = it;
+        const d = document.createElement('div'); d.innerHTML = intentTekst(v);
+        const pillen = [...d.querySelectorAll('.intent')];
+        uit.push({ id, type: it.type, tips: pillen.map(p => p.dataset.tip || ''), tekst: pillen.map(p => p.textContent.trim()) });
+      }
+    }
+    renderGevecht();
+    return { uit, fout, n: new Set(uit.map(r => r.id)).size };
+  });
+  res.push(...alle.uit);
+  t(alle.fout.length === 0 && alle.n >= 20, `intent-assert (dynamisch): de zetten van alle ${alle.n} gewone vijanden en elites gerenderd, soorten: ${[...new Set(alle.uit.map(r => r.type))].sort().join(', ')}${alle.fout.length ? ' — fouten: ' + alle.fout.slice(0, 3).join(' | ') : ''}`);
   const liegt = res.filter(r => r.type !== 'debuff' && r.tips.some(tp => /verzwakt jou/.test(tp)));
   const leeg = res.filter(r => !r.tips.length || r.tips.some(tp => !tp.trim()));
   const getal = res.filter(r => (r.type === 'aanval' || r.type === 'factuur') && r.tekst.some((tx, i) => { const n = (tx.match(/\d+/g) || []).pop(); return n && !r.tips[i].includes(n); }));
-  t(liegt.length === 0, `intent-assert (dynamisch, ${res.length} zetten van 3 bazen + hof): geen pil valt terug op "verzwakt jou" tenzij het een debuff is ([${[...new Set(liegt.map(r => r.id + ':' + r.type))].join(', ')}])`);
+  t(liegt.length === 0, `intent-assert (dynamisch, ${res.length} zetten van 3 bazen + hof + alle gewone vijanden): geen pil valt terug op "verzwakt jou" tenzij het een debuff is ([${[...new Set(liegt.map(r => r.id + ':' + r.type))].join(', ')}])`);
   t(leeg.length === 0, `intent-assert: elke pil heeft een niet-lege data-tip ([${[...new Set(leeg.map(r => r.id + ':' + r.type))].join(', ')}])`);
   t(getal.length === 0, `intent-assert: elke schadepil noemt haar getal ook in de tip ([${[...new Set(getal.map(r => r.id + ':' + r.type))].join(', ')}])`);
   t(page.__f.length === 0, `intent-assert: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
