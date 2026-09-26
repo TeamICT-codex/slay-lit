@@ -395,6 +395,76 @@ const sonde = page => page.evaluate(() => {
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
 
+  /* ================= 8 · F1 · MET METGEZEL (de DEV-override van DE NISSEN DICHT) ================= */
+  /* Solo onbereikbaar: tussen de schorsingswis en de check in beginSpelerBeurt raakt niets de
+     baas. Met een metgezel wel: zijn beet komt NA die check. Echte overgangen, geen DEV-landing
+     (die zet minVrij en verbergt de vloer; les 3 van E). De metgezel staat via devMetgezellen
+     (de schakelaar van main), niet via S.metgezel met de hand. */
+  kop('8 · F1 · met metgezel (DEV-override): een schorsing vóór je eerste actie geldt niet voor je beurt');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  const mg8 = await page.evaluate(() => {
+    DICK.tempo = 0.1;
+    window.__dickKeuze = (A, B) => B;
+    devDicktator('slachter_mid');
+    const solo = { g: S.gevecht ? S.gevecht.metgezel : 'geen gevecht', s: S.metgezel };
+    devMetgezellen(true);                     /* DEV-SHORTCUT (main): alleen deze sessie */
+    devMetgezel('drops');                     /* stapt in vanaf het volgende gevecht */
+    stopGevechtLus(); S.gevecht = null;
+    startGevecht(baasSamenstelling('de_dicktator'), 'baas', 12);
+    S.maxHp = 5000; S.hp = 5000;
+    const m = S.gevecht.metgezel;
+    if (m) { m.hp = 999; m.maxHp = 999; }   /* we meten zijn beet, niet zijn overleving */
+    renderGevecht(); renderTopbalk();
+    return { soloG: solo.g === null, soloS: solo.s === null, aan: metgezellenAan(), mg: m ? m.id : null };
+  });
+  t(mg8.soloG && mg8.soloS, `devDicktator('slachter_mid') is solo zonder handwerk (F8, main): g.metgezel null ${mg8.soloG}, S.metgezel null ${mg8.soloS}`);
+  t(mg8.aan && mg8.mg === 'drops', `met de DEV-override: metgezellenAan ${mg8.aan}, in het gevecht: ${mg8.mg}`);
+  await wachtVrij(page, 30000);
+  /* 8a · scène I: de baas op drempel + 1, Drops bijt hem bij het begin van je beurt op de drempel */
+  let f8 = await page.evaluate(() => {
+    const g = S.gevecht, b = dicktatorBaas(g);
+    b.hp = dicktatorDrempel(b, 2) + 1; b._geschorst = false; renderGevecht();
+    const voor = b.hp;
+    beginSpelerBeurt();
+    return { voor, hp: b.hp, fase: b.fase || 1, geschorst: !!b._geschorst, pil: b.intent ? b.intent.naam : '-', drempel: dicktatorDrempel(b, 2), alleen: g.vijanden.filter(x => !x.dood).length };
+  });
+  t(f8.alleen === 1 && f8.hp === f8.drempel && f8.fase === 2 && !f8.geschorst && f8.pil === 'HERSCHIKT DE ZAAL',
+    `I: baas op ${f8.voor}, Drops bijt bij het begin van je beurt → ${f8.hp}: de overgang vuurt meteen (fase ${f8.fase}, pil "${f8.pil}"), geschorst ${f8.geschorst}`);
+  await wachtVrij(page);
+  f8 = await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); const voor = b.hp; verliesHp(b, 10, sp()); checkBaasFase(); renderGevecht(); return { voor, na: b.hp }; });
+  t(f8.na === f8.voor - 10, `je beurt blijft van jou: een klap van 10 → ${f8.voor} → ${f8.na}`);
+  /* de HERSCHIKT-beurt, en het hof van het toneel (Drops bijt een willekeurige vijand) */
+  await beurt(page, 0);
+  await page.evaluate(() => { S.gevecht.vijanden.filter(x => x.hof && !x.dood).forEach(x => verliesHp(x, 999, sp())); renderGevecht(); });
+  /* 8b · op de vloer van II (DE ZITTING LOOPT): de beet raakt de vloer; geen GESCHORST voor jouw beurt */
+  f8 = await page.evaluate(() => {
+    const g = S.gevecht, b = dicktatorBaas(g);
+    const vloer = dicktatorVloer(b);
+    if (vloer == null) return { vloer: null };
+    b.hp = vloer + 1; b._geschorst = false; renderGevecht();
+    beginSpelerBeurt(); renderGevecht();
+    return { vloer, hp: b.hp, fase: b.fase || 1, geschorst: !!b._geschorst, strook: (document.querySelector('#baas-balk .bb-proces') || {}).textContent || '', alleen: g.vijanden.filter(x => !x.dood).length };
+  });
+  t(f8.vloer != null && f8.alleen === 1 && f8.hp === f8.vloer && f8.fase === 2 && !f8.geschorst && !/GESCHORST/.test(f8.strook),
+    `II op de vloer (${f8.vloer}): Drops bijt → ${f8.hp}, fase ${f8.fase}, geschorst ${f8.geschorst}, strook "${f8.strook}"`);
+  /* 8c · de sonde van E (P1): de vloer van II is net weg, de baas op drempel(III) + 1, Drops
+     bijt hem op de drempel → de overgang naar III vuurt meteen en een klap doet schade */
+  let p1 = null;
+  for (let i = 0; i < 8 && !p1; i++) {
+    await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); b.hp = dicktatorDrempel(b, 3) + 1; b._geschorst = false; renderGevecht(); });
+    const r = await beurt(page, 0);
+    const st = await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); return { hp: b.hp, fase: b.fase || 1, geschorst: !!b._geschorst, pil: b.intent ? b.intent.naam : '-', drempel: dicktatorDrempel(b, 3) }; });
+    if (st.fase >= 3 || r.voorbij) p1 = Object.assign(st, { zet: r.naam, i });
+  }
+  t(p1 && p1.fase === 3 && p1.hp === p1.drempel && !p1.geschorst && p1.pil === 'HERSCHIKT DE ZAAL',
+    `II → III: na zijn laatste zet van de zitting ("${p1 && p1.zet}", beurt ${p1 && p1.i + 1}) bijt Drops hem op ${p1 && p1.hp}: fase ${p1 && p1.fase}, pil "${p1 && p1.pil}", geschorst ${p1 && p1.geschorst}`);
+  await wachtVrij(page);
+  f8 = await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); const voor = b.hp; verliesHp(b, 30, sp()); checkBaasFase(); renderGevecht(); return { voor, na: b.hp }; });
+  t(f8.na === f8.voor - 30, `en een klap van 30 doet schade: ${f8.voor} → ${f8.na} (was: ${f8.voor} → ${f8.voor}, een verloren beurt)`);
+  await page.evaluate(() => devMetgezellen(false));
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
   await browser.close();
   console.log('\n============================================');
   console.log(fout === 0 ? `FINALE ACCEPTATIE: ALLES GROEN — ${ok} ok` : `FINALE ACCEPTATIE: ${ok} ok, ${fout} FOUT`);

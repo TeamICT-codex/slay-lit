@@ -9066,6 +9066,12 @@ function beginSpelerBeurt() {
      vóór v84 op beurt 2+ altijd leeg — de vloek deed dus niets (debug-sweep 27 aug).
      Kan de laatste vijand vellen → de gewonnen-check verderop vangt dat. */
   metgezelBeurt();
+  /* HET SCÈNESLOT (review F1): een schorsing die vóór jouw eerste actie valt, geldt niet voor
+     jouw beurt. Duwde de beet van de metgezel de DICKtator op een drempel (of op de vloer
+     van DE ZITTING LOOPT), dan vuurt de overgang nu - de pil is die van de nieuwe scène - en
+     je beurt blijft van jou. Solo onbereikbaar (niets anders raakt hem tussen de check
+     hierboven en hier), met een metgezel systematisch. */
+  if (_dickB && _dickB._geschorst && !g.voorbij) { _dickB._geschorst = false; checkBaasFase(); }
   /* LICHT-VLOEKEN in de hand (onspeelbaar) — sturen je fakkel-gedrag */
   const smetN = g.hand.filter(c => c.id === 'schaduwsmet').length;
   if (smetN > 0 && ['duister', 'gedoofd'].includes(lichtNu)) {
