@@ -52,6 +52,22 @@ function heldChipsWijken() {
   if (Math.abs(wijk - oud) >= 1) hs.style.setProperty('--wijk', Math.round(wijk) + 'px');
 }
 
+/* ---------- --bb-onder: de onderrand van de bazenbalk als CSS-variabele ----------
+   Op laptop beginnen de fasebanner (B0.13) en de spraakplaat (B0.5) net onder de bazenbalk.
+   Die groeit mee met wat hij toont (Geroofd-pil, beleidsstrook), dus een ResizeObserver
+   houdt de maat bij; zonder zichtbare balk (gewoon gevecht) geldt 60px. */
+function zetBazenbalkOnder() {
+  const bb = document.getElementById('baas-balk'); if (!bb) return;
+  const r = bb.getBoundingClientRect();
+  document.body.style.setProperty('--bb-onder', Math.round(r.height ? r.bottom : 60) + 'px');
+}
+(function volgBazenbalk() {
+  const bb = document.getElementById('baas-balk'); if (!bb) return;
+  if (window.ResizeObserver) new ResizeObserver(zetBazenbalkOnder).observe(bb);
+  window.addEventListener('resize', zetBazenbalkOnder);
+  zetBazenbalkOnder();
+})();
+
 /* ---------- de toneelwacht: één lichte lus (150 ms), alleen tijdens een gevecht ----------
    Figuren bewegen buiten renderGevecht om (entree, oprijzen, het hof dat opkomt, de adem),
    dus wat aan hun positie hangt, volgt hier mee. Buiten het gevecht doet de lus niets. */

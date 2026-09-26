@@ -4903,6 +4903,18 @@ body.ceremonie #speler-zone::before {
   letter-spacing: 3px;
 }
 .baas-flits span { font-family: 'Alegreya', serif; font-style: italic; color: var(--perkament); }
+/* B2 — de bannerwachtrij (baasFaseMoment): een banner die plaats maakt voor de volgende,
+   dooft in 180ms uit in plaats van hard te verdwijnen */
+.baas-flits.bf-weg { animation: bannerUit .18s ease forwards; }
+@keyframes bannerUit { from { opacity: 1; } to { opacity: 0; } }
+body.lite .baas-flits.bf-weg { animation: none; opacity: 0; }
+/* B2 · B0.13 — EEN FASEBANNER DEKT DE FIGUREN NIET. WOEDE, fase 2/3, DE ROOF... stonden
+   gecentreerd met een doek over het hele scherm, precies over de baas op zijn eigen beat
+   (1366-3D: 15,2% van de prins). Laptop: linksboven, net onder de bazenbalk (--bb-onder,
+   js/bazentoneel.js), boven het hoofd van de held, met een licht verloop i.p.v. een doek.
+   Mobiel liggend: zie mobiel.css, blok C2. */
+body[data-modus="laptop"] .baas-flits { justify-content: flex-start; align-items: flex-start; text-align: left; padding: calc(var(--bb-onder, 175px) + 14px) 0 0 7vw; background: linear-gradient(180deg, rgba(10, 6, 14, .62), rgba(10, 6, 14, .3) 38%, transparent 60%); }
+body[data-modus="laptop"] .baas-flits > * { max-width: 40vw; }
 
 /* woede: de koning gloeit gevaarlijk */
 .vijand.woede .vijand-art { animation: woedeGloei 1.1s ease-in-out infinite; }

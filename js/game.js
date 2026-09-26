@@ -2742,11 +2742,15 @@ function _spraakVolgende() {
   clearTimeout(_spraakT);
   /* de klok loopt alleen terwijl de sluis open is: een onderbroken plaat brandde vroeger
      onzichtbaar op achter de titel ("U bent ONTSLAGEN." nog 86 ms leesbaar op 1366x768) */
-  let rest = d, vorig = Date.now();
+  /* Een plaat die langer dan 6 s moet wachten (De Roof, een decreetkeuze), komt niet meer
+     terug: haar regel hoorde bij een moment dat voorbij is. Titels en banners duren korter. */
+  let rest = d, vorig = Date.now(), gepauzeerd = 0;
   const tik = () => {
     const nu = Date.now();
     if (!_spraakGesloten()) rest -= nu - vorig;
+    else gepauzeerd += nu - vorig;
     vorig = nu;
+    if (gepauzeerd > 6000 && !item.slot) rest = 0;
     if (rest <= 0 || !el.isConnected) { el.remove(); _spraakBezig = false; _spraakVolgende(); }
     else _spraakT = setTimeout(tik, Math.min(120, rest));
   };
@@ -8683,15 +8687,47 @@ function dicktatorBalk(b) {
   return `<div class="bb-aegis bb-proces" data-tip="${tip}">${delen.join(' · ')}</div>`;
 }
 
+/* B2 — ÉÉN BANNERWACHTRIJ. baasFaseMoment had geen wachtrij: twee aanroepen binnen 2,4 s
+   lagen over elkaar (DE ROOF en PAPPIE KIJKT TOE, gezien in de O1-hermeting), en elke
+   aanroep schudde het scherm opnieuw. Nu staat er één banner tegelijk. Komt er een bij
+   terwijl er een staat, dan houdt die staande nog zijn minimale leestijd (1,4 s), dooft kort
+   uit (.bf-weg) en pas dan komt de volgende, met zijn eigen schok en klank. Een banner die
+   nog wachtte op een gevecht dat intussen voorbij is, vervalt. De DOM van een banner en de
+   signatuur (titel, sub) blijven ongewijzigd: 21 aanroepers. */
+const BANNER_MS = 2400, BANNER_LEES_MS = 1400, BANNER_UIT_MS = 180;
+let _bannerRij = [], _banner = null;
 function baasFaseMoment(titel, sub) {
+  _bannerRij.push({ titel, sub, g: S && S.gevecht });
+  if (_banner && _banner.el.isConnected) {
+    if (_banner.dooft) return;   /* hij gaat al weg; de volgende komt vanzelf */
+    clearTimeout(_banner.t);
+    _banner.t = setTimeout(_bannerDoof, Math.max(0, dtempo(BANNER_LEES_MS) - (performance.now() - _banner.t0)));
+    return;
+  }
+  _bannerVolgende();
+}
+function _bannerDoof() {
+  const b = _banner; if (!b) return _bannerVolgende();
+  if (!_bannerRij.length || !b.el.isConnected) return _bannerVolgende();
+  b.dooft = true;
+  b.el.classList.add('bf-weg');
+  b.t = setTimeout(_bannerVolgende, dtempo(BANNER_UIT_MS));
+}
+function _bannerVolgende() {
+  if (_banner) { clearTimeout(_banner.t); _banner.el.remove(); _banner = null; }
+  let item = _bannerRij.shift();
+  while (item && item.g !== (S && S.gevecht)) item = _bannerRij.shift();
+  const sc = $('#scherm-gevecht');
+  if (!item || !sc) return;
   schudScherm();
   Klank.sfx('zwareklap');
   setTimeout(() => Klank.sfx('debuff'), 350);
   const el = document.createElement('div');
   el.className = 'baas-flits';
-  el.innerHTML = `<h2>${titel}</h2><span>${sub}</span>`;
-  $('#scherm-gevecht').appendChild(el);
-  setTimeout(() => el.remove(), 2400);
+  el.innerHTML = `<h2>${item.titel}</h2><span>${item.sub}</span>`;
+  sc.appendChild(el);
+  /* wacht er nog een, dan krijgt ook deze alleen zijn leestijd */
+  _banner = { el, t0: performance.now(), t: _bannerRij.length ? setTimeout(_bannerDoof, dtempo(BANNER_LEES_MS)) : setTimeout(_bannerVolgende, BANNER_MS) };
 }
 
 /* vijand toevoegen midden in het gevecht (de splijtende koning) */
