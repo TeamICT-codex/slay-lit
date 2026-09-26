@@ -121,10 +121,10 @@
 
 ---
 
-## 🎬 PROLOOG — optioneel, er is een terugval (4 items) → `assets/proloog/`
+## 🎬 PROLOOG — optioneel, er is een terugval (4 items, 1 geparkeerd) → `assets/proloog/`
 
 > De proloog ("Een Productief Leven™") draait volledig zonder deze platen: de collega's vallen
-> terug op een silhouet met één attribuut, 0042 op een SVG-silhouet. Een drop maakt het beeld
+> terug op een silhouet met één attribuut, B.A.A.S. op de css-kast. Een drop maakt het beeld
 > rijker, niet werkend. **Eigen stijlanker:** de 198X-lock (nicotinegeel, tl-licht, amber CRT,
 > één bloedrood accent), NIET het fantasy-anker. Voeg bij het genereren een referentie toe:
 > `bart_blinker2.webp` voor de collega's (zelfde kader, zelfde vergeelde print), een masker
@@ -144,7 +144,8 @@
 - [ ] `collega_marleen.png` · `assets/proloog` · prompt: `assets/proloog/PROMPTS.txt` → kopregel `collega_marleen.png` (r52) · R3, scène 2 (het Glimlachquotum): de enige warme lamp van de kantoortuin, vest, autosleutels aan een rood hangertje ("Ik ga zo frieten halen"). 1024x1024, VOL beeld (geen cut-out) · terugval: silhouet + bureaulamp/vest · **nieuw (optioneel)**
 - [ ] `collega_rudi.png` · `assets/proloog` · prompt: `assets/proloog/PROMPTS.txt` → kopregel `collega_rudi.png` (r61) · R3, scène 2: de archivaris, bril op het voorhoofd, archiefdoos als schild, staalblauw accent ("Dat was Karel. Twaalf jaar."). 1024x1024, VOL beeld · terugval: silhouet + archiefdoos/bril · **nieuw (optioneel)**
 - [ ] `collega_karel.png` · `assets/proloog` · prompt: `assets/proloog/PROMPTS.txt` → kopregel `collega_karel.png` (r70) · R3, scène 2: de stem uit cubicle 7, midden in een zin, half weggevaagd onder zijn flakkerende tl-buis. 1024x1024, VOL beeld · terugval: alleen zijn tl-buis en zijn stem · **nieuw (optioneel)**
-- [ ] `medewerker_0042.png` · `assets/proloog` · prompt: `assets/proloog/PROMPTS.txt` → kopregel `medewerker_0042.png` (r79) · R4, het Functioneringsgesprek: volledige figuur, kijkt naar **RECHTS**, vastgeroeste glimlach, badge aan een rood koord (badge blanco: het spel zet 0042 erop), het kooltje gloeit door de borstzak. 1024x1024, **cut-out** (transparant, `verwijder_dambord.py` + `converteer_webp.py`) · terugval: SVG-silhouet · **nieuw (optioneel)**
+- [ ] `baas_kast.png` · `assets/proloog` · prompt: `assets/proloog/PROMPTS.txt` → kopregel `baas_kast.png` (onderaan) · R4, het Functioneringsgesprek: B.A.A.S. als vijand rechts onder zijn intentiepil — een beige mainframekast zo hoog als een man met één rond groen fosforscherm als oog, bandspoelen, een antenne met een rood lampje; kijkt naar **LINKS**. 1024x1024, **cut-out** (`verwijder_dambord.py` + `converteer_webp.py`; beide kennen `baas_kast` sinds R4) · terugval: de css-kast met het groene oog · **nieuw (optioneel)**
+- [ ] ~~`medewerker_0042.png`~~ · **geparkeerd (R4)**: 0042 is in het gesprek een naamkaart op een lege bureaustoel (die bij 'geduwd' de lift in rolt); een volle figuur past daar niet. Het promptblok blijft staan tot een ronde hem opvraagt (bv. een outro-epiloog). Niet genereren.
 
 ---
 
