@@ -395,7 +395,9 @@ async function perFormaat(browser, fk) {
         /* een korte (WOEDE) en de langste echte ondertitel (DE ROOF) */
         for (const [titel, sub] of [['WOEDE', '„Au — je SLÁÁT me?! Onbeschofte parvenu. Goed dan."'], ['DE ROOF', '🎭 7 van je beste kaarten — nu MÍJN werk. Je dek sluit zich.']]) {
           await page.evaluate(([a, b]) => baasFaseMoment(a, b), [titel, sub]);
-          await slaap(500);
+          /* de banner faadt in ~0,3 s op; onder last (3D, drie contexten) later - wacht tot hij staat (max 1,5 s) */
+          await page.waitForFunction(() => [...document.querySelectorAll('.baas-flits')].some(e => +getComputedStyle(e).opacity > 0.9), null, { timeout: 1500, polling: 50 }).catch(() => { });
+          await slaap(150);
           const b = await page.evaluate(() => __BT.meet());
           await shot(page, `${vp.naam}_${baas}_banner_${titel.replace(' ', '')}`);
           t(b.flits > 0 && b.flitsBaas <= 2 && b.flitsHeld <= 2, `B0.13 ${vp.naam} ${B}: bannertekst '${titel}' ~ baas ${b.flitsBaas} %, ~ held ${b.flitsHeld} % (<= 2)`);
