@@ -11485,9 +11485,10 @@ if (!document.getElementById('inst-versie')) document.addEventListener('DOMConte
    riep ze nog aan — de DEV-knop ging mee naar devDrempeltafel).
    DAT MAAKT DRIE DINGEN STIL, EN DAT IS DE BEDOELING: drempelVoltrek was de ENIGE schrijver
    van ontgrendelMetgezel() én van ontdek('metgezellen', …). De metgezellen zijn deze release
-   bewust GEPARKEERD — er komt geen nieuwe vrijspeelweg bij. Bestaande saves en Codexen met
-   vrijgespeelde metgezellen blijven volledig werken: kiesRunMetgezel, de act-rotatie, de
-   Drops-boog en de grief-terugkeer van de Witte zijn niet aangeraakt.
+   bewust GEPARKEERD — er komt geen nieuwe vrijspeelweg bij. v128 liet Codexen met al
+   vrijgespeelde metgezellen nog werken; sinds DE NISSEN DICHT (B1) zijn ook die dicht:
+   kiesRunMetgezel, de act-rotatie hieronder en de grief-terugkeer van de Witte staan achter
+   metgezellenAan() (poorten V4-V6), de Drops-boog achter de DEV-schakelaar.
    BLIJFT STAAN: bronIcoon — de scherf-reveal, het Codex-schervenblok en de scherf-loadout
    op het heldkeuze-scherm lezen 'm alle drie.
    DODE CSS: .drempel-scene/.drempel-lore/.drempel-nis(sen)/.drempel-scherf/.drempel-pool/

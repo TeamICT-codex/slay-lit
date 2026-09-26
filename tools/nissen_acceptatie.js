@@ -11,7 +11,9 @@
      NODE_PATH="$PWD/node_modules" SLAYIT_WORKTREE='C:\...\SLAY-IT-nissen' \
        SLAYIT_SHOTS="$PWD/nissen_shots" node "C:\...\SLAY-IT-nissen\tools\nissen_acceptatie.js"
    Geen server: route.fulfill vanaf schijf op localhost:4173, service workers geblokkeerd.
-   Blokken filteren: SLAYIT_NISSEN=bron,scherven,doorloop,save,dev,builds,erfprins,beeld,outro
+   Blokken filteren: SLAYIT_NISSEN=bron,scherven,doorloop,save,dev,builds,erfprins,beeld,vel,outro
+   Het blok 'vel' (M-plan §5, integratie) schrijft contactvel_nissen.jpg in SLAYIT_SHOTS: de
+   heldkeuze, de Codex, de scherf-reveal en de afscheidsregel op Thomas' formaten.
    ============================================================================ */
 const { chromium } = require('playwright');
 const path = require('path'); const fs = require('fs');
@@ -19,7 +21,7 @@ const path = require('path'); const fs = require('fs');
 const WT = process.env.SLAYIT_WORKTREE || path.resolve(__dirname, '..');
 const HOST = 'localhost:4173';
 const UIT = process.env.SLAYIT_SHOTS || path.join(__dirname, 'nissen_shots'); fs.mkdirSync(UIT, { recursive: true });
-const BLOKKEN = (process.env.SLAYIT_NISSEN || 'bron,scherven,doorloop,save,dev,builds,erfprins,beeld,outro').split(',').map(s => s.trim());
+const BLOKKEN = (process.env.SLAYIT_NISSEN || 'bron,scherven,doorloop,save,dev,builds,erfprins,beeld,vel,outro').split(',').map(s => s.trim());
 const doe = b => BLOKKEN.includes(b);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff', '.txt': 'text/plain; charset=utf-8', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav', '.glb': 'model/gltf-binary' };
 const UA = 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36';
@@ -56,6 +58,9 @@ const CODEX = {
     runs: 4, wins: 1, dropsOfferRun: 1, erfprinsOntmoetingen: 2, scherven: ['mosgeest_baas'], relikwieen: [], dranken: [], opgeladen: [], gezien: [], copycatGebroken: true },
   nieuw: { metgezellen: [], gevallen: [], mysteries: {}, runs: 2, wins: 0, erfprinsOntmoetingen: 2, scherven: ['mosgeest_baas', 'mosgeest_figuur'], relikwieen: [], dranken: [], opgeladen: [], gezien: [] }
 };
+/* de daily loopt met de Codex waarin Drops ontwaakt is: het strengste geval (M-plan §2.4 — de
+   daily kreeg nooit een cross-run-metgezel; dat moet zo blijven, zonder tafel en zonder tekst) */
+const codexVan = scen => CODEX[scen === 'daily' ? 'ontwaakt' : scen];
 
 /* ============================================================================
    DE GREP-WACHT — een mini-lexer over de bron (strings, templates met ${}, commentaar,
@@ -336,21 +341,33 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
      C · DE DOORLOOP — drie Codexen, van heldkeuze tot de Codex
      ============================================================ */
   if (doe('doorloop')) {
-    for (const scen of ['ontwaakt', 'rouw', 'nieuw']) {
-      kop('C · doorloop met Codex "' + scen + '"');
-      const { ctx, page } = await context(browser, { codex: CODEX[scen] });
+    for (const scen of ['ontwaakt', 'rouw', 'nieuw', 'daily']) {
+      const daily = scen === 'daily';
+      kop('C · doorloop met Codex "' + scen + '"' + (daily ? ' (de dagelijkse afdaling, Codex met ontwaakte Drops)' : ''));
+      const { ctx, page } = await context(browser, { codex: codexVan(scen) });
       await laad(page);
       /* heldkeuze + de scherf-loadout (de tips lezen scherfTekst) */
       await page.evaluate(() => toonHeldKeuze()); await slaap(500);
       await stap(page, scen, 'heldkeuze');
       const lo = await page.evaluate(() => [...document.querySelectorAll('.scherf-slot[data-shart]')].map(b => ({ sid: b.dataset.shart, tip: b.dataset.tip, moet: scherfTekst(b.dataset.shart) })));
-      t(lo.length === CODEX[scen].scherven.length && lo.every(x => x.tip === x.moet), `${scen} · heldkeuze: ${lo.length} scherven in de loadout, elke tip = scherfTekst (de tafelTekst)`);
-      /* Act 1 → de Drempeltafel → Act 2 */
-      await page.evaluate(() => { nieuwSpel('slachter', 'NISSEN-DOORLOOP'); S.act = 1; ['drops_baas', 'vlamwachter_figuur', 'mosgeest_episch'].forEach(s => draagScherf(s)); renderTopbalk(); });
+      t(lo.length === codexVan(scen).scherven.length && lo.every(x => x.tip === x.moet), `${scen} · heldkeuze: ${lo.length} scherven in de loadout, elke tip = scherfTekst (de tafelTekst)`);
+      /* Act 1 → de Drempeltafel → Act 2 (de daily: via startDaily, en daar staat de tafel uit) */
+      if (daily) {
+        const dg = await page.evaluate(() => { startDaily(); S.act = 1; ['drops_baas', 'vlamwachter_figuur', 'mosgeest_episch'].forEach(s => draagScherf(s)); renderTopbalk(); return { daily: !!S.daily, held: S.held, dagwet: S.dagwet || null }; });
+        t(dg.daily === true, `daily · startDaily() zet een dagelijkse afdaling op (held ${dg.held}, dagwet ${dg.dagwet})`);
+        await slaap(600);
+        await stap(page, scen, 'daily-start (Act 1-kaart)');
+      } else {
+        await page.evaluate(() => { nieuwSpel('slachter', 'NISSEN-DOORLOOP'); S.act = 1; ['drops_baas', 'vlamwachter_figuur', 'mosgeest_episch'].forEach(s => draagScherf(s)); renderTopbalk(); });
+      }
       await page.evaluate(() => volgendeAct('De Slijmkoning')); await slaap(900);
-      await stap(page, scen, 'Drempeltafel (einde Act 1)');
-      await page.evaluate(() => dtLoopVoorbij()); await slaap(900);
-      const overgang = await stap(page, scen, 'Act 2-overgang na Loop voorbij');
+      if (!daily) {
+        await stap(page, scen, 'Drempeltafel (einde Act 1)');
+        await page.evaluate(() => dtLoopVoorbij()); await slaap(900);
+      } else {
+        t(await page.evaluate(() => !document.querySelector('#overlay-drempeltafel.open') && S.act === 2), 'daily · geen Drempeltafel: meteen de Act 2-overgang');
+      }
+      const overgang = await stap(page, scen, daily ? 'Act 2-overgang (daily, geen tafel)' : 'Act 2-overgang na Loop voorbij');
       t(!overgang.log.some(l => /met je mee|daalt mee|rankt met je mee|zweeft .* mee/i.test(l)), `${scen} · geen instapmelding bij Act 2 (V5): ${overgang.log.filter(l => /MELDING/.test(l)).map(l => l.slice(8, 70)).join(' | ') || '—'}`);
       await page.evaluate(() => renderKaartScherm()); await slaap(600);
       await stap(page, scen, 'Act 2-kaart');
@@ -403,9 +420,10 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
       }));
       t(!cx.mgKop && cx.verbruikt === 0 && !cx.doorgrond, `${scen} · Codex: geen blok Metgezellen, geen 'doorgrond'/'verbruikt' trio (kop ${cx.mgKop}, verbruikt ${cx.verbruikt}, doorgrond ${cx.doorgrond})`);
       await page.screenshot({ path: path.join(UIT, `codex-${scen}.png`) });
+      if (daily) t(await page.evaluate(() => !!(S && S.daily)), 'daily · de run is tot in Act 3 een daily gebleven');
       const cxNa = await leesMgCodex(page);
-      t(normaliseer(cxNa) === normaliseer(CODEX[scen]), `${scen} · de metgezelsleutels van de Codex zijn na de doorloop inhoudelijk gelijk (niets gewist, niets bijgeschreven)` +
-        (normaliseer(cxNa) === normaliseer(CODEX[scen]) ? '' : ` — voor ${normaliseer(CODEX[scen])} na ${normaliseer(cxNa)}`));
+      t(normaliseer(cxNa) === normaliseer(codexVan(scen)), `${scen} · de metgezelsleutels van de Codex zijn na de doorloop inhoudelijk gelijk (niets gewist, niets bijgeschreven)` +
+        (normaliseer(cxNa) === normaliseer(codexVan(scen)) ? '' : ` — voor ${normaliseer(codexVan(scen))} na ${normaliseer(cxNa)}`));
       t(page.__f.length === 0, `${scen} · geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 2).join(' | ') : ''));
       await sluit(ctx, page, 'doorloop ' + scen);
     }
@@ -670,6 +688,150 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
       t(bijna(a.held, b.held) && bijna(a.vijand, b.vijand), `${f.id}: held ${JSON.stringify(a.held)} en vijand ${JSON.stringify(a.vijand)} staan waar ze bij een verse Codex staan (${JSON.stringify(b.held)} / ${JSON.stringify(b.vijand)}, ±1 px)`);
       if (f.d3 !== undefined && !f.mobiel) t(a.d3 === !!f.d3, `${f.id}: het toneel draait ${a.d3 ? '3D' : '2D'} zoals gevraagd`);
     }
+  }
+
+  /* ============================================================
+     J · HET CONTACTVEL (M-plan §5, integratie): wat Thomas na de parkering ziet, op zijn formaten.
+     Per formaat vijf beelden met een Codex waarin Drops ontwaakt is — de heldkeuze (met de
+     scherf-tip open op laptop), de Codex (boven + het schervenblok), de scherf-reveal in een
+     Act 2-gevecht en de afscheidsregel na het laden van een lopende run met Drops. Elk beeld
+     krijgt zijn meting (in beeld, geen horizontale scroll, 0 verboden woorden); daarna worden ze
+     tot één contactvel geplakt (contactvel_nissen.jpg in SLAYIT_SHOTS).
+     ============================================================ */
+  if (doe('vel')) {
+    kop('J · contactvel: heldkeuze, Codex, scherf-reveal en afscheidsregel op Thomas\' formaten');
+    const FORMATEN = [
+      { id: '800x360', w: 800, h: 360, mobiel: true, dpr: 2 },
+      { id: '846x381', w: 846, h: 381, mobiel: true, dpr: 2 },
+      { id: '1440x900 2D', w: 1440, h: 900, d3: false },
+      { id: '1440x900 3D', w: 1440, h: 900, d3: true },
+      { id: '1366x768 2D', w: 1366, h: 768, d3: false },
+      { id: '1366x768 3D', w: 1366, h: 768, d3: true }
+    ];
+    const BEELDEN = ['heldkeuze', 'codex', 'codex-scherven', 'scherf-reveal', 'afscheid'];
+    const vel = [];   /* { f, beeld, pad } */
+    const naamVan = (f, b) => path.join(UIT, `vel-${f.id.replace(/\s+/g, '_')}-${b}.png`);
+    /* past een element volledig in het venster? (de maat waarop een speler het leest) */
+    const inBeeld = (page, sel) => page.evaluate(s => {
+      const el = document.querySelector(s); if (!el) return { er: false };
+      const r = el.getBoundingClientRect();
+      return { er: true, r: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)], vw: innerWidth, vh: innerHeight,
+        past: r.width > 0 && r.height > 0 && r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1,
+        hscroll: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+    }, sel);
+    for (const f of FORMATEN) {
+      const inst = { lite: false, d3: !!f.d3 };
+      /* 1+2+3 · heldkeuze en Codex (één context) */
+      {
+        const { ctx, page } = await context(browser, { w: f.w, h: f.h, dpr: f.dpr, mobiel: f.mobiel, codex: CODEX.ontwaakt, inst });
+        await laad(page);
+        await page.evaluate(() => toonHeldKeuze()); await slaap(1200);
+        const hk = await page.evaluate(() => ({ band: !!document.querySelector('.held-mg-regel'), syn: document.querySelectorAll('.held-syn').length, slots: document.querySelectorAll('.scherf-slot[data-shart]').length }));
+        /* de scherf-tip openen zoals een speler dat doet: hover op laptop, een vinger op de telefoon
+           (alleen de pointerdown: een volle tik kiest de scherf ook en hertekent het vak) */
+        const sidTip = await page.evaluate(() => { const s = document.querySelector('.scherf-slot[data-shart]'); return s ? s.dataset.shart : null; });
+        const eerste = await page.$('.scherf-slot[data-shart]');
+        if (eerste) {
+          try {
+            await eerste.scrollIntoViewIfNeeded(); await slaap(300);
+            if (f.mobiel) await eerste.dispatchEvent('pointerdown', { pointerType: 'touch', bubbles: true, isPrimary: true });
+            else await eerste.hover();
+            await slaap(450);
+          } catch (e) {}
+        }
+        await stap(page, 'vel ' + f.id, 'heldkeuze');
+        t(!hk.band && hk.syn === 0 && hk.slots === 3 && !(await inBeeld(page, 'body')).hscroll,
+          `vel ${f.id} · heldkeuze: geen metgezel-band (${hk.band}), ${hk.syn} synergie-badges, ${hk.slots} scherven in de loadout, geen horizontale scroll`);
+        const tip = await page.evaluate(sid => { const el = document.getElementById('tooltip');
+          return { open: !!el && getComputedStyle(el).display !== 'none', tekst: el ? el.textContent : '', moet: sid ? scherfTekst(sid) : '?' }; }, sidTip);
+        t(tip.open && tip.tekst === tip.moet, `vel ${f.id} · heldkeuze: de scherf-tip staat open (${f.mobiel ? 'vinger' : 'hover'}) en leest de tafelTekst: "${tip.tekst}"`);
+        await page.screenshot({ path: naamVan(f, 'heldkeuze') }); vel.push({ f, beeld: 'heldkeuze', pad: naamVan(f, 'heldkeuze') });
+        await page.mouse.move(2, 2);
+        await page.evaluate(() => toonCodex()); await slaap(700);
+        await stap(page, 'vel ' + f.id, 'Codex (boven)');
+        const cx = await page.evaluate(() => ({ mgKop: [...document.querySelectorAll('#overlay-codex .codex-kop')].some(h => /Metgezellen/.test(h.textContent)) }));
+        const cxB = await inBeeld(page, '#overlay-codex .codex-kop');
+        t(!cx.mgKop && cxB.er && cxB.past && cxB.hscroll <= 0, `vel ${f.id} · Codex: geen blok Metgezellen, de eerste kop in beeld ${JSON.stringify(cxB.r)}, horizontale scroll ${cxB.hscroll}px`);
+        await page.screenshot({ path: naamVan(f, 'codex') }); vel.push({ f, beeld: 'codex', pad: naamVan(f, 'codex') });
+        await page.evaluate(() => { const r = document.querySelector('#overlay-codex .scherf-cx-rooster'); if (r) r.scrollIntoView({ block: 'center' }); }); await slaap(400);
+        await stap(page, 'vel ' + f.id, 'Codex (schervenblok)');
+        const ro = await inBeeld(page, '#overlay-codex .scherf-cx-rooster');
+        const ro2 = await page.evaluate(() => ({ verbruikt: document.querySelectorAll('#overlay-codex .scherf-cx-slot.verbruikt').length, doorgrond: /doorgrond/.test((document.querySelector('#overlay-codex .scherf-cx-rooster') || {}).textContent || '') }));
+        t(ro.er && ro.past && ro2.verbruikt === 0 && !ro2.doorgrond, `vel ${f.id} · Codex: het schervenblok staat volledig in beeld ${JSON.stringify(ro.r)} (venster ${ro.vw}x${ro.vh}), geen 'doorgrond'/'verbruikt'`);
+        await page.screenshot({ path: naamVan(f, 'codex-scherven') }); vel.push({ f, beeld: 'codex-scherven', pad: naamVan(f, 'codex-scherven') });
+        t(page.__f.length === 0, `vel ${f.id} · heldkeuze/Codex: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 2).join(' | ') : ''));
+        await sluit(ctx, page, 'vel ' + f.id + ' heldkeuze/codex');
+      }
+      /* 4 · de scherf-reveal in een Act 2-gevecht (de kop die een elite-vondst draagt) */
+      {
+        const { ctx, page } = await context(browser, { w: f.w, h: f.h, dpr: f.dpr, mobiel: f.mobiel, codex: CODEX.ontwaakt, inst });
+        await laad(page);
+        await page.evaluate(() => {
+          nieuwSpel('slachter', 'NISSEN-VEL'); S.act = 1; S.kaart = genereerKaart();
+          volgendeAct('De Slijmkoning'); try { dtLoopVoorbij(); } catch (e) {}
+          startGevecht(['echo', 'naaper'], 'gevecht', 1);
+        });
+        await slaap(2600);
+        /* de gevechtsmeldingen eerst laten uitdoven (in het echte spel komt de reveal pas na de
+           overwinning; een toast van de gevechtsstart ligt anders over de kop) */
+        for (let w = 0; w < 30 && await page.evaluate(() => document.querySelectorAll('#meldingen .toast').length > 0); w++) await slaap(200);
+        const d3 = await page.evaluate(() => !!document.querySelector('#scherm-gevecht.d3-actief'));
+        await page.evaluate(() => toonScherfReveal('vlamwachter_figuur', { kop: '🜂 TUSSEN DE RESTEN GLINSTERT IETS' })); await slaap(1000);
+        await stap(page, 'vel ' + f.id, 'scherf-reveal (Act 2-gevecht)');
+        const rv = await inBeeld(page, '.scherf-reveal-overlay .scherf-reveal-binnen');
+        const rt = await page.evaluate(() => ({ flavor: ((document.querySelector('.scherf-reveal-flavor') || {}).textContent || '').trim(), sub: ((document.querySelector('.scherf-reveal-sub') || {}).textContent || '').trim(), moet: scherfTekst('vlamwachter_figuur') }));
+        t(rv.er && rv.past && rv.hscroll <= 0, `vel ${f.id} · scherf-reveal volledig in beeld ${JSON.stringify(rv.r)} (venster ${rv.vw}x${rv.vh}), horizontale scroll ${rv.hscroll}px`);
+        t(rt.flavor === rt.moet && /bankt bij het einde van je run/.test(rt.sub), `vel ${f.id} · de reveal leest de tafelTekst en zegt in Act 2 dat hij bankt: "${rt.flavor}" / "${rt.sub}"`);
+        if (f.d3 !== undefined && !f.mobiel) t(d3 === !!f.d3, `vel ${f.id} · het gevecht onder de reveal draait ${d3 ? '3D' : '2D'} zoals gevraagd`);
+        await page.screenshot({ path: naamVan(f, 'scherf-reveal') }); vel.push({ f, beeld: 'scherf-reveal', pad: naamVan(f, 'scherf-reveal') });
+        t(page.__f.length === 0, `vel ${f.id} · scherf-reveal: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 2).join(' | ') : ''));
+        await sluit(ctx, page, 'vel ' + f.id + ' reveal');
+      }
+      /* 5 · de afscheidsregel: een lopende Act 2-run met Drops (van vóór de parkering) laden */
+      {
+        const { ctx, page } = await context(browser, { w: f.w, h: f.h, dpr: f.dpr, mobiel: f.mobiel, codex: CODEX.ontwaakt, inst });
+        await laad(page);
+        await page.evaluate(() => {
+          _devMetgezellen = true;
+          nieuwSpel('slachter', 'NISSEN-VEL-SAVE'); S.act = 2; S.kaart = genereerKaart(); geefMetgezel('drops'); S.runMetgezel = 'drops'; S.metgezel.hp = 17; saveSpel();
+          _devMetgezellen = false;
+        });
+        await laad(page);
+        await page.evaluate(() => doorgaan()); await slaap(2100);
+        const toast = await page.evaluate(() => [...document.querySelectorAll('#meldingen .toast')].filter(e => /blijft achter/.test(e.textContent)).map(e => {
+          const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
+          return { tekst: e.textContent, r: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)], past: r.width > 0 && r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight, zicht: cs.visibility !== 'hidden' && cs.display !== 'none' && parseFloat(cs.opacity) > 0.5 };
+        }));
+        await stap(page, 'vel ' + f.id, 'afscheidsregel (na het laden)', /^🐾 Drops blijft achter\. Vanaf hier daal je alleen af\.$/);
+        t(toast.length === 1 && toast[0].tekst === '🐾 Drops blijft achter. Vanaf hier daal je alleen af.' && toast[0].past && toast[0].zicht,
+          `vel ${f.id} · de afscheidsregel staat één keer volledig in beeld: ${toast.length}× ${toast[0] ? JSON.stringify(toast[0].r) : ''}`);
+        await page.screenshot({ path: naamVan(f, 'afscheid') }); vel.push({ f, beeld: 'afscheid', pad: naamVan(f, 'afscheid') });
+        t(page.__f.length === 0, `vel ${f.id} · afscheid: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 2).join(' | ') : ''));
+        await sluit(ctx, page, 'vel ' + f.id + ' afscheid');
+      }
+    }
+    /* het contactvel: een rij per formaat, een kolom per beeld (eigen context, zonder route) */
+    const CEL = 330;
+    const rijen = FORMATEN.map(f => `<tr><th>${f.id}</th>` + BEELDEN.map(b => {
+      const x = vel.find(v => v.f === f && v.beeld === b);
+      return `<td>${x && fs.existsSync(x.pad) ? `<img src="data:image/png;base64,${fs.readFileSync(x.pad).toString('base64')}">` : '—'}</td>`;
+    }).join('') + '</tr>').join('');
+    const html = `<!doctype html><meta charset="utf-8"><style>
+      body{margin:0;background:#15110d;color:#e8dcc4;font:13px/1.3 'Segoe UI',Arial,sans-serif}
+      h1{font-size:17px;margin:10px 12px 4px} p{margin:0 12px 8px;color:#b9a98c}
+      table{border-collapse:collapse;margin:0 8px 10px} th,td{padding:4px;vertical-align:top}
+      thead th{font-weight:600;text-align:left} tbody th{writing-mode:vertical-rl;transform:rotate(180deg);font-weight:600;white-space:nowrap}
+      img{width:${CEL}px;display:block;border:1px solid #3a3026}</style>
+      <h1>DE NISSEN DICHT (B1) — contactvel na de parkering</h1>
+      <p>Codex met ontwaakte Drops (Thomas vandaag). Kolommen: heldkeuze · Codex · Codex-schervenblok · scherf-reveal (Act 2-gevecht) · afscheidsregel na het laden van een lopende run met Drops.</p>
+      <table><thead><tr><th></th>${BEELDEN.map(b => `<th>${b}</th>`).join('')}</tr></thead><tbody>${rijen}</tbody></table>`;
+    const vctx = await browser.newContext({ viewport: { width: 60 + BEELDEN.length * (CEL + 10), height: 400 }, deviceScaleFactor: 1 });
+    const vp = await vctx.newPage();
+    await vp.setContent(html, { waitUntil: 'load' });
+    const velPad = path.join(UIT, 'contactvel_nissen.jpg');
+    await vp.screenshot({ path: velPad, fullPage: true, type: 'jpeg', quality: 82 });
+    await vctx.close();
+    t(vel.length === FORMATEN.length * BEELDEN.length && fs.existsSync(velPad), `contactvel: ${vel.length} beelden (${FORMATEN.length} formaten × ${BEELDEN.length}) → ${velPad}`);
   }
 
   /* ============================================================
