@@ -439,6 +439,9 @@ img { max-width: 100%; display: block; }
   background: radial-gradient(ellipse 40% 42% at 28% 78%, rgba(255, 172, 84, .62), rgba(255, 140, 60, .2) 55%, transparent 74%); }
 .hd-lamp::before { content: ''; position: absolute; left: 22%; bottom: 58%; width: 4px; height: 26%; background: #3a2a18; transform: rotate(-24deg); transform-origin: 50% 100%; }
 .hd-lamp::after { content: ''; position: absolute; left: 16%; bottom: 76%; width: 22%; height: 14%; border-radius: 55% 55% 10% 10%; transform: rotate(18deg); background: linear-gradient(#f0b264, #9c5f22); box-shadow: 0 8px 16px rgba(255, 170, 80, .8); }
+/* slot R3 (verificatie): staand (de basis) hing de lamp links over Rudi's hoofd. Daar staat ze
+   gespiegeld RECHTS van Marleen (lamp, steel en schijnsel samen); breed en kort weer links. */
+.hd-lamp { left: auto; right: -95%; transform: scaleX(-1); }
 .hoofd-marleen .hd-silhouet {
   background:
     radial-gradient(ellipse 18% 16% at 50% 13%, #2c1e14 97%, transparent 100%),
@@ -1050,6 +1053,7 @@ img { max-width: 100%; display: block; }
 
 /* ═══════════════ BREED (laptop/tablet) ═══════════════ */
 @media (min-width: 700px) and (min-height: 600px) {
+  .hd-lamp { left: -95%; right: auto; transform: none; }   /* slot R3: breed hangt de lamp weer links van Marleen */
   /* scène 0: de post in één rij (badge · klok · rek) */
   .ik-rij { flex-wrap: nowrap; gap: 44px; }
   .ik-badge { order: 0; width: 280px; }
@@ -1119,6 +1123,7 @@ img { max-width: 100%; display: block; }
 
 /* ═══════════════ KORT LIGGEND (telefoon dwars, 800x360) ═══════════════ */
 @media (orientation: landscape) and (max-height: 599px) {
+  .hd-lamp { left: -95%; right: auto; transform: none; }   /* slot R3: kort liggend hangt de lamp weer links van Marleen */
   /* scène 0: de post in één rij, lager (de tl hangt er vlak boven) */
   .ik-rij { flex-wrap: nowrap; gap: 18px; margin-top: 54px; }
   .ik-badge { order: 0; width: 206px; padding: 8px 10px 10px; }

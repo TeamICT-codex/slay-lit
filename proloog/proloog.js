@@ -1505,10 +1505,10 @@
         h.rond();
         achterNaarVoor.forEach(r => r.classList.add('uit'));
         spot();
-        bevestig();
+        bevestig(true);
       };
     }
-    function bevestig() {
+    function bevestig(viaTik) {
       if (knopBevestig || !actief) return;
       spoel = null;
       knopBevestig = knop('knop-bevestig', '[ ' + S.oproep.cta + ' ]', lift);
@@ -1516,7 +1516,13 @@
       actie.style.setProperty('--p', 0.5);
       actie.appendChild(knopBevestig);
       hintWeg();
-      focusStil(knopBevestig);
+      if (viaTik) {
+        /* slot R3 (verificatie): komt de knop er door een tik, dan verschijnt hij ±450 ms
+           uitgeschakeld, zoals STEMPEL — anders drukt de tweede tik van een dubbeltik BEVESTIG in */
+        const kb = knopBevestig;
+        kb.disabled = true;
+        T(() => { if (kb === knopBevestig && actief) { kb.disabled = false; focusStil(kb); } }, zacht ? 300 : 450);
+      } else focusStil(knopBevestig);
     }
 
     /* ── de goederenlift omhoog (≤ 3 s, doortikbaar): het schaarhek DICHT, 2 · 3 · 4 · DAK,
