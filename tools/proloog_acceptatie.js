@@ -12,7 +12,7 @@
    Optioneel een filter als argument: hoofd | skip | herbeleef | wipe | poort | stub | rustig |
    glimlach | lite | val | outro | kantoor | breek | gesprek | afrekening | statisch (meerdere mogen,
    komma-gescheiden).
-   Zonder argument draait alles (±22 min).
+   Zonder argument draait alles (±27 min).
 
    WAT HET MEET (plan §5 R1 'klaar als', per formaat waar het ertoe doet):
    1 hoofd     de hele proloog gespeeld (drie formaten, sprong/geduwd/sprong, drie maskers):
@@ -3541,7 +3541,7 @@ function klankReeks(pk, verwacht) {
   }
 
   await browser.close();
-  console.log(`\n============================================\nSAMENVATTING PROLOOG R1+R2+R3: ${ok} ok, ${fout} FOUT  (${Math.round((Date.now() - t00) / 1000)} s)\n============================================`);
+  console.log(`\n============================================\nSAMENVATTING PROLOOG R1-R4: ${ok} ok, ${fout} FOUT  (${Math.round((Date.now() - t00) / 1000)} s)\n============================================`);
   if (fout) { console.log(fouten.map(f => ' - ' + f).join('\n')); }
   process.exit(fout ? 1 : 0);
 })().catch(e => { console.error('CRASH', e); process.exit(2); });
