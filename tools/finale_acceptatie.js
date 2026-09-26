@@ -60,19 +60,22 @@ async function open(browser, o) {
 }
 
 /* een verse DICKtator (tempo 0.1: de regie raast, de logica is dezelfde). Wacht tot de intro
-   en elke ceremonie weg is. De speler krijgt een onsterfelijke HP-pot en geen metgezel, zodat
-   de gemeten schade alleen van de baas en zijn hof komt. */
+   en elke ceremonie weg is. De speler krijgt een onsterfelijke HP-pot, zodat de gemeten schade
+   alleen van de baas en zijn hof komt. Solo zonder handwerk (review F8): DEV_BUILDS dragen
+   geen metgezel meer en de metgezellen zijn geparkeerd; de suite zette S.metgezel vroeger met
+   de hand op null. Nu telt ze elke start die toch een metgezel had (slot: blok 13). */
+let nietSolo = [];
 async function startProces(page, opties) {
-  await page.evaluate(o => {
+  const solo = await page.evaluate(o => {
     DICK.tempo = 0.1;
     window.__dickKeuze = undefined;
     devDicktator('slachter_mid', o || {});
-    S.metgezel = null;
     const g = S.gevecht;
-    if (g) { g.metgezel = null; }
     S.maxHp = 5000; S.hp = 5000;
     renderGevecht(); renderTopbalk();
+    return !!g && g.metgezel === null && !S.metgezel && !metgezellenAan();
   }, opties || {});
+  if (!solo) nietSolo.push(JSON.stringify(opties || {}));
   await wachtVrij(page, 30000);
   /* staand gevecht op mobiel: de draai-prompt wegklikken zoals een speler die 'toch staand' kiest */
   await page.evaluate(() => { if (document.querySelector('#draai-blok.toon') && typeof speelTochStaand === 'function') speelTochStaand(); });
@@ -614,6 +617,10 @@ const sonde = page => page.evaluate(() => {
   t(gesch12.viel === 0 && gesch12.stats === 0 && gesch12.overkill === 0, `geschorste baas, klap 30: viel ${gesch12.viel}, stats +${gesch12.stats}, overkill ${gesch12.overkill}`);
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
+
+  /* ================= 13 · F8 · SOLO ZONDER HANDWERK ================= */
+  kop('13 · F8 · elke devDicktator van deze suite stond solo, zonder dat de suite de metgezel wegzette');
+  t(nietSolo.length === 0, `starts met een metgezel: ${nietSolo.length} ${nietSolo.length ? JSON.stringify(nietSolo) : ''}`);
 
   await browser.close();
   console.log('\n============================================');
