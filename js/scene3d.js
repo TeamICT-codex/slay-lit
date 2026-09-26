@@ -35,7 +35,9 @@ const Vista = (() => {
   }
   function kaderStand() { return { fov: camera ? camera.fov : null, kijkY, eigen: !!kaderOverride }; }
   /* B2 · B0.6: de naam van de textuur die een acteur NU toont ('idle' in rust) - zo zijn ook
-     poses zonder eigen voetmarge toetsbaar (decreet, factuur) */
+     poses zonder eigen voetmarge toetsbaar (decreet, factuur).
+     DEV-SHORTCUT (testhaak): het spel roept poseNu niet aan, tools/bazentoneel_acceptatie.js
+     wel (zie RELEASE-CHECKLIST.md §1.1). */
   function poseNu(actor) { const a = acteurs.get(actor); return a ? (a.poseNu || 'idle') : null; }
   /* De vloer van het toneel: elke acteur staat met zijn GETEKENDE voeten op deze
      wereldhoogte (zie voetmarge() en maakActeur). Dat is meteen de bron van

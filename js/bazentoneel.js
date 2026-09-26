@@ -197,7 +197,7 @@ function kaderFit3D() {
    resize, en als de bazenbalk van hoogte verandert (Geroofd-pil, beleidsstrook) */
 function planKaderFit(ms) {
   clearTimeout(_kaderT);
-  _kaderT = setTimeout(() => { try { window.__kaderLaatst = kaderFit3D(); } catch (e) { } }, ms);
+  _kaderT = setTimeout(() => { try { kaderFit3D(); } catch (e) { } }, ms);
 }
 window.addEventListener('vista:gevechtstart', () => {
   const g = typeof S !== 'undefined' && S && S.gevecht;
