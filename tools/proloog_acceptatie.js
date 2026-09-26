@@ -124,13 +124,13 @@
    R4 (integrator) — deel 15 'gesprek' krijgt de hele strook gesprek → uitweg → afrekening per formaat, alles
    IN de pagina gemeten (window.__r4i, R4_METER), met een speler-robot vanaf de save van het kantoor op scène 3:
   15G natuurlijk (handelt 0,6 s nadat het kan) en 15H doortikkend (tikt om de 150 ms), op 1440x900, 1366x768,
-               800x360 en 846x381 (touch), 412x915, plus reduced motion en lite: (1) intentie, bol, borstzak en
+               800x360 en 846x381 (touch), 412x915, plus reduced motion, lite, 812x365 en 360x640: (1) intentie, bol, borstzak en
                'Eindig beurt' in ELK gemonsterd beeld in beeld en, zolang je kunt spelen, raak (R.elementFromPoint en
                document.elementFromPoint), net als elke kaart; de ballon, de foto, de je-regels, 'Laat los', de
                nieuwste printregel boven de kop en de pen in beeld; nergens scroll, geen draai-blok; (2) spatie,
                vasthouden (muis en vinger), tweede tik (muis en vinger), Enter en geduwd schrijven het contract
                (uitweg, jeugddroom, glimlachen = kantoor + gespeelde Glimlach-kaarten, fotoKantoor, zelfGestempeld);
-               (3) het kettingvel toont die ECHTE cijfers letterlijk voor twaalf contracten, ook na een herlaad
+               (3) het kettingvel toont die ECHTE cijfers letterlijk voor veertien contracten, ook na een herlaad
                in de eerste regels, de trage droomregel, de vastloper, het zakkende totaal, op 'ontslag' en in de
                uitweg; (4) natuurlijk: speelbaar ≤ 2 s, de beurt van B.A.A.S. ≤ 2,5 s, de uitweg 5-9 s, de
                afrekening 12-16 s, de droomregel trager; doortikkend: de langste GEDWONGEN wacht ≤ 2,5 s; (5) elke
@@ -3877,14 +3877,15 @@ function r4iToets(uit) {
           (plan §5 R4 'klaar als', scherper). Een speler-robot speelt vanaf het gesprek (de save van het kantoor
           op scène 3) tot de val; alles wordt IN de pagina gemeten (window.__r4i, R4_METER; klank: window.__r2).
           15G natuurlijk (handelt 0,6 s nadat het kan, tikt nooit door) en 15H doortikkend (handelt meteen, tikt om
-          de 150 ms), elk op 1440x900, 1366x768, 800x360 en 846x381 (touch) en 412x915, plus reduced motion en lite:
+          de 150 ms), elk op 1440x900, 1366x768, 800x360 en 846x381 (touch) en 412x915, plus reduced motion en lite,
+          de onderkant van Thomas' toestel (812x365) en een kleine telefoon staand (360x640):
           (1) intentie, bol, borstzak en 'Eindig beurt' in ELK gemonsterd beeld (120 ms) in beeld, en zolang je kunt
           spelen raak (R.elementFromPoint én document.elementFromPoint), net als elke kaart; de ballon, de foto, de
           je-regels, 'Laat los', de nieuwste printregel (boven de kop) en de pen in beeld; nergens scroll, geen
           draai-blok; (2) elke sprongvariant (spatie, vasthouden met muis en vinger, tweede tik met muis en vinger,
           Enter) en de geduwd-route schrijven het contract (uitweg, jeugddroom, glimlachen = kantoor + de gespeelde
           Glimlach-kaarten, fotoKantoor, zelfGestempeld) en de save; (3) het kettingvel toont die ECHTE cijfers
-          letterlijk (twaalf contracten: 0-13 glimlachen, foto 0-2x, zelf/machinaal, geen/lange/trema/apostrof/
+          letterlijk (veertien contracten: 0-13 glimlachen, foto 0-2x, zelf/machinaal, geen/lange/trema/apostrof/
           HTML-tekens), ook na een herlaad midden in de afrekening (de eerste regels, de trage droomregel, de
           vastloper, het zakkende totaal, 'ontslag') of in de uitweg; (4) natuurlijk: speelbaar ≤ 2 s, de beurt van
           B.A.A.S. ≤ 2,5 s, de uitweg 5-9 s, de afrekening 12-16 s, de droomregel trager; doortikkend: de
