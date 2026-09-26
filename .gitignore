@@ -10,6 +10,11 @@
 # scratchpad en er belandt hier sowieso niets.
 tools/*_shots/
 
+# uitvoer van het meetharnas van de eindbaas (tools/baas-meting/dick_meting.js): meetjson's
+# zijn megabytes groot en horen in .claude/notities/baas-meting/, nooit in de deploy.
+tools/baas-meting/*.json
+tools/baas-meting/uit/
+
 # originelen-backups van het dambord-script (groot, niet nodig in het spel)
 assets/*/originelen/
 
