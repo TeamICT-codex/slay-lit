@@ -4181,10 +4181,19 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
   top: 52px; left: 50%;
   transform: translateX(-50%);
   width: min(620px, 80vw);
-  z-index: 5;
+  /* B2 · B0.10: DE BAZENBALK IS HUD, GEEN TONEEL. Een body-kind (index.html) op z44: boven
+     het fakkel- en tiradevignet (40), onder het doek (45), de vonnistitel (47), de flits
+     (48) en de topbalk (50). Tussen 40 en 44 ligt geen enkele vaste laag. Gemeten bij
+     fakkel 0 zonder daglicht (p98-helderheid): mobiel 61-71 -> 202-208, laptop 131-154 ->
+     175-203; in de tirade op mobiel 82-86 -> 207-208. */
+  z-index: 44;
   text-align: center;
   pointer-events: none;
 }
+/* buiten het gevecht bestaat hij niet (vroeger deed #scherm-gevecht dat door zelf te
+   verdwijnen), en tijdens de intro en de doodsflits - lagen binnen het scherm - ook niet */
+body:not([data-scherm="gevecht"]) #baas-balk { display: none !important; }
+body:has(#baas-intro, .baas-doodflits) #baas-balk { visibility: hidden; }
 #baas-balk .bb-fases { pointer-events: auto; display: flex; gap: 7px; justify-content: center; margin-top: 5px; cursor: help; }
 /* DE BELEIDSPIL IS AANRAAKBAAR (v121-fix bij P1). #baas-balk staat op pointer-events:none
    en dat ERFT door: .bb-fases zet het één regel hoger terug op auto, de beleidspil deed

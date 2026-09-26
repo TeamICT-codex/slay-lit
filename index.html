@@ -119,7 +119,6 @@
          werkt (plaatsGevechtsplaat bailt in 3D uit, en zetLichtVisueel overschrijft een
          filter op de plaat bij elke fakkelwijziging inline). -->
     <div id="arena-tint"></div>
-    <div id="baas-balk" style="display:none"></div>
     <div id="beurt-label"></div>
     <div id="strijdveld">
       <div id="held-cluster">
@@ -240,6 +239,11 @@
        Bewust een body-kind: binnen #scherm-gevecht (stapelcontext z 1) zou hij altijd onder de topbalk vallen. -->
   <button type="button" id="inzage-knop" onclick="wisselInzage()" aria-pressed="false" aria-label="Inzage" title="Inzage"></button>   <!-- v105: geen data-tip meer — op touch toonde die bij ELKE tik de uitleg; de eenmalige melding volstaat -->
   <div id="licht-vignet"></div>
+  <!-- DE BAZENBALK IS HUD, GEEN TONEEL (B2 · B0.10): een body-kind op z44, boven het
+       fakkel- en tiradevignet (40) en onder het doek (45), de flits en de topbalk (50).
+       Binnen #scherm-gevecht (stapelcontext z1) doofde het vignet hem bij fakkel 0 tot
+       onleesbaar (helderheid 61-71). Buiten het gevecht verbergt css hem. -->
+  <div id="baas-balk" style="display:none"></div>
   <!-- HET DOEK (v121): het beeld dooft en trekt weer op bij elke bedrijfsovergang.
        Bewust een BODY-kind, net als het vignet: binnen #scherm-gevecht (position:fixed,
        z-index:1, overflow:hidden) zou het op z1 blijven hangen en weggeklipt worden.

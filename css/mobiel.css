@@ -290,6 +290,9 @@ body[data-modus="mobiel"] #baas-balk .bb-balk.bb-woede::before {
   background: linear-gradient(to top, #ff6a4a 0 calc(var(--hp, 100) * 1%), #2b1420 calc(var(--hp, 100) * 1%) 100%);
   filter: drop-shadow(0 0 7px rgba(255, 90, 60, .7));
 }
+/* B2 · B0.10: geen woedeBalk-puls op het hart. Die animeert box-shadow (met een donkere
+   inset) en tekende zo een doos van ±315x42px over het hart (F V4); het hart kleurt zelf al. */
+body[data-modus="mobiel"] #baas-balk .bb-balk.bb-woede { animation: none; }
 /* De Erfprins (Copycat): geen slijmgroen maar koningspaars/amethist — regaal +
    de magenta steel-aura uit z'n art. Woede → heet magenta i.p.v. rood-oranje. */
 body[data-modus="mobiel"] #baas-balk[data-baas="de_erfprins"] .bb-balk::before {
