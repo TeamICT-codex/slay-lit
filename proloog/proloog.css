@@ -1051,8 +1051,8 @@ img { max-width: 100%; display: block; }
 .pv-afgerond { font-size: .9em; color: #5d4c34; }
 .pv-perfo { min-height: 0; height: 16px; margin: 6px -36px 2px; background: none !important; border-top: 2px dashed rgba(43, 33, 20, .5); }
 .pv-perfo::before { content: '✂'; position: absolute; left: 26px; top: -13px; font-size: .8rem; color: rgba(43, 33, 20, .6); }
-.pv-besluit { margin-top: 2px; padding-right: 50px; font-size: 1.12em; letter-spacing: .04em; text-shadow: .7px 0 #2b2114; }
-.pv-pasfoto { position: absolute; right: 6px; top: 1px; width: 40px; height: 40px; image-rendering: pixelated; border: 1px dotted rgba(43, 33, 20, .5); }
+.pv-besluit { margin-top: 2px; padding-right: 58px; font-size: 1.12em; letter-spacing: .04em; text-shadow: .7px 0 #2b2114; }
+.pv-pasfoto { position: absolute; right: 6px; top: 1px; z-index: 1; width: 48px; height: 48px; image-rendering: pixelated; border: 1px dotted rgba(43, 33, 20, .5); }   /* je pasfoto, gerasterd in printerinkt (keuze 4) */
 .pv-hand { display: inline-block; margin-left: 4px; font-family: var(--f-serif); font-style: italic; font-size: 1.3em; line-height: 1; color: #2a3f7e; rotate: -4deg; animation: plVerschijn .4s ease both; }
 .pv-stempel { position: absolute; right: 7%; top: 120%; z-index: 3; padding: 2px 10px; white-space: nowrap; pointer-events: none;
   font-family: var(--f-black); font-size: 1.2rem; line-height: 1.1; color: #a41f1f; border: 3px solid #a41f1f; border-radius: 6px; opacity: .86; transform: rotate(-9deg); mix-blend-mode: multiply; }
@@ -1366,6 +1366,8 @@ img { max-width: 100%; display: block; }
   .pv-sleuf { height: 14px; }
   .pv-merk { font-size: 1.1rem; bottom: 14px; }
   .pv-leds { bottom: 14px; }
+  .pv-pasfoto { width: 60px; height: 60px; }
+  .pv-besluit { padding-right: 70px; }
   .pv-led { font-size: .6rem; }
 
   .afg-stage { --schijf: clamp(116px, 18vh, 176px); padding-top: 24px; padding-bottom: 24px; }
