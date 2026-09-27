@@ -106,6 +106,17 @@ function spraakZone(el) {
   /* maat: 0 = gewoon, 1 = .smal, 2 = .smal.krap (alleen mobiel) */
   const zet = (z, maat) => { el.style.left = Math.round((z[0] + z[1]) / 2) + 'px'; el.style.maxWidth = Math.round(z[1] - z[0]) + 'px'; el.classList.toggle('smal', maat >= 1); el.classList.toggle('krap', maat >= 2); };
   if (!mob) {
+    /* Finale B4b: een plaat die al STAAT, blijft staan zolang de spreker (zijn lijf of zijn pil) haar
+       niet raakt - hetzelfde principe als mobiel hieronder. Vroeger rekende toneelWacht de zone elke
+       150 ms opnieuw uit en centreerde de plaat erin: kwam er een hoveling bij of gaf een lijk zijn
+       kolom terug, dan schoof de rij en sprong de plaat mee (1366x768-2D, I -> II: 95 px). */
+    if (el._lzStaat) {
+      const sp = el.querySelector('span');
+      const q = sp ? sp.getBoundingClientRect() : null;
+      const raakt = r => q && Math.min(q.right, r.r != null ? r.r : r.right) > Math.max(q.left, r.l != null ? r.l : r.left)
+        && Math.min(q.bottom, r.b != null ? r.b : r.bottom) > Math.max(q.top, r.t != null ? r.t : r.top);
+      if (q && q.width && q.left >= 0 && q.right <= W && !raakt(art) && !pillen.some(raakt)) return;
+    }
     /* laptop: de band boven de (kleine) held is vrij -> links, anders de bredere kant */
     let z = bA >= 200 ? zA : (bA >= bB ? zA : zB);
     /* B2 F1: een plaat die al staat, wisselt niet van kant zolang haar kant breed genoeg blijft
@@ -114,6 +125,7 @@ function spraakZone(el) {
     if (z[1] - z[0] < 160) return;   /* nergens plaats: dan de standaardplek (gecentreerd) */
     el._kant = z === zA ? 'A' : 'B';
     zet(z, 0);
+    el._lzStaat = true;
     return;
   }
   /* Mobiel: een paar kandidaten, in volgorde van voorkeur, en de eerste die niemand raakt

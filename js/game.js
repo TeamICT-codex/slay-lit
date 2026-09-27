@@ -5618,6 +5618,7 @@ function bouwGevechtDom(g) {
     const def = VIJANDEN[v.id];
     const wrap = document.createElement('div');
     wrap.className = 'vijand' + (def.baas ? ' is-baas' : '') + (def.elite ? ' is-elite' : '') + (def.episch ? ' is-episch' : '')
+      + (def.hof ? ' is-hof' : '')   /* Finale B4b: het hof van de DICKtator (css/mobiel.css: zijn chips naast de figuur, niet achter de hand) */
       + (VIJAND_KLEIN.has(v.id) ? ' vijand-klein' : '') + (VIJAND_GROOT.has(v.id) ? ' vijand-groot' : '')   /* grootte-variatie (transform-scale, origin bottom → breekt de grondlijn niet) */
       + (VIJAND_ENTREE[v.id] ? ' entree-' + VIJAND_ENTREE[v.id] : '')   /* binnenkomst-variant (de .entree-trigger zet startGevecht/voegVijandToe erbij) */
       + (v.dood ? ' sterft lijk-weg' : '');   /* al gesneuvelde vijand blijft verborgen na een herbouw (voegVijandToe/reveal) — anders 'herrijst' hij zichtbaar; v114: en geeft meteen zijn kolom terug */
@@ -8170,15 +8171,18 @@ function dicktatorRegieProces(b, g, op, U, D) {
   op(2200, () => baasSpreekt(U.fase2, 1700));
   op(2900, () => Klank.muziek('baas'));           /* de muziek komt terug, voller dan ervoor - de crossfade is dan net geland */
 
+  /* t=3250 - DE DEURWAARDER treedt aan (finale §1: bij de start van II), terwijl de titel nog
+     uitdooft. voegVijandToe -> bouwGevechtDom doet rij.innerHTML='' en zou midden in de regie
+     elke pose en klasse wissen - op 3250 loopt er niets meer (cast tot 2900, oprijzen tot 2140).
+     Finale B4b: vroeger op 3600, ná de ceremonie; maar de eerste regel na de titel (vanaf 3300)
+     stond dan al, en de rij die opschoof duwde de baas in de plaat (1366x768-2D: 95 px sprong,
+     50 ms plaat over de baas). Nu staat het hof vóór er iets gezegd wordt. Hij krijgt TREEDT AAN,
+     net als de baas HERSCHIKT DE ZAAL speelt: de eerste vijandbeurt van de scène doet geen schade. */
+  op(3250, () => dicktatorRoepDeurwaarder(b, g));
   /* t=3600 - invoer vrij. Wat BLIJFT is de amberschifting van scène II. */
   op(3600, () => {
     _bedrijf(2);
     _ceremonieUit(g);
-    /* DE DEURWAARDER treedt aan (finale §1: bij de start van II). Ná de ceremonie:
-       voegVijandToe -> bouwGevechtDom doet rij.innerHTML='' en zou midden in de regie elke
-       pose en klasse wissen. Hij krijgt TREEDT AAN, net als de baas HERSCHIKT DE ZAAL speelt:
-       de eerste vijandbeurt van de scène doet geen schade. */
-    dicktatorRoepDeurwaarder(b, g);
   });
 
   /* t=4000 - NAKLANK, bewust BUITEN de ceremonie: je speelt al terwijl hij nog napraat */

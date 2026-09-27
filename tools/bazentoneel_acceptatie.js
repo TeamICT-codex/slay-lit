@@ -623,7 +623,9 @@ async function dood(browser, fk) {
         }
         await page.evaluate(() => { document.querySelectorAll('#meldingen .toast').forEach(t => t.remove()); _spraakStop(); });
         await page.evaluate(REC);
-        await page.evaluate(() => { const g = S.gevecht; const b = g.vijanden.find(v => v.id === 'de_dicktator'); g.vijanden.filter(v => v !== b && !v.dood).forEach(v => { v.dood = true; }); verliesHp(b, b.hp + 5, sp()); renderGevecht(); if (b.dood && !g.voorbij) gevechtGewonnen(); });
+        /* Finale B4b: in IV houdt DE ZITTING LOOPT hem op 1 HP tot na zijn eerste Ontslag; de
+           DEV-vlag minVrij zet die vloer uit (zoals de drama-suites), zodat de klap de tweede dood is */
+        await page.evaluate(() => { const g = S.gevecht; const b = g.vijanden.find(v => v.id === 'de_dicktator'); b.minVrij = true; g.vijanden.filter(v => v !== b && !v.dood).forEach(v => { v.dood = true; }); verliesHp(b, b.hp + 5, sp()); renderGevecht(); if (b.dood && !g.voorbij) gevechtGewonnen(); });
       } else {
         await startBaas(page, baas);
         await page.evaluate(REC);

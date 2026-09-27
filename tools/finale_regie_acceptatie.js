@@ -283,10 +283,11 @@ async function hofpil(browser, fk) {
   const meet = () => page.evaluate(() => {
     const W = innerWidth, H = innerHeight;
     const pillen = [...document.querySelectorAll('#vijanden-rij .vijand:not(.lijk-weg):not(.sterft) .intent')].filter(e => __FR.zicht(e));
-    const bb = __FR.R(document.getElementById('baas-balk'));
+    /* de bazenbalk: de doos én wat eruit steekt (de beleidsstrook, de teller) */
+    const bbs = [document.getElementById('baas-balk'), ...document.querySelectorAll('#baas-balk .bb-balk, #baas-balk .bb-extra > *, #baas-balk .bb-zitting')].filter(e => __FR.zicht(e)).map(__FR.R);
     const af = pillen.filter(e => e.scrollWidth > e.clientWidth + 1).map(e => e.textContent.trim());
     let pp = 0, pb = 0; const rs = pillen.map(e => ({ r: __FR.R(e), k: e.closest('.vijand') }));
-    for (let i = 0; i < rs.length; i++) { if (bb) pb += __FR.snij(rs[i].r, bb); for (let j = i + 1; j < rs.length; j++) if (rs[i].k !== rs[j].k) pp += __FR.snij(rs[i].r, rs[j].r); }
+    for (let i = 0; i < rs.length; i++) { pb += Math.max(0, ...bbs.map(b => __FR.snij(rs[i].r, b))); for (let j = i + 1; j < rs.length; j++) if (rs[i].k !== rs[j].k) pp += __FR.snij(rs[i].r, rs[j].r); }
     const uit = rs.filter(x => x.r.l < -1 || x.r.r > W + 1 || x.r.t < -1 || x.r.b > H + 1).length;
     return { tekst: pillen.map(e => e.textContent.trim()), af, pp: Math.round(pp), pb: Math.round(pb), uit };
   });
@@ -422,7 +423,7 @@ async function hofChips(browser, fk) {
     'hof 4': { held: { kracht: 2, zwak: 1, kwetsbaar: 1, gif: 3, doornen: 2 }, baas: { gif: 9, zwak: 2, kwetsbaar: 2, kracht: 2 }, hof: { gif: 4, zwak: 1, kwetsbaar: 2, kracht: 1 } },
     'hof 5': { held: { kracht: 2, zwak: 1, kwetsbaar: 1, gif: 3, doornen: 2 }, baas: { gif: 9, zwak: 2, kwetsbaar: 2, kracht: 2, doornen: 2 }, hof: { gif: 4, zwak: 1, kwetsbaar: 2, kracht: 1, doornen: 1 } }
   };
-  for (const [naam, opt] of [['II', { hof: true }], ['III', { tirade: true }]]) {
+  for (const [naam, opt] of [['I', { netVoor: 2 }], ['II', { hof: true }], ['III', { tirade: true }]]) {
     try {
       await startProces(page, opt, 0.5);
       for (const [sn, s] of Object.entries(SETS)) {
@@ -435,16 +436,29 @@ async function hofChips(browser, fk) {
           const W = innerWidth, H = innerHeight;
           const hand = [...document.querySelectorAll('#hand .kaart')].filter(__FR.zicht).map(__FR.R);
           const tb = __FR.R(document.getElementById('topbalk'));
-          const hofKol = g.vijanden.filter(v => !v.dood && v.id !== 'de_dicktator').map(v => GDOM.vijanden[g.vijanden.indexOf(v)].wrap);
-          const chips = [...document.querySelectorAll('#scherm-gevecht .blok-status > *')].filter(__FR.zicht).map(e => ({ r: __FR.R(e), hof: hofKol.some(k => k.contains(e)) }));
+          const eind = __FR.R(document.getElementById('knop-eindbeurt'));
+          const bbs = [document.getElementById('baas-balk'), ...document.querySelectorAll('#baas-balk .bb-balk, #baas-balk .bb-extra > *, #baas-balk .bb-zitting')].filter(__FR.zicht).map(__FR.R);
+          const lev = g.vijanden.filter(v => !v.dood);
+          const kol = v => GDOM.vijanden[g.vijanden.indexOf(v)].wrap;
+          const hofKol = lev.filter(v => v.id !== 'de_dicktator').map(kol);
+          const chips = [...document.querySelectorAll('#scherm-gevecht .blok-status > *')].filter(__FR.zicht).map(e => ({ r: __FR.R(e), hof: hofKol.some(k => k.contains(e)), kol: e.closest('.vijand') }));
+          const hofChips = chips.filter(c => c.hof);
+          /* wat de chips van een hoveling niet mogen raken: een ander zijn lijf of pil, de bazenbalk, de knop */
+          const anders = c => lev.map(kol).filter(k => k !== c.kol).flatMap(k => [k.querySelector('.vijand-art'), ...k.querySelectorAll('.intent')]).filter(__FR.zicht).map(__FR.R);
           const som = (A, B) => A.reduce((x, a) => x + B.reduce((y, b) => y + __FR.snij(a, b), 0), 0);
+          const pillenBB = [...document.querySelectorAll('#vijanden-rij .vijand:not(.lijk-weg) .intent')].filter(__FR.zicht).map(__FR.R);
           return {
-            hand: Math.round(som(chips.map(c => c.r), hand)), hofHand: Math.round(som(chips.filter(c => c.hof).map(c => c.r), hand)),
-            top: tb ? Math.round(som(chips.map(c => c.r), [tb])) : 0, uit: chips.filter(c => c.r.l < -1 || c.r.t < -1 || c.r.r > W + 1 || c.r.b > H + 1).length, n: chips.length, hofN: chips.filter(c => c.hof).length
+            hand: Math.round(som(chips.map(c => c.r), hand)), hofHand: Math.round(som(hofChips.map(c => c.r), hand)),
+            top: tb ? Math.round(som(chips.map(c => c.r), [tb])) : 0, uit: chips.filter(c => c.r.l < -1 || c.r.t < -1 || c.r.r > W + 1 || c.r.b > H + 1).length, n: chips.length, hofN: hofChips.length,
+            hofBB: Math.round(hofChips.reduce((x, c) => x + Math.max(0, ...bbs.map(b => __FR.snij(c.r, b))), 0)),
+            hofEind: eind ? Math.round(som(hofChips.map(c => c.r), [eind])) : 0,
+            hofAnder: Math.round(hofChips.reduce((x, c) => x + som([c.r], anders(c)), 0)),
+            pilBB: Math.round(pillenBB.reduce((x, p) => x + Math.max(0, ...bbs.map(b => __FR.snij(p, b))), 0))
           };
         }, s);
         await shot(page, `${vp.naam}_hofchips_${naam}_${sn}`);
-        t(m.hand === 0 && m.uit === 0, `R3 ${vp.naam} ${naam} (${sn}): chips ~ hand ${m.hand} px2 (het hof: ${m.hofHand}), uit beeld ${m.uit}, over de topbalk ${m.top} (${m.n} chips, ${m.hofN} van het hof)`);
+        t(m.hand === 0 && m.uit === 0 && m.top === 0, `R3 ${vp.naam} ${naam} (${sn}): chips ~ hand ${m.hand} px2 (het hof: ${m.hofHand}), uit beeld ${m.uit}, over de topbalk ${m.top} (${m.n} chips, ${m.hofN} van het hof)`);
+        t(m.hofBB === 0 && m.hofEind === 0 && m.hofAnder === 0 && m.pilBB === 0, `R3 ${vp.naam} ${naam} (${sn}): de hofchips raken de bazenbalk ${m.hofBB}, de knop ${m.hofEind}, een ander lijf of pil ${m.hofAnder}; pil ~ bazenbalk ${m.pilBB} (alles 0)`);
       }
     } catch (e) { t(false, `R3 ${vp.naam} ${naam}: fout in de meting: ${e.message}`); }
   }
