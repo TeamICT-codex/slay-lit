@@ -55,6 +55,7 @@ const REST = `window.__rest = function () {
     if (l.classList.contains('plaat-vast')) vast.push(id + '=' + (getComputedStyle(l).scale || '(geen)'));
   });
   const sp = [...document.querySelectorAll('.baas-spraak')];
+  window.__spraakMerk = sp;   /* Finale B4b: de nameting volgt DEZE platen (zie na), niet elke plaat die er dan staat */
   const b = g && g.vijanden.find(v => v.id === 'de_dicktator');
   return {
     vonnis: document.querySelectorAll('.vonnis').length,
@@ -231,7 +232,12 @@ async function draai(browser, s) {
     rest.wachtteOpRegie = wacht;
     if (rest.spraak > 0) {
       await slaap(Math.round(rest.spraakDuur) + 400);
-      const nog = await page.evaluate(() => document.querySelectorAll('.baas-spraak').length);
+      /* Finale B4b: tel of DEZELFDE platen er nog staan. De wachtrij (B2 · B0.4) zet de volgende
+         regel meteen na de vorige: telde je elke .baas-spraak, dan las je na II -> III de volgende
+         regel („Ik heb die man nooit gekend.", 2600 ms) als een plaat die haar duur overleefde -
+         zodra de tekstsluis de keten ~100 ms later liet vallen (hij wacht nu ook op het uitdoven
+         van het toneeldoek) en de meting net vóór het einde van „IK BEN HET SLACHTBLOK…" viel. */
+      const nog = await page.evaluate(() => (window.__spraakMerk || []).filter(e => e.isConnected).length);
       rest.spraakNa = nog;
     } else { rest.spraakNa = 0; }
     return rest;
