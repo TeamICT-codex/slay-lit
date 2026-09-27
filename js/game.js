@@ -7096,7 +7096,8 @@ function checkBaasFase() {
      wordt een driftbui (een vaste klap) in plaats van een dode beurt;
    - ÉÉN BRON (erfEffect): pil, stempel, tekst en uitvoering rekenen met dezelfde functie;
    - zijn tweede leven (HET NOODRANTSOEN) staat de hele tijd op zijn Buit-pil, verscheurt nooit
-     een kaart van zijn pil, wist niets, en valt het in zijn eigen beurt, dan ís opstaan zijn zet.
+     een kaart van zijn pil, wist niets wat niet op die pil staat, en valt het in zijn eigen
+     beurt, dan ís opstaan zijn zet.
    ERF is de bron van waarheid voor alle getallen, zoals DICK voor de eindbaas: balanceer HIER.
    Het meetharnas (tools/baas-meting/erfprins_meting.js) zet per gevecht andere waarden in ERF.
    ============================================================ */
@@ -7198,15 +7199,20 @@ function gesmeedSpec(c) {
 /* HET SPIEGELRECHT: wat jóu sterker maakt, maakt hém sterker. Leest de velden van de kaart
    (kr/dr/doorn/zw) of, voor de pure krachtkaarten, de status die ze jou geven. Per soort
    × ERF.spiegel[soort] (afgerond, minstens 1); 0 = die soort snapt hij niet (→ driftbui). */
-const ERF_SPIEGEL_STATUS = { vlammende_hartstocht: 'kr', demonenvorm: 'kr', doornenhuid: 'dr', gifklieren: 'kl' };
+/* kaarten die hun getal in het algemene veld 'n' dragen: welke soort dat getal is */
+const ERF_SPIEGEL_STATUS = { vlammende_hartstocht: 'kr', demonenvorm: 'kr', doornenhuid: 'dr', gifklieren: 'kl', ontwapening: 'zw', schokgolf: 'zw' };
 function erfSpiegelDeel(soort, n) {
   const f = (ERF.spiegel && ERF.spiegel[soort]) || 0;
   return (n > 0 && f > 0) ? Math.max(1, Math.round(n * f)) : 0;
 }
+/* het ruwe getal van een soort op een kaart: het eigen veld plus het 'n'-veld als dat die soort is */
+function erfKaartVeld(c, velden, soort) {
+  return velden.reduce((t, v) => t + (kval(c, v) || 0), 0) + (ERF_SPIEGEL_STATUS[c.id] === soort ? (kval(c, 'n') || 0) : 0);
+}
 function erfSpiegelVan(c) {
-  const kr = erfSpiegelDeel('kracht', (kval(c, 'kr') || 0) + (ERF_SPIEGEL_STATUS[c.id] === 'kr' ? (kval(c, 'n') || 0) : 0));
-  const dr = erfSpiegelDeel('doornen', (kval(c, 'dr') || 0) + (kval(c, 'doorn') || 0) + (ERF_SPIEGEL_STATUS[c.id] === 'dr' ? (kval(c, 'n') || 0) : 0));
-  const kl = erfSpiegelDeel('klieren', ERF_SPIEGEL_STATUS[c.id] === 'kl' ? (kval(c, 'n') || 0) : 0);
+  const kr = erfSpiegelDeel('kracht', erfKaartVeld(c, ['kr'], 'kr'));
+  const dr = erfSpiegelDeel('doornen', erfKaartVeld(c, ['dr', 'doorn'], 'dr'));
+  const kl = erfSpiegelDeel('klieren', erfKaartVeld(c, [], 'kl'));
   return (kr > 0 || dr > 0 || kl > 0) ? { soort: 'spiegel', n: kr + dr + kl, kr, dr, kl } : null;
 }
 function _erfprinsRoofKaart(c) {
@@ -7235,10 +7241,11 @@ function _erfprinsRoofKaart(c) {
   const gif = kval(c, 'gif') || 0; if (gif > 0) return { soort: 'gif', n: gif };
   const dmg = kval(c, 'dmg') || 0; if (dmg > 0) return { soort: 'aanval', n: dmg };
   const blok = kval(c, 'blok') || 0;
-  if (blok > 0) return { soort: 'blok', n: blok, dr: erfSpiegelDeel('doornen', (kval(c, 'dr') || 0) + (kval(c, 'doorn') || 0)) };
+  if (blok > 0) return { soort: 'blok', n: blok, dr: erfSpiegelDeel('doornen', erfKaartVeld(c, ['dr', 'doorn'], 'dr')) };
   const sp2 = erfSpiegelVan(c); if (sp2) return sp2;
-  /* 'geef alle vijanden Zwak' (Stoofgeur, Rode Tape): in zijn handen krijg jíj de Zwak */
-  const zw = erfSpiegelDeel('zwak', kval(c, 'zw') || 0); if (zw > 0) return { soort: 'zwak', n: zw };
+  /* 'geef een of alle vijanden Zwak' (Stoofgeur, Rode Tape, Ontwapening, Schokgolf): in zijn
+     handen krijg jíj de Zwak */
+  const zw = erfSpiegelDeel('zwak', erfKaartVeld(c, ['zw'], 'zw')); if (zw > 0) return { soort: 'zwak', n: zw };
   return { soort: 'overig', n: 0 };
 }
 /* een geroofde kaart in zijn buit: wat hij ervan weet (de uid wijst de échte instance aan) */
