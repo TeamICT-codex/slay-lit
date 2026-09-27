@@ -309,6 +309,12 @@ body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk .hp-teks
    de figuur in het midden, en liggen niet meer over het hart, de teller of de strook. */
 body[data-modus="mobiel"] #meldingen.bij-baas { max-width: 42vw; right: calc(8px + env(safe-area-inset-right)); }
 body[data-modus="mobiel"] #meldingen.bij-baas .toast { font-size: .78rem; line-height: 1.25; padding: 5px 11px; border-radius: 12px; }
+/* staand (portret, het controleformaat 412x915): de vijandenrij staat daar vlak onder de bazenbalk, en
+   een toast onder de balk raakte de pil van de baas. Daar gaan ze LINKS onder de topbalk, over de lege
+   achtergrond (de bazenbalk staat rechts); !important wint van de gemeten top uit _meldingPlek. */
+@media (orientation: portrait) and (max-width: 900px) {
+  body[data-modus="mobiel"] #meldingen.bij-baas { top: calc(var(--tbh, 40px) + var(--sat) + 8px) !important; left: calc(8px + env(safe-area-inset-left)); right: auto; align-items: flex-start; max-width: 52vw; }
+}
 body[data-modus="mobiel"] #baas-balk .bb-balk::before {
   content: ''; order: 2; flex: none; width: 46px; height: 42px;
   background: linear-gradient(to top, #6bdb4d 0 calc(var(--hp, 100) * 1%), #2b1420 calc(var(--hp, 100) * 1%) 100%);
