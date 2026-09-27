@@ -876,13 +876,20 @@ async function eenGevecht({ build, job }) {
       if (g.voorbij || S.gevecht !== g) { rondes.push({ r: ronde, bd, hpVoor, hp: S.hp, in: T.rondeIn, intent, hof: hofTxt, ink: inkNu, k: kaarten, posten: g.posten || 0, bossHp: Math.max(0, (boss() || {}).hp || 0) }); break; }
       drinkIndien(true);
       const postenNu = g.posten || 0;
+      /* [review B4a, vondst 1] de LEUGENDETECTOR: de pil van de baas en de getelegrafeerde schade aan
+         het einde van jouw beurt, tegenover wat je in de vijandbeurt echt verloor (inVijand). Een
+         ronde met pilEind 'HET DECREET' en inVijand >= 10 was de leugen van vondst 1. */
+      const pilEind = (boss() && boss().intent) ? boss().intent.naam : '?';
+      const teleEind = (typeof intentVerwachteSchade === 'function') ? alleVijanden().reduce((s, v) => s + intentVerwachteSchade(v), 0) : null;
+      const hpEind = S.hp;
       if (g.beurt === beurtStart) {
         let pog = 0;
         while (g.beurt === beurtStart && !g.voorbij && pog++ < 5) { await vrij(); await eindBeurt(); await vrij(); }
         if (g.beurt === beurtStart && !g.voorbij) { fout = 'eindBeurt kwam niet door (ronde ' + ronde + ')'; break; }
       }
       const bb = boss();
-      rondes.push({ r: ronde, bd, hpVoor, hp: S.hp, in: T.rondeIn, intent, hof: hofTxt, ink: inkNu, k: kaarten, posten: postenNu, bossHp: Math.max(0, (bb && bb.hp) || 0), gif: (bb && bb.status.gif) || 0, blok: 0 });
+      rondes.push({ r: ronde, bd, hpVoor, hp: S.hp, in: T.rondeIn, intent, hof: hofTxt, ink: inkNu, k: kaarten, posten: postenNu, bossHp: Math.max(0, (bb && bb.hp) || 0), gif: (bb && bb.status.gif) || 0, blok: 0,
+        pilEind, teleEind, inVijand: hpEind - S.hp });
     }
   } catch (e) { fout = (e && e.stack) ? String(e.stack).slice(0, 600) : String(e); }
   await vrij();

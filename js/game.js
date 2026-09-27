@@ -7624,8 +7624,10 @@ function dicktatorZittingTeller(b) {
    dezelfde verdeling lezen. Van links naar rechts over de levende hovelingen (g.vijanden, geen
    baas; lookup-bugklasse: een onbekend id telt als hoveling). A4 (B4a): de griffier vangt
    hoogstens tot hij op DICK.griffierBodem HP staat - hij draagt het dossier, zonder hem geen
-   decreet; elke andere hoveling vangt wat er nog over is (en kan eraan sterven). Wat daarna
-   overblijft, vervalt. Geeft [{ h, n }] terug (alleen wie echt iets vangt). */
+   decreet; de eerstvolgende andere hoveling vangt ALLES wat er nog over is (ook meer dan hij
+   heeft: overkill zoals bij elke klap, zoals vóór A4 de eerste vanger alles ving - geen ketting)
+   en kan eraan sterven. Is er geen, dan vervalt de rest. Geeft [{ h, n }] terug (alleen wie
+   echt iets vangt). */
 function dicktatorHofVangst(g, b, n) {
   const uit = [];
   if (!g || !(n > 0)) return uit;

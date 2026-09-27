@@ -1000,7 +1000,9 @@ const sonde = page => page.evaluate(() => {
   const r18b = await vang18(page, 20);
   t(r18b.na.gr === 1 && r18b.voor.dw - r18b.na.dw === 20 && r18b.vanger === 'de_deurwaarder', `de griffier op zijn bodem vangt niets meer: de deurwaarder vangt ${r18b.voor.dw - r18b.na.dw}, de vanger is nu ${r18b.vanger}`);
   const r18c = await vang18(page, 30, 'dw.hp = 5;');
-  t(r18c.na.gr === 1 && r18c.na.dw === 0 && r18c.gevangen === 5, `de deurwaarder (5 HP) vangt 5 en sterft; de rest (25) vervalt: gevangen ${r18c.gevangen}, griffier ${r18c.na.gr}`);
+  /* een andere hoveling vangt wat er over is, zoals vóór A4 de eerste vanger alles ving: wat hij
+     niet draagt, is overkill zoals bij elke klap (geen ketting naar de volgende) */
+  t(r18c.na.gr === 1 && r18c.na.dw === 0 && r18c.gevangen === 30 && r18c.verdeling === 'deurwaarder:30', `de deurwaarder (5 HP) vangt de 30 en sterft eraan; de griffier blijft op ${r18c.na.gr} (verdeling "${r18c.verdeling}", gevangen ${r18c.gevangen})`);
   const tip18 = await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); const t2 = dicktatorZittingTeller(b); return { vanger: (typeof dicktatorHofVanger === 'function' && dicktatorHofVanger(S.gevecht, b) || {}).id || null, tip: t2 ? t2.tip : '', gesch: dicktatorGeschorstTip(b) }; });
   t(tip18.vanger === null && /gaat verloren/.test(tip18.tip) && !/vangt zijn hof/.test(tip18.gesch), `met enkel een griffier op zijn bodem belooft geen tekst een vangst: teller "…${tip18.tip.slice(-44)}", GESCHORST "…${tip18.gesch.slice(-16)}"`);
   /* het Galgentouw executeert de griffier niet op een vangst, wel op jouw klap */
