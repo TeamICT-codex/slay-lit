@@ -29,6 +29,12 @@
    Sinds B4b (27 sep 2026): 20 A6 - het decreet vervalt ZICHTBAAR (de doorbraak vóór de zitting, de
      dode griffier, beide in één klap, geen regel zonder dossier, de melding zonder baasspraak, 846x381).
      De regie zelf (B2.1-B2.4 en de restpunten van het bazentoneel) staat in finale_regie_acceptatie.js.
+   Sinds B4b F1 (review van B4b, 27 sep 2026): 21 de review-fixes - a één naam per ding (HIJ HOUDT STAND 🔒,
+     "zitting" = de decreetbeurt, ⚖ = het hof dat ingrijpt), b de chip op de telefoon en de melding per
+     scène, c de teller van IV op de telefoon, d het Ontslag in de strook = de pil, e de toasts (de aanzegging
+     één keer, de tekstsluis, onder de bazenbalk, de laster na de reveal), f de titelduren, g de griffier die
+     al dood is, h het toetsenbord in het keuzescherm, i de herverkiezing op je Doornen, j de lage.
+     Blok 15 en 16 lezen de nieuwe naam (standKort, "🔒N").
    Review F9: de suite leest elk balansgetal uit DICK (R3 draait aan die knoppen).
 
    GEEN dev-server en NOOIT poort 4173: een verzonnen host (localhost:4198) wordt vanaf
@@ -331,7 +337,8 @@ const sonde = page => page.evaluate(() => {
   t(s.intent === 'DE FACTUUR', `de eerste vorm-2-zet is de AANLOOP: "${s.intent}"`);
   await wachtVrij(page);
   s = await sonde(page);
-  t(/IV · HET MANDAAT/.test(s.strook) && /ONTSLAG over 1/.test(s.strook) && new RegExp('ONTSLAG ' + DK.L[0] + '\\b').test(s.strook), `de strook: "${s.strook}" (DICK.ONTSLAG[0] = ${DK.L[0]})`);
+  /* Finale B4b F1 (review): de strook noemt zijn Ontslag PLUS zijn Kracht (het getal dat straks op de pil staat) */
+  t(/IV · HET MANDAAT/.test(s.strook) && /ONTSLAG over 1/.test(s.strook) && new RegExp('ONTSLAG ' + (DK.L[0] + (s.status.kracht || 0)) + '\\b').test(s.strook), `de strook: "${s.strook}" (DICK.ONTSLAG[0] = ${DK.L[0]} + Kracht ${s.status.kracht || 0})`);
 
   /* de verwachte reeks uit DICK.ONTSLAG: het n-de Ontslag, voorbij het einde het laatste bedrag */
   const ontslagVerwacht = [1, 2, 3, 4].map(n => DK.L[Math.min(n, DK.L.length) - 1]);
@@ -715,6 +722,9 @@ const sonde = page => page.evaluate(() => {
      van een klap wegknipt valt op de eerste levende hoveling (met de vang-fx op DIE hoveling), in
      IV een teken, gif dat in de vloer tikt valt op het hof, en B5: telegraaf en teller nooit onder
      de duisternis. Alle getallen uit DICK en uit de spelcode (dicktatorVloer, dicktatorZittingNog). */
+  /* Finale B4b F1 (review, hoog): de regel heet voor de speler HIJ HOUDT STAND (🔒); zolang HERSCHIKT DE
+     ZAAL op de pil staat, telt hij nog niet ("3 zetten" i.p.v. "nog 3") */
+  const standKort = (n, wacht) => '🔒 HIJ HOUDT STAND · ' + (wacht ? '' : 'nog ') + n + (n === 1 ? ' zet' : ' zetten');
   const zit = page => page.evaluate(() => {
     const g = S.gevecht, b = dicktatorBaas(g);
     const z = document.querySelector('#baas-balk .bb-zitting'), k = document.querySelector('#baas-balk .bb-vloer');
@@ -767,18 +777,18 @@ const sonde = page => page.evaluate(() => {
   await wachtVrij(page);
   zs = await zit(page);
   const vloer2 = DZ.d3 + 1;
-  t(zs.scene === 2 && zs.vloer === vloer2 && zs.nog === DZ.N2 && zs.teller === '⚖ ZITTING LOOPT · nog ' + DZ.N2 && zs.chip && /GESCHORST/.test(zs.strook), `na de regie: GESCHORST in de strook ("${zs.strook}") en de teller "${zs.teller}" van de nieuwe zitting, vloer ${zs.vloer} (= drempel III + 1 = ${vloer2}), nog ${zs.nog}`);
+  t(zs.scene === 2 && zs.vloer === vloer2 && zs.nog === DZ.N2 && zs.teller === standKort(DZ.N2, true) && zs.chip && /GESCHORST/.test(zs.strook), `na de regie: GESCHORST in de strook ("${zs.strook}") en de teller "${zs.teller}" van de nieuwe scène (nog niet geteld: HERSCHIKT staat op de pil), vloer ${zs.vloer} (= drempel III + 1 = ${vloer2}), nog ${zs.nog}`);
   t(zs.kerf != null && Math.abs(zs.kerf - vloer2 / zs.maxHp * 100) < 0.2, `de inkeping staat op de vloer: ${zs.kerf && zs.kerf.toFixed(2)}% (verwacht ${(vloer2 / zs.maxHp * 100).toFixed(2)}%)`);
   t(new RegExp('minstens ' + DZ.N2 + ' zet').test(zs.tip) && new RegExp('niet onder ' + vloer2 + ' HP').test(zs.tip) && /HERSCHIKT DE ZAAL telt niet mee/.test(zs.tip) && !/cyclus/.test(zs.tip), `de tooltip: "${zs.tip}"`);
   let zb = await beurt(page, 0);
   zs = await zit(page);
-  t(zb.naam === 'HERSCHIKT DE ZAAL' && zs.nog === DZ.N2 && !zs.chip && !/GESCHORST/.test(zs.strook), `HERSCHIKT telt niet mee: nog ${zs.nog}, de GESCHORST-chip is weg (${zs.chip})`);
+  t(zb.naam === 'HERSCHIKT DE ZAAL' && zs.nog === DZ.N2 && zs.teller === standKort(DZ.N2, false) && !zs.chip && !/GESCHORST/.test(zs.strook), `HERSCHIKT telt niet mee: nog ${zs.nog} ("${zs.teller}": de vorm wisselt, zo is de eerste daling zichtbaar), de GESCHORST-chip is weg (${zs.chip})`);
   /* de vloer: 200 op de baas → hij stopt OP zijn vloer, de rest valt op de eerste levende hoveling */
   kv = await klapVang(page, 200, { vangerHp: 400 });
   t(kv.bNa === vloer2 && kv.hVoor - kv.hNa === 200 - (kv.bVoor - vloer2), `de vloer: ${kv.bVoor} → ${kv.bNa}, ${kv.hId} vangt ${kv.hVoor - kv.hNa} (= 200 − ${kv.bVoor - vloer2})`);
-  t(!kv.geschorst && kv.fxOpVanger && !kv.fxOpBaas && /DE ZITTING LOOPT/.test(kv.toast), `F10: de vloer schorst niet (${kv.geschorst}); de vang-fx op ${kv.hId}; één melding: "${kv.toast}"`);
+  t(!kv.geschorst && kv.fxOpVanger && !kv.fxOpBaas && /HIJ HOUDT STAND/.test(kv.toast), `F10: de vloer schorst niet (${kv.geschorst}); de vang-fx op ${kv.hId}; één melding: "${kv.toast}"`);
   zs = await zit(page);
-  t(!zs.chip && !/GESCHORST/.test(zs.strook) && zs.teller === '⚖ ZITTING LOOPT · nog ' + DZ.N2 && /vangt zijn hof/.test(zs.tip), `op de vloer geen GESCHORST (chip ${zs.chip}, strook "${zs.strook}"), wel de teller: "${zs.teller}"`);
+  t(!zs.chip && !/GESCHORST/.test(zs.strook) && zs.teller === standKort(DZ.N2, false) && /vangt zijn hof/.test(zs.tip), `op de vloer geen GESCHORST (chip ${zs.chip}, strook "${zs.strook}"), wel de teller: "${zs.teller}"`);
   /* F7: wat het hof vangt, telt als schade (op het hof) */
   kv = await klapVang(page, 30, { kaart: true });
   t(kv.bNa === vloer2 && kv.stats > 0 && kv.stats === kv.hVoor - kv.hNa, `F7: een kaartklap op de vloer: baas ${kv.bVoor} → ${kv.bNa}, S.stats.schade +${kv.stats} = wat ${kv.hId} verloor (${kv.hVoor - kv.hNa})`);
@@ -803,7 +813,7 @@ const sonde = page => page.evaluate(() => {
   await wachtVrij(page);
   zb = await beurt(page, 0);   /* HERSCHIKT van III */
   zs = await zit(page);
-  t(zb.naam === 'HERSCHIKT DE ZAAL' && zs.scene === 3 && zs.vloer === 1 && zs.nog === DZ.N3 && zs.teller === '⚖ ZITTING LOOPT · nog ' + DZ.N3, `III: vloer ${zs.vloer} HP, teller "${zs.teller}", hof ${zs.hof}`);
+  t(zb.naam === 'HERSCHIKT DE ZAAL' && zs.scene === 3 && zs.vloer === 1 && zs.nog === DZ.N3 && zs.teller === standKort(DZ.N3, false), `III: vloer ${zs.vloer} HP, teller "${zs.teller}", hof ${zs.hof}`);
   const gifIII = await page.evaluate(() => {
     const g = S.gevecht, b = dicktatorBaas(g);
     const h = (typeof dicktatorHofVanger === 'function' ? dicktatorHofVanger(g, b) : null);
@@ -855,7 +865,7 @@ const sonde = page => page.evaluate(() => {
   zs = await zit(page);
   t(zs.scene === 4 && zs.vloer === 1 && zs.nog === DZ.N4 && zs.hof === '', `IV: vloer ${zs.vloer} HP, nog ${zs.nog}, hof "${zs.hof}"`);
   const totOntslag = DZ.N4 % 2 === 0;   /* de zitting van IV loopt af met een even zet = HET ONTSLAG */
-  t(totOntslag ? (zs.teller === '⚖ valt na zijn ONTSLAG' && /valt pas na zijn ONTSLAG/.test(zs.tip)) : /nog /.test(zs.teller || ''), `het teken in IV: "${zs.teller}" (tip: "${zs.tip}")`);
+  t(totOntslag ? (zs.teller === '🔒 valt na zijn ONTSLAG' && /valt pas na zijn ONTSLAG/.test(zs.tip)) : /nog /.test(zs.teller || ''), `het teken in IV: "${zs.teller}" (tip: "${zs.tip}")`);
   t(/gaat verloren/.test(zs.tip) && !/vangt zijn hof/.test(zs.tip), 'zonder hof belooft de tekst geen vangst: "wat je klap te veel heeft, gaat verloren"');
   kv = await klapVang(page, 999);
   t(kv.bNa === 1 && kv.hId === null && kv.fx.length === 0 && !kv.geschorst, `een klap van 999 in IV: ${kv.bVoor} → ${kv.bNa}, geen vanger, geen vang-fx, niet geschorst`);
@@ -901,7 +911,7 @@ const sonde = page => page.evaluate(() => {
     t(geo.z && geo.binnen, `de teller staat binnen ${geo.W}×${geo.H}: "${geo.tekst}" (${geo.z && Math.round(geo.z.w)}×${geo.z && Math.round(geo.z.h)} op ${geo.z && Math.round(geo.z.l)},${geo.z && Math.round(geo.z.t)})`);
     t(!geo.tekstZ && !geo.labelZ && !geo.strookZ, `geen overlap met het HP-getal (${geo.tekstZ}), #beurt-label (${geo.labelZ}) of de strook (${geo.strookZ})`);
     t(!geo.beurtZ && !geo.pilZ && !geo.beurtStrook && !geo.pilStrook && !geo.pilBeurt, `B4b: 0 snijdende rechthoeken tussen de teller, 'Beurt N' (.bb-beurt), de strook en de baaspil (teller~beurt ${geo.beurtZ}, teller~pil ${geo.pilZ}, beurt~strook ${geo.beurtStrook}, pil~strook ${geo.pilStrook}, pil~beurt ${geo.pilBeurt})`);
-    if (vp.mobiel) t(/^⚖\d+$/.test(geo.tekst) && geo.links && !geo.kerf, `mobiel: "${geo.tekst}" links van het HP-getal, geen inkeping (${!!geo.kerf})`);
+    if (vp.mobiel) t(/^🔒\d+$/.test(geo.tekst) && geo.links && !geo.kerf, `mobiel: "${geo.tekst}" links van het HP-getal, geen inkeping (${!!geo.kerf})`);
     else t(geo.inBalk && !!geo.kerf, `laptop: de teller in de HP-balk (${geo.inBalk}) en de inkeping staat (${!!geo.kerf})`);
     await page.screenshot({ path: path.join(UIT, `zitting-${vp.w}x${vp.h}.png`) }).catch(() => {});
     t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
@@ -1250,6 +1260,335 @@ const sonde = page => page.evaluate(() => {
   if (f20) await page.screenshot({ path: path.join(UIT, 'a6-doorbraak-846x381.png') }).catch(() => {});
   await stopOp(page);
   t(!!f20 && f20.l >= 0 && f20.r <= f20.W && f20.t >= 0 && f20.b <= f20.H, `846x381: de regel staat binnen het scherm (${f20 ? Math.round(f20.l) + '..' + Math.round(f20.r) + ' x ' + Math.round(f20.t) + '..' + Math.round(f20.b) : 'nooit gezien'})`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  /* ================= 21 · FINALE B4b F1 · DE REVIEW-FIXES ================= */
+  /* De review van B4b (27 sep 2026): hoog - één naam per ding (HIJ HOUDT STAND 🔒 is de lengteregel,
+     "zitting" alleen de decreetbeurt, ⚖ het hof dat ingrijpt) en de regel op de telefoon (een chip op de
+     baas, de melding per scène door de tekstsluis); middel - de teller in IV op de telefoon, het Ontslag in
+     de strook = de pil, de griffier die al dood is, de toasts, de titels, het toetsenbord in het
+     keuzescherm, de herverkiezing op je Doornen; en de goedkope lage. Alleen tekst, teken, plaatsing en
+     regie: geen getal (het harnas: dezelfde gevechten). */
+  const spraakRec = page => page.evaluate(() => {
+    window.__f1 = { t0: performance.now(), spraak: [], titels: [] };
+    if (!window.__f1Wrap) {
+      window.__f1Wrap = true;
+      const oudS = window.baasSpreekt, oudV = window.vonnisSlam;
+      window.baasSpreekt = function (tx, duur, o) { if (window.__f1) window.__f1.spraak.push({ t: Math.round(performance.now() - window.__f1.t0), tekst: String(tx), duur: duur || null, beurt: !!(o && o.beurt) }); return oudS.apply(this, arguments); };
+      window.vonnisSlam = function (titel, sub, o) { if (window.__f1) window.__f1.titels.push({ t: Math.round(performance.now() - window.__f1.t0), titel: String(titel), duur: (o && o.duur) || null }); return oudV.apply(this, arguments); };
+    }
+  });
+  const recLees = page => page.evaluate(() => window.__f1);
+  const chip21 = page => page.evaluate(() => {
+    const b = dicktatorBaas(S.gevecht), el = actorEl(b), c = el && el.querySelector('.status-stand');
+    const z = document.querySelector('#baas-balk .bb-zitting');
+    const r = c ? c.getBoundingClientRect() : null;
+    const tel = dicktatorZittingTeller(b);
+    return {
+      chip: c ? c.textContent : null, tip: c ? (c.dataset.tip || '') : '', wacht: c ? c.classList.contains('wacht') : null, verwacht: tel && !b._geschorst ? '🔒' + tel.chip : null,
+      teller: z && !z.hidden ? z.textContent : null, binnen: !!(r && r.width && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight),
+      geschorst: !!b._geschorst, nog: dicktatorZittingNog(b), herschik: !!b.herschik
+    };
+  });
+  const toasts21 = page => page.evaluate(() => [...document.querySelectorAll('#meldingen .toast')].map(e => e.textContent));
+
+  kop('21a · F1 (hoog) · één naam per ding: HIJ HOUDT STAND 🔒 is de lengteregel, "zitting" alleen de decreetbeurt, ⚖ het hof dat ingrijpt');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page);
+  await beurt(page, 0);   /* DE AANZEGGING */
+  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, 999, sp()); checkBaasFase(); renderGevecht(); });
+  await wachtVrij(page);
+  await beurt(page, 0);   /* HERSCHIKT DE ZAAL */
+  const n21 = await page.evaluate(() => {
+    const g = S.gevecht, b = dicktatorBaas(g), U = UITSPRAKEN._dicktator;
+    const tel = dicktatorZittingTeller(b);
+    document.querySelectorAll('.fx-nummer').forEach(e => e.remove());
+    b.hp = dicktatorVloer(b); verliesHp(b, 5, sp()); renderGevecht();
+    const fx = [...document.querySelectorAll('.fx-nummer')].map(e => e.textContent);
+    const pil = intentTekst({ id: b.id, intent: { type: 'decreet', naam: 'HET DECREET', namen: ['Slag', 'Verdediging'] }, status: {} });
+    const fases = document.querySelector('#baas-balk .bb-fases');
+    return {
+      tel: tel ? [tel.kort, tel.mob, tel.chip, tel.tip, tel.melding].join(' || ') : '', fx: fx.join(' | '), pil: pil.replace(/<[^>]+>/g, '').trim(),
+      fases: fases ? (fases.dataset.tip || '') : '', best: dickTekst(BESTIARIUM.de_dicktator.notitie), herschikt: U.herschikt, aanklacht: (U.duiding || {}).aanklacht || ''
+    };
+  });
+  t(/HIJ HOUDT STAND/.test(n21.tel) && /🔒/.test(n21.tel) && !/zitting|ZITTING|⚖/.test(n21.tel), `de teller, de chip, de tip en de melding: HIJ HOUDT STAND met 🔒, nooit "zitting" of ⚖ ("${n21.tel.slice(0, 110)}…")`);
+  t(/🔒 houdt stand/.test(n21.fx) && !/zitting/i.test(n21.fx), `de fx op de vloer: "${n21.fx}"`);
+  t(/HIJ HOUDT STAND/.test(n21.fases) && !/ZITTING LOOPT/.test(n21.fases) && /HIJ HOUDT STAND/.test(n21.best) && !/ZITTING LOOPT/.test(n21.best), 'de tip van de fase-pips en de Bestiarium-notitie noemen HIJ HOUDT STAND, niet DE ZITTING LOOPT');
+  t(!/zitting/i.test(n21.herschikt), `HERSCHIKT DE ZAAL gebruikt het woord niet meer: ${n21.herschikt}`);
+  t(n21.pil === '📜 Slag · Verdediging', `de decreetpil: "${n21.pil}" ('·', geen ⚖)`);
+  t(/zitting/.test(n21.aanklacht), `"zitting" blijft de decreetbeurt (de duiding van I: "${n21.aanklacht}")`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  kop('21b · F1 (hoog) · 846x381: HIJ HOUDT STAND als chip op de baas ("🔒 nog N", een tik toont de tip), de melding één keer per scène, het HP-getal van het hof');
+  ({ ctx, page } = await open(browser, { w: 846, h: 381, mobiel: true }));
+  await startProces(page);
+  await beurt(page, 0);   /* DE AANZEGGING: de griffier */
+  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, b.hp - dicktatorDrempel(b, 2), sp()); checkBaasFase(); renderGevecht(); });
+  await wachtVrij(page);
+  let c21 = await chip21(page);
+  t(c21.geschorst && c21.herschik && c21.chip === null && c21.teller === '🔒' + c21.nog, `na de overgang (GESCHORST, HERSCHIKT op de pil): geen chip naast GESCHORST, naast het hart "${c21.teller}"`);
+  await beurt(page, 0);   /* HERSCHIKT DE ZAAL */
+  c21 = await chip21(page);
+  t(c21.chip === '🔒nog ' + c21.nog && c21.chip === c21.verwacht && /HIJ HOUDT STAND/.test(c21.tip) && c21.binnen && !c21.wacht, `na HERSCHIKT: de chip "${c21.chip}" op de baas, binnen het scherm, met de tip ("${c21.tip.slice(0, 60)}…")`);
+  const tik21 = await page.evaluate(() => { const c = actorEl(dicktatorBaas(S.gevecht)).querySelector('.status-stand'); if (!c) return null; const r = c.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+  if (tik21) { await page.touchscreen.tap(tik21.x, tik21.y); await slaap(300); }
+  const tt21 = await page.evaluate(() => { const tip = document.getElementById('tooltip'); return tip ? { d: getComputedStyle(tip).display, tekst: tip.textContent || '' } : { d: '-', tekst: '' }; });
+  t(!!tik21 && tt21.d === 'block' && /HIJ HOUDT STAND/.test(tt21.tekst), `een tik op de chip toont de tip (${tt21.d}: "${tt21.tekst.slice(0, 50)}…")`);
+  await page.evaluate(() => { const tip = document.getElementById('tooltip'); if (tip) tip.style.display = 'none'; });
+  await page.evaluate(() => { document.querySelectorAll('#meldingen .toast').forEach(e => e.remove()); const b = dicktatorBaas(S.gevecht); verliesHp(b, 200, sp()); renderGevecht(); });
+  const m1_21 = await toasts21(page);
+  await page.evaluate(() => { document.querySelectorAll('#meldingen .toast').forEach(e => e.remove()); const b = dicktatorBaas(S.gevecht); verliesHp(b, 200, sp()); renderGevecht(); });
+  const m2_21 = await toasts21(page);
+  t(m1_21.some(x => /HIJ HOUDT STAND/.test(x)) && !m2_21.some(x => /HIJ HOUDT STAND/.test(x)), `de eerste klap op de vloer: één melding ("${m1_21.join(' | ')}"), de tweede in dezelfde scène niet (${m2_21.length})`);
+  const N2_21 = await page.evaluate(() => dicktatorMinZetten(2));
+  for (let i = 0; i < N2_21; i++) await beurt(page, 0);
+  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, b.hp - dicktatorDrempel(b, 3), sp()); checkBaasFase(); renderGevecht(); });
+  await wachtVrij(page);
+  await beurt(page, 0);   /* HERSCHIKT van III */
+  await page.evaluate(() => { document.querySelectorAll('#meldingen .toast').forEach(e => e.remove()); const b = dicktatorBaas(S.gevecht); verliesHp(b, 200, sp()); renderGevecht(); });
+  const m3_21 = await toasts21(page);
+  const sc21 = await page.evaluate(() => dicktatorScene(dicktatorBaas(S.gevecht)));
+  t(sc21 === 3 && m3_21.some(x => /HIJ HOUDT STAND/.test(x)), `een nieuwe scène (${sc21}): de melding komt opnieuw ("${m3_21.join(' | ')}")`);
+  const hp21 = await page.evaluate(() => {
+    const g = S.gevecht, b = dicktatorBaas(g);
+    const hof = g.vijanden.filter(x => x.hof && !x.dood).map(x => { const e = actorEl(x) && actorEl(x).querySelector('.hp-tekst'); return { id: x.id.replace(/^de_/, ''), d: e ? getComputedStyle(e).display : '-', tekst: e ? e.textContent : '' }; });
+    const be = actorEl(b) && actorEl(b).querySelector('.hp-tekst');
+    return { hof, baas: be ? getComputedStyle(be).display : '-' };
+  });
+  t(hp21.hof.length > 0 && hp21.hof.every(h => h.d !== 'none' && /^\d+\/\d+$/.test(h.tekst)) && hp21.baas === 'none', `het hof toont zijn HP-getal op de telefoon (${hp21.hof.map(h => h.id + ' ' + h.tekst).join(', ')}); de baas niet (dat staat bij het hart)`);
+  await page.screenshot({ path: path.join(UIT, 'f1-chip-846x381.png') }).catch(() => {});
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  kop('21c · F1 (middel) · 846x381: in IV telt de teller echt af ("🔒2" → "🔒1" na de AANLOOP), de chip zegt "tot ONTSLAG"');
+  ({ ctx, page } = await open(browser, { w: 846, h: 381, mobiel: true }));
+  await startProces(page, { tirade: true });
+  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, b.hp, sp()); checkBaasFase(); renderGevecht(); });
+  await wachtVrij(page); await slaap(400);
+  const N4_21 = await page.evaluate(() => dicktatorMinZetten(4));
+  const iv21 = [];
+  const lees21 = async naam => { const s2 = await chip21(page); iv21.push(`${naam}: "${s2.teller}" / chip "${s2.chip}" / nog ${s2.nog}`); return s2; };
+  const a21 = await lees21('na de herverkiezing');
+  await beurt(page, 0);
+  const b21 = await lees21('na de AANLOOP');
+  await beurt(page, 0);
+  const e21 = await lees21('na HET ONTSLAG');
+  t(a21.nog === N4_21 && a21.teller === '🔒' + N4_21 && b21.nog === N4_21 - 1 && b21.teller === '🔒' + (N4_21 - 1) && e21.teller === null, `de teller naast het hart telt af: ${iv21.join(' ; ')}`);
+  t(a21.chip === a21.verwacht && b21.chip === b21.verwacht && e21.chip === null && (N4_21 !== 2 || (a21.chip === '🔒tot ONTSLAG' && b21.chip === '🔒tot ONTSLAG')), `de chip op de baas: "${a21.chip}" → "${b21.chip}" → ${e21.chip}`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  kop('21d · F1 (middel) · IV: de strook noemt hetzelfde Ontslag als de pil (Kracht, Zwak) en draagt de kroon 👑, niet ⚖');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page, { tirade: true });
+  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, b.hp, sp()); checkBaasFase(); renderGevecht(); });
+  await wachtVrij(page); await slaap(400);   /* het strooklabel van IV komt op 4600 (x tempo) */
+  const strook21 = () => page.evaluate(() => {
+    const b = dicktatorBaas(S.gevecht);
+    const st = (document.querySelector('#baas-balk .bb-proces') || {}).textContent || '';
+    const pil = ((actorEl(b) && actorEl(b).querySelector('.intent')) || {}).textContent || '';
+    const m = st.match(/ONTSLAG \d+/g);
+    return { st, pil: pil.trim(), getal: m ? parseInt(m[m.length - 1].split(' ')[1], 10) : null, kracht: b.status.kracht || 0, basis: dicktatorOntslagBedrag(b), klok: dicktatorKlok(b), verwacht: intentVerwachteSchade(b), ontslagOpPil: !!(b.intent && b.intent.ontslag) };
+  });
+  let d21 = await strook21();
+  t(/^👑 IV · HET MANDAAT/.test(d21.st) && !/⚖/.test(d21.st) && d21.klok === 1 && d21.kracht > 0 && d21.getal === d21.basis + d21.kracht, `klok 1: "${d21.st}" = zijn Ontslag ${d21.basis} + zijn Kracht ${d21.kracht}`);
+  await beurt(page, 0);   /* de AANLOOP */
+  d21 = await strook21();
+  const pil21 = parseInt((d21.pil.match(/\d+/) || [])[0], 10);
+  t(d21.klok === 0 && d21.ontslagOpPil && d21.getal === pil21 && pil21 === d21.verwacht, `klok 0: de strook "${d21.st}" = de pil "${d21.pil}" (${d21.verwacht})`);
+  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); b.status.zwak = 2; renderGevecht(); });
+  d21 = await strook21();
+  const pilZ21 = parseInt((d21.pil.match(/\d+/) || [])[0], 10);
+  t(d21.getal === pilZ21 && pilZ21 === d21.verwacht && d21.getal < d21.basis + d21.kracht, `met Zwak op hem: strook ${d21.getal} = pil ${pilZ21} (niet het kale ${d21.basis + d21.kracht})`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  kop('21e · F1 (middel) · de aanzegging één keer (de plaat, met de echte reden), uitleg door de tekstsluis, toasts onder de bazenbalk, de laster na de reveal');
+  for (const vp of [{ w: 1440, h: 900, naam: '1440x900' }, { w: 846, h: 381, mobiel: true, naam: '846x381' }]) {
+    ({ ctx, page } = await open(browser, vp));
+    await startProces(page);
+    await spraakRec(page);
+    await page.evaluate(() => {
+      document.querySelectorAll('#meldingen .toast').forEach(e => e.remove());
+      window.__toasts = [];
+      window.__toastObs = new MutationObserver(l => l.forEach(x => x.addedNodes.forEach(n => { if (n.classList && n.classList.contains('toast')) window.__toasts.push(n.textContent); })));
+      window.__toastObs.observe(document.getElementById('meldingen'), { childList: true });
+    });
+    await beurt(page, 0);   /* DE AANZEGGING, nog niets gespeeld */
+    const a21e = await page.evaluate(() => ({ toasts: window.__toasts.slice(), spraak: window.__f1.spraak.map(x => x.tekst + ' @' + x.duur), dossier: [...S.gevecht.aangezegd.values()].map(d => d.reden) }));
+    const aanz21 = a21e.spraak.find(x => /overbodig/.test(x)) || '';
+    t(!a21e.toasts.some(x => /DE AANZEGGING/.test(x)), `${vp.naam}: geen aanzeg-toast naast de plaat (${a21e.toasts.length} toasts${a21e.toasts.length ? ': ' + a21e.toasts.join(' | ').slice(0, 90) : ''})`);
+    t(/: de duurste post\./.test(aanz21) && !/eest gespeeld/.test(aanz21) && /@5600$/.test(aanz21), `${vp.naam}: de plaat noemt de echte reden (${a21e.dossier.join(' / ')}): "${aanz21.slice(0, 120)}"`);
+    const uit21 = await page.evaluate(() => { INST.spraak = false; document.querySelectorAll('#meldingen .toast').forEach(e => e.remove()); const g = S.gevecht; dicktatorShortlist(g, dicktatorBaas(g)); const x = [...document.querySelectorAll('#meldingen .toast')].map(e => e.textContent); INST.spraak = true; return x; });
+    t(uit21.some(x => /DE AANZEGGING/.test(x)), `${vp.naam}: zonder baasspraak draagt de toast de aanzegging ("${uit21.join(' | ').slice(0, 80)}")`);
+    const sl21 = await page.evaluate(async () => {
+      document.querySelectorAll('#meldingen .toast').forEach(e => e.remove());
+      const v = document.createElement('div'); v.className = 'vonnis'; document.body.appendChild(v);
+      meldingNaSluis('F1-SLUISTEST');
+      await new Promise(r => setTimeout(r, 400));
+      const onder = [...document.querySelectorAll('#meldingen .toast')].some(e => /F1-SLUISTEST/.test(e.textContent));
+      v.remove();
+      await new Promise(r => setTimeout(r, 400));
+      const na = [...document.querySelectorAll('#meldingen .toast')].find(e => /F1-SLUISTEST/.test(e.textContent));
+      const r = e => { const x = e.getBoundingClientRect(); return { l: x.left, r: x.right, t: x.top, b: x.bottom }; };
+      const snij = (a, c) => !!(a && c) && !(a.r <= c.l || c.r <= a.l || a.b <= c.t || c.b <= a.t);
+      const bb = r(document.getElementById('baas-balk'));
+      const b = dicktatorBaas(S.gevecht), pilEl = actorEl(b) && actorEl(b).querySelector('.intent');
+      const pil = pilEl ? r(pilEl) : null, tr = na ? r(na) : null;
+      return { onder, na: !!na, tr, bb, bbSnij: snij(tr, bb), pilSnij: snij(tr, pil), W: innerWidth };
+    });
+    t(!sl21.onder && sl21.na, `${vp.naam}: een uitleg-melding wacht op de tekstsluis (onder een titel: ${sl21.onder}; erna: ${sl21.na})`);
+    t(!!sl21.tr && sl21.tr.t >= sl21.bb.b && !sl21.bbSnij && !sl21.pilSnij && sl21.tr.r <= sl21.W, `${vp.naam}: de toast staat onder de bazenbalk (top ${sl21.tr && Math.round(sl21.tr.t)} ≥ ${Math.round(sl21.bb.b)}), niet over de balk of de pil van de baas`);
+    const zi21 = await naarZitting(page);
+    await page.evaluate(() => {
+      window.__laster21 = []; const t0 = performance.now();
+      if (window.__lasterObs) window.__lasterObs.disconnect();
+      window.__lasterObs = new MutationObserver(l => l.forEach(x => x.addedNodes.forEach(n => { if (n.classList && n.classList.contains('toast') && /lasterdecreet/.test(n.textContent)) window.__laster21.push({ t: Math.round(performance.now() - t0), reveal: !!document.querySelector('.decreet-overlay') }); })));
+      window.__lasterObs.observe(document.getElementById('meldingen'), { childList: true });
+      eindBeurt();
+    });
+    await wachtVrij(page, 30000); await slaap(600);
+    const la21 = await page.evaluate(() => window.__laster21);
+    t(zi21.intent === 'HET DECREET' && la21.length === 1 && !la21[0].reveal, `${vp.naam}: de laster-toast komt pas als de decreet-reveal weg is (${JSON.stringify(la21)})`);
+    t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+    await ctx.close();
+  }
+
+  kop('21f · F1 (middel) · de titels van II, III en de herverkiezing staan langer (3200 / 3300 / 2200 ms), de stemming 1450 ms, de rede 2000 ms; met levende griffier „U bent ONTSLAGEN."');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page);
+  await beurt(page, 0);   /* de griffier */
+  await spraakRec(page);
+  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, 999, sp()); checkBaasFase(); renderGevecht(); });
+  await wachtVrij(page);
+  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); b._geschorst = false; b.minVrij = true; verliesHp(b, 999, sp()); checkBaasFase(); renderGevecht(); });
+  await wachtVrij(page);
+  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); b._geschorst = false; b.minVrij = true; verliesHp(b, 999, sp()); checkBaasFase(); renderGevecht(); });
+  await wachtVrij(page); await slaap(1200);
+  const f21 = await recLees(page);
+  const U21 = await page.evaluate(() => { const U = UITSPRAKEN._dicktator; return { stemming: U.stemming, rede: U.rede, weg: U.griffierWeg || [], ontslag: U.griffierOntslag }; });
+  const duur21 = re => (f21.titels.find(x => re.test(x.titel)) || {}).duur;
+  t(duur21(/II · DE FACTUUR/) === 3200 && duur21(/III · DE TIRADE/) === 3300 && duur21(/HERVERKIEZING/) === 2200, `titelduren: ${f21.titels.map(x => x.titel + ' ' + x.duur).join(', ')}`);
+  const sp21 = tx => f21.spraak.find(x => x.tekst === tx);
+  t(sp21(U21.stemming) && sp21(U21.stemming).duur === 1450 && sp21(U21.rede) && sp21(U21.rede).duur === 2000, `de stemming ${sp21(U21.stemming) ? sp21(U21.stemming).duur : '-'} ms, de rede ${sp21(U21.rede) ? sp21(U21.rede).duur : '-'} ms`);
+  const gez21 = f21.spraak.map(x => x.tekst);
+  t(gez21.includes(U21.ontslag[0]) && !U21.weg.some(x => gez21.includes(x)), `de griffier leefde bij II→III: „${U21.ontslag[0].replace(/[„"]/g, '')}" (en niet de regels van een lege plek)`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+
+  kop('21g · F1 (middel) · II→III zonder levende griffier: geen „U bent ONTSLAGEN." tegen een lege plek, wel zijn eigen twee regels');
+  await startProces(page);
+  await beurt(page, 0);   /* de griffier */
+  await spraakRec(page);
+  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, 999, sp()); checkBaasFase(); renderGevecht(); });
+  await wachtVrij(page);
+  await page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g); const gr = hofLid(g, 'de_griffier'); if (gr) verliesHp(gr, 999, sp()); b._geschorst = false; b.minVrij = true; verliesHp(b, 999, sp()); checkBaasFase(); renderGevecht(); });
+  await wachtVrij(page); await slaap(1500);
+  const g21 = await recLees(page);
+  const gezG21 = g21.spraak.map(x => x.tekst);
+  t(U21.weg.length === 2 && U21.weg.every(x => gezG21.includes(x)) && !U21.ontslag.some(x => gezG21.includes(x)), `zonder griffier: ${U21.weg.map(x => '„' + x.replace(/[„"]/g, '') + '"').join(' + ')} (geen ${U21.ontslag.map(x => '„' + x.replace(/[„"]/g, '') + '"').join(' / ')})`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  kop('21h · F1 (middel) · het decreet-keuzescherm met het toetsenbord: de eerste Enter toont, Tab of 1/2/pijlen kiest, Enter schrapt; e, Esc en cijfers doen niets');
+  for (const pad of ['Tab', '2 1 →']) {
+    ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+    const zh21 = await naarZitting(page);
+    await page.evaluate(() => { const g = S.gevecht; const d = [...g.aangezegd.values()]; g.gespeeld[d[0].id] = (g.gespeeld[d[0].id] || 0) + 1; eindBeurt(); });
+    let open21 = false;
+    for (let k = 0; k < 80 && !open21; k++) { open21 = await page.evaluate(() => !!document.querySelector('.decreet-keuze-overlay')); if (!open21) await slaap(100); }
+    t(zh21.intent === 'HET DECREET' && open21, `${pad}: het keuzescherm staat open`);
+    if (open21) {
+      const dekVoor = await page.evaluate(() => S.dek.map(c => c.uid));
+      const getoond = await page.evaluate(() => Object.fromEntries([...document.querySelectorAll('.decreet-keuze-overlay .decreet-keuze-kaart')].map(k => [k.dataset.decreet, +(k.querySelector('.kaart') || {}).dataset.uid])));
+      for (const k of ['e', 'Escape', '5', 'Enter']) await page.keyboard.press(k);
+      await slaap(200);
+      const na1 = await page.evaluate(() => { const r = document.querySelector('.decreet-kies.toets-focus'); return { open: !!document.querySelector('.decreet-keuze-overlay'), ring: r ? r.dataset.decreet : null, bezig: !!S.gevecht.bezig, dek: S.dek.length }; });
+      t(na1.open && na1.bezig && na1.ring === 'A' && na1.dek === dekVoor.length, `${pad}: e, Esc en 5 doen niets; de eerste Enter toont de ring (op ${na1.ring}) en schrapt niets (scherm open ${na1.open}, dek ${na1.dek})`);
+      for (const k of pad.split(' ').map(x => x === '→' ? 'ArrowRight' : x)) await page.keyboard.press(k);
+      const ring2 = await page.evaluate(() => { const e = document.querySelector('.decreet-kies.toets-focus'); return e ? e.dataset.decreet : null; });
+      await page.keyboard.press('Enter');
+      await slaap(400);
+      const na2 = await page.evaluate(voor => { const nu = new Set(S.dek.map(c => c.uid)); return { weg: voor.filter(u => !nu.has(u)), open: !!document.querySelector('.decreet-keuze-overlay'), kop: (document.querySelector('.decreet-overlay:not(.decreet-keuze-overlay) .decreet-shortlist') || {}).textContent || '' }; }, dekVoor);
+      t(ring2 === 'B' && !na2.open && na2.weg.length === 1 && na2.weg[0] === getoond.B && /U KOOS/.test(na2.kop), `${pad}: de ring op ${ring2}, Enter schrapt B (weg ${JSON.stringify(na2.weg)}, getoond B ${getoond.B}): "${na2.kop.trim().slice(0, 44)}"`);
+      await wachtVrij(page, 20000);
+    }
+    t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+    await ctx.close();
+  }
+
+  kop('21i · F1 (middel) · de herverkiezing valt op je Doornen tijdens zijn EXECUTIE: geen regel van de oude zet in de val, de stemming meteen');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page, { netVoor: 4 });
+  await slaap(1300); await wachtVrij(page);
+  await spraakRec(page);
+  const i21 = await page.evaluate(() => {
+    DICK.tempo = 1;   /* de regie op spelsnelheid, zoals de speler hem ziet */
+    const g = S.gevecht, b = dicktatorBaas(g);
+    b.minVrij = true;
+    b.sceneStart = (b.beurtTeller || 0) - 2;   /* slot 3 in III: EXECUTIE */
+    b.intent = VIJANDEN[b.id].kies(b, b.beurtTeller || 0); dicktatorHersync(false);
+    b.hp = 2; g.speler.status.doornen = 5; g.speler.blok = 999; renderGevecht();
+    window.__herT = null;
+    if (!window.__herWrap) { window.__herWrap = true; const oud = window.dicktatorHerverkiezing; window.dicktatorHerverkiezing = function () { window.__herT = Math.round(performance.now() - window.__f1.t0); return oud.apply(this, arguments); }; }
+    const zicht = []; window.__zicht21 = zicht; const t0 = window.__f1.t0;
+    window.__zichtIv = setInterval(() => document.querySelectorAll('.baas-spraak').forEach(e => { if (+getComputedStyle(e).opacity > 0.2) zicht.push({ t: Math.round(performance.now() - t0), k: e.textContent.trim() }); }), 50);
+    const pil = b.intent ? b.intent.naam : '-', hof = dicktatorHof(g).length;
+    eindBeurt();
+    return { pil, hof };
+  });
+  await slaap(4500);
+  const i21b = await page.evaluate(() => { clearInterval(window.__zichtIv); const b = dicktatorBaas(S.gevecht); const U = UITSPRAKEN._dicktator; return { herT: window.__herT, zicht: window.__zicht21, her: !!b.herrezen, spraak: window.__f1.spraak, stemming: U.stemming, oud: [U.executie, U.zelf].concat(U.factuur) }; });
+  await wachtVrij(page, 20000);
+  const naHer = i21b.herT == null ? [] : i21b.zicht.filter(x => x.t >= i21b.herT && x.t <= i21b.herT + 1900);
+  const oudGezegd = i21b.spraak.filter(x => i21b.herT != null && x.t >= i21b.herT && i21b.oud.includes(x.tekst));
+  const stemEerst = i21b.herT == null ? null : (i21b.zicht.find(x => x.t >= i21b.herT && x.k.startsWith(i21b.stemming.slice(0, 14))) || {}).t;
+  t(i21.pil === 'EXECUTIE' && i21b.her && i21.hof > 0, `de pil was "${i21.pil}", de Doornen doodden hem: herkozen ${i21b.her} (hof ${i21.hof})`);
+  t(oudGezegd.length === 0 && !naHer.some(x => i21b.oud.some(o => x.k.startsWith(o.slice(0, 14)))), `geen regel van zijn oude zet na de herverkiezing (aangevraagd: ${oudGezegd.length}, in beeld 0-1,9 s: ${[...new Set(naHer.map(x => x.k.slice(0, 24)))].join(' | ') || '-'})`);
+  t(stemEerst != null && stemEerst - i21b.herT < 1900, `de stemming staat in beeld op +${stemEerst != null ? stemEerst - i21b.herT : '-'} ms na de herverkiezing (< 1,9 s; vroeger ~5,3 s)`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  kop('21j · F1 (laag) · de duiding van IV, de A6-regel zegt wie het deed, regels van de vijandbeurt vervallen, GESCHORST in de vijandbeurt, de testhaak');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page);
+  await spraakRec(page);
+  const j21 = await page.evaluate(async () => {
+    DICK.tempo = 1;
+    const U = UITSPRAKEN._dicktator, g = S.gevecht, b = dicktatorBaas(g);
+    const mandaat = dickTekst(U.duiding.mandaat);
+    _spraakStop();
+    _decreetRegel('doorbraak');
+    const a6 = window.__f1.spraak.filter(x => x.tekst === U.decreetVervalt).map(x => x.duur);
+    _spraakStop();
+    /* L6: een regel van de vijandbeurt die nog in de rij staat als je volgende beurt begint, vervalt */
+    const gezien = new Set();
+    const iv = setInterval(() => document.querySelectorAll('.baas-spraak').forEach(e => gezien.add(e.textContent.trim())), 30);
+    baasSpreekt('F1-EERST', 500);
+    baasSpreekt('F1-BEURT', 500, { beurt: true });
+    baasSpreekt('F1-GEWOON', 500);
+    g.beurt = (g.beurt || 0) + 1;   /* je volgende beurt begint terwijl ze nog wachten */
+    await new Promise(r => setTimeout(r, 1700));
+    clearInterval(iv); g.beurt -= 1;
+    /* P11 (optie b): GESCHORST in de vijandbeurt, vóór zijn zet */
+    b._geschorst = true; g._vijandBeurt = true; g._gehandeld = new Set();
+    const tipVoor = dicktatorGeschorstTip(b);
+    g._gehandeld.add(b);
+    const tipNa = dicktatorGeschorstTip(b);
+    g._vijandBeurt = false; g._gehandeld = null;
+    const tipSpeler = dicktatorGeschorstTip(b);
+    b._geschorst = false; renderGevecht();
+    return { mandaat, vervalt: U.decreetVervalt, a6, gezien: [...gezien], tipVoor, tipNa, tipSpeler };
+  });
+  t(/hou blok over/.test(j21.mandaat) && !/race/.test(j21.mandaat), `de duiding van IV liegt niet meer: "${j21.mandaat}"`);
+  t(/U brak door/.test(j21.vervalt) && /vervalt het decreet/.test(j21.vervalt) && j21.a6.length === 1 && j21.a6[0] === 2200, `A6: de doorbraakregel zegt wie het deed (${j21.vervalt}), ${j21.a6.join(',')} ms`);
+  t(j21.gezien.some(x => /F1-EERST/.test(x)) && j21.gezien.some(x => /F1-GEWOON/.test(x)) && !j21.gezien.some(x => /F1-BEURT/.test(x)), `een regel van de vijandbeurt die nog wachtte toen je beurt begon, vervalt (in beeld: ${j21.gezien.join(', ')})`);
+  t(/volgt nog/.test(j21.tipVoor) && !/volgt nog/.test(j21.tipNa) && !/volgt nog/.test(j21.tipSpeler), 'GESCHORST in de vijandbeurt vóór zijn zet: de tip zegt dat zijn zet nog volgt (na zijn zet en in jouw beurt niet)');
+  const bron21 = fs.readFileSync(path.join(WORKTREE, 'js/game.js'), 'utf8');
+  const haak21 = bron21.indexOf("typeof window.__dickKeuze === 'function'");
+  t(haak21 > 0 && /DEV-SHORTCUT \(testhaak meetharnas\)/.test(bron21.slice(Math.max(0, haak21 - 500), haak21)) && /__dickKeuze/.test(fs.readFileSync(path.join(WORKTREE, 'RELEASE-CHECKLIST.md'), 'utf8')), 'de testhaak window.__dickKeuze draagt DEV-SHORTCUT en staat in RELEASE-CHECKLIST §1.1');
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
 

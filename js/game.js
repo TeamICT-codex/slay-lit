@@ -8678,8 +8678,9 @@ async function dicktatorDecreet(v) {
     v.lasters = (v.lasters || 0) + 1;
     g.trek.splice(Math.floor(willekeurig() * (g.trek.length + 1)), 0, nieuweKaart('laster'));
     /* Finale B4b F1 (review, middel): de toast lag 2,2-2,4 s over de decreet-reveal - nu pas als de
-       reveal weg is (DECREET_REVEAL.weg), zelfde klok als de await hieronder */
-    setTimeout(() => { if (S.gevecht === g && !g.voorbij) melding('👑 Een gestempeld lasterdecreet schuift tussen je kaarten.'); }, dtempo(DECREET_REVEAL.weg));
+       reveal weg is (DECREET_REVEAL.weg + .uit, zelfde klok als de await hieronder; +60 ms zodat de
+       overlay echt van het scherm is) */
+    setTimeout(() => { if (S.gevecht === g && !g.voorbij) melding('👑 Een gestempeld lasterdecreet schuift tussen je kaarten.'); }, dtempo(DECREET_REVEAL.weg + DECREET_REVEAL.uit) + 60);
   }
   if (g.aangezegd) g.aangezegd.clear();   /* het dossier is gesloten */
   pose2D(v, 'decreet', 2.2);   /* de signature-pose (de_dicktator_decreet-art) */

@@ -114,7 +114,7 @@ async function spoor(browser, sp) {
   console.log('    pointer-events=' + rust.pe + '  strook-opacity=' + rust.op + '  elementFromPoint(' + rust.x + ',' + rust.y + ') = ' + rust.raak);
   t(rust.pil, 'de beleidspil staat in beeld');
   t(/IV . HET MANDAAT/.test(rust.label), 'de pil draagt het label IV · HET MANDAAT: "' + rust.label + '"');
-  t(/Blok, of race/.test(rust.tip), 'de data-tip draagt de duiding van IV (finale: "Om de twee beurten HET ONTSLAG ... Blok, of race.")');
+  t(/hou blok over/.test(rust.tip), 'de data-tip draagt de duiding van IV (Finale B4b F1: "Om de twee beurten HET ONTSLAG ... Hij valt pas na zijn eerste ONTSLAG: hou blok over.")');
   t(rust.pe === 'auto', 'pointer-events van de pil = auto (gemeten "' + rust.pe + '")');
   t(rust.raakIsPil, 'elementFromPoint op het midden van de pil levert de pil zelf (gemeten ' + rust.raak + ')');
 
@@ -126,7 +126,7 @@ async function spoor(browser, sp) {
     return { display: tip ? getComputedStyle(tip).display : '(geen tooltip)', tekst: tip ? (tip.textContent || '') : '' };
   });
   console.log('    muis-hover -> #tooltip display=' + muis.display + '  "' + muis.tekst.slice(0, 150) + '..."');
-  t(muis.display === 'block' && /Blok, of race/.test(muis.tekst), 'muis-hover toont de tip MET de duiding');
+  t(muis.display === 'block' && /hou blok over/.test(muis.tekst), 'muis-hover toont de tip MET de duiding');
   if (UIT) await page.screenshot({ path: path.join(UIT, 'tip_' + sp.n.replace(/[^a-z0-9]+/gi, '-') + '_muis.png') });
 
   if (sp.mobiel) {
@@ -137,7 +137,7 @@ async function spoor(browser, sp) {
       return { display: tip ? getComputedStyle(tip).display : '(geen tooltip)', tekst: tip ? (tip.textContent || '') : '' };
     });
     console.log('    vinger-tik -> #tooltip display=' + tik.display + '  "' + tik.tekst.slice(0, 150) + '..."');
-    t(tik.display === 'block' && /Blok, of race/.test(tik.tekst), 'een tik met de vinger toont dezelfde tip');
+    t(tik.display === 'block' && /hou blok over/.test(tik.tekst), 'een tik met de vinger toont dezelfde tip');
     if (UIT) await page.screenshot({ path: path.join(UIT, 'tip_' + sp.n.replace(/[^a-z0-9]+/gi, '-') + '_tik.png') });
   }
 
