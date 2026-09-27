@@ -33,7 +33,7 @@
 
    Gebruik (Git Bash, vanuit de scratchpad met NODE_PATH naar node_modules):
      node tools/baas-meting/erfprins_meting.js [seeds=24] [label=meting]
-     node tools/baas-meting/erfprins_meting.js --analyse <uitvoer.json> [variant]
+     node tools/baas-meting/erfprins_meting.js --analyse <uitvoer.json> [<nog.json> …] [variant]   (meerdere = gepoold)
    opties (env):
      MEET_HELDEN=slachter,gifmagier,thoverk
      MEET_STERKTES=matig,gemiddeld,sterk,kroon          (+ sterkkroon als gevoeligheid)
@@ -50,7 +50,12 @@ const fs = require('fs'), path = require('path');
 /* ============================================================ DOELEN (bazen_plan.md §5) */
 const DOEL = {
   matig: [10, 25], gemiddeld: [45, 60], sterk: [70, 85], kroon: [0, 85],
-  spreiding: 20, rondes: [6, 10], beleid: ['bewust', 'schild', 'slim']
+  spreiding: 20, rondes: [6, 10], beleid: ['bewust', 'schild', 'slim'],
+  /* DE MARGE (architectbeslissing B3, 27 sep): een doel telt als GEHAALD als de gepoolde waarde in de
+     band ligt of er hoogstens 3 pp buiten valt — de marge van een gepoold blok is ~ ±7 pp. Dat geldt
+     voor de winstbanden, de spreiding en de controle 'nietslaan ≤ bewust'; de rondes blijven strikt
+     6-10. MEET_MARGE=0 geeft het strikte oordeel. */
+  marge: parseFloat(process.env.MEET_MARGE || '3')
 };
 
 /* ============================================================ ANALYSE (ook los: --analyse) */
@@ -110,16 +115,21 @@ function analyseer(resultaten, variant) {
   /* ---- doelen ---- */
   zeg('');
   zeg('DOELEN (' + DOEL.beleid.join(', ') + '): matig 10-25 · gemiddeld 45-60 · sterk 70-85 · kroon ≤ 85 · spreiding gemiddeld ≤ 20 pp · rondes 6-10 (mediaan per sterkte)');
+  zeg(`MARGE ${fmt(DOEL.marge)} pp: een doel telt als GEHAALD als de gepoolde waarde in de band ligt of er hoogstens ${fmt(DOEL.marge)} pp buiten valt (winst, spreiding, nietslaan); de rondes strikt.`);
   let alles = true;
-  const tekort = [];
+  const tekort = [], krap = [];
+  const M = DOEL.marge + 1e-9;
   for (const b of DOEL.beleid) {
     if (!oordeel[b]) { alles = false; tekort.push(`${b}: niet gemeten`); continue; }
     for (const c of oordeel[b].cellen) {
       const band = DOEL[c.st]; if (!band) continue;
-      if (c.w < band[0] - 1e-9 || c.w > band[1] + 1e-9) { alles = false; tekort.push(`${b} ${c.st} ${fmt(c.w)} % (doel ${band[0]}-${band[1]})`); }
+      const buiten = c.w < band[0] ? band[0] - c.w : (c.w > band[1] ? c.w - band[1] : 0);
+      if (buiten > M) { alles = false; tekort.push(`${b} ${c.st} ${fmt(c.w)} % (doel ${band[0]}-${band[1]})`); }
+      else if (buiten > 1e-9) krap.push(`${b} ${c.st} ${fmt(c.w, 1)} % (${fmt(buiten, 1)} pp buiten de band)`);
       if (c.st !== 'sterkkroon' && (c.rondes < DOEL.rondes[0] || c.rondes > DOEL.rondes[1])) { alles = false; tekort.push(`${b} ${c.st} rondes ${fmt(c.rondes, 1)} (doel 6-10)`); }
     }
-    if (oordeel[b].spr > DOEL.spreiding) { alles = false; tekort.push(`${b} spreiding ${fmt(oordeel[b].spr)} pp`); }
+    if (oordeel[b].spr > DOEL.spreiding + M) { alles = false; tekort.push(`${b} spreiding ${fmt(oordeel[b].spr)} pp`); }
+    else if (oordeel[b].spr > DOEL.spreiding) krap.push(`${b} spreiding ${fmt(oordeel[b].spr, 1)} pp`);
   }
   /* de controle: niet slaan in beurt 1 mag nooit beter zijn dan bewust (per sterkte, gepaard) */
   if (oordeel.nietslaan && oordeel.bewust) {
@@ -128,12 +138,15 @@ function analyseer(resultaten, variant) {
       const wa = a.filter(r => r.gewonnen).length, wz = z.filter(r => r.gewonnen).length;
       const kA = new Map(a.map(r => [r.held + r.seed, r.gewonnen])); let gered = 0, verloren = 0;
       for (const r of z) { const x = kA.get(r.held + r.seed); if (x === undefined) continue; if (r.gewonnen && !x) gered++; if (!r.gewonnen && x) verloren++; }
-      const ok = wz <= wa;
-      if (!ok) { alles = false; tekort.push(`nietslaan ${st} ${fmt(pct(wz, z.length))} % > bewust ${fmt(pct(wa, a.length))} %`); }
-      zeg(`controle nietslaan · ${st}: ${fmt(pct(wz, z.length))} % tegen bewust ${fmt(pct(wa, a.length))} % (gepaard: ${gered} gered, ${verloren} verloren) ${ok ? 'ok' : 'FOUT'}`);
+      const d = pct(wz, z.length) - pct(wa, a.length);
+      const ok = d <= 1e-9, binnen = d <= M;
+      if (!binnen) { alles = false; tekort.push(`nietslaan ${st} ${fmt(pct(wz, z.length))} % > bewust ${fmt(pct(wa, a.length))} %`); }
+      else if (!ok) krap.push(`nietslaan ${st} +${fmt(d, 1)} pp boven bewust`);
+      zeg(`controle nietslaan · ${st}: ${fmt(pct(wz, z.length))} % tegen bewust ${fmt(pct(wa, a.length))} % (gepaard: ${gered} gered, ${verloren} verloren) ${ok ? 'ok' : (binnen ? 'binnen de marge' : 'FOUT')}`);
     }
   } else { alles = false; tekort.push('controle nietslaan niet gemeten'); }
-  zeg(alles ? 'GEHAALD: alle doelen voor bewust, schild en slim, en nietslaan ≤ bewust.' : 'NIET GEHAALD: ' + tekort.join(' · '));
+  zeg(alles ? `GEHAALD (marge ${fmt(DOEL.marge)} pp): alle doelen voor bewust, schild en slim, en nietslaan ≤ bewust.` : 'NIET GEHAALD: ' + tekort.join(' · '));
+  if (krap.length) zeg('binnen de marge, buiten de strikte band: ' + krap.join(' · '));
   /* ---- beslist de kern? ---- */
   zeg('');
   const kern = R.filter(r => r.st !== 'sterkkroon');
@@ -162,9 +175,14 @@ function analyseer(resultaten, variant) {
 }
 
 if (process.argv[2] === '--analyse') {
-  const d = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
-  const varianten = process.argv[4] ? [process.argv[4]] : [...new Set(d.resultaten.map(r => r.variant))];
-  for (const v of varianten) { console.log(`\n=== variant ${v} ===`); console.log(analyseer(d.resultaten, v).tekst); }
+  /* meerdere uitvoerbestanden = gepoold (bv. twee bevestigingsblokken met verse seeds) */
+  const bestanden = process.argv.slice(3).filter(a => /\.json$/i.test(a));
+  const variant = process.argv.slice(3).find(a => !/\.json$/i.test(a));
+  const res = [];
+  for (const f of bestanden) JSON.parse(fs.readFileSync(f, 'utf8')).resultaten.forEach(r => res.push(r));
+  const varianten = variant ? [variant] : [...new Set(res.map(r => r.variant))];
+  console.log(`gepoold uit ${bestanden.join(' + ')}`);
+  for (const v of varianten) { console.log(`\n=== variant ${v} ===`); console.log(analyseer(res, v).tekst); }
   return;
 }
 
