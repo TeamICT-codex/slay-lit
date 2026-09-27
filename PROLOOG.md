@@ -372,7 +372,7 @@ gesprek heeft eigen layouts voor staand, breed, smal-breed (700-1080 px) en kort
 - `tools/proloog_landing_acceptatie.js` — de game-kant met een stub-proloog: de landing, de gate, de
   poorten, herbeleven, de Codex (filter 'landing'), en (filter 'echo', deel 8) de echo op zes formaten
   met contactvellen, doortikken, een kaart spelen, herladen, herbeleven, de daily, reduced motion, lite,
-  de DEV-landing en dezelfde seed opnieuw (346 controles, ±7 min).
+  de DEV-landing en dezelfde seed opnieuw (346 controles, ±6 min).
 - Beide bedienen de worktree vanaf schijf (`route.fulfill`, geen server) en tonen elke gemeten waarde.
 
 ### DEV

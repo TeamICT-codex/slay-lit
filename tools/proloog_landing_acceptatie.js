@@ -9,7 +9,8 @@
 // van het gesprek (per held de juiste kaart), die na <= 1,5 s weg zijn en nooit terugkomen (ook
 // niet na een herlaad midden in het gevecht); de zin precies 1x op de spraakplaat; contract.echo
 // 0 -> 1, nooit een tweede keer; herbeleven, de daily en de DEV-landing raken het contract niet;
-// reduced motion en lite: geen animatie in de landing of de echo langer dan 800 ms. Op 1440x900
+// reduced motion en lite: geen animatie in de landing of de echo langer dan 800 ms; een nieuwe run
+// met dezelfde (getypte) seed krijgt de kamer van haar seed, niet de slijm van de echo (8H). Op 1440x900
 // (2D en 3D), 1366x768, 800x360 en 846x381 (touch) en 412x915 (touch, achter het draai-blok),
 // natuurlijk, doortikkend, met een kaart spelen, herladen; met contactvellen (CDP-screencast).
 //
