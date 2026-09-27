@@ -1492,6 +1492,13 @@ async function catalogusInPagina(arg) {
       const maten = []; zet(['zware_klap', 'slag', 'slag', 'verdediging', 'verdediging', 'knal', 'dubbelslag']);
       for (let n = 0; n < 4; n++) { v.plagN = n; maten.push(VIJANDEN[v.id].kies(v, 3).plan.length); }
       t(maten.every((m, i) => m === ERF.plan[2][i % ERF.plan[2].length]), `"${erfPerBeurt(2)} per beurt" in fase 2: zijn plannen tellen ${maten.join(', ')} kaarten (ERF.plan[2] = [${ERF.plan[2]}])`);
+      /* (F1) leeghalen: alleen nog Blok of Zwak in zijn buit = tot ERF.leeghalen in één beurt (geen drie stille beurten), en de Buit-pil zegt het */
+      zet(['verdediging', 'verdediging', 'bastvel', 'stoofgeur']);
+      const lh = v.intent.plan.map(k => k.soort), tipLH = aeg().dataset.tip || '';
+      zet(['verdediging', 'zware_klap']);
+      const gemengd = v.intent.plan.map(k => k.soort);
+      t(ERF.leeghalen > 0 && lh.length === Math.min(4, ERF.leeghalen) && lh.every(s => s === 'blok' || s === 'zwak') && tipLH.includes(`Heeft hij alleen nog Blok of Zwak, dan speelt hij die (tot ${ERF.leeghalen}) in één beurt.`) && gemengd.length === ERF.plan[2][0] && gemengd[0] === 'aanval',
+        `leeghalen (F1): alleen Blok/Zwak -> ${lh.length} tegelijk (${lh.join(', ')}), de tip zegt "(tot ${ERF.leeghalen}) in één beurt"; met nog een klap erbij blijft het plan ${gemengd.join(', ')}`);
       /* de chips op zijn lijf */
       zet(['zware_klap', 'slag', 'slag', 'verdediging', 'verdediging', 'knal', 'dubbelslag', 'laster']);
       v.status = { gif: 5, zwak: 2, kwetsbaar: 1, kracht: 2, doornen: 1, gifklieren: 1 }; renderGevecht();

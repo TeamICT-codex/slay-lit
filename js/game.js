@@ -7185,11 +7185,17 @@ const ERF = {
   /* DE VORM VAN ZIJN KLAP (ijkknoppen: Blok alleen mag hem niet oplossen, zie jury W2) */
   treffers: 1,                      /* in hoeveel treffers een teruggespeelde klap valt (Kracht telt per treffer, jouw Doornen ook) */
   onblokbaar: 0.6,                  /* IJK: welk deel van elke treffer dwars door je Blok gaat (0..1; staat op pil, stempel en tip).
-                                       De grootste knop tegen 'precies de pil wegblokken': het gat bewust → schild/slim krimpt. */
-  doorPlafond: 0,                   /* B3 F1 (keuzevraag, gemeten): een plafond op het onblokbare deel per beurt, als deel van je
-                                       max-HP (0 = geen plafond); wat erboven valt, wordt gewoon blokbaar. Pil = uitvoering. */
+                                       De grootste knop tegen 'precies de pil wegblokken': het gat bewust → schild/slim krimpt.
+                                       KEUZEVRAAG K1 voor Thomas (B3 F1, bazen_plan.md §5): gemeten op verse seeds 95000 (96/cel) naast
+                                       'treffers 2 + onblokbaar 0,3' (de spreiding breekt: Kolendruïde gemiddeld 78-86 %, Slachter 35-51 %)
+                                       en een plafond per beurt (doorPlafond 0,5: nooit bereikt, identiek; 0,3: ±1-2 pp). */
+  doorPlafond: 0,                   /* B3 F1 (K1, gemeten, standaard uit): een plafond op het onblokbare deel per beurt, als deel van
+                                       je max-HP (0 = geen plafond); wat erboven valt, wordt gewoon blokbaar. Pil = uitvoering, en de
+                                       tip noemt het plafond zodra het een klap raakt. */
   /* PER KAARTSOORT (Thomas, 30 jun: "extra schade afhankelijk van het type kaart") */
-  gifMult: 4.2,                     /* IJK: jouw gifkaart: round(n × 4,2) Gif op JOU (vervangt de gifkaats); houdt de Gifmagiër bij de rest */
+  gifMult: 4.2,                     /* IJK: jouw gifkaart: round(n × 4,2) Gif op JOU (vervangt de gifkaats); houdt de Gifmagiër bij de rest.
+                                       KEUZEVRAAG K2 (B3 F1): ent 6 zei ×2,5 zoals O1. Gemeten (seeds 95000, bewust/schild/slim) wint de
+                                       Gifmagiër met ×2,5 gemiddeld 63/64/57 % (×4,2: 54/53/45) en sterk 86/88/92 % (×4,2: 81/78/77). */
   blokMult: 1,                      /* jouw blokkaart: n × blokMult Blok voor hém */
   spiegel: { kracht: 0.5, doornen: 0.34, klieren: 0.5, zwak: 1 },   /* IJK · HET SPIEGELRECHT: jouw Kracht / Doornen / Gifklieren / 'alle vijanden Zwak' worden
                                        de zijne, × dit deel per soort (0 = die soort snapt hij niet → driftbui) */
@@ -7199,10 +7205,10 @@ const ERF = {
   /* FASES — fase 2 = de Roof (WOEDE), fase 3 = onder de streep op zijn balk */
   fase3Hp: 0.5,
   plan: { 1: [1], 2: [1, 2], 3: [2, 3] },   /* IJK: kaarten per plagiaatbeurt, per fase (cyclus op zijn plagiaatbeurten) */
-  blokMee: false,                   /* B3 F1 (gemeten): een geroofde Blok-kaart neemt geen plek in zijn plan: ze gaat mee met zijn
-                                       klappen (één per beurt, achteraan) — geen stille beurten met alleen Blok op het einde van zijn buit */
-  leeghalen: 0,                     /* B3 F1 (gemeten): heeft hij alleen nog stille kaarten (Blok, Zwak), dan speelt hij er tot zoveel
-                                       tegelijk (0 = uit) */
+  leeghalen: 3,                     /* B3 F1 (gemeten): heeft hij alleen nog stille kaarten (Blok, Zwak), dan speelt hij er tot zoveel
+                                       tegelijk (0 = uit) - niet meer drie beurten 'alleen Blok' vóór de naroof. Gepaard gemeten (seeds
+                                       95000, 4 608 gevechten): elke cel binnen 2 pp van zonder. ('Blok gaat mee met een klap' maakte
+                                       hem te zwaar: matig 4-9 %, sterk 63-66 %.) Staat in de tip van zijn Buit-pil. */
   /* HET NOODRANTSOEN — zijn tweede leven, altijd zichtbaar op zijn Buit-pil (♥+N) */
   rantsoenPerKaart: 15, rantsoenMax: 5,   /* IJK: de hefboom op 'gemiddeld' (Gifmagiër en Kolendruïde halen hem bijna altijd) */
   rantsoenWist: true,               /* hij staat schoon op: jouw Gif, Zwak en Kwetsbaar op hem zijn weg — dat staat letterlijk op zijn Buit-pil
@@ -7265,7 +7271,7 @@ function erfKlap(v, basis, doel, xk, doorMax) {
   const door = doorMax == null ? door0 : Math.max(0, Math.min(door0, Math.floor(doorMax / T)));
   const blokbaar = per - door;
   const landt = glasDmg(blokbaar) + glasDmg(door);
-  return { treffers: T, blokbaar, door, per: landt, totaal: landt * T, doorTotaal: glasDmg(door) * T };
+  return { treffers: T, blokbaar, door, per: landt, totaal: landt * T, doorTotaal: glasDmg(door) * T, plafond: door < door0 };
 }
 /* ERF.doorPlafond: het budget voor het onblokbare deel in één beurt van hem (null = geen plafond) */
 function erfDoorBudget() {
@@ -7358,18 +7364,17 @@ function erfPlanKaart(v, s) {
   else if (s.soort === 'spiegel') { k.kr = s.kr || 0; k.dr = s.dr || 0; k.kl = s.kl || 0; }
   return k;
 }
-/* zijn plan: de N kaarten die hij deze beurt speelt (B3 F1: met ERF.blokMee gaat één Blok-kaart
-   mee achteraan, buiten de N; met ERF.leeghalen speelt hij zijn laatste stille kaarten samen) */
+/* ERF.leeghalen: bestaat zijn buit alleen nog uit stille kaarten (Blok, Zwak)? */
+function erfBuitStil(v) {
+  const b = (v && v.gestolen) || [];
+  return (ERF.leeghalen || 0) > 0 && b.length > 0 && b.every(s => s.soort === 'blok' || s.soort === 'zwak');
+}
+/* zijn plan: de N kaarten die hij deze beurt speelt (B3 F1: met ERF.leeghalen speelt hij zijn
+   laatste stille kaarten samen, tot ERF.leeghalen) */
 function copycatPlagiaatPlan(v, aantal) {
   const volg = (v.gestolen || []).slice().sort((a, b) => erfSterkte(b) - erfSterkte(a));
-  const stil = s => s.soort === 'blok' || s.soort === 'zwak';
-  let kaarten;
-  if ((ERF.leeghalen || 0) > 0 && volg.length && volg.every(stil)) kaarten = volg.slice(0, Math.max(aantal, ERF.leeghalen));
-  else if (ERF.blokMee) {
-    const kern = volg.filter(s => s.soort !== 'blok'), blok = volg.filter(s => s.soort === 'blok');
-    kaarten = kern.length ? kern.slice(0, aantal).concat(blok.slice(0, 1)) : blok.slice(0, aantal);
-  } else kaarten = volg.slice(0, aantal);
-  return kaarten.map(s => erfPlanKaart(v, s));
+  const n = erfBuitStil(v) ? Math.max(aantal, ERF.leeghalen) : aantal;
+  return volg.slice(0, n).map(s => erfPlanKaart(v, s));
 }
 
 /* ============================================================================
@@ -7430,7 +7435,8 @@ function erfTekst(e) {
     const kern = kl.treffers > 1 ? `${kl.per}×${kl.treffers}` : `${kl.per}`;
     const label = kl.door ? `${kern} (${kl.doorTotaal} door)` : kern;
     const vorm = (kl.treffers > 1 ? ` in ${kl.treffers} treffers van ${kl.per}` : '')
-      + (kl.door ? ` — waarvan ${kl.doorTotaal} dwars door je Blok` : '');
+      + (kl.door ? ` — waarvan ${kl.doorTotaal} dwars door je Blok` : '')
+      + (kl.plafond ? ` (zijn plafond: hoogstens ${erfDoorBudget()} per beurt dwars door je Blok)` : '');
     if (e.soort === 'drift') {
       return { klasse: 'intent-aanval', pip: `💢 ${label}`, stempel: `💢 ${label}`,
         tip: `JOUW ${naam}: snapt hij niet — een driftbui voor ${kl.totaal} schade${vorm}.`,
@@ -8208,6 +8214,7 @@ function copycatBalk(b) {
     : (b.plagiaat ? 'Zijn noodrantsoen is op: valt hij nog eens, dan blijft hij liggen.' : 'Geen schoon werk naast zijn plan: valt hij nu, dan blijft hij liggen.');
   const tip = `Zijn buit, voor dit gevecht: ${buit.length} kaart${buit.length === 1 ? '' : 'en'} uit jouw dek${buit.length ? ' (' + namen + ')' : ''}. `
     + `Elke beurt speelt hij er ${erfPerBeurt(Math.max(2, b.fase || 1))} terug — met zijn toeslag — en daarna valt de kaart aangetast terug in je aflegstapel. `
+    + ((ERF.leeghalen || 0) > 0 ? `Heeft hij alleen nog Blok of Zwak, dan speelt hij die (tot ${ERF.leeghalen}) in één beurt. ` : '')
     + (vloeken ? `Er ${vloeken === 1 ? 'zit 1 vloek' : 'zitten ' + vloeken + ' vloeken'} in: die speelt hij eerst, en die bijt hém. ` : '')
     + rantsoen;
   return `<div class="bb-aegis" data-tip="${tip}">🎭 Buit · ${buit.length}${vloeken ? ' · 🌑' + vloeken : ''}${nr.kaarten ? ' · ♥+' + nr.hp : ''}</div>`;
