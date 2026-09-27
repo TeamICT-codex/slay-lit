@@ -8542,7 +8542,7 @@ function dicktatorRoepDeurwaarder(b, g) {
 function dicktatorHersync(ookBaas) {
   const g = S.gevecht; if (!g || g.voorbij) return;
   const b = dicktatorBaas(g);
-  const wacht = x => !!(g._vijandBeurt && g._gehandeld && !g._gehandeld.has(x));
+  const wacht = x => !!(g._vijandBeurt && g._gehandeld && typeof g._gehandeld.has === 'function' && !g._gehandeld.has(x));
   if (ookBaas && b && !b.dood && (!wacht(b) || (b.intent && b.intent.laatInnen && !hofLid(g, 'de_deurwaarder')))) {
     b.intent = VIJANDEN[b.id].kies(b, b.beurtTeller || 0);
   }
