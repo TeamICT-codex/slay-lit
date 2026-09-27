@@ -1674,7 +1674,7 @@ async function catalogusInPagina(arg) {
         const kop = ov2 ? ov2.querySelector('.roof-kop').childNodes[0].textContent.trim() : '', klein = ov2 ? (ov2.querySelector('.roof-kop small') || {}).textContent : '';
         const gek = ov2 ? [...ov2.querySelectorAll('.roof-kaart.gekozen')] : [];
         const tegel = gek[0] ? gek[0].querySelector('.rk-naam') : null;
-        const tNaam = tegel ? tegel.childNodes[0].textContent.trim() : '', tGetal = tegel && tegel.querySelector('b') ? tegel.querySelector('b').textContent.trim() : '';
+        const tNaam = tegel ? [...tegel.childNodes].filter(n => n.nodeName !== 'B' && n.nodeName !== 'BR').map(n => n.textContent).join('').trim() : '', tGetal = tegel && tegel.querySelector('b') ? tegel.querySelector('b').textContent.trim() : '';
         const tegels = ov2 ? ov2.querySelectorAll('.roof-kaart').length : 0;
         cat('buit-beat, kop', kop + ' · ' + klein); cat('buit-beat, de aangewezen tegel', tNaam + ' · ' + tGetal);
         if (ov2) ov2.click();

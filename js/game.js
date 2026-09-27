@@ -2303,8 +2303,9 @@ function d3Actief() { return $('#scherm-gevecht').classList.contains('d3-actief'
    hart van de baas, zijn pil en zijn Buit-pil (846x381: 77 % van het hart van de Erfprins; een
    toast verborg zijn dodelijke fase-3-pil aan het begin van je beurt). Daar staan ze nu in een
    smalle kolom linksonder: boven je trekstapel en de energie-orb, links van de held en de hand.
-   Op laptop blijven ze rechtsboven, maar rechts van de bazenbalk (ze lagen over het eind van zijn
-   levensbalk). Elders (de kaart, gewone gevechten, staand) blijft #meldingen zoals in de css. */
+   Op laptop staan ze linksboven, naast de bazenbalk (rechtsboven lagen ze over het eind van zijn
+   levensbalk, en drie gestapelde toasts reikten tot op zijn pil). Elders (de kaart, gewone
+   gevechten, staand) blijft #meldingen zoals in de css. */
 function meldingenPlek() {
   const m = $('#meldingen'), sc = $('#scherm-gevecht');
   if (!m) return;
@@ -2314,7 +2315,7 @@ function meldingenPlek() {
   const bbEl = (inBaas && !mob) ? $('#baas-balk') : null, bb = bbEl && bbEl.getBoundingClientRect();
   m.classList.toggle('meld-baas', baas);
   m.classList.toggle('meld-bb', !!(bb && bb.width > 0));
-  if (bb && bb.width > 0) m.style.setProperty('--meld-b', Math.max(260, Math.round(innerWidth - bb.right - 28)) + 'px');
+  if (bb && bb.width > 0) m.style.setProperty('--meld-b', Math.max(240, Math.round(bb.left - 28)) + 'px');
   if (!baas) return;
   const r = s => { const e = $(s); const q = e && e.getBoundingClientRect(); return (q && q.width > 0) ? q : null; };
   const orb = r('#energie-orb'), trek = r('#stapel-trek'), held = r('#speler-figuur'), oog = r('#inzage-knop');
@@ -7637,9 +7638,13 @@ function erfNaamFit(ov) {
   for (const el of ov.querySelectorAll('.rk-naam')) {
     el.style.fontSize = '';
     let fs = parseFloat(getComputedStyle(el).fontSize) || 10, i = 0;
-    while (el.scrollWidth > el.clientWidth + 1 && fs > 6.5 && i++ < 12) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
+    while (el.scrollWidth > el.clientWidth + 1 && fs > 6 && i++ < 14) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
   }
 }
+/* de naam op een tegel: bij een verbeterde kaart ("Verdediging+") staat de '+' in een eigen
+   inline-blok, want Chrome breekt (hyphens: auto) geen woord met een '+' eraan (ook niet met een
+   <wbr> of een onzichtbare spatie ertussen). De namen komen uit KAARTEN (data), nooit uit invoer. */
+function erfTegelNaam(naam) { return String(naam || '').replace(/\+$/, '<span class="rk-plus">+</span>'); }
 /* het doek met een gat rond de prins: de Roof en de buit-beat (zelfde layout) */
 function erfDoekRondPrins(ov, v) {
   const r = erfPrinsRect(v); if (!r) return;
@@ -7753,10 +7758,11 @@ function erfPlaatsSpeelKaart(wrap, v) {
     y = Math.min(H - h / 2 - 2, Math.max(top + 4 + h / 2, (top + H) / 2 - 24));
     /* zijn pil (die liggend naast zijn hoofd kan hangen, B0.9) blijft leesbaar: de kop schuift eronder */
     const pillen = [...((actorEl(v) || document.body).querySelectorAll('.intent'))].map(e => e.getBoundingClientRect()).filter(q => q.width > 0);
-    for (const p of pillen) {
-      const kl = x - kopW / 2, kr = x + kopW / 2, kt = y - h / 2;
-      if (p.right > kl && p.left < kr && p.bottom > kt && p.top < kt + kopH) y = Math.min(H - h / 2 - 2, p.bottom + 4 + h / 2);
-    }
+    const raakt = p => { const kl = x - kopW / 2, kr = x + kopW / 2, kt = y - h / 2; return p.right > kl && p.left < kr && p.bottom > kt && p.top < kt + kopH; };
+    for (const p of pillen) if (raakt(p)) y = Math.min(H - h / 2 - 2, p.bottom + 4 + h / 2);
+    /* B3 F1: is er onder zijn pil geen plek (800x360, fase 3: de pil op twee rijen), dan schuift de
+       kaart naar links tot de kop naast de pil staat; de held mag er deels achter */
+    for (const p of pillen) if (raakt(p)) x = Math.min(x, p.left - 6 - kopW / 2);
   }
   x = Math.max(w / 2 + 6, Math.min(W - w / 2 - 6, x));
   wrap.style.left = x + 'px'; wrap.style.top = y + 'px';
@@ -7829,7 +7835,7 @@ async function copycatRoofCutscene(g, v, wil, viaEindBeurt) {
     const k = document.createElement('div');
     k.className = 'roof-kaart' + (roofSet.has(i) ? '' : ' veilig');
     k.dataset.idx = i;
-    k.innerHTML = `<div class="rk-art kaart-icoon" data-kicoon="${c.id}">${def.icoon}</div><span class="rk-naam">${knaam(c)}</span>`;
+    k.innerHTML = `<div class="rk-art kaart-icoon" data-kicoon="${c.id}">${def.icoon}</div><span class="rk-naam">${erfTegelNaam(knaam(c))}</span>`;
     waaier.appendChild(k);
   });
   if (typeof verfraaiKaartIconen === 'function') verfraaiKaartIconen(waaier);   /* echte kaart-art laden i.p.v. de emoji-terugval */
@@ -7901,7 +7907,7 @@ async function copycatBekijktBuit(v, g) {
     /* onder elke kaart zijn getal uit dezelfde bron als de pil (bij zijn huidige Kracht) */
     const e = s.soort === 'vloek' ? null : erfEffect(v, erfPlanKaart(v, s), 0);
     const getal = !e ? '🌑' : (e.soort === 'klap' ? '⚔️ ' + erfTekst(e).stempel : erfTekst(e).stempel);
-    k.innerHTML = `<div class="rk-art kaart-icoon" data-kicoon="${s.id}">${def.icoon || '🎴'}</div><span class="rk-naam">${erfNaam(s)}<br><b>${getal}</b></span>`;
+    k.innerHTML = `<div class="rk-art kaart-icoon" data-kicoon="${s.id}">${def.icoon || '🎴'}</div><span class="rk-naam">${erfTegelNaam(erfNaam(s))}<br><b>${getal}</b></span>`;
     waaier.appendChild(k);
   });
   if (typeof verfraaiKaartIconen === 'function') verfraaiKaartIconen(waaier);

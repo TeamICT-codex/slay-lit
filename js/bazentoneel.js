@@ -259,7 +259,7 @@ function spraakZone(el) {
    (pil-zij) in dezelfde bovenband: WOEDE, DE ROOF, fase 3, het noodrantsoen en de naroof liepen er
    per tekstregel 500-2 200 px2 overheen (846x381), ook in JOUW beurt, net als je hem moet lezen.
    De banner krijgt dan eerst een smallere kolom (tot vóór de pil, zo nodig tot vóór de held) en
-   pas daarna een kleinere letter; de eerste plek waar geen tekstregel iets raakt, wint. */
+   een kleinere letter; van de plekken waar geen tekstregel iets raakt, wint de laagste banner. */
 function bannerFit(el) {
   if (!el || innerHeight > innerWidth) return;
   let h = null;

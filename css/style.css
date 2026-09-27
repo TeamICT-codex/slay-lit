@@ -1691,7 +1691,7 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
 .roof-overlay.open .roof-kaart { transform: translateY(0) scale(1); opacity: 1; }
 .roof-kaart .rk-art { width: 100%; aspect-ratio: 3 / 2; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: clamp(1.3rem, 3.3vw, 1.9rem); line-height: 1; background: #0d0a14; }
 .roof-kaart .rk-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.roof-kaart .rk-naam { font-size: clamp(.7rem, 1.6vw, .8rem); color: var(--perkament); text-align: center; line-height: 1.12; max-width: 100%; overflow-wrap: normal; word-break: normal; hyphens: auto; min-height: 2.3em; }   /* v95: twee regels gereserveerd → rustige rij. B3 F1: nooit midden in een woord ("Verdedigi-ng"); een te lang woord krimpt (erfNaamFit) */
+.roof-kaart .rk-naam { font-size: clamp(.7rem, 1.6vw, .8rem); color: var(--perkament); text-align: center; line-height: 1.12; max-width: 100%; overflow-wrap: normal; word-break: normal; hyphens: auto; hyphenate-limit-chars: 4 2 2; min-height: 2.3em; }   /* v95: twee regels gereserveerd → rustige rij. B3 F1: nooit midden in een woord ("Verdedigi-ng"); een te lang woord krimpt (erfNaamFit) */
 .roof-kaart.gekozen { border-color: rgba(255, 90, 70, .95); box-shadow: 0 0 22px rgba(255, 80, 40, .9); transform: translateY(-10px) scale(1.12); z-index: 2; }
 .roof-kaart.verbrandt { animation: roofVerbrand .58s ease forwards; }
 @keyframes roofVerbrand {
@@ -1704,6 +1704,7 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
    van de diefstal: deze gaat hem bijten */
 .roof-kaart.buit-vuil { border-color: rgba(214, 44, 78, .95); box-shadow: 0 0 16px rgba(214, 44, 78, .7); }
 .roof-kaart.buit-vuil .rk-naam { color: #ffb6c4; }
+.roof-kaart .rk-naam .rk-plus { display: inline-block; }   /* B3 F1: de '+' van een verbeterde kaart los van het woord (erfTegelNaam) */
 /* B3: tik om over te slaan (vanaf de tweede ontmoeting), onderaan het doek */
 .roof-hint { position: absolute; left: 0; right: 0; bottom: max(10px, 2vh); text-align: center; pointer-events: none; }
 /* B3 · B1.3 — DE PRINS IN BEELD tijdens de Roof en de buit-beat (erfDoekRondPrins in js/game.js).
@@ -3105,9 +3106,9 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
   display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
   pointer-events: none;
 }
-/* B3 F1: in een baasgevecht op laptop blijven de toasts rechts van de bazenbalk (meldingenPlek) */
-#meldingen.meld-bb { max-width: var(--meld-b, 360px); }
-#meldingen.meld-bb .toast { text-align: right; line-height: 1.25; }
+/* B3 F1: in een baasgevecht op laptop staan de toasts linksboven, naast de bazenbalk (meldingenPlek) */
+#meldingen.meld-bb { right: auto; left: 14px; max-width: var(--meld-b, 360px); align-items: flex-start; }
+#meldingen.meld-bb .toast { line-height: 1.25; }
 .toast {
   background: rgba(20, 14, 28, .95);
   border: 1px solid var(--ember);
