@@ -376,9 +376,49 @@ async function doek(browser, fk) {
         return o;
       }, venster);
       t(o.onder === 0, `R1 ${vp.naam} ${naam}: baasspraak onder het toneeldoek ${o.onder} ms (0; diepste doek ${o.max.toFixed(2)}${o.wie ? ', "' + o.wie + '…"' : ''}) — regels: ${Object.entries(o.regels).map(([k, v]) => k.slice(0, 16) + '… ' + Math.round(v) + ' ms').join(', ')}`);
-      if (nv === 4) t(o.stem >= 600, `R1 ${vp.naam} ${naam}: „De stemmen worden geteld…" staat ${o.stem} ms in beeld (>= 600)`);
+      /* B4b: 1200 ms vanaf de eerste stem (was 900); >= 0,7 s zoals elke regel in B0.4 */
+      if (nv === 4) t(o.stem >= 700, `R1 ${vp.naam} ${naam}: „De stemmen worden geteld…" staat ${o.stem} ms in beeld (>= 700)`);
     } catch (e) { t(false, `R1 ${vp.naam} ${naam}: fout in de meting: ${e.message}`); }
   }
+  /* R1b (B4b): js en css pauzeren een staande plaat op hetzelfde moment, ook terwijl het doek
+     UITDOOFT (.dooft). Een plaat van 2000 ms, na 500 ms valt het doek (.80), na 1300 ms dooft het
+     uit (900 ms): nooit zichtbaar zolang het doek > .1 staat, en daarna nog even lang leesbaar
+     (~0,88 x 2000 ms, zoals de onderbroken plaat van B0.4). En een plaat die al uitdooft (laatste
+     20 %) en dan door een titel wordt onderbroken, komt na de titel niet terug. */
+  try {
+    await startProces(page, { netVoor: 3 }   /* scène II: geen ouverture-banner die de meting onderbreekt */);
+    const p = await page.evaluate(async () => {
+      const d = document.getElementById('toneel-doek');
+      _spraakStop();
+      let zicht = 0, onder = 0, vorig = performance.now();
+      const iv = setInterval(() => {
+        const nu = performance.now(), dt = nu - vorig; vorig = nu;
+        const e = document.querySelector('.baas-spraak');
+        if (e && +getComputedStyle(e).opacity > 0.2) { zicht += dt; if (+getComputedStyle(d).opacity > 0.1) onder += dt; }
+      }, 25);
+      baasSpreekt('„R1B — het doek valt en dooft uit."', 2000);
+      await new Promise(r => setTimeout(r, 500)); toneelDoek(0.8, 300);
+      await new Promise(r => setTimeout(r, 800)); toneelDoek(0, 900);
+      const dooft = d.classList.contains('dooft');
+      await new Promise(r => setTimeout(r, 4200));
+      clearInterval(iv);
+      const nogDooft = d.classList.contains('dooft'), weg = !document.querySelector('.baas-spraak');
+      /* de staart: 1000 ms, op 950 ms (de laatste 20 %) een titel van 1200 ms */
+      let terug = false;
+      baasSpreekt('„R1B — al aan het uitdoven."', 1000);
+      await new Promise(r => setTimeout(r, 950));
+      vonnisSlam('R1B', 'de staart', { duur: 1200, schok: false, sfx: false });
+      const t1 = performance.now();
+      while (performance.now() - t1 < 2600) {
+        await new Promise(r => setTimeout(r, 50));
+        if (!document.querySelector('.vonnis') && [...document.querySelectorAll('.baas-spraak')].some(x => /uitdoven/.test(x.textContent) && +getComputedStyle(x).opacity > 0.2)) terug = true;
+      }
+      return { zicht: Math.round(zicht), onder: Math.round(onder), dooft, nogDooft, weg, terug };
+    });
+    t(p.dooft && !p.nogDooft && p.onder === 0 && p.weg && Math.abs(p.zicht - 2000 * 0.88) <= 350,
+      `R1b ${vp.naam}: een staande plaat pauzeert onder het doek én terwijl het uitdooft (.dooft ${p.dooft}, daarna weg ${!p.nogDooft}): onder het doek ${p.onder} ms (0), daarna nog ${p.zicht} ms leesbaar van 2000 (~1760 ± 350)`);
+    t(!p.terug, `R1b ${vp.naam}: een plaat die al uitdooft, flitst na de titel niet terug (${p.terug})`);
+  } catch (e) { t(false, `R1b ${vp.naam}: fout in de meting: ${e.message}`); }
   t(...fouten(page, vp));
   await ctx.close();
   return { kop: `R1 · geen baasspraak onder het toneeldoek · ${vp.naam}`, regels: R };

@@ -2498,7 +2498,29 @@ function hofDeinst(g, stap) {
 function toneelDoek(diepte, ms) {
   const d = $('#toneel-doek'); if (!d) return;
   if (ms != null) d.style.setProperty('--doek-t', dtempo(ms) + 'ms');
-  if (!diepte) { d.classList.remove('aan'); return; }
+  if (!diepte) {
+    /* Finale B4b: het doek DOOFT UIT (.dooft) zolang zijn opacity-transition loopt. De tekstsluis
+       (_SPRAAK_SLUIS + css) houdt de baasspraak ook dan tegen: js en css lezen dezelfde klasse, dus
+       een plaat die pauzeert, is precies dan onzichtbaar (vroeger las js de opacity en css alleen
+       .aan - de animatie van de plaat liep dan door terwijl haar klok stilstond). De transitieduur
+       komt uit de css (mobiel x .7, lite 0); transitionend is de nette uitgang, de timer het vangnet. */
+    if (d.classList.contains('aan')) {
+      d.classList.remove('aan');
+      d.classList.add('dooft');
+      const s = getComputedStyle(d).transitionDuration.split(',')[0].trim();
+      const duur = (parseFloat(s) || 0) * (/ms$/.test(s) ? 1 : 1000);
+      const klaar = () => { clearTimeout(d._dooftT); d.removeEventListener('transitionend', d._dooftE); d.classList.remove('dooft'); };
+      clearTimeout(d._dooftT);
+      if (d._dooftE) d.removeEventListener('transitionend', d._dooftE);
+      d._dooftE = e => { if (!e || e.propertyName === 'opacity') klaar(); };
+      d.addEventListener('transitionend', d._dooftE);
+      d._dooftT = setTimeout(klaar, duur + 150);
+    }
+    return;   /* stond hij niet aan (open, of al aan het uitdoven), dan loopt wat loopt gewoon af */
+  }
+  clearTimeout(d._dooftT);
+  if (d._dooftE) d.removeEventListener('transitionend', d._dooftE);
+  d.classList.remove('dooft');
   d.style.setProperty('--doek', diepte);
   d.classList.add('aan');
 }
@@ -2731,17 +2753,14 @@ function baasSpreekt(tekst, duurMs, opts) {
    .roof-overlay is alleen De Roof zelf: de Drempeltafel (.dt-overlay) en het Slachtblok
    (.slachtblok-overlay) lenen dezelfde klasse, en een open tafel hield zo de doodregel van
    de volgende baas tegen. */
-const _SPRAAK_SLUIS = '.vonnis, .baas-flits, #baas-intro, .roof-overlay:not(.dt-overlay, .slachtblok-overlay), .roof-speel-kaart, .decreet-overlay, #toneel-doek.aan';
+const _SPRAAK_SLUIS = '.vonnis, .baas-flits, #baas-intro, .roof-overlay:not(.dt-overlay, .slachtblok-overlay), .roof-speel-kaart, .decreet-overlay, #toneel-doek.aan, #toneel-doek.dooft';
 /* Finale B4b (restpunt bazentoneel): ook het TONEELDOEK sluit de sluis. De spraakplaat woont in
    #scherm-gevecht (stapelcontext z1), het doek is een body-kind op z45: een regel onder het doek
    was bij .80 nog 20 % helder - „De stemmen worden geteld…" stond zo onleesbaar in de
-   herverkiezing. Een regel start pas als het doek weg én uitgedoofd is (de fade-out telt mee);
-   een plaat die al staat, pauzeert zolang het doek ligt (css: dezelfde lijst). */
-function _doekDicht() {
-  const d = document.getElementById('toneel-doek');
-  return !!d && (d.classList.contains('aan') || +getComputedStyle(d).opacity > 0.08);
-}
-function _spraakGesloten() { return !!document.querySelector(_SPRAAK_SLUIS) || (!!(S && S.gevecht) && _doekDicht()); }
+   herverkiezing. Een regel start pas als het doek weg én uitgedoofd is (.dooft = de fade-out,
+   zie toneelDoek); een plaat die al staat, pauzeert zolang het doek ligt of uitdooft. Js en css
+   lezen dezelfde lijst: een pauzerende plaat is precies dan onzichtbaar. */
+function _spraakGesloten() { return !!document.querySelector(_SPRAAK_SLUIS); }
 /* HET TONEEL NEEMT HET OVER. v121-fix: de wachtrij houdt netjes één plaat tegelijk, maar
    een GEWONE baasregel die net vóór de fasegrens viel (standaardduur 3200ms) kon de eerste
    regieregel tot 3,2s van zijn beat wegduwen. Elke regie wist daarom eerst het bord: de
@@ -2795,11 +2814,14 @@ function _spraakVolgende() {
      onzichtbaar op achter de titel ("U bent ONTSLAGEN." nog 86 ms leesbaar op 1366x768) */
   /* Een plaat die langer dan 6 s moet wachten (De Roof, een decreetkeuze), komt niet meer
      terug: haar regel hoorde bij een moment dat voorbij is. Titels en banners duren korter. */
+  /* Finale B4b: een plaat die al UITDOOFT (de laatste 20 % van spraakKoning, css) en dan door
+     een titel, banner of het doek wordt onderbroken, is uitgelezen: ze komt niet na de titel
+     nog even terugflitsen (en houdt de volgende regel niet op). */
   let rest = d, vorig = Date.now(), gepauzeerd = 0;
   const tik = () => {
     const nu = Date.now();
     if (!_spraakGesloten()) rest -= nu - vorig;
-    else gepauzeerd += nu - vorig;
+    else { gepauzeerd += nu - vorig; if (rest <= d * 0.2 && !item.slot) rest = 0; }
     vorig = nu;
     if (gepauzeerd > 6000 && !item.slot) rest = 0;
     if (rest <= 0 || !el.isConnected) { el.remove(); _spraakBezig = false; _spraakVolgende(); }
@@ -8376,9 +8398,11 @@ function dicktatorHerverkiezing(g, doel) {
     fxNummer(xe, i < doel._kiezers ? '🗳️ +' + DICK.krachtPerKiezer + ' Kracht' : '🗳️ stem genoteerd', 'fx-buff');
     Klank.sfx('goud');
   }));
-  /* 700-1600: de regel valt meteen na de eerste stem en is weg vóór het doek (1900) - een regel
-     onder het doek wacht in de tekstsluis, en daarna hoort hij niet meer bij zijn beat */
-  if (kiezers.length) op(700, () => baasSpreekt(U.stemming, 900));
+  /* 600-1800: de regel valt MET de eerste stem en is weg vóór het doek (1900) - een regel onder
+     het doek wacht in de tekstsluis, en daarna hoort hij niet meer bij zijn beat. Finale B4b: 1200
+     i.p.v. 900 ms (op 700): negen woorden stonden zo ~600 ms leesbaar (de in- en uitfade eraf),
+     onder de 0,7 s van B0.4; nu ~1,1 s, met 100 ms marge tot het doek. */
+  if (kiezers.length) op(600, () => baasSpreekt(U.stemming, 1200));
 
   /* t=1500 - ze vluchten van het toneel onder betaald applaus */
   op(1500, () => {
