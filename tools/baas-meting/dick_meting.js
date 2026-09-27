@@ -54,6 +54,11 @@
    8. Fakkel (MEET_FAKKEL=N), de Drempeltafel (MEET_TAFEL), elasticiteit (MEET_DMGX), ablatie
       (MEET_ABL), verse seeds (MEET_SEEDBASE), veerkracht (een gestorven browser herstart en de
       job draait opnieuw) en bossHp per ronde in log[] (voor stilstand.py).
+   9. [review B4a] De LEUGENDETECTOR van de telegraaf: per ronde pilEind (de pil van de baas aan
+      het einde van jouw beurt), teleEind (de getelegrafeerde schade van alle vijanden) en inVijand
+      (wat je in de vijandbeurt echt verloor) - leugen.py telt decreetleugens en rondes boven de
+      telegraaf, decreet.py zegt waarom er (geen) decreet viel. Sinds A4 leest de bot de verdeling
+      van het hof uit de spelcode (dicktatorHofVangst: de griffier vangt tot op zijn bodem).
    Verworpen probe, bewust NIET meer in dit harnas: MEET_LEK ('de Factuur lekt blok', planner F
    §4.5: helpt sterk niet, duwt het Factuur-aandeel naar 48-69 %). Bron: F_finale\harnas.
 
@@ -87,7 +92,7 @@
    Uitvoer:<werkboom>/.claude/notities/baas-meting/uit/<label>.json (gitignored, niet gedeployd;
    of MEET_UIT=<pad>) + een samenvatting op de console. Analyse: python tools/baas-meting/doeltabel.py
    <json> (alle doelen in één tabel), populatie.py, breekpunt.py, oorzaak.py, stilstand.py,
-   kaarten.py, pool_winst.py, vat_samen.py; mdtabel.py zet dezelfde doeltabel als markdown in
+   kaarten.py, pool_winst.py, vat_samen.py, leugen.py, decreet.py; mdtabel.py zet dezelfde doeltabel als markdown in
    .claude/notities/baas-meting/meting_finale_R3.md (de voor/na-tabellen van R3). */
 const fs = require('fs'), path = require('path');
 function laadPlaywright() {
