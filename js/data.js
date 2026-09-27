@@ -1329,7 +1329,7 @@ const VIJANDEN = {
        game.js overschrijft het meteen met ERF.hp (data.js laadt eerder). ERF in game.js is de
        bron van waarheid — balanceer daar, niet hier. Geen gifkaats meer: hij rooft je gifkaarten
        al en speelt ze zelf terug (ERF.gifMult). */
-    naam: 'De Erfprins', art: '🤴', hp: [190, 190], baas: true, copycat: true,
+    naam: 'De Erfprins', art: '🤴', hp: [145, 145], baas: true, copycat: true,
     titel: 'Erfgenaam zonder verdienste',
     kies: (v, beurt) => copycatKies(v, beurt)
   },
@@ -1847,6 +1847,9 @@ const UITSPRAKEN = {
   _erfprins: {
     intro:  '„EINDELIJK — IEMAND OM VAN AF TE KIJKEN."',
     woede:  '„Au — je SLÁÁT me?! Onbeschofte parvenu. Goed dan."',
+    /* B3 (integratie): de woede als je hem NIET sloeg (de Roof op het einde van je beurt) — de
+       regel hierboven ("je SLÁÁT me") zou daar liegen. Een voorstel; de tekst is van Thomas. */
+    woedeNiet: '„Niet eens slaan?! Lafaard. Goed dan — dan kóm ik het halen."',
     roof:   '„Laat eens zien wat je hébt... GEEF HIER. Het wordt nú MÍJN werk."',
     /* de buit-beat (zijn eerste beurt na de Roof), één per ontmoeting in de rij */
     buit: [

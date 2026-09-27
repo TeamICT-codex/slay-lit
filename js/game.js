@@ -4345,7 +4345,7 @@ function renderTopbalk() {
     tbF.innerHTML = `🔥 ${S.fakkel}`;
     tbF.className = 'licht-' + lichtNiveau();
     tbF.style.background = `linear-gradient(90deg, rgba(255,140,60,.30) ${S.fakkel}%, rgba(0,0,0,.35) ${S.fakkel}%)`;
-    tbF.dataset.tip = 'Fakkel: kamers kosten licht (dieper = duurder). Helder (60+) geeft 4 kaartkeuzes na een gevecht, schemer 3, donker 2. Onder 30 zie je geen intent-getallen; gedoofd = vijanden +1 Kracht maar +50% goud.';
+    tbF.dataset.tip = 'Fakkel: kamers kosten licht (dieper = duurder). Helder (60+) geeft 4 kaartkeuzes na een gevecht, schemer 3, donker 2. Onder 30 zie je geen intent-getallen (een baas telegrafeert altijd); gedoofd = vijanden +1 Kracht maar +50% goud.';
   }
   $('#tb-goud').innerHTML = `🪙 ${S.goud}`;
   $('#tb-verdieping').innerHTML = `🏔️ ${S.verdieping}`;
@@ -5793,7 +5793,9 @@ function intentTekst(v) {
      Een baas telegrafeert altijd (B0.11 hierboven), dus hier geen duister-varianten. */
   if (it.type === 'roof') return copycatRoofPil(v);
   if (it.type === 'buit') {
-    return `<span class="intent intent-buit" data-tip="Hij bekijkt zijn buit — deze beurt geen schade. Zijn eerste kaart staat daarna op de pil.">🧐 buit</span>`;
+    /* een lege buit (je trekstapel was te mager om te plunderen): dan is er ook geen eerste kaart */
+    const leeg = !(v.gestolen || []).length;
+    return `<span class="intent intent-buit" data-tip="${leeg ? 'Hij had niets te roven — deze beurt doet hij niets.' : 'Hij bekijkt zijn buit — deze beurt geen schade. Zijn eerste kaart staat daarna op de pil.'}">🧐 buit</span>`;
   }
   if (it.type === 'steel') return copycatNaroofPil(v);
   if (it.type === 'plagiaat') return copycatPlanPillen(v, it);
@@ -5871,7 +5873,17 @@ function statusBadges(actor) {
     .filter(([k, n]) => n > 0 && STATUSINFO[k])
     .map(([k, n]) => {
       const i = STATUSINFO[k];
-      return `<span class="status ${i.goed ? 's-goed' : 's-slecht'}" data-tip="${i.naam}: ${i.uitleg}">${i.icoon}<b>${n}</b></span>`;
+      /* B3 (integratie): een baas weerstaat de helft van je gif (eindBeurt: ceil(gif / 2)) — dan zegt
+         zijn chip dat ook, en niet 'verliest zoveel HP' */
+      const baasGif = k === 'gif' && !actor.isSpeler && VIJANDEN[actor.id] && VIJANDEN[actor.id].baas;
+      let uitleg = baasGif ? `Verliest aan het begin van zijn beurt de helft hiervan (naar boven afgerond, nu ${Math.ceil(n / 2)} HP): een baas weerstaat de helft van het gif. Negeert Blok; neemt elke beurt met 1 af.` : i.uitleg;
+      /* HET NOODRANTSOEN wist jouw Gif, Zwak en Kwetsbaar op de Erfprins (ERF.rantsoenWist): geen
+         stille wis — het staat ook op de chip zelf, niet alleen in de tip van zijn Buit-pil */
+      if (actor.id === 'de_erfprins' && ERF.rantsoenWist && ['gif', 'zwak', 'kwetsbaar'].includes(k)) {
+        const nr = copycatNoodrantsoen(actor);
+        if (nr.kaarten) uitleg += ` Staat hij op uit zijn noodrantsoen (♥+${nr.hp}), dan is dit weg.`;
+      }
+      return `<span class="status ${i.goed ? 's-goed' : 's-slecht'}" data-tip="${i.naam}: ${uitleg}">${i.icoon}<b>${n}</b></span>`;
     }).join('');
 }
 
@@ -7168,8 +7180,10 @@ function copycatBaas(g) {
 /* De breker van de machine was een metgezel: g.copycatGebroken heeft maar één schrijver, Drops'
    offer, en dat staat achter metgezellenAan() (DE NISSEN DICHT). Met de metgezellen geparkeerd
    kan niets hem dus breken: het pad blijft latent voor een terugkeer (M-plan §8), en de
-   Erfprins-logica leest het alleen via deze ene poort. */
-function copycatGebroken(g) { return !!(g && g.copycatGebroken); }
+   Erfprins-logica leest het alleen via deze ene poort. B3 (integratie): de poort leest de vlag
+   ook zelf, zodat Wanhoopsklap, HERINDEXEREN en 'machine gebroken' solo nooit kunnen vuren,
+   ook niet met een oude g.copycatGebroken in een bewaard gevecht. */
+function copycatGebroken(g) { return metgezellenAan() && !!(g && g.copycatGebroken); }
 function erfNaam(s) { return (s && s.naam || '') + (s && s.up ? '+' : ''); }
 /* act-schaling van zijn eigen getallen (zelfde +15 % per act als actDmg) */
 function erfActDmg(d) { return huidigeAct() > 1 ? Math.ceil(d * (1 + ERF.actSchaal * (huidigeAct() - 1))) : d; }
@@ -7401,7 +7415,8 @@ function copycatNoodrantsoen(v) {
   const it = v.intent;
   const gepland = new Set(((it && it.type === 'plagiaat' && it.plan) || []).map(k => k.uid).filter(u => u != null));
   const lijst = (v.gestolen || []).filter(s => s.soort !== 'vloek' && !(s.uid != null && gepland.has(s.uid))).slice(0, ERF.rantsoenMax);
-  return { kaarten: lijst.length, hp: lijst.length * ERF.rantsoenPerKaart, lijst };
+  /* ♥+N is wat hij krijgt: nooit meer dan zijn volle HP (één bron voor de pil en het opstaan) */
+  return { kaarten: lijst.length, hp: Math.min(v.maxHp || ERF.hp, lijst.length * ERF.rantsoenPerKaart), lijst };
 }
 /* aangeroepen uit verliesHp op zijn doodklap. Geeft true als hij opstaat. */
 function copycatNoodrantsoenVuurt(doel) {
@@ -7412,7 +7427,7 @@ function copycatNoodrantsoenVuurt(doel) {
   doel.plagiaat = true;
   const buit = nr.lijst;
   doel.gestolen = doel.gestolen.filter(s => !buit.includes(s));
-  doel.hp = Math.min(doel.maxHp || ERF.hp, nr.hp);
+  doel.hp = nr.hp;   /* ♥+N op zijn Buit-pil (copycatNoodrantsoen klemt al op zijn volle HP) */
   if (ERF.rantsoenWist) ['gif', 'zwak', 'kwetsbaar'].forEach(st => { delete doel.status[st]; });   /* aangekondigd op de Buit-pil */
   /* in zijn eigen beurt (je gif, je doornen of zijn eigen vloek velden hem) is opstaan zijn zet:
      de rest van die beurt doet hij niets. In jouw beurt blijft de zet op zijn pil gewoon staan. */
@@ -7671,7 +7686,8 @@ async function copycatDeRoof(g, viaEindBeurt) {
   const el = actorEl(v); if (el) el.classList.add('woede');
   if (window.Vista) Vista.pose(v, 'cast', 2.4);
   pose2D(v, 'cast', 2.4);
-  baasFaseMoment('WOEDE', UITSPRAKEN._erfprins.woede);
+  /* sloeg je hem niet (de Roof op het einde van je beurt), dan zegt hij dat ook niet */
+  baasFaseMoment('WOEDE', (viaEindBeurt && UITSPRAKEN._erfprins.woedeNiet) || UITSPRAKEN._erfprins.woede);
   Klank.sfx('zwareklap');
   await slaap(1250);
   if (S.gevecht !== g || g.voorbij) return;
@@ -7846,6 +7862,7 @@ async function copycatSpeelTerug(v, g, plan) {
   v.plagN = (v.plagN || 0) + 1;   /* telt zijn plagiaatbeurten (de cyclus 1, 2, 1, 2 …) */
   pose2D(v, Math.random() < 0.5 ? 'plagiaat' : 'plagiaat_variant', 0.9);   /* cosmetisch → Math.random raakt de seeded RNG niet */
   const opgestaan = () => !!(v.intent && v.intent.type === 'opstaan');
+  let gespeeld = 0;   /* hoeveel kaarten van zijn plan hij écht speelde (de banner hieronder telt die, niet het plan) */
   for (let i = 0; i < (plan || []).length; i++) {
     if (S.gevecht !== g || g.voorbij || v.dood || opgestaan()) break;   /* een dode (of net opgestane) baas speelt niet door */
     const k = plan[i];
@@ -7858,6 +7875,7 @@ async function copycatSpeelTerug(v, g, plan) {
       const schade = k.bf;
       kaartVliegFx(k.id, actorEl(v), copycatBronEl(), { vloek: true });
       g._vloekGreep = true;
+      gespeeld++;
       try { verliesHp(v, schade); } finally { g._vloekGreep = false; }
       if (!v.dood) { fxNummer(actorEl(v), `🌑 jouw ${k.naam} bijt hém! −${schade}`, 'fx-schade'); pose2D(v, 'hit', 0.5); }
       melding(`🌑 Hij speelt je ${k.naam} — een vloek laat zich niet kopiëren. Ze bijt hém.`);
@@ -7901,6 +7919,7 @@ async function copycatSpeelTerug(v, g, plan) {
     } else {
       fxNummer(actorEl(v), `🎭 jouw ${k.naam}?`, 'fx-debuff');
     }
+    gespeeld++;
     renderGevecht();
     if (S.gevecht !== g || g.voorbij || v.dood) { wrap.classList.add('weg'); setTimeout(() => wrap.remove(), 300); return; }   /* jouw doornen velden hem → geen retour meer */
     /* 3 — aangetast terug in je aflegstapel (+1 ⚡, eenmalig) */
@@ -7915,9 +7934,13 @@ async function copycatSpeelTerug(v, g, plan) {
     await slaap(560);
   }
   if (opgestaan()) fxNummer(actorEl(v), '🗞️ opstaan was zijn zet', 'fx-genees');
-  else if ((plan || []).length >= 2 && !g.copycatDubbelGezien) {
+  else if (gespeeld >= 2 && !g.copycatDubbelGezien) {
+    /* B3 (integratie): de banner telt wat hij écht speelde — ERF.plan kan in fase 3 drie kaarten
+       plannen, en na een vloek verslikt hij zich (dan speelde hij er maar één) */
     g.copycatDubbelGezien = true;
-    baasFaseMoment('TWEE TEGELIJK', '„Twee tegelijk. Allebei van JOU.”');
+    if (gespeeld === 2) baasFaseMoment('TWEE TEGELIJK', '„Twee tegelijk. Allebei van JOU.”');
+    else if (gespeeld === 3) baasFaseMoment('DRIE TEGELIJK', '„Drie tegelijk. Alle drie van JOU.”');
+    else baasFaseMoment(`${gespeeld} TEGELIJK`, '„Allemaal tegelijk. Allemaal van JOU.”');
   }
   renderGevecht();
 }
@@ -11524,7 +11547,7 @@ function devErfprins() {
   S.gevecht = null; S.act = 2; S.fakkel = fakkelMax();
   S.hp = Math.max(1, Math.round((S.maxHp || 1) * 0.85));
   S.dranken = ['heeldrank'];
-  if (S.dek.length < 16) {
+  if (S.dek.length < 18) {   /* de melding en de menutip beloven 'minstens 18' (B3: was < 16, dan bleef een dek van 16-17 staan) */
     const pool = heldPool();
     let veiligheid = 0;
     while (S.dek.length < 18 && pool.length && veiligheid++ < 40) S.dek.push(nieuweKaart(kiesUit(pool)));
