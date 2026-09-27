@@ -10,7 +10,7 @@
        NODE_PATH="$PWD/node_modules" SLAYIT_WORKTREE="...\SLAY-IT-proloog" \
        SLAYIT_SHOTS="$PWD/proloog_shots" node "...\SLAY-IT-proloog\tools\proloog_acceptatie.js"
    Optioneel een filter als argument: hoofd | skip | herbeleef | wipe | poort | stub | rustig |
-   glimlach | lite | val | outro | kantoor | breek | gesprek | integratie | fixer | afrekening | statisch (meerdere
+   glimlach | lite | val | outro | kantoor | breek | gesprek | integratie | fixer | afrekening | echo | statisch (meerdere
    mogen, komma-gescheiden; 'fixer' = alleen deel 15L van fixer R4 F1).
    Zonder argument draait alles (±34 min; alleen de integrator-delen van R4: 'integratie', ±7,5 min).
 
@@ -150,6 +150,13 @@
                vensterformaat; de regelopvoer na een tik; de pasfoto op de getoonde maat; de dakzin. Daarnaast: de
                factuur print 'Mailtjes verstuurd: n …… dank voor uw inzet' (15G/H, 16A/B; herbeleven: 15E/J, 16D) en
                herbeleven toont de cijfers van toen (15E: 4, 15J: 11 — de Glimlach van de herbeleving telt niet bij).
+   R5 (echo en QA):
+  17 echo      de echte proloog tot in de eerste kamer (laptop en 846x381): skip → Afgrond → masker → landing →
+               de eerste knoop: een solo Groene Slijm, de eerste hand als de kantoorvellen uit de GELADEN
+               proloog/data.js (per kaart de juiste), weg na ≤ 1,5 s en niet terug, de zin 1x op de spraakplaat,
+               contract.echo 0 → 1 (+ echoSeed) op het contract van proloog.js, de rest byte-gelijk. De randgevallen
+               (herladen, herbeleven, de daily, rustig, lite, doortikken, het draai-blok, de DEV-landing, contact-
+               vellen) meet tools/proloog_landing_acceptatie.js deel 8 'echo'.
    Het script heeft GEEN server nodig: het bedient de worktree rechtstreeks vanaf
    schijf via route.fulfill op http://localhost:4173/** (ook onder /slay-lit/).
    Elke regel toont de GEMETEN waarde. Exit 1 bij minstens één fout.
@@ -4613,6 +4620,68 @@ function r4iToets(uit) {
     }
   }
 
+  /* ==========================================================================
+     17 · R5 — DE ECHO IN DE EERSTE KAMER, met de ECHTE proloog: de naad tot in het eerste gevecht.
+          Skip → de Afgrond → een masker → de landing → de eerste knoop: een solo Groene Slijm, de eerste
+          hand als de kantoorvellen uit proloog/data.js (de GELADEN bron, niet de terugval van de brug),
+          weg na ≤ 1,5 s, de zin 1x op de spraakplaat, contract.echo 0 → 1 op het contract dat proloog.js
+          schreef (de rest byte-gelijk). De randgevallen (herladen, herbeleven, de daily, reduced motion,
+          lite, doortikken, het draai-blok, de DEV-landing) meet tools/proloog_landing_acceptatie.js deel 8.
+     ========================================================================== */
+  if (doe('echo')) {
+    const PER_KAART = { slag: 'mailtje', prik: 'mailtje', takkenslag: 'mailtje', verdediging: 'glimlach', knal: 'verantwoord', dodelijke_kus: 'glimlach', gifflits: 'koffie', vonkenbeet: 'overuren', stoofpotje: 'koffie' };
+    for (const vp of [VPS.laptop, VPS.thomas]) {
+      const L = 'echo ' + vp.n;
+      kop('17 · ' + L + ' · de echte proloog tot in de eerste kamer');
+      const { ctx, page } = await open(browser, vp);
+      await naarProloog(page, vp, L);
+      await naarKantoor(page, vp, L);
+      await wachtOp(page, () => { const R = document.getElementById('scherm-proloog').shadowRoot; return !!(R && R.querySelector('.pl-skip.zichtbaar')); }, 7000);
+      await houdSkip(page, vp, 950);
+      t(await wachtScene(page, 'breekpunt/afgrond', 4000), `${L}: de skip → de Afgrond`);
+      await kiesMasker(page, vp, vp.masker, L);
+      await wachtLanding(page, 12000);
+      await slaap(300);
+      const c0 = await page.evaluate(() => localStorage.getItem('slayit_proloog'));
+      const cv = JSON.parse(c0 || '{}');
+      t(cv.v === 2 && cv.echo === 0 && cv.held === vp.held, `${L}: geland; het contract van proloog.js: v${cv.v}, held ${cv.held}, echo ${cv.echo}`);
+      await page.evaluate(() => {
+        const E = window.__r5 = { vel: [], zin: 0, platen: 0, t0: null, laatst: null };
+        new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => {
+          if (n.nodeType !== 1) return;
+          if (n.classList.contains('kaart-kantoorvel')) {
+            const k = n.closest('.kaart'); let c = null; try { c = S.gevecht.hand.find(x => x.uid === +k.dataset.uid); } catch (e) { c = null; }
+            E.vel.push({ kantoor: n.dataset.kantoor, naam: (n.querySelector('.kv-naam') || {}).textContent, kaart: c ? c.id : null });
+          }
+          if (n.classList.contains('baas-spraak')) { E.platen++; if (n.textContent === 'Fijn dat je er bent. Ik hou je een plekje warm.') E.zin++; }
+        }))).observe(document.body, { childList: true, subtree: true });
+        const lus = () => { if (document.body.dataset.scherm === 'gevecht' && E.t0 === null) E.t0 = performance.now(); if (document.querySelector('.kaart-kantoorvel')) E.laatst = performance.now(); requestAnimationFrame(lus); };
+        requestAnimationFrame(lus);
+      });
+      await tik(page, vp, '#kaart-vlak .knoop.kan');
+      const w = await wachtOp(page, () => document.body.dataset.scherm === 'gevecht', 8000);
+      await slaap(3600);
+      const r = await page.evaluate(() => {
+        const D = window.SLAYLIT_PROLOOG; const g = D && D.scenes.find(s => s.kind === 'gesprek');
+        const namen = {}; (g ? g.hand : []).forEach(k => { namen[k.id] = k.naam; });
+        return { r5: window.__r5, namen, geladen: !!D, vijanden: S.gevecht ? S.gevecht.vijanden.map(v => v.id) : null, seed: S.seed,
+          c: localStorage.getItem('slayit_proloog'), nu: document.querySelectorAll('.kaart-kantoorvel').length, acN: window.__acN };
+      });
+      await shot(page, `${vp.n}-17-echo-na`);
+      const mis = r.r5.vel.filter(v => v.kantoor !== (PER_KAART[v.kaart] || 'mailtje') || v.naam !== r.namen[v.kantoor]);
+      const duur = r.r5.laatst !== null && r.r5.t0 !== null ? Math.round(r.r5.laatst - r.r5.t0) : null;
+      const c1 = JSON.parse(r.c || '{}');
+      const zonder = s => { const o = JSON.parse(s); delete o.echo; delete o.echoSeed; return JSON.stringify(o); };
+      t(w >= 0 && JSON.stringify(r.vijanden) === '["groene_slijm"]', `${L}: de eerste kamer is ${JSON.stringify(r.vijanden)} (solo)`);
+      t(r.geladen && r.r5.vel.length >= 5 && !mis.length, `${L}: de eerste hand als kantoorvellen uit de geladen proloog/data.js: ${r.r5.vel.map(v => v.kaart + ' ← ' + v.naam).join(' · ')}` + (mis.length ? ' — FOUT: ' + JSON.stringify(mis) : ''));
+      t(duur !== null && duur <= 1500 && r.nu === 0, `${L}: .kaart-kantoorvel na ${duur} ms weg (≤ 1500) en niet terug (nu ${r.nu})`);
+      t(r.r5.zin === 1 && r.r5.platen === 1, `${L}: de zin precies 1x op de spraakplaat (${r.r5.zin}x, ${r.r5.platen} platen)`);
+      t(c1.echo === 1 && c1.echoSeed === r.seed && zonder(r.c) === zonder(c0), `${L}: contract.echo 0 → ${c1.echo}, echoSeed = de run (${c1.echoSeed}), de rest van het contract van proloog.js byte-gelijk`);
+      t(r.acN === 1 && page.__f.length === 0, `${L}: ${r.acN} AudioContext, geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+      await ctx.close();
+    }
+  }
+
   if (doe('statisch')) {
     kop('8 · statisch (bronnen)');
     const lees = p => fs.readFileSync(path.join(WORKTREE, p), 'utf8');
@@ -4663,7 +4732,7 @@ function r4iToets(uit) {
   }
 
   await browser.close();
-  console.log(`\n============================================\nSAMENVATTING PROLOOG R1-R4: ${ok} ok, ${fout} FOUT  (${Math.round((Date.now() - t00) / 1000)} s)\n============================================`);
+  console.log(`\n============================================\nSAMENVATTING PROLOOG R1-R5: ${ok} ok, ${fout} FOUT  (${Math.round((Date.now() - t00) / 1000)} s)\n============================================`);
   if (fout) { console.log(fouten.map(f => ' - ' + f).join('\n')); }
   process.exit(fout ? 1 : 0);
 })().catch(e => { console.error('CRASH', e); process.exit(2); });
