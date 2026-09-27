@@ -7118,7 +7118,12 @@ function checkBaasFase() {
    ============================================================ */
 const ERF = {
   hp: 145,                          /* IJKING B3 (27 sep, tools/baas-meting/erfprins_meting.js, solo, D's Act 2-aankomst + de
-                                       Drempeltafel): HP is geen sterke knop, de vorm van zijn klap wel. De ijkknoppen dragen 'IJK'. */
+                                       Drempeltafel): HP is geen sterke knop, de vorm van zijn klap wel. De ijkknoppen dragen 'IJK'.
+                                       BEVESTIGD op twee verse blokken (seeds 83000 + 84000, 96 per cel, 14.400 gevechten), winst
+                                       bewust / schild / slim: matig 14 / 16 / 21 %, gemiddeld 44 / 53 / 52 %, sterk 76 / 77 / 78 %,
+                                       kroon 80 / 84 / 85 %; spreiding gemiddeld 16 pp; 'slaat niet in beurt 1' nooit meer dan 1 pp
+                                       boven bewust. OPEN (beslissing architect): de rondes-mediaan bij sterk is 5 (bewust, slim;
+                                       bij winst 6) en de volle sport III-uitbetaling (sterk dek + de Kroon) wint 89-90 %. */
   /* DE ROOF */
   roofDeel: 0.5,                    /* hij neemt round(je dek × 0,5) kaarten, ad random, uit je trekstapel */
   roofRest: 2,                      /* er blijven altijd minstens zoveel kaarten in je trekstapel */
