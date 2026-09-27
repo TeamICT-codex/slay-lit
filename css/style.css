@@ -3101,6 +3101,9 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
   display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
   pointer-events: none;
 }
+/* B3 F1: in een baasgevecht op laptop blijven de toasts rechts van de bazenbalk (meldingenPlek) */
+#meldingen.meld-bb { max-width: var(--meld-b, 360px); }
+#meldingen.meld-bb .toast { text-align: right; line-height: 1.25; }
 .toast {
   background: rgba(20, 14, 28, .95);
   border: 1px solid var(--ember);

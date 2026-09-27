@@ -2299,10 +2299,38 @@ function d3Gewenst() {
 function d3Actief() { return $('#scherm-gevecht').classList.contains('d3-actief'); }
 
 /* ---------- meldingen & effecten ---------- */
+/* B3 F1 — DE TOASTS IN EEN BAASGEVECHT OP DE TELEFOON (liggend). Rechtsboven lagen ze over het
+   hart van de baas, zijn pil en zijn Buit-pil (846x381: 77 % van het hart van de Erfprins; een
+   toast verborg zijn dodelijke fase-3-pil aan het begin van je beurt). Daar staan ze nu in een
+   smalle kolom linksonder: boven je trekstapel en de energie-orb, links van de held en de hand.
+   Op laptop blijven ze rechtsboven, maar rechts van de bazenbalk (ze lagen over het eind van zijn
+   levensbalk). Elders (de kaart, gewone gevechten, staand) blijft #meldingen zoals in de css. */
+function meldingenPlek() {
+  const m = $('#meldingen'), sc = $('#scherm-gevecht');
+  if (!m) return;
+  const inBaas = document.body.dataset.scherm === 'gevecht' && !!sc && sc.classList.contains('baas-actief');
+  const mob = document.body.dataset.modus === 'mobiel';
+  const baas = inBaas && mob && innerWidth > innerHeight;
+  const bbEl = (inBaas && !mob) ? $('#baas-balk') : null, bb = bbEl && bbEl.getBoundingClientRect();
+  m.classList.toggle('meld-baas', baas);
+  m.classList.toggle('meld-bb', !!(bb && bb.width > 0));
+  if (bb && bb.width > 0) m.style.setProperty('--meld-b', Math.max(260, Math.round(innerWidth - bb.right - 28)) + 'px');
+  if (!baas) return;
+  const r = s => { const e = $(s); const q = e && e.getBoundingClientRect(); return (q && q.width > 0) ? q : null; };
+  const orb = r('#energie-orb'), trek = r('#stapel-trek'), held = r('#speler-figuur'), oog = r('#inzage-knop');
+  const handL = Math.min(innerWidth, ...[...document.querySelectorAll('#hand .kaart')].map(e => e.getBoundingClientRect()).filter(q => q.width > 0).map(q => q.left));
+  const onder = Math.min(innerHeight - 8, ...[orb, trek].filter(Boolean).map(q => q.top - 8));
+  const links = Math.max(10, oog ? oog.left + 26 : 10);   /* naast het zichtbare lipje (22px) van de inzage-knop */
+  const rechts = Math.min(handL, held ? held.left : innerWidth) - 10;
+  m.style.setProperty('--meld-l', Math.round(links) + 'px');
+  m.style.setProperty('--meld-onder', Math.round(innerHeight - onder) + 'px');
+  m.style.setProperty('--meld-b', Math.max(150, Math.round(rechts - links)) + 'px');
+}
 function melding(tekst) {
   const el = document.createElement('div');
   el.className = 'toast';
   el.textContent = tekst;
+  meldingenPlek();
   $('#meldingen').appendChild(el);
   setTimeout(() => el.classList.add('weg'), 2100);
   setTimeout(() => el.remove(), 2600);

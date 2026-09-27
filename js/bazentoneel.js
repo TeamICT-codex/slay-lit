@@ -253,7 +253,13 @@ function spraakZone(el) {
    B3 (integratie): ook op laptop. De fase-3-banner van de Erfprins ("HET IS ALLEMAAL VAN MIJ",
    met de ondertitel die zegt hoeveel kaarten hij vanaf dan speelt) brak op 1366x768 in 2D naar
    vier regels en lag op 26 % van de held. In 3D is de held een sprite: zijn doos komt dan uit
-   Vista.schermPos (de breedte zoals erfPlaatsSpeelKaart ze neemt). */
+   Vista.schermPos (de breedte zoals erfPlaatsSpeelKaart ze neemt).
+   B3 F1: ook de PIL VAN DE BAAS blijft vrij, en op laptop de chips van de held (op mobiel zakken die
+   tijdens een banner naar .12, zie mobiel.css C2). Op zijn telefoon hangt de pil van de Erfprins
+   (pil-zij) in dezelfde bovenband: WOEDE, DE ROOF, fase 3, het noodrantsoen en de naroof liepen er
+   per tekstregel 500-2 200 px2 overheen (846x381), ook in JOUW beurt, net als je hem moet lezen.
+   De banner krijgt dan eerst een smallere kolom (tot vóór de pil, zo nodig tot vóór de held) en
+   pas daarna een kleinere letter; de eerste plek waar geen tekstregel iets raakt, wint. */
 function bannerFit(el) {
   if (!el || innerHeight > innerWidth) return;
   let h = null;
@@ -265,12 +271,63 @@ function bannerFit(el) {
     const hf = document.getElementById('speler-figuur'); if (hf) h = hf.getBoundingClientRect();
   }
   if (!h) return;
-  const raakt = () => [...el.children].some(c => {
-    const q = c.getBoundingClientRect();
+  const rect = e => e.getBoundingClientRect();
+  const pillen = [...document.querySelectorAll('#vijanden-rij .vijand.is-baas .intent-rij .intent')].map(rect).filter(q => q.width > 0);
+  /* de chips van de held tellen alleen waar ze tijdens een banner niet dimmen (laptop); op mobiel
+     zakken ze naar .12 (css), en de computed opacity helpt hier niet: de overgang loopt nog */
+  const chipsEl = document.body.dataset.modus === 'mobiel' ? null : document.querySelector('#speler-zone .blok-status');
+  const chips = chipsEl ? [...chipsEl.children].map(rect).filter(q => q.width > 0) : [];
+  const snijdt = (q, r) => q.bottom > r.top && q.top < r.bottom && q.right > r.left && q.left < r.right;
+  /* de tekstregels zelf (een regel is korter dan zijn blok): Range per tekstknoop */
+  const regels = () => {
+    const uit = [];
+    for (const c of el.children) {
+      const w = document.createTreeWalker(c, NodeFilter.SHOW_TEXT); let n;
+      while ((n = w.nextNode())) { const rg = document.createRange(); rg.selectNodeContents(n); for (const q of rg.getClientRects()) if (q.width > 0) uit.push(q); }
+    }
+    return uit;
+  };
+  const raaktHeld = () => [...el.children].some(c => {
+    const q = rect(c);
     return q.bottom > h.top - 2 && q.top < h.bottom && q.right > h.left && q.left < h.right;
   });
-  if (raakt()) el.classList.add('bf-klein');
-  if (raakt()) el.classList.add('bf-kleinst');
+  const kost = () => {
+    let k = raaktHeld() ? 1000 : 0;
+    for (const q of regels()) { for (const p of pillen) if (snijdt(q, p)) k += 100; for (const c of chips) if (snijdt(q, c)) k += 10; }
+    return k;
+  };
+  if (!pillen.length && !chips.length) {   /* het oude pad: alleen de held */
+    if (raaktHeld()) el.classList.add('bf-klein');
+    if (raaktHeld()) el.classList.add('bf-kleinst');
+    return;
+  }
+  const L = Math.min(...[...el.children].map(c => rect(c).left));
+  const std = Math.max(...[...el.children].map(c => rect(c).width), parseFloat(getComputedStyle(el.children[0]).maxWidth) || 0);   /* de css-kolom (44vw / 40vw): nooit breder */
+  const hind = pillen.concat(chips).filter(p => p.top < h.top);   /* wat boven zijn hoofd in de band hangt */
+  const totPil = hind.length ? Math.min(...hind.map(p => p.left)) - 10 - L : null;
+  const totHeld = Math.min(totPil == null ? Infinity : totPil, h.left - 10 - L);
+  const breedtes = [null, totPil, totHeld].filter((b, i, a) => b == null || (b >= 110 && b < std - 1 && a.indexOf(b) === i));
+  const zet = (maat, b) => {
+    el.classList.toggle('bf-klein', maat >= 1); el.classList.toggle('bf-kleinst', maat >= 2);
+    for (const c of el.children) c.style.maxWidth = b == null ? '' : Math.floor(b) + 'px';
+  };
+  const volg = [];
+  for (const maat of [0, 1, 2]) for (const b of breedtes) volg.push([maat, b]);
+  /* de volle maat op de gewone plek wint meteen (het oude gedrag als er niets in de weg hangt);
+     anders, van alle schone plekken, de laagste banner (minder regels), met een kleine prijs per
+     maat kleiner - zo wordt het in een smalle kolom "HET IS ALLEMAAL / VAN MIJ" en niet
+     "HET IS / ALLEMAAL VAN / MIJ" */
+  let best = null;
+  for (const [maat, b] of volg) {
+    zet(maat, b);
+    const k = kost();
+    if (k === 0 && maat === 0 && b == null) { el.dataset.fit = '0/std'; return; }
+    const hoog = Math.max(...[...el.children].map(c => rect(c).bottom)) - Math.min(...[...el.children].map(c => rect(c).top));
+    const score = k * 1000 + hoog + maat * 20;
+    if (!best || score < best.score) best = { score, k, maat, b };
+  }
+  zet(best.maat, best.b);
+  el.dataset.fit = `${best.maat}/${best.b == null ? 'std' : Math.floor(best.b)}${best.k ? '/k' + best.k : ''}`;
 }
 
 /* ---------- --bb-onder: de onderrand van de bazenbalk als CSS-variabele ----------

@@ -220,6 +220,11 @@ body[data-modus="mobiel"] #tb-scherven, body[data-modus="mobiel"] #tb-metgezel {
 }
 /* toasts onder de (nu variabele) topbalk — ze overlapten 'm met een notch */
 body[data-modus="mobiel"] #meldingen { top: calc(var(--tbh, 40px) + var(--sat) + 8px); }
+/* B3 F1: in een baasgevecht (liggend) staan de toasts linksonder, boven trekstapel en orb, links van
+   held en hand (meldingenPlek in js/game.js meet de kolom); rechtsboven lagen ze over het hart van
+   de baas, zijn pil en zijn Buit-pil */
+body[data-modus="mobiel"] #meldingen.meld-baas { top: auto; right: auto; left: var(--meld-l, 12px); bottom: var(--meld-onder, 80px); max-width: var(--meld-b, 180px); align-items: flex-start; gap: 5px; }
+body[data-modus="mobiel"] #meldingen.meld-baas .toast { font-size: .76rem; line-height: 1.2; padding: 4px 10px; border-radius: 12px; }
 
 /* schermen sluiten aan op de compacte balk; het gevecht gaat tot de rand */
 /* topbalkhoogte: de var(--tbh, 40px)-fallback IS de basiswaarde (liggend één rij);
@@ -1464,6 +1469,8 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] .baas-flits.bf-klein h2 { font-size: clamp(1.15rem, 3.4vw, 1.5rem); }
   body[data-modus="mobiel"] .baas-flits.bf-klein span { font-size: .8rem; line-height: 1.2; }
   body[data-modus="mobiel"] .baas-flits.bf-kleinst span { font-size: .72rem; }
+  body[data-modus="mobiel"] .baas-flits.bf-kleinst h2 { font-size: clamp(1rem, 2.9vw, 1.3rem); letter-spacing: 1.5px; }   /* B3 F1: in de smalle kolom naast zijn pil (bannerFit) */
+  body[data-modus="mobiel"] .baas-flits h2 { text-wrap: balance; }   /* B3 F1: breekt de titel, dan in evenwicht ("HET IS ALLEMAAL / VAN MIJ", niet een wees "MIJ") */
 
   /* B0.5 — DE SPRAAKPLAAT IN EEN VRIJE ZONE. Direct onder de topbalk (var(--sat), niet
      env(top): de v97-regel), horizontaal in de zone die spraakZone() berekent (naast de
