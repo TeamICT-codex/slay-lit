@@ -738,11 +738,11 @@ const sonde = page => page.evaluate(() => {
   t(kv.bNa === DZ.d2 && kv.hId === 'de_griffier' && kv.hVoor - kv.hNa === 10, `het slot: ${kv.bVoor} → ${kv.bNa} (drempel ${DZ.d2}), de griffier vangt de 10 te veel: ${kv.hVoor} → ${kv.hNa}`);
   t(kv.fx.length === 1 && /⚖️ vangt 10/.test(kv.fx[0].tekst) && kv.fxOpVanger && !kv.fxOpBaas, `de vang-fx "${kv.fx.map(f => f.tekst).join(',')}" staat op de griffier, niet op de baas`);
   zs = await zit(page);
-  t(zs.chip && /de scène is uit/.test(zs.chipTip) && /vangt zijn hof/.test(zs.chipTip) && /GESCHORST/.test(zs.strook), `GESCHORST (het slot, de scène IS uit): chip "${zs.chipTip}"`);
+  t(zs.chip && /de scène is uit/.test(zs.chipTip) && /vangt zijn hof/.test(zs.chipTip), `GESCHORST (het slot, de scène IS uit): chip "${zs.chipTip}" (de strook bevriest tot de banner valt)`);
   await wachtVrij(page);
   zs = await zit(page);
   const vloer2 = DZ.d3 + 1;
-  t(zs.scene === 2 && zs.vloer === vloer2 && zs.nog === DZ.N2 && zs.teller === '⚖ ZITTING LOOPT · nog ' + DZ.N2, `na de regie: teller "${zs.teller}", vloer ${zs.vloer} (= drempel III + 1 = ${vloer2}), nog ${zs.nog}`);
+  t(zs.scene === 2 && zs.vloer === vloer2 && zs.nog === DZ.N2 && zs.teller === '⚖ ZITTING LOOPT · nog ' + DZ.N2 && zs.chip && /GESCHORST/.test(zs.strook), `na de regie: GESCHORST in de strook ("${zs.strook}") en de teller "${zs.teller}" van de nieuwe zitting, vloer ${zs.vloer} (= drempel III + 1 = ${vloer2}), nog ${zs.nog}`);
   t(zs.kerf != null && Math.abs(zs.kerf - vloer2 / zs.maxHp * 100) < 0.2, `de inkeping staat op de vloer: ${zs.kerf && zs.kerf.toFixed(2)}% (verwacht ${(vloer2 / zs.maxHp * 100).toFixed(2)}%)`);
   t(new RegExp('minstens ' + DZ.N2 + ' zet').test(zs.tip) && new RegExp('niet onder ' + vloer2 + ' HP').test(zs.tip) && /HERSCHIKT DE ZAAL telt niet mee/.test(zs.tip) && !/cyclus/.test(zs.tip), `de tooltip: "${zs.tip}"`);
   let zb = await beurt(page, 0);

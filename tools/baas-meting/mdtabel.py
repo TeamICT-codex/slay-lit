@@ -71,6 +71,8 @@ def vol(p, pop):
             print(f"- spreiding gemiddeld ≤ {DOEL['spr']} pp (streef {DOEL['spr_streef']}): {spr:.0f} pp {ok(spr <= DOEL['spr'])}")
     if ster:
         print(f"- sterk ≤ {DOEL['sterk']} %: " + ' / '.join(f"{HELD[h]} {s['winst']:.0f} {ok(s['winst'] <= DOEL['sterk'])}" for h, s in ster.items()))
+    if ster and gem:
+        print(f"- sterk ≥ gemiddeld + {DOEL['sterk_boven']} pp: " + ' / '.join(f"{HELD[h]} {ster[h]['winst'] - gem[h]['winst']:+.0f} {ok(ster[h]['winst'] - gem[h]['winst'] >= DOEL['sterk_boven'])}" for h in HELD if h in ster and h in gem))
     if mat:
         print(f"- matig {DOEL['matig'][0]}-{DOEL['matig'][1]} %: " + ' / '.join(f"{HELD[h]} {s['winst']:.0f} {ok(s['winst'] <= DOEL['matig'][1])}" for h, s in mat.items()))
     if gem:

@@ -13,7 +13,10 @@ from collections import defaultdict, Counter
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from meetlib import HELD, ST, SCENE, laad, dick_rs, tag, seeds, marge, binnen_zonder_zelf, factuur, stilstand
 
-DOEL = dict(gem=(40, 55), spr=20, spr_streef=15, sterk=80, matig=(0, 10), med=(11, 14), scene=2, fact=45)
+# Architectbeslissingen B4a (27 sep 2026): 'sterk <= 80 %' vervalt; sterk (norm) wint per held
+# MINSTENS sterk_boven pp meer dan gemiddeld EN HOOGSTENS sterk %. Gemiddeld = de gemiddeld-norm
+# (MEET_GEMNORM=1) - de tabel toont wat de meting bevat.
+DOEL = dict(gem=(40, 55), spr=20, spr_streef=15, sterk=90, sterk_boven=15, matig=(0, 10), med=(11, 14), scene=2, fact=45)
 
 
 def cel_stats(v):
@@ -94,7 +97,7 @@ def druk(p, pop=False, kort=False):
     if ster:
         print(f"   - sterk <= {DOEL['sterk']} %              : " + ' / '.join(f"{HELD[h]} {s['winst']:.0f} {ok(s['winst'] <= DOEL['sterk'])}" for h, s in ster.items()))
     if ster and gem:
-        print('   - sterk > gemiddeld per held      : ' + ' / '.join(f"{HELD[h]} {ster[h]['winst'] - gem[h]['winst']:+.0f} {ok(ster[h]['winst'] > gem[h]['winst'])}" for h in HELD if h in ster and h in gem))
+        print(f"   - sterk >= gemiddeld + {DOEL['sterk_boven']} pp      : " + ' / '.join(f"{HELD[h]} {ster[h]['winst'] - gem[h]['winst']:+.0f} {ok(ster[h]['winst'] - gem[h]['winst'] >= DOEL['sterk_boven'])}" for h in HELD if h in ster and h in gem))
     if mat:
         print(f"   - matig {DOEL['matig'][0]}-{DOEL['matig'][1]} %                 : " + ' / '.join(f"{HELD[h]} {s['winst']:.0f} {ok(s['winst'] <= DOEL['matig'][1])}" for h, s in mat.items()))
     if gem:
