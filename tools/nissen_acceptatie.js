@@ -977,7 +977,7 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
        Drops' offer deed) sterft hij gewoon — de sonde onderscheidt dus echt. */
     const plag = await page.evaluate(async () => {
       const wacht = ms => new Promise(res => setTimeout(res, ms));
-      const proef = async (gebroken, sd) => {
+      const proef = async (gebroken, sd, schakelaar) => {
         if (S && S.gevecht) { try { S.gevecht.voorbij = true; stopGevechtLus(); } catch (e) {} }
         nieuwSpel('slachter', sd); S.gevecht = null; S.act = 2; S.maxHp = 90; S.hp = 90;
         startGevecht(['de_erfprins'], 'baas', 15);
@@ -986,20 +986,25 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
         const b = g.vijanden.find(x => x.id === 'de_erfprins');
         const graai = _copycatGraai(b, g, 2);
         if (gebroken) g.copycatGebroken = true;
+        /* B3 (integratie): de poort copycatGebroken() leest ook metgezellenAan() — de latente
+           breker werkt alleen nog met de DEV-schakelaar AAN, een oude vlag alleen doet niets meer */
+        if (schakelaar) devMetgezellen(true);
         b.hp = 5; b.blok = 0;
-        doeSchade(b, 40, sp());
+        try { doeSchade(b, 40, sp()); } finally { if (schakelaar) devMetgezellen(false); }
         const r = { graai, gebroken: !!g.copycatGebroken, plagiaat: !!b.plagiaat, hp: b.hp, dood: !!b.dood || b.hp <= 0, gMet: !!g.metgezel };
         try { g.voorbij = true; stopGevechtLus(); } catch (e) {}
         S.gevecht = null;
         document.querySelectorAll('#baas-intro, .baas-intro, .baas-flits, .baas-spraak, .roof-overlay, .steel-vlieger').forEach(nd => { try { nd.remove(); } catch (e) {} });
         return r;
       };
-      return { solo: await proef(false, 'NISSEN-PLAG-1'), gebroken: await proef(true, 'NISSEN-PLAG-2') };
+      return { solo: await proef(false, 'NISSEN-PLAG-1', false), oudeVlag: await proef(true, 'NISSEN-PLAG-3', false), gebroken: await proef(true, 'NISSEN-PLAG-2', true) };
     });
     t(plag.solo.graai === 2 && !plag.solo.gebroken && plag.solo.plagiaat && !plag.solo.dood && plag.solo.hp > 0 && !plag.solo.gMet,
       `de Plagiaatfase speelt solo: ${plag.solo.graai} kaarten geroofd, doodsklap → hij staat op met ${plag.solo.hp} HP (plagiaat ${plag.solo.plagiaat}, copycatGebroken ${plag.solo.gebroken}, geen metgezel)`);
+    t(plag.oudeVlag.graai === 2 && plag.oudeVlag.gebroken && plag.oudeVlag.plagiaat && !plag.oudeVlag.dood,
+      `B3: een oude g.copycatGebroken (Drops' offer) breekt hem solo niet meer — de poort leest de vlag: hij staat op met ${plag.oudeVlag.hp} HP (plagiaat ${plag.oudeVlag.plagiaat})`);
     t(plag.gebroken.graai === 2 && plag.gebroken.gebroken && !plag.gebroken.plagiaat && plag.gebroken.dood,
-      `leegte-wacht: met g.copycatGebroken true (Drops' oude offer) slaat hij de fase over en sterft (plagiaat ${plag.gebroken.plagiaat}, dood ${plag.gebroken.dood}) — de sonde meet echt`);
+      `leegte-wacht: met g.copycatGebroken true én de DEV-schakelaar AAN (Drops' oude offer) slaat hij de fase over en sterft (plagiaat ${plag.gebroken.plagiaat}, dood ${plag.gebroken.dood}) — de sonde meet echt`);
     /* poort B: sterven in het donker (de oude code: de Witte springt ertussen en je staat op 40 %) */
     const pb = await page.evaluate(async () => {
       nieuwSpel('slachter', 'NISSEN-POORTB'); S.act = 2; S.maxHp = 90; S.hp = 1; S.relikwieen = [];

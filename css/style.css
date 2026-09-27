@@ -2458,9 +2458,14 @@ body.lite .pb-skelet, body.lite .pb-lijst .pb-rij.pb-skelet:nth-child(odd) { bac
   transform: translateX(-50%) rotate(-7deg);
   padding: 3px 12px 4px; border: 3px double rgba(214, 44, 78, .95); border-radius: 8px;
   font-family: 'Pirata One', serif; font-size: clamp(.95rem, 3vmin, 1.25rem); letter-spacing: .05em;
-  color: #ff5d7c; background: rgba(22, 4, 12, .82); white-space: nowrap;
+  color: #ff5d7c; background: rgba(22, 4, 12, .82);
+  /* B3 (integratie): een lang getal ("10+16🩸": het blokbare en het onblokbare deel) stak op de
+     smalle telefoonkaart (±119 px) links en rechts buiten de kaart; nu breekt de stempel binnen
+     de kaart naar een tweede regel, het getal blijft heel */
+  width: max-content; max-width: 94%; text-align: center; line-height: 1.1;
   text-shadow: 0 0 6px rgba(255, 60, 100, .55); box-shadow: 0 3px 12px rgba(0, 0, 0, .6);
 }
+.rs-stempel b { white-space: nowrap; }
 .rs-stempel b { font-size: 1.3em; color: #fff0f4; letter-spacing: .02em; }
 
 /* ====== AANGETASTE KAART — gecorrumpeerd door de Erfprins (+1 kost, uitputtend) ====== */

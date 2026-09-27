@@ -476,19 +476,24 @@ async function regie(browser, fk, BANNERS) {
     await page.evaluate(async () => { try { await window.__buit; } catch (e) { } });
     await slaap(300);
     /* --- de plagiaatkaart (B1.4): fase 2 (1 kaart) en fase 3 (2 kaarten) --- */
-    for (const fase of [2, 3]) {
-      await page.evaluate(fase => { const g = S.gevecht; const v = g.vijanden[0]; g.roofBeurt = false; v.gestolen = (v.gestolen || []).filter(s => s.soort !== 'vloek'); v.fase = fase; v.copyKracht = ERF.toeslag[fase]; v.hp = Math.max(v.hp, 60); if (fase === 3) v.plagN = 1; v.intent = VIJANDEN[v.id].kies(v, v.beurtTeller); renderGevecht(); }, fase);
+    /* fase 2 (1 kaart) en fase 3 (3 kaarten) uit zijn echte buit, plus de LANGSTE stempels: Zware Klap+ en Kolenstempel+
+       in fase 3 ("KOPIE · Junior — 10+16🩸", "… — 💪+1 🌵+1"), zodat de breedte niet van de worp afhangt */
+    for (const [fase, lang] of [[2, false], [3, false], [3, true]]) {
+      await page.evaluate(([fase, lang]) => { const g = S.gevecht; const v = g.vijanden[0]; g.roofBeurt = false; S.hp = S.maxHp; /* drie klappen na elkaar: de held mag niet sterven */ v.gestolen = (v.gestolen || []).filter(s => s.soort !== 'vloek'); v.fase = fase; v.copyKracht = ERF.toeslag[fase]; v.hp = Math.max(v.hp, 60); if (fase === 3) v.plagN = 1;
+        if (lang) { v.plagN = 0; v.gestolen = ['zware_klap', 'kolenstempel'].map(id => { const c = nieuweKaart(id); c.up = true; return erfBuitKaart(c); }).concat(v.gestolen); }
+        v.intent = VIJANDEN[v.id].kies(v, v.beurtTeller); renderGevecht(); }, [fase, lang]);
       await slaap(250);
       await page.evaluate(() => { __EA.speelRecorder(); const v = S.gevecht.vijanden[0]; S.gevecht.vijandAanZet = true; if (v.intent && v.intent.doe) window.__zet = v.intent.doe(v); });
       await wacht(page, () => (window.__speelMetingen || []).length > 0, 5000);
-      await shot(page, `${vp.naam}_plagiaat_f${fase}${dk ? '_donker' : ''}`);
+      await shot(page, `${vp.naam}_plagiaat_f${fase}${lang ? '_lang' : ''}${dk ? '_donker' : ''}`);
       await page.evaluate(async () => { try { await window.__zet; } catch (e) { } S.gevecht.vijandAanZet = false; });
       const ms = await page.evaluate(() => window.__speelMetingen || []);
       const min = laptop ? 0.72 : (vp.staand ? 0.6 : 0.92);
-      t(ms.length >= 1, `B1.4 ${vp.naam}${dk} fase ${fase}: ${ms.length} grote kaart(en) gemeten`);
-      if (!vp.staand) t(ms.every(m => m.kaartBaas <= 2), `B1.4 ${vp.naam}${dk} fase ${fase}: de kaart naast hem (${ms.map(m => m.kaartBaas).join('/')} % van zijn silhouet, <= 2)`);
-      t(ms.every(m => m.kopBinnen && m.kopBB === 0 && m.kopTop === 0 && m.kopPil === 0), `B1.4 ${vp.naam}${dk} fase ${fase}: de kop in beeld (${ms.map(m => m.kopBinnen).join('/')}), niet over de bazenbalk (${ms.map(m => m.kopBB).join('/')}), de topbalk (${ms.map(m => m.kopTop).join('/')}) of zijn pil (${ms.map(m => m.kopPil).join('/')})`);
-      t(ms.every(m => m.schaal >= min - 0.001 && m.stempelInKaart && m.stempelBinnen), `B1.4 ${vp.naam}${dk} fase ${fase}: schaal ${ms.map(m => m.schaal).join('/')} (>= ${min}), de stempel op de kaart ("${ms.map(m => m.stempelTekst).join('" / "')}")`);
+      const fz = `fase ${fase}${lang ? ' (de langste stempels)' : ''}`;
+      t(ms.length >= 1, `B1.4 ${vp.naam}${dk} ${fz}: ${ms.length} grote kaart(en) gemeten`);
+      if (!vp.staand) t(ms.every(m => m.kaartBaas <= 2), `B1.4 ${vp.naam}${dk} ${fz}: de kaart naast hem (${ms.map(m => m.kaartBaas).join('/')} % van zijn silhouet, <= 2)`);
+      t(ms.every(m => m.kopBinnen && m.kopBB === 0 && m.kopTop === 0 && m.kopPil === 0), `B1.4 ${vp.naam}${dk} ${fz}: de kop in beeld (${ms.map(m => m.kopBinnen).join('/')}), niet over de bazenbalk (${ms.map(m => m.kopBB).join('/')}), de topbalk (${ms.map(m => m.kopTop).join('/')}) of zijn pil (${ms.map(m => m.kopPil).join('/')})`);
+      t(ms.every(m => m.schaal >= min - 0.001 && m.stempelInKaart && m.stempelBinnen), `B1.4 ${vp.naam}${dk} ${fz}: schaal ${ms.map(m => m.schaal).join('/')} (>= ${min}), de stempel op de kaart ("${ms.map(m => m.stempelTekst).join('" / "')}")`);
       await slaap(300);
     }
   }
