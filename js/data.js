@@ -1341,6 +1341,7 @@ const VIJANDEN = {
        hetzelfde zeggen; game.js overschrijft het meteen met DICK.hp (data.js laadt eerder).
        DICK in game.js is de bron van waarheid — balanceer daar, niet hier. */
     naam: 'de DICKtator', art: '👑', hp: [240, 240], baas: true,
+    plek3d: { x: 1.0, z: 0.4 },   /* B4b · B2.1: in 3D een VASTE plek vooraan, naar de held gekeerd (ook alleen, in I en IV); scene3d.js gevechtStart */
     titel: 'Heerser van het Slachtblok',
     kies: (v, beurt) => dicktatorKies(v, beurt)
   },
@@ -1351,16 +1352,19 @@ const VIJANDEN = {
      zodat élke VIJANDEN[x.id].naam/art-lookup en het Bestiarium gewoon werken. */
   de_griffier: {
     naam: 'De Griffier', art: '🖋️', artId: 'de_omroeper', hp: [21, 24], hof: true,   /* → 34-39 in Act 3 */
+    plek3d: { x: 3.5, z: -0.4 },  /* B2.1: achter de baas; de claqueur erft deze plek in III (de griffier is dan geëxecuteerd) */
     kies: (v, beurt) => hofIntent(v, beurt),
     bijDood: () => dicktatorGriffierDood()   /* zonder griffier geen decreet: een open dossier sluit meteen en de zitting-pil slaat om naar EIGENHANDIG VONNIS (game.js, review F4) */
   },
   de_deurwaarder: {
     naam: 'De Deurwaarder', art: '🧾', artId: 'de_aanklager', hp: [24, 28], hof: true,   /* → 39-45 in Act 3 */
+    plek3d: { x: 5.5, z: -0.4 },  /* B2.1: achter de baas, 2 wereldeenheden naast de griffier/claqueur */
     kies: (v, beurt) => hofIntent(v, beurt),
     bijDood: () => dicktatorHersync(true)   /* de baas moet zelf innen: zijn pil slaat om van 'laat innen' naar DE FACTUUR */
   },
   de_claqueur: {
     naam: 'De Claqueur', art: '👏', artId: 'het_klapvee', hp: [16, 16], hof: true,   /* handmatig 16 via dicktatorRoep (geen schaling) */
+    plek3d: { x: 3.5, z: -0.4 },  /* B2.1: de plek van de griffier (ze staan nooit samen) */
     kies: (v, beurt) => hofIntent(v, beurt)
   },
   /* DE DREMPELWACHTER — Balrog-stijl poortwachter. Sinds v128 is hij de BANKHOUDER van

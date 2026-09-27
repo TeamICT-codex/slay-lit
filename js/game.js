@@ -5957,6 +5957,16 @@ function statusBadges(actor) {
     }).join('');
 }
 
+/* Finale B4b · B2.2 — DE HOFMAAT TELT DE KOLOMMEN DIE ER STAAN. De mobiele hofmaat (baas en
+   hof een maat kleiner, css/mobiel.css) hing aan #vijanden-rij:has(.vijand:nth-child(3)): dat
+   telt ook de kolommen van gevallen vijanden die al weg zijn (.lijk-weg = display:none). In IV
+   stond de DICKtator zo alleen, maar op hofmaat. data-n telt de kolommen zonder .lijk-weg: een
+   kolom die nog uitdooft (sterft, 750 ms) telt mee - ze neemt nog plaats in. */
+function _rijMaat() {
+  const rij = document.getElementById('vijanden-rij'); if (!rij) return;
+  const n = String(rij.querySelectorAll(':scope > .vijand:not(.lijk-weg)').length);
+  if (rij.dataset.n !== n) rij.dataset.n = n;
+}
 /* gerichte update: muteert alleen wat veranderd is */
 let _bbExtraSig = null;   /* dirty-guard voor de bazenbalk-extra (arsenaal-/copycat-strook) */
 function renderGevecht() {
@@ -6081,13 +6091,18 @@ function renderGevecht() {
     if (!exitBezig) d.wrap.classList.toggle('sterft', v.dood);
     if (!v.dood) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); d._lijkT = null; }
     else if (exitBezig) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); d._lijkT = null; }
-    else if (!wasDood || (isBaas && !d._lijkT && !d.wrap.classList.contains('lijk-weg'))) {
+    /* Finale B4b · B2.2: ook een HOVELING (v.hof) die al .sterft droeg - door verliesHp, of door
+       de regie (de geëxecuteerde griffier, de gevluchte kiezers, de hofvlucht bij de tweede dood)
+       - geeft zijn kolom terug zodra de ceremonie voorbij is. Vroeger bleef zo'n kolom (opacity
+       0) plaats innemen: in IV stond de baas alleen maar op hofmaat (1,32x de held i.p.v. 1,65x
+       op 800x360) en staand zweefde hij 177 px. Gewone vijanden: ongewijzigd (finalecontract §0). */
+    else if (!wasDood || ((isBaas || v.hof) && !d._lijkT && !d.wrap.classList.contains('lijk-weg'))) {
       clearTimeout(d._lijkT);
       /* B2 · B0.7: een verslagen BAAS blijft liggen tot het scherm wisselt (css: .is-baas.sterft
          in 2D). Alleen als het gevecht DOORGAAT (de Slijmkoning met zijn splitsingen), geeft hij
          zijn kolom terug - pas na 2,4 s, na zijn val. Gewone vijanden: ongewijzigd. */
       d._lijkT = setTimeout(() => {
-        if (v.dood && !(isBaas && S.gevecht && S.gevecht.voorbij)) d.wrap.classList.add('lijk-weg');
+        if (v.dood && !(isBaas && S.gevecht && S.gevecht.voorbij)) { d.wrap.classList.add('lijk-weg'); _rijMaat(); }
       }, dtempo(isBaas ? 2400 : 750));
     }
     /* v121: de fase-klassen van de DICKtator worden AFGEDWONGEN, net als .sterft.
@@ -6113,6 +6128,7 @@ function renderGevecht() {
     zetBlokSchild(d.blok, v.blok);
     d.badges.innerHTML = statusBadges(v);
   });
+  _rijMaat();   /* B2.2: #vijanden-rij[data-n] = de kolommen die er staan */
 
   const s = g.speler, ds = GDOM.speler;
   ds.hpV.style.width = (S.hp / S.maxHp * 100) + '%';

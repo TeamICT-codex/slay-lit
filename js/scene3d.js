@@ -465,11 +465,27 @@ const Vista = (() => {
        Vista's three.js-sprite niet → dit was de 'dode vijand herrijst'-bug. */
     const levend = g.vijanden.filter(v => !v.dood);
     const n = levend.length;
+    /* Finale B4b · B2.1 — EEN VASTE FORMATIE voor een baas met een hof (P_plaatsing_regie_plan
+       §5). De gewone verdeling hierboven (x over 1,1-5,0, z om en om) liet de DICKtator bij elke
+       aantreding verspringen (206 px in I -> II) en zette de griffier en de deurwaarder VÓÓR hem
+       (13-15 % van de baas bedekt). Draagt de baas in dit gevecht een plek3d (js/data.js), dan
+       staat iedereen met een plek3d op die plek: de baas vooraan (naar de held), het hof erachter
+       op een vaste plek per rol. Een figuur zonder eigen plek, of een plek die al bezet is,
+       krijgt de eerste vrije plek achteraan. Niemand verspringt meer als een ander opkomt. */
+    const plaats = new Map();
+    if (levend.some(v => VIJANDEN[v.id] && VIJANDEN[v.id].baas && VIJANDEN[v.id].plek3d)) {
+      const VRIJ = [{ x: 3.5, z: -0.4 }, { x: 5.5, z: -0.4 }, { x: 7.0, z: -0.4 }];
+      const bezet = p => [...plaats.values()].some(q => q.x === p.x && q.z === p.z);
+      /* eerst de vaste plekken (in volgorde van opkomst), dan wie geen plek (meer) heeft */
+      levend.forEach(v => { const p = VIJANDEN[v.id].plek3d; if (p && !bezet(p)) plaats.set(v, p); });
+      levend.forEach(v => { if (!plaats.has(v)) plaats.set(v, VRIJ.find(p => !bezet(p)) || VRIJ[VRIJ.length - 1]); });
+    }
     levend.forEach((v, i) => {
       const def = VIJANDEN[v.id];
       const schaal = def.baas ? 4.4 : (def.elite ? 3.3 : 2.4);
-      const x = n === 1 ? 3.1 : 1.1 + i * (3.9 / (n - 1));
-      const z = (i % 2) * 0.8 - 0.4;
+      const p = plaats.get(v);
+      const x = p ? p.x : (n === 1 ? 3.1 : 1.1 + i * (3.9 / (n - 1)));
+      const z = p ? p.z : (i % 2) * 0.8 - 0.4;
       maakActeur(v, v.id, { teken: def.art, spiegel: false }, x, z, schaal);
     });
     actief = true;
