@@ -695,7 +695,7 @@ const sonde = page => page.evaluate(() => {
     const z = document.querySelector('#baas-balk .bb-zitting'), k = document.querySelector('#baas-balk .bb-vloer');
     const chip = document.querySelector('.status-geschorst');
     const st = document.querySelector('#baas-balk .bb-proces');
-    const h = dicktatorHofVanger(g, b);
+    const h = (typeof dicktatorHofVanger === 'function' ? dicktatorHofVanger(g, b) : null);
     return {
       hp: b.hp, maxHp: b.maxHp, scene: dicktatorScene(b), geschorst: !!b._geschorst, vloer: dicktatorVloer(b), nog: dicktatorZittingNog(b),
       N: dicktatorMinZetten(dicktatorScene(b)), v2: b.v2Zet || 0, pil: b.intent ? b.intent.naam : '-',
@@ -709,7 +709,7 @@ const sonde = page => page.evaluate(() => {
   const klapVang = (page, n, vooraf) => page.evaluate(([n, vooraf]) => {
     const g = S.gevecht, b = dicktatorBaas(g);
     document.querySelectorAll('.fx-nummer').forEach(e => e.remove());
-    const h = dicktatorHofVanger(g, b);
+    const h = (typeof dicktatorHofVanger === 'function' ? dicktatorHofVanger(g, b) : null);
     if (h && vooraf && vooraf.vangerHp) { h.hp = vooraf.vangerHp; h.maxHp = Math.max(h.maxHp, vooraf.vangerHp); }
     const hVoor = h ? h.hp : null, bVoor = b.hp, st0 = S.stats.schade;
     if (vooraf && vooraf.kaart) aanvalOp(b, n); else verliesHp(b, n, sp());
@@ -758,7 +758,7 @@ const sonde = page => page.evaluate(() => {
   kv = await klapVang(page, 30, { kaart: true });
   t(kv.bNa === vloer2 && kv.stats > 0 && kv.stats === kv.hVoor - kv.hNa, `F7: een kaartklap op de vloer: baas ${kv.bVoor} → ${kv.bNa}, S.stats.schade +${kv.stats} = wat ${kv.hId} verloor (${kv.hVoor - kv.hNa})`);
   /* de volgorde: van links naar rechts - valt de eerste, dan vangt de volgende */
-  const volg = await page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g); const levend = g.vijanden.filter(x => x !== b && !x.dood); const eerste = levend[0]; verliesHp(eerste, 9999, sp()); renderGevecht(); const nu = dicktatorHofVanger(g, b); return { eerste: eerste.id, volgende: levend[1] ? levend[1].id : null, nu: nu ? nu.id : null }; });
+  const volg = await page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g); const levend = g.vijanden.filter(x => x !== b && !x.dood); const eerste = levend[0]; verliesHp(eerste, 9999, sp()); renderGevecht(); const nu = (typeof dicktatorHofVanger === 'function' ? dicktatorHofVanger(g, b) : null); return { eerste: eerste.id, volgende: levend[1] ? levend[1].id : null, nu: nu ? nu.id : null }; });
   t(volg.nu === volg.volgende, `de eerste hoveling (${volg.eerste}) valt → de vanger wordt de volgende van links: ${volg.nu} (verwacht ${volg.volgende})`);
   if (volg.nu) {
     kv = await klapVang(page, 25);
@@ -781,7 +781,7 @@ const sonde = page => page.evaluate(() => {
   t(zb.naam === 'HERSCHIKT DE ZAAL' && zs.scene === 3 && zs.vloer === 1 && zs.nog === DZ.N3 && zs.teller === '⚖ ZITTING LOOPT · nog ' + DZ.N3, `III: vloer ${zs.vloer} HP, teller "${zs.teller}", hof ${zs.hof}`);
   const gifIII = await page.evaluate(() => {
     const g = S.gevecht, b = dicktatorBaas(g);
-    const h = dicktatorHofVanger(g, b);
+    const h = (typeof dicktatorHofVanger === 'function' ? dicktatorHofVanger(g, b) : null);
     if (h) { h.hp = 400; h.maxHp = Math.max(h.maxHp, 400); h.blok = 0; }
     b.hp = 5; b.status = { gif: 20 }; renderGevecht();
     return { h: h ? h.id : null, hVoor: h ? h.hp : null, tik: Math.ceil(20 / 2) };
@@ -807,8 +807,10 @@ const sonde = page => page.evaluate(() => {
   let PNGm = null; try { PNGm = require('pngjs').PNG; } catch (e) { /* zonder pngjs: alleen de geometrie hierboven */ }
   if (PNGm) {
     await slaap(1400);   /* het vignet schuift in 1,2 s naar zijn donkerte */
-    const clipT = await page.evaluate(() => { const r = document.querySelector('#baas-balk .bb-zitting').getBoundingClientRect(); return { x: Math.floor(r.left), y: Math.floor(r.top), width: Math.ceil(r.width), height: Math.ceil(r.height) }; });
+    const clipT = await page.evaluate(() => { const e = document.querySelector('#baas-balk .bb-zitting'); if (!e || e.hidden) return null; const r = e.getBoundingClientRect(); return r.width ? { x: Math.floor(r.left), y: Math.floor(r.top), width: Math.ceil(r.width), height: Math.ceil(r.height) } : null; });
     const p90 = buf => { const p = PNGm.sync.read(buf); const l = []; for (let i = 0; i < p.data.length; i += 4) l.push(0.2126 * p.data[i] + 0.7152 * p.data[i + 1] + 0.0722 * p.data[i + 2]); l.sort((a, b) => a - b); return Math.round(l[Math.floor(l.length * 0.9)]); };
+    if (!clipT) t(false, 'de teller bij fakkel 0 in de tirade: er staat geen teller (dus ook geen helderheid)');
+    else {
     const met = p90(await page.screenshot({ clip: clipT }));
     await page.evaluate(() => document.getElementById('licht-vignet').classList.remove('proces-open'));
     await slaap(150);
@@ -816,6 +818,7 @@ const sonde = page => page.evaluate(() => {
     await page.evaluate(() => renderGevecht());   /* het gat komt terug */
     await page.screenshot({ path: path.join(UIT, 'zitting-fakkel0-1440x900.png') }).catch(() => {});
     t(met >= 150 && met >= zonder, `de teller bij fakkel 0 in de tirade: helderheid (p90) ${met} met het gat, ${zonder} zonder (doel ≥ 150; mobiel rechtsboven is het verschil het grootst, zie de beeldcontrole)`);
+    }
   } else console.log('   (pngjs ontbreekt: de helderheidsmeting van 15c overgeslagen)');
   /* de telegraaf: geen '?' of '❓' op de pillen van de baas en het hof, hoe donker ook */
   const tel0 = await page.evaluate(() => { const out = []; for (const f of [20, 0]) { S.fakkel = f; renderGevecht(); out.push({ f, licht: lichtNiveau(), pillen: S.gevecht.vijanden.filter(x => !x.dood).map(x => x.id.replace(/^de_/, '') + ':' + (actorEl(x) && actorEl(x).querySelector('.intent') ? actorEl(x).querySelector('.intent').textContent.trim() : '-')) }); } S.fakkel = 100; zetLichtVisueel(); renderGevecht(); return out; });
