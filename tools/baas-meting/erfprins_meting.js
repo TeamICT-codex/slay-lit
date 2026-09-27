@@ -42,6 +42,7 @@
        mods: vloek1 · vloek2 (extra Lasters)
      MEET_SEEDBASE=70000 (seeds 'ERF-<base+i>')   MEET_HP=0.85   MEET_WERKERS=8   MEET_RECYCLE=40
      MEET_UIT=<pad> (standaard: <label>.json naast dit script)
+     MEET_TUSSEN=1000 (tussenstand elke zoveel gevechten)   MEET_HERVAT=1 (ga verder op de tussenstand in MEET_UIT)
      SLAYIT_WORKTREE=<map met index.html> (standaard: de repo van dit script)
      SLAYIT_PLAYWRIGHT=<pad naar node_modules/playwright> (anders: require('playwright') via NODE_PATH) */
 const fs = require('fs'), path = require('path');
@@ -761,13 +762,32 @@ async function maakPagina(browser, fouten) {
 
 async function main() {
   const t0 = Date.now();
-  const browser = await chromium.launch({ headless: true });
   const fouten = [];
-  const jobs = maakJobs();
+  const uitPad = process.env.MEET_UIT || path.join(__dirname, LABEL + '.json');
+  const resultaten = [];
+  /* HERVATTEN: een lange meting die sterft, verliest niets. Elke MEET_TUSSEN gevechten schrijft het
+     harnas een tussenstand naar MEET_UIT (meta.onvolledig = true); met MEET_HERVAT=1 leest het die
+     terug en slaat het de gevechten over die er al in staan (zelfde variant, beleid, held, sterkte, seed). */
+  let jobs = maakJobs();
+  const sleutel = r => `${r.variant}/${r.beleid}/${r.held}/${r.st}|${r.seed}`;
+  if (process.env.MEET_HERVAT && fs.existsSync(uitPad)) {
+    try {
+      const oud = JSON.parse(fs.readFileSync(uitPad, 'utf8'));
+      (oud.resultaten || []).filter(r => !r.fout).forEach(r => resultaten.push(r));
+      const al = new Set(resultaten.map(sleutel));
+      jobs = jobs.filter(j => !al.has(sleutel(j)));
+      console.log(`hervat: ${resultaten.length} gevechten uit ${uitPad}, nog ${jobs.length} te gaan`);
+    } catch (e) { console.log('hervat: de tussenstand is onleesbaar, alles opnieuw (' + e.message + ')'); }
+  }
+  const TUSSEN = parseInt(process.env.MEET_TUSSEN || '1000', 10);
+  const browser = await chromium.launch({ headless: true });
   const versie = (fs.readFileSync(path.join(WORTEL, 'sw.js'), 'utf8').match(/const CACHE = '([^']+)'/) || [])[1] || '?';
   console.log(`ERFPRINS-meting '${LABEL}' · ${versie} · ${jobs.length} gevechten · ${WERKERS} werkers · ${N} seeds/cel · seeds ERF-${SEEDBASE}.. · varianten ${VARS.join(',')}`);
-  const resultaten = [];
+  const builds = {};
+  for (const h of HELDEN) for (const st of STERKTES) builds[h + '/' + st] = tafelBuild(h, st);
   let volgende = 0, klaar = 0, erf = null;
+  const bewaar = onvolledig => fs.writeFileSync(uitPad, JSON.stringify({ meta: { label: LABEL, versie, datum: new Date().toISOString(), seeds: N, seedbase: SEEDBASE, hpPct: HPPCT, beleid: BELEID, sterktes: STERKTES,
+    erf, varianten: VARS.map(v => ({ naam: v, def: VARIANTEN[v] })), duurS: Math.round((Date.now() - t0) / 1000), onvolledig: !!onvolledig, paginafouten: [...new Set(fouten)].slice(0, 20) }, builds, resultaten }));
   const werkers = [];
   for (let w = 0; w < WERKERS; w++) werkers.push((async () => {
     let page = await maakPagina(browser, fouten), gedaan = 0;
@@ -788,16 +808,13 @@ async function main() {
       resultaten.push(r);
       if (r.fout) console.log(`  FOUT ${job.cel} ${job.seed}: ${String(r.fout).split('\n')[0]}`);
       if (++klaar % 200 === 0) console.log(`  ${klaar}/${jobs.length} (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
+      if (TUSSEN > 0 && klaar % TUSSEN === 0) { try { bewaar(true); } catch (e) { console.log('  tussenstand niet bewaard: ' + e.message); } }
     }
     try { await page.context().close(); } catch (e) {}
   })());
   await Promise.all(werkers);
   await browser.close();
-  const builds = {};
-  for (const h of HELDEN) for (const st of STERKTES) builds[h + '/' + st] = tafelBuild(h, st);
-  const uitPad = process.env.MEET_UIT || path.join(__dirname, LABEL + '.json');
-  fs.writeFileSync(uitPad, JSON.stringify({ meta: { label: LABEL, versie, datum: new Date().toISOString(), seeds: N, seedbase: SEEDBASE, hpPct: HPPCT, beleid: BELEID, sterktes: STERKTES,
-    erf, varianten: VARS.map(v => ({ naam: v, def: VARIANTEN[v] })), duurS: Math.round((Date.now() - t0) / 1000), paginafouten: [...new Set(fouten)].slice(0, 20) }, builds, resultaten }));
+  bewaar(false);
   console.log(`klaar in ${((Date.now() - t0) / 1000).toFixed(0)} s → ${uitPad}`);
   if (fouten.length) console.log('PAGINAFOUTEN:', [...new Set(fouten)].slice(0, 8));
   for (const v of VARS) { console.log(`\n=== variant ${v} ===`); console.log(analyseer(resultaten, v).tekst); }

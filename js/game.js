@@ -7117,7 +7117,8 @@ function checkBaasFase() {
    Het meetharnas (tools/baas-meting/erfprins_meting.js) zet per gevecht andere waarden in ERF.
    ============================================================ */
 const ERF = {
-  hp: 190,                          /* gemeten (O1 ronde_g/h, eind3/eind4): boven 180 is HP hier geen sterke knop */
+  hp: 145,                          /* IJKING B3 (27 sep, tools/baas-meting/erfprins_meting.js, solo, D's Act 2-aankomst + de
+                                       Drempeltafel): HP is geen sterke knop, de vorm van zijn klap wel. De ijkknoppen dragen 'IJK'. */
   /* DE ROOF */
   roofDeel: 0.5,                    /* hij neemt round(je dek × 0,5) kaarten, ad random, uit je trekstapel */
   roofRest: 2,                      /* er blijven altijd minstens zoveel kaarten in je trekstapel */
@@ -7125,25 +7126,27 @@ const ERF = {
   buitMs: 2200,                     /* regie: hoe lang hij zijn buit bekijkt (de beurt na de Roof) */
   overslaanVanaf: 2,                /* vanaf deze ontmoeting (Codex.erfprinsOntmoetingen) mag je de Roof en de buit-beat wegtikken */
   /* HET TERUGSPELEN — een aanval: min(cap, (round(jouw getal × mult) + toeslag) × actschaal) */
-  mult: 1.65,
+  mult: 1.5,                        /* IJK */
   actSchaal: 0.15,                  /* +15 % per act na de eerste (dezelfde regel als actDmg) */
-  cap: { 1: 20, 2: 22, 3: 28 },     /* plafond per kopie, per fase (O1 ronde_f/h: 30/40 was te grof) */
-  toeslag: { 1: 0, 2: 1, 3: 3 },    /* zijn fasetoeslag op elke kopie (v.copyKracht) */
+  cap: { 1: 20, 2: 20, 3: 26 },     /* IJK: plafond per kopie, per fase (O1 ronde_f/h: 30/40 was te grof) */
+  toeslag: { 1: 0, 2: 2, 3: 4 },    /* IJK: zijn fasetoeslag op elke kopie (v.copyKracht) */
   /* DE VORM VAN ZIJN KLAP (ijkknoppen: Blok alleen mag hem niet oplossen, zie jury W2) */
   treffers: 1,                      /* in hoeveel treffers een teruggespeelde klap valt (Kracht telt per treffer, jouw Doornen ook) */
-  onblokbaar: 0,                    /* welk deel van elke treffer dwars door je Blok gaat (0..1; staat op pil, stempel en tip) */
+  onblokbaar: 0.6,                  /* IJK: welk deel van elke treffer dwars door je Blok gaat (0..1; staat op pil, stempel en tip).
+                                       De grootste knop tegen 'precies de pil wegblokken': het gat bewust → schild/slim krimpt. */
   /* PER KAARTSOORT (Thomas, 30 jun: "extra schade afhankelijk van het type kaart") */
-  gifMult: 2.5,                     /* jouw gifkaart: round(n × 2,5) Gif op JOU (vervangt de gifkaats) */
+  gifMult: 4.2,                     /* IJK: jouw gifkaart: round(n × 4,2) Gif op JOU (vervangt de gifkaats); houdt de Gifmagiër bij de rest */
   blokMult: 1,                      /* jouw blokkaart: n × blokMult Blok voor hém */
-  spiegel: { kracht: 1, doornen: 1, klieren: 1, zwak: 1 },   /* HET SPIEGELRECHT: jouw Kracht / Doornen / Gifklieren / 'alle vijanden Zwak' worden
+  spiegel: { kracht: 0.5, doornen: 0.34, klieren: 0.5, zwak: 1 },   /* IJK · HET SPIEGELRECHT: jouw Kracht / Doornen / Gifklieren / 'alle vijanden Zwak' worden
                                        de zijne, × dit deel per soort (0 = die soort snapt hij niet → driftbui) */
   driftbui: [2, 2],                 /* wat hij niet snapt: een klap van a + b × fase (act-geschaald, + zijn Kracht); [0, 0] = geen effect */
-  vloek: [12, 5, 4],                /* een geroofde vloek bijt HÉM: a + b × fase + c × (act − 1), en hij verslikt zich */
+  vloek: [3, 1, 1],                 /* IJK: een geroofde vloek bijt HÉM: a + b × fase + c × (act − 1), en hij verslikt zich
+                                       (de beet blijft klein: het verslikken zelf kost hem al zijn beurt; hoger = matig te makkelijk) */
   /* FASES — fase 2 = de Roof (WOEDE), fase 3 = onder de streep op zijn balk */
   fase3Hp: 0.5,
-  plan: { 1: [1], 2: [1, 2], 3: [2] },   /* kaarten per plagiaatbeurt, per fase (cyclus op zijn plagiaatbeurten) */
+  plan: { 1: [1], 2: [1, 2], 3: [2, 3] },   /* IJK: kaarten per plagiaatbeurt, per fase (cyclus op zijn plagiaatbeurten) */
   /* HET NOODRANTSOEN — zijn tweede leven, altijd zichtbaar op zijn Buit-pil (♥+N) */
-  rantsoenPerKaart: 12, rantsoenMax: 4,
+  rantsoenPerKaart: 15, rantsoenMax: 5,   /* IJK: de hefboom op 'gemiddeld' (Gifmagiër en Kolendruïde halen hem bijna altijd) */
   rantsoenWist: true,               /* hij staat schoon op: jouw Gif, Zwak en Kwetsbaar op hem zijn weg — dat staat letterlijk op zijn Buit-pil
                                        (O1 mat met de wis; zonder wint de Gifmagiër gemiddeld 81-91 %, verkenning B3). Zijn eigen
                                        Kracht/Doornen/Gifklieren blijven. false = hij staat op met al zijn statussen. */
@@ -7169,7 +7172,7 @@ function erfActDmg(d) { return huidigeAct() > 1 ? Math.ceil(d * (1 + ERF.actScha
 function erfPerBeurt(fase) { const p = ERF.plan[fase] || [1]; return [...new Set(p)].sort((a, b) => a - b).join(' of '); }
 
 /* de kopie-waarde van een teruggespeelde aanval (vóór zijn Kracht en de statussen): jouw getal
-   × 1,65 + zijn fasetoeslag, act-geschaald, met een plafond per fase. Ligt vast zodra hij plant. */
+   × ERF.mult + zijn fasetoeslag, act-geschaald, met een plafond per fase. Ligt vast zodra hij plant. */
 function copycatPlagiaatDmg(v, n) {
   let d = Math.round(n * ERF.mult) + (v.copyKracht || 0);
   d = erfActDmg(d);
