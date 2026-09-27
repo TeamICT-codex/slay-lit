@@ -1356,9 +1356,9 @@ const sonde = page => page.evaluate(() => {
     const g = S.gevecht, b = dicktatorBaas(g);
     const hof = g.vijanden.filter(x => x.hof && !x.dood).map(x => { const e = actorEl(x) && actorEl(x).querySelector('.hp-tekst'); return { id: x.id.replace(/^de_/, ''), d: e ? getComputedStyle(e).display : '-', tekst: e ? e.textContent : '' }; });
     const be = actorEl(b) && actorEl(b).querySelector('.hp-tekst');
-    return { hof, baas: be ? getComputedStyle(be).display : '-' };
+    return { hof, baas: be ? getComputedStyle(be).display : '-', baasTekst: be ? be.textContent : '', baasStand: !!(be && be.classList.contains('stand')) };
   });
-  t(hp21.hof.length > 0 && hp21.hof.every(h => h.d !== 'none' && /^\d+\/\d+$/.test(h.tekst)) && hp21.baas === 'none', `het hof toont zijn HP-getal op de telefoon (${hp21.hof.map(h => h.id + ' ' + h.tekst).join(', ')}); de baas niet (dat staat bij het hart)`);
+  t(hp21.hof.length > 0 && hp21.hof.every(h => h.d !== 'none' && /^\d+\/\d+$/.test(h.tekst)) && (hp21.baas === 'none' || (hp21.baasStand && /^🔒 /.test(hp21.baasTekst))), `het hof toont zijn HP-getal op de telefoon (${hp21.hof.map(h => h.id + ' ' + h.tekst).join(', ')}); de baas niet - daar staat het getal bij het hart, op zijn balk hoogstens het label ("${hp21.baasStand ? hp21.baasTekst : hp21.baas}")`);
   await page.screenshot({ path: path.join(UIT, 'f1-chip-846x381.png') }).catch(() => {});
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
