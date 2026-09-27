@@ -7186,6 +7186,8 @@ const ERF = {
   treffers: 1,                      /* in hoeveel treffers een teruggespeelde klap valt (Kracht telt per treffer, jouw Doornen ook) */
   onblokbaar: 0.6,                  /* IJK: welk deel van elke treffer dwars door je Blok gaat (0..1; staat op pil, stempel en tip).
                                        De grootste knop tegen 'precies de pil wegblokken': het gat bewust → schild/slim krimpt. */
+  doorPlafond: 0,                   /* B3 F1 (keuzevraag, gemeten): een plafond op het onblokbare deel per beurt, als deel van je
+                                       max-HP (0 = geen plafond); wat erboven valt, wordt gewoon blokbaar. Pil = uitvoering. */
   /* PER KAARTSOORT (Thomas, 30 jun: "extra schade afhankelijk van het type kaart") */
   gifMult: 4.2,                     /* IJK: jouw gifkaart: round(n × 4,2) Gif op JOU (vervangt de gifkaats); houdt de Gifmagiër bij de rest */
   blokMult: 1,                      /* jouw blokkaart: n × blokMult Blok voor hém */
@@ -7197,6 +7199,10 @@ const ERF = {
   /* FASES — fase 2 = de Roof (WOEDE), fase 3 = onder de streep op zijn balk */
   fase3Hp: 0.5,
   plan: { 1: [1], 2: [1, 2], 3: [2, 3] },   /* IJK: kaarten per plagiaatbeurt, per fase (cyclus op zijn plagiaatbeurten) */
+  blokMee: false,                   /* B3 F1 (gemeten): een geroofde Blok-kaart neemt geen plek in zijn plan: ze gaat mee met zijn
+                                       klappen (één per beurt, achteraan) — geen stille beurten met alleen Blok op het einde van zijn buit */
+  leeghalen: 0,                     /* B3 F1 (gemeten): heeft hij alleen nog stille kaarten (Blok, Zwak), dan speelt hij er tot zoveel
+                                       tegelijk (0 = uit) */
   /* HET NOODRANTSOEN — zijn tweede leven, altijd zichtbaar op zijn Buit-pil (♥+N) */
   rantsoenPerKaart: 15, rantsoenMax: 5,   /* IJK: de hefboom op 'gemiddeld' (Gifmagiër en Kolendruïde halen hem bijna altijd) */
   rantsoenWist: true,               /* hij staat schoon op: jouw Gif, Zwak en Kwetsbaar op hem zijn weg — dat staat letterlijk op zijn Buit-pil
@@ -7246,7 +7252,7 @@ function erfBackfire(v) {
 /* ÉÉN KLAP van hem ZOALS HIJ LANDT (vóór jouw Blok): per treffer de kopie-waarde + zijn Kracht,
    dan Zwak op hem en Kwetsbaar op jou (net als bij elke vijand, vijandAanval), dan Glazen Zielen.
    xk = Kracht die hij eerder in dezelfde beurt uit jouw kaarten haalt (het Spiegelrecht). */
-function erfKlap(v, basis, doel, xk) {
+function erfKlap(v, basis, doel, xk, doorMax) {
   const T = Math.max(1, Math.round(ERF.treffers || 1));
   let per = T > 1 ? Math.ceil(basis / T) : basis;
   per += (v.status.kracht || 0) + (xk || 0);
@@ -7254,10 +7260,16 @@ function erfKlap(v, basis, doel, xk) {
   const dl = doel || sp();
   if (dl && (dl.status.kwetsbaar || 0) > 0) per = Math.floor(per * 1.5);
   per = Math.max(0, per);
-  const door = Math.min(per, Math.round(per * Math.max(0, Math.min(1, ERF.onblokbaar || 0))));
+  const door0 = Math.min(per, Math.round(per * Math.max(0, Math.min(1, ERF.onblokbaar || 0))));
+  /* doorMax (ERF.doorPlafond): wat er deze beurt nog dwars door je Blok mag, verdeeld over de treffers */
+  const door = doorMax == null ? door0 : Math.max(0, Math.min(door0, Math.floor(doorMax / T)));
   const blokbaar = per - door;
   const landt = glasDmg(blokbaar) + glasDmg(door);
   return { treffers: T, blokbaar, door, per: landt, totaal: landt * T, doorTotaal: glasDmg(door) * T };
+}
+/* ERF.doorPlafond: het budget voor het onblokbare deel in één beurt van hem (null = geen plafond) */
+function erfDoorBudget() {
+  return (ERF.doorPlafond || 0) > 0 ? Math.max(0, Math.floor((S.maxHp || 0) * ERF.doorPlafond)) : null;
 }
 
 /* ---- wat hij met een geroofde kaart doet: de SOORT, afgeleid van de kaart zelf ----
@@ -7346,9 +7358,18 @@ function erfPlanKaart(v, s) {
   else if (s.soort === 'spiegel') { k.kr = s.kr || 0; k.dr = s.dr || 0; k.kl = s.kl || 0; }
   return k;
 }
-/* zijn plan: de N kaarten die hij deze beurt speelt */
+/* zijn plan: de N kaarten die hij deze beurt speelt (B3 F1: met ERF.blokMee gaat één Blok-kaart
+   mee achteraan, buiten de N; met ERF.leeghalen speelt hij zijn laatste stille kaarten samen) */
 function copycatPlagiaatPlan(v, aantal) {
-  return (v.gestolen || []).slice().sort((a, b) => erfSterkte(b) - erfSterkte(a)).slice(0, aantal).map(s => erfPlanKaart(v, s));
+  const volg = (v.gestolen || []).slice().sort((a, b) => erfSterkte(b) - erfSterkte(a));
+  const stil = s => s.soort === 'blok' || s.soort === 'zwak';
+  let kaarten;
+  if ((ERF.leeghalen || 0) > 0 && volg.length && volg.every(stil)) kaarten = volg.slice(0, Math.max(aantal, ERF.leeghalen));
+  else if (ERF.blokMee) {
+    const kern = volg.filter(s => s.soort !== 'blok'), blok = volg.filter(s => s.soort === 'blok');
+    kaarten = kern.length ? kern.slice(0, aantal).concat(blok.slice(0, 1)) : blok.slice(0, aantal);
+  } else kaarten = volg.slice(0, aantal);
+  return kaarten.map(s => erfPlanKaart(v, s));
 }
 
 /* ============================================================================
@@ -7358,9 +7379,9 @@ function copycatPlagiaatPlan(v, aantal) {
    xk = de Kracht die hij eerder in dezelfde beurt uit jouw kaarten haalt (alleen voor de pil:
    bij de uitvoering staat die Kracht dan al op hem).
    ============================================================================ */
-function erfEffect(v, k, xk) {
+function erfEffect(v, k, xk, doorMax) {
   if (k.vuil) return { k, soort: 'vloek', bf: k.bf };
-  if (k.soort === 'aanval' || k.drift) return { k, soort: k.drift ? 'drift' : 'klap', klap: erfKlap(v, k.eindDmg, sp(), xk) };
+  if (k.soort === 'aanval' || k.drift) return { k, soort: k.drift ? 'drift' : 'klap', klap: erfKlap(v, k.eindDmg, sp(), xk, doorMax) };
   if (k.soort === 'gif') return { k, soort: 'gif', n: k.eindGif };
   if (k.soort === 'blok') return { k, soort: 'blok', n: k.eindBlok, dr: k.dr || 0 };
   if (k.soort === 'zwak') return { k, soort: 'zwak', n: k.n };
@@ -7370,11 +7391,12 @@ function erfEffect(v, k, xk) {
 /* het hele plan in volgorde, zoals de pil het toont: met de Kracht die hij onderweg krijgt, en
    na een vloek valt de rest weg (hij verslikt zich) */
 function erfEffecten(v, plan) {
-  let xk = 0, gestikt = false;
+  let xk = 0, gestikt = false, doorOver = erfDoorBudget();
   return (plan || []).map(k => {
-    const e = erfEffect(v, k, xk);
+    const e = erfEffect(v, k, xk, doorOver);
     e.vervalt = gestikt;
     if (!gestikt && e.soort === 'spiegel') xk += e.kr;
+    if (!gestikt && e.klap && doorOver != null) doorOver = Math.max(0, doorOver - e.klap.door * e.klap.treffers);
     if (e.soort === 'vloek') gestikt = true;
     return e;
   });
@@ -7940,6 +7962,7 @@ async function copycatSpeelTerug(v, g, plan) {
   const opgestaan = () => !!(v.intent && v.intent.type === 'opstaan');
   let gespeeld = 0;   /* hoeveel kaarten van zijn plan hij écht speelde (de banner hieronder telt die, niet het plan) */
   const retour = [];   /* de namen van wat deze beurt aangetast terugkomt: één regel, geen melding per kaart */
+  let doorOver = erfDoorBudget();   /* ERF.doorPlafond: hetzelfde budget als erfEffecten (de pil) */
   for (let i = 0; i < (plan || []).length; i++) {
     if (S.gevecht !== g || g.voorbij || v.dood || opgestaan()) break;   /* een dode (of net opgestane) baas speelt niet door */
     const k = plan[i];
@@ -7972,16 +7995,18 @@ async function copycatSpeelTerug(v, g, plan) {
       break;
     }
     /* 1 — de kaart groot in beeld, met zijn stempel */
-    const e0 = erfEffect(v, k, 0);
+    const e0 = erfEffect(v, k, 0, doorOver);
     const wrap = await copycatToonGespeeld(k, s, e0, v);
     if (S.gevecht !== g || g.voorbij || v.dood) { wrap.remove(); return; }
     /* 2 — het effect landt: exact wat de stempel en de pil zeiden */
-    const e = erfEffect(v, k, 0);
+    const e = erfEffect(v, k, 0, doorOver);
     if (e.soort === 'klap' || e.soort === 'drift') {
+      const doorKaart = doorOver;
+      if (doorOver != null) doorOver = Math.max(0, doorOver - e.klap.door * e.klap.treffers);
       for (let t = 0; t < e.klap.treffers; t++) {
         if (S.gevecht !== g || g.voorbij || v.dood || opgestaan()) break;
         const doelC = kiesAanvalDoel(v);
-        const kl = erfKlap(v, k.eindDmg, doelC, 0);
+        const kl = erfKlap(v, k.eindDmg, doelC, 0, doorKaart);
         /* één treffer = één HP-verlies: het onblokbare deel gaat mee in doeSchade (opts.door),
            zodat de Feniksveer en het Verlopen Contract de hele klap vangen (B3 F1) */
         doeSchade(doelC, kl.blokbaar, v, { door: kl.door });
@@ -11724,7 +11749,9 @@ function erfDevAankomst(held, st) {
    dek, relikwieën, upgrades, max-HP en dranken van de gekozen held en sterkte, op 85 % HP (na de
    rustplaats vóór de baas; met 150 HP en 3 dranken won elke build 16 op 16, D §2.5). sterkte en
    held komen uit het DEV-menu (devInst: erfdek, erfheld); 'run' = de held van je lopende run.
-   Overschrijft je run (nieuwSpel) en markeert hem als DEV-run (isDevRun: geen erfstuk). */
+   Overschrijft je run en markeert hem als DEV-run (isDevRun: geen erfstuk). Een verse run
+   (nieuwSpel) alleen als de held wisselt of er geen run is: anders loopt de toevalsgenerator van
+   je run door (een suite die eerst nieuwSpel(held, seed) doet, blijft reproduceerbaar). */
 function devErfprins(sterkte, held) {
   const d = devInst();
   const st = ERF_DEV.sterktes.includes(sterkte) ? sterkte : d.erfdek;
@@ -11733,7 +11760,7 @@ function devErfprins(sterkte, held) {
   if (!ERF_DEV.helden.includes(h)) h = 'slachter';
   if (inGevecht()) stopGevechtLus();
   const b = erfDevAankomst(h, st);
-  nieuwSpel(h);
+  if (!S || S.held !== h) nieuwSpel(h);
   S._devRun = true;   /* DEV-TAINT: een gesmede kaart uit deze sprong wordt nooit een erfstuk */
   S.gevecht = null; S.act = 2; S.fakkel = fakkelMax(); S.pos = null; S.ascensie = 0; S.daily = false; S.dagwet = null;
   delete S.beloning; delete S.winkel; delete S.huidigEvent;

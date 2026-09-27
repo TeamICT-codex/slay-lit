@@ -962,7 +962,9 @@ async function intents(browser) {
   const tak = game.slice(kop, staart);
   const takken = new Set([...tak.matchAll(/it\.type === '([a-z_]+)'/g)].map(m => m[1]));
   const soorten = new Set();
-  for (const m of bron.matchAll(/\{[^{}]*?\btype:\s*'([a-z_]+)'[^{}]*?\}/g)) {
+  /* B3 F1: één nestniveau toegestaan (doe: () => {} in het object): anders vielen { type: 'roof', …, doe: () => {} }
+     en { type: 'opstaan', … } buiten de lijst, en glipt een toekomstige zet met een lege doe ongemerkt door */
+  for (const m of bron.matchAll(/\{[^{}]*?\btype:\s*'([a-z_]+)'[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g)) {
     const blok = m[0];
     if (/\b(naam|dmg|blok|doe|kort|icoon)\s*:/.test(blok) && !/\bkost\s*:/.test(blok)) soorten.add(m[1]);
   }

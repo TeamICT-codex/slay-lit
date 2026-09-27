@@ -182,7 +182,10 @@ const HELPER = `(() => {
       tegelsUit: tegels.filter(t => t.l < -0.5 || t.t < -0.5 || t.r > W + 0.5 || t.b > H + 0.5).length,
       scrollOv: Math.max(ov.scrollHeight - ov.clientHeight, ov.scrollWidth - ov.clientWidth),
       vingerInKaart: (vinger && gekozen) ? (() => { const cx = (vinger.l + vinger.r) / 2, cy = (vinger.t + vinger.b) / 2; return cx >= gekozen.l && cx <= gekozen.r && cy >= gekozen.t && cy <= gekozen.b; })() : null,
-      vingerKop: snij(vinger, kop), hintWaaier: hint ? som([hint], tegels) : 0, fit: ov.dataset.fit || ''
+      vingerKop: snij(vinger, kop), hintWaaier: hint ? som([hint], tegels) : 0, fit: ov.dataset.fit || '',
+      /* B3 F1: geen kaartnaam die uit haar tegel steekt (geen breuk midden in een woord), en de HUD van de held zwijgt */
+      naamOver: [...ov.querySelectorAll('.rk-naam')].filter(e => e.scrollWidth > e.clientWidth + 1).map(e => e.textContent.trim()),
+      hudHeld: Math.max(0, ...[...document.querySelectorAll('#speler-zone .speler-hp, #speler-zone .blok-status')].map(e => +getComputedStyle(e).opacity))
     };
   }
   async function speel(wrap) {
@@ -239,15 +242,30 @@ const HELPER = `(() => {
     return { op, kop };
   }
   /* B0.13: een fasebanner (titel en ondertitel) op zijn silhouet en op dat van de held */
+  /* de tekstregels van een element (een regel is korter dan zijn blok) */
+  const regels = el => { const uit = []; const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) { const rg = document.createRange(); rg.selectNodeContents(n); for (const q of rg.getClientRects()) if (q.width > 0) uit.push({ l: q.left, t: q.top, r: q.right, b: q.bottom }); } return uit; };
   async function flits() {
     const g = S.gevecht; if (!g) return { geen: true };
     const W = innerWidth, H = innerHeight;
     const b = baasV(); const held = await figuur(g.speler), bf = b ? await figuur(b) : null;
     const fl = alle('.baas-flits h2, .baas-flits span');
+    /* B3 F1: de tekstregels van de banner tegen zijn pil (op zijn telefoon hangt die in dezelfde bovenband) */
+    const lijnen = [...document.querySelectorAll('.baas-flits h2, .baas-flits span')].filter(zicht).flatMap(regels);
+    const kol = b ? kolom(b) : null;
+    const pillen = kol ? [...kol.querySelectorAll('.intent')].filter(zicht).map(R) : [];
     return { n: fl.length, baas: pct(bf, fl), held: pct(held, fl), uit: fl.filter(r => r.l < -0.5 || r.r > W + 0.5 || r.t < -0.5 || r.b > H + 0.5).length,
-      titel: (document.querySelector('.baas-flits h2') || {}).textContent || '' };
+      titel: (document.querySelector('.baas-flits h2') || {}).textContent || '', pil: som(lijnen, pillen), pilTekst: pillen.length, fit: (document.querySelector('.baas-flits') || { dataset: {} }).dataset.fit || '' };
   }
-  window.__EA = { rust, roof, speel, speelRecorder, inv, vingerVolg, flits };
+  /* B3 F1: de toasts (#meldingen) tegen zijn HUD (bazenbalk, pil, Buit-pil), de hand en de held */
+  async function toasts() {
+    const g = S.gevecht; if (!g) return { geen: true };
+    const b = baasV(); const kol = b ? kolom(b) : null;
+    const t = alle('#meldingen .toast');
+    const hud = [een('#baas-balk'), een('#baas-balk .bb-aegis')].filter(Boolean).concat(kol ? [...kol.querySelectorAll('.intent')].filter(zicht).map(R) : []);
+    const held = await figuur(g.speler);
+    return { n: t.length, hud: som(t, hud), hand: som(t, alle('#hand .kaart')), held: pct(held, t), uit: t.filter(r => r.l < -0.5 || r.r > innerWidth + 0.5 || r.t < -0.5 || r.b > innerHeight + 0.5).length };
+  }
+  window.__EA = { rust, roof, speel, speelRecorder, inv, vingerVolg, flits, toasts };
 })();`;
 
 /* ---------- pagina openen en de Erfprins zetten ---------- */
@@ -430,7 +448,7 @@ async function regie(browser, fk, BANNERS) {
   fouten(page, t, vp, 'rust en Buit-pil');
   /* --- de Roof (B1.3): echte trekstapel, 6 en 22 kaarten; op Thomas' toestel en 3D ook in het donker --- */
   /* P B1.3: 6, 13 en 22 kaarten en de echte trekstapel; en op ELK formaat ook in het donker (fakkel 0, vier statussen op held en baas) */
-  const gevallen = [[0, 'geen', 'max'], [6, 'geen', 'max'], [13, 'geen', 'max'], [22, 'geen', 'max'], [0, 'vier', 0]];
+  const gevallen = [[0, 'geen', 'max'], [6, 'geen', 'max'], [13, 'geen', 'max'], [22, 'geen', 'max'], [0, 'vier', 0]].concat(vp.staand ? [] : [[35, 'geen', 'max']]);   /* B3 F1: 35 = een dek van 40 */
   for (const [N, st, f] of gevallen) {
     await startErf(page);
     if (st !== 'geen') await zetStatus(page, st);
@@ -455,6 +473,8 @@ async function regie(browser, fk, BANNERS) {
     t(m.tegelsUit === 0 && m.scrollOv <= 0, `B1.3 ${vp.naam} ${wat}: elke tegel in beeld (${m.tegelsUit} erbuiten), geen scroll (${m.scrollOv})`);
     t(zichtR == null || zichtR >= 0.9, `B1.3 ${vp.naam} ${wat}: hij staat in het gat, zijn lijf ${zichtR}x zo helder als in rust (>= 0,9)`);
     t(m.vingerInKaart === true && m.vingerKop === 0 && m.hintWaaier === 0, `B1.3 ${vp.naam} ${wat}: de vinger ÓP de gekozen kaart (${m.vingerInKaart}), niet op de kop (${m.vingerKop} px2), de tik-hint niet op de waaier (${m.hintWaaier})`);
+    t(m.naamOver.length === 0 && m.hudHeld <= 0.05, `B1.3 ${vp.naam} ${wat} (F1): geen kaartnaam steekt uit haar tegel (${JSON.stringify(m.naamOver)}), de levensbalk en chips van de held zwijgen onder het doek (opacity ${m.hudHeld})`);
+    if (laptop && N === 13) t(+((m.fit.match(/@(\d+)/) || [])[1] || 0) >= 120, `B1.3 ${vp.naam} (F1): het geopende dek is geen strookje meer, 13 kaarten op ${m.fit} (tegel >= 120 px)`);
     await page.evaluate(async () => { try { await window.__roof; } catch (e) { } });
     if (N !== 0) continue;
     const dk = f !== 'max' ? ' (fakkel 0, vier statussen)' : '';
@@ -473,11 +493,12 @@ async function regie(browser, fk, BANNERS) {
     t(it === 'buit', `W5 ${vp.naam}${dk}: na de Roof bekijkt hij eerst zijn buit (zet "${it}")`);
     t(bu.metPrins && bu.waaierBaas === 0 && bu.kopBaas === 0 && bu.tegelsUit === 0 && bu.scrollOv <= 0, `W5 ${vp.naam}${dk} buit-beat (${bu.kaartenN} kaarten, ${bu.fit}): waaier ${bu.waaierBaas} % en kop ${bu.kopBaas} % op zijn silhouet, ${bu.tegelsUit} tegels buiten beeld, scroll ${bu.scrollOv}`);
     t((zichtB == null || zichtB >= 0.9) && bu.vingerInKaart === true, `W5 ${vp.naam}${dk} buit-beat: hij in het gat (${zichtB}x), de vinger op zijn eerste kaart (${bu.vingerInKaart})`);
+    t(bu.naamOver.length === 0 && bu.hudHeld <= 0.05, `W5 ${vp.naam}${dk} buit-beat (F1): geen naam uit haar tegel (${JSON.stringify(bu.naamOver)}), de HUD van de held schijnt niet door de waaier (opacity ${bu.hudHeld})`);
     await page.evaluate(async () => { try { await window.__buit; } catch (e) { } });
     await slaap(300);
     /* --- de plagiaatkaart (B1.4): fase 2 (1 kaart) en fase 3 (2 kaarten) --- */
     /* fase 2 (1 kaart) en fase 3 (3 kaarten) uit zijn echte buit, plus de LANGSTE stempels: Zware Klap+ en Kolenstempel+
-       in fase 3 ("KOPIE · Junior — 10+16🩸", "… — 💪+1 🌵+1"), zodat de breedte niet van de worp afhangt */
+       in fase 3 ("KOPIE · Junior — 26 (16 door)", "… — 💪+1 🌵+1"), zodat de breedte niet van de worp afhangt */
     for (const [fase, lang] of [[2, false], [3, false], [3, true]]) {
       await page.evaluate(([fase, lang]) => { const g = S.gevecht; const v = g.vijanden[0]; g.roofBeurt = false; S.maxHp = Math.max(S.maxHp, 400); S.hp = S.maxHp; /* drie klappen na elkaar (in het donker, Kwetsbaar): de held mag niet sterven */ v.gestolen = (v.gestolen || []).filter(s => s.soort !== 'vloek'); v.fase = fase; v.copyKracht = ERF.toeslag[fase]; v.hp = Math.max(v.hp, 60); if (fase === 3) v.plagN = 1;
         if (lang) { v.plagN = 0; v.gestolen = ['zware_klap', 'kolenstempel'].map(id => { const c = nieuweKaart(id); c.up = true; return erfBuitKaart(c); }).concat(v.gestolen); }
@@ -502,9 +523,9 @@ async function regie(browser, fk, BANNERS) {
   if (!vp.staand) {
     await startErf(page);
     const std = await page.evaluate(() => { const u = UITSPRAKEN._erfprins; return {
-      'WOEDE': u.woede, 'DE ROOF': '🎭 22 van je 44 kaarten — allemaal uit je trekstapel — nu MÍJN werk. Je beurt is om.',
+      'WOEDE': u.woede, 'DE ROOF': '🎭 22 van je 44 kaarten uit je trekstapel — voor dit gevecht MÍJN werk. Je beurt is om.',
       'HET IS ALLEMAAL VAN MIJ': `${u.fase3} · vanaf zijn volgende zet ${erfPerBeurt(3)} kaarten per beurt, harder`,
-      'HET NOODRANTSOEN': `🗞️ Hij verscheurt ${ERF.rantsoenMax} van je kaarten en staat op met ${Math.min(ERF.hp, ERF.rantsoenMax * ERF.rantsoenPerKaart)} HP.`,
+      'HET NOODRANTSOEN': `Hij verscheurt ${ERF.rantsoenMax} kaarten uit zijn buit (je dek blijft heel) en staat op met ${Math.min(ERF.hp, ERF.rantsoenMax * ERF.rantsoenPerKaart)} HP.`,
       'NAROOF': '🎭 „Nog niet leeg?” — hij grist nóg 12 kaarten uit je trekstapel.', 'TWEE TEGELIJK': '„Twee tegelijk. Allebei van JOU.”', 'DRIE TEGELIJK': '„Drie tegelijk. Alle drie van JOU.”' }; });
     const lijstB = Object.keys(std).map(k => [k, (BANNERS && BANNERS[k]) || std[k]]);
     const uitB = [];
@@ -518,6 +539,29 @@ async function regie(browser, fk, BANNERS) {
       await wachtRust(page, 0, 6000);
     }
     t(uitB.every(([ti, s, b]) => b.n > 0 && b.titel === ti && b.baas <= 2 && b.held <= 2 && b.uit === 0), `B0.13 ${vp.naam}: zijn ${uitB.length} echte banners dekken de figuren niet (baas / held in %): ${uitB.map(([ti, s, b]) => `${ti} ${b.baas}/${b.held}${b.uit ? ' BUITEN BEELD' : ''}${b.titel !== ti ? ' NIET GEZIEN' : ''}`).join(' · ')} (<= 2)`);
+    t(uitB.every(([ti, s, b]) => b.pil === 0), `B0.13 ${vp.naam} (F1): geen tekstregel van een banner op zijn pil (px2): ${uitB.map(([ti, s, b]) => `${ti} ${b.pil}`).join(' · ')}`);
+    /* B3 F1: dezelfde banners tegen zijn BREEDSTE pil (fase 3, drie soorten, vijf statussen): het noodrantsoen en de
+       fase-3-banner vallen in JOUW beurt, net als je die pil moet lezen */
+    await zetStatus(page, 'vijf'); await page.evaluate(BREED, false); await slaap(vp.d3 ? 350 : 200);
+    if (vp.d3) await page.evaluate(() => { try { kaderFit3D(); } catch (e) { } });
+    const uitW = [];
+    for (const [titel, sub] of lijstB) {
+      await page.evaluate(([a, b]) => baasFaseMoment(a, b), [titel, sub]);
+      await page.waitForFunction(ti => [...document.querySelectorAll('.baas-flits')].some(e => +getComputedStyle(e).opacity > 0.9 && (e.querySelector('h2') || {}).textContent === ti), titel, { timeout: 2500, polling: 50 }).catch(() => { });
+      await slaap(150);
+      uitW.push([titel, await page.evaluate(() => __EA.flits())]);
+      if (titel === 'HET IS ALLEMAAL VAN MIJ') await shot(page, `${vp.naam}_banner_fase3_breedste_pil`);
+      await wachtRust(page, 0, 6000);
+    }
+    t(uitW.every(([ti, b]) => b.n > 0 && b.titel === ti && b.pil === 0 && b.baas <= 2 && b.held <= 2 && b.uit === 0),
+      `B0.13 ${vp.naam} (F1) met zijn breedste pil: tekstregels op zijn pil (px2) / baas / held (%): ${uitW.map(([ti, b]) => `${ti} ${b.pil}/${b.baas}/${b.held} [${b.fit}]`).join(' · ')}`);
+    /* B3 F1: de toasts in zijn baasgevecht: nooit op zijn bazenbalk, zijn pil of de Buit-pil; op de telefoon ook niet op de hand of de held */
+    await page.evaluate(() => { document.querySelectorAll('#meldingen .toast').forEach(x => x.remove()); melding('🪶 De Feniksveer verbrandt — je weigert te sterven!'); melding('↩️ Je herschikt wat je nog hebt.'); melding('🎭 Je trekstapel is te dun om nog te grissen — hij is uitgeput. Maak hem af.'); });
+    await slaap(450);
+    const ts = await page.evaluate(() => __EA.toasts());
+    await shot(page, `${vp.naam}_toasts`);
+    t(ts.n === 3 && ts.hud === 0 && ts.uit === 0 && (!vp.mobiel || (ts.hand === 0 && ts.held <= 2)), `toasts (F1) ${vp.naam}: ${ts.n} meldingen, op zijn bazenbalk/pil/Buit-pil ${ts.hud} px2${vp.mobiel ? `, op de hand ${ts.hand} px2, op de held ${ts.held} %` : ''}, buiten beeld ${ts.uit}`);
+    await page.evaluate(() => document.querySelectorAll('#meldingen .toast').forEach(x => x.remove()));
     fouten(page, t, vp, 'banners');
   }
   await ctx.close();
@@ -642,8 +686,9 @@ function installeerEerlijk() {
         continue;
       }
       if (V.type === 'roof') {
-        m = tip.match(/pakt hij (?:de helft van je dek: )?(\d+) kaart(?:en)?\b/);
+        m = tip.match(/pakt hij voor dit gevecht (?:de helft van je dek: )?(\d+) kaart(?:en)?\b/);
         if (m) V.roof = +m[1]; else if (!/te mager om te plunderen/.test(tip)) V.fout.push('roof-tip "' + tip.slice(0, 80) + '"');
+        if (!/^DE ROOF: raak je hem met een kaart, dan stopt je beurt meteen/.test(tip)) V.fout.push('roof-tip zonder de kern vooraan "' + tip.slice(0, 80) + '"');
         continue;
       }
       if (V.type === 'steel') {
@@ -660,39 +705,43 @@ function installeerEerlijk() {
         continue;
       }
       if (V.type !== 'plagiaat') { V.fout.push('onbekende zet ' + V.type + ' "' + t + '"'); continue; }
-      if ((m = t.match(/^(🎭|💢) (\d+)(?:\+(\d+)🩸)?(?:×(\d+))?$/)) && /intent-aanval/.test(cls)) {
-        const bl = +m[2], door = +m[3] || 0, T = +m[4] || 1, tot = (bl + door) * T, drift = m[1] === '💢';
+      /* B3 F1: "21 (13 door)" = 21 per treffer (×T), waarvan 13 dwars door je Blok (vroeger "8+13🩸") */
+      if ((m = t.match(/^(🎭|💢) (\d+)(?:×(\d+))?(?: \((\d+) door\))?$/)) && /intent-aanval/.test(cls)) {
+        const per = +m[2], T = +m[3] || 1, door = +m[4] || 0, tot = per * T, drift = m[1] === '💢';
         pip(drift ? 'drift' : 'klap');
         V.klap += tot;
         if (!tip.includes((drift ? 'driftbui voor ' : 'voor ') + tot + ' schade')) V.fout.push(`klap-tip "${tip.slice(0, 90)}" (pip ${t} = ${tot})`);
-        if (door && !tip.includes(`waarvan ${door * T} dwars door je Blok`)) V.fout.push(`door-tip "${tip.slice(0, 90)}" (pip ${t})`);
-        V.stempels.push(drift ? t : t.replace(/^🎭 /, ''));
+        if (door && !tip.includes(`waarvan ${door} dwars door je Blok`)) V.fout.push(`door-tip "${tip.slice(0, 90)}" (pip ${t})`);
+        if (/🩸/.test(t)) V.fout.push(`de bloeddruppel (= aangetast) in een klap-pip "${t}"`);
+        V.stempels.push('KOPIE · Junior — ' + (drift ? t : t.replace(/^🎭 /, '')));
         V.subs.push((drift ? 'Driftbui: ' : '') + tot + ' schade op jou');
       } else if ((m = t.match(/^🧪 (\d+)$/))) {
         pip('gif'); V.gif += +m[1];
         if (!tip.includes(`: ${m[1]} Gif op jou`)) V.fout.push('gif-tip "' + tip.slice(0, 80) + '"');
-        V.stempels.push(t); V.subs.push(`${m[1]} Gif op JOU`);
+        V.stempels.push('KOPIE · Junior — ' + t); V.subs.push(`${m[1]} Gif op JOU`);
       } else if ((m = t.match(/^🛡️ (\d+)(?: 🌵(\d+))?$/))) {
         pip('blok'); V.blok += +m[1]; V.doornen += +m[2] || 0;
         if (!tip.includes(`hij krijgt ${m[1]} Blok`) || (m[2] && !tip.includes(`en ${m[2]} Doornen`))) V.fout.push('blok-tip "' + tip.slice(0, 80) + '"');
-        V.stempels.push(t); V.subs.push(`${m[1]} Blok voor hém`);
+        V.stempels.push('KOPIE · Junior — ' + t); V.subs.push(`${m[1]} Blok voor hém`);
       } else if ((m = t.match(/^🥀 (\d+)$/))) {
         pip('zwak'); V.zwak += +m[1];
         if (!tip.includes(`: ${m[1]} Zwak op jou`)) V.fout.push('zwak-tip "' + tip.slice(0, 80) + '"');
-        V.stempels.push(t); V.subs.push(`${m[1]} Zwak op JOU`);
+        V.stempels.push('KOPIE · Junior — ' + t); V.subs.push(`${m[1]} Zwak op JOU`);
       } else if ((m = t.match(/^🌑 −(\d+)$/))) {
         pip('vloek'); V.bf += +m[1];
         if (!tip.includes(`bijt hém voor ${m[1]} en hij verslikt zich`)) V.fout.push('vloek-tip "' + tip.slice(0, 80) + '"');
+        /* B3 F1: ook de vloek komt groot in beeld, met haar eigen stempel */
+        V.stempels.push(`KOPIE MISLUKT — 🌑 −${m[1]} · hij verslikt zich`); V.subs.push('Een vloek laat zich niet kopiëren');
       } else if (/intent-buff/.test(cls) && (m = t.match(/^🎭 (?:💪\+(\d+))? ?(?:🌵\+(\d+))? ?(?:🧫\+(\d+))?$/)) && (m[1] || m[2] || m[3])) {
         pip('spiegel');
         const kr = +m[1] || 0, dr = +m[2] || 0, kl = +m[3] || 0;
         V.kracht += kr; V.doornen += dr; V.klieren += kl;
         if ((kr && !tip.includes(`+${kr} Kracht voor hém`)) || (dr && !tip.includes(`+${dr} Doornen voor hém`)) || (kl && !tip.includes(`jij krijgt ${kl} Gif aan het begin van elke beurt van hem`))) V.fout.push('spiegel-tip "' + tip.slice(0, 90) + '"');
-        V.stempels.push(t.replace(/^🎭 /, '')); V.subs.push('nu de zijne');
+        V.stempels.push('KOPIE · Junior — ' + t.replace(/^🎭 /, '')); V.subs.push('nu de zijne');
       } else if (/^🎭 /.test(t) && /intent-debuff/.test(cls)) {
         pip('niks');
         if (!/geen effect/.test(tip)) V.fout.push('niks-tip "' + tip.slice(0, 80) + '"');
-        V.stempels.push('niks'); V.subs.push('geen effect');
+        V.stempels.push('KOPIE · Junior — niks'); V.subs.push('geen effect');
       } else if (t === '🎭' && /buit is leeg/.test(tip)) {
         pip('leeg');
       } else V.fout.push('onbekende pip "' + t + '" (' + cls + ')');
@@ -726,7 +775,7 @@ function installeerEerlijk() {
         e.klierTik += m.klierTik;
         const verschil = VELDEN.filter(k => (V[k] || 0) !== (m[k] || 0));
         const meer = VELDEN.filter(k => (m[k] || 0) > (V[k] || 0));
-        const stOk = m.stempels.length <= V.stempels.length && m.stempels.every((s, i) => s === 'KOPIE · Junior — ' + V.stempels[i]);
+        const stOk = m.stempels.length <= V.stempels.length && m.stempels.every((s, i) => s === V.stempels[i]);
         const subOk = m.subs.every((s, i) => s.includes(V.subs[i] || '§'));
         e.stempelN += m.stempels.length;
         if (!stOk || !subOk) kort(e.stempelFout, `${waar()}: pil [${V.stempels.join(' | ')}] / stempel [${m.stempels.join(' | ')}]${subOk ? '' : ' / sub [' + m.subs.join(' | ') + ']'}`);
@@ -761,7 +810,7 @@ function installeerEerlijk() {
     const g = S.gevecht;
     if (M && n > 0) {
       if (doel && doel.isSpeler && isBaas(bron) && !inDS) { if (inPlag) { M.klap += n; tag(); } else M.eigen += n; }
-      if (isBaas(doel) && g && g._vloekGreep) { M.kaart++; tag(); M.bf += n; M.stikKaart = M.kaart; }
+      if (isBaas(doel) && g && g._vloekGreep) { M.bf += n; M.stikKaart = M.kaart; }   /* B3 F1: de vloek kwam al groot in beeld (copycatToonGespeeld telde haar) */
     }
     return oVH.apply(this, arguments);
   };
@@ -801,7 +850,7 @@ function installeerEerlijk() {
   window.copycatRoofCutscene = async function (g, v, wil, via) {
     const el = intentEl(v); const pil = el ? el.querySelector('.intent-roof') : null;
     const tip = pil ? (pil.dataset.tip || '') : '';
-    const m = tip.match(/pakt hij (?:de helft van je dek: )?(\d+) kaart(?:en)?\b/);
+    const m = tip.match(/pakt hij voor dit gevecht (?:de helft van je dek: )?(\d+) kaart(?:en)?\b/);
     const beloofd = m ? +m[1] : (/te mager om te plunderen/.test(tip) ? 0 : null);
     const trekU = (g.trek || []).map(c => c.uid), andersU = g.hand.concat(g.afleg, g.uitgeput || []).map(c => c.uid);
     _roof = { voor: (v.gestolen || []).length, via: !!via };
@@ -898,12 +947,13 @@ function installeerEerlijk() {
           if (+m[1] !== n) f(`noemt ${m[1]} kaarten, geroofd ${n}`);
           if (+m[2] !== S.dek.length) f(`noemt een dek van ${m[2]}, je dek telt ${S.dek.length}`);
           if (/Je beurt is om/.test(sub) === _roof.via) f('"Je beurt is om." klopt niet met hoe de Roof viel');
-          if (!/allemaal uit je trekstapel/.test(sub)) f('zegt niet "allemaal uit je trekstapel"');
+          if (!/uit je trekstapel — voor dit gevecht MÍJN werk/.test(sub)) f('zegt niet "uit je trekstapel — voor dit gevecht MÍJN werk"');
         } else if (!/Te mager/.test(sub)) f('onbekende ondertitel');
+        else if (/Je beurt is om/.test(sub) === _roof.via) f('te mager: "Je beurt is om." klopt niet met hoe de Roof viel');
       }
       if (titel === 'WOEDE' && _deRoofVia != null && /SLÁÁT/.test(sub) === _deRoofVia) f(_deRoofVia ? 'zegt "je SLÁÁT me" terwijl je niet sloeg' : 'de klap-regel ontbreekt terwijl je sloeg');
       if (titel === 'NAROOF' && _naroof) { m = String(sub).match(/grist nóg (\d+) kaart/); const n = (b.gestolen || []).length - _naroof.voor; if (!m || +m[1] !== n) f(`noemt ${m ? m[1] : '?'}, grist ${n}`); }
-      if (titel === 'HET NOODRANTSOEN' && _nrLaatst) { m = String(sub).match(/verscheurt (\d+) van je kaarten en staat op met (\d+) HP/); if (!m || +m[1] !== _nrLaatst.k || +m[2] !== _nrLaatst.hp) f(`verwacht ${_nrLaatst.k} kaarten en ${_nrLaatst.hp} HP`); }
+      if (titel === 'HET NOODRANTSOEN' && _nrLaatst) { m = String(sub).match(/verscheurt (\d+) kaarten? uit zijn buit \(je dek blijft heel\) en staat op met (\d+) HP/); if (!m || +m[1] !== _nrLaatst.k || +m[2] !== _nrLaatst.hp) f(`verwacht ${_nrLaatst.k} kaarten uit zijn buit en ${_nrLaatst.hp} HP`); }
       if (/TEGELIJK$/.test(titel) && M) { const n = M.kaart; const w = { 2: 'TWEE TEGELIJK', 3: 'DRIE TEGELIJK' }[n] || (n + ' TEGELIJK'); if (titel !== w) f(`hij speelde ${n} kaarten`); }
       if (titel === 'HET IS ALLEMAAL VAN MIJ') {
         if (!String(sub).includes(`vanaf zijn volgende zet ${erfPerBeurt(3)} kaarten per beurt`)) f('noemt niet wat ERF.plan[3] zegt');
@@ -1133,9 +1183,37 @@ async function tekst(browser) {
   });
   t(/inventaris/.test(intro[1].intro) && !/inventaris/.test(intro[2].intro) && /erfprins/.test(intro[2].intro) && !/inventaris/.test(intro[3].intro) && intro[1].teller === 1 && intro[2].teller === 2,
     `de Inventaris-intro alleen bij de eerste ontmoeting, daarna de snelle speelkaart (1e "${intro[1].intro}", 2e "${intro[2].intro}", 3e "${intro[3].intro}")`);
-  /* --- devErfprins realistisch (W13) --- */
-  const dev = await page.evaluate(() => { nieuwSpel('slachter', 'ERF-ACC-DEV'); devErfprins(); return { hp: S.hp, max: S.maxHp, dranken: S.dranken.slice(), dek: S.dek.length }; });
-  t(dev.hp === Math.round(dev.max * 0.85) && dev.dranken.length === 1 && dev.dranken[0] === 'heeldrank' && dev.dek >= 18, `W13 devErfprins realistisch: ${dev.hp}/${dev.max} HP (85 %), dranken [${dev.dranken}], dek ${dev.dek} (>= 18, zoals de melding belooft)`);
+  /* --- W13 (B3 F1): de DEV-sprong laadt D's Act 2-aankomst uit de ijking (ERF_DEV = D_BUILDS/TAFEL/tafelBuild
+     van het meetharnas), per held en sterkte, op 85 % HP; de melding zegt welk dek je krijgt --- */
+  const HM = require(path.join(__dirname, 'baas-meting', 'erfprins_meting.js'));
+  const dev = await page.evaluate(() => {
+    const uit = [];
+    for (const h of ERF_DEV.helden) for (const st of ERF_DEV.sterktes) {
+      nieuwSpel(h, 'ERF-ACC-DEV-' + h + '-' + st); S.metgezel = null;
+      const oM = window.melding; let mel = ''; window.melding = x => { if (/^⚡ DEV/.test(x)) mel = x; return oM(x); };
+      try { devErfprins(st, h); } finally { window.melding = oM; }
+      document.querySelectorAll('#baas-intro').forEach(n => n.remove());
+      const b = erfDevAankomst(h, st);
+      uit.push({ h, st, b, S: { held: S.held, hp: S.hp, max: S.maxHp, rel: S.relikwieen.slice(), dr: S.dranken.slice(), dek: S.dek.map(c => [c.id, c.up ? 1 : 0]), dev: !!S._devRun, erf: !!(S.gevecht && S.gevecht.vijanden.some(v => v.id === 'de_erfprins')), solo: !(S.gevecht && S.gevecht.metgezel) }, mel });
+    }
+    /* de standaard (het DEV-menu zonder keuze): het gemiddelde dek van je held */
+    nieuwSpel('gifmagier', 'ERF-ACC-DEV-STD'); devErfprins(); document.querySelectorAll('#baas-intro').forEach(n => n.remove());
+    return { uit, std: { held: S.held, max: S.maxHp, dek: S.dek.length, keuze: devInst().erfdek + '/' + devInst().erfheld } };
+  });
+  const devFout = [];
+  for (const x of dev.uit) {
+    const exp = JSON.parse(JSON.stringify(HM.tafelBuild(x.h, x.st))); delete exp.uitkomst;
+    const sorteer = o => JSON.stringify(Object.keys(o).sort().map(k => [k, o[k]]));
+    if (sorteer(exp) !== sorteer(x.b)) devFout.push(`${x.h}/${x.st}: ERF_DEV wijkt af van tafelBuild in het harnas`);
+    const dekExp = x.b.dek.map(([id, up]) => [id, up ? 1 : 0]).concat(x.b.gesmeed ? [['gesmeed_run_900', 0]] : []).concat(Array.from({ length: x.b.laster || 0 }, () => ['laster', 0]));
+    if (JSON.stringify(x.S.dek) !== JSON.stringify(dekExp)) devFout.push(`${x.h}/${x.st}: het dek in de run is niet de aankomst`);
+    if (x.S.held !== x.h || x.S.max !== x.b.hp || x.S.hp !== Math.round(x.b.hp * 0.85) || JSON.stringify(x.S.rel) !== JSON.stringify(x.b.relikwieen) || JSON.stringify(x.S.dr) !== JSON.stringify(x.b.dranken)) devFout.push(`${x.h}/${x.st}: held/HP/relikwieën/dranken (${x.S.held} ${x.S.hp}/${x.S.max})`);
+    if (!x.S.dev || !x.S.erf || !x.S.solo) devFout.push(`${x.h}/${x.st}: geen DEV-run, geen Erfprins of niet solo`);
+    const naam = { slachter: 'De Slachter', gifmagier: 'De Gifmagiër', thoverk: 'De Kolendruïde' }[x.h];
+    if (!(x.mel.includes(`${naam} · ${x.st}`) && x.mel.includes(`${x.S.hp}/${x.S.max} HP (85 %)`) && x.mel.includes(`${x.S.dek.length} kaarten`) && /D's Act 2-aankomst uit de ijking/.test(x.mel))) devFout.push(`${x.h}/${x.st}: de melding "${x.mel.slice(0, 90)}"`);
+  }
+  t(dev.uit.length === 12 && devFout.length === 0, `W13 (F1) devErfprins = D's aankomst uit de ijking, 3 helden x 4 sterktes: dek, upgrades, relikwieën, max-HP en dranken = tafelBuild van het harnas, op 85 % HP, solo, DEV-run, en de melding zegt welk dek` + (devFout.length ? ' — ' + devFout.slice(0, 3).join(' | ') : ''));
+  t(dev.std.keuze === 'gemiddeld/run' && dev.std.held === 'gifmagier' && dev.std.max === HM.tafelBuild('gifmagier', 'gemiddeld').hp, `W13 (F1) de standaard van het DEV-menu: het gemiddelde dek van de held van je run (${dev.std.keuze}: ${dev.std.held}, ${dev.std.max} max-HP, ${dev.std.dek} kaarten)`);
   /* --- B1.7: orakel en nudge --- */
   const b17 = await page.evaluate(async () => {
     const u = UITSPRAKEN._erfprins;
@@ -1197,7 +1275,7 @@ async function catalogusInPagina(arg) {
   window.copycatToonGespeeld = async function () { const w = await oT.apply(this, arguments); if (w && w.querySelector) stempels.push({ stempel: (w.querySelector('.rs-stempel') || {}).textContent || '', sub: (w.querySelector('.rs-sub') || {}).textContent || '', kop: (w.querySelector('.rs-kop') || {}).textContent || '' }); return w; };
   let naRoof = null;
   window.copycatRoofCutscene = async function (g, v) { const r = await oCut.apply(this, arguments); naRoof = { hand: g.hand.map(c => c.uid), afleg: g.afleg.map(c => c.uid), trek: g.trek.map(c => c.uid), buit: (v.gestolen || []).map(s => s.uid) }; return r; };
-  const leeg = () => { banners.length = 0; meldingen.length = 0; fx.length = 0; spraak.length = 0; stempels.length = 0; };
+  const leeg = () => { banners.length = 0; meldingen.length = 0; fx.length = 0; spraak.length = 0; stempels.length = 0; document.querySelectorAll('.erf-retour').forEach(n => n.remove()); };
   const mob0 = window.mobiel;
   const vers = async (held, seed) => {
     if (S && S.gevecht) { try { S.gevecht.voorbij = true; stopGevechtLus(); } catch (e) { } }
@@ -1224,7 +1302,8 @@ async function catalogusInPagina(arg) {
     if ((v.status.zwak || 0) > 0) per = Math.floor(per * 0.75);
     if ((sp().status.kwetsbaar || 0) > 0) per = Math.floor(per * 1.5);
     const door = Math.min(per, Math.round(per * ERF.onblokbaar)), bl = per - door, g1 = glasDmg(bl), g2 = glasDmg(door);
-    return { label: (door ? `${g1}+${g2}🩸` : `${g1 + g2}`) + (TR > 1 ? `×${TR}` : ''), totaal: (g1 + g2) * TR, door: g2 * TR };
+    const kern = `${g1 + g2}` + (TR > 1 ? `×${TR}` : '');
+    return { label: door ? `${kern} (${g2 * TR} door)` : kern, totaal: (g1 + g2) * TR, door: g2 * TR };
   };
   const deel = (n, f) => (n > 0 && f > 0) ? Math.max(1, Math.round(n * f)) : 0;
   try {
@@ -1238,8 +1317,9 @@ async function catalogusInPagina(arg) {
       window.mobiel = true; const tekstM = tekstVan(intentTekst(v)); window.mobiel = mob0;
       cat('pil vóór de Roof (laptop · mobiel)', tekstL + ' · ' + tekstM);
       cat('pil vóór de Roof, tip', tip);
-      const N = +((tip.match(/pakt hij (?:de helft van je dek: )?(\d+) kaart(?:en)?\b/) || [])[1]);
+      const N = +((tip.match(/pakt hij voor dit gevecht (?:de helft van je dek: )?(\d+) kaart(?:en)?\b/) || [])[1]);
       const dek = S.dek.length, trekU = g.trek.map(c => c.uid), speelU = [slag.uid];
+      t(/^DE ROOF: raak je hem met een kaart, dan stopt je beurt meteen en pakt hij voor dit gevecht /.test(tip), `ROOF-tip (F1): de kern in één zin vooraan, met "voor dit gevecht" ("${tip.slice(0, 100)}…")`);
       const verwachtN = Math.max(0, Math.min(g.trek.length - ERF.roofRest, Math.round(dek * ERF.roofDeel)));
       t(tekstL === '🎭 ROOF bij je 1e klap' && tekstM === '🎭 ROOF', `ROOF-pil: "${tekstL}" (laptop) en "${tekstM}" (mobiel)`);
       t(N === verwachtN && ERF.roofDeel === 0.5 && /de helft van je dek/.test(tip), `ROOF-tip "de helft van je dek: ${N} kaarten": round(je dek ${dek} × ERF.roofDeel ${ERF.roofDeel}), met altijd ${ERF.roofRest} over (${verwachtN})`);
@@ -1254,25 +1334,50 @@ async function catalogusInPagina(arg) {
       cat('banner WOEDE (je sloeg)', woede ? woede[1] : '-');
       cat('banner DE ROOF (je sloeg)', roof ? roof[1] : '-');
       t(woede && woede[1] === u.woede, `WOEDE na je klap: "${woede && woede[1]}"`);
-      t(roof && roof[1] === `🎭 ${N} van je ${dek} kaarten — allemaal uit je trekstapel — nu MÍJN werk. Je beurt is om.`, `DE ROOF: "${roof && roof[1]}" (${N} geroofd, je dek telt ${dek})`);
-      const kop = document.querySelector('.roof-overlay .roof-kop');
-      cat('het Roof-doek, kop', '🎭 DE ERFPRINS OPENT JE DEK · ' + u.roof);
+      t(roof && roof[1] === `🎭 ${N} van je ${dek} kaarten uit je trekstapel — voor dit gevecht MÍJN werk. Je beurt is om.`, `DE ROOF: "${roof && roof[1]}" (${N} geroofd, je dek telt ${dek}; voor dit gevecht)`);
+      cat('het Roof-doek, kop', 'DE ERFPRINS OPENT JE DEK · ' + u.roof);
     }
     /* ---------- B · DE ROOF zonder klap (het vangnet op het einde van je beurt) ---------- */
     {
       const { g, v } = await vers('gifmagier', 'ERF-ACC-CAT-B');
       const tip = intentEl(v).querySelector('.intent-roof').dataset.tip;
-      const N = +((tip.match(/pakt hij (?:de helft van je dek: )?(\d+) kaart(?:en)?\b/) || [])[1]), dek = S.dek.length, trekU = g.trek.map(c => c.uid), handU = g.hand.map(c => c.uid), hp0 = S.hp;
+      const N = +((tip.match(/pakt hij voor dit gevecht (?:de helft van je dek: )?(\d+) kaart(?:en)?\b/) || [])[1]), dek = S.dek.length, trekU = g.trek.map(c => c.uid), handU = g.hand.map(c => c.uid), hp0 = S.hp;
       naRoof = null;
       await eindBeurt(); await vrij(g);
       const nb = naRoof || { buit: [] };
-      t(/Val je niet aan, dan rooft hij op het einde van je beurt/.test(tip) && nb.buit.length === N && nb.buit.every(x => trekU.includes(x)) && !nb.buit.some(x => handU.includes(x)), `ROOF-tip "val je niet aan, dan rooft hij op het einde van je beurt": ${nb.buit.length}/${N} kaarten, allemaal uit je trekstapel, niets uit je hand`);
+      t(/Sla je hem niet, dan rooft hij op het einde van je beurt/.test(tip) && nb.buit.length === N && nb.buit.every(x => trekU.includes(x)) && !nb.buit.some(x => handU.includes(x)), `ROOF-tip "val je niet aan, dan rooft hij op het einde van je beurt": ${nb.buit.length}/${N} kaarten, allemaal uit je trekstapel, niets uit je hand`);
       const woede = banners.find(b => b[0] === 'WOEDE'), roof = banners.find(b => b[0] === 'DE ROOF');
       cat('banner WOEDE (je sloeg niet)', woede ? woede[1] : '-');
       cat('banner DE ROOF (je sloeg niet)', roof ? roof[1] : '-');
       t(woede && woede[1] === u.woedeNiet && !/SLÁÁT/.test(woede[1]), `WOEDE zonder klap zegt niet "je SLÁÁT me": "${woede && woede[1]}"`);
-      t(roof && roof[1] === `🎭 ${N} van je ${dek} kaarten — allemaal uit je trekstapel — nu MÍJN werk.`, `DE ROOF zonder klap, zonder "Je beurt is om.": "${roof && roof[1]}"`);
+      t(roof && roof[1] === `🎭 ${N} van je ${dek} kaarten uit je trekstapel — voor dit gevecht MÍJN werk.`, `DE ROOF zonder klap, zonder "Je beurt is om.": "${roof && roof[1]}"`);
       t(S.hp === hp0 && v.intent && v.intent.type === 'plagiaat', `zonder klap: Roof en buit-beat in dezelfde beurt, geen schade (HP ${hp0} -> ${S.hp}), daarna "${v.intent && v.intent.type}"`);
+    }
+    /* ---------- B2 · (F1) een DRANK raakt hem: geen Roof (de pil zegt 'met een kaart'), en op het einde van je beurt noemt hij je geen lafaard ---------- */
+    {
+      const { g, v } = await vers('slachter', 'ERF-ACC-CAT-B2');
+      const tip = intentEl(v).querySelector('.intent-roof').dataset.tip;
+      S.dranken = ['vuurfles']; const vhp = v.hp;
+      gebruikDrank(0); await vrij(g);
+      const naDrank = { roof: !!g.roofGedaan, hp: vhp - v.hp };
+      await eindBeurt(); await vrij(g);
+      const woede = banners.find(b => b[0] === 'WOEDE');
+      cat('banner WOEDE (een drank raakte hem)', woede ? woede[1] : '-');
+      t(/raak je hem met een kaart/.test(tip) && !naDrank.roof && naDrank.hp === 20 && woede && woede[1] === u.woede && woede[1] !== u.woedeNiet, `drank (F1): de Vuurfles doet ${naDrank.hp} en ontketent geen Roof (de pil zegt "met een kaart"); op het einde van je beurt: "${woede && woede[1]}" (niet "Lafaard")`);
+    }
+    /* ---------- B3 · (F1) TE MAGER: de pil zegt dat je beurt stopt, en de banner ook ---------- */
+    {
+      const { g, v } = await vers('thoverk', 'ERF-ACC-CAT-B3');
+      g.trek = g.trek.slice(0, 2); renderGevecht();
+      const tip = intentEl(v).querySelector('.intent-roof').dataset.tip;
+      cat('pil vóór de Roof, tip (te mager)', tip);
+      const slag = nieuweKaart('takkenslag'); g.hand.push(slag); g.energie = Math.max(g.energie, 3); renderGevecht();
+      const beurt = g.beurt;
+      await speelKaart(slag, v); await wachtTot(() => g.beurt > beurt || g.voorbij, 8000); await vrij(g);
+      const roof = banners.find(b => b[0] === 'DE ROOF');
+      cat('banner DE ROOF (te mager)', roof ? roof[1] : '-');
+      t(/te mager om te plunderen/.test(tip) && /je beurt stopt meteen/.test(tip) && roof && roof[1] === '🎭 „Te mager om te plunderen… voor nu.” Je beurt is om.' && g.beurt === beurt + 1 && (v.gestolen || []).length === 0,
+        `te mager (F1): de tip zegt "je beurt stopt meteen", de banner "Je beurt is om." (${roof && roof[1]}), en je beurt stopte (${beurt} -> ${g.beurt}), niets geroofd`);
     }
     /* ---------- C · ELKE SOORT: pip, tip, stempel, ondertitel, uitvoering en retour ---------- */
     {
@@ -1319,15 +1424,19 @@ async function catalogusInPagina(arg) {
           const ok = dhp === (exp.hp || 0) && dgif === (exp.gif || 0) && dzw === (exp.zwak || 0) && dbl === (exp.blok || 0) && dkr === (exp.kr || 0) && ddr === ((exp.dr || 0)) && dkl === (exp.kl || 0);
           t(ok, `${wie}: wat landt = de pil (HP −${dhp}, Gif +${dgif}, Zwak +${dzw}; bij hem Blok ${dbl}, Kracht +${dkr}, Doornen +${ddr}, Gifklieren +${dkl})`);
           const terug = g.afleg[g.afleg.length - 1], gewoon = nieuweKaart(id);
-          const retour = meldingen.find(m => /aangetast in je aflegstapel/.test(m));
-          if (fase === 2 && !statussen && soort === 'klap') cat('melding bij de retour', retour || '-');
-          t(g.afleg.length === afl0 + 1 && terug && terug.id === id && terug.aangetast && terug.uitputtend && kkost(terug) === kkost(gewoon) + 1 && retour === `🩸 Je ${naam} valt aangetast in je aflegstapel — +1 ⚡, eenmalig.`, `${wie}: "${retour}" — de kaart ligt aangetast in je aflegstapel, kost ${kkost(terug)} (${kkost(gewoon)} + 1), eenmalig`);
+          /* B3 F1: geen toast per kaart meer (die lag op de telefoon over zijn hart en zijn pil), maar één regel per beurt boven je aflegstapel */
+          const retourEl = document.querySelector('.erf-retour'), retour = retourEl ? retourEl.textContent : '';
+          const toast = meldingen.find(m => /aangetast/.test(m));
+          if (fase === 2 && !statussen && soort === 'klap') cat('de retourregel (één per beurt)', retour || '-');
+          t(g.afleg.length === afl0 + 1 && terug && terug.id === id && terug.aangetast && terug.uitputtend && kkost(terug) === kkost(gewoon) + 1 && retour === `🩸 ${naam} aangetast terug in je aflegstapel — kost 1 ⚡ meer, eenmalig.` && !toast, `${wie}: "${retour}" (geen toast) — de kaart ligt aangetast in je aflegstapel, kost ${kkost(terug)} (${kkost(gewoon)} + 1), eenmalig`);
           if (soort === 'klap' && !aangetastKaart) aangetastKaart = terug;
         } else {
-          const beet = fx.find(x => /bijt hém!/.test(x)), mel = meldingen.find(m => /een vloek laat zich niet kopiëren/.test(m));
-          if (fase === 2 && !statussen) { cat('vloek: fx', beet || '-'); cat('vloek: melding', mel || '-'); }
-          t(vhp0 - v.hp === exp.bf && beet === `🌑 jouw ${naam} bijt hém! −${exp.bf}` && fx.includes('🤢 verslikt zich') && mel === `🌑 Hij speelt je ${naam} — een vloek laat zich niet kopiëren. Ze bijt hém.` && g.afleg.length === afl0 && S.hp === hp0,
-            `${wie}: hij verliest ${vhp0 - v.hp} HP (pil ${exp.bf}), verslikt zich, en de vloek komt niet terug (aflegstapel ${afl0} -> ${g.afleg.length})`);
+          /* B3 F1: de vloek die bijt, Thomas' eigen tegenzet, groot in beeld met haar eigen stempel; één getal (de −N van zijn HP), geen melding */
+          if (fase === 2 && !statussen) { cat('vloek: de grote kaart, kop', st ? st.kop : '-'); cat('vloek: stempel', st ? st.stempel : '-'); cat('vloek: ondertitel', st ? st.sub : '-'); }
+          const tweede = fx.filter(x => /bijt hém!/.test(x)).length, mel = meldingen.filter(m => /vloek/i.test(m)).length;
+          t(vhp0 - v.hp === exp.bf && st && st.stempel.trim() === `KOPIE MISLUKT — 🌑 −${exp.bf} · hij verslikt zich` && /HIJ GRIJPT JOUW VLOEK/.test(st.kop) && /Een vloek laat zich niet kopiëren/.test(st.sub)
+            && fx.includes('🤢 verslikt zich') && fx.includes('-' + exp.bf) && tweede === 0 && mel === 0 && g.afleg.length === afl0 && S.hp === hp0,
+            `${wie}: groot in beeld "${st && st.stempel.trim()}", hij verliest ${vhp0 - v.hp} HP (pil ${exp.bf}; één getal, ${tweede} extra, ${mel} meldingen), verslikt zich, en de vloek komt niet terug (aflegstapel ${afl0} -> ${g.afleg.length})`);
         }
       }
       /* de vloek eerst en de rest valt weg (vervalt), en de banner telt wat hij echt speelde */
@@ -1345,6 +1454,8 @@ async function catalogusInPagina(arg) {
             `vloek eerst: "${ps.map(p => p.t).join(' ')}" — de tweede kaart valt weg en blijft in zijn buit, geen schade (pil ${verwacht}), geen "TEGELIJK"-banner (${tb.join(',') || 'geen'})`);
         } else {
           t(ps.length === ids.length && tb.length === 1 && tb[0] === titel && hp0 - S.hp === verwacht, `plan van ${ids.length} (fase ${fase}): pil "${ps.map(p => p.t).join(' ')}" = ${verwacht} schade, landt ${hp0 - S.hp}; banner ${tb.join(',') || 'geen'} (${titel})`);
+          const rr = [...document.querySelectorAll('.erf-retour')].map(e => e.textContent);
+          t(rr.length === 1 && rr[0] === `🩸 ${ids.length} kaarten aangetast terug in je aflegstapel — kost 1 ⚡ meer, eenmalig.` && !meldingen.some(m => /aangetast/.test(m)), `retour (F1): ${ids.length} kaarten in één beurt = één regel ("${rr.join(' | ')}"), geen toast`);
           if (titel) cat(`banner ${titel}`, (banners.find(b => b[0] === titel) || [0, '-'])[1]);
         }
       }
@@ -1410,7 +1521,8 @@ async function catalogusInPagina(arg) {
       const nrB = banners.find(b => b[0] === 'HET NOODRANTSOEN');
       cat('banner HET NOODRANTSOEN', nrB ? nrB[1] : '-');
       cat('fx bij het verscheuren', fx.filter(x => /verscheurd/.test(x)).join(' · '));
-      t(nrB && nrB[1] === `🗞️ Hij verscheurt ${weg2.length} van je kaarten en staat op met ${hpN} HP.` && weg2.every(s => fx.includes(`🗞️ „${erfNaam(s)}” verscheurd · +${ERF.rantsoenPerKaart}`)), `HET NOODRANTSOEN: "${nrB && nrB[1]}", per kaart "🗞️ „…” verscheurd · +${ERF.rantsoenPerKaart}"`);
+      t(nrB && nrB[1] === `Hij verscheurt ${weg2.length} kaart${weg2.length === 1 ? '' : 'en'} uit zijn buit (je dek blijft heel) en staat op met ${hpN} HP.` && weg2.every(s => fx.includes(`„${erfNaam(s)}” verscheurd · +${ERF.rantsoenPerKaart}`)) && !fx.some(x => /🗞️/.test(x)),
+        `HET NOODRANTSOEN (F1): "${nrB && nrB[1]}" (uit zijn buit, je dek blijft heel), per kaart "„…” verscheurd · +${ERF.rantsoenPerKaart}" met een scheur i.p.v. een krant`);
       renderGevecht();
       const tipNa = aeg().dataset.tip || '';
       cat('Buit-pil na het opstaan, tip (slot)', tipNa.split('. ').slice(-1)[0]);
@@ -1427,9 +1539,32 @@ async function catalogusInPagina(arg) {
         try { const r = v2.intent.doe(v2); if (r && r.then) await r; } finally { g2.vijandAanZet = false; }
         const opTekst = tekstVan(intentTekst(v2)), opTip = (() => { const d = document.createElement('div'); d.innerHTML = intentTekst(v2); const s = d.querySelector('.intent'); return s ? s.dataset.tip : ''; })();
         cat('pil na het opstaan in zijn beurt', opTekst + ' — ' + opTip);
-        t(v2.plagiaat && !v2.dood && v2.intent.type === 'opstaan' && plan2.length === 2 && v2.gestolen.some(s => s.uid === plan2[1].uid) && stempels.length === 1 && fx.includes('🗞️ opstaan was zijn zet') && opTekst === '🗞️ opgestaan' && /dat was zijn zet: deze beurt doet hij niets meer/.test(opTip),
-          `noodrantsoen in zijn beurt (jouw Doornen vellen hem op zijn eerste kaart): "${opTekst}", zijn tweede kaart speelt hij niet (${stempels.length} grote kaart), "🗞️ opstaan was zijn zet"`);
+        t(v2.plagiaat && !v2.dood && v2.intent.type === 'opstaan' && plan2.length === 2 && v2.gestolen.some(s => s.uid === plan2[1].uid) && stempels.length === 1 && fx.includes('opstaan was zijn zet') && opTekst === '♥ opgestaan' && /dat was zijn zet: deze beurt doet hij niets meer/.test(opTip),
+          `noodrantsoen in zijn beurt (jouw Doornen vellen hem op zijn eerste kaart): "${opTekst}", zijn tweede kaart speelt hij niet (${stempels.length} grote kaart), "opstaan was zijn zet"`);
         g2.speler.status = {};
+      }
+      /* (F1) het noodrantsoen door zijn gif-tik in zijn eigen beurt: de wis laat geen NaN achter */
+      { const r4 = await vers('gifmagier', 'ERF-ACC-CAT-D4'); const g4 = r4.g, v4 = r4.v;
+        g4.roofGedaan = true; g4.roofBeurt = false; v4.fase = 2; v4.copyKracht = ERF.toeslag[2]; v4.plagN = 0;
+        v4.gestolen = ['zware_klap', 'slag', 'slag', 'verdediging', 'knal', 'dubbelslag'].map(id => erfBuitKaart(nieuweKaart(id)));
+        v4.intent = VIJANDEN[v4.id].kies(v4, 3); v4.hp = 3; v4.status = { gif: 12 }; renderGevecht();
+        await eindBeurt(); await vrij(g4);
+        t(v4.plagiaat && !v4.dood && Number.isFinite(v4.status.gif) && !Object.values(v4.status).some(x => typeof x === 'number' && isNaN(x)), `noodrantsoen door de gif-tik in zijn beurt (F1): hij staat op, zijn Gif is ${v4.status.gif} (een getal, geen NaN) — ${JSON.stringify(v4.status)}`);
+      }
+      /* (F1) één klap van hem = één HP-verlies: de Feniksveer en het Verlopen Contract vangen ook een klap met een onblokbaar deel */
+      for (const rel of ['feniksveer', 'verlopen_contract']) {
+        const r5 = await vers('slachter', 'ERF-ACC-CAT-D5-' + rel); const g5 = r5.g, v5 = r5.v;
+        g5.roofGedaan = true; g5.roofBeurt = false; v5.fase = 3; v5.copyKracht = ERF.toeslag[3]; v5.plagN = 0; v5.status = {};
+        v5.gestolen = [erfBuitKaart(Object.assign(nieuweKaart('zware_klap'), { up: true }))];
+        v5.intent = VIJANDEN[v5.id].kies(v5, 3); renderGevecht();
+        const pip = (pips(v5)[0] || {}).t || '';
+        S.relikwieen = S.relikwieen.filter(r => r !== 'feniksveer' && r !== 'verlopen_contract').concat([rel]); S.contractGebruikt = false;
+        S.hp = 5; g5.speler.blok = 0; g5.speler.status = {};
+        leeg(); g5.vijandAanZet = true;
+        try { const r = v5.intent.doe(v5); if (r && r.then) await r; } finally { g5.vijandAanZet = false; }
+        const levend = S.hp === 1 && !g5._verloren && !g5.voorbij;
+        const op = rel === 'feniksveer' ? !heeftRelikwie('feniksveer') : !!S.contractGebruikt;
+        t(/\(\d+ door\)/.test(pip) && levend && op, `${rel} op 5 HP tegen "${pip}" (F1, sonde B7): ${levend ? 'je leeft op 1 HP' : 'je STIERF (HP ' + S.hp + ')'}, ${rel === 'feniksveer' ? 'de veer is verbrand' : 'het contract is gebruikt'} (${op})`);
       }
       /* vloeken tellen niet: geen schoon werk naast zijn plan = geen tweede leven */
       { const r3 = await vers('slachter', 'ERF-ACC-CAT-D3'); const g3 = r3.g, v3 = r3.v;
@@ -1493,7 +1628,7 @@ async function catalogusInPagina(arg) {
     {
       const b = (typeof BESTIARIUM !== 'undefined' && BESTIARIUM.de_erfprins) || {};
       cat('Bestiarium, lore', b.lore); cat('Bestiarium, notitie', b.notitie);
-      t(/halve dek/.test(b.lore) && /de helft van je dek/.test(b.notitie) && ERF.roofDeel === 0.5 && /Je eerste klap sluit je beurt/.test(b.notitie), 'Bestiarium: "je halve dek" / "je eerste klap sluit je beurt en kost je de helft van je dek" (ERF.roofDeel 0,5)');
+      t(/halve dek/.test(b.lore) && /de helft van je dek/.test(b.notitie) && ERF.roofDeel === 0.5 && /Je eerste klap sluit je beurt en kost je voor dit gevecht de helft van je dek/.test(b.notitie), 'Bestiarium: "je halve dek" / "je eerste klap sluit je beurt en kost je voor dit gevecht de helft van je dek" (ERF.roofDeel 0,5; F1: voor dit gevecht)');
       t(/jouw Kracht en Doornen worden de zijne/.test(b.notitie) && ERF.spiegel.kracht > 0 && ERF.spiegel.doornen > 0 && /Een vloek laat zich niet kopiëren/.test(b.notitie) && erfBuitKaart(nieuweKaart('laster')).soort === 'vloek' && /staat hij één keer op/.test(b.notitie),
         'Bestiarium: het Spiegelrecht (Kracht en Doornen), de vloek en "één keer op" kloppen met ERF en de code');
       const { g, v } = await vers('slachter', 'ERF-ACC-CAT-G');
@@ -1501,25 +1636,21 @@ async function catalogusInPagina(arg) {
       cat('fakkeltip', ft.tip || '-');
       S.fakkel = 0; const donker = tekstVan(intentTekst(v)); S.fakkel = fakkelMax();
       t(/een baas telegrafeert altijd/.test(ft.tip || '') && !/❓/.test(donker) && lichtNiveau() !== 'gedoofd', `fakkeltip "een baas telegrafeert altijd": bij fakkel 0 blijft zijn pil "${donker}"`);
-      const devItem = DEV_MENU.flatMap(s => s.items || []).find(i => i.label === '🤴 Erfprins');
-      const res = [];
-      for (const extra of [0, 6, 7]) {
-        nieuwSpel('slachter', 'ERF-ACC-DEV-' + extra);
-        for (let i = 0; i < extra; i++) S.dek.push(nieuweKaart('slag'));
-        const voor = S.dek.length; meldingen.length = 0; devErfprins();
-        res.push({ voor, na: S.dek.length, hp: S.hp, max: S.maxHp, dranken: S.dranken.slice(), mel: meldingen.find(m => /DEV: meteen tegen de Erfprins/.test(m)) || '' });
-        document.querySelectorAll('#baas-intro').forEach(n => n.remove());
-      }
-      cat('DEV-menu, tip', devItem ? devItem.tip : '-'); cat('DEV-melding', res[0].mel);
-      t(devItem && /85 % HP, 1 heeldrank\) en een dek van minstens 18/.test(devItem.tip) && res.every(r => r.na >= 18 && r.hp === Math.round(r.max * 0.85) && r.dranken.length === 1 && r.dranken[0] === 'heeldrank' && /85 % HP, 1 heeldrank, dek van minstens 18/.test(r.mel)),
-        `DEV-sprong (W13): 85 % HP, 1 heeldrank, dek van minstens 18 — dekken ${res.map(r => r.voor + '->' + r.na).join(', ')}, HP ${res.map(r => r.hp + '/' + r.max).join(', ')}`);
+      const alleItems = DEV_MENU.flatMap(s => s.items || []);
+      const devItem = alleItems.find(i => i.label === '🤴 Erfprins'), dekKeuze = alleItems.find(i => i.label === 'Erfprins-dek'), heldKeuze = alleItems.find(i => i.label === 'Erfprins-held');
+      nieuwSpel('slachter', 'ERF-ACC-DEV-CAT'); meldingen.length = 0; devErfprins();
+      const mel = meldingen.find(m => /^⚡ DEV/.test(m)) || '';
+      document.querySelectorAll('#baas-intro').forEach(n => n.remove());
+      cat('DEV-menu, tip', devItem ? devItem.tip : '-'); cat('DEV-menu, Erfprins-dek', dekKeuze ? dekKeuze.tip : '-'); cat('DEV-melding', mel);
+      t(devItem && /D's aankomst uit de ijking/.test(devItem.tip) && dekKeuze && dekKeuze.opties.map(o => o.v).join() === 'gemiddeld,matig,kroon,sterk' && heldKeuze && /^⚡ DEV: de Erfprins \(solo\) met D's Act 2-aankomst uit de ijking — De Slachter · gemiddeld \(sport I: een zeldzame kaart\)/.test(mel),
+        `DEV-sprong (W13, F1): de menutip, de keuzes Erfprins-dek (${dekKeuze && dekKeuze.opties.map(o => o.v).join('/')}) en Erfprins-held, en de melding "${mel.slice(0, 110)}…"`);
     }
     /* ---------- H · TIK OM OVER TE SLAAN (vanaf de tweede ontmoeting), in echte tijd ---------- */
     traag();
     {
       const { g, v } = await vers('slachter', 'ERF-ACC-CAT-H');
       const tip = intentEl(v).querySelector('.intent-roof').dataset.tip;
-      const N = +((tip.match(/pakt hij (?:de helft van je dek: )?(\d+) kaart(?:en)?\b/) || [])[1]);
+      const N = +((tip.match(/pakt hij voor dit gevecht (?:de helft van je dek: )?(\d+) kaart(?:en)?\b/) || [])[1]);
       const t0 = performance.now(); const p = copycatDeRoof(g);
       await wachtTot(() => !!document.querySelector('.roof-overlay.open:not(.buit-overlay)'), 6000);
       const ov = document.querySelector('.roof-overlay.open'); const hint = ov ? ov.querySelector('.roof-hint') : null;
@@ -1545,7 +1676,7 @@ async function catalogusInPagina(arg) {
         const e0 = v.intent.plan[0], pip0 = (pips(v)[0] || {}).t || '';
         const stempel0 = e0.soort === 'aanval' ? '⚔️ ' + pip0.replace(/^🎭 /, '') : (e0.soort === 'spiegel' ? pip0.replace(/^🎭 /, '') : pip0);
         t(h2 && dt2 < 1.6, `"tik om over te slaan" op de buit-beat: klaar in ${dt2.toFixed(1)} s (zonder tik ${((ERF.buitMs + 520) / 1000).toFixed(1)} s)`);
-        t(kop === `🧐 ZIJN BUIT · ${v.gestolen.length} KAARTEN` && (u.buit || []).includes(klein) && gek.length === 1 && tegels === v.gestolen.length && tNaam === erfNaam(e0) && tGetal === stempel0,
+        t(kop === `ZIJN BUIT · ${v.gestolen.length} KAARTEN` && (u.buit || []).includes(klein) && gek.length === 1 && tegels === v.gestolen.length && tNaam === erfNaam(e0) && tGetal === stempel0,
           `buit-beat: "${kop}", de vinger wijst "${tNaam} · ${tGetal}" aan = de eerste kaart van zijn pil ("${pip0}")`);
       } else t(false, `na de Roof verwacht de buit-beat, kreeg "${v.intent && v.intent.type}"`);
     }
@@ -1578,6 +1709,32 @@ async function catalogus(browser, vechtTeksten) {
   fouten(page, t, vp, 'tekstcatalogus');
   await ctx.close();
   return { kop: `De tekstcatalogus: ${res.lijst.length} speler-teksten over de Erfprins, getoetst aan de code (bazen_plan §8)`, regels: R };
+}
+
+/* ============================================================
+   5b · (F1) DE SNELLE KAART-INTRO (vanaf de tweede ontmoeting) op een liggende telefoon: de speelkaart
+   met haar gouden rand en de act-regel erboven blijven de hele intro binnen beeld (846x381: de
+   onderrand ging van 388 naar 397 bij een scherm van 381)
+   ============================================================ */
+async function introKaart(browser, fk) {
+  const R = []; const t = (g, s) => R.push([!!g, s]);
+  const { ctx, page, vp } = await open(browser, fk);
+  const r = await page.evaluate(async () => {
+    Codex.erfprinsOntmoetingen = 3; S.metgezel = null; devErfprins();
+    if (document.querySelector('#draai-blok.toon') && typeof speelTochStaand === 'function') speelTochStaand();
+    let n = 0, top = 1e9, bodem = -1e9, links = 1e9, rechts = -1e9; const t0 = performance.now();
+    while (performance.now() - t0 < 3600) {
+      const k = document.querySelector('#baas-intro .bik-kaart'), w = document.querySelector('#baas-intro .bik-wrap');
+      if (k && w) { n++; const q = k.getBoundingClientRect(), p = w.getBoundingClientRect(); top = Math.min(top, p.top); bodem = Math.max(bodem, q.bottom); links = Math.min(links, q.left); rechts = Math.max(rechts, q.right); }
+      await new Promise(x => requestAnimationFrame(x));
+    }
+    return { n, top: Math.round(top), bodem: Math.round(bodem), links: Math.round(links), rechts: Math.round(rechts), W: innerWidth, H: innerHeight };
+  });
+  await shot(page, `${vp.naam}_intro_kaart`);
+  t(r.n > 20 && r.top >= 0 && r.bodem <= r.H && r.links >= 0 && r.rechts <= r.W, `snelle kaart-intro ${vp.naam} (F1): ${r.n} frames, act-regel vanaf ${r.top} px, kaart tot ${r.bodem} px bij een scherm van ${r.H} (en ${r.links}-${r.rechts} van ${r.W})`);
+  t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
+  await ctx.close();
+  return { kop: `De snelle kaart-intro (F1) · ${vp.naam}`, regels: R };
 }
 
 /* ============================================================
@@ -1626,6 +1783,7 @@ async function orakelTijd(browser, fk, klap) {
     ...['M800', 'M846', 'L1440', 'L1440d3', 'L1366', 'L1366d3', 'P412'].map(fk => ['regie ' + fk, () => regie(browser, fk, A.bannerLangst)]),
     ...['M800', 'M846', 'L1440', 'L1440d3', 'L1366d3', 'P412'].map(fk => ['inventaris ' + fk, () => inventaris(browser, fk)]),
     ['tekst', () => tekst(browser)],
+    ...['M800', 'M846'].map(fk => ['intro ' + fk, () => introKaart(browser, fk)]),
     ['catalogus', () => catalogus(browser, A.vechtTeksten)],
     ...[['M800', true], ['M800', false], ['L1440', true], ['L1440d3', false]].map(([fk, klap]) => ['orakel ' + fk, () => orakelTijd(browser, fk, klap)])
   ].filter(([n]) => !FILTER || FILTER.test(n)).map(([, f]) => f);
