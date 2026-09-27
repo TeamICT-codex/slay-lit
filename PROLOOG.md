@@ -2,8 +2,8 @@
 
 *De ontwerpbron van de proloog. Het concept is vastgelegd op 14-06-2026 (brainstorm Thomas +
 Claude); de proloog zelf is in september 2026 in vijf rondes herbouwd (R1-R5, plan
-`.claude/notities/proloog_herwerking_plan.md`, v129 → v134 + R5). Dit document beschrijft de
-proloog **zoals hij nu speelt**. De rondes, hun metingen en alle afwijkingen van het plan staan in
+`.claude/notities/proloog_herwerking_plan.md`, v129 → v134 + R5, met de review-fixes van R5 F1). Dit
+document beschrijft de proloog **zoals hij nu speelt**. De rondes, hun metingen en alle afwijkingen van het plan staan in
 dat plan; hier staat het resultaat.*
 
 *In één zin: een droge, tragische, absurde satire op de rat race die vóór de afdaling speelt, in
@@ -33,7 +33,7 @@ Droog, tragisch, absurd, zelfspot. **Stereotype-doorbrekend** is de harde lat.
   frieten gaat halen, het frietkot als de laatste eerlijke plek).
 - **Medeplichtigheid** — de protagonist is geen onschuldig slachtoffer: *"Ú schreef mij, in 1979."*
 
-**Regels die elke scène volgt** (R1-R4): vooruit gaat alleen door te handelen in de wereld; de rest
+**Regels die elke scène volgt** (R1-R5): vooruit gaat alleen door te handelen in de wereld; de rest
 is regie die je met een tik versnelt ("TIK = DOORSPOELEN", in dezelfde woorden als de outro). Nooit
 paginascroll, elke handeling staat in beeld. **Het systeem zegt u, de warmte zegt je**; na VERBINDING
 VERBROKEN blijft het voorgoed je. Gekocht licht (tl, fosfor, B.A.A.S.-groen, amber) staat tegenover
@@ -73,7 +73,9 @@ De heldkeuze ís de proloog: in de Afgrond laat je één masker los. Kits en bal
 - De speler vult de factuur deels zelf in: de getypte **jeugddroom**, het aantal glimlachen, de foto,
   zelf of machinaal afgestempeld.
 - **Keuze 3 (gevoeligheid): de lift daalt, de mens valt niet.** Geen raam, geen gevel, geen dakrand,
-  geen blik omlaag, geen vrij vallende figuur, geen inslag. De foto valt; 0042 blijft staan.
+  geen blik omlaag, geen vrij vallende figuur, geen inslag. De foto valt; 0042 stapt in: in beide routes
+  rolt de lege stoel met de badge de lift in en valt het hek dicht (R5 F1). Niets in de proloog of de
+  outro noemt het dakmoment een sprong (de interne naam `uitweg: 'sprong'` ziet de speler nergens).
 - **Direct landen**: een nieuwe speler landt met de held van zijn masker op de kaart, zonder heldkeuze.
 - De titel blijft de voordeur (geen koude opening).
 
@@ -81,9 +83,11 @@ De heldkeuze ís de proloog: in de Afgrond laat je één masker los. Kits en bal
 
 ## 2. De proloog, scène per scène (zoals hij nu speelt)
 
-Natuurlijk gespeeld duurt hij ±2 min (gemeten per stuk: scènes 0-2 ±37 s, het gesprek met de uitweg
-±30-40 s, de afrekening ±14 s, de val 12,6 s, de Afgrond en de landing samen ±15 s); wie doortikt, is er
-een stuk sneller door. **Overslaan = vasthouden** (zie §4).
+Natuurlijk gespeeld duurt hij ±2 min tot de eerste speelbare kaart: ±105-110 s via de sprong, ±120 s via
+geduwd (de machinestempel, drie beurten, de pen), plus ±4-5 s tot na de echo. Per stuk: scènes 0-2 ±37 s,
+het gesprek met de uitweg ±30-40 s, de afrekening met het besluit 17-20 s, de val 14,1 s (geduwd), de
+Afgrond en de landing samen ±15 s. Wie doortikt, zit na **28-37 s** op de speelbare kaart; het rustige pad
+duurt natuurlijk ±95 s (gemeten door de review van R5). **Overslaan = vasthouden** (zie §4).
 
 ### 0 · Maandag, 06:42 — inklokken
 Regen op het raam van de ingang, de koude gloed van een straatlamp. Een tl-starter tikt: tik… tik…
@@ -138,7 +142,8 @@ van de val (de stad, een zeppelin met *FUNCTIONERINGSGESPREK - UW WELZIJN IS ONZ
 een verre donder, regen). Wie het gesprek speelde, herkent straks het gevecht.
 - **Links 0042**: een naamkaart aan een rood koord op een **lege bureaustoel** (met je pasfoto als je
   hem nam), WELZIJN 40. **Rechts B.A.A.S.**: een beige mainframekast met het groene oog, de balk
-  **AANDEELHOUDERSWAARDE ∞**, een chip FACT. 78 % en een intentiepil: **DEADLINE 8** →
+  **AANDEELHOUDERSWAARDE ∞**, een chip FACT. die verder telt vanaf de meter van het kantoor (98 % na het
+  quotum; wie het gesprek rechtstreeks herbeleeft, begint ook op 98) en een intentiepil: **DEADLINE 8** →
   **TEAMBUILDING −1 ⚡** → **OPTIMALISATIERONDE**. B.A.A.S. spreekt in een groene fosforballon
   (*"Fijn dat u er bent. Dit is een gesprek tussen gelijken."*).
 - Onderaan de energiebol (3), de trekstapel, een waaier van vijf **kantoorkaarten**, 'Einde beurt ⏳',
@@ -148,7 +153,7 @@ een verre donder, regen). Wie het gesprek speelde, herkent straks het gevecht.
 | Kantoorkaart | Kost | Effect | Wordt straks (de echo, scène 9) |
 |---|---|---|---|
 | Glimlach | 0 | Krijg 5 Blok. Kost een tikje warmte. | je Verdediging (bij de Gifmagiër ook de Dodelijke Kus) |
-| Snel een mailtje | 1 | 6 schade, *Cc: iedereen.* ∞ zakt niet: "+6 % FACTURABILITEIT", *"Dank voor uw inzet."* | je aanval: Slag / Prik / Takkenslag |
+| Snel een mailtje | 1 | 6 schade, *Cc: iedereen.* ∞ zakt niet: "+6 % FACTURABILITEIT" (de chip gaat boven de 100: *FACT. 104 %*), *"Dank voor uw inzet."* | je aanval: Slag / Prik / Takkenslag |
 | Koffie | 0 | +1 ⚡ | Gifflits, Stoofpotje |
 | Overuren | 0 | Verbrand 6 Welzijn, +2 ⚡ | Vonkenbeet (verbrand licht) |
 | "Verantwoordelijkheid" | 1 | Doet niets. B.A.A.S. +5 %. | de Knal van de Slachter |
@@ -157,12 +162,16 @@ een verre donder, regen). Wie het gesprek speelde, herkent straks het gevecht.
   speelt). Winnen kan niet; dat wordt nergens gezegd.
 
 ### 4 · De uitweg (in hetzelfde decor)
-- **De sprong**: houd de foto vast (0,5 s; muis, vinger of **spatie**), of tik hem op en tik nog eens.
-  Een bleke sluier legt zich over de wereld, de foto vliegt naar het midden (Ken Burns) en drie
-  je-regels komen: *"Daar ben je."* · *"Het sterretje brandt nog in je hand."* · *"Dat licht was nooit
-  te koop."* Dan **Laat los**: de stippellijn scheurt over het hele scherm, de foto zweeft gloeiend
-  naar de lift en valt tussen het hek door de schacht in. *"Wat je vasthield, is niet meer van hen."*
-  De wachtmuziek zwijgt zolang je kijkt.
+- **De sprong** (de interne naam; de speler ziet dat woord nergens): houd de foto vast (0,5 s; muis,
+  vinger of **spatie**), of tik hem op en tik nog eens. Een bleke sluier legt zich over de wereld, de foto
+  vliegt naar het midden (Ken Burns) en twee je-regels komen: *"Daar ben je."* · *"Het sterretje brandt
+  nog in je hand."* Dan **Laat los**: de stippellijn scheurt over het hele scherm, de foto zweeft gloeiend
+  naar de lift en valt tussen het hek door de schacht in. Dan gaat het hek open en **rolt je lege stoel
+  met de badge de lift in, het warme licht van de foto achterna** (de spiegel van 'geduwd', zonder
+  B.A.A.S.: een warme rand in plaats van de groene); het hek valt dicht. *"Wat je vasthield, is niet meer
+  van hen."* De wachtmuziek zwijgt zolang je kijkt. (R5 F1: vroeger bleef de stoel leeg op het stormdak
+  achter en zag je 0042 nooit instappen — de reeks kon als zelfdoding gelezen worden. *"Dat licht was
+  nooit te koop."* is weg: twee moraalregels na elkaar.)
 - **Geduwd**: na beurt 3 (of bij WELZIJN 0) vuurt de OPTIMALISATIERONDE. De lichten gaan uit, alleen
   B.A.A.S. brandt nog; de lege stoel met de badge rolt de lift in. *"U bent vrijgesteld."* Het hek
   valt dicht. De borstzak met het kooltje gaat mee naar beneden.
@@ -191,9 +200,10 @@ met **jouw cijfers**, regel per regel, met printergeratel (een tik = de regel me
 - **Geduwd**: de handtekeningregel is een **lege pen** — tik, of trek zelf je handtekening: er komt
   geen inkt, alleen een groef. Na 6 s (of een tik ernaast) de machine: *"Uw handtekening is niet
   vereist. Wij hadden hem al."*
-- **Sprong**: *"U tekende niet. U had al losgelaten."*
+- **Sprong**: *"U tekende niet. U had uw handen vol."* (R5 F1: niet meer *"U had al losgelaten."* —
+  loslaten is ook een eufemisme voor sterven.)
 
-### 6 · In de wacht — de val (12,6 s)
+### 6 · In de wacht — de val (14,1 s)
 *"Een ogenblikje. Ik zet u even in de wacht."* Een pixelcanvas met de lichtmotor van de outro
 (`proloog/val.js`): 0042 staat in de goederenlift, het schaarhek dicht vanaf het eerste beeld, en de
 lift daalt door **dezelfde etages die de outro beklimt**, elk in zijn outro-klimaat: **DAK** (storm,
@@ -205,11 +215,15 @@ VOORZIENING GETROFFEN, door het kelderraam het warme frietkot) · rots, −2, �
   BELANGRIJK VOOR ONS*. Bij −3 sterft de kooi-tl.
 - Het laatste gekochte licht is de **meter-LED op 80 %**: **VERBINDING VERBROKEN** (de enige keer in de
   hele proloog), kooloranje, uit. De vloer valt uiteen in gewichtloze factuurvellen: *"De vloer is een
-  veronderstelling. U had het moeten nalezen."* 0042 blijft staan, van kruin tot schoen in de gloed
-  van zijn kooltje. 1,5 s **stilte**. Het kooltje ademt (dezelfde code als de outro-intro): *"Voor het
-  eerst in vijfentwintig jaar wordt er niets gefactureerd."*
+  veronderstelling. Je had het moeten nalezen."* (R5 F1: je, niet u — ze komt na VERBINDING VERBROKEN.)
+  0042 blijft staan, van kruin tot schoen in de gloed van zijn kooltje. 1,5 s **stilte**. Het kooltje
+  ademt (dezelfde code als de outro-intro): *"Voor het eerst in vijfentwintig jaar wordt er niets
+  gefactureerd."*
 - **De knop −∞** — die niet zou mogen bestaan. Wie sprong, drukt hem zelf in (beschenen door de
-  gevallen foto); wie geduwd werd, ziet B.A.A.S. hem indrukken. Het licht trekt zich terug in het kooltje.
+  gevallen foto); wie geduwd werd, ziet B.A.A.S. hem indrukken, op 13,6 s: de slotzin (het emotionele
+  slot) staat dan ≥ 1,8 s volledig. Op het rustige pad staat hij er in één keer en drukt B.A.A.S. niet
+  sneller (R5 F1: vroeger op 12,08 s — ±0,9 s leestijd, rustig maar ±0,3 s). Het licht trekt zich terug in
+  het kooltje.
 
 ### 7 · De Afgrond (de heldkeuze)
 *"Je bent beneden. Maar hóe je verdergaat, dat kies je zelf."* — *"Uit woede? Uit wrok? Of vlucht je
@@ -219,7 +233,9 @@ startkaarten, live uit `SPELERS`); de tweede tik (of **Laat los**) kiest. De twe
 de outro bevrijdt ze. De zinnen hebben één bron met de reünie in de outro (`OutroFX.MASKERZINNEN`):
 - De Slachter: *"Genoeg geglimlacht. Nu is het hún beurt."*
 - De Gifmagiër: *"We passen ons aan. Zoals altijd."*
-- De Kolendruïde: *"Ik wou {jeugddroom} worden. Ik heb het licht nog."* (zonder droom: *"Ik wou ooit iets worden."*)
+- De Kolendruïde: *"Ik was acht: ‚{jeugddroom}’. Ik heb het licht nog."* (zonder droom: *"Ik wou ooit
+  iets worden."*). R5 F1: de droom is vrije tekst (formulier Z-8), geen beroep — *"Ik wou zeeën bevaren
+  worden"* brak; een citaat kan elk antwoord aan en verwijst naar de vraag.
 
 *"Laat er één los."* Het gekozen masker zinkt als een token in het kooltje: puur zwart, één ademend
 kooltje — het eerste beeld van de outro.
@@ -242,8 +258,10 @@ Het eerste gevecht na een uitgespeelde proloog is een **solo Groene Slijm**. Je 
 binnen als de **beige kantoorkaarten van het gesprek** — Snel een mailtje, Glimlach, … — die van
 onderen **wegbranden** tot je echte kaarten: een gerafelde, witgloeiende brandlijn met verkoold papier
 erboven, van links naar rechts, in ±1,4 s. Het mailtje wordt je aanval, de glimlach je verdediging
-(per held de juiste kaarten; zie de tabel bij scène 3). Het opgebrande papier voedt je fakkel: één warme puls
-op de fakkelchip. Dan zegt de slijm, één keer, op de spraakplaat van het spel:
+(per held de juiste kaarten; zie de tabel bij scène 3). Het opgebrande papier voedt je fakkel: de 5 🔥 van de
+eerste knoop komen terug (75 → 80) met één warme puls op de fakkelchip. Dan — ná het branden, op ±1,45 s, zodat
+de blik van de kaarten naar de slijm gaat — zegt de slijm, één keer, op de spraakplaat van het spel (op een
+telefoon vlak onder de topbalk, nooit over zijn intentie; op korte telefoons aan de kant van de held):
 
 > **"Fijn dat je er bent. Ik hou je een plekje warm."**
 
@@ -251,6 +269,12 @@ op de fakkelchip. Dan zegt de slijm, één keer, op de spraakplaat van het spel:
 - **Eenmalig**: `contract.echo` gaat van 0 naar 1 op het moment dat de echo in beeld begint, en de echo
   speelt nooit een tweede keer. Niet bij herbeleven (dat start geen run), niet in de daily (die laat hem
   liggen voor de volgende gewone run).
+- **Alleen na een landing van deze versie** (R5 F1): de landing zet `contract.echoOpen = 1`, en alleen dan
+  speelt de echo. Sinds R1 staat `echo: 0` in élk contract, dus zonder die markering kreeg wie de proloog
+  in v130-v135 uitspeelde (en sindsdien twaalf runs speelde) de echo alsnog in zijn volgende run. Een
+  contract zonder markering telt als gezien en wordt niet aangeraakt. *Thomas' keuze* (optie A van de
+  review: de echo als eenmalige verrassing voor bestaande spelers) is één regel in `proloogEcho`: de eis
+  `c.echoOpen === 1` laten vallen.
 - **Geen gedwongen wacht**: een tik laat de vellen meteen opbranden (en speelt gewoon door); een kaart
   spelen kan meteen. Staat het gevecht achter het draai-blok (telefoon staand), dan liggen de vellen stil
   tot het gevecht in beeld is.
@@ -275,7 +299,10 @@ staan; er is geen herlaad en toestel-terug brengt je niet terug in de proloog.
 - **Overslaan = vasthouden**: een compacte ring rechtsonder (40 %, na 4 s; tijdens het gesprek
   rechtsboven), **0,8 s vasthouden** (Esc 0,8 s op laptop; kort indrukken doet niets). Hij snijdt naar de
   **Afgrond**: ook wie overslaat, kiest een masker en landt. Wie vóór het gesprek overslaat, werd geduwd.
-- **Klank**: de knop 🔊/🔇 naast de skip (M op laptop) schakelt de game-mute.
+  Wie niet kan vasthouden (Enter of spatie op de gefocuste ring, een schermlezer) krijgt één bevestiging:
+  *nog eens · overslaan*, en een tweede activering binnen 4 s slaat over (R5 F1).
+- **Klank**: de knop 🔊/🔇 naast de skip (M op laptop) schakelt de game-mute (een vast label *Geluid dempen*
+  met `aria-pressed`).
 - **Herbeleven**: de titelknop 'Proloog' (voor wie hem kent; wie hem nog nooit zag, speelt hem echt),
   het DEV-menu, en de **Codex** (blok *Een Productief Leven™*, per hoofdstuk: Maandag, 06:42 · De CRT
   degausst · Het Glimlachquotum · Het Functioneringsgesprek · De Eindafrekening · In de wacht · De
@@ -299,18 +326,23 @@ staan; er is geen herlaad en toestel-terug brengt je niet terug in de proloog.
 `localStorage['slayit_proloog']`, stapsgewijs geschreven door de proloog, nooit bij herbeleven:
 ```
 { v: 2, jeugddroom, uitweg: 'sprong'|'geduwd', held (game-id), masker: 'woede'|'gif'|'vlucht',
-  glimlachen, fotoKantoor, zelfGestempeld, wachtToon: -7, echo: 0|1, echoSeed }
+  glimlachen, fotoKantoor, zelfGestempeld, wachtToon: -7, echo: 0|1, echoOpen: 1, echoSeed }
 ```
-`echoSeed` (R5) onthoudt de run waarin de echo speelde; samen met de markering `echoKamer: 1` in de save
-van die run (`slayit_save_v1`) geeft een herlaad in de eerste kamer dezelfde kamer terug — alleen in
-díé run, niet in een nieuwe run met dezelfde seed.
+`echoOpen` (R5 F1) zet de landing (nooit herbeleven of de DEV-landing): alleen dan speelt de echo (§2,
+scène 9). `echoSeed` (R5) onthoudt de run waarin de echo speelde; samen met de markering `echoKamer: 1` in
+de save van die run (`slayit_save_v1`) geeft een herlaad in de eerste kamer dezelfde kamer terug — alleen
+in díé run, niet in een nieuwe run met dezelfde seed.
 Waar het terugkomt:
 - **De Afgrond**: de Kolendruïde zegt je jeugddroom.
 - **De Eindafrekening**: je glimlachen, de foto, je droom, zelf of machinaal afgestempeld.
 - **De eerste kamer**: de echo (`echo`).
-- **De DICKtator** (Act 3): *„Uw jeugddroom — ‚…'. Voorziening getroffen. AFGESCHREVEN."*
+- **De DICKtator** (Act 3): *„Uw jeugddroom — ‚…'. Voorziening getroffen. AFGESCHREVEN."* De spraakplaat
+  zet innerHTML; de droom gaat er daarom door `escSyn` in (R5 F1: *<3 dieren* brak de regel, en een getypte
+  `<img onerror=…>` voerde code uit).
 - **De outro**: de intro hervat de wachtmuziek op −7 en buigt haar omhoog (`wachtToon`); B.A.A.S. zegt
-  *DOSSIER HEROPEND: U SPRONG. CORRECTIE AANVAARD.* of *U WERD GEDUWD. DAT WISTEN WE.* (`uitweg`); wie
+  *DOSSIER HEROPEND: U STAPTE IN. CORRECTIE AANVAARD.* of *U WERD GEDUWD. DAT WISTEN WE.* (`uitweg`).
+  **Keuze 3**: nooit *U SPRONG* — dat benoemde het dakmoment achteraf als de sprong van een ontslagen man,
+  precies de lezing die de proloog uitsluit (R5 F1; hoog). De regel past in 53 tekens (320 px pixelfont). Wie
   'baas' als droom typte, hoort *U WILDE MIJ WORDEN. NU SLOOPT U MIJ.*; de droomkast opent met je droom;
   de reünie citeert de kern van de maskerzinnen (*IK HEB HET LICHT NOG.*).
 
@@ -331,7 +363,7 @@ De proloog draait **in de game-pagina**, als scherm 'proloog', in een **shadow r
 | `proloog/audio.js` | de klank van de proloog (`window.ProloogKlank`) op de ENE AudioContext van de game (`Klank.koppel()`) |
 | `proloog/proloog.css` | de stijl, in de shadow root geladen |
 | `proloog/index.html` | een stub: oude links en bladwijzers → `../?proloog=1` |
-| `js/proloog-brug.js` | de game-kant: laden, gate en poorten, de heenweg, de landing (`speelLanding`), herbeleven, de Codex-hoofdstukken, de echo (`proloogEcho`) |
+| `js/proloog-brug.js` | de game-kant: laden (lui; de Codex laadt alleen `proloog/data.js` voor de namen, de rest pas bij de klik; de css één keer, als tekst aan de proloog), gate en poorten, de heenweg, de landing (`speelLanding`), herbeleven, de Codex-hoofdstukken, de echo (`proloogEcho`) |
 | `js/game.js` | de aansluitingen: de gate in `startNieuw`, `toonHeldKeuze({ voorkeur })`, het scherm 'proloog' (topbalk, muziek, toetsen, herladen, de nudge), de WIPE-lijst, `jeugddroomTekst()`, de Codex, het DEV-menu en (R5) één haak bovenaan `startGevecht` voor de echo |
 | `js/outro-fx.js` | gedeeld met de outro: `KLIMAAT`, `ETAGE_NR`, het pixelfont, `MASKERZINNEN`, `kooltje()`, `tekenLucht` |
 | `css/style.css` / `css/mobiel.css` | de sluier, de landing, de heldkeuze met voorselectie, de echo (`.kaart-kantoorvel`) — het proloog-blok |
@@ -339,8 +371,16 @@ De proloog draait **in de game-pagina**, als scherm 'proloog', in een **shadow r
 ### Opslag
 `slayit_proloog` (het contract), `slayit_proloog_klaar` (de brug, bij de landing), `slayit_proloog_over`
 (de skip, pas bij de landing), `slaylit_proloog_v3` (de eigen save: `{scene, checkpoint, choices, gezien[]}`;
-de oude v2 wordt gemigreerd en gewist). Alles in try/catch; spelersinvoer altijd als tekst. De WIPE
-wist ze allemaal.
+de oude v2 wordt gemigreerd en gewist). Alles in try/catch; spelersinvoer altijd als tekst (ook in de
+DICKtator-regel, via `escSyn`). Opslag en console lezen alleen eigen sleutels (lookup-bugklasse: een held,
+masker of hoofdstuk als *constructor* valt terug). Een save van vóór R3 (checkpoint `beat:N`) hervat op
+'start' met de glimlachteller van nul. De WIPE wist ze allemaal.
+
+### Toegankelijkheid
+Een stille spiegel voor schermlezers (`.pl-sr`, `role=log`, `aria-live=polite`) krijgt de regels van B.A.A.S.,
+de collega's, de ballon van het gesprek en de printer als hele zin; de val heeft haar eigen spiegel. De skip
+werkt met het toetsenbord (twee activeringen), de klankknop heeft een vast label, en na de landing op de
+heldkeuze staat de focus op laptop op *Speel als …*.
 
 ### Klank
 Eén AudioContext (via `Klank.koppel()`). De bedrijfsjingle speelt vals (majeur, één maat te lang); de
@@ -357,7 +397,15 @@ een knisper per brandend vel.
 Allebei hetzelfde: de proloog zonder blur en flikker (de val lite, de keuze klaar op 0,9 s), de landing
 met een statische titel (1,2 s) en een overvloeier van 800 ms, de echo met stille vellen die in 0,6 s
 wegvloeien en een spraakplaat met een korte inkomst, het fakkelvignet hoogstens 0,8 s. **Geen animatie
-in de landing of de echo duurt langer dan 800 ms** (gemeten in de suite).
+in de landing of de echo duurt langer dan 800 ms** (gemeten in de suite). In de proloog zelf (R5 F1): geen
+oneindige knipperlussen (de hint *TIK = DOORSPOELEN*, de terminalcursor, het printerblok en de fout-LED
+staan stil aan), de nacht van 'geduwd', de lift, de schachtgloed en de Afgrond vloeien in 0,6 s, en de
+slotzin van de val staat er in één keer.
+
+### Prestaties
+De Afgrond heeft een fps-bewaker (zoals de val): twee seconden onder 45 beelden/s en de zes rimpels (sinds
+R5 F1 hoogstens 81vmax, was 136vmax) staan stil. Headless zonder GPU haalde de Afgrond op 1440x900 31-44
+beelden/s; op een echte laptop met GPU-compositing is dat waarschijnlijk geen probleem.
 
 ### Formaten
 Nergens paginascroll; elke handeling staat in beeld en is raak, van 360x640 tot 1920x1080, ook
@@ -367,12 +415,15 @@ gesprek heeft eigen layouts voor staand, breed, smal-breed (700-1080 px) en kort
 ### Tests
 - `tools/proloog_acceptatie.js` — de échte proloog, van 'Nieuw avontuur' tot de landing en (deel 17
   'echo') de eerste kamer; per deel te filteren (hoofd, skip, herbeleef, wipe, poort, stub, rustig,
-  glimlach, lite, val, outro, kantoor, breek, gesprek, integratie, fixer, afrekening, echo, statisch).
-  Volledig ±40 min (1617 controles).
+  glimlach, lite, val, outro, kantoor, breek, gesprek, integratie, fixer, afrekening, echo, fixer5,
+  statisch). Deel 18 'fixer5' bewaakt de review-fixes van R5 (skip met het toetsenbord, de klankknop, de
+  css één keer, de Afgrond-bewaker, de spiegel, de facturabiliteit, de resize-listener, de Afgrond op de
+  telefoon, het rustige pad, lookups, de teksten). Volledig ±40 min.
 - `tools/proloog_landing_acceptatie.js` — de game-kant met een stub-proloog: de landing, de gate, de
-  poorten, herbeleven, de Codex (filter 'landing'), en (filter 'echo', deel 8) de echo op zes formaten
-  met contactvellen, doortikken, een kaart spelen, herladen, herbeleven, de daily, reduced motion, lite,
-  de DEV-landing en dezelfde seed opnieuw (346 controles, ±6 min).
+  poorten, herbeleven, de Codex (filter 'landing'; de Codex laadt alleen data.js), en (filter 'echo',
+  deel 8) de echo op zes formaten met contactvellen, doortikken, een kaart spelen, herladen, herbeleven,
+  de daily, reduced motion, lite, de DEV-landing, dezelfde seed opnieuw, een contract uit v130-v135
+  zonder `echoOpen` (8V) en de jeugddroom als tekst in de DICKtator-regel (8J). ±6 min.
 - Beide bedienen de worktree vanaf schijf (`route.fulfill`, geen server) en tonen elke gemeten waarde.
 
 ### DEV
@@ -393,8 +444,9 @@ lift, etages, printer, scheur, vonken, kooltje, B.A.A.S.-kast, de brandlijn van 
 de vlag `NIEUWE_ART` in `proloog/data.js` of het manifest), `baas_kast` (terugval: de css-kast).
 `medewerker_0042` is geparkeerd (de lege stoel met de badge is het sterkere beeld).
 
-**Niet (meer) gebruikt**: `baas-terminal.webp` (staat nog in ZWAAR van sw.js) en `slijmklerk.webp` (een
-volle scène, geen vijand-cut-out; zie scène 9 in §2).
+**Niet (meer) gebruikt**: `baas-terminal.webp` en `slijmklerk.webp` (een volle scène, geen vijand-cut-out;
+zie scène 9 in §2). R5 F1 haalde ze uit ZWAAR in sw.js (214 KB minder per install); de bestanden staan nog in
+`assets/proloog/` en mogen naar `assets-bron/`.
 
 ---
 
@@ -413,7 +465,12 @@ de outro het motief alleen.
 
 ## 10. Open punten (voor Thomas)
 - **Keuze 3**: laat één buitenstaander naar de val kijken (de lift daalt, de mens valt niet), samen met
-  de stoel die de lift inrolt, de dakzin en *"Dat was Karel. Twaalf jaar."*
+  de sprongroute (de foto valt, de stoel rolt haar achterna de lift in, het hek dicht), de dakzin, *"Dat
+  was Karel. Twaalf jaar."* en de outro (*U STAPTE IN*). Nog een optie voor die review: de dak-CTA *Laat
+  los* vervangen door *Stap in* (de foto gaat dan mee in de borstzak en het kooltje verlicht in de val de
+  knop −∞; dat raakt ook `proloog/val.js`).
+- **De echo voor bestaande spelers** (R5 F1 koos optie B: alleen na een landing van deze versie); optie A
+  is één regel (§2, scène 9).
 - **Op het echte toestel**: het klavier bij formulier Z-8 (zeker liggend), de foto vasthouden, de pen
   slepen, de helderheid van het nachtbeeld bij 'geduwd' en van het dak achter de printer, de echo
   (branden de vellen goed leesbaar weg op 846x381?).
@@ -422,6 +479,12 @@ de outro het motief alleen.
 - De natuurlijke stretch van ±9 s in het bureau (stempel → buizenpost → collega's → oproep) is
   doortikbaar; blijkt hij lang, dan is `duur()` in `proloog/proloog.js` de knop.
 - De inzage-hint van het eerste mobiele gevecht komt voor wie de proloog speelde nu in het tweede gevecht.
+- **Opruimronde** (bewust niet in R5 F1): de ongebruikte klanken in `proloog/audio.js` (hartslag, ruis,
+  glitch, …; eerst nagaan welke via ALIAS nog klinken, zoals *knop → liftknop*) en de opruimoproepen
+  `AU.heartStop()`/`AU.noiseOff()`; `proloog/val.js` pas laden bij de factuur; een live-regio voor de
+  echozin (de spraakplaat van het spel); de focus op het eerste masker na de skip naar de Afgrond (een
+  focus pelt het masker meteen af).
+- De Afgrond-fps en de echo op een echt toestel en een echte laptop.
 
 ## 11. Geschiedenis
 - **14-06-2026** — het concept (dit document, §1), een React-prototype, daarna een vanilla-herbouw
@@ -432,4 +495,7 @@ de outro het motief alleen.
   poorten), R2 *de val en de klank* (de lift in de wacht, de wachtmuziek), R3 *het kantoor als film*
   (≈200 woorden in plaats van 1560), R4 *gesprek en afrekening* (het beige gevechtstoneel, de printer).
 - **27 sep 2026, R5** *echo en QA*: de echo in de eerste kamer, het rustige pad van landing en echo,
-  dit document.
+  dit document. **R5 F1** (de review-fixes): keuze 3 dicht (de outro zegt *U STAPTE IN*, de stoel stapt in
+  beide routes in, *U had uw handen vol.*), de droomgrammatica, de slotzin van de val, de echo alleen na
+  een landing van deze versie, de jeugddroom als tekst, de Codex en de css lichter, het rustige pad, de
+  toegankelijkheid, de leesbaarheid op mobiel en de Afgrond-bewaker.

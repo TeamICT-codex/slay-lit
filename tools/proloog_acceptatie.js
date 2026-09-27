@@ -41,7 +41,7 @@
                in de val 0, −1 … −7 (één halve toon per etage, op −7 de vaste noot), de stilte
                hangt de lijn op, wachtStop in de Afgrond; "VERBINDING VERBROKEN" precies 1x
                in de hele proloog (DOM + canvas); 0042 blijft in de kooi.
-  11 val       de val ONAANGERAAKT (geduwd) per formaat: 14,0 ± 0,3 s (fixer R5 F1: B.A.A.S. drukt pas als de
+  11 val       de val ONAANGERAAKT (geduwd) per formaat: 14,1 ± 0,3 s (fixer R5 F1: B.A.A.S. drukt pas als de
                slotzin ≥ 1,8 s volledig stond, rustig en lite niet sneller); de transponering valt
                precies op elke etage; stilte(≈1500) na de vloer; VERBINDING 1x; de 0042-sprite
                staat elk beeld op dezelfde plek in de kooi, ook als de vloer weg is (geen vrij
@@ -2432,7 +2432,7 @@ function r4iToets(uit) {
     const valOp = (page, s, ms) => wachtOp(page, x => !!(window.__r2 && window.__r2.handle && window.__r2.handle.t >= x), ms || 16000, s);
     const inAfgrond = () => { const R = document.getElementById('scherm-proloog').shadowRoot; const a = R && R.getElementById('pl-app'); return !!a && a.dataset.fase === 'afgrond'; };
 
-    /* 11a · onaangeraakt, geduwd: de regie van 12,6 s, de klank, VERBINDING, 0042 in de kooi */
+    /* 11a · onaangeraakt, geduwd: de regie van 14,1 s (fixer R5 F1; was 12,6), de klank, VERBINDING, 0042 in de kooi */
     for (const vp of [VPS.laptop, VPS.liggend, VPS.staand]) {
       const L = 'val ' + vp.n;
       kop(`11a · ${L} ${vp.w}x${vp.h} · onaangeraakt (geduwd): regie, klank, VERBINDING, geen vallende figuur`);
@@ -2459,8 +2459,8 @@ function r4iToets(uit) {
       const r2 = await r2Lees(page);
       const vv = valVenster(r2);
       const duur = vv && vv.t1 !== null ? (vv.t1 - vv.t0) / 1000 : null;
-      t(tot >= 0 && duur !== null && Math.abs(duur - 14.0) <= 0.3 && vv.naar === 'afgrond',
-        `${L}: de val duurt onaangeraakt ${duur === null ? '?' : duur.toFixed(2)} s (14,0 ± 0,3), dan de Afgrond (B.A.A.S. drukt)`);
+      t(tot >= 0 && duur !== null && Math.abs(duur - 14.1) <= 0.3 && vv.naar === 'afgrond',
+        `${L}: de val duurt onaangeraakt ${duur === null ? '?' : duur.toFixed(2)} s (14,1 ± 0,3), dan de Afgrond (B.A.A.S. drukt)`);
       toetsSlotzin(r2, L, false);
       const ev = r2.val.map(v => v.naam);
       const volg = ['hek', 'etage', 'tl', 'verbinding', 'ledUit', 'vloer', 'stilte', 'kooltje', 'slot', 'knop', 'baasDrukt'];
@@ -2577,7 +2577,7 @@ function r4iToets(uit) {
       const r2 = await r2Lees(page);
       const vv = valVenster(r2);
       const duur = vv && vv.t1 !== null ? (vv.t1 - vv.t0) / 1000 : null;
-      t(duur !== null && duur >= 13.3 && duur <= 14.3, `${L}: de rustige val duurt ${duur === null ? '?' : duur.toFixed(2)} s (B.A.A.S. drukt niet sneller dan op het natuurlijke pad: 13,5 s + 0,15 s; 13,3-14,3)`);
+      t(duur !== null && duur >= 13.3 && duur <= 14.3, `${L}: de rustige val duurt ${duur === null ? '?' : duur.toFixed(2)} s (B.A.A.S. drukt niet sneller dan op het natuurlijke pad: 13,6 s + 0,15 s; 13,3-14,3)`);
       toetsSlotzin(r2, L, true);
       const sp = await page.evaluate(() => window.__spiegel);
       t([/EEN OGENBLIKJE/, /^VERBINDING VERBROKEN$/, /DE VLOER IS EEN VERONDERSTELLING/, /VOOR HET EERST IN VIJFENTWINTIG JAAR/].every(re => sp.some(s => re.test(s))),

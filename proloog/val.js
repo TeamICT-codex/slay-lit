@@ -48,7 +48,7 @@
        het canvas, anker 'knop'), druk() (de knop is ingedrukt), kooltje() → { x, y, maat }
        in viewport-px (zoals de Afgrond haar kooltje doorgeeft), stop(), get t, get lite }
      voorbak(tekst)                   bakt de statische beelden en de lucht alvast (idle)
-   Duur onaangeraakt: 14,0 s tot de Afgrond (geduwd: B.A.A.S. drukt op 13,5 s, de
+   Duur onaangeraakt: 14,1 s tot de Afgrond (geduwd: B.A.A.S. drukt op 13,6 s, de
    Afgrond volgt na de drukanimatie van proloog.js). Fixer R5 F1: B.A.A.S. drukte op 12,08 s,
    0,4 s nadat de slotzin volledig stond — het emotionele slot las je amper. Nu staat hij
    ≥ 1,8 s volledig; op het rustige pad (reduced motion, lite) staat hij er in één keer (geen
@@ -60,7 +60,7 @@
   const VERTREK = 0.8;                                        /* de lift zet zich in beweging */
   /* d = k: etage k staat recht voor de kooi (aankomst). Fixer R2: op 2 KANTOORTUIN (k = 3: je
      stoel draait nog, cubicle 7 is leeg) houdt de lift 0,2 s halt, uit gewoonte — de
-     emotionele etage. Die tijd gaat af van de rots (−2, −3), het totaal blijft 12,6 s. */
+     emotionele etage. Die tijd gaat af van de rots (−2, −3), het totaal van de afdaling blijft gelijk (fixer R5 F1: alleen B.A.A.S. drukt later, 13,6 s). */
   const CENTRUM = [0, 2.0, 3.2, 4.4, 5.8, 6.3, 6.75, 7.1];
   const HALT = [0, 0, 0, 0.2, 0, 0, 0, 0];                    /* s stilstand bij etage k */
   const NA = 2.6;                                             /* etages per seconde onder −3 (in het donker) */
@@ -94,7 +94,7 @@
     verbinding: 7.45, kijk: 1.0, oranje: 8.2, ledUit: 8.55, ledWeg: 8.8, /* het laatste gekochte licht; kijk = minimale kijktijd van VERBROKEN bij doortikken */
     vloer: 8.6, vloerTekst: 8.75, vloerTekstWeg: 10.4,        /* de vloer: factuurvellen (0042 staat dan al in zijn eigen gloed) */
     stilte: 8.95, stilteMs: 1500,                             /* 1,5 s stilte (de vellen mogen nog uitklinken) */
-    kooltje: 10.45, slot: 10.6, fotoIn: 10.6, knop: 11.2, baas: 13.5, einde: 14.02,
+    kooltje: 10.45, slot: 10.6, fotoIn: 10.6, knop: 11.2, baas: 13.6, einde: 14.12,
     slotCps: 60   /* de slotzin typt 60 tekens/s: 66 tekens, volledig op ±11,7 s → nog ≥ 1,8 s tot B.A.A.S. drukt (fixer R5 F1) */
   };
   /* één tik = één stap: naar de volgende mijlpaal (vertrek, elke etage, VERBINDING, LED uit, kooltje, knop) */
