@@ -11580,7 +11580,10 @@ function devInst() {
   const buildOk = rauw.build === 'choreo' || !!DEV_BUILDS[rauw.build];
   _devInst = {
     build: buildOk ? rauw.build : 'slachter_mid',
-    tempo: DEV_TEMPOS.indexOf(+rauw.tempo) >= 0 ? +rauw.tempo : 1
+    tempo: DEV_TEMPOS.indexOf(+rauw.tempo) >= 0 ? +rauw.tempo : 1,
+    /* B3 F1: het dek en de held van de Erfprins-sprong; een onbekende waarde valt terug */
+    erfdek: ERF_DEV.sterktes.includes(rauw.erfdek) ? rauw.erfdek : 'gemiddeld',
+    erfheld: (rauw.erfheld === 'run' || ERF_DEV.helden.includes(rauw.erfheld)) ? rauw.erfheld : 'run'
   };
   return _devInst;
 }
@@ -11651,25 +11654,106 @@ function devDrempel(testScherven) {
   melding('⚡ DEV: devDrempeltafel ontbreekt — js/drempeltafel.js is niet geladen.');
 }
 
-/* DEV-SHORTCUT: spring meteen SOLO tegen de Erfprins, zodat je De Roof niet door een hele
-   Act 2-run hoeft te bevechten. Een REALISTISCHE aankomst (B3): 85 % van je max-HP en 1
-   heeldrank, zoals na de rustplaats vóór de baas — met 150 HP en 3 dranken won elke build
-   16 op 16 (D §2.5), en dan test je een andere baas. Plus een geloofwaardig Act 2-dek (de Roof
-   grist de helft, dus een kaal startdek van 10 maakt de test onspeelbaar). */
-function devErfprins() {
-  if (!S) nieuwSpel('slachter');
-  if (inGevecht()) stopGevechtLus();
-  S.gevecht = null; S.act = 2; S.fakkel = fakkelMax();
-  S.hp = Math.max(1, Math.round((S.maxHp || 1) * 0.85));
-  S.dranken = ['heeldrank'];
-  if (S.dek.length < 18) {   /* de melding en de menutip beloven 'minstens 18' (B3: was < 16, dan bleef een dek van 16-17 staan) */
-    const pool = heldPool();
-    let veiligheid = 0;
-    while (S.dek.length < 18 && pool.length && veiligheid++ < 40) S.dek.push(nieuweKaart(kiesUit(pool)));
+/* ============================================================================
+   DEV-SHORTCUT (B3 F1): D'S ACT 2-AANKOMST voor de Erfprins-sprong — exact de dekken, relikwieën,
+   dranken en Drempeltafel-uitkomsten van de ijking (tools/baas-meting/erfprins_meting.js: D_BUILDS,
+   TAFEL, tafelBuild; tools/erfprins_acceptatie.js W13 leest ze na en eist gelijkheid). Vroeger vulde
+   devErfprins een startdek met willekeurige poolkaarten aan tot 18, zonder relikwieën of upgrades:
+   zwakker dan D's 'matig' (dat in de ijking 9-21 % wint). Een review stierf er in beurt 4 met de
+   prins op 73/145 - Thomas zou via de DEV-sprong 'onwinbaar' zien en de ijking bestrijden.
+   matig = niets van de tafel + 1 Laster · gemiddeld = sport I (een zeldzame kaart) · kroon = het
+   gemiddelde dek + de Kroon van Sintels (sport II; telt als sterk) · sterk = sport III (een
+   zeldzame en een gesmede kaart, twee basiskaarten geofferd).
+   ============================================================================ */
+const ERF_DEV = {
+  sterktes: ['gemiddeld', 'matig', 'kroon', 'sterk'],
+  helden: ['slachter', 'gifmagier', 'thoverk'],
+  dekken: {
+    slachter: {
+      matig: { hp: 76, relikwieen: ['brandend_bloed', 'wetsteen', 'anker'], dranken: [], laster: 1,
+        dek: [['slag', 0], ['slag', 0], ['slag', 0], ['slag', 0], ['slag', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['knal', 1], ['dubbelslag', 0], ['zware_klap', 0], ['ijzeren_golf', 0], ['klingenstorm', 0], ['schildmuur', 0], ['uithaal', 0], ['executie', 0], ['molensteen', 0]] },
+      gemiddeld: { hp: 80, relikwieen: ['brandend_bloed', 'krachtsteen', 'stempelkussen', 'oorlogsbanier'], dranken: ['heeldrank'], laster: 0,
+        dek: [['slag', 1], ['slag', 0], ['slag', 0], ['slag', 0], ['verdediging', 1], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['knal', 0], ['zware_klap', 1], ['afgekeurd', 0], ['executie', 0], ['uithaal', 0], ['in_drievoud', 0], ['dubbelslag', 0], ['schildmuur', 1], ['schildmuur', 0], ['metaalhuid', 0], ['vlammende_hartstocht', 0], ['ijzeren_golf', 0], ['bolwerk', 0]] },
+      sterk: { hp: 86, relikwieen: ['brandend_bloed', 'krachtsteen', 'stalen_vuist', 'stempelkussen', 'brandmerkijzer', 'oorlogsbanier'], dranken: ['heeldrank', 'heeldrank'], laster: 0,
+        dek: [['slag', 1], ['slag', 1], ['slag', 0], ['verdediging', 1], ['verdediging', 1], ['verdediging', 0], ['knal', 1], ['zware_klap', 1], ['originele_handtekening', 0], ['afgekeurd', 1], ['executie', 0], ['uithaal', 1], ['in_drievoud', 0], ['bloedoffer', 0], ['genadeslag', 0], ['vlammende_hartstocht', 1], ['metaalhuid', 0], ['schildmuur', 1], ['bolwerk', 0], ['geindexeerd', 0], ['dubbelslag', 0], ['schildmuur', 0]] }
+    },
+    gifmagier: {
+      matig: { hp: 68, relikwieen: ['slangenamulet', 'bottenfluit', 'anker'], dranken: [], laster: 1,
+        dek: [['prik', 0], ['prik', 0], ['prik', 0], ['prik', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['dodelijke_kus', 0], ['gifflits', 1], ['giftige_steek', 0], ['slangenbeet', 0], ['venijnregen', 0], ['sluiproute', 0], ['gifwolk', 0], ['snelle_steek', 0], ['verlammend_gif', 0], ['schildmuur', 0]] },
+      gemiddeld: { hp: 72, relikwieen: ['slangenamulet', 'smaragden_ring', 'oorlogsbanier', 'stempelkussen'], dranken: ['heeldrank'], laster: 0,
+        dek: [['prik', 1], ['prik', 0], ['prik', 0], ['verdediging', 1], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['dodelijke_kus', 1], ['gifflits', 1], ['gifflits', 0], ['giftige_steek', 0], ['slangenbeet', 0], ['giftand', 0], ['inktklerk_steek', 0], ['naaperij', 0], ['sluiproute', 1], ['sluiproute', 0], ['verlammend_gif', 0], ['gifwolk', 0], ['katalyse', 0], ['snelle_steek', 0]] },
+      sterk: { hp: 76, relikwieen: ['slangenamulet', 'smaragden_ring', 'inktpot', 'oorlogsbanier', 'stempelkussen', 'bloedrobijn'], dranken: ['heeldrank', 'heeldrank'], laster: 0,
+        dek: [['prik', 1], ['prik', 0], ['verdediging', 1], ['verdediging', 0], ['verdediging', 0], ['dodelijke_kus', 1], ['gifflits', 1], ['gifflits', 1], ['inktklerk_steek', 0], ['inktklerk_steek', 0], ['giftand', 1], ['katalyse', 1], ['nachtschade', 0], ['naaperij', 1], ['slangenbeet', 0], ['registerrot', 0], ['gifklieren', 0], ['sluiproute', 1], ['sluiproute', 0], ['bolwerk', 0], ['verlammend_gif', 0], ['snelle_steek', 1]] }
+    },
+    thoverk: {
+      matig: { hp: 72, relikwieen: ['houten_been', 'warme_mantel', 'anker'], dranken: [], laster: 1,
+        dek: [['takkenslag', 0], ['takkenslag', 0], ['takkenslag', 0], ['takkenslag', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['vonkenbeet', 1], ['stoofpotje', 0], ['wortelgreep', 0], ['doornzweep', 0], ['bastvel', 0], ['sporenstoot', 0], ['stoofgeur', 0], ['perkamentslag', 0], ['eikenhuid', 0], ['schildmuur', 0]] },
+      gemiddeld: { hp: 76, relikwieen: ['houten_been', 'bronzen_schub', 'oorlogsbanier', 'stempelkussen'], dranken: ['heeldrank'], laster: 0,
+        dek: [['takkenslag', 1], ['takkenslag', 0], ['takkenslag', 0], ['verdediging', 1], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['vonkenbeet', 1], ['stoofpotje', 0], ['wurgwortels', 0], ['sporenstoot', 0], ['perkamentslag', 0], ['doorslag_doornen', 0], ['bastvel', 1], ['bastvel', 0], ['eikenhuid', 0], ['kolengloed', 0], ['doornzweep', 0], ['wortelgreep', 0], ['stoofgeur', 0], ['doornmantel', 0]] },
+      sterk: { hp: 82, relikwieen: ['houten_been', 'bronzen_schub', 'krachtsteen', 'oorlogsbanier', 'stempelkussen', 'mosamulet'], dranken: ['heeldrank', 'heeldrank'], laster: 0,
+        dek: [['takkenslag', 1], ['takkenslag', 0], ['verdediging', 1], ['verdediging', 0], ['verdediging', 0], ['vonkenbeet', 1], ['wurgwortels', 1], ['sporenstoot', 1], ['doorslag_doornen', 0], ['perkamentslag', 1], ['het_origineel_kaart', 0], ['doornmantel', 1], ['duivelspact', 0], ['kolenstempel', 0], ['bastvel', 1], ['bastvel', 0], ['eikenhuid', 0], ['knalsigaar', 0], ['wortelgreep', 0], ['stoofgeur', 0], ['stoofpotje', 0], ['doornzweep', 0]] }
+    }
+  },
+  tafel: {
+    slachter: { zeldzaam: { gemiddeld: 'genadeslag', sterk: 'demonenvorm' }, offers: ['slag', 'verdediging'],
+      smeed: {naam: 'Het Gesmede Werk', icoon: '🪓', kost: 2, maker: 'slachter', modules: [{m: 'schade', p: 4}, {m: 'blok', p: 2}], offers: ['Slag', 'Verdediging']} },
+    gifmagier: { zeldzaam: { gemiddeld: 'nachtschade', sterk: 'energiekern' }, offers: ['prik', 'verdediging'],
+      smeed: {naam: 'Het Gesmede Werk', icoon: '☠️', kost: 2, maker: 'gifmagier', modules: [{m: 'schade', p: 2}, {m: 'gif', p: 4}], offers: ['Prik', 'Verdediging']} },
+    thoverk: { zeldzaam: { gemiddeld: 'knalsigaar', sterk: 'sporenkring' }, offers: ['takkenslag', 'verdediging'],
+      smeed: {naam: 'Het Gesmede Werk', icoon: '🌹', kost: 2, maker: 'thoverk', modules: [{m: 'schade', p: 3}, {m: 'groei', p: 3}], offers: ['Takkenslag', 'Verdediging']} }
+  },
+  uitkomst: { matig: 'niets van de Drempeltafel', gemiddeld: 'sport I: een zeldzame kaart', kroon: 'sport II: de Kroon van Sintels', sterk: 'sport III: een zeldzame en een gesmede kaart' }
+};
+/* één aankomst (dezelfde vorm als tafelBuild in het harnas) */
+function erfDevAankomst(held, st) {
+  const basisSt = st === 'kroon' ? 'gemiddeld' : st;
+  const b = JSON.parse(JSON.stringify(ERF_DEV.dekken[held][basisSt]));
+  const t = ERF_DEV.tafel[held];
+  b.held = held;
+  if (st === 'gemiddeld' || st === 'sterk') b.dek.push([t.zeldzaam[basisSt], 0]);
+  if (st === 'sterk') {
+    for (const off of t.offers) { const i = b.dek.findIndex(([id, up]) => id === off && !up); if (i >= 0) b.dek.splice(i, 1); }
+    b.gesmeed = JSON.parse(JSON.stringify(t.smeed));
   }
+  if (st === 'kroon') b.relikwieen.push('kroon_van_sintels');
+  return b;
+}
+
+/* DEV-SHORTCUT: spring meteen SOLO tegen de Erfprins, zodat je De Roof niet door een hele
+   Act 2-run hoeft te bevechten. B3 F1: met D's Act 2-aankomst uit de ijking (ERF_DEV hierboven):
+   dek, relikwieën, upgrades, max-HP en dranken van de gekozen held en sterkte, op 85 % HP (na de
+   rustplaats vóór de baas; met 150 HP en 3 dranken won elke build 16 op 16, D §2.5). sterkte en
+   held komen uit het DEV-menu (devInst: erfdek, erfheld); 'run' = de held van je lopende run.
+   Overschrijft je run (nieuwSpel) en markeert hem als DEV-run (isDevRun: geen erfstuk). */
+function devErfprins(sterkte, held) {
+  const d = devInst();
+  const st = ERF_DEV.sterktes.includes(sterkte) ? sterkte : d.erfdek;
+  let h = held || d.erfheld;
+  if (h === 'run') h = S && S.held;
+  if (!ERF_DEV.helden.includes(h)) h = 'slachter';
+  if (inGevecht()) stopGevechtLus();
+  const b = erfDevAankomst(h, st);
+  nieuwSpel(h);
+  S._devRun = true;   /* DEV-TAINT: een gesmede kaart uit deze sprong wordt nooit een erfstuk */
+  S.gevecht = null; S.act = 2; S.fakkel = fakkelMax(); S.pos = null; S.ascensie = 0; S.daily = false; S.dagwet = null;
+  delete S.beloning; delete S.winkel; delete S.huidigEvent;
+  S.maxHp = b.hp; S.hp = Math.max(1, Math.round(b.hp * 0.85));
+  S.relikwieen = b.relikwieen.slice();
+  S.dek = b.dek.map(([id, up]) => { const c = nieuweKaart(id); c.up = !!up; return c; });
+  if (b.gesmeed) {
+    const id = 'gesmeed_run_900';
+    S.gesmeed = {}; S.gesmeed[id] = JSON.parse(JSON.stringify(b.gesmeed));
+    registreerGesmeed(id, S.gesmeed[id]);
+    S.dek.push(nieuweKaart(id));
+  }
+  S.dranken = b.dranken.slice();
+  for (let i = 0; i < (b.laster || 0); i++) S.dek.push(nieuweKaart('laster'));
+  S.metgezel = null; S.runMetgezel = null;
+  S.kaart = genereerKaart();
   saveSpel();
   startGevecht(['de_erfprins'], 'baas', 15);   /* betreedt zelf het gevechtscherm */
-  melding('⚡ DEV: meteen tegen de Erfprins (solo) — realistische aankomst: 85 % HP, 1 heeldrank, dek van minstens 18. Test „De Roof”.');
+  const dr = S.dranken.length;
+  melding(`⚡ DEV: de Erfprins (solo) met D's Act 2-aankomst uit de ijking — ${SPELERS[h].naam} · ${st} (${ERF_DEV.uitkomst[st]}): ${S.hp}/${S.maxHp} HP (85 %), ${S.dek.length} kaarten, ${S.relikwieen.length} relikwieën, ${dr ? dr + ' heeldrank' + (dr === 1 ? '' : 'en') : 'geen dranken'}.`);
 }
 
 /* DEV-SHORTCUT: de Erfprins als EERSTE ontmoeting — reset de Codex-teller zodat de
@@ -12068,8 +12152,14 @@ const DEV_MENU = [
       { label: '🗺️ Act 2 · kaart', tip: 'Overschrijft je lopende run: Act 2-kaart, 150 HP, 3 heeldranken + drie scherven in je tas.', doe: () => devSprongAct2() },
       { label: '🌋 Act 3 · kaart', tip: 'Overschrijft je lopende run: de Act 3-ladder (het Slachtblok), 150 HP, volle heeldranken.', doe: () => devSprongAct3() },
       { label: '🫠 Slijmkoning', tip: 'Overschrijft je lopende run en start meteen het Act 1-baasgevecht met 150 HP + opgevuld dek.', doe: () => devSlijmkoning() },
-      { label: '🤴 Erfprins', tip: 'Overschrijft je lopende run en start het Act 2-baasgevecht solo: realistische aankomst (85 % HP, 1 heeldrank) en een dek van minstens 18.', doe: () => devErfprins() },
-      { label: '🃏 Erfprins · eerste ontmoeting', tip: 'Zet de Codex-teller erfprinsOntmoetingen op 0 (raakt je Codex) en springt dan naar de Erfprins, zodat de Inventaris-intro opnieuw speelt.', doe: () => devErfprinsIntro() }
+      { label: '🤴 Erfprins', tip: "Overschrijft je lopende run en start het Act 2-baasgevecht solo met D's aankomst uit de ijking (dek, relikwieën, dranken, 85 % HP): de held en het dek kies je hieronder.", doe: () => devErfprins() },
+      { label: '🃏 Erfprins · eerste ontmoeting', tip: 'Zet de Codex-teller erfprinsOntmoetingen op 0 (raakt je Codex) en springt dan naar de Erfprins, zodat de Inventaris-intro opnieuw speelt.', doe: () => devErfprinsIntro() },
+      { soort: 'kies', label: 'Erfprins-dek', tip: "Het dek van de Erfprins-sprong (die overschrijft je lopende run): D's Act 2-aankomst met een Drempeltafel-uitkomst. gemiddeld = sport I, doel 45-60 %; matig = niets, 10-25 %; Kroon = sport II, <= 85 %; sterk = sport III, 70-85 %.",
+        opties: [{ v: 'gemiddeld', label: 'gemiddeld (sport I)' }, { v: 'matig', label: 'matig (niets)' }, { v: 'kroon', label: 'Kroon (sport II)' }, { v: 'sterk', label: 'sterk (sport III)' }],
+        stand: () => devInst().erfdek, doe: v => devInstZet('erfdek', v) },
+      { soort: 'kies', label: 'Erfprins-held', tip: "De held van de Erfprins-sprong (die overschrijft je lopende run): 'je held' = de held van je run, zonder run de Slachter.",
+        opties: [{ v: 'run', label: 'je held' }, { v: 'slachter', label: 'Slachter' }, { v: 'gifmagier', label: 'Gifmagiër' }, { v: 'thoverk', label: 'Kolendruïde' }],
+        stand: () => devInst().erfheld, doe: v => devInstZet('erfheld', v) }
     ]
   },
   {
