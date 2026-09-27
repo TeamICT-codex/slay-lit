@@ -130,7 +130,7 @@ const bij = (log, ms) => log.reduce((a, r) => Math.abs(r.t - ms) < Math.abs(a.t 
   /* ============================ B3 in 3D ============================ */
   console.log('\n== B3 · DE HERVERKIEZING op het 3D-toneel ==');
   await page.evaluate(() => { window.__tel.raak = 0; window.__tel.schud = 0; window.__tel.pose = 0; window.__tel.licht = []; });
-  await page.evaluate(sampler("(function(){ const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.hp = 6; verliesHp(b, 30); })();"));
+  await page.evaluate(sampler("(function(){ const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.hp = 6; b.minVrij = true; /* B4 stap 3: de sprong landt na de zitting van III (DE ZITTING LOOPT houdt hem anders op 1 HP) */ verliesHp(b, 30); })();"));
   await slaap(8200);
   await page.evaluate(() => window.__stop());
   const L3 = await page.evaluate(() => window.__log);

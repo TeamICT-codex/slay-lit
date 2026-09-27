@@ -192,7 +192,7 @@ const tussen = (log, a, b2) => log.filter(r => r.t >= a && r.t <= b2);
      vrij op 2500, de herrijzenis op 2300, en IV · HET MANDAAT komt als strooklabel op 4600. */
   console.log('\n== B3 · DE HERVERKIEZING (~5000 ms, invoer dicht 0-4400) ==');
   await opzet();
-  await page.evaluate(sampler("(function(){ const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; verliesHp(b, 30); })();"));
+  await page.evaluate(sampler("(function(){ const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; b.minVrij = true; /* B4 stap 3: de sprong landt na de zitting van III (DE ZITTING LOOPT houdt hem anders op 1 HP) */ verliesHp(b, 30); })();"));
   await slaap(6200);
   await page.evaluate(() => window.__stop());
   const L3 = await page.evaluate(() => window.__log);

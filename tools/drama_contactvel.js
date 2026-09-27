@@ -51,7 +51,7 @@ const OVERGANGEN = [
   {
     /* finale (sep 2026): het scharnier is ingekort tot ~5 s */
     sleutel: 'IV', naam: 'DE HERVERKIEZING', totaal: 5000,
-    trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; verliesHp(b, 30); },
+    trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; b.minVrij = true; /* B4 stap 3: de sprong landt na de zitting van III (DE ZITTING LOOPT houdt hem anders op 1 HP) */ verliesHp(b, 30); },
     beats: [
       [110, 'doodsklap, hitstop 220'], [300, 'DE VAL, doek .80'], [700, 'DE STEMMING'],
       [1000, 'aankondiging'], [2100, 'ZWART .92 + stilte'], [2400, 'goud + HERRIJZENIS'],

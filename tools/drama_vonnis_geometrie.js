@@ -160,7 +160,7 @@ const OVERGANGEN = [
   { sleutel: 'III', naam: 'III · DE TIRADE', wacht: 1400,
     trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 2; b.hp = Math.floor(b.maxHp * 0.30); checkBaasFase(); } },
   { sleutel: 'IV', naam: 'DE HERVERKIEZING', wacht: 3400,
-    trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; verliesHp(b, 30); } }
+    trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; b.minVrij = true; /* B4 stap 3: de sprong landt na de zitting van III (DE ZITTING LOOPT houdt hem anders op 1 HP) */ verliesHp(b, 30); } }
 ];
 
 async function draaiViewport(browser, vp) {
@@ -262,7 +262,7 @@ async function draaiViewport(browser, vp) {
 
   // bedrijf V — geen kaartje meer, wel de aankomstpuls op de strook
   await opzet();
-  await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; verliesHp(b, 30); });
+  await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; b.minVrij = true; /* B4 stap 3: de sprong landt na de zitting van III (DE ZITTING LOOPT houdt hem anders op 1 HP) */ verliesHp(b, 30); });
   await slaap(4900);   /* finale: het strooklabel komt op t=4600, de puls duurt 1400 ms */
   const m = await page.evaluate(() => window.__mandaat());
   await page.screenshot({ path: path.join(UIT, 'geo_' + vp.n.replace(/[^a-z0-9]+/gi, '-') + '_V.png') });

@@ -18,6 +18,10 @@
      9 F3+F5 (elke scènewissel sluit het dossier) · 10 F4 (zonder griffier geen dossier) ·
      11 F6 (het keuzescherm overleeft de reveals) · 12 F7 (schade na het slot) ·
      13 F8 (solo zonder handwerk) · 14 F9 + F11 (teksten volgen de knoppen).
+   Sinds B4 stap 3 (afwerkplan §9A, F10, B5): 15 DE ZITTING LOOPT + HET HOF VANGT DE KLAP (de
+     teller, de inkeping, de vangst met zijn fx op de hoveling, GESCHORST alleen bij het slot, gif
+     in de vloer, IV met zijn teken, de teller en de telegraaf nooit onder de duisternis) ·
+     16 de teller op drie formaten.
    Review F9: de suite leest elk balansgetal uit DICK (R3 draait aan die knoppen).
 
    GEEN dev-server en NOOIT poort 4173: een verzonnen host (localhost:4198) wordt vanaf
@@ -496,7 +500,10 @@ const sonde = page => page.evaluate(() => {
   let z9 = await beurt(page, 0);
   let d9 = await dossierStand(page);
   t(z9.naam === 'DE AANZEGGING' && d9.n === 2 && d9.dossierScene === 1 && d9.zegelsDek === 2 && /📜/.test(d9.strook), `I: de aanzegging zet een dossier (${d9.n} kaarten, scène ${d9.dossierScene}, strook "${d9.strook}")`);
-  const wissel = await page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g); verliesHp(b, 999, sp()); checkBaasFase(); return { n: g.aangezegd.size, dossierScene: b.dossierScene == null ? null : b.dossierScene, scene: dicktatorScene(b), zegels: S.dek.filter(c => kaartAangezegd(c)).length }; });
+  /* B4 stap 3: de wissels hieronder zijn klappen van precies tot op de drempel. Een klap van 999
+     zou het overschot op de griffier laten vallen (HET HOF VANGT DE KLAP) en hem doden - dan sloot
+     zijn dood het dossier (F4) en niet de wissel (F3), en dat is niet wat dit blok bewijst. */
+  const wissel = await page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g); verliesHp(b, b.hp - dicktatorDrempel(b, 2), sp()); checkBaasFase(); return { n: g.aangezegd.size, dossierScene: b.dossierScene == null ? null : b.dossierScene, scene: dicktatorScene(b), zegels: S.dek.filter(c => kaartAangezegd(c)).length }; });
   t(wissel.scene === 2 && wissel.n === 0 && wissel.dossierScene === null && wissel.zegels === 0, `I → II: op het moment van de wissel is het dossier dicht (${wissel.n} kaarten, dossierScene ${wissel.dossierScene}, ${wissel.zegels} zegels)`);
   await wachtVrij(page);
   d9 = await dossierStand(page);
@@ -509,7 +516,7 @@ const sonde = page => page.evaluate(() => {
   /* II → III met een open dossier. DE ZITTING LOOPT houdt hem nu nog op zijn vloer; minVrij
      (de DEV-vlag van de landing) zet de vloer voor deze ene scène uit, zodat de wissel met
      een open dossier valt - de toestand die zonder vloer (of na zijn zetten) gewoon kan. */
-  const wissel3 = await page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g); b.minVrij = true; verliesHp(b, 999, sp()); checkBaasFase(); return { n: g.aangezegd.size, dossierScene: b.dossierScene == null ? null : b.dossierScene, scene: dicktatorScene(b), zegels: S.dek.filter(c => kaartAangezegd(c)).length }; });
+  const wissel3 = await page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g); b.minVrij = true; verliesHp(b, b.hp - dicktatorDrempel(b, 3), sp()); checkBaasFase(); return { n: g.aangezegd.size, dossierScene: b.dossierScene == null ? null : b.dossierScene, scene: dicktatorScene(b), zegels: S.dek.filter(c => kaartAangezegd(c)).length }; });
   t(wissel3.scene === 3 && wissel3.n === 0 && wissel3.dossierScene === null && wissel3.zegels === 0, `II → III met een open dossier: bij de wissel dicht (${wissel3.n} kaarten, ${wissel3.zegels} zegels)`);
   await wachtVrij(page);
   const iii = [];
@@ -676,6 +683,197 @@ const sonde = page => page.evaluate(() => {
   t(JSON.stringify(nog) === JSON.stringify([2, 2, 1, 0]), `met DICK.minZetten[2] = 2: nog ${nog.join(' → ')} (overgang → HERSCHIKT → 1e zet → 2e zet; verwacht 2 → 2 → 1 → 0)`);
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
+
+  /* ================= 15 · DE ZITTING LOOPT + HET HOF VANGT DE KLAP (B4 stap 3, F10, B5) ================= */
+  /* De regel ZICHTBAAR (afwerkplan §9A): de vloer met zijn teller op de bazenbalk en een eerlijke
+     tekst (GESCHORST alleen bij het scèneslot, "de scène is uit" alleen als ze uit is), wat de regel
+     van een klap wegknipt valt op de eerste levende hoveling (met de vang-fx op DIE hoveling), in
+     IV een teken, gif dat in de vloer tikt valt op het hof, en B5: telegraaf en teller nooit onder
+     de duisternis. Alle getallen uit DICK en uit de spelcode (dicktatorVloer, dicktatorZittingNog). */
+  const zit = page => page.evaluate(() => {
+    const g = S.gevecht, b = dicktatorBaas(g);
+    const z = document.querySelector('#baas-balk .bb-zitting'), k = document.querySelector('#baas-balk .bb-vloer');
+    const chip = document.querySelector('.status-geschorst');
+    const st = document.querySelector('#baas-balk .bb-proces');
+    const h = dicktatorHofVanger(g, b);
+    return {
+      hp: b.hp, maxHp: b.maxHp, scene: dicktatorScene(b), geschorst: !!b._geschorst, vloer: dicktatorVloer(b), nog: dicktatorZittingNog(b),
+      N: dicktatorMinZetten(dicktatorScene(b)), v2: b.v2Zet || 0, pil: b.intent ? b.intent.naam : '-',
+      teller: z && !z.hidden ? z.textContent : null, tip: z && !z.hidden ? (z.dataset.tip || '') : '', kerf: k && !k.hidden ? parseFloat(k.style.left) : null,
+      chip: !!chip, chipTip: chip ? (chip.dataset.tip || '') : '', strook: st ? st.textContent : '', strookTip: st ? (st.dataset.tip || '') : '',
+      vanger: h ? { id: h.id, hp: h.hp } : null, hof: g.vijanden.filter(x => x !== b && !x.dood).map(x => x.id).join(',')
+    };
+  });
+  /* één klap langs het normale pad; geeft de vang-fx terug die in DEZE tick verscheen, met zijn
+     positie tegenover de vanger en de baas (de fx leeft 950 ms) */
+  const klapVang = (page, n, vooraf) => page.evaluate(([n, vooraf]) => {
+    const g = S.gevecht, b = dicktatorBaas(g);
+    document.querySelectorAll('.fx-nummer').forEach(e => e.remove());
+    const h = dicktatorHofVanger(g, b);
+    if (h && vooraf && vooraf.vangerHp) { h.hp = vooraf.vangerHp; h.maxHp = Math.max(h.maxHp, vooraf.vangerHp); }
+    const hVoor = h ? h.hp : null, bVoor = b.hp, st0 = S.stats.schade;
+    if (vooraf && vooraf.kaart) aanvalOp(b, n); else verliesHp(b, n, sp());
+    checkBaasFase(); renderGevecht();
+    const rect = el => { if (!el) return null; const r = el.getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom }; };
+    const hr = h ? rect(actorEl(h)) : null, br = rect(actorEl(b));
+    const fx = [...document.querySelectorAll('.fx-nummer.fx-vang')].map(e => ({ tekst: e.textContent, x: parseFloat(e.style.left) }));
+    const binnen = (x, r) => r && x >= r.l - 20 && x <= r.r + 20;
+    return {
+      bVoor, bNa: b.hp, hId: h ? h.id : null, hVoor, hNa: h ? Math.max(0, h.hp) : null, hDood: h ? !!h.dood : null,
+      stats: S.stats.schade - st0, fx, fxOpVanger: fx.length > 0 && fx.every(f => binnen(f.x, hr)), fxOpBaas: fx.some(f => binnen(f.x, br) && !binnen(f.x, hr)),
+      geschorst: !!b._geschorst, toast: [...document.querySelectorAll('#meldingen .toast')].map(e => e.textContent).join(' | ')
+    };
+  }, [n, vooraf || null]);
+
+  kop('15a · DE ZITTING LOOPT in II: de teller, de inkeping, de vangst (laptop 1440×900)');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page);
+  await beurt(page, 0);   /* DE AANZEGGING roept de griffier */
+  const DZ = await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); return { d2: dicktatorDrempel(b, 2), d3: dicktatorDrempel(b, 3), N2: dicktatorMinZetten(2), N3: dicktatorMinZetten(3), N4: dicktatorMinZetten(4), hofVangt: !!DICK.hofVangt }; });
+  t(DZ.hofVangt && DZ.N2 > 0 && DZ.N3 > 0 && DZ.N4 > 0, `DICK: hofVangt ${DZ.hofVangt}, minZetten II/III/IV ${DZ.N2}/${DZ.N3}/${DZ.N4}`);
+  let zs = await zit(page);
+  t(zs.scene === 1 && zs.teller === null && zs.kerf === null && zs.vanger && zs.vanger.id === 'de_griffier', `scène I heeft geen vloer: geen teller, geen inkeping (vanger nu: ${zs.vanger && zs.vanger.id})`);
+  /* het scèneslot: 10 te veel → de griffier vangt 10; GESCHORST met een eerlijke tekst */
+  let kv = await klapVang(page, (zs.hp - DZ.d2) + 10);
+  t(kv.bNa === DZ.d2 && kv.hId === 'de_griffier' && kv.hVoor - kv.hNa === 10, `het slot: ${kv.bVoor} → ${kv.bNa} (drempel ${DZ.d2}), de griffier vangt de 10 te veel: ${kv.hVoor} → ${kv.hNa}`);
+  t(kv.fx.length === 1 && /⚖️ vangt 10/.test(kv.fx[0].tekst) && kv.fxOpVanger && !kv.fxOpBaas, `de vang-fx "${kv.fx.map(f => f.tekst).join(',')}" staat op de griffier, niet op de baas`);
+  zs = await zit(page);
+  t(zs.chip && /de scène is uit/.test(zs.chipTip) && /vangt zijn hof/.test(zs.chipTip) && /GESCHORST/.test(zs.strook), `GESCHORST (het slot, de scène IS uit): chip "${zs.chipTip}"`);
+  await wachtVrij(page);
+  zs = await zit(page);
+  const vloer2 = DZ.d3 + 1;
+  t(zs.scene === 2 && zs.vloer === vloer2 && zs.nog === DZ.N2 && zs.teller === '⚖ ZITTING LOOPT · nog ' + DZ.N2, `na de regie: teller "${zs.teller}", vloer ${zs.vloer} (= drempel III + 1 = ${vloer2}), nog ${zs.nog}`);
+  t(zs.kerf != null && Math.abs(zs.kerf - vloer2 / zs.maxHp * 100) < 0.2, `de inkeping staat op de vloer: ${zs.kerf && zs.kerf.toFixed(2)}% (verwacht ${(vloer2 / zs.maxHp * 100).toFixed(2)}%)`);
+  t(new RegExp('minstens ' + DZ.N2 + ' zet').test(zs.tip) && new RegExp('niet onder ' + vloer2 + ' HP').test(zs.tip) && /HERSCHIKT DE ZAAL telt niet mee/.test(zs.tip) && !/cyclus/.test(zs.tip), `de tooltip: "${zs.tip}"`);
+  let zb = await beurt(page, 0);
+  zs = await zit(page);
+  t(zb.naam === 'HERSCHIKT DE ZAAL' && zs.nog === DZ.N2 && !zs.chip && !/GESCHORST/.test(zs.strook), `HERSCHIKT telt niet mee: nog ${zs.nog}, de GESCHORST-chip is weg (${zs.chip})`);
+  /* de vloer: 200 op de baas → hij stopt OP zijn vloer, de rest valt op de eerste levende hoveling */
+  kv = await klapVang(page, 200, { vangerHp: 400 });
+  t(kv.bNa === vloer2 && kv.hVoor - kv.hNa === 200 - (kv.bVoor - vloer2), `de vloer: ${kv.bVoor} → ${kv.bNa}, ${kv.hId} vangt ${kv.hVoor - kv.hNa} (= 200 − ${kv.bVoor - vloer2})`);
+  t(!kv.geschorst && kv.fxOpVanger && !kv.fxOpBaas && /DE ZITTING LOOPT/.test(kv.toast), `F10: de vloer schorst niet (${kv.geschorst}); de vang-fx op ${kv.hId}; één melding: "${kv.toast}"`);
+  zs = await zit(page);
+  t(!zs.chip && !/GESCHORST/.test(zs.strook) && zs.teller === '⚖ ZITTING LOOPT · nog ' + DZ.N2 && /vangt zijn hof/.test(zs.tip), `op de vloer geen GESCHORST (chip ${zs.chip}, strook "${zs.strook}"), wel de teller: "${zs.teller}"`);
+  /* F7: wat het hof vangt, telt als schade (op het hof) */
+  kv = await klapVang(page, 30, { kaart: true });
+  t(kv.bNa === vloer2 && kv.stats > 0 && kv.stats === kv.hVoor - kv.hNa, `F7: een kaartklap op de vloer: baas ${kv.bVoor} → ${kv.bNa}, S.stats.schade +${kv.stats} = wat ${kv.hId} verloor (${kv.hVoor - kv.hNa})`);
+  /* de volgorde: van links naar rechts - valt de eerste, dan vangt de volgende */
+  const volg = await page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g); const levend = g.vijanden.filter(x => x !== b && !x.dood); const eerste = levend[0]; verliesHp(eerste, 9999, sp()); renderGevecht(); const nu = dicktatorHofVanger(g, b); return { eerste: eerste.id, volgende: levend[1] ? levend[1].id : null, nu: nu ? nu.id : null }; });
+  t(volg.nu === volg.volgende, `de eerste hoveling (${volg.eerste}) valt → de vanger wordt de volgende van links: ${volg.nu} (verwacht ${volg.volgende})`);
+  if (volg.nu) {
+    kv = await klapVang(page, 25);
+    t(kv.hId === volg.nu && kv.hVoor - kv.hNa === 25 && kv.bNa === vloer2, `${volg.nu} vangt nu de 25: ${kv.hVoor} → ${kv.hNa}`);
+  }
+  /* de teller telt af met zijn zetten; na de laatste is de vloer weg en valt de scène */
+  const aftel = [];
+  for (let i = 0; i < DZ.N2; i++) { await beurt(page, 0); const s2 = await zit(page); aftel.push((s2.teller || '-') + '/' + s2.nog); }
+  zs = await zit(page);
+  t(zs.nog === 0 && zs.vloer === null && zs.teller === null && zs.kerf === null, `teller na elke zet: ${aftel.join(' → ')}; daarna geen teller en geen inkeping`);
+  kv = await klapVang(page, (zs.hp - DZ.d3) + 5);
+  zs = await zit(page);
+  t(kv.bNa === DZ.d3 && zs.scene === 3 && kv.geschorst, `de zitting is uit: een klap brengt hem op de drempel van III (${kv.bNa}), scène ${zs.scene}, geschorst ${kv.geschorst}`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+
+  kop('15b · III: 1 HP tot na zijn zetten; gif dat in de vloer tikt, valt op het hof');
+  await wachtVrij(page);
+  zb = await beurt(page, 0);   /* HERSCHIKT van III */
+  zs = await zit(page);
+  t(zb.naam === 'HERSCHIKT DE ZAAL' && zs.scene === 3 && zs.vloer === 1 && zs.nog === DZ.N3 && zs.teller === '⚖ ZITTING LOOPT · nog ' + DZ.N3, `III: vloer ${zs.vloer} HP, teller "${zs.teller}", hof ${zs.hof}`);
+  const gifIII = await page.evaluate(() => {
+    const g = S.gevecht, b = dicktatorBaas(g);
+    const h = dicktatorHofVanger(g, b);
+    if (h) { h.hp = 400; h.maxHp = Math.max(h.maxHp, 400); h.blok = 0; }
+    b.hp = 5; b.status = { gif: 20 }; renderGevecht();
+    return { h: h ? h.id : null, hVoor: h ? h.hp : null, tik: Math.ceil(20 / 2) };
+  });
+  zb = await beurt(page, 0);
+  const naGif = await page.evaluate(id => { const g = S.gevecht, b = dicktatorBaas(g); const h = g.vijanden.find(x => x.id === id); return { hp: b.hp, hHp: h ? h.hp : null, herrezen: !!b.herrezen }; }, gifIII.h);
+  t(gifIII.h && naGif.hp === 1 && !naGif.herrezen && gifIII.hVoor - naGif.hHp === gifIII.tik - 4, `gif ${gifIII.tik} in de vijandbeurt vanaf 5 HP: de baas op ${naGif.hp} (geen herverkiezing), ${gifIII.h} vangt ${gifIII.hVoor - naGif.hHp} (= ${gifIII.tik} − 4)`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+
+  /* B5: HET PROCES IS OPENBAAR - de teller valt niet onder de duisternis (het gat in het vignet),
+     ook niet in DE TIRADE bij een gedoofde fakkel. Gemeten op de schermafdruk (pngjs, optioneel). */
+  kop('15c · B5: de teller bij fakkel 0 in DE TIRADE (het gat in het fakkelvignet)');
+  const gat = await page.evaluate(() => {
+    S.fakkel = 0; zetLichtVisueel(); renderGevecht();
+    const vig = document.getElementById('licht-vignet'), bb = document.getElementById('baas-balk');
+    const cs = getComputedStyle(vig), r = bb.getBoundingClientRect();
+    const px = k => parseFloat(vig.style.getPropertyValue(k));
+    const g = { x: px('--gat-x'), y: px('--gat-y'), w: px('--gat-w'), h: px('--gat-h') };
+    return { klasse: vig.classList.contains('proces-open'), tirade: document.body.classList.contains('tirade'), licht: lichtNiveau(), lagen: (cs.maskImage || cs.webkitMaskImage || '').split('linear-gradient').length - 1,
+      dekt: g.x <= r.left && g.y <= r.top && g.x + g.w >= r.right && g.y + g.h >= r.bottom, opac: parseFloat(cs.opacity) };
+  });
+  t(gat.klasse && gat.lagen === 3 && gat.dekt && gat.licht === 'gedoofd', `het vignet draagt het gat (klasse ${gat.klasse}, ${gat.lagen} maskerlagen, dekt de bazenbalk ${gat.dekt}); fakkel gedoofd, tirade ${gat.tirade}, vignet ${gat.opac}`);
+  let PNGm = null; try { PNGm = require('pngjs').PNG; } catch (e) { /* zonder pngjs: alleen de geometrie hierboven */ }
+  if (PNGm) {
+    await slaap(1400);   /* het vignet schuift in 1,2 s naar zijn donkerte */
+    const clipT = await page.evaluate(() => { const r = document.querySelector('#baas-balk .bb-zitting').getBoundingClientRect(); return { x: Math.floor(r.left), y: Math.floor(r.top), width: Math.ceil(r.width), height: Math.ceil(r.height) }; });
+    const p90 = buf => { const p = PNGm.sync.read(buf); const l = []; for (let i = 0; i < p.data.length; i += 4) l.push(0.2126 * p.data[i] + 0.7152 * p.data[i + 1] + 0.0722 * p.data[i + 2]); l.sort((a, b) => a - b); return Math.round(l[Math.floor(l.length * 0.9)]); };
+    const met = p90(await page.screenshot({ clip: clipT }));
+    await page.evaluate(() => document.getElementById('licht-vignet').classList.remove('proces-open'));
+    await slaap(150);
+    const zonder = p90(await page.screenshot({ clip: clipT }));
+    await page.evaluate(() => renderGevecht());   /* het gat komt terug */
+    await page.screenshot({ path: path.join(UIT, 'zitting-fakkel0-1440x900.png') }).catch(() => {});
+    t(met >= 150 && met >= zonder, `de teller bij fakkel 0 in de tirade: helderheid (p90) ${met} met het gat, ${zonder} zonder (doel ≥ 150; mobiel rechtsboven is het verschil het grootst, zie de beeldcontrole)`);
+  } else console.log('   (pngjs ontbreekt: de helderheidsmeting van 15c overgeslagen)');
+  /* de telegraaf: geen '?' of '❓' op de pillen van de baas en het hof, hoe donker ook */
+  const tel0 = await page.evaluate(() => { const out = []; for (const f of [20, 0]) { S.fakkel = f; renderGevecht(); out.push({ f, licht: lichtNiveau(), pillen: S.gevecht.vijanden.filter(x => !x.dood).map(x => x.id.replace(/^de_/, '') + ':' + (actorEl(x) && actorEl(x).querySelector('.intent') ? actorEl(x).querySelector('.intent').textContent.trim() : '-')) }); } S.fakkel = 100; zetLichtVisueel(); renderGevecht(); return out; });
+  t(tel0.every(o => o.pillen.length && o.pillen.every(p => !/[?❓]/.test(p))), `de telegraaf onder de duisternis: ${tel0.map(o => o.licht + ' → ' + o.pillen.join(' | ')).join(' ;; ')}`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  kop('15d · IV: de vloer tot na zijn eerste ONTSLAG, met een teken (zonder hof: niets vangt)');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page, { tirade: true });   /* de DEV-landing in III zet de vloer voor III uit; IV is een nieuwe scène */
+  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, b.hp, sp()); checkBaasFase(); renderGevecht(); });
+  await wachtVrij(page);
+  zs = await zit(page);
+  t(zs.scene === 4 && zs.vloer === 1 && zs.nog === DZ.N4 && zs.hof === '', `IV: vloer ${zs.vloer} HP, nog ${zs.nog}, hof "${zs.hof}"`);
+  const totOntslag = DZ.N4 % 2 === 0;   /* de zitting van IV loopt af met een even zet = HET ONTSLAG */
+  t(totOntslag ? (zs.teller === '⚖ valt na zijn ONTSLAG' && /valt pas na zijn ONTSLAG/.test(zs.tip)) : /nog /.test(zs.teller || ''), `het teken in IV: "${zs.teller}" (tip: "${zs.tip}")`);
+  t(/gaat verloren/.test(zs.tip) && !/vangt zijn hof/.test(zs.tip), 'zonder hof belooft de tekst geen vangst: "wat je klap te veel heeft, gaat verloren"');
+  kv = await klapVang(page, 999);
+  t(kv.bNa === 1 && kv.hId === null && kv.fx.length === 0 && !kv.geschorst, `een klap van 999 in IV: ${kv.bVoor} → ${kv.bNa}, geen vanger, geen vang-fx, niet geschorst`);
+  const ivZet = [];
+  for (let i = 0; i < DZ.N4; i++) { const r = await beurt(page, 0); const s2 = await zit(page); ivZet.push(r.naam + ' → ' + (s2.teller || 'geen teller')); }
+  zs = await zit(page);
+  t(zs.vloer === null && zs.teller === null && (!totOntslag || /HET ONTSLAG/.test(ivZet[ivZet.length - 1])), `IV: ${ivZet.join(' ; ')}`);
+  kv = await klapVang(page, 999);
+  const ivEind = await page.evaluate(() => ({ voorbij: !S.gevecht || !!S.gevecht.voorbij, dood: !!(dicktatorBaas(S.gevecht) || {}).dood }));
+  t(ivEind.dood || ivEind.voorbij, `na zijn ONTSLAG valt hij: dood ${ivEind.dood}, gevecht voorbij ${ivEind.voorbij}`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  /* ================= 16 · DE TELLER OP DRIE FORMATEN ================= */
+  for (const vp of [{ w: 1440, h: 900, naam: 'laptop 1440×900' }, { w: 800, h: 360, mobiel: true, naam: 'mobiel 800×360' }, { w: 412, h: 915, mobiel: true, naam: 'mobiel 412×915' }]) {
+    kop('16 · de teller en de inkeping (' + vp.naam + ')');
+    ({ ctx, page } = await open(browser, vp));
+    await startProces(page);
+    await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, 999, sp()); checkBaasFase(); renderGevecht(); });
+    await wachtVrij(page);
+    const geo = await page.evaluate(() => {
+      const r = s => { const e = document.querySelector(s); if (!e || e.hidden) return null; const x = e.getBoundingClientRect(); return x.width ? { l: x.left, r: x.right, t: x.top, b: x.bottom, w: x.width, h: x.height } : null; };
+      const tekstEl = document.querySelector('#baas-balk .bb-tekst');
+      let tekst = null;
+      if (tekstEl && tekstEl.firstChild) { const rg = document.createRange(); rg.selectNodeContents(tekstEl); const x = rg.getBoundingClientRect(); tekst = { l: x.left, r: x.right, t: x.top, b: x.bottom }; }
+      const ov = (a, b) => !!(a && b) && !(a.r <= b.l || b.r <= a.l || a.b <= b.t || b.b <= a.t);
+      const z = r('#baas-balk .bb-zitting'), balk = r('#baas-balk .bb-balk'), label = r('#beurt-label'), strook = r('#baas-balk .bb-proces');
+      const W = innerWidth, H = innerHeight;
+      return {
+        z, W, H, tekstZ: ov(z, tekst), labelZ: ov(z, label), strookZ: ov(z, strook), inBalk: !!(z && balk && z.l >= balk.l - 1 && z.r <= balk.r + 1),
+        binnen: !!(z && z.l >= 0 && z.t >= 0 && z.r <= W && z.b <= H), tekst: (document.querySelector('#baas-balk .bb-zitting') || {}).textContent || '',
+        kerf: r('#baas-balk .bb-vloer'), links: !!(z && tekst && z.r <= tekst.l + 1)
+      };
+    });
+    t(geo.z && geo.binnen, `de teller staat binnen ${geo.W}×${geo.H}: "${geo.tekst}" (${geo.z && Math.round(geo.z.w)}×${geo.z && Math.round(geo.z.h)} op ${geo.z && Math.round(geo.z.l)},${geo.z && Math.round(geo.z.t)})`);
+    t(!geo.tekstZ && !geo.labelZ && !geo.strookZ, `geen overlap met het HP-getal (${geo.tekstZ}), #beurt-label (${geo.labelZ}) of de strook (${geo.strookZ})`);
+    if (vp.mobiel) t(/^⚖\d+$/.test(geo.tekst) && geo.links && !geo.kerf, `mobiel: "${geo.tekst}" links van het HP-getal, geen inkeping (${!!geo.kerf})`);
+    else t(geo.inBalk && !!geo.kerf, `laptop: de teller in de HP-balk (${geo.inBalk}) en de inkeping staat (${!!geo.kerf})`);
+    await page.screenshot({ path: path.join(UIT, `zitting-${vp.w}x${vp.h}.png`) }).catch(() => {});
+    t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+    await ctx.close();
+  }
 
   await browser.close();
   console.log('\n============================================');

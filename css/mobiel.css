@@ -278,6 +278,15 @@ body[data-modus="mobiel"] #baas-balk .bb-balk .bb-tekst {
   order: 1; position: static; font-family: 'Pirata One', serif; font-size: .95rem;
   color: var(--perkament); text-shadow: 0 1px 3px #000; padding: 0;
 }
+/* DE ZITTING LOOPT (Finale B4 stap 3): op het hart-spoor "⚖2" LINKS van het HP-getal (in de
+   flexrij: teller · getal · hart); de inkeping op de balk bestaat hier niet (er is geen balk).
+   De volle zin staat in de data-tip: een tik op de teller toont hem. */
+body[data-modus="mobiel"] #baas-balk .bb-balk .bb-zitting {
+  order: 0; position: static; transform: none; flex: none;
+  font-family: 'Pirata One', serif; font-size: .9rem; font-weight: 400; letter-spacing: 0;
+  line-height: 1.15; padding: 1px 7px; border-radius: 9px;
+}
+body[data-modus="mobiel"] #baas-balk .bb-balk .bb-vloer { display: none !important; }
 body[data-modus="mobiel"] #baas-balk .bb-balk::before {
   content: ''; order: 2; flex: none; width: 46px; height: 42px;
   background: linear-gradient(to top, #6bdb4d 0 calc(var(--hp, 100) * 1%), #2b1420 calc(var(--hp, 100) * 1%) 100%);

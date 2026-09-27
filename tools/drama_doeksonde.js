@@ -76,7 +76,7 @@ const METER = `window.__meet = function () {
 
     // (1) doek-piek in bedrijf IV
     await page.evaluate(() => { DICK.tempo = 1; dicktatorRoep('de_griffier'); dicktatorRoep('de_deurwaarder'); }); await slaap(900);
-    await page.evaluate(() => { window.__meet(); const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; verliesHp(b, 30); });
+    await page.evaluate(() => { window.__meet(); const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; b.minVrij = true; /* B4 stap 3: de sprong landt na de zitting van III (DE ZITTING LOOPT houdt hem anders op 1 HP) */ verliesHp(b, 30); });
     await slaap(2800);
     if (UIT) await page.screenshot({ path: path.join(UIT, 'doeksonde_' + vp.n + '_zwart.png') });
     await slaap(4800);

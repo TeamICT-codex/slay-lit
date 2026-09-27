@@ -2953,6 +2953,9 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
 .fx-genees { color: var(--gifgroen); }
 .fx-buff { color: var(--goud); font-size: 1.3rem; }
 .fx-debuff { color: var(--paars); font-size: 1.3rem; }
+/* HET HOF VANGT DE KLAP (Finale B4 stap 3): het getal staat op de hoveling die vangt, in het
+   goud van de zitting - een grote klap op de DICKtator verdwijnt nooit stil */
+.fx-vang { color: #ffd27a; font-size: 1.5rem; }
 @keyframes fxstijg {
   0% { transform: translateY(0) scale(.6); opacity: 0; }
   15% { transform: translateY(-8px) scale(1.15); opacity: 1; }
@@ -4270,6 +4273,30 @@ body[data-modus="laptop"]:has(#scherm-gevecht.baas-actief) .baas-spraak { top: c
 #baas-balk[data-vorm="2"] .bb-balk.bb-woede { border-color: rgba(255, 200, 90, .9); }
 /* de beleidsstrook van HET PROCES: zelfde pil-vorm als de Copycat-arsenaalpil */
 .bb-proces { color: #ffdf9a; border-color: rgba(214, 168, 74, .5); }
+/* DE ZITTING LOOPT (Finale B4 stap 3, afwerkplan §9A): de teller RECHTS IN de HP-balk
+   ("⚖ ZITTING LOOPT · nog 2", in IV "⚖ valt na zijn ONTSLAG") en de inkeping met slotje op
+   de vloer ("tot hier, zolang de zitting loopt"). Bewust niet in de beleidsstrook (die botst
+   al met #beurt-label en de pil). De teller is aanraakbaar voor zijn uitleg (data-tip), net als
+   de beleidspil. Mobiel: "⚖2" naast het hart, zonder inkeping (mobiel.css). */
+#baas-balk .bb-zitting {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%); z-index: 2;
+  font-family: 'Alegreya', serif; font-size: .7rem; font-weight: 700; letter-spacing: .05em;
+  line-height: 14px; padding: 0 7px; border-radius: 7px; white-space: nowrap;
+  color: #ffe2a0; background: rgba(24, 10, 14, .84); border: 1px solid rgba(214, 168, 74, .75);
+  text-shadow: 0 1px 2px #000;
+  pointer-events: auto; cursor: help;
+}
+#baas-balk .bb-zitting.bb-zitting-ontslag { color: #ffd24a; border-color: rgba(255, 210, 74, .9); }
+#baas-balk .bb-vloer {
+  position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1px; z-index: 1;
+  background: #ffd27a; box-shadow: 0 0 6px rgba(255, 210, 122, .95);
+  font-style: normal; pointer-events: none;
+}
+#baas-balk .bb-vloer::after {
+  content: '🔒'; position: absolute; left: 5px; top: 50%; transform: translateY(-50%);
+  font-size: 10px; line-height: 1; filter: drop-shadow(0 1px 1px #000);
+}
+#baas-balk .bb-zitting[hidden], #baas-balk .bb-vloer[hidden] { display: none !important; }
 
 /* DE HERVERKIEZING: de gouden flits over het hele slagveld op het moment dat het
    volk (zijn eigen hof) op hem stemt. */
@@ -5010,6 +5037,31 @@ body.ceremonie #speler-zone::before {
   opacity: 0;
 }
 #licht-vignet.flikker::after { animation: vignetFlikker 3.2s ease-in-out infinite; }
+/* B5 (Finale B4 stap 3) - HET PROCES IS OPENBAAR: in de finale krijgt het vignet een zacht
+   rechthoekig GAT waar de bazenbalk staat (JS meet de balk en zet --gat-x/-y/-w/-h, zie
+   _procesVignetGat), zodat de teller van DE ZITTING LOOPT nooit onder de duisternis valt - ook
+   niet in DE TIRADE (.82) of bij een gedoofde fakkel. De zaal zelf blijft donker. Drie lagen:
+   de gewone verticale uitmaskering MIN (de horizontale band ∩ de verticale band van het gat).
+   De -webkit-variant eerst; de standaard (subtract/intersect/add) wint waar hij bestaat. */
+body[data-scherm="gevecht"] #licht-vignet.proces-open {
+  --gat-rand: 18px;
+  -webkit-mask-image:
+    linear-gradient(to bottom, #000 0, #000 60%, rgba(0, 0, 0, .35) 80%, transparent 94%),
+    linear-gradient(to right, transparent 0, #000 var(--gat-rand), #000 calc(100% - var(--gat-rand)), transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 var(--gat-rand), #000 calc(100% - var(--gat-rand)), transparent 100%);
+  mask-image:
+    linear-gradient(to bottom, #000 0, #000 60%, rgba(0, 0, 0, .35) 80%, transparent 94%),
+    linear-gradient(to right, transparent 0, #000 var(--gat-rand), #000 calc(100% - var(--gat-rand)), transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 var(--gat-rand), #000 calc(100% - var(--gat-rand)), transparent 100%);
+  -webkit-mask-size: 100% 100%, var(--gat-w, 0px) var(--gat-h, 0px), var(--gat-w, 0px) var(--gat-h, 0px);
+  mask-size: 100% 100%, var(--gat-w, 0px) var(--gat-h, 0px), var(--gat-w, 0px) var(--gat-h, 0px);
+  -webkit-mask-position: 0 0, var(--gat-x, 0px) var(--gat-y, 0px), var(--gat-x, 0px) var(--gat-y, 0px);
+  mask-position: 0 0, var(--gat-x, 0px) var(--gat-y, 0px), var(--gat-x, 0px) var(--gat-y, 0px);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-composite: source-out, source-in, source-over;
+  mask-composite: subtract, intersect, add;
+}
 @keyframes vignetFlikker {
   0%, 100% { opacity: 0; }
   16% { opacity: .34; }

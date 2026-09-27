@@ -420,9 +420,13 @@ function installeer() {
   };
   /* [onderzoeker E] hoeveel spelersschade gooit het sceneslot/de vloer weg? */
   const oSlot = window.dicktatorSlot;
-  if (oSlot) window.dicktatorSlot = function (b, n) {
-    const r = oSlot(b, n); const T = window.__T;
+  if (oSlot) window.dicktatorSlot = function (b, n, bron) {
+    const r = oSlot(b, n, bron); const T = window.__T;
     if (T && n > r) { const bd = window.__bedrijf(); T.slotWeg = (T.slotWeg || 0) + (n - r); T.slotWegBd = T.slotWegBd || {}; T.slotWegBd[bd] = (T.slotWegBd[bd] || 0) + (n - r); T.slotHits = (T.slotHits || 0) + 1; if (r === 0) T.slotNul = (T.slotNul || 0) + 1; }
+    /* B4 stap 3: 'het hof vangt de klap' staat in de spelcode (DICK.hofVangt). Wat het hof van
+       DEZE klap ving, schrijft dicktatorSlot zelf in b._slotGevangenLaatst (= wat de probe
+       MEET_SPILL vroeger als spill telde: het weggeknipte deel, als er een vanger was). */
+    if (T && b && b._slotGevangenLaatst > 0) T.spill = (T.spill || 0) + b._slotGevangenLaatst;
     return r;
   };
   const oDec = window.dicktatorDecreet;
@@ -543,7 +547,10 @@ async function eenGevecht({ build, job }) {
      valt op zijn eerste levende hoveling (van links naar rechts). Uit de spelcode (DICK.hofVangt)
      of uit de probe MEET_SPILL=1. De bot telt dat overschot mee; blind telt hij het niet. */
   const hofVangt = () => !botBlind && (!!(typeof DICK === 'object' && DICK && DICK.hofVangt) || !!window.__spillProbe);
-  const vanger = () => g.vijanden.find(x => !x.dood && !isBaas(x) && x.hp > 0) || null;
+  /* de vanger uit de spelcode zodra die bestaat (B4 stap 3: dicktatorHofVanger), anders hetzelfde criterium */
+  const vanger = () => (typeof dicktatorHofVanger === 'function')
+    ? dicktatorHofVanger(g, dicktatorBaas(g))
+    : (g.vijanden.find(x => !x.dood && !isBaas(x) && x.hp > 0) || null);
   const spillW = over => {
     if (over <= 0 || !hofVangt()) return 0;
     const h = vanger(); if (!h) return 0;
@@ -928,16 +935,16 @@ async function maakPagina(browser, fouten) {
     const capVan = b => { const sc = dicktatorScene(b); const c = (typeof CAPS === 'object') ? (CAPS[sc] ?? CAPS[String(sc)]) : CAPS; return (c == null || c <= 0) ? Infinity : c; };
     const reset = (b, g) => { if (b._capBeurt !== g.beurt) { b._capBeurt = g.beurt; b._capSom = 0; } };
     window.__capRuimte = b => { const g = S.gevecht; if (!g || !b) return Infinity; reset(b, g); return Math.max(0, capVan(b) - b._capSom); };
-    window.dicktatorSlot = function (b, n) {
+    window.dicktatorSlot = function (b, n, bron) {
       const g = S.gevecht;
-      if (!g || !b || b.dood || b._geschorst || n <= 0) return o(b, n);
+      if (!g || !b || b.dood || b._geschorst || n <= 0) return o(b, n, bron);
       reset(b, g);
       const open = Math.max(0, capVan(b) - b._capSom);
       const n2 = Math.min(n, open);
       const T = window.__T;
       if (T && n2 < n) { const bd = window.__bedrijf(); T.capWeg = (T.capWeg || 0) + (n - n2); T.capWegBd = T.capWegBd || {}; T.capWegBd[bd] = (T.capWegBd[bd] || 0) + (n - n2); T.capHits = (T.capHits || 0) + 1; }
       if (n2 <= 0) return 0;
-      const r = o(b, n2);
+      const r = o(b, n2, bron);
       b._capSom += r;
       return r;
     };
@@ -977,13 +984,15 @@ async function maakPagina(browser, fouten) {
      hoveling (links naar rechts). Eén generieke regel voor élke weggeknipte schade (gif, doornen,
      kaarten). Zonder levend hof blijft het weg. Buitenste laag, ná installeer: slotWeg telt de knip
      zoals altijd, de hoveling-schade telt als uitHof. Sinds v4 kent de bot de regel (spillW).
-     Staat de regel al in de spelcode (DICK.hofVangt), dan doet de probe NIETS (geen dubbele vangst). */
+     Staat de regel al in de spelcode (DICK.hofVangt), dan doet de probe NIETS (geen dubbele vangst).
+     Sinds B4 stap 3 staat hij daar (DICK.hofVangt = true): de probe werkt alleen nog als je hem
+     via MEET_DICK='{"hofVangt":false}' uitzet (de ijking spelcode tegenover probe). */
   if (process.env.MEET_SPILL === '1') await page.evaluate(() => {
     if (typeof DICK === 'object' && DICK && DICK.hofVangt) { console.warn('MEET_SPILL genegeerd: DICK.hofVangt staat in de spelcode'); return; }
     window.__spillProbe = true;
     const o = window.dicktatorSlot;
-    window.dicktatorSlot = function (b, n) {
-      const r = o(b, n);
+    window.dicktatorSlot = function (b, n, bron) {
+      const r = o(b, n, bron);
       const g = S.gevecht;
       if (g && b && !b.dood && n > r) {
         const hof = g.vijanden.find(x => x !== b && !x.dood && !(VIJANDEN[x.id] && VIJANDEN[x.id].baas));

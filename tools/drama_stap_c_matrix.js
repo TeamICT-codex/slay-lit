@@ -273,7 +273,7 @@ async function draai(browser, s) {
     await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 2; b.hp = Math.floor(b.maxHp * 0.30); checkBaasFase(); });
     stappen.push({ naam: 'II -> III · DE TIRADE', rest: await na(6400) });
     await opzet(); await kijk();
-    await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; verliesHp(b, 30); });
+    await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; b.minVrij = true; /* B4 stap 3: de sprong landt na de zitting van III (DE ZITTING LOOPT houdt hem anders op 1 HP) */ verliesHp(b, 30); });
     stappen.push({ naam: 'DE HERVERKIEZING', rest: await na(8200) });
   }
   await page.screenshot({ path: path.join(UIT, 'c3-' + s.n.split(' ')[0] + '.png') });
