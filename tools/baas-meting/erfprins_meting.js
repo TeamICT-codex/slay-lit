@@ -40,6 +40,9 @@
      MEET_BELEID=naief,bewust,schild,slim,nietslaan
      MEET_VAR=basis[,naam…]  MEET_VARIANTEN=<json-bestand {naam:{knoppen:{…ERF…},mods:[…]}}>
        mods: vloek1 · vloek2 (extra Lasters)
+       B3 F1, de keuzevragen (bazen_plan.md §5): {"G25":{"knoppen":{"gifMult":2.5}}}, {"T2":{"knoppen":{"treffers":2,"onblokbaar":0.3}}},
+       {"P30":{"knoppen":{"doorPlafond":0.3}}} (plafond op het onblokbare deel per beurt), {"LH0":{"knoppen":{"leeghalen":0}}};
+       gemeten op MEET_SEEDBASE=95000, 96 seeds, bewust/schild/slim/nietslaan
      MEET_SEEDBASE=70000 (seeds 'ERF-<base+i>')   MEET_HP=0.85   MEET_WERKERS=8   MEET_RECYCLE=40
      MEET_UIT=<pad> (standaard: <label>.json naast dit script)
      MEET_TUSSEN=1000 (tussenstand elke zoveel gevechten)   MEET_HERVAT=1 (ga verder op de tussenstand in MEET_UIT)
