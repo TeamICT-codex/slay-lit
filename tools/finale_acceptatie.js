@@ -1046,6 +1046,7 @@ const sonde = page => page.evaluate(() => {
   /* het Galgentouw executeert de griffier niet op een vangst, wel op jouw klap */
   const galg = await page.evaluate(() => {
     const g = S.gevecht, b = dicktatorBaas(g), gr = hofLid(g, 'de_griffier');
+    if (!gr) return { naVangst: { hp: null, dood: true }, naKlap: { hp: null, dood: true }, drempel: null };   /* code zonder A4: de griffier is al dood (negatieve controle breekt niet af) */
     if (!S.relikwieen.includes('galgentouw')) S.relikwieen.push('galgentouw');
     gr.hp = 6; b.hp = dicktatorVloer(b) || b.hp;
     verliesHp(b, 40, sp());
