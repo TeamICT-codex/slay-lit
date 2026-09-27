@@ -3415,9 +3415,11 @@ function verliesHp(doel, n, bron) {
     if (S.hp <= 0 && inGevecht()) nederlaag();
   } else {
     doel._hpVoorKlap = doel.hp;   /* v121 (het drama): de stand van VÓÓR deze klap. De bazenbalk van de DICKtator bevriest daarop tot de banner valt (§2.1 t=900) - op b.hp bevroor hij op de nieuwe stand en was de balk al verschoven vóór de stempel. */
-    doel.hp = Math.max(0, doel.hp - n);
+    /* _vangBodem (A4, dicktatorSlot): de griffier die een klap van zijn baas VANGT, sterft er niet
+       aan - ook het Galgentouw executeert hem dan niet. Een klap die jij hem geeft, wel. */
+    doel.hp = Math.max(doel._vangBodem || 0, doel.hp - n);
     /* Het Galgentouw (Act 3): vijanden (geen bazen) onder 10% HP sterven meteen — de executie */
-    if (doel.hp > 0 && heeftRelikwie('galgentouw') && VIJANDEN[doel.id] && !VIJANDEN[doel.id].baas
+    if (doel.hp > 0 && !doel._vangBodem && heeftRelikwie('galgentouw') && VIJANDEN[doel.id] && !VIJANDEN[doel.id].baas
         && doel.hp <= Math.ceil((doel.maxHp || 1) * 0.1)) {
       doel.hp = 0;
       fxNummer(actorEl(doel), '🪢 de executie', 'fx-schade');
@@ -5283,8 +5285,13 @@ function toonBaasIntro(g) {
     setTimeout(() => {
       const Dd = (UITSPRAKEN._dicktator || {}).duiding || {};
       /* B4 stap 3 (nevenvondst beeldcontrole): viel scène I al binnen die 5,6 s (een openingsklap
-         van 80+), dan zou deze banner ná de regie van II over scène II liggen - dan zwijgt hij */
-      if (S.gevecht === g && !g.voorbij && (b.fase || 1) === 1 && !b.vorm2) baasFaseMoment('I · DE AANKLACHT', Dd.aanklacht || '„De zitting is geopend."');
+         van 80+), dan zou deze banner ná de regie van II over scène II liggen - dan zwijgt hij.
+         Review B4a: valt de klap terwijl hij STAAT (2,4 s, invoer open), dan ruimt de regie van de
+         overgang hem op t=0 op (dicktatorOvergang, klasse proces-ouverture). */
+      if (S.gevecht === g && !g.voorbij && (b.fase || 1) === 1 && !b.vorm2) {
+        const f = baasFaseMoment('I · DE AANKLACHT', Dd.aanklacht || '„De zitting is geopend."');
+        if (f) f.classList.add('proces-ouverture');
+      }
     }, 5600);
     return;
   }
@@ -5751,7 +5758,12 @@ function intentTekst(v) {
   const witLeeft = !!(gMet() && !gMet().dood && gMet().id === 'drops_wit');
   /* B5 (B4 stap 3) - HET PROCES IS OPENBAAR: in de finale is de zaal verlicht. De telegraaf van
      de DICKtator én zijn hof valt nooit onder de duisternis ("telegraaf zonder toeval"); de
-     fakkel doet verder alles wat hij doet (+1 Kracht bij gedoofd, het vignet, de buit). */
+     fakkel doet verder alles wat hij doet (+1 Kracht bij gedoofd, het vignet, de buit).
+     A5 (architectbeslissing B4a, 27 sep 2026): ook het HOF telegrafeert in de finale altijd. Dat
+     staat naast de bazentoneel-regel B0.11 op main (elke BAAS telegrafeert altijd; gewone
+     vijanden blijven in het donker) en botst er niet mee: het hof bestaat alleen in de finale.
+     Bij de merge worden het dus beide voorwaarden: witLeeft || isBaas (B0.11) || openbaar (A5/B5)
+     || de Fluisterende Schedel. */
   const openbaar = !!(S.gevecht && dicktatorBaas(S.gevecht));
   const niveau = (witLeeft || openbaar || heeftRelikwie('fluisterende_schedel')) ? 'helder' : lichtNiveau();
   if (niveau === 'gedoofd') {
@@ -7444,8 +7456,13 @@ const DICK = {
   /* HET HOF VANGT DE KLAP (B4 stap 3, afwerkplan §9A): wat het scèneslot of de vloer van een
      klap op hem wegknipt, valt niet in de leegte maar op zijn eerste levende hoveling (van
      links naar rechts, dicktatorHofVanger), met de fx '⚖️ vangt n' op die hoveling. Eén regel
-     voor elke weggeknipte schade (kaarten, gif, doornen); zonder levend hof blijft het weg. */
+     voor elke weggeknipte schade (kaarten, gif, doornen); zonder levend hof blijft het weg.
+     A4 (architectbeslissing B4a, 27 sep 2026): DE GRIFFIER STERFT ER NIET AAN. Een vangst laat
+     hem op minstens griffierBodem HP; wat overblijft, valt op de volgende levende hoveling of
+     vervalt (dicktatorHofVangst). Anders werd hij de vaste spons en verdwenen het decreet en de
+     stemming bijna uit het gevecht. Doden kan de speler hem nog altijd zelf. */
   hofVangt: true,
+  griffierBodem: 1,
   claqueurHp: 16,
   gifRest: 0.5,           /* DE HERVERKIEZING: dit deel van zijn Gif overleeft (naar beneden afgerond) */
   tempo: 1
@@ -7464,9 +7481,17 @@ function dickZittingTekst() {
   const lo = Math.min(...n), hi = Math.max(...n);
   return lo === hi ? String(lo) : lo + '-' + hi;
 }
+/* {OM} = het hoogste Ontslag (DICK.ONTSLAG loopt op en blijft daarna op zijn laatste bedrag):
+   "harder tot {OM}" in plaats van "elke keer harder", dat voorbij het einde van de lijst loog
+   (review B4a). Een lege of rare lijst laat de sleutel staan (lookup-bugklasse). */
+function dickOntslagMax() {
+  const L = (DICK.ONTSLAG || []).filter(x => typeof x === 'number');
+  return L.length ? Math.max(...L) : null;
+}
 function dickTekst(s) {
-  return String(s == null ? '' : s).replace(/\{(A|K|V|KM|D|Z)\}/g, (m, k) => {
+  return String(s == null ? '' : s).replace(/\{(A|K|V|KM|D|Z|OM)\}/g, (m, k) => {
     if (k === 'Z') { const z = dickZittingTekst(); return z == null ? m : z; }
+    if (k === 'OM') { const o = dickOntslagMax(); return o == null ? m : String(o); }
     const v = DICK[DICK_TEKST[k]];
     return (typeof v === 'number') ? String(v) : m;
   });
@@ -7551,6 +7576,9 @@ function dicktatorMinZetten(scene) {
   return (m && m[scene]) ?? 0;   /* lookup-bugklasse: een scène zonder sleutel heeft geen minimum */
 }
 function dicktatorVloer(b) {
+  /* DEV-SHORTCUT: b.minVrij zet alleen de DEV-landing (_devBedrijfLanding, en de sprongen van de
+     drama-suites naar IV); het spel zelf zet hem nooit op true (de HERSCHIKT-rider en de
+     herverkiezing zetten hem terug op false). Zie RELEASE-CHECKLIST §1.1. */
   if (!b || b.dood || b.minVrij) return null;
   const scene = dicktatorScene(b);
   const min = dicktatorMinZetten(scene);
@@ -7591,12 +7619,31 @@ function dicktatorZittingTeller(b) {
       : '⚖ DE ZITTING LOOPT: nog ' + zetten(nog) + '. ' + (hof ? 'Te veel schade vangt zijn hof.' : 'Tot dan zakt hij niet onder ' + vloer + '.')
   };
 }
-/* HET HOF VANGT DE KLAP: de eerste levende hoveling van links naar rechts (g.vijanden). Precies
-   het criterium van vanger() in tools/baas-meting/dick_meting.js, zodat het harnas dezelfde
-   vanger meet als het spel. Geen baas (lookup-bugklasse: een onbekend id telt als hoveling). */
+/* HET HOF VANGT DE KLAP - wie vangt hoeveel van n weggeknipte schade? PUUR (geen mutatie), zodat
+   het slot, de teller, de GESCHORST-tekst en het meetharnas (tools/baas-meting/dick_meting.js)
+   dezelfde verdeling lezen. Van links naar rechts over de levende hovelingen (g.vijanden, geen
+   baas; lookup-bugklasse: een onbekend id telt als hoveling). A4 (B4a): de griffier vangt
+   hoogstens tot hij op DICK.griffierBodem HP staat - hij draagt het dossier, zonder hem geen
+   decreet; elke andere hoveling vangt wat er nog over is (en kan eraan sterven). Wat daarna
+   overblijft, vervalt. Geeft [{ h, n }] terug (alleen wie echt iets vangt). */
+function dicktatorHofVangst(g, b, n) {
+  const uit = [];
+  if (!g || !(n > 0)) return uit;
+  const bodem = Math.max(1, DICK.griffierBodem ?? 1);
+  let rest = n;
+  for (const h of g.vijanden) {
+    if (rest <= 0) break;
+    if (h === b || h.dood || !(h.hp > 0) || (VIJANDEN[h.id] && VIJANDEN[h.id].baas)) continue;
+    const k = h.id === 'de_griffier' ? Math.min(rest, Math.max(0, h.hp - bodem)) : rest;
+    if (k > 0) { uit.push({ h, n: k }); rest -= k; }
+  }
+  return uit;
+}
+/* de eerste hoveling die nu iets kan vangen (null = wat de regel wegknipt, gaat verloren). Een
+   griffier op zijn bodem vangt niets meer; dan is het de volgende, of niemand. */
 function dicktatorHofVanger(g, b) {
-  if (!g) return null;
-  return g.vijanden.find(x => x !== b && !x.dood && x.hp > 0 && !(VIJANDEN[x.id] && VIJANDEN[x.id].baas)) || null;
+  const v = dicktatorHofVangst(g, b, Infinity);
+  return v.length ? v[0].h : null;
 }
 /* de scène volgens de HP. <= de drempel = de nieuwe scène (het scèneslot legt hem exact
    OP de drempel, dus die moet al tot de volgende scène horen). */
@@ -7615,10 +7662,11 @@ function dicktatorFase(v) {
    Vanaf III (80 → 0) en in vorm 2 is er geen slot: de doodsklap is de herverkiezing.
    b._slotWegLaatst = wat het slot van DEZE klap wegknipte (review F7): aanvalOp telt alleen
    wat echt viel in S.stats.schade en in de overkill-uitspraak.
-   HET HOF VANGT DE KLAP (B4 stap 3): wat hier weggeknipt wordt, valt op de eerste levende
-   hoveling (dicktatorHofVanger) - langs verliesHp, dus met zijn dood-haak en Galgentouw, maar
-   zonder recursie (een hoveling loopt niet door het slot). b._slotGevangenLaatst = het deel
-   dat het hof ving (aanvalOp telt het als schade op het hof, F7). bron = de veroorzaker. */
+   HET HOF VANGT DE KLAP (B4 stap 3): wat hier weggeknipt wordt, valt op het hof volgens
+   dicktatorHofVangst (van links naar rechts; A4: de griffier sterft er niet aan) - langs
+   verliesHp, dus met de dood-haak van wie eraan sterft, maar zonder recursie (een hoveling
+   loopt niet door het slot). b._slotGevangenLaatst = het deel dat het hof ving (aanvalOp telt
+   het als schade op het hof, F7). bron = de veroorzaker. */
 function dicktatorSlot(b, n, bron) {
   if (!b || b.dood) return n;
   const r = dicktatorSlotRest(b, n);
@@ -7626,12 +7674,12 @@ function dicktatorSlot(b, n, bron) {
   b._slotWegLaatst = weg;
   b._slotGevangenLaatst = 0;
   if (weg > 0 && DICK.hofVangt) {
-    const g = S.gevecht;
-    const h = dicktatorHofVanger(g, b);
-    if (h) {
-      b._slotGevangenLaatst = weg;
+    for (const { h, n: k } of dicktatorHofVangst(S.gevecht, b, weg)) {
+      b._slotGevangenLaatst += k;
       h._vangt = true;                 /* verliesHp toont dan '⚖️ vangt n' i.p.v. '-n' (de vang-fx) */
-      try { verliesHp(h, weg, bron); } finally { h._vangt = false; }
+      /* A4: de griffier houdt zijn bodem, ook tegenover het Galgentouw (verliesHp leest _vangBodem) */
+      if (h.id === 'de_griffier') h._vangBodem = Math.max(1, DICK.griffierBodem ?? 1);
+      try { verliesHp(h, k, bron); } finally { h._vangt = false; h._vangBodem = 0; }
     }
   }
   return r;
@@ -7892,6 +7940,9 @@ function dicktatorOvergang(b, g, nieuw, oud) {
   b._bbToon = (b._hpVoorKlap != null ? Math.max(b.hp, b._hpVoorKlap) : b.hp);
   b.herschik = true;
   dicktatorSluitDossier(b, g);   /* elke scènewissel sluit het dossier (review F3 + F5) */
+  /* review B4a: de ouverture-banner "I · DE AANKLACHT" die nog in beeld staat (de klap viel
+     tijdens de banner), gaat op t=0 weg - nooit twee scènetitels tegelijk */
+  document.querySelectorAll('.baas-flits.proces-ouverture').forEach(e => e.remove());
   _ceremonieAan(g);
 
   if (nieuw === 2) dicktatorRegieProces(b, g, op, U, D);
@@ -8099,7 +8150,7 @@ function dicktatorHerverkiezing(g, doel) {
   doel.blok = 0;
   doel._geschorst = false;
   doel.herschik = false;
-  doel.minVrij = false;   /* IV is een nieuwe scène: een DEV-landing in III geldt niet voor DE ZITTING van IV */
+  doel.minVrij = false;   /* DEV-SHORTCUT (minVrij): IV is een nieuwe scène - een DEV-landing in III geldt niet voor DE ZITTING van IV */
   /* DE KIEZERS. Ze sterven METEEN in de staat (geen verliesHp → geen bijDood, geen
      Galgentouw, geen Epidemie-verspreiding); de gouden stemming en de vlucht zijn de
      animatie eroverheen. */
@@ -8569,19 +8620,39 @@ function dicktatorSluitDossier(b, g) {
 /* DE GRIFFIER STERFT (review F4, VIJANDEN.de_griffier.bijDood): zonder griffier geen decreet,
    dus ook geen dossier. Een open dossier sluit meteen, met één melding; de zitting-pil slaat
    om naar EIGENHANDIG VONNIS (de hersync). Zijn executie in de Tirade loopt buiten verliesHp
-   (geen bijDood); daar sluit de scènewissel het dossier al. */
+   (geen bijDood); daar sluit de scènewissel het dossier al.
+   Review B4a, vondst 1: sterft hij terwijl de baas AAN ZET is (g._aanZet, tussen zijn gif-tik
+   en zijn zet), dan kiest de baas NIET opnieuw - de pil die je las is zijn zet. Stond daar HET
+   DECREET, dan wordt het een zitting zonder decreet (dicktatorZittingZonderDecreet): geen
+   schade, geen kaart. Vroeger werd het hier stil EIGENHANDIG VONNIS (13 niet-getelegrafeerde
+   schade). Sinds A4 sterft de griffier niet meer aan een vangst; dit blijft de vangrail. */
+function dicktatorBaasAanZet(g) {
+  const b = g ? dicktatorBaas(g) : null;
+  return !!(b && g._aanZet === b);
+}
 function dicktatorGriffierDood() {
   const g = S.gevecht; if (!g || g.voorbij) return;
   if (g.aangezegd && g.aangezegd.size) {
     dicktatorSluitDossier(dicktatorBaas(g), g);
     melding('📜 De griffier is dood: het dossier is gesloten, er valt geen decreet meer.');
   }
-  dicktatorHersync(true);
+  dicktatorHersync(!dicktatorBaasAanZet(g));
 }
 /* de zitting van deze scène is gehouden - welke vorm ze ook kreeg. Het dossier sluit. */
 function dicktatorZittingGehouden(v, g, scene) {
   v.zittingIn = Object.assign({}, v.zittingIn, { [scene]: true });
   if (g && g.aangezegd && g.aangezegd.size) { g.aangezegd.clear(); renderGevecht(); }
+}
+/* HET DECREET stond op de pil, maar bij de zitting is er geen griffier (of geen dossier) meer
+   (review B4a, vondst 1): "zonder griffier geen decreet". De zitting gaat voorbij zoals de pil
+   zei - geen schade - en je verliest geen kaart. NIET via het vangnet van dicktatorDecreet: dat
+   verbrandt de duurste kaart, en dat stond nergens. zittingIn is al gezet door de rider. */
+function dicktatorZittingZonderDecreet(v, g) {
+  const griffier = !!(g && hofLid(g, 'de_griffier'));
+  dicktatorSluitDossier(v, g);
+  fxNummer(actorEl(v), '📜 geen decreet', 'fx-blok');
+  melding(griffier ? '📜 Geen dossier, geen decreet: de zitting gaat voorbij.' : '📜 Zonder griffier geen decreet: de zitting gaat voorbij.');
+  renderGevecht();
 }
 
 /* na een uitgevoerde factuur: tellen en spreken. zelf = er is géén deurwaarder → hij int
@@ -8640,7 +8711,7 @@ function dicktatorKies(v, beurt) {
     tip: 'het hof neemt zijn plaats in — deze beurt geen schade. De nieuwe scène begint daarna.',
     doe: vv => {
       vv.herschik = false;
-      vv.minVrij = false;                          /* een DEV-landing geldt maar voor één scène */
+      vv.minVrij = false;                          /* DEV-SHORTCUT (minVrij): een DEV-landing geldt maar voor één scène */
       vv.sceneStart = (vv.beurtTeller || 0) + 1;   /* eindBeurt hoogt de teller hierna op: de volgende zet is slot 1 */
       baasSpreekt(UITSPRAKEN._dicktator.herschikt);
     }
@@ -8697,7 +8768,13 @@ function dicktatorKies(v, beurt) {
   if (dossier.length < 2 || speelbaar <= DICK.speelbaarGuard) return vonnis;
   return {
     naam: 'HET DECREET', type: 'decreet', namen: dossier.map(d => d.naam),
-    doe: vv => { vv.zittingIn = Object.assign({}, vv.zittingIn, { [scene]: true }); return dicktatorDecreet(vv); }
+    doe: vv => {
+      vv.zittingIn = Object.assign({}, vv.zittingIn, { [scene]: true });
+      /* review B4a, vondst 1: zonder griffier of dossier bij de zitting geen decreet - en geen kaart */
+      const gg = S.gevecht;
+      if (!gg || !hofLid(gg, 'de_griffier') || !(gg.aangezegd && gg.aangezegd.size >= 2)) return dicktatorZittingZonderDecreet(vv, gg);
+      return dicktatorDecreet(vv);
+    }
   };
 }
 
@@ -8953,7 +9030,7 @@ function dicktatorBalk(b) {
     delen.push('⏳ ' + (klok === 0 ? 'ONTSLAG NU' : 'ONTSLAG over ' + klok));
     delen.push('ONTSLAG ' + bedrag);
     tips.push('HET MANDAAT: om de twee beurten HET ONTSLAG (' + (DICK.ONTSLAG || []).join(' → ') + ', plus zijn Kracht), ertussen een aanloop: DE FACTUUR of de DONDERREDE.'
-      + (D.mandaat ? ' ' + D.mandaat : ''));
+      + (D.mandaat ? ' ' + dickTekst(D.mandaat) : ''));
   } else {
     if (scene >= 2) {
       const tar = dicktatorTarief(b);
@@ -8991,6 +9068,7 @@ function baasFaseMoment(titel, sub) {
   el.innerHTML = `<h2>${titel}</h2><span>${sub}</span>`;
   $('#scherm-gevecht').appendChild(el);
   setTimeout(() => el.remove(), 2400);
+  return el;   /* de ouverture van het Proces merkt hem, zodat een regie hem kan opruimen */
 }
 
 /* vijand toevoegen midden in het gevecht (de splijtende koning) */
@@ -9067,7 +9145,12 @@ async function eindBeurt() {
      snapshot staat hij één volle spelersbeurt met zichtbare intentie klaar. */
   for (const v of [...g.vijanden]) {
     g.herrijzenisNu = false;   /* v109: de knip geldt per reeks, niet voor de hele vijandbeurt */
+    g._aanZet = null;
     if (v.dood || gestopt()) continue;
+    /* AAN ZET (review B4a, vondst 1): van zijn gif-tik tot zijn zet gelezen is. Wat in dat venster
+       sterft (bv. een hoveling die zijn gif-tik vangt), mag de pil die je las niet herschrijven -
+       dicktatorGriffierDood leest dit. */
+    g._aanZet = v;
     v.blok = 0;
     const wasHerrezen = !!v.herrezen;   /* HET PROCES: valt de herverkiezing op zijn eigen gif-tik? */
 
@@ -9125,6 +9208,7 @@ async function eindBeurt() {
     if (gestopt()) return;
 
     const it = v.intent;
+    g._aanZet = null;   /* zijn zet is gelezen: vanaf hier mag een hersync de pil van de VOLGENDE beurt zetten */
     if (it) {
       if (it.type === 'aanval' || it.type === 'factuur') {
         /* v109: een factuur is een klap, vast en zonder Kracht; het bedrag komt uit dezelfde
@@ -9173,6 +9257,7 @@ async function eindBeurt() {
     console.error('Fout tijdens de vijandbeurt — beurt veilig teruggeven i.p.v. bevriezen:', e);
     if (gestopt()) return;
   }
+  g._aanZet = null;   /* ook na een 'continue' (de herverkiezing op zijn gif-tik, een gif-dood) of een throw */
 
   if (alleVijanden().length === 0) { gevechtGewonnen(); return; }
   beginSpelerBeurt();
@@ -9289,10 +9374,11 @@ function beginSpelerBeurt() {
      Kan de laatste vijand vellen → de gewonnen-check verderop vangt dat. */
   metgezelBeurt();
   /* HET SCÈNESLOT (review F1): een schorsing die vóór jouw eerste actie valt, geldt niet voor
-     jouw beurt. Duwde de beet van de metgezel de DICKtator op een drempel (of op de vloer
-     van DE ZITTING LOOPT), dan vuurt de overgang nu - de pil is die van de nieuwe scène - en
-     je beurt blijft van jou. Solo onbereikbaar (niets anders raakt hem tussen de check
-     hierboven en hier), met een metgezel systematisch. */
+     jouw beurt. Duwde de beet van de metgezel de DICKtator op een drempel, dan vuurt de
+     overgang nu - de pil is die van de nieuwe scène - en je beurt blijft van jou. (De vloer
+     van DE ZITTING LOOPT schorst sinds F10 niet meer: alleen het scèneslot zet _geschorst.)
+     Solo onbereikbaar (niets anders raakt hem tussen de check hierboven en hier), met een
+     metgezel systematisch. */
   if (_dickB && _dickB._geschorst && !g.voorbij) { _dickB._geschorst = false; checkBaasFase(); }
   /* LICHT-VLOEKEN in de hand (onspeelbaar) — sturen je fakkel-gedrag */
   const smetN = g.hand.filter(c => c.id === 'schaduwsmet').length;

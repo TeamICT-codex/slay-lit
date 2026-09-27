@@ -367,7 +367,7 @@ const SONDE = () => {
   t(s.baas.fase === 3 && s.bedrijf === '4' && !s.ceremonie && s.eindDisabled === false && s.vonnis === 0 && !s.doek && !s.hitstop,
     `\u2026 en landt in V: data-bedrijf "${s.bedrijf}", herrezen ${s.baas.herrezen}, ${s.baas.hp}/${s.baas.maxHp} HP, invoer vrij ${s.eindDisabled === false}, ${s.vonnis} vonnissen, doek ${s.doek}, hitstop ${s.hitstop}`);
 
-  /* \u23f3 IV \u00b7 Het Mandaat (de staart): herkozen met twee kiezers = +4 Kracht */
+  /* \u23f3 IV \u00b7 Het Mandaat (de staart): herkozen met twee kiezers = 2 x DICK.krachtPerKiezer Kracht (de controle eist alleen Kracht > 0: geen balansgetal in de suite, review F9) */
   await klik(1, 6); await wachtGevecht(1200); await slaap(9000); s = await sonde();
   t(s.baas.herrezen && s.baas.vorm2 && s.bedrijf === '4' && s.baas.kracht > 0 && s.hp === Math.round(88 * 0.40) && !s.ceremonie,
     `\u23f3 IV \u00b7 Het Mandaat (de staart) \u2192 jij ${s.hp}/${s.maxHp} HP zonder dranken, baas ${s.baas.hp}/${s.baas.maxHp} herrezen ${s.baas.herrezen} vorm2 ${s.baas.vorm2} kracht ${s.baas.kracht}, data-bedrijf "${s.bedrijf}", ceremonie ${s.ceremonie}`);

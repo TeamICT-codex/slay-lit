@@ -16,7 +16,11 @@ from meetlib import HELD, ST, SCENE, laad, dick_rs, tag, seeds, marge, binnen_zo
 # Architectbeslissingen B4a (27 sep 2026): 'sterk <= 80 %' vervalt; sterk (norm) wint per held
 # MINSTENS sterk_boven pp meer dan gemiddeld EN HOOGSTENS sterk %. Gemiddeld = de gemiddeld-norm
 # (MEET_GEMNORM=1) - de tabel toont wat de meting bevat.
-DOEL = dict(gem=(40, 55), spr=20, spr_streef=15, sterk=90, sterk_boven=15, matig=(0, 10), med=(11, 14), scene=2, fact=45)
+DOEL = dict(gem=(40, 55), spr=20, spr_streef=15, sterk=90, sterk_boven=15, matig=(0, 10), med=(11, 14), scene=2, fact=45, dec=1.0)
+# Review B4a (27 sep 2026): 'sterk <= 90 %' is met de toegestane hefbomen onhaalbaar gebleken en VERVALT
+# voor deze release (een latere ontwerpvraag aan Thomas); de tabel toont hem nog, als informatie.
+# A4: het decreet komt weer gemiddeld minstens DOEL['dec'] keer per gevecht voor (gemiddeld-norm).
+STERK_MAX_VERVALT = True
 
 
 def cel_stats(v):
@@ -43,6 +47,8 @@ def cel_stats(v):
         spill=st.mean(r.get('spill', 0) for r in v) if v else 0,
         stil=st.mean(stilstand(r) for r in v) if v else 0,
         ivw=(sum(1 for r in iv if r.get('gewonnen')), len(iv)),
+        dec=st.mean(len(r.get('decreten') or []) for r in v) if v else 0,
+        kiez=(st.mean(r.get('kiezers') or 0 for r in iv) if iv else None),
         sterf=Counter(r.get('sterfBedrijf') for r in v if r.get('dood')),
         tijd=sum(1 for r in v if r.get('timeout')),
     )
@@ -81,13 +87,14 @@ def druk(p, pop=False, kort=False):
               f" | med {min(meds) if meds else '-'}-{max(meds) if meds else '-'} | fact {min(facts) if facts else 0:.0f}-{max(facts) if facts else 0:.0f}%")
         return res
     print(kop)
-    print(f"{'cel':24} {'n':>4} {'sd':>3} {'winst':>6} {'±':>3} {'med':>4} {'I':>4} {'II':>4} {'III':>4} {'IV':>4} {'fact%':>5} {'weg':>5} {'cap':>4} {'hof':>4} {'stil':>4} {'IV w/h':>7}  sterfscène")
+    print(f"{'cel':24} {'n':>4} {'sd':>3} {'winst':>6} {'±':>3} {'med':>4} {'I':>4} {'II':>4} {'III':>4} {'IV':>4} {'fact%':>5} {'weg':>5} {'cap':>4} {'hof':>4} {'stil':>4} {'dec':>4} {'kiez':>4} {'IV w/h':>7}  sterfscène")
     for k in sorted(res, key=lambda k: (k[0], ST.index(k[1]) if k[1] in ST else 9, k[2])):
         s = res[k]
         rb = lambda bd: (f"{s['rb'][bd]:.1f}" if s['rb'][bd] is not None else '-')
         sterf = ' '.join(f"{SCENE[b] if isinstance(b, int) and 0 < b <= 4 else b}:{c}" for b, c in sorted(s['sterf'].items(), key=lambda x: (x[0] is None, x[0])))
+        kz = '-' if s['kiez'] is None else f"{s['kiez']:.2f}"
         print(f"{k[0] + '/' + k[1] + tag(k[2]):24} {s['n']:4} {s['s']:3} {s['winst']:5.0f}% {s['marge']:3.0f} {s['med']:4} {rb(1):>4} {rb(2):>4} {rb(3):>4} {rb(4):>4}"
-              f" {s['fact']:5.0f} {s['weg']:5.0f} {s['cap']:4.0f} {s['spill']:4.0f} {s['stil']:4.1f} {s['ivw'][0]:>3}/{s['ivw'][1]:<3}  {sterf}")
+              f" {s['fact']:5.0f} {s['weg']:5.0f} {s['cap']:4.0f} {s['spill']:4.0f} {s['stil']:4.1f} {s['dec']:4.2f} {kz:>4} {s['ivw'][0]:>3}/{s['ivw'][1]:<3}  {sterf}")
     # ---- de doelen ----
     print('   DOELEN (solo, verse seeds):')
     if gem:
@@ -95,7 +102,8 @@ def druk(p, pop=False, kort=False):
     if spr is not None:
         print(f"   - spreiding gemiddeld <= {DOEL['spr']} pp (streef {DOEL['spr_streef']}) : {spr:.0f} pp {ok(spr <= DOEL['spr'])}{'' if spr <= DOEL['spr_streef'] else ' (boven het streefcijfer)'}")
     if ster:
-        print(f"   - sterk <= {DOEL['sterk']} %              : " + ' / '.join(f"{HELD[h]} {s['winst']:.0f} {ok(s['winst'] <= DOEL['sterk'])}" for h, s in ster.items()))
+        vv = ' (vervalt voor deze release, review B4a: alleen informatie)' if STERK_MAX_VERVALT else ''
+        print(f"   - sterk <= {DOEL['sterk']} %              : " + ' / '.join(f"{HELD[h]} {s['winst']:.0f} {ok(s['winst'] <= DOEL['sterk'])}" for h, s in ster.items()) + vv)
     if ster and gem:
         print(f"   - sterk >= gemiddeld + {DOEL['sterk_boven']} pp      : " + ' / '.join(f"{HELD[h]} {ster[h]['winst'] - gem[h]['winst']:+.0f} {ok(ster[h]['winst'] - gem[h]['winst'] >= DOEL['sterk_boven'])}" for h in HELD if h in ster and h in gem))
     if mat:
@@ -108,6 +116,9 @@ def druk(p, pop=False, kort=False):
         print(f"   - elke scène >= {DOEL['scene']} rondes (min over gem+sterk): " + ' / '.join(f"{SCENE[bd]} {'-' if mins[bd] is None else f'{mins[bd]:.1f}'} {ok(mins[bd] is None or mins[bd] >= DOEL['scene'])}" for bd in (1, 2, 3, 4)))
         fmax = max(s['fact'] for s in bron)
         print(f"   - Factuur <= {DOEL['fact']} % van de schade (max over gem+sterk): {fmax:.0f} % {ok(fmax <= DOEL['fact'])}")
+    if gem:
+        print(f"   - decreten per gevecht >= {DOEL['dec']:.0f} (gem, A4)   : " + ' / '.join(f"{HELD[h]} {s['dec']:.2f} {ok(s['dec'] >= DOEL['dec'])}" for h, s in gem.items())
+              + ('  · sterk ' + ' / '.join(f"{HELD[h]} {s['dec']:.2f}" for h, s in ster.items()) if ster else ''))
     print(f"   - solo (geen metgezel in één gevecht): {ok(solo)} · fouten {nfout} · paginafouten {len(m.get('paginafouten') or [])}")
     return res
 

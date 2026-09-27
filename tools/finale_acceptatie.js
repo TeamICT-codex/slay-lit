@@ -22,6 +22,9 @@
      teller, de inkeping, de vangst met zijn fx op de hoveling, GESCHORST alleen bij het slot, gif
      in de vloer, IV met zijn teken, de teller en de telegraaf nooit onder de duisternis) ·
      16 de teller op drie formaten.
+   Sinds de review van B4a (27 sep 2026): 17 de telegraaf liegt niet in zijn eigen beurt (vondst 1:
+     T1, T1b en de vangrail) · 18 A4 (de griffier sterft niet aan een vangst; de rest valt op de
+     volgende hoveling of vervalt; het Galgentouw) · 19 de ouverture wijkt voor de regie van II.
    Review F9: de suite leest elk balansgetal uit DICK (R3 draait aan die knoppen).
 
    GEEN dev-server en NOOIT poort 4173: een verzonnen host (localhost:4198) wordt vanaf
@@ -877,6 +880,165 @@ const sonde = page => page.evaluate(() => {
     t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
     await ctx.close();
   }
+
+  /* ================= 17 · REVIEW B4a VONDST 1 · DE TELEGRAAF LIEGT NIET IN ZIJN EIGEN BEURT ================= */
+  /* Vroeger: zijn gif-tik viel op de vloer (II) of op het scèneslot (I), het hof ving de tik, de
+     griffier stierf eraan, bijDood liet de baas opnieuw kiezen - vóór eindBeurt de pil las - en HET
+     DECREET ("geen schade") werd stil EIGENHANDIG VONNIS. T1 en T1b zijn de naspelingen van de
+     review (rev_b4a_breek.js); 17c dwingt de dood van de griffier in dat venster af (de vangrail
+     achter A4: dan geen herkeuze, en een zitting zonder griffier kost geen schade en geen kaart). */
+  const vijandbeurt = async (page, vooraf) => {
+    const voor = await page.evaluate(v => {
+      const g = S.gevecht, b = dicktatorBaas(g);
+      if (v) (new Function('g', 'b', v))(g, b);
+      g.speler.blok = 0; g.speler.status = {};
+      document.querySelectorAll('#meldingen .toast').forEach(e => e.remove());
+      renderGevecht();
+      const verwacht = g.vijanden.filter(x => !x.dood).reduce((s, x) => s + intentVerwachteSchade(x), 0);
+      window.__uitgevoerd = [];
+      if (!window.__wrapAanval) {
+        window.__wrapAanval = true;
+        const oud = window.vijandAanval;
+        window.vijandAanval = function (x, basis) { window.__uitgevoerd.push({ wie: x.id, basis, pil: x.intent ? x.intent.naam : '-' }); return oud.apply(this, arguments); };
+      }
+      const gr = hofLid(g, 'de_griffier');
+      return { pil: b.intent ? b.intent.naam : '-', verwacht, sHp: S.hp, dek: S.dek.length, dec: b.decreten || 0, gr: gr ? gr.hp : null };
+    }, vooraf || null);
+    await page.evaluate(() => { if (typeof window.__dickKeuze !== 'function') window.__dickKeuze = (A, B) => A; eindBeurt(); });
+    await slaap(200);
+    await wachtVrij(page, 30000);
+    const na = await page.evaluate(() => {
+      const g = S.gevecht, b = dicktatorBaas(g), gr = g.vijanden.find(x => x.id === 'de_griffier'), dw = g.vijanden.find(x => x.id === 'de_deurwaarder');
+      return {
+        sHp: S.hp, dek: S.dek.length, dec: b.decreten || 0, pil: b.intent ? b.intent.naam : '-', uit: window.__uitgevoerd || [],
+        gr: gr ? { hp: gr.hp, dood: !!gr.dood } : null, dw: dw ? { hp: dw.hp, dood: !!dw.dood } : null,
+        toasts: [...document.querySelectorAll('#meldingen .toast')].map(e => e.textContent).join(' | ')
+      };
+    });
+    return { voor, na, verloren: voor.sHp - na.sHp, uitTekst: na.uit.map(x => x.wie.replace(/^de_/, '') + ':' + x.pil + ' ' + x.basis).join(', ') || 'geen klap' };
+  };
+  const naarDecreetII = async page => {
+    await startProces(page);
+    await vijandbeurt(page);   /* DE AANZEGGING roept de griffier */
+    await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, b.hp - dicktatorDrempel(b, 2), sp()); checkBaasFase(); renderGevecht(); });
+    await wachtVrij(page, 30000);
+    for (let i = 0; i < 3; i++) await vijandbeurt(page);   /* HERSCHIKT, KARAKTERMOORD (dossier van II), de rekening */
+    return page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g); return { pil: b.intent.naam, vloer: dicktatorVloer(b), dossier: g.aangezegd ? g.aangezegd.size : 0, griffier: !!hofLid(g, 'de_griffier'), dw: !!hofLid(g, 'de_deurwaarder') }; });
+  };
+
+  kop('17a · T1 · II: zijn gif tikt in de vloer, het hof vangt, HET DECREET blijft HET DECREET');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  let st17 = await naarDecreetII(page);
+  if (st17.pil === 'HET DECREET' && st17.vloer && st17.griffier && st17.dw) {
+    const r = await vijandbeurt(page, "b.hp = dicktatorVloer(b); b.status.gif = 30; const gr = hofLid(g, 'de_griffier'); gr.hp = 10; gr.blok = 0;");
+    t(r.voor.pil === 'HET DECREET' && r.verloren === r.voor.verwacht && !r.na.uit.some(x => x.wie === 'de_dicktator'), `de pil zei "${r.voor.pil}" (${r.voor.verwacht} schade op het bord); je verloor ${r.verloren} (${r.uitTekst})`);
+    t(r.na.gr && !r.na.gr.dood && r.na.gr.hp === 1 && r.na.dw && r.na.dw.hp > 0, `A4: de griffier vangt tot op 1 HP (10 → ${r.na.gr && r.na.gr.hp}), de rest valt op de deurwaarder (${r.na.dw && r.na.dw.hp} HP)`);
+    t(r.na.dec === r.voor.dec + 1 && r.na.dek === r.voor.dek - 1, `het decreet viel zoals getelegrafeerd: decreten ${r.voor.dec} → ${r.na.dec}, dek ${r.voor.dek} → ${r.na.dek}`);
+  } else t(false, 'opzet 17a mislukt: ' + JSON.stringify(st17));
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  kop('17b · T1b · I: zijn gif duwt hem op het scèneslot, de griffier vangt, HET DECREET blijft HET DECREET');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page);
+  await vijandbeurt(page); await vijandbeurt(page);   /* DE AANZEGGING, VONNISSLAG */
+  st17 = await page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g); return { pil: b.intent.naam, griffier: !!hofLid(g, 'de_griffier'), dossier: g.aangezegd ? g.aangezegd.size : 0 }; });
+  if (st17.pil === 'HET DECREET' && st17.griffier) {
+    const r = await vijandbeurt(page, "b.hp = dicktatorDrempel(b, 2) + 2; b.status.gif = 12; const gr = hofLid(g, 'de_griffier'); gr.hp = 3; gr.blok = 0;");
+    t(r.voor.pil === 'HET DECREET' && r.verloren === r.voor.verwacht && !r.na.uit.some(x => x.wie === 'de_dicktator'), `I: de pil zei "${r.voor.pil}" (${r.voor.verwacht}); je verloor ${r.verloren} (${r.uitTekst})`);
+    t(r.na.gr && !r.na.gr.dood && r.na.gr.hp === 1 && r.na.dec === r.voor.dec + 1, `A4: de griffier (3 HP) vangt 2 en leeft (${r.na.gr && r.na.gr.hp} HP), de rest vervalt; het decreet viel (${r.voor.dec} → ${r.na.dec})`);
+  } else t(false, 'opzet 17b mislukt: ' + JSON.stringify(st17));
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  kop('17c · de vangrail: sterft de griffier TOCH in zijn beurt (vóór zijn zet), dan geen herkeuze, geen schade, geen kaart');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  st17 = await naarDecreetII(page);
+  if (st17.pil === 'HET DECREET' && st17.griffier) {
+    /* eenmalige haak: net na de gif-tik van de baas sterft de griffier (welke weg dan ook) */
+    await page.evaluate(() => {
+      const oud = window.verliesHp;
+      window.__doodNaTik = true;
+      window.verliesHp = function (d) {
+        const r = oud.apply(this, arguments);
+        if (window.__doodNaTik && d && d.id === 'de_dicktator') { window.__doodNaTik = false; const gr = hofLid(S.gevecht, 'de_griffier'); if (gr) oud(gr, 999); }
+        return r;
+      };
+    });
+    const r = await vijandbeurt(page, 'b.status.gif = 4;');
+    t(r.voor.pil === 'HET DECREET' && r.verloren === r.voor.verwacht && !r.na.uit.some(x => x.wie === 'de_dicktator'), `de pil zei "${r.voor.pil}" (${r.voor.verwacht}); de griffier stierf vóór de zet (${JSON.stringify(r.na.gr)}); je verloor ${r.verloren} (${r.uitTekst})`);
+    t(r.na.gr && r.na.gr.dood && r.na.dek === r.voor.dek && r.na.dec === r.voor.dec, `zonder griffier geen decreet - en geen kaart: dek ${r.voor.dek} → ${r.na.dek}, decreten ${r.voor.dec} → ${r.na.dec}`);
+    t(/Zonder griffier geen decreet/.test(r.na.toasts), `een melding zegt het: "${r.na.toasts}"`);
+    const verder = await vijandbeurt(page);
+    t(verder.verloren === verder.voor.verwacht, `de volgende zet staat gewoon op de pil ("${verder.voor.pil}": ${verder.verloren} = ${verder.voor.verwacht})`);
+  } else t(false, 'opzet 17c mislukt: ' + JSON.stringify(st17));
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  /* ================= 18 · A4 · HET HOF VANGT DE KLAP, MAAR DE GRIFFIER STERFT ER NIET AAN ================= */
+  kop('18 · A4 · de griffier vangt tot op zijn bodem, de rest valt op de volgende hoveling of vervalt');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page, { hof: true });   /* II: griffier + deurwaarder (in die volgorde); de DEV-landing zet de vloer uit */
+  const vang18 = (page, n, zet) => page.evaluate(([n, zet]) => {
+    const g = S.gevecht, b = dicktatorBaas(g);
+    const gr = hofLid(g, 'de_griffier'), dw = hofLid(g, 'de_deurwaarder');
+    if (zet) (new Function('g', 'b', 'gr', 'dw', zet))(g, b, gr, dw);
+    document.querySelectorAll('.fx-nummer').forEach(e => e.remove());
+    const vl = (typeof dicktatorVloer === 'function') ? dicktatorVloer(b) : null;
+    const weg = n - Math.max(0, b.hp - (vl == null ? 0 : vl));
+    const verdeling = (typeof dicktatorHofVangst === 'function') ? dicktatorHofVangst(g, b, weg).map(x => x.h.id.replace(/^de_/, '') + ':' + x.n).join(',') : 'geen dicktatorHofVangst';
+    const voor = { gr: gr ? gr.hp : null, dw: dw ? dw.hp : null, b: b.hp };
+    verliesHp(b, n, sp()); renderGevecht();
+    const fx = [...document.querySelectorAll('.fx-nummer.fx-vang')].map(e => e.textContent);
+    const v = (typeof dicktatorHofVanger === 'function') ? dicktatorHofVanger(g, b) : null;
+    return { voor, na: { gr: gr ? gr.hp : null, grDood: gr ? !!gr.dood : null, dw: dw ? dw.hp : null, b: b.hp }, gevangen: b._slotGevangenLaatst || 0, fx, verdeling, vanger: v ? v.id : null };
+  }, [n, zet || null]);
+  /* de vloer aanzetten zoals na een echte overgang: minVrij uit, de zitting net begonnen */
+  const r18a = await vang18(page, 60, 'b.minVrij = false; b.sceneStart = (b.beurtTeller || 0) + 1; b.hp = dicktatorVloer(b) || b.hp; gr.hp = 10; dw.hp = 200; dw.maxHp = Math.max(dw.maxHp, 200);');
+  t(r18a.na.b === r18a.voor.b && r18a.na.gr === 1 && !r18a.na.grDood && r18a.voor.dw - r18a.na.dw === 51 && r18a.gevangen === 60, `60 op de vloer: de griffier 10 → ${r18a.na.gr} (vangt 9), de deurwaarder vangt ${r18a.voor.dw - r18a.na.dw} (51), samen ${r18a.gevangen}; verdeling uit de spelcode "${r18a.verdeling}"`);
+  t(r18a.fx.length === 2 && /vangt 9\b/.test(r18a.fx.join()) && /vangt 51\b/.test(r18a.fx.join()), `twee vang-fx, elk op wie ving: ${JSON.stringify(r18a.fx)}`);
+  const r18b = await vang18(page, 20);
+  t(r18b.na.gr === 1 && r18b.voor.dw - r18b.na.dw === 20 && r18b.vanger === 'de_deurwaarder', `de griffier op zijn bodem vangt niets meer: de deurwaarder vangt ${r18b.voor.dw - r18b.na.dw}, de vanger is nu ${r18b.vanger}`);
+  const r18c = await vang18(page, 30, 'dw.hp = 5;');
+  t(r18c.na.gr === 1 && r18c.na.dw === 0 && r18c.gevangen === 5, `de deurwaarder (5 HP) vangt 5 en sterft; de rest (25) vervalt: gevangen ${r18c.gevangen}, griffier ${r18c.na.gr}`);
+  const tip18 = await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); const t2 = dicktatorZittingTeller(b); return { vanger: (typeof dicktatorHofVanger === 'function' && dicktatorHofVanger(S.gevecht, b) || {}).id || null, tip: t2 ? t2.tip : '', gesch: dicktatorGeschorstTip(b) }; });
+  t(tip18.vanger === null && /gaat verloren/.test(tip18.tip) && !/vangt zijn hof/.test(tip18.gesch), `met enkel een griffier op zijn bodem belooft geen tekst een vangst: teller "…${tip18.tip.slice(-44)}", GESCHORST "…${tip18.gesch.slice(-16)}"`);
+  /* het Galgentouw executeert de griffier niet op een vangst, wel op jouw klap */
+  const galg = await page.evaluate(() => {
+    const g = S.gevecht, b = dicktatorBaas(g), gr = hofLid(g, 'de_griffier');
+    if (!S.relikwieen.includes('galgentouw')) S.relikwieen.push('galgentouw');
+    gr.hp = 6; b.hp = dicktatorVloer(b) || b.hp;
+    verliesHp(b, 40, sp());
+    const naVangst = { hp: gr.hp, dood: !!gr.dood };
+    const drempel = Math.ceil((gr.maxHp || 1) * 0.1);
+    gr.hp = drempel + 1; verliesHp(gr, 1, sp());
+    return { naVangst, naKlap: { hp: gr.hp, dood: !!gr.dood }, drempel };
+  });
+  t(galg.naVangst.hp === 1 && !galg.naVangst.dood && galg.naKlap.dood, `Galgentouw: na een vangst leeft de griffier (${JSON.stringify(galg.naVangst)}); jouw klap tot op ${galg.drempel} HP executeert hem wel (${JSON.stringify(galg.naKlap)})`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  /* ================= 19 · REVIEW B4a · DE OUVERTURE WIJKT VOOR DE REGIE ================= */
+  kop('19 · de openingsklap valt TERWIJL "I · DE AANKLACHT" staat: de regie van II ruimt de banner op t=0 op');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page);
+  let ouv = false;
+  for (let i = 0; i < 200 && !ouv; i++) { ouv = await page.evaluate(() => [...document.querySelectorAll('.baas-flits')].some(e => /AANKLACHT/.test(e.textContent))); if (!ouv) await slaap(50); }
+  const o19 = await page.evaluate(() => {
+    DICK.tempo = 1;   /* de regie op spelsnelheid, zoals de speler hem ziet */
+    const b = dicktatorBaas(S.gevecht); verliesHp(b, 999, sp()); checkBaasFase(); renderGevecht();
+    return { meteen: [...document.querySelectorAll('.baas-flits')].filter(e => /AANKLACHT/.test(e.textContent)).length, scene: dicktatorScene(b) };
+  });
+  const later19 = [];
+  for (const ms of [300, 700, 500]) {
+    await slaap(ms);
+    later19.push(await page.evaluate(() => ({ aanklacht: [...document.querySelectorAll('.baas-flits')].filter(e => /AANKLACHT/.test(e.textContent)).length, factuur: [...document.querySelectorAll('[class*="vonnis"]')].some(e => /FACTUUR/.test(e.textContent || '')) })));
+  }
+  t(ouv && o19.scene === 2 && o19.meteen === 0 && later19.every(x => x.aanklacht === 0), `de banner stond (${ouv}); na de klap (scène ${o19.scene}): AANKLACHT meteen ${o19.meteen}, na 0,3 / 1,0 / 1,5 s ${later19.map(x => x.aanklacht).join(' / ')}`);
+  t(later19.some(x => x.factuur), `de regie van II speelt wel ("II · DE FACTUUR" in beeld: ${later19.map(x => x.factuur).join(' / ')})`);
+  await page.screenshot({ path: path.join(UIT, 'ouverture-1440x900.png') }).catch(() => {});
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
 
   await browser.close();
   console.log('\n============================================');

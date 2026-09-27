@@ -553,6 +553,11 @@ async function eenGevecht({ build, job }) {
     : (g.vijanden.find(x => !x.dood && !isBaas(x) && x.hp > 0) || null);
   const spillW = over => {
     if (over <= 0 || !hofVangt()) return 0;
+    /* A4 (B4a): de verdeling uit de spelcode zodra die bestaat (dicktatorHofVangst: de griffier
+       vangt tot op zijn bodem, de rest valt op de volgende hoveling of vervalt) */
+    if (!window.__spillProbe && typeof dicktatorHofVangst === 'function') {
+      return dicktatorHofVangst(g, dicktatorBaas(g), over).reduce((s, x) => s + x.n * 0.8 + (x.n >= x.h.hp ? 6 : 0), 0);
+    }
     const h = vanger(); if (!h) return 0;
     const echt = Math.min(over, h.hp);
     return echt * 0.8 + (over >= h.hp ? 6 : 0);
@@ -658,7 +663,7 @@ async function eenGevecht({ build, job }) {
     if (cl && !isGif && (cl.hp <= klap || (cl.hp <= klap * 2 && totGrens > 90))) return cl;
     if (!b.vorm2 && (b.fase || 1) >= 3 && b.hp <= 30 && !isGif && h[0].hp <= klap) return h[0];   /* vóór de herverkiezing: geen kiezers laten staan */
     if (dw && !isGif && dw.hp <= klap && factuurBron() === dw) return dw;
-    if (gr && !isGif && gr.hp <= klap && !(b.intent && b.intent.type === 'decreet')) return b;  /* griffier laten leven: dood = +1 Kracht */
+    if (gr && !isGif && gr.hp <= klap && !(b.intent && b.intent.type === 'decreet')) return b;  /* griffier laten leven: zonder hem wordt de zitting EIGENHANDIG VONNIS (DICK.EIGENHANDIG schade) i.p.v. een decreet zonder schade */
     return b;
   };
 
