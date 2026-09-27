@@ -577,6 +577,8 @@ async function eenGevecht({ build, job }) {
     return (typeof intentVerwachteSchade === 'function') ? intentVerwachteSchade(v) : 0;
   };
   const inkomend = () => alleVijanden().reduce((s, v) => s + verwacht(v), 0);
+  /* R3 (A2, ONAFTREKBAAR): het deel van wat er binnenkomt dat door je Blok gaat - uit de spelcode */
+  const doorBlokNu = () => (typeof intentDoorBlok === 'function') ? alleVijanden().reduce((s, v) => s + intentDoorBlok(v), 0) : 0;
   const factuurBron = () => (typeof dicktatorFactuurBron === 'function') ? dicktatorFactuurBron(g) : null;
   const postenVan = c => { const k = kval(c, 'kost'); const pw = (typeof DICK === 'object' && DICK.POSTEN) || { gratis: 2, een: 1 }; return k === 0 ? pw.gratis : (k === 1 ? pw.een : 0); };
   /* marginale factuurkost van een kaart (alleen bewust): wat de rekening stijgt, na zwak/kwetsbaar */
@@ -588,9 +590,11 @@ async function eenGevecht({ build, job }) {
     let d = na - nu;
     if ((fb.status.zwak || 0) > 0) d *= 0.75;
     if ((spl().status.kwetsbaar || 0) > 0) d *= 1.5;
-    /* staat er al meer blok dan er binnenkomt, dan is een deel van de marge gratis */
-    const overschot = (spl().blok || 0) + (spl().status.metaalhuid || 0) - inkomend();
-    if (overschot > d) return d * 0.25;
+    /* staat er al meer blok dan er binnenkomt, dan is een deel van de marge gratis - behalve het
+       ONAFTREKBARE deel (R3, A2): dat gaat door je Blok, dus dat telt altijd */
+    const f = (typeof dicktatorDoorBlokFrac === 'function') ? dicktatorDoorBlokFrac(fb.intent) : 0;
+    const overschot = (spl().blok || 0) + (spl().status.metaalhuid || 0) - (inkomend() - doorBlokNu());
+    if (overschot > d) return d * f + d * (1 - f) * 0.25;
     return d;
   };
   /* de shortlist: welke van de twee wil de bot houden? (hoogste rang, dan kost, dan upgrade) */
@@ -686,10 +690,12 @@ async function eenGevecht({ build, job }) {
     const gw = (add, x) => { x = x || t; return x ? (isBaas(x) ? gifWaarde(add + gifB, x.status.gif || 0, R, true) : Math.min(x.hp, gifWaarde(add + gifB, x.status.gif || 0, R, false))) : 0; };
     const gwAlle = add => alleVijanden().reduce((som, x) => som + gw(add, x), 0);
     const ink = inkomend();
-    const nodig = Math.max(0, ink - (s.blok || 0) - (s.status.metaalhuid || 0));
+    /* R3 (A2): de bot kent het ONAFTREKBARE deel (intentDoorBlok, spelcode): blok vangt dat niet */
+    const door = doorBlokNu();
+    const nodig = Math.max(0, ink - door - (s.blok || 0) - (s.status.metaalhuid || 0));
     const hpFrac = S.hp / S.maxHp;
     const blokW = hpFrac < 0.4 ? 1.5 : 1.05;
-    const dodelijk = nodig >= S.hp;   /* wat er nu op het bord staat, kost je het leven */
+    const dodelijk = nodig + door >= S.hp;   /* wat er nu op het bord staat, kost je het leven */
     const blokV = n => Math.min(n, nodig) * (dodelijk ? 3 : blokW) + Math.max(0, n - nodig) * 0.05;
     const hitsPerBeurt = Math.max(1, alleVijanden().filter(x => x.intent && (x.intent.type === 'aanval' || x.intent.type === 'factuur')).length);
     const doornV = n => n * Math.min(R, 5) * 0.9 * Math.max(1, hitsPerBeurt * 0.8);
@@ -818,7 +824,7 @@ async function eenGevecht({ build, job }) {
   };
   const drinkIndien = (noodgeval) => {
     const i = S.dranken.indexOf('heeldrank'); if (i < 0 || g.ceremonie || g.bezig) return false;
-    const drempel = S.hp < S.maxHp * 0.35 || (noodgeval && Math.max(0, inkomend() - (spl().blok || 0)) >= S.hp);
+    const drempel = S.hp < S.maxHp * 0.35 || (noodgeval && Math.max(0, inkomend() - doorBlokNu() - (spl().blok || 0)) + doorBlokNu() >= S.hp);
     if (!drempel) return false;
     try { gebruikDrank(i); T.drank = (T.drank || 0) + 1; return true; } catch (e) { return false; }
   };

@@ -3307,17 +3307,20 @@ function vijandAanval(v, basis, gedwongenDoel, opts = {}) {
     const iel = actorEl(doel);
     if (iel) { iel.classList.remove('mg-vangt'); void iel.offsetWidth; iel.classList.add('mg-vangt'); setTimeout(() => iel.classList.remove('mg-vangt'), 700); }
   }
-  doeSchade(doel, Math.max(0, dmg), v);
+  doeSchade(doel, Math.max(0, dmg), v, opts.doorBlok || 0);
 }
 
 /* GLAZEN ZIELEN: één waarheid voor de ×1.5, gedeeld door klap, telegraaf en kaarttekst */
 function glasDmg(n) { return (n > 0 && typeof dagwetActief === 'function' && dagwetActief('glas')) ? Math.ceil(n * 1.5) : n; }
 
-/* aanvalsschade toepassen: blok absorbeert, doornen kaatsen terug */
-function doeSchade(doel, dmg, bron) {
+/* aanvalsschade toepassen: blok absorbeert, doornen kaatsen terug.
+   doorFrac (optioneel, 0-1): het ONAFTREKBARE deel van de DICKtator (R3, A2) - dat deel gaat door
+   je Blok; dicktatorDoorBlok rekent het, dezelfde som als de pil. */
+function doeSchade(doel, dmg, bron, doorFrac) {
   /* GLAZEN ZIELEN (dagwet): elke klap ×1.5 — vóór blok, beide richtingen */
   dmg = glasDmg(dmg);
-  let rest = dmg;
+  const door = (doorFrac > 0 && doel.isSpeler) ? Math.min(dmg, dicktatorDoorBlok(dmg, doorFrac)) : 0;
+  let rest = dmg - door;
   /* Het Dossier (vloek): een vijandaanval op de speler mag maar de HELFT van het
      Blok gebruiken; de rest van het Blok blijft staan maar vangt deze klap niet */
   const dossierKlap = doel.isSpeler && bron && !bron.isSpeler && !bron.isMetgezel
@@ -3327,6 +3330,10 @@ function doeSchade(doel, dmg, bron) {
     const op = Math.min(beschikbaar, rest);
     doel.blok -= op; rest -= op;
     if (op > 0) fxNummer(actorEl(doel), '🛡️-' + op, 'fx-blok');
+  }
+  if (door > 0) {
+    rest += door;
+    if ((doel.blok || 0) > 0 || beschikbaar > 0) fxNummer(actorEl(doel), '⛓ ' + door + ' door je blok', 'fx-debuff');
   }
   if (dossierKlap) {
     doel.status.dossier--;
@@ -5768,7 +5775,10 @@ function intentTekst(v) {
     dmg = glasDmg(dmg);   /* GLAZEN ZIELEN telegrafeert mee — de balk loog een derde te laag (debug-sweep) */
     const merk = richtMet ? ` → ${METGEZELLEN[mDoel.id].icoon}` : '';
     const tipWie = richtMet ? METGEZELLEN[mDoel.id].naam : 'jou';
-    return `<span class="intent intent-aanval${richtMet ? ' intent-viseert-mg' : ''}" data-tip="${it.naam}: valt ${tipWie} aan voor ${dmg}${it.hits ? '×' + it.hits : ''} schade">⚔️ ${dmg}${it.hits ? '×' + it.hits : ''}${merk}</span>`;
+    /* ONAFTREKBAAR (R3, A2): HET ONTSLAG kan deels door je Blok gaan - de ⛓ en het getal */
+    const door = dicktatorDoorBlok(dmg, dicktatorDoorBlokFrac(it));
+    const doorTip = door ? `, waarvan ${door} door je Blok gaat (onaftrekbaar)` : '';
+    return `<span class="intent intent-aanval${richtMet ? ' intent-viseert-mg' : ''}" data-tip="${it.naam}: valt ${tipWie} aan voor ${dmg}${it.hits ? '×' + it.hits : ''} schade${doorTip}">⚔️ ${dmg}${it.hits ? '×' + it.hits : ''}${door ? ' ⛓' + door : ''}${merk}</span>`;
   }
   if (it.type === 'steel') {
     return `<span class="intent intent-steel" data-tip="De Copycat kijkt je sterkste recente kaart af om die te stelen">👀 steelt</span>`;
@@ -5805,9 +5815,12 @@ function intentTekst(v) {
     const vrijTip = vrij > 0 ? ` De eerste ${vrij} posten zijn vrijgesteld (standaardprocedure): van uw ${rauw} post${rauw === 1 ? '' : 'en'} ${posten === 0 ? 'is er nog geen belast' : (posten === 1 ? 'is er 1 belast' : 'zijn er ' + posten + ' belast')}.` : '';
     /* laptop: de hele rekensom; mobiel alleen het bedrag (een tik op de pil is daar een
        doelwitklik, dus de formule staat in de eenmalige melding en in de Codex - v105) */
-    const som = window.mobiel ? `🧾 ${bed}` : `🧾 ${basis} + ${tarief}×${posten} = ${bed}`;
+    /* ONAFTREKBAAR (R3, A2): het deel dat door je Blok gaat - zichtbaar op de pil (⛓) en met het getal in de tip */
+    const door = dicktatorDoorBlok(bed, dicktatorDoorBlokFrac(it));
+    const som = (window.mobiel ? `🧾 ${bed}` : `🧾 ${basis} + ${tarief}×${posten} = ${bed}`) + (door ? ` ⛓${door}` : '');
     const aanloopTip = it.aanloop ? ' De aanloop naar HET ONTSLAG.' : '';
-    return `<span class="intent intent-factuur" data-tip="${it.naam}: ${basis} basis + ${tarief} per post × ${posten} post${posten === 1 ? '' : 'en'} = ${bed} schade. Elke gespeelde kaart is een post: gratis = ${DICK.POSTEN.gratis}, 1 energie = ${DICK.POSTEN.een}, 2+ = aftrekbaar.${vrijTip}${aanloopTip}">${som}</span>`;
+    const doorTip = door ? ` ONAFTREKBAAR: ${door} daarvan gaat door je Blok.` : '';
+    return `<span class="intent intent-factuur" data-tip="${it.naam}: ${basis} basis + ${tarief} per post × ${posten} post${posten === 1 ? '' : 'en'} = ${bed} schade. Elke gespeelde kaart is een post: gratis = ${DICK.POSTEN.gratis}, 1 energie = ${DICK.POSTEN.een}, 2+ = aftrekbaar.${doorTip}${vrijTip}${aanloopTip}">${som}</span>`;
   }
   /* HET HOF (v109): een zet zonder schade die wel iets doet (delegeren, laten innen, de
      zitting, de betekening, de peiling). Nooit in de default-tak - die zegt 'verzwakt jou'. */
@@ -7392,8 +7405,10 @@ function copycatNaSchade(v, n, bron) {
 /* ============================================================
    HET PROCES - alle getallen van de eindbaas in één blok, zodat een balansronde
    niet door de code hoeft te grasduinen. tempo = ceremonieschaal (het meetharnas zet
-   'm op 0.02 om de beats over te slaan). Dit zijn de STARTWAARDEN van het finale-
-   contract (R1+R2); R3 tunet ze met tools/baas-meting/dick_meting.js.
+   'm op 0.02 om de beats over te slaan). Waren de STARTWAARDEN van het finale-
+   contract (R1+R2); R3 (Finale B4 stap 4) tunet ze met tools/baas-meting/dick_meting.js,
+   vertrekkend van EV2s (afwerkplan §9A: klappen x1,05, lichtere Factuur, vloeken-as en
+   kiezers op 1). De meting per stap: .claude/notities/baas-meting/meting_finale_R3.md.
    Alle klappen zijn VAST: het getal hieronder is het getal op de pil (geen act-schaling),
    plus zijn Kracht - en die komt alleen nog van de kiezers.
    ============================================================ */
@@ -7437,6 +7452,11 @@ const DICK = {
      links naar rechts, dicktatorHofVanger), met de fx '⚖️ vangt n' op die hoveling. Eén regel
      voor elke weggeknipte schade (kaarten, gif, doornen); zonder levend hof blijft het weg. */
   hofVangt: true,
+  /* ONAFTREKBAAR (R3, architectbeslissing A2): het deel (0-1) van een klap dat DOOR je Blok gaat,
+     per soort - de hefboom tegen puur verdedigen. factuur = DE FACTUUR en DE INVORDERING (de
+     posten zijn onaftrekbaar), ontslag = HET ONTSLAG. 0 = uit. De pil toont het deel met een ⛓
+     en de tooltip noemt het getal (dicktatorDoorBlok, één bron voor pil en klap). */
+  doorBlok: { factuur: 0, ontslag: 0 },
   claqueurHp: 16,
   gifRest: 0.5,           /* DE HERVERKIEZING: dit deel van zijn Gif overleeft (naar beneden afgerond) */
   tempo: 1
@@ -7509,6 +7529,25 @@ function dicktatorFactuurBron(g) {
 function dicktatorFactuurNu(g) {
   const v = dicktatorFactuurBron(g);
   return v ? dicktatorFactuurBedrag(g, v.intent) : null;
+}
+/* ONAFTREKBAAR (R3, A2): welk deel (0-1) van deze intent gaat door je Blok? DE FACTUUR en DE
+   INVORDERING (type 'factuur') volgen DICK.doorBlok.factuur, HET ONTSLAG DICK.doorBlok.ontslag.
+   Een onbekende soort of een ontbrekende sleutel = 0 (lookup-bugklasse). Eén bron voor de pil
+   (intentTekst), de klap (eindBeurt → vijandAanval → doeSchade) en het meetharnas. */
+function dicktatorDoorBlokFrac(it) {
+  const D = DICK.doorBlok;
+  if (!it || !D) return 0;
+  const soort = it.type === 'factuur' ? 'factuur' : (it.ontslag ? 'ontslag' : null);
+  const f = soort ? (D[soort] ?? 0) : 0;
+  return Math.max(0, Math.min(1, +f || 0));
+}
+/* hoeveel van een klap van n gaat door je Blok (afgerond; dezelfde som in pil en klap) */
+function dicktatorDoorBlok(n, frac) { return (frac > 0 && n > 0) ? Math.round(n * frac) : 0; }
+/* het deel van de verwachte klap van v dat door je Blok gaat (de pil en het meetharnas) */
+function intentDoorBlok(v) {
+  const it = v && v.intent;
+  const f = dicktatorDoorBlokFrac(it);
+  return f ? dicktatorDoorBlok(intentVerwachteSchade(v), f) : 0;
 }
 /* de kassa-tik: speel je een kaart terwijl er een factuur op het bord staat, dan zie je
    het bedrag ter plekke oplopen (+6 / +3) of niet bewegen ("+0 aftrekbaar"). */
@@ -9126,7 +9165,7 @@ async function eindBeurt() {
         const gericht = it.doelMetgezel ? gMet() : null;   /* bv. de Erfprins die Drops wegwuift */
         if (factuur) pose2D(v, 'factuur', 0.6);
         for (let h = 0; h < slagen; h++) {
-          vijandAanval(v, bedrag, gericht, { vast: factuur || !!it.vast, geenKracht: factuur });
+          vijandAanval(v, bedrag, gericht, { vast: factuur || !!it.vast, geenKracht: factuur, doorBlok: dicktatorDoorBlokFrac(it) });   /* R3 (A2): het onaftrekbare deel, dezelfde bron als de pil */
           renderGevecht();
           if (gestopt()) return;
           if (v.dood) break;                 /* doodgegaan aan Doornen mid-reeks → stop de reeks */
