@@ -670,6 +670,21 @@ const sonde = page => page.evaluate(() => {
   t(tx.gedraaid.claq.includes((tx.oud.A + 2) + ' schade per beurt') && tx.gedraaid.dick.includes('max ' + (tx.oud.D + 1) + ' per gevecht') && tx.gedraaid.herv.includes('+' + (tx.oud.K + 3) + ' Kracht'),
     `knoppen gedraaid (APPLAUS ${tx.oud.A + 2}, decreetCap ${tx.oud.D + 1}, krachtPerKiezer ${tx.oud.K + 3}): de teksten volgen`);
   t(tx.pagina.includes(tx.oud.A + ' schade per beurt') && !/[{}]/.test(tx.pagina), `de Bestiarium-pagina van de claqueur: "${tx.pagina.trim()}"`);
+  /* review B4a: "elke keer harder" loog vanaf het vierde Ontslag (de lijst blijft op zijn laatste bedrag);
+     de teksten zeggen nu "harder tot {OM}" = het hoogste bedrag uit DICK.ONTSLAG */
+  const om = await page.evaluate(() => {
+    const vul = s => (typeof dickTekst === 'function' ? dickTekst(s) : String(s));
+    const L = (DICK.ONTSLAG || []).slice();
+    const lees = () => ({ duid: vul(UITSPRAKEN._dicktator.duiding.mandaat), best: vul(BESTIARIUM.de_dicktator.notitie) });
+    const nu = lees();
+    DICK.ONTSLAG = L.concat([Math.max(...L) + 13]);
+    const gedraaid = lees();
+    DICK.ONTSLAG = L;
+    return { L, nu, gedraaid, rauw: UITSPRAKEN._dicktator.duiding.mandaat + ' | ' + BESTIARIUM.de_dicktator.notitie };
+  });
+  const omMax = Math.max(...om.L);
+  t(!/elke keer harder/.test(om.rauw) && /\{OM\}/.test(om.rauw) && om.nu.duid.includes('harder tot ' + omMax) && om.nu.best.includes('harder tot ' + omMax)
+    && om.gedraaid.duid.includes('harder tot ' + (omMax + 13)), `HET ONTSLAG: "harder tot {OM}" volgt DICK.ONTSLAG (${JSON.stringify(om.L)} → "${om.nu.duid}"; een vierde bedrag erbij → "…tot ${omMax + 13}")`);
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
   kop('14b · F11 · niets belooft "één volle cyclus": DE ZITTING LOOPT telt DICK.minZetten zetten');
