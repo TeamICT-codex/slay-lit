@@ -750,8 +750,9 @@ function installeerEerlijk() {
   const oSpeel = window.copycatSpeelTerug;
   window.copycatSpeelTerug = async function () { const o = inPlag; inPlag = true; try { return await oSpeel.apply(this, arguments); } finally { inPlag = o; } };
   const oDS = window.doeSchade;
-  window.doeSchade = function (doel, dmg, bron) {
-    if (M && doel && doel.isSpeler && isBaas(bron)) { const n = glasDmg(Math.max(0, dmg)); if (inPlag) { M.klap += n; tag(); } else M.eigen += n; }
+  window.doeSchade = function (doel, dmg, bron, opts) {
+    /* B3 F1: één treffer = één doeSchade, het onblokbare deel komt mee in opts.door */
+    if (M && doel && doel.isSpeler && isBaas(bron)) { const n = glasDmg(Math.max(0, dmg)) + ((opts && opts.door > 0) ? glasDmg(opts.door) : 0); if (inPlag) { M.klap += n; tag(); } else M.eigen += n; }
     inDS++;
     try { return oDS.apply(this, arguments); } finally { inDS--; }
   };

@@ -370,16 +370,18 @@ function installeer() {
     return oGG(doel, n);
   };
   const oDS = window.doeSchade;
-  window.doeSchade = function (doel, dmg, bron) {
+  window.doeSchade = function (doel, dmg, bron, opts) {
     const t = T(); const g = S.gevecht;
     if (t && doel && doel.isSpeler && bron && !bron.isSpeler) {
-      if (window.__lab === 'plagiaat' || window.__lab === 'driftbui') t.rPlag += glasDmg(dmg);
+      /* B3 F1: het onblokbare deel van een treffer zit sinds de fix in dezelfde doeSchade (opts.door) */
+      const door = (opts && opts.door > 0) ? glasDmg(opts.door) : 0;
+      if (window.__lab === 'plagiaat' || window.__lab === 'driftbui') t.rPlag += glasDmg(dmg) + door;
       t.geblokt += Math.min(doel.blok || 0, glasDmg(dmg));
     }
     const oudD = window.__doornTerug;
     if (doel && doel.id === 'de_erfprins' && bron && bron.isSpeler) window.__doornTerug = true;
     window.__inDS++;
-    try { return oDS(doel, dmg, bron); } finally { window.__inDS--; window.__doornTerug = oudD; }
+    try { return oDS(doel, dmg, bron, opts); } finally { window.__inDS--; window.__doornTerug = oudD; }
   };
   const oVH = window.verliesHp;
   window.verliesHp = function (doel, n, bron) {

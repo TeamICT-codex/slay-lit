@@ -2467,6 +2467,43 @@ body.lite .pb-skelet, body.lite .pb-lijst .pb-rij.pb-skelet:nth-child(odd) { bac
 }
 .rs-stempel b { white-space: nowrap; }
 .rs-stempel b { font-size: 1.3em; color: #fff0f4; letter-spacing: .02em; }
+/* B3 F1 — DE VLOEK DIE BIJT, Thomas' eigen tegenzet: ook zij komt groot in beeld, met haar eigen
+   stempel ("KOPIE MISLUKT — 🌑 −6 · hij verslikt zich"), en ontploft dan in zijn gezicht: de kaart
+   schiet zijn kant op (--dx/--dy wijzen naar hem), zwelt op en spat uit in een flits. */
+.roof-speel-kaart.rs-vuil .rs-kop { color: #ffb6c4; text-shadow: 0 2px 12px rgba(214, 44, 78, .85); }
+.roof-speel-kaart.rs-vuil .rs-stempel { border-color: rgba(150, 110, 210, .95); color: #e6c8ff; text-shadow: 0 0 6px rgba(160, 90, 255, .6); }
+.roof-speel-kaart.ontploft {
+  transform: translate(calc(-50% + var(--dx, 0px) * .72), calc(-50% + var(--dy, 0px) * .72)) scale(calc(var(--rs-s, 1) * 1.28)) rotate(6deg);
+  opacity: 0; filter: brightness(2.6) saturate(1.8) hue-rotate(-24deg) blur(1.5px);
+  transition: transform .46s cubic-bezier(.55, 0, .9, .45), opacity .34s ease-in .14s, filter .3s ease;
+}
+body.lite .roof-speel-kaart.ontploft { transition: opacity .3s ease; transform: translate(-50%, -50%) scale(var(--rs-s, 1)); filter: none; }
+/* B3 F1 — wat hij aangetast teruggeeft: één regel per beurt boven je aflegstapel (erfRetourRegel),
+   i.p.v. een toast per kaart (die lagen op de telefoon over zijn hart, zijn pil en de Buit-pil) */
+.erf-retour {
+  position: fixed; z-index: 905; pointer-events: none;
+  max-width: min(46vw, 440px); padding: 5px 12px; border-radius: 10px; text-align: right;
+  font-family: 'Alegreya', serif; font-size: .92rem; line-height: 1.22; color: #ffc4cf;
+  background: rgba(22, 4, 12, .9); border: 1px solid rgba(214, 44, 78, .8); box-shadow: 0 4px 14px rgba(0, 0, 0, .6);
+  animation: erfRetour 2.7s ease forwards;
+}
+@keyframes erfRetour {
+  0% { opacity: 0; transform: translateY(8px); }
+  9% { opacity: 1; transform: translateY(0); }
+  82% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-6px); }
+}
+/* B3 F1 — HET NOODRANTSOEN verscheurt een kaart uit zijn buit: het getal scheurt zelf (geen 🗞️).
+   De tekst staat twee keer op een pseudo-laag (data-t), elk de helft langs een kartelrand. */
+.fx-nummer.fx-scheur { color: transparent; text-shadow: none; white-space: nowrap; }
+.fx-nummer.fx-scheur::before, .fx-nummer.fx-scheur::after {
+  content: attr(data-t); position: absolute; left: 0; top: 0; white-space: nowrap;
+  color: var(--gifgroen); text-shadow: 0 2px 4px #000, 0 0 12px rgba(120, 220, 120, .7);
+}
+.fx-nummer.fx-scheur::before { clip-path: polygon(0 0, 100% 0, 100% 46%, 88% 58%, 76% 43%, 63% 60%, 50% 42%, 37% 59%, 24% 44%, 11% 58%, 0 47%); animation: scheurBoven .9s ease-out forwards; }
+.fx-nummer.fx-scheur::after { clip-path: polygon(0 47%, 11% 58%, 24% 44%, 37% 59%, 50% 42%, 63% 60%, 76% 43%, 88% 58%, 100% 46%, 100% 100%, 0 100%); animation: scheurOnder .9s ease-out forwards; }
+@keyframes scheurBoven { 0%, 30% { transform: none; } 100% { transform: translate(-7px, -8px) rotate(-5deg); } }
+@keyframes scheurOnder { 0%, 30% { transform: none; } 100% { transform: translate(7px, 8px) rotate(4deg); } }
 
 /* ====== AANGETASTE KAART — gecorrumpeerd door de Erfprins (+1 kost, uitputtend) ====== */
 .kaart-aangetast {
