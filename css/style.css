@@ -1788,6 +1788,11 @@ body:has(.decreet-keuze-overlay) #meldingen { visibility: hidden; }   /* geen to
 .decreet-keuze-kaart .kaart-kost { width: 38px; height: 38px; font-size: 1.4rem; }
 .decreet-keuze-kaart .decreet-kies { min-width: 180px; max-width: 240px; white-space: normal; margin-top: 0; font-size: 1.05rem; padding: 10px 18px; }
 body[data-modus="laptop"] .decreet-keuze-kaart:hover .kaart.groot { box-shadow: 0 0 0 3px #e23c2c, 0 0 26px rgba(226, 60, 44, .55); }
+/* Finale B4b F1 (review P10): het keuzescherm met het toetsenbord. De focus staat bij het openen op A
+   (dicktatorKeuze) zonder dat dat een keuze is: geen eigen browserring, alleen de gouden ring van de
+   toetsenrouter (.knop-groot.toets-focus) toont wat Enter schrapt - en dan ook de kaart erboven. */
+.decreet-keuze-kaart .decreet-kies:focus { outline: none; }
+.decreet-keuze-kaart:has(.decreet-kies.toets-focus) .kaart.groot { box-shadow: 0 0 0 3px var(--goud), 0 0 26px rgba(255, 210, 90, .5); }
 /* de GESCHORST-chip van het scèneslot: dezelfde chip als de statussen, in het rood van de griffie */
 .status.status-geschorst { color: #ffd7a0; border-color: rgba(226, 60, 44, .8); background: rgba(60, 8, 18, .86); letter-spacing: .04em; }
 .status.status-geschorst b { font-size: .72em; margin-left: 3px; }
@@ -3026,6 +3031,11 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
   transition: opacity .5s;
 }
 .toast.weg { opacity: 0; }
+/* Finale B4b F1 (review, middel): tijdens een baasgevecht staan de toasts ONDER de bazenbalk en zijn
+   strook (game.js _meldingPlek zet de top, gemeten) en smaller, zodat ze rechts blijven: niet over de
+   HP, de teller of de strook, en niet over de figuur en de pil in het midden. Mobiel: mobiel.css. */
+#meldingen.bij-baas { max-width: min(38vw, 500px); }
+#meldingen.bij-baas .toast { font-size: .92rem; padding: 7px 16px; border-radius: 16px; }
 @keyframes toastin {
   from { transform: translateX(18px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
@@ -4348,9 +4358,9 @@ body.lite #baas-balk .bb-beurt { transition: none; }
 #baas-balk[data-vorm="2"] .bb-balk.bb-woede { border-color: rgba(255, 200, 90, .9); }
 /* de beleidsstrook van HET PROCES: zelfde pil-vorm als de Copycat-arsenaalpil */
 .bb-proces { color: #ffdf9a; border-color: rgba(214, 168, 74, .5); }
-/* DE ZITTING LOOPT (Finale B4 stap 3, afwerkplan §9A): de teller RECHTS IN de HP-balk
-   ("⚖ ZITTING LOOPT · nog 2", in IV "⚖ valt na zijn ONTSLAG") en de inkeping met slotje op
-   de vloer ("tot hier, zolang de zitting loopt"). Bewust niet in de beleidsstrook (die botst
+/* HIJ HOUDT STAND (Finale B4 stap 3, afwerkplan §9A; tot Finale B4b F1 "DE ZITTING LOOPT" met ⚖): de
+   teller RECHTS IN de HP-balk ("🔒 HIJ HOUDT STAND · nog 2 zetten", in IV "🔒 valt na zijn ONTSLAG")
+   en de inkeping met hetzelfde slotje op de vloer ("tot hier"). Bewust niet in de beleidsstrook (die botst
    al met #beurt-label en de pil). De teller is aanraakbaar voor zijn uitleg (data-tip), net als
    de beleidspil. Mobiel: "⚖2" naast het hart, zonder inkeping (mobiel.css). */
 #baas-balk .bb-zitting {
@@ -4362,6 +4372,8 @@ body.lite #baas-balk .bb-beurt { transition: none; }
   pointer-events: auto; cursor: help;
 }
 #baas-balk .bb-zitting.bb-zitting-ontslag { color: #ffd24a; border-color: rgba(255, 210, 74, .9); }
+/* Finale B4b F1: zolang HERSCHIKT DE ZAAL op de pil staat, telt de regel nog niet ("3 zetten", gedimd) */
+#baas-balk .bb-zitting.bb-zitting-wacht { opacity: .7; }
 #baas-balk .bb-vloer {
   position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1px; z-index: 1;
   background: #ffd27a; box-shadow: 0 0 6px rgba(255, 210, 122, .95);

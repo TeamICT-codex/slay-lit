@@ -279,15 +279,28 @@ body[data-modus="mobiel"] #baas-balk .bb-balk .bb-tekst {
   order: 1; position: static; font-family: 'Pirata One', serif; font-size: .95rem;
   color: var(--perkament); text-shadow: 0 1px 3px #000; padding: 0;
 }
-/* DE ZITTING LOOPT (Finale B4 stap 3): op het hart-spoor "⚖2" LINKS van het HP-getal (in de
-   flexrij: teller · getal · hart); de inkeping op de balk bestaat hier niet (er is geen balk).
-   De volle zin staat in de data-tip: een tik op de teller toont hem. */
+/* HIJ HOUDT STAND (Finale B4 stap 3; tot Finale B4b F1 "DE ZITTING LOOPT" met ⚖): op het hart-spoor
+   "🔒2" LINKS van het HP-getal (in de flexrij: teller · getal · hart); de inkeping op de balk bestaat
+   hier niet (er is geen balk). De volle zin staat in de data-tip: een tik op de teller toont hem.
+   Sinds Finale B4b F1 draagt de figuur zelf ook een chip ("🔒 nog 2", hieronder): het teken naast het
+   hart alleen was te klein om de baas op 1 HP met ☠️199 te verklaren. */
 body[data-modus="mobiel"] #baas-balk .bb-balk .bb-zitting {
   order: 0; position: static; transform: none; flex: none;
   font-family: 'Pirata One', serif; font-size: .9rem; font-weight: 400; letter-spacing: 0;
   line-height: 1.15; padding: 1px 7px; border-radius: 9px;
 }
+body[data-modus="mobiel"] #baas-balk .bb-balk .bb-zitting.bb-zitting-wacht { opacity: .65; }
 body[data-modus="mobiel"] #baas-balk .bb-balk .bb-vloer { display: none !important; }
+/* de chip van HIJ HOUDT STAND op de figuur van de baas (game.js statusBadges, alleen mobiel): in het
+   goud van de teller; gedimd zolang HERSCHIKT DE ZAAL op de pil staat (de telling begint daarna) */
+body[data-modus="mobiel"] .status.status-stand { color: #ffe2a0; border-color: rgba(214, 168, 74, .85); background: rgba(40, 22, 8, .9); letter-spacing: .02em; }
+body[data-modus="mobiel"] .status.status-stand b { font-size: .8em; margin-left: 3px; white-space: nowrap; }
+body[data-modus="mobiel"] .status.status-stand.wacht { opacity: .7; }
+/* Finale B4b F1 (review, middel): de toasts in een baasgevecht onder de bazenbalk (game.js
+   _meldingPlek, gemeten; de balk staat hier zelf rechtsboven), smal en klein: ze blijven rechts, naast
+   de figuur in het midden, en liggen niet meer over het hart, de teller of de strook. */
+body[data-modus="mobiel"] #meldingen.bij-baas { max-width: 42vw; right: calc(8px + env(safe-area-inset-right)); }
+body[data-modus="mobiel"] #meldingen.bij-baas .toast { font-size: .78rem; line-height: 1.25; padding: 5px 11px; border-radius: 12px; }
 body[data-modus="mobiel"] #baas-balk .bb-balk::before {
   content: ''; order: 2; flex: none; width: 46px; height: 42px;
   background: linear-gradient(to top, #6bdb4d 0 calc(var(--hp, 100) * 1%), #2b1420 calc(var(--hp, 100) * 1%) 100%);
@@ -411,6 +424,11 @@ body[data-modus="mobiel"] #scherm-gevecht .vijand.vijand-klein .vijand-art { sca
    HP-GETAL wijkt op mobiel — de vulbalk toont de verhouding, tik-op-figuur geeft het exacte getal.
    Vijand-namen blijven dus zichtbaar (≠ de held, die helemaal weg is). Laptop ongemoeid. */
 body[data-modus="mobiel"] #scherm-gevecht .vijand .hp-tekst { display: none; }
+/* Finale B4b F1 (review, laag): in de finale wél het HP-getal van het HOF op zijn balk. In een
+   baasgevecht ligt er geen naam op de balk (hierboven: verborgen), dus het getal past; zonder waren
+   griffier, deurwaarder en claqueur naamloze figuren met een kale balk, terwijl juist de keuzes van de
+   finale aan hun HP hangen (de griffier doden vóór de zitting, de zaal ruimen vóór de herverkiezing). */
+body[data-modus="mobiel"] #scherm-gevecht.baas-actief .vijand.is-hof .hp-tekst { display: flex; font-size: .68rem; }
 body[data-modus="mobiel"] #scherm-gevecht .vijand-naam {
   position: relative; z-index: 3; margin: 0 0 -21px; pointer-events: none;
   /* leesbaarheidspas (playtest aug 2026): .62rem mat 9,9px — onder elk leesbaar

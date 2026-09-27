@@ -1814,7 +1814,10 @@ const UITSPRAKEN = {
     decreet: ['„AFGESCHREVEN."', '„Voorziening getroffen."', '„Dat had u niet meer nodig."'],
     /* HET PROCES — vier scènes en een scharnier (finale-contract, sep 2026) */
     delegatie: '„Ik maak mijn handen niet vuil. Daar heb ik MENSEN voor."',   /* de eerste aanzegging: hij roept de griffier */
-    aanzegging: '„Uw ‚{A}\'. Meest gespeeld. Uw ‚{B}\'. De duurste post. Eén van beide is overbodig. Gebruik ze, en u mag kiezen welke."',
+    /* Finale B4b F1 (review): {RA}/{RB} = de reden uit het dossier (game.js dicktatorShortlist). Zonder
+       gespeelde kaart is A de duurste, niet de meest gespeelde - de regel zei vroeger altijd "Meest
+       gespeeld". Sinds de aanzeg-toast alleen nog zonder baasspraak komt, draagt deze plaat de info. */
+    aanzegging: '„Uw ‚{A}\': {RA}. Uw ‚{B}\': {RB}. Eén van beide is overbodig. Gebruik ze, en u mag kiezen welke."',
     laatInnen: '„De deurwaarder komt langs. Ik hoef daar niet bij te zijn."',
     factuur: ['„Gefactureerd."', '„Uurtarief. Plus BTW."', '„Elke handeling is een post."', '„Gratis bestaat niet in dit huis. Administratiekost."'],
     aftrek: '„Een investering. Aftrekbaar."',
@@ -1826,15 +1829,18 @@ const UITSPRAKEN = {
     decreetKeuze: '„Het is niet mijn beslissing. Het is uw gebruik."',
     /* A6 (architectbeslissing B4b): het decreet is een dreiging die je met agressie voorkomt - en
        dan ZIE je dat het vervalt (game.js dicktatorDecreetVervalt, via de tekstsluis) */
-    decreetVervalt: '„Het decreet vervalt. De zaal wordt herschikt."',     /* je brak door de drempel vóór de zitting */
+    decreetVervalt: '„U brak door vóór de zitting? Dan vervalt het decreet."',   /* je brak door de drempel vóór de zitting - Finale B4b F1: de regel zegt dat JIJ het deed (A6) */
     geenGriffier: '„Geen griffier, geen decreet. Het dossier is gesloten."',   /* de griffier sterft met een open dossier */
     geenDossier: '„Geen dossier, geen decreet. De zitting gaat voorbij."',     /* de zitting zonder dossier (vangrail) */
     /* de nieuwe zetten */
-    herschikt: '„Orde in de zaal. De zitting wordt hervat."',                 /* HERSCHIKT DE ZAAL */
+    herschikt: '„Orde in de zaal. Het proces gaat verder."',                  /* HERSCHIKT DE ZAAL - Finale B4b F1: "zitting" is alleen nog de decreetbeurt */
     vonnis: '„Het dossier is gesloten. Het vonnis niet."',                    /* HET VONNIS */
     eigenhandig: '„Geen griffier? Dan teken ik het vonnis EIGENHANDIG."',     /* EIGENHANDIG VONNIS */
     donderrede: '„LUISTER. Ik ben nog niet klaar met u."',                    /* de AANLOOP, zonder rekening */
     griffierOntslag: ['„U bent ONTSLAGEN."', '„Ik heb die man nooit gekend."'],
+    /* Finale B4b F1 (review): de griffier is al dood als II→III valt (bij de meeste builds) - dan geen
+       "U bent ONTSLAGEN." tegen een lege plek, maar deze twee (game.js dicktatorRegieTirade) */
+    griffierWeg: ['„Mijn griffier? Al afgeschreven."', '„Niemand meer om te ontslaan. Dan blijft U over."'],
     executie: '„Geen dossiers meer? Dan doe ik het ZELF."',
     rede: '„HET VOLK heeft gesproken. HET VOLK: ben ik."',                    /* sinds de finale een baasplaat in de herverkiezing, geen zet */
     kiezers: '„De kiezers zijn opgebruikt. Bedankt voor uw stem."',
@@ -1849,7 +1855,10 @@ const UITSPRAKEN = {
       factuur: 'Elke goedkope kaart die je speelt is nu een post. De deurwaarder int.',
       tirade: 'Geen decreten meer. De griffier is weg; het applaus is betaald en slaat.',
       herverkiezing: 'Wie je liet staan, stemde op hem: +{K} Kracht per kiezer.',   /* {K} = DICK.krachtPerKiezer (game.js, dickTekst) */
-      mandaat: 'Om de twee beurten HET ONTSLAG, harder tot {OM}. Blok, of race.'   /* {OM} = het hoogste bedrag uit DICK.ONTSLAG (dickTekst) */
+      /* {OM} = het hoogste bedrag uit DICK.ONTSLAG (dickTekst). Finale B4b F1 (review): niet meer
+         "Blok, of race." - met DICK.minZetten[4] = 2 houdt hij stand tot na zijn eerste ONTSLAG, dat
+         kun je dus nooit ontlopen door te racen. Wie minZetten[4] onder 2 zet, past deze zin aan. */
+      mandaat: 'Om de twee beurten HET ONTSLAG, harder tot {OM}. Hij valt pas na zijn eerste ONTSLAG: hou blok over.'
     }
   },
   /* De Erfprins = THE COPYCAT: nepo-baby die nooit iets zelf maakte. Eerst pappies
@@ -1995,7 +2004,7 @@ const BESTIARIUM = {
   de_rechter: { act: 3, soort: 'Elite', lore: 'Een rechter-beul in wijnrode toga, de blinddoek omhóóg geschoven op het voorhoofd — hij ziet precies wat hij wil zien. De gouden duim drukt de weegschaal al eeuwen dezelfde kant op.', notitie: 'Elke derde beurt valt het VONNIS: 8 + 4 per Zwak/Kwetsbaar-stapel op jou. Ontsmet jezelf, of blok op de maat.' },
   de_hofnar: { act: 3, soort: 'Elite', lore: 'Belletjes vervangen door grijnzende schedeltjes, één broekspijp vol doorgehaalde namen, en een geschilderde glimlach over een mond die niet lacht. Zijn grappen zijn vloeken — en ze gaan over jou.', notitie: 'Zingt Laster je trekstapel in en lacht (+Blok) telkens jij een vloek trekt. Verbrand zijn leugens snel.' },
   het_spreekgestoelte: { act: 3, soort: 'Episch', lore: 'Een verguld spreekgestoelte dat decennia toespraken opzoog tot het zélf ging spreken — monden vol slogans over het hele gouden front. En de stem... de stem is niet de zijne.', notitie: 'Slogans verzwakken je en sterken hem. Wie goed luistert, herkent de stem van wat boven het Slachtblok wacht.' },
-  de_dicktator: { act: 3, soort: 'Baas', lore: 'De vergulde demagoog-koning op de top van de ladder: zelfbenoemde lauwerkrans, zelfgeslagen medailles, opvallend kleine handen in véél te grote gouden handschoenen. Zijn woord is een pen — wat hij afschrijft, bestaat niet meer. Ook jouw kaarten. Ook jouw dromen.', notitie: 'Het Proces loopt in vier scènes; elke scène stopt op haar drempel, en na elke overgang doet hij eerst minstens {Z} zetten (DE ZITTING LOOPT): tot dan zakt hij niet verder, en wat je klap te veel heeft, vangt zijn hof (de griffier sterft er niet aan). I · De Aanklacht: hij noemt twee kaarten — speel er één en jij kiest bij de zitting welke valt (max {D} per gevecht). II · De Factuur: elke kaart is een post (gratis = 2, 1 energie = 1, 2+ = aftrekbaar). III · De Tirade: ruim de zaal, want wie blijft staan stemt op hem bij de herverkiezing. IV · Het Mandaat: om de twee beurten HET ONTSLAG, harder tot {OM} — hou blok over.' },
+  de_dicktator: { act: 3, soort: 'Baas', lore: 'De vergulde demagoog-koning op de top van de ladder: zelfbenoemde lauwerkrans, zelfgeslagen medailles, opvallend kleine handen in véél te grote gouden handschoenen. Zijn woord is een pen — wat hij afschrijft, bestaat niet meer. Ook jouw kaarten. Ook jouw dromen.', notitie: 'Het Proces loopt in vier scènes; elke scène stopt op haar drempel, en na elke overgang doet hij eerst minstens {Z} zetten (HIJ HOUDT STAND 🔒): tot dan zakt hij niet verder, en wat je klap te veel heeft, vangt zijn hof (de griffier sterft er niet aan). I · De Aanklacht: hij noemt twee kaarten — speel er één en jij kiest bij de zitting welke valt (max {D} per gevecht). II · De Factuur: elke kaart is een post (gratis = 2, 1 energie = 1, 2+ = aftrekbaar). III · De Tirade: ruim de zaal, want wie blijft staan stemt op hem bij de herverkiezing. IV · Het Mandaat: om de twee beurten HET ONTSLAG, harder tot {OM} — hou blok over.' },
   /* het hof van HET PROCES (v109) */
   de_griffier: { act: 3, soort: 'Hofhouding', lore: 'De pen van den tamzak. Hij tekent, de griffier zoekt het dossier, stempelt en voert de zitting uit — zonder klerk kan de grote man niets afschrijven, en hij haat het om dat toe te geven.', notitie: 'Zonder griffier geen decreet: dood hem en de zitting wordt een EIGENHANDIG VONNIS — een klap, maar je houdt je kaart. Wat hij voor zijn baas vangt, doodt hem niet: hij blijft op 1 HP. In De Tirade laat de baas hem zelf executeren.' },
   de_deurwaarder: { act: 3, soort: 'Hofhouding', lore: 'De heerser raakt geen geld aan. Hij boekt, de deurwaarder komt langs met de rekening.', notitie: 'Treedt aan in De Factuur en int de rekening. Dood hem en de baas int zelf — hetzelfde bedrag. Sneuvelt hij in De Factuur, dan keert hij in De Tirade één keer terug.' },

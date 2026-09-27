@@ -2303,9 +2303,41 @@ function melding(tekst) {
   const el = document.createElement('div');
   el.className = 'toast';
   el.textContent = tekst;
+  _meldingPlek();
   $('#meldingen').appendChild(el);
   setTimeout(() => el.classList.add('weg'), 2100);
   setTimeout(() => el.remove(), 2600);
+}
+/* Finale B4b F1 (review, middel): in een baasgevecht lagen de toasts (rechtsboven, top 64 px) per
+   gevecht 9-11 s over de bazenbalk op laptop (HP, de teller, de strook) en 13-16 s op de telefoon,
+   waar de bazenbalk zelf rechtsboven staat - en 6-10 s over de pil van de baas. Tijdens een
+   baasgevecht staan ze nu ONDER de bazenbalk en zijn strook (gemeten, niet geraden: de balk groeit
+   met de strook, en is op beide sporen anders gebouwd), smaller (#meldingen.bij-baas, beide sporen),
+   zodat ze rechts blijven en niet over de figuur in het midden lopen. Buiten een baasgevecht: de
+   gewone plek uit de css (inline top weg). */
+function _meldingPlek() {
+  const m = $('#meldingen'); if (!m) return;
+  const bb = $('#baas-balk');
+  let top = null;
+  if (document.body.dataset.scherm === 'gevecht' && bb && bb.dataset.baas && bb.style.display !== 'none') {
+    const r = bb.getBoundingClientRect();
+    if (r.height > 0) top = Math.round(r.bottom + 8);
+  }
+  m.classList.toggle('bij-baas', top != null);
+  m.style.top = top == null ? '' : top + 'px';
+}
+/* Finale B4b F1 (review, middel): een UITLEG-melding (de lengteregel, de factuur) wacht op de
+   tekstsluis van de baasspraak (_spraakGesloten): geen toast onder een scènetitel, een banner, het
+   decreet of het doek. Hoogstens 10 s wachten; een gevecht dat intussen voorbij is, zegt niets meer. */
+function meldingNaSluis(tekst, g) {
+  g = g || (S && S.gevecht);
+  const t0 = Date.now();
+  const probeer = () => {
+    if (!S || !S.gevecht || S.gevecht !== g || g.voorbij) return;
+    if (typeof _spraakGesloten === 'function' && _spraakGesloten() && Date.now() - t0 < 10000) { setTimeout(probeer, 150); return; }
+    melding(tekst);
+  };
+  probeer();
 }
 
 function fxNummer(doelEl, tekst, klasse) {
@@ -2735,12 +2767,18 @@ let _spraakRij = [], _spraakBezig = false, _spraakT = null;
    - vervalt (ms): flavor (orakel, scherven-nudge) die langer dan dit op de sluis moet
      wachten, vervalt - liever niets dan mosterd na de maaltijd. De termijn telt alleen de
      tijd dat de regel VOORAAN staat en de sluis dicht is (wacht, in _spraakVolgende), niet
-     de tijd achter een andere plaat. */
+     de tijd achter een andere plaat.
+   - beurt (Finale B4b F1, review laag): een regel van de VIJANDBEURT (de riders: HERSCHIKT, LAAT
+     INNEN, de factuur, het vonnis, de executie, het Ontslag…). Staat hij nog in de rij als je
+     volgende beurt al begon (g.beurt is opgehoogd), dan vervalt hij: hij hoort bij feiten die
+     voorbij zijn (de spraak liep 3-4 s achter de actie aan). Een plaat die al staat, speelt uit.
+     Niet voor regels die informatie dragen (de aanzegging, het decreet, A6). */
 function baasSpreekt(tekst, duurMs, opts) {
   if (INST.spraak === false || !tekst) return;
   const o = opts || {};
   if (o.slot) _spraakStop();
-  _spraakRij.push({ tekst, duur: duurMs || 3200, wacht: 0, sluisT: null, vervalt: o.vervalt || 0, slot: !!o.slot });
+  const beurt = (o.beurt && S && S.gevecht) ? (S.gevecht.beurt || 0) : null;
+  _spraakRij.push({ tekst, duur: duurMs || 3200, wacht: 0, sluisT: null, vervalt: o.vervalt || 0, slot: !!o.slot, beurt });
   _spraakVolgende();
 }
 /* B2 · B0.4 — DE TEKSTSLUIS: één regel voor álle baasspraak. Zolang er een scènetitel
@@ -2782,6 +2820,10 @@ function _spraakVolgende() {
     for (let i = _spraakRij.length - 1; i >= 0; i--) if (!_spraakRij[i].slot) _spraakRij.splice(i, 1);
     if (!_spraakRij.length) return;
   }
+  /* Finale B4b F1: een regel van een vorige vijandbeurt (opts.beurt) vervalt zodra je volgende beurt begon */
+  const nuBeurt = S.gevecht.beurt || 0;
+  while (_spraakRij.length && _spraakRij[0].beurt != null && nuBeurt > _spraakRij[0].beurt) _spraakRij.shift();
+  if (!_spraakRij.length) return;
   /* wachten mag, maar niet eindeloos: flavor vervalt na zijn eigen termijn, elke andere
      regel na 10 s (een laag die ooit zou blijven hangen, mag niet alle baasspraak stilleggen).
      B2 F1: de termijn telt alleen de tijd dat de regel VOORAAN staat en de sluis DICHT is.
@@ -5960,7 +6002,7 @@ function intentTekst(v) {
        handkaarten de namen en de tellers; daar past alleen het aantal beurten. */
     const namen = (it.namen || []).map(n => n.length > 11 ? n.slice(0, 10) + '…' : n);
     const kort = window.mobiel || namen.length < 2;
-    const tekst = kort ? '📜 NU' : `📜 ${escSyn(namen[0])} ⚖ ${escSyn(namen[1])}`;
+    const tekst = kort ? '📜 NU' : `📜 ${escSyn(namen[0])} · ${escSyn(namen[1])}`;   /* Finale B4b F1: '·' i.p.v. ⚖ (⚖ = het hof dat ingrijpt) */
     const paar = (it.namen || []).length >= 2 ? ' „' + escSyn(it.namen[0]) + '” of „' + escSyn(it.namen[1]) + '”' : ' één van beide kaarten';
     return `<span class="intent intent-decreet" data-tip="HET DECREET: schrijft${paar} voorgoed af. Speelde je er één sinds de aanzegging, dan kies JIJ welke; anders schrapt hij de duurste. Geen schade.">${tekst}</span>`;
   }
@@ -5990,7 +6032,16 @@ function statusBadges(actor) {
      heeft zijn eigen teller op de bazenbalk en zegt nooit dat de scène voorbij is. */
   const geschorst = (actor && actor._geschorst && !actor.vorm2 && actor.id === 'de_dicktator')
     ? `<span class="status s-goed status-geschorst" data-tip="${escSyn(dicktatorGeschorstTip(actor))}">⚖️<b>GESCHORST</b></span>` : '';
-  return geschorst + Object.entries(actor.status)
+  /* Finale B4b F1 (review, hoog): HIJ HOUDT STAND op de TELEFOON als chip op de figuur, naast zijn
+     andere statussen ("🔒 nog 2"; een tik toont de tip). Daar was de regel alleen een teken van 10 px
+     naast het hart: de baas stond rondes op 81 of 1 HP met ☠️199 op zijn chip, en niets zei waarom.
+     Laptop: de teller en de inkeping op de bazenbalk (_bbZitting), geen chip. Niet samen met
+     GESCHORST (dan doet toch niets hem schade; de chip komt bij je volgende beurt), en onder dezelfde
+     vries als de bazenbalk (_bbToon): hij verklapt de nieuwe scène niet vóór de titel. */
+  const standTel = (actor && window.mobiel && actor.id === 'de_dicktator' && !actor._geschorst && !actor.dood && actor._bbToon == null) ? dicktatorZittingTeller(actor) : null;
+  const stand = standTel
+    ? `<span class="status s-goed status-stand${standTel.wacht ? ' wacht' : ''}" data-tip="${escSyn(standTel.tip)}">🔒<b>${escSyn(standTel.chip)}</b></span>` : '';
+  return geschorst + stand + Object.entries(actor.status)
     .filter(([k, n]) => n > 0 && STATUSINFO[k])
     .map(([k, n]) => {
       const i = STATUSINFO[k];
@@ -6037,7 +6088,7 @@ function renderGevecht() {
             <span class="bb-tekst"></span>
             <span class="bb-zitting" hidden></span>
           </div>
-          <div class="bb-fases" data-tip="${b.id === 'de_dicktator' ? escSyn(dickTekst('Het Proces loopt in scènes: elke scène stopt op haar drempel — je slaat er nooit één over. Elke nieuwe scène duurt minstens {Z} van zijn zetten (DE ZITTING LOOPT). Wie hem velt, ziet hem herkozen worden.')) : 'De baas vecht in drie bedrijven — verzwak hem en zie wat er gebeurt.'}">
+          <div class="bb-fases" data-tip="${b.id === 'de_dicktator' ? escSyn(dickTekst('Het Proces loopt in scènes: elke scène stopt op haar drempel — je slaat er nooit één over. Elke nieuwe scène duurt minstens {Z} van zijn zetten (HIJ HOUDT STAND). Wie hem velt, ziet hem herkozen worden.')) : 'De baas vecht in drie bedrijven — verzwak hem en zie wat er gebeurt.'}">
             ${[1, 2, 3].map(() => `<span class="bb-pip"></span>`).join('')}<span class="bb-pip kroon"></span>
           </div>
           <div class="bb-extra"></div>`;
@@ -7628,7 +7679,11 @@ const DICK = {
   speelbaarGuard: 6,      /* onder 7 speelbare kaarten geen decreet meer (dan HET VONNIS) */
   lasterCap: 2, dekMinLaster: 16,
   kiezersCap: 3, krachtPerKiezer: 1,
-  /* DE ZITTING LOOPT (R3): elke scène na een overgang duurt minstens N = minZetten[scène] van
+  /* DE LENGTEREGEL - voor de speler sinds Finale B4b F1 "HIJ HOUDT STAND" (🔒), tot dan "DE ZITTING
+     LOOPT" (de code en de commentaren noemen hem nog zo: dicktatorZittingNog, _bbZitting, ...;
+     "zitting" is in elke speler-tekst alleen nog de decreetbeurt). NB: de duiding van IV zegt "hij
+     valt pas na zijn eerste ONTSLAG" - dat klopt zolang minZetten[4] >= 2.
+     (R3): elke scène na een overgang duurt minstens N = minZetten[scène] van
      zijn eigen zetten (HERSCHIKT niet meegeteld). N is een eigen knop, los van de lengte van
      zijn cyclus (3 zetten in I-III, 2 in IV): met N = 2 speelt II of III niet elke zet. Tot
      dan houdt hij stand op drempel + 1 (in III en IV op 1 HP). Een speler-tekst noemt N
@@ -7783,9 +7838,18 @@ function dicktatorZittingTotOntslag(b) {
   const nog = dicktatorZittingNog(b);
   return !!(b && b.vorm2 && nog > 0 && ((b.v2Zet || 0) + nog) % 2 === 0);
 }
-/* DE TELLER VAN DE ZITTING (B4 stap 3, review F10): wat de speler over de vloer moet weten, in
-   één object - voor de bazenbalk (laptop: tekst + inkeping, mobiel: "⚖2"), de eenmalige melding
-   en de suite. null = geen vloer. Eerlijk: "vangt zijn hof" alleen als er een hoveling leeft. */
+/* DE TELLER VAN DE LENGTEREGEL (B4 stap 3, review F10): wat de speler over de vloer moet weten, in
+   één object - voor de bazenbalk (laptop: tekst + inkeping, mobiel: "🔒2" naast het hart en een chip
+   op de figuur), de melding en de suite. null = geen vloer. Eerlijk: "vangt zijn hof" alleen als er
+   een hoveling leeft.
+   Finale B4b F1 (review, hoog): de regel heet HIJ HOUDT STAND, met het slotje 🔒 van de inkeping.
+   Vroeger heette hij "DE ZITTING LOOPT" (⚖), terwijl "zitting" ook de decreetbeurt was (strook,
+   griffierpil, duiding van I) en ⚖ ook GESCHORST, de vangst, de decreetpil en het IV-label: twee
+   aftellers met verschillende getallen heetten allebei "zitting". "Zitting" is nu alleen nog de
+   decreetbeurt; ⚖ is het hof dat ingrijpt (GESCHORST en de vangst).
+   wacht (review, laag): zolang HERSCHIKT DE ZAAL op de pil staat, telt de regel nog niet (die zet telt
+   niet mee). Dan een andere vorm ("3 zetten" i.p.v. "nog 3", gedimd), zodat de eerste echte daling na
+   HERSCHIKT zichtbaar is en de teller niet twee beurten op hetzelfde getal lijkt vast te zitten. */
 function dicktatorZittingTeller(b) {
   const vloer = dicktatorVloer(b);
   if (vloer == null) return null;
@@ -7793,18 +7857,20 @@ function dicktatorZittingTeller(b) {
   const nog = dicktatorZittingNog(b);
   const n = dicktatorMinZetten(dicktatorScene(b));
   const ontslag = dicktatorZittingTotOntslag(b);
+  const wacht = !!(b.herschik && !b.vorm2);
   const zetten = k => k + (k === 1 ? ' zet' : ' zetten');
   const hof = !!(DICK.hofVangt && dicktatorHofVanger(g, b));
   const rest = hof ? 'wat je klap te veel heeft, vangt zijn hof' : 'wat je klap te veel heeft, gaat verloren';
   return {
-    nog, vloer, ontslag, hof,
-    kort: ontslag ? '⚖ valt na zijn ONTSLAG' : '⚖ ZITTING LOOPT · nog ' + nog,
-    mob: '⚖' + nog,
-    tip: 'DE ZITTING LOOPT: na elke nieuwe scène doet hij minstens ' + zetten(n) + ' (HERSCHIKT DE ZAAL telt niet mee)'
-      + (ontslag ? '; hij valt pas na zijn ONTSLAG' : '; nog ' + zetten(nog))
+    nog, vloer, ontslag, hof, wacht,
+    kort: ontslag ? '🔒 valt na zijn ONTSLAG' : '🔒 HIJ HOUDT STAND · ' + (wacht ? '' : 'nog ') + zetten(nog),
+    mob: '🔒' + nog,
+    chip: ontslag ? 'tot ONTSLAG' : (wacht ? zetten(nog) : 'nog ' + nog),
+    tip: 'HIJ HOUDT STAND: na elke nieuwe scène doet hij minstens ' + zetten(n) + ' (HERSCHIKT DE ZAAL telt niet mee)'
+      + (ontslag ? '; hij valt pas na zijn ONTSLAG' : (wacht ? '; de telling begint na HERSCHIKT DE ZAAL' : '; nog ' + zetten(nog)))
       + '. Tot dan zakt hij niet onder ' + vloer + ' HP; ' + rest + '.',
-    melding: ontslag ? '⚖ DE ZITTING LOOPT: hij valt pas na zijn ONTSLAG.'
-      : '⚖ DE ZITTING LOOPT: nog ' + zetten(nog) + '. ' + (hof ? 'Te veel schade vangt zijn hof.' : 'Tot dan zakt hij niet onder ' + vloer + '.')
+    melding: ontslag ? '🔒 HIJ HOUDT STAND: hij valt pas na zijn ONTSLAG.'
+      : '🔒 HIJ HOUDT STAND: nog ' + zetten(nog) + '. ' + (hof ? 'Te veel schade vangt zijn hof.' : 'Tot dan zakt hij niet onder ' + vloer + '.')
   };
 }
 /* HET HOF VANGT DE KLAP - wie vangt hoeveel van n weggeknipte schade? PUUR (geen mutatie), zodat
@@ -7886,16 +7952,23 @@ function dicktatorSlotRest(b, n) {
      alleen het scèneslot, "de scène is uit"); op de vloer is elke klap toch 0, en na zijn
      laatste zitting-zet raakt niets hem nog in dezelfde vijandbeurt (gif en doornen vallen
      vóór zijn zet), dus het gevecht blijft zetje voor zetje hetzelfde. De eerste keer dat de
-     vloer iets wegknipt, zegt één melding wat er gebeurt. */
+     vloer iets wegknipt, zegt één melding wat er gebeurt.
+     Finale B4b F1 (review, hoog): de regel heet HIJ HOUDT STAND (🔒, zie dicktatorZittingTeller). De
+     melding komt één keer PER SCÈNE (vroeger één keer per gevecht: de Gifmagiër zag de baas daarna
+     rondes op 81 of 1 HP staan zonder uitleg) en door de tekstsluis: nooit onder een scènetitel,
+     een banner of het doek (meldingNaSluis). */
   const vloer = dicktatorVloer(b);
   if (vloer != null && b.hp - n < vloer) {
     const rest = Math.max(0, b.hp - vloer);
-    if (!rest) fxNummer(actorEl(b), '⚖️ zitting loopt', 'fx-blok');
+    if (!rest) fxNummer(actorEl(b), '🔒 houdt stand', 'fx-blok');
     const g = S.gevecht;
-    if (g && !g._zittingUitleg) {
-      g._zittingUitleg = true;
-      const tel = dicktatorZittingTeller(b);
-      if (tel) melding(tel.melding);
+    if (g) {
+      g._standUitleg = g._standUitleg || {};
+      if (!g._standUitleg[scene]) {
+        g._standUitleg[scene] = true;
+        const tel = dicktatorZittingTeller(b);
+        if (tel) meldingNaSluis(tel.melding, g);
+      }
     }
     return rest;
   }
@@ -8173,7 +8246,9 @@ function dicktatorRegieProces(b, g, op, U, D) {
   /* t=900 - HET VONNIS. Nu pas weet je welk bedrijf je speelt, en NU pas knapt pip 2 aan
      en verspringt de HP-balk: de vries eindigt op hetzelfde frame als de stempel. */
   op(900, () => {
-    vonnisSlam('II · DE FACTUUR', D.factuur, { duur: 2400, schok: 1.2 });
+    /* Finale B4b F1 (review, middel): 3200 i.p.v. 2400 ms - de duiding (13 woorden) stond maar 2,0 s
+       leesbaar. De titel dooft uit (80-100 % van zijn duur) terwijl de invoer op 3600 vrijkomt. */
+    vonnisSlam('II · DE FACTUUR', D.factuur, { duur: 3200, schok: 1.2 });
     b._bbToon = null;
     renderGevecht();
     _pipKnapt(1);
@@ -8228,6 +8303,13 @@ function dicktatorRegieProces(b, g, op, U, D) {
 /* 2.2 · II→III · DE TIRADE - 5600 ms, invoer dicht 0-4600 */
 function dicktatorRegieTirade(b, g, op, U, D) {
   const gr = hofLid(g, 'de_griffier');
+  /* Finale B4b F1 (review, middel): bij de meeste builds is de griffier al dood als II→III valt (het
+     harnas: bij de start van de laatste ronde van II leeft hij in 0-12 % van de gevechten, alleen bij
+     de gemiddelde Kolendruïde vaker). Dan geen „U bent ONTSLAGEN." tegen een lege plek en „Ik heb die
+     man nooit gekend.", maar twee eigen regels (U.griffierWeg). Alleen tekst: de uithaal speelt
+     zonder slachtoffer, geen HP of mechaniek eraan. */
+  let geexecuteerd = false;
+  const ontslagRegel = i => (geexecuteerd ? U.griffierOntslag : (U.griffierWeg || U.griffierOntslag))[i];
 
   /* t=0 - dezelfde hamer, één trede zwaarder: dieper geduckt, langer stil, 38px terugstoot */
   _spraakStop();                                   /* het toneel neemt het over (zie I->II) */
@@ -8257,7 +8339,7 @@ function dicktatorRegieTirade(b, g, op, U, D) {
     Klank.sfx('inzakken');
   });
 
-  op(1000, () => vonnisSlam('III · DE TIRADE', D.tirade, { duur: 2400, schok: 1.2 }));
+  op(1000, () => vonnisSlam('III · DE TIRADE', D.tirade, { duur: 3300, schok: 1.2 }));   /* Finale B4b F1: 3300 i.p.v. 2400 (de duiding 2,0 s leesbaar); weg op 4300, vóór de invoer (4600) */
 
   /* t=1700 - HIJ KOMT OMHOOG EN HAALT UIT, en DE EXECUTIE valt.
      CONTRACT §2 ongewijzigd: de griffier gaat dood in de STAAT (gr.dood/hp/blok = 0), NIET
@@ -8278,6 +8360,7 @@ function dicktatorRegieTirade(b, g, op, U, D) {
       setTimeout(() => sc.classList.remove('slowmo'), dtempo(320));
     }
     if (gr && !gr.dood) {
+      geexecuteerd = true;
       gr.dood = true; gr.hp = 0; gr.blok = 0;
       const grEl = actorEl(gr); if (grEl) { _entreeAf(grEl); grEl.classList.add('exit', 'geveld'); }
       if (UITSPRAKEN.de_griffier) spreek(gr, UITSPRAKEN.de_griffier.dood, 0.4);
@@ -8303,7 +8386,7 @@ function dicktatorRegieTirade(b, g, op, U, D) {
   /* kort, hard, ná het beeld. De duur past in het GAT naar fase3 (2100 -> 3400 = 1300):
      de FIFO-wachtrij kapt niets af, en met 1700 begon fase3 pas op 3842 en griffier-
      Ontslag[1] op 6444 - ruim 0,8s voorbij hun beat (v121-fix). */
-  op(2100, () => baasSpreekt(U.griffierOntslag[0], 1200));
+  op(2100, () => baasSpreekt(ontslagRegel(0), 1200));
 
   /* t=2600 - HET VOETLICHT SLAAT DOOR. Bedrijf III krijgt zijn eigen wereld zonder vierde
      zaalplaat: blijvende rode tint, blijvend dichtgeknepen vignet, 6% camerakruip. Het doek
@@ -8339,7 +8422,7 @@ function dicktatorRegieTirade(b, g, op, U, D) {
 
   op(4600, () => _ceremonieUit(g));
   /* t=5600 - koud, terwijl je al speelt */
-  op(5600, () => { baasSpreekt(U.griffierOntslag[1], 2600); _regieOpruim(b); });
+  op(5600, () => { baasSpreekt(ontslagRegel(1), 2600); _regieOpruim(b); });
 }
 
 /* 2.3 · DE HERVERKIEZING (het scharnier) - ~5 s, invoer dicht 0-4400 (finale §3).
@@ -8412,11 +8495,12 @@ function dicktatorHerverkiezing(g, doel) {
     fxNummer(xe, i < doel._kiezers ? '🗳️ +' + DICK.krachtPerKiezer + ' Kracht' : '🗳️ stem genoteerd', 'fx-buff');
     Klank.sfx('goud');
   }));
-  /* 600-1800: de regel valt MET de eerste stem en is weg vóór het doek (1900) - een regel onder
-     het doek wacht in de tekstsluis, en daarna hoort hij niet meer bij zijn beat. Finale B4b: 1200
-     i.p.v. 900 ms (op 700): negen woorden stonden zo ~600 ms leesbaar (de in- en uitfade eraf),
-     onder de 0,7 s van B0.4; nu ~1,1 s, met 100 ms marge tot het doek. */
-  if (kiezers.length) op(600, () => baasSpreekt(U.stemming, 1200));
+  /* 400-1850: de regel valt MET de val, net vóór de eerste stem, en is weg vóór het doek (1900) - een
+     regel onder het doek wacht in de tekstsluis, en daarna hoort hij niet meer bij zijn beat. Finale
+     B4b: 1200 i.p.v. 900 ms (op 700). Finale B4b F1 (review, middel): op 400 voor 1450 ms (was 600 /
+     1200: ~1,0-1,1 s leesbaar, onder last 694 ms, net onder de 0,7 s van B0.4); nu ~1,3 s, met 50 ms
+     marge tot het doek. */
+  if (kiezers.length) op(400, () => baasSpreekt(U.stemming, 1450));
 
   /* t=1500 - ze vluchten van het toneel onder betaald applaus */
   op(1500, () => {
@@ -8470,7 +8554,10 @@ function dicktatorHerverkiezing(g, doel) {
     renderGevecht();
     _pipKnapt(3);
   });
-  op(2600, () => vonnisSlam('DE HERVERKIEZING', dickTekst(D.herverkiezing), { duur: 1400, kleur: 'goud', schok: 1.6 }));
+  /* Finale B4b F1 (review, middel): 2200 i.p.v. 1400 ms - titel en duiding (het sterkste idee van het
+     stuk) stonden ~1,1-1,3 s leesbaar. Weg op 4800; de invoer komt op 4400 vrij terwijl hij uitdooft
+     (80-100 % van zijn duur), net als de titel van II. */
+  op(2600, () => vonnisSlam('DE HERVERKIEZING', dickTekst(D.herverkiezing), { duur: 2200, kleur: 'goud', schok: 1.6 }));
   op(2800, () => _oprijzen(doel, null, 1.12, 400));   /* en hij zakt in op 1.12 = de maat die .herverkozen vasthoudt */
 
   /* t=3000 - DE ZAAL STORT IN, het goudrode mandaatlicht blijft daarna staan */
@@ -8482,20 +8569,21 @@ function dicktatorHerverkiezing(g, doel) {
     }
   });
   op(3100, () => { const el = actorEl(doel); if (el) el.classList.add('woede', 'herverkozen'); });
-  /* de REDE is geen zet meer (finale §3): ze valt als baasplaat NA de titel (2600-4000) - een
-     spraakplaat onder een vonnisplaat botste liggend met de h2 (drama_vonnis_geometrie) */
-  op(4000, () => baasSpreekt(U.rede, 1300));
-  op(4000, () => Klank.muziek('finale'));        /* DE TRIOMFMARS: de terugkeer van het geluid ÍS de klap */
+  /* de REDE is geen zet meer (finale §3): ze valt als baasplaat NA de titel (2600-4800) - een
+     spraakplaat onder een vonnisplaat botste liggend met de h2 (drama_vonnis_geometrie).
+     Finale B4b F1: op 4800 (de titel staat nu tot 4800) en 2000 i.p.v. 1300 ms (~1,1 s leesbaar). */
+  op(4800, () => baasSpreekt(U.rede, 2000));
+  op(4800, () => Klank.muziek('finale'));        /* DE TRIOMFMARS: de terugkeer van het geluid ÍS de klap */
   op(4400, () => _ceremonieUit(g));              /* invoer vrij */
 
   /* t=4600 - IV · HET MANDAAT: geen eigen kaartje, het permanente strooklabel komt AAN */
   op(4600, () => {
     doel._mandaat = true;
-    renderGevecht();          /* zet '⚖ IV · HET MANDAAT' in de strook (dicktatorBalk) */
+    renderGevecht();          /* zet '👑 IV · HET MANDAAT' in de strook (dicktatorBalk) */
     _mandaatPuls();
     Klank.sfx('hamer');
   });
-  if (doel._kiezers > 0) op(5400, () => baasSpreekt(U.kiezers, 2000));   /* napraat na de rede: je speelt al */
+  if (doel._kiezers > 0) op(6900, () => baasSpreekt(U.kiezers, 2400));   /* napraat na de rede: je speelt al (Finale B4b F1: na de langere rede, 4800-6800) */
   op(5000, () => _regieOpruim(doel));
   renderGevecht();
 }
@@ -8589,7 +8677,9 @@ async function dicktatorDecreet(v) {
   if (S.dek.length + 1 >= DICK.dekMinLaster && (v.lasters || 0) < DICK.lasterCap) {
     v.lasters = (v.lasters || 0) + 1;
     g.trek.splice(Math.floor(willekeurig() * (g.trek.length + 1)), 0, nieuweKaart('laster'));
-    melding('👑 Een gestempeld lasterdecreet schuift tussen je kaarten.');
+    /* Finale B4b F1 (review, middel): de toast lag 2,2-2,4 s over de decreet-reveal - nu pas als de
+       reveal weg is (DECREET_REVEAL.weg), zelfde klok als de await hieronder */
+    setTimeout(() => { if (S.gevecht === g && !g.voorbij) melding('👑 Een gestempeld lasterdecreet schuift tussen je kaarten.'); }, dtempo(DECREET_REVEAL.weg));
   }
   if (g.aangezegd) g.aangezegd.clear();   /* het dossier is gesloten */
   pose2D(v, 'decreet', 2.2);   /* de signature-pose (de_dicktator_decreet-art) */
@@ -8617,6 +8707,9 @@ async function dicktatorDecreet(v) {
 function dicktatorKeuze(g, a, b) {
   const ka = dicktatorExemplaar(a), kb = dicktatorExemplaar(b);   /* hetzelfde exemplaar dat straks verbrandt (F2) */
   if (!ka || !kb) return Promise.resolve({ d: ka ? a : b, bron: 'vangnet' });
+  /* DEV-SHORTCUT (testhaak meetharnas): tools/baas-meting/dick_meting.js en de suites zetten
+     window.__dickKeuze om het keuzescherm over te slaan. Onschuldig (alleen lezen; via de console kan
+     wie wil het scherm overslaan). Zie RELEASE-CHECKLIST §1.1: mag blijven, of weg samen met het harnas. */
   if (typeof window.__dickKeuze === 'function') {
     let r = null;
     try { r = window.__dickKeuze(ka, kb); } catch (e) { r = null; }
@@ -8641,6 +8734,11 @@ function dicktatorKeuze(g, a, b) {
     document.body.appendChild(ov);
     if (typeof verfraaiKaartIconen === 'function') verfraaiKaartIconen(ov);
     Klank.sfx('zwareklap');
+    /* Finale B4b F1 (review, middel): het scherm werkt ook met het toetsenbord (de toetsenrouter,
+       decreetKeuzeToets: ←/→ of 1/2 kiest de knop, Tab wisselt, Enter/Spatie bevestigt). De focus staat
+       bij het openen op A, zodat Tab binnen het scherm begint - zonder ring: de eerste Enter toont de
+       keuze pas, hij schrapt niets blind (zelfde regel als de rest van de router). */
+    if (!window.mobiel) { const kA = ov.querySelector('.decreet-kies[data-decreet="A"]'); if (kA) { try { kA.focus({ preventScroll: true }); } catch (e) { /* oude browser: dan zonder focus */ } } }
     let klaar = false;
     let wacht = null;
     const sluit = (keuze, bron) => {
@@ -8801,11 +8899,21 @@ function dicktatorShortlist(g, v) {
   const restAnders = kand.filter(c => c !== A && c.id !== A.id);
   const B = beste(restAnders.length ? restAnders : kand.filter(c => c !== A), [kost, rang]);
   if (!B) return null;
-  g.aangezegd.set(A.uid, { uid: A.uid, id: A.id, naam: knaam(A), start: gesp(A), reden: gespeeldIets ? 'Meest gespeeld' : 'De duurste post' });
-  g.aangezegd.set(B.uid, { uid: B.uid, id: B.id, naam: knaam(B), start: gesp(B), reden: gespeeldIets ? 'De duurste post' : 'De op een na duurste post' });
-  /* het criterium wordt HARDOP gezegd: je moet weten waarom juist deze twee */
-  baasSpreekt(String(UITSPRAKEN._dicktator.aanzegging).replace('{A}', knaam(A)).replace('{B}', knaam(B)));
-  melding(`📜 DE AANZEGGING: „${knaam(A)}" en „${knaam(B)}". Speel er één, dan kies jij wat valt.`);
+  const da = { uid: A.uid, id: A.id, naam: knaam(A), start: gesp(A), reden: gespeeldIets ? 'Meest gespeeld' : 'De duurste post' };
+  const db = { uid: B.uid, id: B.id, naam: knaam(B), start: gesp(B), reden: gespeeldIets ? 'De duurste post' : 'De op één na duurste post' };
+  g.aangezegd.set(A.uid, da);
+  g.aangezegd.set(B.uid, db);
+  /* het criterium wordt HARDOP gezegd: je moet weten waarom juist deze twee.
+     Finale B4b F1 (review): de reden komt uit het dossier ({RA}/{RB}) - zonder gespeelde kaart zei
+     de regel vroeger toch "Meest gespeeld". Deze plaat is de drager van de aanzegging (hieronder):
+     ~20 woorden, dus 5,6 s (3,5 woorden per seconde) i.p.v. de standaard 3,2 s. */
+  const klein = s => s.charAt(0).toLowerCase() + s.slice(1);
+  baasSpreekt(String(UITSPRAKEN._dicktator.aanzegging).replace('{A}', da.naam).replace('{B}', db.naam)
+    .replace('{RA}', klein(da.reden)).replace('{RB}', klein(db.reden)), 5600);
+  /* Finale B4b F1 (review, middel): de aanzegging kwam twee keer - eerst als toast (2,3 s, bovenop de
+     delegatieregel), ~3 s later als baasplaat met dezelfde inhoud. De toast alleen nog zonder
+     baasspraak (zelfde patroon als A6, _decreetRegel); de zegels op de kaarten dragen de namen ook. */
+  if (INST.spraak === false) melding(`📜 DE AANZEGGING: „${da.naam}" en „${db.naam}". Speel er één, dan kies jij wat valt.`);
   renderGevecht();
   return [A, B];
 }
@@ -8896,7 +9004,7 @@ function _decreetRegel(reden) {
     melding(reden === 'doorbraak' ? '📜 Het decreet vervalt: je brak door vóór de zitting. De zaal wordt herschikt.'
       : (reden === 'griffier' ? '📜 De griffier is dood: het dossier is gesloten, er valt geen decreet meer.'
         : '📜 Geen dossier, geen decreet: de zitting gaat voorbij.'));
-  } else baasSpreekt(regel, 1800);
+  } else baasSpreekt(regel, reden === 'doorbraak' ? 2200 : 1800);   /* Finale B4b F1: de doorbraakregel zegt nu wie het deed (10 woorden) - 2,2 s */
 }
 /* de zitting van deze scène is gehouden - welke vorm ze ook kreeg. Het dossier sluit. */
 function dicktatorZittingGehouden(v, g, scene) {
@@ -8925,12 +9033,12 @@ function dicktatorNaFactuur(b, zelf) {
   if (!b) return;
   b.facturen = (b.facturen || 0) + 1;
   if (b.dood) return;
-  if (zelf) baasSpreekt(UITSPRAKEN._dicktator.zelf);
-  else baasSpreekt(kiesUit(UITSPRAKEN._dicktator.factuur));
+  if (zelf) baasSpreekt(UITSPRAKEN._dicktator.zelf, undefined, { beurt: true });
+  else baasSpreekt(kiesUit(UITSPRAKEN._dicktator.factuur), undefined, { beurt: true });
 }
 
 function dicktatorOntslagBeat(v) {
-  baasSpreekt(UITSPRAKEN._dicktator.ontslag);
+  baasSpreekt(UITSPRAKEN._dicktator.ontslag, undefined, { beurt: true });
   schudScherm();
   Klank.duck(0.6, 0.9);
   const el = $('#scherm-gevecht');
@@ -8979,7 +9087,7 @@ function dicktatorKies(v, beurt) {
       vv._decreetVervallen = null;
       vv.minVrij = false;                          /* DEV-SHORTCUT (minVrij): een DEV-landing geldt maar voor één scène */
       vv.sceneStart = (vv.beurtTeller || 0) + 1;   /* eindBeurt hoogt de teller hierna op: de volgende zet is slot 1 */
-      baasSpreekt(UITSPRAKEN._dicktator.herschikt);
+      baasSpreekt(UITSPRAKEN._dicktator.herschikt, undefined, { beurt: true });
     }
   };
 
@@ -9005,7 +9113,7 @@ function dicktatorKies(v, beurt) {
     if (dw && dw._aangetreden) return {
       naam: 'LAAT INNEN', type: 'hof', icoon: '🪑', kort: 'laat innen',
       tip: 'de deurwaarder komt de rekening innen — het bedrag staat op ZIJN pil',
-      laatInnen: true, doe: () => baasSpreekt(UITSPRAKEN._dicktator.laatInnen)
+      laatInnen: true, doe: () => baasSpreekt(UITSPRAKEN._dicktator.laatInnen, undefined, { beurt: true })
     };
     const tar = dicktatorTarief(v);
     return {
@@ -9018,16 +9126,16 @@ function dicktatorKies(v, beurt) {
   /* slot 3 — in III de EXECUTIE; in I en II DE ZITTING */
   if (scene >= 3) return {
     naam: 'EXECUTIE', type: 'aanval', dmg: DICK.EXECUTIE, vast,
-    doe: () => baasSpreekt(UITSPRAKEN._dicktator.executie)
+    doe: () => baasSpreekt(UITSPRAKEN._dicktator.executie, undefined, { beurt: true })
   };
   const vonnis = {
     naam: 'HET VONNIS', type: 'aanval', dmg: DICK.VONNIS, vast,
-    doe: vv => { dicktatorZittingGehouden(vv, g, scene); baasSpreekt(UITSPRAKEN._dicktator.vonnis); }
+    doe: vv => { dicktatorZittingGehouden(vv, g, scene); baasSpreekt(UITSPRAKEN._dicktator.vonnis, undefined, { beurt: true }); }
   };
   if (!dicktatorDecreetMogelijk(v, scene)) return vonnis;
   if (!hofLid(g, 'de_griffier')) return {
     naam: 'EIGENHANDIG VONNIS', type: 'aanval', dmg: DICK.EIGENHANDIG, vast,
-    doe: vv => { dicktatorZittingGehouden(vv, g, scene); baasSpreekt(UITSPRAKEN._dicktator.eigenhandig); }
+    doe: vv => { dicktatorZittingGehouden(vv, g, scene); baasSpreekt(UITSPRAKEN._dicktator.eigenhandig, undefined, { beurt: true }); }
   };
   const speelbaar = S.dek.filter(c => kdef(c).type !== 'vloek').length;
   const dossier = [...(g.aangezegd ? g.aangezegd.values() : [])];
@@ -9059,12 +9167,12 @@ function dicktatorKiesVorm2(v, g) {
     return {
       naam: 'DE FACTUUR', type: 'factuur', vast: true, zelf: true, aanloop: true,
       basis: tar.basis, tarief: tar.tarief,
-      doe: vv => { tel(vv); dicktatorNaFactuur(vv, false); if (!vv.dood) baasSpreekt(UITSPRAKEN._dicktator.opzegtermijn); }
+      doe: vv => { tel(vv); dicktatorNaFactuur(vv, false); if (!vv.dood) baasSpreekt(UITSPRAKEN._dicktator.opzegtermijn, undefined, { beurt: true }); }
     };
   }
   return {
     naam: 'DONDERREDE', type: 'aanval', dmg: DICK.DONDERREDE, vast: true, aanloop: true,
-    doe: vv => { tel(vv); baasSpreekt(UITSPRAKEN._dicktator.donderrede); }
+    doe: vv => { tel(vv); baasSpreekt(UITSPRAKEN._dicktator.donderrede, undefined, { beurt: true }); }
   };
 }
 
@@ -9224,17 +9332,21 @@ function copycatBalk(b) {
    in de huidige scène bestaat - I: de shortlist; II: tarief + shortlist; III: tarief;
    IV: de ontslagklok + het bedrag. De volle uitleg staat in de tooltip, nooit in de strook.
    Eén regel, met ellipsis op mobiel (zelfde patroon als de Copycat-arsenaalpil). */
-/* DE TELLER VAN DE ZITTING op de bazenbalk (B4 stap 3, afwerkplan §9A, review F10): laptop
-   "⚖ ZITTING LOOPT · nog 2" rechts in de HP-balk + een inkeping op de vloer ("tot hier");
-   mobiel "⚖2" naast het hart (de inkeping bestaat daar niet: mobiel.css). In IV zegt hij
-   "⚖ valt na zijn ONTSLAG" als de zitting met zijn Ontslag afloopt. Bewust NIET in de
-   beleidsstrook (die botst al met #beurt-label en de pil, E §10). Alleen DOM schrijven als
-   de inhoud wijzigt (zelfde dirty-guard-idee als _bbExtraSig). */
+/* DE TELLER VAN DE LENGTEREGEL op de bazenbalk (B4 stap 3, afwerkplan §9A, review F10; sinds
+   Finale B4b F1 heet hij HIJ HOUDT STAND): laptop "🔒 HIJ HOUDT STAND · nog 2 zetten" rechts in de
+   HP-balk + een inkeping met slotje op de vloer ("tot hier"); mobiel "🔒2" naast het hart (de
+   inkeping bestaat daar niet: mobiel.css) en een chip op de figuur (statusBadges). In IV zegt hij
+   "🔒 valt na zijn ONTSLAG" als de regel met zijn Ontslag afloopt. Bewust NIET in de beleidsstrook
+   (die botst al met #beurt-label en de pil, E §10). Alleen DOM schrijven als de inhoud wijzigt
+   (zelfde dirty-guard-idee als _bbExtraSig).
+   Finale B4b F1 (review, middel): de signatuur draagt ook tel.mob en tel.nog. In IV zijn kort ("valt
+   na zijn ONTSLAG") en tip gelijk voor nog 2 en nog 1, dus de telefoon bleef "2" tonen na de
+   uitgevoerde AANLOOP (de teller loog tot de regel afliep). */
 function _bbZitting(bb, b) {
   const el = bb.querySelector('.bb-zitting'), kerf = bb.querySelector('.bb-vloer');
   if (!el || !kerf) return;
   const tel = (b && b.id === 'de_dicktator') ? dicktatorZittingTeller(b) : null;
-  const sig = tel ? [window.mobiel ? 'm' : 'l', tel.kort, tel.tip, tel.vloer, b.maxHp].join('|') : '';
+  const sig = tel ? [window.mobiel ? 'm' : 'l', tel.kort, tel.mob, tel.nog, tel.wacht ? 'w' : '', tel.tip, tel.vloer, b.maxHp].join('|') : '';
   if (el.dataset.sig === sig) return;
   el.dataset.sig = sig;
   el.hidden = !tel; kerf.hidden = !tel;
@@ -9242,6 +9354,7 @@ function _bbZitting(bb, b) {
   el.textContent = window.mobiel ? tel.mob : tel.kort;
   el.dataset.tip = tel.tip;
   el.classList.toggle('bb-zitting-ontslag', tel.ontslag);
+  el.classList.toggle('bb-zitting-wacht', tel.wacht);
   kerf.style.left = Math.max(0, Math.min(100, tel.vloer / (b.maxHp || DICK.hp) * 100)) + '%';
   kerf.dataset.tip = tel.tip;
 }
@@ -9253,11 +9366,17 @@ function _bbZitting(bb, b) {
 /* GESCHORST (het scèneslot, review F10): de scène IS uit. Eerlijk over het hof: vangt het de
    klap (DICK.hofVangt en er leeft een hoveling), dan zegt de tekst dat; anders dat het hof
    gewoon kwetsbaar blijft. De vloer van DE ZITTING LOOPT heeft zijn eigen tekst (de teller). */
+/* Finale B4b F1 (review, laag - optie b; optie a is een vraag voor de architect): valt de schorsing
+   IN DE VIJANDBEURT vóór zijn zet (zijn eigen gif-tik legt hem op de drempel), dan voert hij de zet
+   van zijn pil nog uit - ook HET DECREET (contract §2, afwijking 7: de telegraaf liegt niet). De tip
+   zei alleen "de scène is uit" en dat leek een tegenspraak; nu zegt hij het. */
 function dicktatorGeschorstTip(b) {
   const g = S.gevecht;
   const vangt = !!(DICK.hofVangt && g && dicktatorHofVanger(g, b));
+  const zetVolgt = !!(g && g._vijandBeurt && g._gehandeld && typeof g._gehandeld.has === 'function' && !g._gehandeld.has(b));
   return 'GESCHORST: de scène is uit. Tot je volgende beurt doet niets hem schade'
-    + (vangt ? '; wat je hem geeft, vangt zijn hof.' : '; zijn hof wel.');
+    + (vangt ? '; wat je hem geeft, vangt zijn hof.' : '; zijn hof wel.')
+    + (zetVolgt ? ' Zijn zet van deze beurt (op de pil) volgt nog; de nieuwe scène begint bij je volgende beurt.' : '');
 }
 function dicktatorBalk(b) {
   const g = S.gevecht; if (!g || !b) return '';
@@ -9274,9 +9393,16 @@ function dicktatorBalk(b) {
   if (scene === 4) {
     /* IV · HET MANDAAT: het permanente strooklabel (aan een eigen vlag, niet aan b.vorm2:
        die staat al op t=0 van de herverkiezing) */
-    if (b._mandaat) delen.push('⚖ IV · HET MANDAAT');
+    if (b._mandaat) delen.push('👑 IV · HET MANDAAT');   /* Finale B4b F1: de kroon van vorm 2 (de vierde pip), niet ⚖ */
     const klok = dicktatorKlok(b);
-    const bedrag = dicktatorOntslagBedrag(b);
+    /* Finale B4b F1 (review, middel): de strook noemde het kale getal uit DICK ("ONTSLAG 21") naast
+       "⚔️ 23" op de pil (2 kiezers = +2 Kracht) of "⚔️ 15" (Zwak op hem): twee getallen voor één klap.
+       Staat het Ontslag op de pil (klok 0), dan precies het getal van de pil (intentVerwachteSchade:
+       Kracht, Zwak, Kwetsbaar, Glazen Zielen). Daarvoor zijn Ontslag plus zijn Kracht - wat blijft; Zwak
+       en Kwetsbaar kunnen tegen dan uitgewerkt zijn. De tip zegt het. */
+    const bedrag = (klok === 0 && b.intent && b.intent.ontslag)
+      ? intentVerwachteSchade(b)
+      : dicktatorOntslagBedrag(b) + ((b.status && b.status.kracht) || 0);
     if (mob) {
       /* Finale B4b (beeldcontrole): op de telefoon twee korte regels, rechts onder het hart. In
          één regel ("⚖ IV · HET MANDAAT · ⏳ ONTSLAG over 1 · ONTSLAG 21", ~310 px) lag de strook in
@@ -9289,6 +9415,7 @@ function dicktatorBalk(b) {
       delen.push('ONTSLAG ' + bedrag);
     }
     tips.push('HET MANDAAT: om de twee beurten HET ONTSLAG (' + (DICK.ONTSLAG || []).join(' → ') + ', plus zijn Kracht), ertussen een aanloop: DE FACTUUR of de DONDERREDE.'
+      + ' Het getal in de strook: zijn volgende Ontslag plus zijn Kracht; staat het Ontslag op de pil, dan precies het getal van de pil (met Zwak, Kwetsbaar en Glazen Zielen).'
       + (D.mandaat ? ' ' + dickTekst(D.mandaat) : ''));
   } else {
     if (scene >= 2) {
@@ -9551,7 +9678,13 @@ async function eindBeurt() {
         if (window.Vista) Vista.pose(v, 'cast', cd);
         pose2D(v, 'cast', cd);
       }
-      if (it.doe && !v.dood) { const r = it.doe(v); if (r && r.then) await r; }   /* async intent (de Erfprins-plagiaat) wordt geawait; een lijk (Doornen mid-aanval) voert zijn rider niet meer uit (debug-sweep) */
+      /* Finale B4b F1 (review, middel): viel DE HERVERKIEZING midden in zijn eigen klap (je Doornen,
+         de Carbon-afdruk), dan IS dat zijn beurt - net als op het gif-pad hierboven. De rider van de
+         oude pil (EXECUTIE, DE FACTUUR: een regel van 3,2 s, en een getelde factuur) liep anders nog,
+         stond in zijn val en schoof DE STEMMING ~5 s op (de wachtrij). Geen spelgevolg: de riders van
+         III doen alleen spraak en tellen b.facturen. */
+      const herkozenNu = !!(v.herrezen && !wasHerrezen);
+      if (it.doe && !v.dood && !herkozenNu) { const r = it.doe(v); if (r && r.then) await r; }   /* async intent (de Erfprins-plagiaat) wordt geawait; een lijk (Doornen mid-aanval) voert zijn rider niet meer uit (debug-sweep) */
       if (gestopt()) return;
     }
     if (el) el.classList.remove('actief');
@@ -9611,7 +9744,8 @@ function beginSpelerBeurt() {
      formule staat in de tooltip van de strook, van de pil en in de Codex. */
   if (!g._factuurUitleg && typeof dicktatorFactuurBron === 'function' && dicktatorFactuurBron(g)) {
     g._factuurUitleg = true;
-    melding('🧾 DE FACTUUR: elke goedkope kaart is een post. Speel groot, of speel weinig.');
+    /* Finale B4b F1 (review, middel): door de tekstsluis - nooit onder een titel, banner of het doek */
+    meldingNaSluis('🧾 DE FACTUUR: elke goedkope kaart is een post. Speel groot, of speel weinig.', g);
   }
   g._epidemieGespreid = false;   /* Epidemie mag deze beurt weer 1× verspreiden */
   g._hakblokGebruikt = false;    /* Het Hakblok slijpt elke beurt een verse eerste snede */
@@ -13736,6 +13870,45 @@ function wisselInzage(aan) {
     if (k === 'Escape') { const x = exitKnop(scherm); if (x) { e.preventDefault(); x.click(); } }
   }
 
+  /* ---- HET DECREET-KEUZESCHERM (Finale B4b F1, review P10) ----
+     Het scherm (dicktatorKeuze) is geen .overlay en had geen eigen toetsen: Enter en Spatie gingen
+     naar gevechtToets (hand-modus, preventDefault) en de knop werd nooit geactiveerd - wie alleen het
+     toetsenbord gebruikte, zat vast in de vijandbeurt (de promise wacht op een keuze). Nu:
+     ←/↑ of 1 = A, →/↓ of 2 = B, Tab/Shift+Tab wisselt (de focus blijft in het scherm), Enter/Spatie =
+     de knop met de ring. De eerste Enter zonder ring toont de keuze alleen: een kaart gaat voorgoed
+     uit je dek, dus nooit blind schrappen (zelfde regel als de hand en de menu's). Andere toetsen van
+     het gevecht (e, 3-9 = een drank, Esc) doen hier niets. */
+  function decreetKeuzeToets(e, ov) {
+    const k = e.key;
+    wisselCtx('decreet');
+    const knoppen = [...ov.querySelectorAll('.decreet-kies[data-decreet]')];
+    if (!knoppen.length) return;
+    const kies = i => {
+      toetsIdx = Math.max(0, Math.min(i, knoppen.length - 1));
+      cursorAan = true;
+      zetFocus(knoppen[toetsIdx]);
+      try { knoppen[toetsIdx].focus({ preventScroll: true }); } catch (x) { /* zonder focus: de ring volstaat */ }
+    };
+    if (k === 'ArrowLeft' || k === 'ArrowUp' || k === '1') { e.preventDefault(); kies(0); return; }
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === '2') { e.preventDefault(); kies(1); return; }
+    if (k === 'Tab') {
+      e.preventDefault();
+      const nu = knoppen.indexOf(document.activeElement);
+      const van = cursorAan ? toetsIdx : (nu >= 0 ? nu : -1);
+      kies(van < 0 ? 0 : (van + (e.shiftKey ? -1 : 1) + knoppen.length) % knoppen.length);
+      return;
+    }
+    if (k === 'Enter' || k === ' ') {
+      e.preventDefault();
+      const ring = ov.querySelector('.decreet-kies.toets-focus');
+      if (!cursorAan || !ring) { const nu = knoppen.indexOf(document.activeElement); kies(nu >= 0 ? nu : 0); return; }
+      ring.click();
+      cursorAan = false; wisFocus();
+      return;
+    }
+    if (k === 'Escape' || k === 'e' || k === 'E' || /^[0-9]$/.test(k)) e.preventDefault();   /* geen eindbeurt, geen drank, geen annuleren: kiezen moet */
+  }
+
   /* ---- OVERLAYS (Codex/Bestiarium/Relikwie/Help + bevestig-dialogen) ---- */
   function overlayToets(e, ov) {
     const k = e.key;
@@ -13789,6 +13962,10 @@ function wisselInzage(aan) {
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') { e.preventDefault(); intro.click(); }
       return;
     }
+
+    /* Finale B4b F1: het decreet-keuzescherm vóór alles van het gevecht (zie decreetKeuzeToets) */
+    const dk = document.querySelector('.decreet-keuze-overlay');
+    if (dk) { decreetKeuzeToets(e, dk); return; }
 
     if (document.querySelector('#overlay-kies.open')) return;   /* kaartkeuze regelt zichzelf */
     const ov = bovensteOverlay();
