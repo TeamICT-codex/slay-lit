@@ -696,6 +696,12 @@ const ACHTERGRONDEN = {
       'Act 2 achtergronden/Gevechtstijl act2 EPISCH 2.webp',
       'Act 2 achtergronden/Gevechtstijl act2 EPISCH 3.webp'
     ],
+    /* B3 · B1.2 — de VASTE arena van de Erfprins (kiesGevechtAchtergrond('baas') neemt `finale`,
+       zoals in Act 3). EPISCH 2, de catalogusmachine met de identieke laden, is 'zijn catalogus'
+       en de plaat waarop hij het best als silhouet leest (contrast 1,17-1,28, P §4 B1.2; geen
+       enkele Act 2-plaat haalt 1,3). Een eigen troonzaal met tegenlicht staat als prompt klaar
+       in assets/achtergronden/PROMPTS.txt (ART-TODO): na de art-drop komt die hier in de plaats. */
+    finale: 'Act 2 achtergronden/Gevechtstijl act2 EPISCH 2.webp',
     winkel: 'Act 2 achtergronden/Achtergrondverkoper ACT2.webp',
     winkelEasterEgg: 'Act 2 achtergronden/Achtergrondverkoper ACT2 easter egg.webp',
     event: 'Act 2 achtergronden/Achtergrondvraagtekenencounter ACT2.webp',

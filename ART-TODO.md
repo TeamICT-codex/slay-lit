@@ -16,6 +16,10 @@
 > **Aanvulling 24 september 2026 (proloog R3):** daarbovenop **4 optionele proloog-items**
 > (drie collega-portretten en 0042 als figuur). Ze hebben allemaal een werkende terugval, dus
 > niets blokkeert; zie de sectie 🎬 PROLOOG hieronder.
+>
+> **Aanvulling 27 september 2026 (B3, De Roof eerlijk):** daarbovenop **1 item**, de eigen
+> troonzaal van de Erfprins (sectie 🥈 hieronder). Tot die plaat er is, vecht hij vast op
+> EPISCH 2 (`ACHTERGRONDEN.act2.finale` in `js/art.js`), dus niets blokkeert.
 
 ## Werkwijze (per drop)
 
@@ -45,7 +49,7 @@
 
 ---
 
-## 🥈 PRIORITEIT MIDDEL — 19 items
+## 🥈 PRIORITEIT MIDDEL — 20 items
 
 ### Vijandposes die de code al opvraagt (11) → `assets/karakters/`
 
@@ -81,6 +85,16 @@
 - [ ] `thoverk_jump.png` · `assets/karakters` · prompt: `assets/karakters/STATE-PROMPTS.txt` → kopregel `thoverk_jump.png` (r2490) · sprong/val voor Thoverk · **nieuw**
 - [ ] `thoverk_land.png` · `assets/karakters` · prompt: `assets/karakters/STATE-PROMPTS.txt` → kopregel `thoverk_land.png` (r2498) · landingshurk met het houten been onder hem gevouwen · **nieuw**
 - [ ] `thoverk_climb.png` · `assets/karakters` · prompt: `assets/karakters/STATE-PROMPTS.txt` → kopregel `thoverk_climb.png` (r2514) · klimframe; de ladder wordt niet getekend · **nieuw**
+
+### De arena van de Erfprins (1) → `assets/achtergronden/Act 2 achtergronden/`
+
+> De prins is intrinsiek donker, en geen enkele Act 2-plaat laat hem als silhouet lezen
+> (contrast 1,01-1,29; P_plaatsing_regie_plan.md §4 B1.2). Een CSS-tegenlicht verlaagt het
+> contrast (gemeten), dus de oplossing is een plaat met een licht vlak ÁCHTER zijn plek. Tot
+> ze er is, vecht hij vast op EPISCH 2. Een volle scène (geen cut-out): alleen
+> `converteer_webp.py`, exacte naam behouden.
+
+- [ ] `Gevechtstijl act2 FINALE troonzaal.png` · `assets/achtergronden/Act 2 achtergronden` · prompt: `assets/achtergronden/PROMPTS.txt` → kopregel `Gevechtstijl act2 FINALE troonzaal.png` · na de drop: `ACHTERGRONDEN.act2.finale` in `js/art.js` naar deze plaat + een GROND-regel (vloerrand 56 % → grond 61, nameten); meetdoel silhouetcontrast ≥ 1,8 op 800x360 · **nieuw (B3)**
 
 ---
 

@@ -457,6 +457,26 @@ STAGE COMPOSITION (strict): camera at standing eye level, straight-on, shallow o
 
 Painted illustration style only. Full-bleed 16:9 landscape environment plate (1920x1080), no transparency. No characters, no creatures, no figures, no crowd, no faces, no text, no letters, no numbers, no signage, no frame, no UI.
 
+========================= Gevechtstijl act2 FINALE troonzaal.png =========================
+(NIEUW — B3 · B1.2: de eigen zaal van de Erfprins, de Act 2-baas. Dropmap "Act 2 achtergronden/".
+Registreren als ACHTERGRONDEN.act2.finale in js/art.js (nu staat daar EPISCH 2 als vaste arena) +
+een GROND-regel zoals de andere platen op de toneelstandaard (vloerrand 56% -> grond 61; na de drop
+nameten). Waarom: geen enkele Act 2-plaat laat de donkere prins als silhouet lezen (contrast 1,01-1,29,
+P_plaatsing_regie_plan.md §4 B1.2); een licht vlak ACHTER zijn plek is de enige echte oplossing (een
+CSS-tegenlicht verlaagt het contrast, gemeten). Meetdoel: silhouetcontrast van de prins >= 1,8 op
+800x360 en 846x381. De prins staat op het toneel rechts, ongeveer op 55-85% van de breedte.)
+Stylized painterly digital illustration for a dark fantasy card game, hand-painted fantasy concept art with expressive visible brushwork, rich colors and soft painted shading. NOT photorealistic, not a photograph, no photo textures, no 3D render.
+
+Environment plate, wide establishing shot: THE STOLEN THRONE-ROOM OF THE HEIR, deep in the archive — a tall clerical hall in which every surface is a copy of something else: mirrored walls of identical card-catalogue drawers, rows of duplicated portraits in gilded frames with blank faces, gilded frames around nothing. The far edge of the walkable floor is a low black-iron plinth running as ONE straight horizontal line across the entire width at 56% down the frame. The focal structure stands in the RIGHT half, centred at about 70% of the width: a vast pale BACKLIT CATALOGUE-SCREEN — a tall arched wall of frosted glass and thousands of index cards glowing cold white-violet from behind like a lit page, rising from the floor line up to about 18% from the top and spanning from 55% to 85% of the width; in front of its lower edge, on the plinth, a small absurd gilded heir's chair assembled from stolen picture frames and stacked sealed folders, empty. The left half of the hall stays in deep blue-grey shadow, the duplicated shelving receding. Left wing (outer 10%): a clerk's reading-stand with a hooded lantern burning SOFT AMBER, the one warm, uncopyable light. Right wing (outer 10%): a rolling archive ladder and a hanging chain of sealed contracts. The floor filling the whole lower part of the frame: flat, matte, dark slate flagstones with a faint worn pattern, no paper on the floor, fading into darkness toward the bottom edge.
+
+Warm torchlight rim lighting, palette of deep purples, charcoal and ember orange, matching a torchlit dungeon. For this Act 2 archive the palette is tilted COLD: blue-grey clerical 'system light', paper-yellow only as a faint accent on the shelves, and the warm torch-glow confined to the left wing; identical, duplicated, mirrored shelving on both sides (copies of copies).
+
+VALUE STAGING (strict): the backlit catalogue-screen is by far the brightest large area of the plate — a pale, low-detail, evenly glowing field (about 70-80% brightness) between 55% and 85% of the width and between 18% and 56% down the frame, so that any dark figure standing on the floor line in front of it reads as a crisp silhouette. Everything else above the floor line is mid-to-dark. No bright light below the floor line.
+
+STAGE COMPOSITION (strict): camera at standing eye level, straight-on, shallow one-point perspective with the vanishing point at centre, no fisheye. The far edge of the walkable floor is ONE straight horizontal line at 56% down the frame across the middle 80% of the width. Everything below that line across the middle 80% of the width is EMPTY flat matte floor: no chair legs, lecterns, books, candles, pillars, stairs or debris standing there. Tall framing elements only in the outer 10% left and right. The lower third falls into deep low-texture shadow with a soft dark vignette in the corners. Include a human-scale reference on the floor line (a shelving bay about 22% of the frame height).
+
+Painted illustration style only. Full-bleed 16:9 landscape environment plate (1920x1080), no transparency. No characters, no creatures, no figures, no text, no letters, no numbers, no signage, no frame, no UI.
+
 ========================= Gevechtstijl act2 EPISCH 1.png =========================
 (VERVANGT de papierkathedraal — de drukste textuur van het spel zit precies achter
 de naam/hp/chip-band, en de vloerrand loopt aan de figuurkanten tot 73%; zelfde naam,
