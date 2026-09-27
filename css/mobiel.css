@@ -317,9 +317,14 @@ body[data-modus="mobiel"] #baas-balk[data-vorm="2"] .bb-balk.bb-woede::before {
 /* de nieuwe pillen mogen nooit wrappen op een telefoon: een regel met ellipsis */
 body[data-modus="mobiel"] .intent-decreet,
 body[data-modus="mobiel"] .intent-factuur,
-body[data-modus="mobiel"] .intent-hof {
+body[data-modus="mobiel"] .intent-hof,
+body[data-modus="mobiel"] .intent-roof,
+body[data-modus="mobiel"] .intent-buit,
+body[data-modus="mobiel"] .intent-vuil {
   white-space: nowrap; max-width: 38vw; overflow: hidden; text-overflow: ellipsis;
 }
+/* B3: op de telefoon is zijn balk een hart — daar geen streep; de fase-puntjes dragen de tip */
+body[data-modus="mobiel"] #baas-balk .bb-inkeping { display: none; }
 /* het shortlist-zegel kleiner en binnen de 44px-raakzones van de handkaart. Aan de
    BOVENRAND naast de kostbol (zie style.css): de onderrand van een handkaart hangt onder
    het scherm en de rechterhelft ligt onder de buurkaart van de waaier — en juist op mobiel

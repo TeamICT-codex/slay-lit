@@ -3467,52 +3467,13 @@ function verliesHp(doel, n, bron) {
       doel.hp = 0;
       fxNummer(actorEl(doel), '🪢 de executie', 'fx-schade');
     }
-    /* THE COPYCAT voedt zich met jouw schade — chokepoint, dus ook gif loopt hierlangs.
-       copycatNaSchade regelt voeding (bron-gegate) + terugwin van je gestolen kaarten. */
+    /* DE ERFPRINS: elke klap die hij incasseert (ook gif en doornen) kan zijn streep op 50 %
+       passeren, en je eerste klap ontketent de Roof — zie copycatNaSchade */
     if (doel.hp > 0 && VIJANDEN[doel.id] && VIJANDEN[doel.id].copycat
-        && S.gevecht && !S.gevecht.copycatGebroken) copycatNaSchade(doel, n, bron);
-    /* DE PLAGIAATFASE: de Erfprins weigert éénmalig te sterven zolang hij jouw werk
-       nog in voorraad heeft — hij verscheurt zijn gestolen arsenaal en verzilvert elke
-       kaart in levenskracht (+12 HP per kaart, max 5; tunebaar). Counterplay was: win je
-       arsenaal terug vóór de kill, of breek de machine (Drops) → hij sterft gewoon. Geen van
-       beide bestaat vandaag (terugwin weg sinds 30 jun; de breker is geparkeerd, DE NISSEN
-       DICHT) — de Erfprins-ronde herbouwt de tegenzet. Zie M_metgezel_parkering_plan.md §2.9. */
-    if (doel.hp <= 0 && !doel.dood && doel.id === 'de_erfprins' && !doel.plagiaat
-        && S.gevecht && !S.gevecht.copycatGebroken && (doel.gestolen || []).length) {
-      doel.plagiaat = true;
-      const buit = doel.gestolen.splice(0, 5);          /* verscheurd = dit gevecht nooit meer terug te winnen */
-      doel.hp = Math.min(doel.maxHp || 180, buit.length * 12);
-      doel.blok = 0;
-      doel.status = {};                                  /* hij herrijst schoon — jouw gif stierf met de vorige versie */
-      /* de intent is een momentopname van vóór de splice: zonder hersync pocht hij over
-         kaarten die hij net verscheurde en landt de getelegrafeerde klap nooit (review) */
-      if (VIJANDEN[doel.id] && typeof VIJANDEN[doel.id].kies === 'function') {
-        doel.intent = VIJANDEN[doel.id].kies(doel, doel.beurtTeller || 0);
-      }
-      const g2 = S.gevecht;
-      /* de beat: hij zákt (fake-dood, stilte)… en staat dan op met jouw leven in zijn handen */
-      pose2D(doel, 'hit', 1.1);
-      const elD = actorEl(doel);
-      if (elD) { elD.classList.add('plagiaat-zakt'); }
-      setTimeout(() => {
-        /* de zak-klasse ALTIJD opruimen — ook als hij intussen alsnog stierf (multi-hit),
-           anders blijft het lijk grijs-gezakt staan (review 27 aug) */
-        if (elD && elD.isConnected) elD.classList.remove('plagiaat-zakt');
-        if (S.gevecht !== g2 || g2.voorbij) return;
-        baasFaseMoment('DE PLAGIAATFASE', '„Sterven? Ik? Ik heb JOUW leven nog op voorraad."');
-        baasSpreekt(UITSPRAKEN._erfprins.plagiaat);
-        if (window.Vista) Vista.pose(doel, 'cast', 2.2);
-        pose2D(doel, 'cast', 2.2);
-        buit.forEach((c, i) => setTimeout(() => {
-          if (S.gevecht !== g2 || g2.voorbij) return;
-          fxNummer(actorEl(doel), `🗞️ „${knaam(c)}" verscheurd · +12`, 'fx-genees');
-          Klank.sfx('flip');
-          renderGevecht();
-        }, 500 + i * 380));
-        setTimeout(() => { if (S.gevecht === g2 && !g2.voorbij) renderGevecht(); }, 700 + buit.length * 380);
-      }, 950);
-      renderGevecht();
-    }
+        && S.gevecht && !copycatGebroken(S.gevecht)) copycatNaSchade(doel, n, bron);
+    /* HET NOODRANTSOEN (de Erfprins): zijn tweede leven, aangekondigd op zijn Buit-pil —
+       de regels en de regie staan bij de rest van de baas (copycatNoodrantsoenVuurt) */
+    if (doel.hp <= 0 && !doel.dood && doel.id === 'de_erfprins') copycatNoodrantsoenVuurt(doel);
     /* IV · DE HERVERKIEZING — de DICKtator herrijst éénmalig uit de dood: we leren niet
        uit de fouten van het verleden. Wie je liet staan, STEMT op hem (+1 Kracht per
        kiezer), zijn blijvende Kracht komt terug, en hij begint aan HET MANDAAT.
@@ -4815,10 +4776,9 @@ function maakVijand(id, rij) {
   if (!def.baas && dagwetActief('stormloop')) hp = Math.ceil(hp * 1.25);   /* DE STORMLOOP: de tegenprijs van 4 energie */
   const v = { id, naam: def.naam, art: def.art, hp, maxHp: hp, blok: 0, status: {}, dood: false, beurtTeller: 0, intent: null };   /* (aegis-veld weg — geen enkele vijand-def heeft het nog; het oude schild is vervangen door de Copycat-machinerie) */
   if (def.copycat) {
-    /* THE COPYCAT-state. Overal elders lui geguard ((v.gestolen||[]), v.gevoed||0, …)
-       want Drops kan midden in het gevecht verschijnen — zie [[lookup-bugklasse]]. */
-    v.gestolen = []; v.gevoed = 0; v.fase = 1; v.terugwinMeter = 0;
-    v.maxKlap = 0; v.copyKracht = 0;   /* (totaalGestolen weg — hoorde bij de verwijderde steel-loop) */
+    /* DE ERFPRINS: zijn buit, zijn fase, zijn fasetoeslag en zijn plagiaatbeurten. Overal elders
+       lui geguard ((v.gestolen || []), v.plagN || 0, …) — zie [[lookup-bugklasse]]. */
+    v.gestolen = []; v.fase = 1; v.copyKracht = 0; v.plagN = 0;
   }
   markeerGezien(id);   /* artbook: deze vijand staat nu vrij in het Bestiarium */
   return v;
@@ -4964,8 +4924,8 @@ function startGevecht(samenstelling, soort, rij, opts) {
     energie: dagwetActief('stormloop') ? 4 : 3, maxEnergie: dagwetActief('stormloop') ? 4 : 3,
     beurt: 0, bezig: false, voorbij: false,
     gekozenKaart: null, gekozenDrank: null,
-    /* THE COPYCAT: zijn observatie-buffer + breekstatus leven op het gevecht */
-    laatstGespeeld: [], vorigeId: null, copycatGebroken: false, raakteCopycat: false,
+    /* DE ERFPRINS: de breekstatus (alleen Drops' geparkeerde offer schrijft die) */
+    copycatGebroken: false,
     /* HET PROCES (v109): de boekhouding van de DICKtator. Alles leeft op het GEVECHT,
        dus saveSpel (gevecht: null) hoeft er niets van te migreren.
        gespeeld = hoe vaak elke kaart-id dit gevecht gespeeld is (shortlist-criterium),
@@ -5814,16 +5774,16 @@ function intentTekst(v) {
     const tipWie = richtMet ? METGEZELLEN[mDoel.id].naam : 'jou';
     return `<span class="intent intent-aanval${richtMet ? ' intent-viseert-mg' : ''}" data-tip="${it.naam}: valt ${tipWie} aan voor ${dmg}${it.hits ? '×' + it.hits : ''} schade">⚔️ ${dmg}${it.hits ? '×' + it.hits : ''}${merk}</span>`;
   }
+  /* DE ERFPRINS (B3): elke zet van hem heeft een eigen tak (de default-tak liegt 'verzwakt jou').
+     Een baas telegrafeert altijd (B0.11 hierboven), dus hier geen duister-varianten. */
+  if (it.type === 'roof') return copycatRoofPil(v);
+  if (it.type === 'buit') {
+    return `<span class="intent intent-buit" data-tip="Hij bekijkt zijn buit — deze beurt geen schade. Zijn eerste kaart staat daarna op de pil.">🧐 buit</span>`;
+  }
   if (it.type === 'steel') {
-    return `<span class="intent intent-steel" data-tip="De Copycat kijkt je sterkste recente kaart af om die te stelen">👀 steelt</span>`;
+    return `<span class="intent intent-steel" data-tip="NAROOF: zijn buit is op. Hij grist de helft van je trekstapel — geen schade deze beurt. Een vloek die hij meeneemt, bijt hem later.">👀 naroof</span>`;
   }
-  if (it.type === 'plagiaat') {
-    if (verborgen) return `<span class="intent intent-debuff" data-tip="Plagiaat — te donker om te zien wát hij terugspeelt">🎭 ?</span>`;
-    const pips = (it.plan || []).map(k => k.soort === 'aanval'
-      ? `<span class="intent intent-aanval" data-tip="Plagiaat — JOUW ${k.naam} voor ${k.eindDmg} schade">🎭 ${k.eindDmg}</span>`
-      : `<span class="intent intent-debuff" data-tip="Plagiaat — JOUW ${k.naam}">🎭 ${k.naam}</span>`).join(' ');
-    return pips || `<span class="intent intent-debuff" data-tip="Plagiaat">🎭</span>`;
-  }
+  if (it.type === 'plagiaat') return copycatPlanPillen(v, it);
   if (it.type === 'blok') {
     return `<span class="intent intent-blok" data-tip="${it.naam}: verdedigt zich">🛡️ ${verborgen ? '?' : it.blok}</span>`;
   }
@@ -5924,8 +5884,9 @@ function renderGevecht() {
           <div class="bb-balk">
             <div class="bb-vul"></div>
             <span class="bb-tekst"></span>
+            ${VIJANDEN[b.id].copycat ? `<span class="bb-inkeping" style="left:${Math.round(ERF.fase3Hp * 100)}%"></span>` : ''}
           </div>
-          <div class="bb-fases" data-tip="De baas vecht in drie bedrijven — verzwak hem en zie wat er gebeurt... en wie hem velt, ziet hem herkozen worden.">
+          <div class="bb-fases" data-tip="${VIJANDEN[b.id].copycat ? copycatFaseTip(b) : 'De baas vecht in drie bedrijven — verzwak hem en zie wat er gebeurt... en wie hem velt, ziet hem herkozen worden.'}">
             ${[1, 2, 3].map(() => `<span class="bb-pip"></span>`).join('')}<span class="bb-pip kroon"></span>
           </div>
           <div class="bb-extra"></div>`;
@@ -7028,7 +6989,6 @@ async function speelKaart(c, doel) {
     renderGevecht();
     try { await resultaat; } finally { if (S.gevecht === g) g.bezig = false; }
   }
-  baasZietKaart(c);   /* THE COPYCAT ziet wat je speelt (observeren) */
   /* Act 2-kaarthaken (Het Archief): teller + Geïndexeerd-blok, dán de Doorslag-verdubbeling.
      Increment vóór de recast (anders telt Originele Handtekening de recast dubbel als
      'eerste aanval'); de recast wordt geawait (async multi-hit niet fire-and-forget). */
@@ -7065,8 +7025,9 @@ async function speelKaart(c, doel) {
   } else {
     g.afleg.push(c);
   }
-  /* DE ROOF: je eerste aanval op de Erfprins ontketent het ritueel — het onderbreekt je beurt,
-     waarna hij meteen je kaarten begint terug te spelen (eindBeurt). */
+  /* DE ROOF: je eerste klap op de Erfprins ontketent het ritueel. De kaart ligt hierboven al
+     in je aflegstapel (buiten zijn bereik); de Roof neemt alleen uit je trekstapel, en daarna
+     stopt je beurt (Thomas' keuze van 30 jun, aangekondigd op de pil). */
   if (g.roofPending && !g.roofGedaan && !g.voorbij) {
     g.roofPending = false;
     g.bezig = true; renderGevecht();
@@ -7117,38 +7078,211 @@ function checkBaasFase() {
   }
 }
 
-/* ============ THE COPYCAT — Act 2-eindbaas (kopieer-mechaniek) ============
-   De Erfprins maakt nooit iets zelf: hij STEELT je kaarten (uit de gevecht-kopie
-   van je trek/afleg — S.dek blijft heilig), kaatst ze opgewaardeerd terug, en
-   GROEIT (v.gevoed) naarmate jij optimaler speelt. Voeding loopt via verliesHp
-   (de chokepoint — dus ook gif voedt). Drops (rol:'breker') breekt de machine.
-   Volledig ontwerp: ONTWERP.md "The Copycat — Act 2-eindbaasmechaniek". */
-
-const COPYCAT_CAP_DMG = { 1: 20, 2: 30, 3: 40 };   /* fase-afhankelijke cap op teruggekaatste schade. Roof-rework: half je dek is al weg → de burst moest terug omlaag (60 was verpletterend tegen een gehalveerd dek). 'Zeer moeilijk maar net winbaar solo'; tunebaar. */
-const COPYCAT_F2 = 6, COPYCAT_F3 = 13;   /* voedings-drempels voor fase 2 / 3 (verlaagd: hij ramt nu sneller op) */
+/* ============================================================
+   DE ERFPRINS — THE COPYCAT, de Act 2-baas ('De Roof, eerlijk', release B3).
+   Het draaiboek van Thomas (30 jun): hij lacht je uit; je eerste klap gaat door en hij wordt
+   woedend; je dek gaat open en de vieze vinger kiest AD RANDOM de helft; daarna speelt hij die
+   kaarten beurt na beurt groot in beeld terug, met een toeslag die van de kaartsoort afhangt,
+   en geeft ze je aangetast terug. Alles per gevecht: S.dek blijft heilig (voorgoed afnemen is
+   voor de eindbaas).
+   Eerlijk gemaakt volgens bazen_onderzoek/ontwerp/O1-roof-eerlijk.md en de jury-enten:
+   - zijn pil zegt wat er komt: 🎭 ROOF vóór je eerste klap, daarna per kaart zijn échte getal;
+   - na de Roof bekijkt hij eerst zijn buit (geen blinde klap meer);
+   - de fases hangen aan de Roof (WOEDE = fase 2) en aan een streep op zijn balk (fase 3);
+   - de zet op zijn pil is een BELOFTE: een fase die in jouw beurt omslaat, geldt pas vanaf zijn
+     volgende plan;
+   - zijn tweede leven (het NOODRANTSOEN) staat de hele tijd op zijn Buit-pil.
+   ERF is de bron van waarheid voor alle getallen, zoals DICK voor de eindbaas: balanceer HIER.
+   Het meetharnas (tools/baas-meting/erfprins_meting.js) zet per gevecht andere waarden in ERF.
+   ============================================================ */
+const ERF = {
+  hp: 190,                          /* gemeten (O1 ronde_g/h, eind3/eind4): boven 180 is HP hier geen sterke knop */
+  /* DE ROOF */
+  roofDeel: 0.5,                    /* hij neemt round(je dek × 0,5) kaarten, ad random, uit je trekstapel */
+  roofRest: 2,                      /* er blijven altijd minstens zoveel kaarten in je trekstapel */
+  roofKaartMs: 760,                 /* regie: tempo van de vieze vinger per geplukte kaart */
+  buitMs: 2200,                     /* regie: hoe lang hij zijn buit bekijkt (de beurt na de Roof) */
+  /* HET TERUGSPELEN — een aanval: min(cap, (round(jouw getal × mult) + toeslag) × actschaal) */
+  mult: 1.65,
+  actSchaal: 0.15,                  /* +15 % per act na de eerste (dezelfde regel als actDmg) */
+  cap: { 1: 20, 2: 22, 3: 28 },     /* plafond per klap, per fase (O1 ronde_f/h: 30/40 was te grof) */
+  toeslag: { 1: 0, 2: 1, 3: 3 },    /* zijn fasetoeslag op elke kopie (v.copyKracht) */
+  gifMult: 2.5,                     /* jouw gifkaart speelt hij terug als round(n × 2,5) Gif op JOU (vervangt de gifkaats) */
+  blokMult: 1,                      /* jouw blokkaart geeft hém n × blokMult Blok */
+  driftbui: [0, 0],                 /* wat hij niet snapt: [a, b] → een klap van a + b × fase (0 = geen effect) */
+  spiegel: false,                   /* HET SPIEGELRECHT: jouw Kracht/Doornen/Gifklieren worden de zijne */
+  vloek: [12, 5, 4],                /* een geroofde vloek bijt HÉM: a + b × fase + c × (act − 1) */
+  /* FASES — fase 2 = de Roof (WOEDE), fase 3 = onder de streep op zijn balk */
+  fase3Hp: 0.5,
+  plan: { 1: [1], 2: [1, 2], 3: [2] },   /* kaarten per plagiaatbeurt, per fase (cyclus op zijn plagiaatbeurten) */
+  /* HET NOODRANTSOEN — zijn tweede leven, altijd zichtbaar op zijn Buit-pil (♥+N) */
+  rantsoenPerKaart: 12, rantsoenMax: 4,
+  /* NAROOF en UITPUTTING — als zijn buit op is */
+  naroofMin: 3,                     /* hij grist opnieuw zolang je trekstapel minstens zoveel kaarten telt */
+  naroofDeel: 0.5,                  /* … en dan ceil(je trekstapel × dit deel) */
+  uitput: [4, 4]                    /* daaronder: Pappie Bellen / Wild Geschreeuw voor a + b × fase (act-geschaald) */
+};
+if (typeof VIJANDEN !== 'undefined' && VIJANDEN.de_erfprins) VIJANDEN.de_erfprins.hp = [ERF.hp, ERF.hp];   /* ERF is de bron van waarheid (data.js laadt eerder) */
 
 function copycatBaas(g) {
   return (g && g.vijanden) ? g.vijanden.find(v => !v.dood && VIJANDEN[v.id] && VIJANDEN[v.id].copycat) : null;
 }
-function copycatFaseBodem(fase) { return fase >= 3 ? COPYCAT_F3 : (fase >= 2 ? COPYCAT_F2 : 0); }
-function snapSterkte(s) { return s.soort === 'aanval' ? (s.n || 0) * 2 : (s.n || 0); }
+/* De breker van de machine was een metgezel: g.copycatGebroken heeft maar één schrijver, Drops'
+   offer, en dat staat achter metgezellenAan() (DE NISSEN DICHT). Met de metgezellen geparkeerd
+   kan niets hem dus breken: het pad blijft latent voor een terugkeer (M-plan §8), en de
+   Erfprins-logica leest het alleen via deze ene poort. */
+function copycatGebroken(g) { return !!(g && g.copycatGebroken); }
+function erfNaam(s) { return (s && s.naam || '') + (s && s.up ? '+' : ''); }
+/* act-schaling van zijn eigen getallen (zelfde +15 % per act als actDmg) */
+function erfActDmg(d) { return huidigeAct() > 1 ? Math.ceil(d * (1 + ERF.actSchaal * (huidigeAct() - 1))) : d; }
 
-/* KANAAL 1 — observeren: elke stelbare kaart die je speelt landt in de buffer + voedt traag */
-function baasZietKaart(c) {
-  const g = S.gevecht; if (!g || g.copycatGebroken) return;
-  const baas = copycatBaas(g); if (!baas) return;
-  const recept = kdef(c).kopie; if (!recept) return;
-  const n = Math.max(0, kval(c, recept.veld) || 0);
-  if (recept.soort === 'aanval' && n <= 0) return;
-  const kost = Math.max(1, kkost(c) || 1);
-  if (!Array.isArray(g.laatstGespeeld)) g.laatstGespeeld = [];
-  g.laatstGespeeld.push({ id: c.id, naam: kdef(c).naam, soort: recept.soort, n, kost });
-  while (g.laatstGespeeld.length > 3) g.laatstGespeeld.shift();
-  /* observatie-voeding: aanvallen voeden naar schade/kost; herhaalde dure bommen +50% */
-  let voer = recept.soort === 'aanval' ? Math.round(n / kost) : 0;
-  if (c.id === g.vorigeId && kost >= 2) voer = Math.round(voer * 1.5);
-  baas.gevoed = (baas.gevoed || 0) + voer;
-  g.vorigeId = c.id;
+/* de kopie-waarde van een teruggespeelde aanval (vóór zijn Kracht en de statussen): jouw getal
+   × 1,65 + zijn fasetoeslag, act-geschaald, met een plafond per fase. Ligt vast zodra hij plant. */
+function copycatPlagiaatDmg(v, n) {
+  let d = Math.round(n * ERF.mult) + (v.copyKracht || 0);
+  d = erfActDmg(d);
+  return Math.min(ERF.cap[v.fase || 1] || ERF.cap[3], Math.max(1, d));
+}
+/* de driftbui: een kaart die hij niet snapt, gooit hij naar je hoofd (0 = geen effect) */
+function erfDriftbui(v) {
+  const [a, b] = ERF.driftbui || [0, 0];
+  const d = (a || 0) + (b || 0) * (v.fase || 1);
+  return d > 0 ? erfActDmg(d) : 0;
+}
+/* wat een geroofde vloek HEM kost */
+function erfBackfire(v) {
+  const [a, b, c] = ERF.vloek;
+  return a + b * (v.fase || 1) + c * Math.max(0, huidigeAct() - 1);
+}
+/* de klap ZOALS HIJ LANDT (vóór jouw Blok): Zwak op hem en Kwetsbaar op jou tellen, net als bij
+   elke andere vijand (vijandAanval). Glazen Zielen zit in doeSchade; de pil telt die er zelf bij. */
+function copycatKlapNu(v, eind, doel) {
+  let d = eind;
+  if ((v.status.zwak || 0) > 0) d = Math.floor(d * 0.75);
+  const dl = doel || sp();
+  if (dl && (dl.status.kwetsbaar || 0) > 0) d = Math.floor(d * 1.5);
+  return Math.max(0, d);
+}
+
+/* ---- wat hij met een geroofde kaart doet: de SOORT, afgeleid van de kaart zelf ----
+   aanval · gif · blok · zwak · spiegel (Kracht/Doornen/Gifklieren voor hém) · vloek · overig */
+function gesmeedSpec(c) {
+  if (S.gesmeed && S.gesmeed[c.id]) return S.gesmeed[c.id];
+  const pre = 'gesmeed_codex_';
+  if (c.id.indexOf(pre) === 0 && Codex.slachtblok) return Codex.slachtblok[c.id.slice(pre.length)] || null;
+  return null;
+}
+function _erfprinsRoofKaart(c) {
+  const def = kdef(c);
+  if (def.type === 'vloek') return { soort: 'vloek', n: 0 };
+  if (def.gesmeed) {
+    /* gesmede kaarten (Slachtblok, Drempeltafel sport III): lees de modules uit de spec */
+    const spec = gesmeedSpec(c);
+    if (spec) {
+      const F = spec.dubbel ? 2 : 1;
+      const som = m => spec.modules.filter(x => x.m === m).reduce((t, x) => t + x.p * ((SMEED_MODULES[x.m] || {}).perPunt || 0) * F, 0);
+      if (som('schade') > 0) return { soort: 'aanval', n: som('schade') };
+      if (som('blok') > 0) return { soort: 'blok', n: som('blok') };
+    }
+    return { soort: 'overig', n: 0 };
+  }
+  const rec = def.kopie;
+  if (rec) { const n = Math.max(0, kval(c, rec.veld) || 0); if (n > 0 || rec.soort !== 'aanval') return { soort: rec.soort, n }; }
+  /* een gifkaart zonder recept (Gifwolk, Verlammend Gif, Dodelijke Kus…) speelt hij als Gif terug */
+  const gif = kval(c, 'gif') || 0; if (gif > 0) return { soort: 'gif', n: gif };
+  const dmg = kval(c, 'dmg') || 0; if (dmg > 0) return { soort: 'aanval', n: dmg };
+  const blok = kval(c, 'blok') || 0; if (blok > 0) return { soort: 'blok', n: blok };
+  return { soort: 'overig', n: 0 };
+}
+/* een geroofde kaart in zijn buit: wat hij ervan weet (de uid wijst de échte instance aan) */
+function erfBuitKaart(c) {
+  const info = _erfprinsRoofKaart(c);
+  return Object.assign({ uid: c.uid, id: c.id, naam: kdef(c).naam, up: !!c.up }, info);
+}
+/* de volgorde waarin hij speelt: een vloek eerst (hij grijpt blind), dan zijn sterkste */
+function erfSterkte(s) {
+  if (s.soort === 'vloek') return 1e6;
+  if (s.soort === 'aanval') return (s.n || 0) * 2;
+  if (s.soort === 'overig') return 0;
+  return s.n || 0;
+}
+/* één plankaart: de getallen van zijn plan liggen vast op het moment dat hij plant */
+function erfPlanKaart(v, s) {
+  const k = { uid: s.uid, id: s.id, naam: s.naam, up: !!s.up, soort: s.soort, n: s.n || 0 };
+  if (s.soort === 'vloek') { k.vuil = true; k.stik = true; k.bf = erfBackfire(v); }
+  else if (s.soort === 'aanval') k.eindDmg = copycatPlagiaatDmg(v, s.n);
+  else if (s.soort === 'overig') { k.eindDmg = erfDriftbui(v); k.drift = k.eindDmg > 0; }
+  else if (s.soort === 'gif') k.eindGif = Math.max(1, Math.round((s.n || 0) * ERF.gifMult));
+  else if (s.soort === 'blok') k.eindBlok = Math.max(1, Math.round((s.n || 0) * ERF.blokMult));
+  return k;
+}
+/* zijn plan: de N kaarten die hij deze beurt speelt */
+function copycatPlagiaatPlan(v, aantal) {
+  return (v.gestolen || []).slice().sort((a, b) => erfSterkte(b) - erfSterkte(a)).slice(0, aantal).map(s => erfPlanKaart(v, s));
+}
+/* de schade die zijn plan op jou doet (vóór je Blok), exact zoals copycatSpeelTerug hem
+   uitvoert: dezelfde bron voor de pil, het meetharnas en de acceptatiesuite */
+function copycatVerwacht(v) {
+  const it = v && v.intent; if (!it || it.type !== 'plagiaat') return 0;
+  let som = 0;
+  for (const k of it.plan || []) {
+    if (k.vuil) { if (k.stik) break; continue; }
+    if (k.soort === 'aanval' || k.drift) som += glasDmg(copycatKlapNu(v, k.eindDmg, sp()));
+  }
+  return som;
+}
+
+/* ---- HET NOODRANTSOEN: valt hij terwijl hij nog schoon werk heeft, dan verscheurt hij
+   tot rantsoenMax kaarten en staat op met rantsoenPerKaart HP per kaart (vloeken tellen niet).
+   Hij verscheurt eerst wat NIET op zijn pil staat, zodat de getelegrafeerde zet blijft staan. */
+function copycatNoodrantsoen(v) {
+  if (!v || v.plagiaat) return { kaarten: 0, hp: 0, lijst: [] };
+  const schoon = (v.gestolen || []).filter(s => s.soort !== 'vloek');
+  const plan = (v.intent && v.intent.type === 'plagiaat' && v.intent.plan) || [];
+  const gepland = new Set();
+  for (const k of plan) { const x = schoon.find(y => !gepland.has(y) && y.id === k.id && y.soort === k.soort); if (x) gepland.add(x); }
+  const lijst = schoon.filter(x => !gepland.has(x)).concat(schoon.filter(x => gepland.has(x))).slice(0, ERF.rantsoenMax);
+  return { kaarten: lijst.length, hp: lijst.length * ERF.rantsoenPerKaart, lijst };
+}
+/* aangeroepen uit verliesHp op zijn doodklap. Geeft true als hij opstaat. */
+function copycatNoodrantsoenVuurt(doel) {
+  const g2 = S.gevecht;
+  if (!g2 || copycatGebroken(g2) || doel.plagiaat) return false;
+  const nr = copycatNoodrantsoen(doel);
+  if (!nr.kaarten) return false;
+  doel.plagiaat = true;
+  const buit = nr.lijst;
+  doel.gestolen = doel.gestolen.filter(s => !buit.includes(s));
+  doel.hp = Math.min(doel.maxHp || ERF.hp, nr.hp);
+  doel.blok = 0;
+  doel.status = {};
+  /* de zet op zijn pil blijft staan als hij er geen kaart van moest verscheuren */
+  const it0 = doel.intent;
+  const heel = !!(it0 && it0.type === 'plagiaat' && (it0.plan || []).every(k => doel.gestolen.some(x => x.id === k.id && x.soort === k.soort)));
+  if (!heel && VIJANDEN[doel.id] && typeof VIJANDEN[doel.id].kies === 'function') doel.intent = VIJANDEN[doel.id].kies(doel, doel.beurtTeller || 0);
+  /* de beat: hij zákt (schijndood, stilte)… en staat dan op met jouw werk in zijn handen */
+  pose2D(doel, 'hit', 1.1);
+  const elD = actorEl(doel);
+  if (elD) elD.classList.add('plagiaat-zakt');
+  setTimeout(() => {
+    /* de zak-klasse ALTIJD opruimen — ook als hij intussen alsnog stierf (multi-hit),
+       anders blijft het lijk grijs-gezakt staan (review 27 aug) */
+    if (elD && elD.isConnected) elD.classList.remove('plagiaat-zakt');
+    if (S.gevecht !== g2 || g2.voorbij) return;
+    baasFaseMoment('HET NOODRANTSOEN', `🗞️ Hij verscheurt ${buit.length} van je kaarten en staat op met ${doel.hp} HP.`);
+    baasSpreekt(UITSPRAKEN._erfprins.plagiaat);
+    if (window.Vista) Vista.pose(doel, 'cast', 2.2);
+    pose2D(doel, 'cast', 2.2);
+    buit.forEach((c, i) => setTimeout(() => {
+      if (S.gevecht !== g2 || g2.voorbij) return;
+      fxNummer(actorEl(doel), `🗞️ „${erfNaam(c)}” verscheurd · +${ERF.rantsoenPerKaart}`, 'fx-genees');
+      Klank.sfx('flip');
+      renderGevecht();
+    }, 500 + i * 380));
+    setTimeout(() => { if (S.gevecht === g2 && !g2.voorbij) renderGevecht(); }, 700 + buit.length * 380);
+  }, 950);
+  renderGevecht();
+  return true;
 }
 
 /* ---- ZICHTBARE STEEL: een kaart vliegt over het scherm (van je hand-zone naar de
@@ -7178,84 +7312,24 @@ function kaartVliegFx(kaartId, bronEl, doelEl, opts) {
 }
 function copycatBronEl() { return $('#hand') || $('#onderbalk') || $('#speler-zone'); }
 
-/* VLOEK-GREEP: de Erfprins grijpt blind — een vloek in je stapels keert zich tégen hem.
-   Hij loopt er zélf schade van op (zonder zich eraan te voeden) en de vloek is geconsumeerd.
-   → "neem bewust vloeken mee" wordt een echte counter. Tunebaar via VLOEK_BACKFIRE. */
-const VLOEK_BACKFIRE = (v) => 12 + (v.fase || 1) * 5 + Math.max(0, huidigeAct() - 1) * 4;   /* ~17–31 */
-/* (copycatGristVloek + copycatSteel — de oude reactieve per-beurt-steel-loop — zijn
-   verwijderd: de Roof v2 grist in één cinematische graai (copycatDeRoof/_copycatGraai)
-   en de vloek-backfire leeft nu in copycatSpeelTerug, met dezelfde VLOEK_BACKFIRE.) */
-
-/* de eind-schade van een teruggespeelde aanval: +65%, +copyKracht, act-scaling, fase-cap */
-function copycatPlagiaatDmg(v, n) {
-  let d = Math.round(n * 1.65) + (v.copyKracht || 0);
-  if (huidigeAct() > 1) d = Math.ceil(d * (1 + 0.15 * (huidigeAct() - 1)));
-  return Math.min(COPYCAT_CAP_DMG[v.fase || 1] || 46, Math.max(1, d));
-}
-/* kies de N sterkste gestolen kaarten + bereken hun eind-getallen (voor telegraaf én uitvoer) */
-function copycatPlagiaatPlan(v, aantal) {
-  return (v.gestolen || []).slice().sort((a, b) => snapSterkte(b) - snapSterkte(a)).slice(0, aantal)
-    .map(s => ({ id: s.id, naam: s.naam, soort: s.soort, n: s.n, eindDmg: s.soort === 'aanval' ? copycatPlagiaatDmg(v, s.n) : 0 }));
-}
-/* ---- DE ROOF (opening): de Erfprins grist meteen een willekeurige HELFT van je dek in
-   zijn kopie-stapel en maakt je af met de jouwe. Per gevecht — je trek/afleg worden elk
-   gevecht vers uit S.dek gebouwd, dus na de baas is je dek weer compleet. ---- */
-function _erfprinsRoofKaart(c) {
-  const def = kdef(c);
-  if (def.type === 'vloek') return { soort: 'vloek', n: 0 };
-  const rec = def.kopie;
-  if (rec) { const n = Math.max(0, kval(c, rec.veld) || 0); if (n > 0 || rec.soort !== 'aanval') return { soort: rec.soort, n }; }
-  const dmg = kval(c, 'dmg') || 0; if (dmg > 0) return { soort: 'aanval', n: dmg };
-  const blok = kval(c, 'blok') || 0; if (blok > 0) return { soort: 'blok', n: blok };
-  return { soort: 'overig', n: 0 };
-}
-/* gedeelde graai: verplaats `aantal` willekeurige kaarten uit je trek naar zijn arsenaal
-   (laat ALTIJD ≥2 in je trek → nooit meteen droogtrekken). Geeft het aantal echt geroofde
-   kaarten terug. */
-function _copycatGraai(v, g, aantal) {
-  const trek = g.trek || [];
-  aantal = Math.max(0, Math.min(trek.length - 2, aantal | 0));
-  if (aantal <= 0) return 0;
-  const idxs = schud(trek.map((_, i) => i)).slice(0, aantal).sort((a, b) => b - a);   /* hoog→laag → splice-veilig; seeded schud */
-  v.gestolen = v.gestolen || [];
-  idxs.forEach(i => {
-    const c = trek[i]; trek.splice(i, 1);
-    const info = _erfprinsRoofKaart(c);
-    v.gestolen.push({ id: c.id, naam: kdef(c).naam, soort: info.soort, n: info.n, up: !!c.up });
-  });
-  v.totaalGeroofd = (v.totaalGeroofd || 0) + idxs.length;
-  return idxs.length;
-}
-/* DE NAROOF: raakt zijn geroofde stapel op, dan grist hij OPNIEUW (de helft van wat je nú hebt) →
-   de onslaught deflater niet, je kunt 'm solo niet uitzitten. Dooft pas als je trek te klein is om
-   nog te grissen (<3) → dán valt hij zwak uit (jouw window). De Drops-breker stopt de machine
-   volledig. Geen schade deze beurt (hij her-stockt); telegrafeert als '👀 steelt'. */
-function copycatHerroof(v, g) {
-  if (!v || g.copycatGebroken) return;
-  const n = _copycatGraai(v, g, Math.ceil((g.trek || []).length / 2));
-  if (!n) { fxNummer(actorEl(v), '🎭 niks meer te grissen…', 'fx-debuff'); return; }
-  v.gestolen.slice(-n).forEach((s, i) => setTimeout(() => kaartVliegFx(s.id, copycatBronEl(), actorEl(v)), i * 90));
-  baasFaseMoment('NAROOF', `🎭 „Nog niet leeg?" — hij grist nóg ${n} kaart${n === 1 ? '' : 'en'} uit je dek!`);
-  Klank.sfx('debuff');
-  renderGevecht();
-}
-
 /* ============================================================================
-   DE ROOF — CINEMATISCH (Roof-rework v2). NIET meer bij gevechtsstart, maar het
-   moment je je EERSTE aanval op de Erfprins landt: hij ontsteekt in woede, je dek
-   OPENT zich, en hij plukt er één voor één (met een vieze vinger) een willekeurige
-   HELFT uit die in zijn arsenaal verbrandt. Daarna onderbreekt het je beurt en
-   speelt hij ze beurt na beurt GROOT in beeld terug — elk gecorrumpeerd retour in
-   je dek (+1 kost, uitputtend, zwart aangetast). copycatDeRoof is idempotent
-   (g.roofGedaan) en wordt getriggerd vanuit speelKaart (na je 1e aanval) óf — als
-   je je beurt zonder aanval eindigt — als vangnet bovenin eindBeurt. ============ */
-const ROOF_KAART_MS = 760;   /* pacing per geplukte kaart in de cutscene (tunebaar) */
-
-async function copycatDeRoof(g) {
+   DE ROOF — je EERSTE klap die hem raakt: hij ontsteekt in woede (= fase 2), je dek OPENT
+   zich en de vieze vinger plukt er ad random de helft uit, allemaal uit je TREKSTAPEL (je hand
+   en wat je al speelde, blijven van jou). Daarna stopt je beurt (Thomas' keuze van 30 jun,
+   nu aangekondigd op de pil), en bekijkt hij in zijn eerste beurt eerst zijn buit. Getriggerd
+   vanuit speelKaart (nadat je kaart afgelegd is) of, zonder klap, als vangnet bovenin
+   eindBeurt. Idempotent via g.roofGedaan.
+   ============================================================================ */
+function copycatRoofWil(g) {
+  return Math.round((S.dek.length || ((g && g.trek) || []).length) * ERF.roofDeel);
+}
+async function copycatDeRoof(g, viaEindBeurt) {
   const v = copycatBaas(g);
-  if (!v || g.roofGedaan || g.copycatGebroken) return;
+  if (!v || g.roofGedaan || copycatGebroken(g)) return;
   g.roofGedaan = true;
-  /* 1 — WOEDE: hij voelt je klap en ontsteekt */
+  /* 1 — WOEDE: hij voelt je klap en ontsteekt. De woede ÍS zijn tweede fase. */
+  v.fase = Math.max(2, v.fase || 1);
+  v.copyKracht = ERF.toeslag[v.fase];
   const el = actorEl(v); if (el) el.classList.add('woede');
   if (window.Vista) Vista.pose(v, 'cast', 2.4);
   pose2D(v, 'cast', 2.4);
@@ -7264,24 +7338,27 @@ async function copycatDeRoof(g) {
   await slaap(1250);
   if (S.gevecht !== g || g.voorbij) return;
   /* 2 — HET RITUEEL: je dek opent, hij plukt de helft */
-  await copycatRoofCutscene(g, v, Math.round((S.dek.length || (g.trek || []).length) / 2));
+  await copycatRoofCutscene(g, v, copycatRoofWil(g), !!viaEindBeurt);
   if (S.gevecht !== g || g.voorbij) return;
-  /* 3 — zijn eerstvolgende zet = jouw kaarten terugspelen */
+  /* 3 — geen blinde klap: zijn eerste beurt bekijkt hij zijn buit, en zijn plan staat op de
+     pil vóór jij weer aan zet bent */
+  g.roofBeurt = true;
+  checkCopycatFase(v, g);
   v.intent = VIJANDEN[v.id].kies(v, v.beurtTeller);
   renderGevecht();
 }
 
-/* het zichtbare ritueel: toon je trek als open waaier, pluk er `wil` willekeurig uit
-   (laat ALTIJD ≥2 over), elk met de vieze vinger → verbrandt → in zijn arsenaal. */
-async function copycatRoofCutscene(g, v, wil) {
+/* het zichtbare ritueel: toon je trek als open waaier, pluk er `wil` ad random uit
+   (laat ALTIJD roofRest over), elk met de vieze vinger → in zijn buit. */
+async function copycatRoofCutscene(g, v, wil, viaEindBeurt) {
   const trek = g.trek || [];
-  const aantal = Math.max(0, Math.min(trek.length - 2, wil | 0));
+  const aantal = Math.max(0, Math.min(trek.length - ERF.roofRest, wil | 0));
   if (aantal <= 0) {
-    baasFaseMoment('DE ROOF', '🎭 „Te mager om te plunderen… voor nu."');
+    baasFaseMoment('DE ROOF', '🎭 „Te mager om te plunderen… voor nu.”');
     Klank.sfx('debuff');
     return;
   }
-  const teRoven = schud(trek.map((_, i) => i)).slice(0, aantal);   /* seeded → reproduceerbaar */
+  const teRoven = schud(trek.map((_, i) => i)).slice(0, aantal);   /* ad random, seeded → reproduceerbaar */
   const roofSet = new Set(teRoven);
   const ov = document.createElement('div');
   ov.className = 'roof-overlay';
@@ -7314,31 +7391,68 @@ async function copycatRoofCutscene(g, v, wil) {
     vinger.classList.add('wijst');
     kEl.classList.add('gekozen');
     Klank.sfx('klik');
-    await slaap(ROOF_KAART_MS * 0.5);
+    await slaap(ERF.roofKaartMs * 0.5);
     vinger.classList.add('tik');
     kEl.classList.add('verbrandt');
     Klank.sfx('debuff');
     await slaap(140);
     vinger.classList.remove('tik');
-    await slaap(ROOF_KAART_MS * 0.45);
+    await slaap(ERF.roofKaartMs * 0.45);
     kEl.classList.add('weg');
   }
   vinger.classList.remove('wijst');
   await slaap(160);
-  /* DATA: verplaats de geplukte kaarten naar zijn arsenaal (hoog→laag = splice-veilig) */
+  /* DATA: verplaats de geplukte kaarten naar zijn buit (hoog→laag = splice-veilig) */
   v.gestolen = v.gestolen || [];
   teRoven.slice().sort((a, b) => b - a).forEach(i => {
     const c = trek[i]; if (!c) return;
     trek.splice(i, 1);
-    const info = _erfprinsRoofKaart(c);
-    v.gestolen.push({ id: c.id, naam: kdef(c).naam, soort: info.soort, n: info.n, up: !!c.up });
+    v.gestolen.push(erfBuitKaart(c));
   });
   v.totaalGeroofd = (v.totaalGeroofd || 0) + teRoven.length;
   ov.classList.add('sluit');
-  baasFaseMoment('DE ROOF', `🎭 ${teRoven.length} van je beste kaarten — nu MÍJN werk. Je dek sluit zich.`);
+  baasFaseMoment('DE ROOF', `🎭 ${teRoven.length} van je ${S.dek.length} kaarten — allemaal uit je trekstapel — nu MÍJN werk.${viaEindBeurt ? '' : ' Je beurt is om.'}`);
   Klank.sfx('zwareklap');
   await slaap(720);
   ov.remove();
+}
+
+/* DE BUIT-BEAT — zijn eerste beurt na de Roof. Geen schade: hij waaiert JOUW kaarten open als
+   zijn hand en tilt de kaart op die hij als eerste speelt. Hergebruikt het roof-doek. */
+async function copycatBekijktBuit(v, g) {
+  g.roofBeurt = false;
+  const buit = v.gestolen || [];
+  if (!buit.length) return;
+  const eerste = copycatPlagiaatPlan(v, 1)[0];
+  const ov = document.createElement('div');
+  ov.className = 'roof-overlay buit-overlay';
+  ov.innerHTML = `<div class="roof-kop">🧐 ZIJN BUIT · ${buit.length} KAARTEN<small>„Kijk eens wat ik allemaal heb. Allemaal van mij. Deze eerst.”</small></div>
+    <div class="roof-waaier"></div>`;
+  document.body.appendChild(ov);
+  const waaier = ov.querySelector('.roof-waaier');
+  let gemarkeerd = false;
+  buit.forEach(s => {
+    const def = KAARTEN[s.id] || {};
+    const k = document.createElement('div');
+    const isEerste = !gemarkeerd && eerste && s.id === eerste.id && s.soort === eerste.soort;
+    if (isEerste) gemarkeerd = true;
+    k.className = 'roof-kaart' + (isEerste ? ' gekozen' : '') + (s.soort === 'vloek' ? ' buit-vuil' : '');
+    const pk = erfPlanKaart(v, s);
+    const getal = s.soort === 'aanval' ? `⚔️ ${pk.eindDmg}` : (s.soort === 'blok' ? `🛡️ ${pk.eindBlok}` : (s.soort === 'gif' ? `🧪 ${pk.eindGif}` : (s.soort === 'vloek' ? '🌑' : '🎭')));
+    k.innerHTML = `<div class="rk-art kaart-icoon" data-kicoon="${s.id}">${def.icoon || '🎴'}</div><span class="rk-naam">${erfNaam(s)}<br><b>${getal}</b></span>`;
+    waaier.appendChild(k);
+  });
+  if (typeof verfraaiKaartIconen === 'function') verfraaiKaartIconen(waaier);
+  await slaap(40);
+  ov.classList.add('open');
+  if (window.Vista) Vista.pose(v, 'cast', 1.6);
+  pose2D(v, 'cast', 1.6);
+  Klank.sfx('kaart');
+  await slaap(ERF.buitMs);
+  ov.classList.add('sluit');
+  await slaap(520);
+  ov.remove();
+  renderGevecht();
 }
 
 /* één geroofde kaart groot in beeld terwijl hij 'm speelt (slam-in + hold) */
@@ -7361,91 +7475,234 @@ async function copycatToonGespeeld(k, s) {
   return wrap;
 }
 
-/* KANAAL 3 — terugspelen (Roof-rework v2): beurt na beurt speelt hij zijn geroofde kaarten
-   GROOT in beeld met de Erfprins-bonus, en stuurt elke kaart daarna GECORRUMPEERD retour in
-   je dek (aangetast: +1 kost + uitputtend). Een geroofde VLOEK laat zich niet kopiëren en
-   bijt HÉM. Async → wordt geawait vanuit de vijandbeurt-lus (it.doe). */
+/* HET TERUGSPELEN — beurt na beurt speelt hij zijn plan: elke kaart groot in beeld, het effect
+   met zijn toeslag, en daarna valt ze aangetast (+1 ⚡, eenmalig) in je aflegstapel. Een geroofde
+   VLOEK laat zich niet kopiëren: ze bijt HÉM en hij verslikt zich (de rest van zijn plan valt
+   weg). Async → wordt geawait vanuit de vijandbeurt-lus (it.doe). */
 async function copycatSpeelTerug(v, g, plan) {
+  v.plagN = (v.plagN || 0) + 1;   /* telt zijn plagiaatbeurten (de cyclus 1, 2, 1, 2 …) */
   pose2D(v, Math.random() < 0.5 ? 'plagiaat' : 'plagiaat_variant', 0.9);   /* cosmetisch → Math.random raakt de seeded RNG niet */
   for (let i = 0; i < (plan || []).length; i++) {
-    if (S.gevecht !== g || g.voorbij || v.dood) break;   /* dode baas speelt niet door (vloek-backfire/doornen kunnen 'm mid-beurt vellen) */
+    if (S.gevecht !== g || g.voorbij || v.dood) break;   /* een dode baas speelt niet door */
     const k = plan[i];
     const ai = (v.gestolen || []).findIndex(s => s.id === k.id && s.soort === k.soort);
-    if (ai < 0) continue;                          /* al weg (bv. door de breker) → skip */
+    if (ai < 0) continue;
     const s = v.gestolen[ai]; v.gestolen.splice(ai, 1);   /* hij verbruikt de instance */
-    if (k.soort === 'vloek') {
+    if (k.vuil) {
+      /* VUIL WERK: een vloek bijt hém, voedt niets, en hij verslikt zich */
+      const schade = erfBackfire(v);
       kaartVliegFx(k.id, actorEl(v), copycatBronEl(), { vloek: true });
-      const schade = VLOEK_BACKFIRE(v);
       g._vloekGreep = true;
       try { verliesHp(v, schade); } finally { g._vloekGreep = false; }
-      if (!v.dood) { fxNummer(actorEl(v), `🌑 jouw ${k.naam} keert! −${schade}`, 'fx-schade'); pose2D(v, 'hit', 0.5); }
-      melding(`🎭 Hij speelt je ${k.naam} — maar een vloek laat zich niet kopiëren, en bijt hém!`);
+      if (!v.dood) { fxNummer(actorEl(v), `🌑 jouw ${k.naam} bijt hém! −${schade}`, 'fx-schade'); pose2D(v, 'hit', 0.5); }
+      melding(`🌑 Hij speelt je ${k.naam} — een vloek laat zich niet kopiëren. Ze bijt hém.`);
       renderGevecht();
-      if (v.dood) break;   /* de vloek-backfire velde de Erfprins → stop; eindBeurt regelt de victory */
+      if (v.dood) break;   /* de vloek velde hem → eindBeurt regelt de overwinning */
       await slaap(720);
+      if (k.stik) {
+        g._stikTeller = (g._stikTeller || 0) + 1;
+        fxNummer(actorEl(v), '🤢 verslikt zich', 'fx-debuff');
+        break;
+      }
       continue;
     }
     /* 1 — de kaart groot in beeld */
     const wrap = await copycatToonGespeeld(k, s);
     if (S.gevecht !== g || g.voorbij || v.dood) { wrap.remove(); return; }
-    /* 2 — het effect landt (aanvallen met de Erfprins-bonus) */
-    if (k.soort === 'aanval') {
-      /* óók deze klap loopt langs de doelkeuze: DE MUUR (en de gewone dreiging-vang)
-         gold anders niet voor teruggespeelde kaarten (review 9031c72) */
+    /* 2 — het effect landt, per soort met zijn toeslag */
+    if (k.soort === 'aanval' || k.drift) {
       const doelC = kiesAanvalDoel(v);
-      if (doelC.isMetgezel) {
-        melding(`🛡️ ${METGEZELLEN[doelC.id].naam} vangt de klap voor je op!`);
-        const ielC = actorEl(doelC);
-        if (ielC) { ielC.classList.remove('mg-vangt'); void ielC.offsetWidth; ielC.classList.add('mg-vangt'); setTimeout(() => ielC.classList.remove('mg-vangt'), 700); }
-      }
-      doeSchade(doelC, k.eindDmg, v);
-      fxNummer(actorEl(v), `🔥 jouw ${k.naam}! −${k.eindDmg}`, 'fx-schade');
+      const klap = copycatKlapNu(v, k.eindDmg, doelC);   /* Zwak/Kwetsbaar tellen, zoals de pil */
+      doeSchade(doelC, klap, v);
+      fxNummer(actorEl(v), k.drift ? `💢 snapt je ${k.naam} niet! −${glasDmg(klap)}` : `🔥 jouw ${k.naam}! −${glasDmg(klap)}`, 'fx-schade');
     } else if (k.soort === 'blok') {
-      geefBlok(v, k.n); fxNummer(actorEl(v), `🛡️ jouw ${k.naam}!`, 'fx-blok');
+      geefBlok(v, k.eindBlok); fxNummer(actorEl(v), `🛡️ jouw ${k.naam}! +${k.eindBlok}`, 'fx-blok');
     } else if (k.soort === 'gif') {
-      geefGif(sp(), k.n); fxNummer(actorEl(v), `🧪 jouw ${k.naam}!`, 'fx-debuff');
+      geefGif(sp(), k.eindGif); fxNummer(actorEl(v), `🧪 jouw ${k.naam}! +${k.eindGif} Gif`, 'fx-debuff');
     } else if (k.soort === 'zwak') {
       geefStatus(sp(), 'zwak', k.n); fxNummer(actorEl(v), `🎭 jouw ${k.naam}!`, 'fx-debuff');
     } else {
       fxNummer(actorEl(v), `🎭 jouw ${k.naam}!`, 'fx-debuff');
     }
     renderGevecht();
-    if (S.gevecht !== g || g.voorbij || v.dood) { wrap.classList.add('weg'); setTimeout(() => wrap.remove(), 300); return; }   /* doornen-kaats velde de baas → stop, geen corruptie-retour meer */
-    /* 3 — gecorrumpeerd retour in je dek (+1 kost, uitputtend, zwart aangetast) */
+    if (S.gevecht !== g || g.voorbij || v.dood) { wrap.classList.add('weg'); setTimeout(() => wrap.remove(), 300); return; }   /* jouw doornen velden hem → geen retour meer */
+    /* 3 — aangetast terug in je aflegstapel (+1 ⚡, eenmalig) */
     wrap.classList.add('corrupt-weg');
     setTimeout(() => wrap.remove(), 620);
     kaartVliegFx(k.id, actorEl(v), copycatBronEl(), { terug: true, corrupt: true });
     const kaart = nieuweKaart(k.id); kaart.up = !!s.up; kaart.uitputtend = true; kaart.aangetast = true;
     g.afleg.push(kaart);
-    melding(`🩸 Je ${k.naam} valt aangetast terug in je dek — loodzwaar en eenmalig.`);
+    melding(`🩸 Je ${erfNaam(s)} valt aangetast in je aflegstapel — +1 ⚡, eenmalig.`);
     Klank.sfx('debuff');
     await slaap(560);
   }
   if ((plan || []).length >= 2 && !g.copycatDubbelGezien) {
     g.copycatDubbelGezien = true;
-    baasFaseMoment('JOUW BESTE WERK', '„Twee tegelijk. Allebei van JOU."');
+    baasFaseMoment('TWEE TEGELIJK', '„Twee tegelijk. Allebei van JOU.”');
   }
   renderGevecht();
 }
 
-/* aangeroepen uit verliesHp telkens de Copycat échte schade oploopt: terugwin (alle
-   schade) + voeding (bron-gegate: speler piekt, gif voedt half, breker voedt NIET) */
-function copycatNaSchade(v, n, bron) {
-  const g = S.gevecht; if (!g) return;
-  if (g._vloekGreep) return;   /* vloek-backfire: bezeert hem, maar voedt hem NIET (geen win-back in de Roof-rework) */
-  if (bron === sp()) {
-    g.raakteCopycat = true;
-    if (!g.roofGedaan && !v.dood) g.roofPending = true;   /* je EERSTE aanval op de Erfprins ontketent de Roof (afgehandeld in speelKaart) — niet als die klap 'm meteen velt */
-    if (n > (v.maxKlap || 0)) { v.gevoed = (v.gevoed || 0) + Math.floor((n - (v.maxKlap || 0)) / 4); v.maxKlap = n; }
-  } else if (!bron) {
-    v.gevoed = (v.gevoed || 0) + Math.round(n / 2);   /* gif/doornen: voedt half */
-  }
-  /* bron.isMetgezel (de breker): telt alleen voor terugwin, voedt NIET — trouw voedt de dief niet */
+/* gedeelde graai: verplaats `aantal` kaarten ad random uit je trekstapel naar zijn buit (laat
+   ALTIJD roofRest over → nooit meteen droogtrekken). Geeft het aantal echt geroofde terug. */
+function _copycatGraai(v, g, aantal) {
+  const trek = g.trek || [];
+  aantal = Math.max(0, Math.min(trek.length - ERF.roofRest, aantal | 0));
+  if (aantal <= 0) return 0;
+  const idxs = schud(trek.map((_, i) => i)).slice(0, aantal).sort((a, b) => b - a);   /* hoog→laag → splice-veilig; seeded */
+  v.gestolen = v.gestolen || [];
+  idxs.forEach(i => { const c = trek[i]; trek.splice(i, 1); v.gestolen.push(erfBuitKaart(c)); });
+  v.totaalGeroofd = (v.totaalGeroofd || 0) + idxs.length;
+  return idxs.length;
+}
+/* DE NAROOF: zijn buit is op → hij grist opnieuw ceil(je trekstapel × naroofDeel). Die beurt
+   doet hij geen schade. */
+function copycatHerroof(v, g) {
+  if (!v || copycatGebroken(g)) return;
+  const n = _copycatGraai(v, g, Math.ceil((g.trek || []).length * ERF.naroofDeel));
+  if (!n) { fxNummer(actorEl(v), '🎭 niks meer te grissen…', 'fx-debuff'); return; }
+  v.gestolen.slice(-n).forEach((s, i) => setTimeout(() => kaartVliegFx(s.id, copycatBronEl(), actorEl(v)), i * 90));
+  baasFaseMoment('NAROOF', `🎭 „Nog niet leeg?” — hij grist nóg ${n} kaart${n === 1 ? '' : 'en'} uit je trekstapel.`);
+  Klank.sfx('debuff');
+  renderGevecht();
 }
 
-/* de beurtkeuze van de Erfprins (Roof-rework): speel geroofde kaarten per fase, óf — als zijn
-   geroofde stapel op is — een zwakke eigen uithaal (jouw window om hem af te maken).
-   Puur (geen mutatie) — alle mutatie zit in de it.doe()-haken. */
+/* aangeroepen uit verliesHp telkens de Erfprins échte schade oploopt */
+function copycatNaSchade(v, n, bron) {
+  const g = S.gevecht; if (!g) return;
+  /* de streep op zijn balk: fase 3 (de zet op zijn pil blijft staan tot zijn volgende plan) */
+  if (g.roofGedaan) checkCopycatFase(v, g);
+  if (g._vloekGreep) return;   /* zijn eigen vloek-beet ontketent niets */
+  /* je EERSTE klap op hem ontketent de Roof (afgehandeld in speelKaart) — niet als die hem velt */
+  if (bron === sp() && !g.roofGedaan && !v.dood) g.roofPending = true;
+}
+
+/* ZIJN BEURTKEUZE — puur (geen mutatie); alle mutatie zit in de it.doe()-haken */
+function copycatKies(v, beurt) {
+  const g = S.gevecht; if (!g) return { type: 'aanval', naam: 'Geschreeuw', dmg: 6 };
+  const gebroken = copycatGebroken(g);
+  /* vóór de Roof: hij neemt je op en wácht op je eerste klap (of rooft op het einde van je beurt) */
+  if (!g.roofGedaan && !gebroken) return { type: 'roof', naam: 'De Roof', doe: () => {} };
+  /* de beurt na de Roof: hij bekijkt zijn buit (geen schade) */
+  if (g.roofBeurt) return { type: 'buit', naam: 'Zijn buit', doe: vv => copycatBekijktBuit(vv, g) };
+  const fase = v.fase || 1;
+  const arsenaal = (v.gestolen || []).length;
+  if (gebroken) return { type: 'aanval', naam: 'Wanhoopsklap', dmg: 6 + (fase >= 3 ? 2 : 0) };   /* latent: alleen met een metgezel-breker */
+  if (arsenaal > 0) {
+    const cyc = ERF.plan[fase] || [1];
+    const aantal = Math.min(arsenaal, cyc[(v.plagN || 0) % cyc.length]);   /* de eerste plagiaatbeurt is altijd de eerste stap van de cyclus */
+    const plan = copycatPlagiaatPlan(v, aantal);
+    return { type: 'plagiaat', naam: 'Plagiaat', plan, doe: vv => copycatSpeelTerug(vv, g, plan) };
+  }
+  /* zijn buit is op → hij grist opnieuw uit je trekstapel (die beurt geen schade) */
+  if ((g.trek || []).length >= ERF.naroofMin) return { type: 'steel', naam: 'Naroof', doe: vv => copycatHerroof(vv, g) };
+  /* je trekstapel is te dun om nog te grissen → hij belt Pappie of schreeuwt zelf (jouw window) */
+  return { type: 'aanval', naam: fase >= 2 ? 'Wild Geschreeuw' : 'Pappie Bellen', dmg: ERF.uitput[0] + fase * ERF.uitput[1],
+    doe: vv => {
+      fxNummer(actorEl(vv), '🎭 niks meer te grissen!', 'fx-debuff');
+      if (!g._copycatLeeggemeld) { melding('🎭 Je trekstapel is te dun om nog te grissen — hij is uitgeput. Maak hem af.'); g._copycatLeeggemeld = true; }
+    } };
+}
+
+/* de fases hangen aan de Roof (fase 2) en aan zijn HP (fase 3 op de streep); eenrichting */
+function checkCopycatFase(b, g) {
+  if (!g || !g.roofGedaan || b.dood) return;
+  if ((b.fase || 1) < 2) { b.fase = 2; b.copyKracht = ERF.toeslag[2]; }
+  if ((b.fase || 1) < 3 && b.hp <= b.maxHp * ERF.fase3Hp) {
+    b.fase = 3;
+    b.copyKracht = ERF.toeslag[3];
+    const n3 = Math.max(...(ERF.plan[3] || [2]));
+    baasFaseMoment('HET IS ALLEMAAL VAN MIJ', `${UITSPRAKEN._erfprins.fase3} · vanaf zijn volgende zet ${n3} kaarten per beurt, harder`);
+    const el = actorEl(b); if (el) el.classList.add('woede');
+    if (window.Vista) Vista.pose(b, 'cast', 2.4);
+    pose2D(b, 'cast', 2.4);
+  }
+}
+/* de tip op zijn fase-puntjes (en de streep op zijn balk): wanneer hij escaleert */
+function copycatFaseTip(b) {
+  const p2 = ERF.plan[2] || [1], p3 = ERF.plan[3] || [2];
+  const telling = arr => [...new Set(arr)].join(' of ');
+  return `Fase 1: hij neemt je op. Fase 2: WOEDE, vanaf de Roof — ${telling(p2)} van jouw kaarten per beurt. `
+    + `Fase 3: onder de streep (${Math.round(b.maxHp * ERF.fase3Hp)} HP) — ${telling(p3)} per beurt, harder.`;
+}
+
+/* begin van je beurt: de fase-check (gif of doornen in zijn beurt kunnen de streep passeren) */
+function copycatBeurtStart(g) {
+  const b = copycatBaas(g); if (!b) return;
+  if (copycatGebroken(g)) {
+    /* latent: een gebroken machine herindexeert (alleen met een metgezel-breker) */
+    if (g.copycatHerstelBeurt && (g.beurt || 0) >= g.copycatHerstelBeurt) {
+      g.copycatGebroken = false; g.copycatHerstelBeurt = null;
+      baasFaseMoment('HERINDEXEREN…', '„Ik kopieer gewoon opnieuw.”');
+    }
+    return;
+  }
+  checkCopycatFase(b, g);
+}
+
+/* anti-softlock: je houdt altijd minstens één speelbare kaart in de hand */
+function copycatAntiSoftlock(g) {
+  const b = copycatBaas(g); if (!b || copycatGebroken(g)) return;
+  const speelbaar = g.hand.some(c => {
+    const d = kdef(c); if (!d || d.type === 'vloek') return false;
+    return (kval(c, 'dmg') || 0) > 0 || d.type === 'vaardigheid' || d.type === 'kracht';
+  });
+  if (speelbaar) return;
+  /* GEEN kaart uit zijn buit trekken (dat zou terugwinnen zijn) — enkel een echt vangnet
+     zodat je niet vastloopt: herschud je afleg, of geef energie als zelfs dat leeg is. */
+  if (g.afleg.length || g.trek.length) {
+    /* SAMENVOEGEN, niet overschrijven: g.trek kan nog kaarten bevatten */
+    g.trek = schud(g.afleg.concat(g.trek)); g.afleg = []; trekKaarten(1);
+    melding('↩️ Je herschikt wat je nog hebt.');
+  } else {
+    g.energie += 1;   /* echt niks meer om te trekken → dan pas het energie-vangnet */
+  }
+}
+
+/* de strook onder de bazenbalk: zijn buit en zijn noodrantsoen (één regel, namen in de tip) */
+function copycatBalk(b) {
+  if (S.gevecht && copycatGebroken(S.gevecht)) {
+    return `<div class="bb-aegis bb-gebroken" data-tip="De kopieermachine is gebroken — trouw was niet te indexeren.">🎭 machine gebroken</div>`;
+  }
+  if (S.gevecht && !S.gevecht.roofGedaan) return '';
+  const buit = b.gestolen || [];
+  const namen = buit.map(erfNaam).join(', ');
+  const nr = copycatNoodrantsoen(b);
+  const vloeken = buit.filter(s => s.soort === 'vloek').length;
+  const tip = `Zijn buit: ${buit.length} kaart${buit.length === 1 ? '' : 'en'} uit jouw dek${buit.length ? ' (' + namen + ')' : ''}. `
+    + `Elke beurt speelt hij er ${b.fase >= 3 ? 2 : (b.fase === 2 ? '1 à 2' : 1)} terug — met zijn toeslag, dan valt de kaart aangetast terug in je dek. `
+    + (nr.kaarten ? `NOODRANTSOEN: valt hij terwijl hij nog schoon werk heeft, dan verscheurt hij er tot ${ERF.rantsoenMax} en staat op met ${ERF.rantsoenPerKaart} HP per kaart (nu +${nr.hp}). Vloeken tellen niet.`
+      : (b.plagiaat ? 'Zijn noodrantsoen is op: de volgende keer blijft hij liggen.' : 'Geen schoon werk meer: valt hij nu, dan blijft hij liggen.'));
+  return `<div class="bb-aegis" data-tip="${tip}">🎭 Buit · ${buit.length}${vloeken ? ' · 🌑' + vloeken : ''}${nr.kaarten ? ' · ♥+' + nr.hp : ''}</div>`;
+}
+
+/* ---- DE PILLEN: wat hij van plan is, met zijn échte getallen (intentTekst roept dit aan) ---- */
+function copycatRoofPil(v) {
+  const g = S.gevecht;
+  const n = g ? Math.max(0, Math.min((g.trek || []).length - ERF.roofRest, copycatRoofWil(g))) : 0;
+  const tip = n > 0
+    ? `DE ROOF: Junior wacht op je eerste klap. Raak je hem, dan wordt hij woedend en pakt hij de helft van je dek: ${n} kaart${n === 1 ? '' : 'en'}, allemaal uit je trekstapel. Je beurt stopt meteen: speel eerst wat je nog wilt spelen (je hand steelt hij niet). Val je niet aan, dan rooft hij op het einde van je beurt. Daarna bekijkt hij eerst zijn buit: die beurt geen schade.`
+    : 'DE ROOF: Junior wacht op je eerste klap. Je trekstapel is te mager om te plunderen: raak je hem, dan wordt hij woedend, maar hij pakt (nog) niets.';
+  return `<span class="intent intent-roof" data-tip="${tip}">🎭 ${window.mobiel ? 'ROOF' : 'ROOF bij je 1e klap'}</span>`;
+}
+function copycatPlanPillen(v, it) {
+  const pillen = (it.plan || []).map(k => {
+    const naam = erfNaam(k);
+    if (k.vuil) return `<span class="intent intent-vuil" data-tip="Jouw ${naam} laat zich niet kopiëren — ze bijt hém voor ${k.bf} en hij verslikt zich: de rest van zijn beurt valt weg.">🌑 −${k.bf}</span>`;
+    if (k.soort === 'aanval' || k.drift) {
+      const d = glasDmg(copycatKlapNu(v, k.eindDmg, sp()));
+      return k.drift
+        ? `<span class="intent intent-aanval" data-tip="JOUW ${naam}: snapt hij niet — een driftbui voor ${d} schade.">💢 ${d}</span>`
+        : `<span class="intent intent-aanval" data-tip="Plagiaat — JOUW ${naam} voor ${d} schade">🎭 ${d}</span>`;
+    }
+    if (k.soort === 'gif') return `<span class="intent intent-debuff" data-tip="Plagiaat — JOUW ${naam}: ${k.eindGif} Gif op jou">🧪 ${k.eindGif}</span>`;
+    if (k.soort === 'blok') return `<span class="intent intent-blok" data-tip="Plagiaat — JOUW ${naam}: hij krijgt ${k.eindBlok} Blok">🛡️ ${k.eindBlok}</span>`;
+    if (k.soort === 'zwak') return `<span class="intent intent-debuff" data-tip="Plagiaat — JOUW ${naam}: ${k.n} Zwak op jou">🥀 ${k.n}</span>`;
+    return `<span class="intent intent-debuff" data-tip="Plagiaat — JOUW ${naam}. Hij snapt er niks van: geen effect, maar ze komt wel aangetast terug.">🎭 ${naam}</span>`;
+  });
+  return pillen.join(' ') || '<span class="intent intent-debuff" data-tip="Plagiaat: zijn buit is leeg.">🎭</span>';
+}
+
 /* ============================================================
    DE DICKTATOR — het brein van de Act 3-eindbaas.
    Kern: HET DECREET (elke 3e beurt, getelegrafeerd) schrijft een kaart
@@ -8647,120 +8904,6 @@ function hofIntent(v, beurt) {
   }
   return stil;
 }
-function copycatKies(v, beurt) {
-  const g = S.gevecht; if (!g) return { type: 'aanval', naam: 'Geschreeuw', dmg: 6 };
-  /* vóór DE ROOF: hij neemt je op en wácht tot je toeslaat — je eerste aanval ontketent
-     de Roof (zie speelKaart); eindig je je beurt zonder aanval, dan rooft het vangnet in
-     eindBeurt alsnog. Telegrafeert dus geen schade die eerste beurt. */
-  if (!g.roofGedaan && !g.copycatGebroken) {
-    return { type: 'buff', naam: 'Neemt je op…', doe: () => {} };
-  }
-  const fase = v.fase || 1;
-  const arsenaal = (v.gestolen || []).length;
-  const t = v.beurtTeller || 0;
-  if (g.copycatGebroken) return { type: 'aanval', naam: 'Wanhoopsklap', dmg: 6 + (fase >= 3 ? 2 : 0) };
-  if (arsenaal > 0) {
-    /* fase 1 → 1 kaart/beurt · fase 2 → om de beurt 2 · fase 3 → 2 kaarten/beurt */
-    const aantal = fase >= 3 ? Math.min(2, arsenaal)
-      : (fase === 2 && (t % 2 === 1) ? Math.min(2, arsenaal) : 1);
-    const plan = copycatPlagiaatPlan(v, aantal);
-    return { type: 'plagiaat', naam: 'Plagiaat', plan, doe: vv => copycatSpeelTerug(vv, g, plan) };
-  }
-  /* arsenaal leeg → grist OPNIEUW als je trek het toelaat (sustain: solo niet uit te zitten);
-     telegrafeert als 👀 steelt, doet die beurt geen schade. Ontworpen rond de breker/metgezel
-     (g.copycatGebroken) — die is geparkeerd (DE NISSEN DICHT); de Erfprins-ronde herbouwt dit,
-     zie M_metgezel_parkering_plan.md §2.9. */
-  if (!g.copycatGebroken && (g.trek || []).length >= 3) {
-    return { type: 'steel', naam: 'Naroof', doe: vv => copycatHerroof(vv, g) };
-  }
-  /* trek te klein om nog te grissen → hij is uitgeput en haalt zelf nog zwak uit (jouw window) */
-  return { type: 'aanval', naam: fase >= 2 ? 'Wild Geschreeuw' : 'Pappie Bellen', dmg: 4 + fase * 4,
-    doe: vv => {
-      fxNummer(actorEl(vv), '🎭 niks meer te grissen!', 'fx-debuff');
-      if (!g._copycatLeeggemeld) { melding('🎭 Je dek is te uitgedund om nog te grissen — hij is uitgeput. Maak hem af.'); g._copycatLeeggemeld = true; }
-    } };
-}
-
-/* fase-escalatie: puur voedings-gedreven, sticky (eenrichting) — vervangt de aegis-fases */
-function checkCopycatFase(b, g) {
-  const gevoed = b.gevoed || 0;
-  if ((b.fase || 1) < 2 && gevoed >= COPYCAT_F2) {
-    b.fase = 2;
-    b.copyKracht = (b.copyKracht || 0) + 1;
-    baasFaseMoment('PAPPIE KIJKT TOE', UITSPRAKEN._erfprins.fase2);
-    if (window.Vista) Vista.pose(b, 'cast', 2.4);
-    pose2D(b, 'cast', 2.4);
-  }
-  if ((b.fase || 1) < 3 && gevoed >= COPYCAT_F3) {
-    b.fase = 3;
-    b.copyKracht = (b.copyKracht || 0) + 2;
-    baasFaseMoment('HET IS ALLEMAAL VAN MIJ', UITSPRAKEN._erfprins.fase3);
-    const el = actorEl(b); if (el) el.classList.add('woede');
-    if (window.Vista) Vista.pose(b, 'cast', 2.4);
-    pose2D(b, 'cast', 2.4);
-  }
-}
-
-/* begin van je beurt: stall-straf + afkoeling tot de fase-bodem + tijds-vloer + fase-check.
-   GEEN mercy-lek meer (Roof-rework: geen win-back — je krijgt enkel de niet-aanval-kaarten
-   uitputtend terug doordat hij ze speelt). Bij een gebroken machine: tel af tot de
-   herindexering (alleen bij herhaal-runs). */
-function copycatBeurtStart(g) {
-  const b = copycatBaas(g); if (!b) return;
-  if (g.copycatGebroken) {
-    if (g.copycatHerstelBeurt && (g.beurt || 0) >= g.copycatHerstelBeurt) {
-      g.copycatGebroken = false; g.copycatHerstelBeurt = null;
-      baasFaseMoment('HERINDEXEREN…', '„Ik kopieer gewoon opnieuw."');
-    }
-    return;
-  }
-  const raakte = g.raakteCopycat;
-  /* stall-straf: deed je vorige beurt geen schade aan hem, dan leert hij traag bij;
-     anders koelt zijn voeding licht af (nooit onder de huidige fase-bodem) */
-  if (!raakte) b.gevoed = (b.gevoed || 0) + 1;
-  else b.gevoed = Math.max(copycatFaseBodem(b.fase || 1), (b.gevoed || 0) - 1);
-  g.raakteCopycat = false;
-  /* tijds-vloer: hij blijft niet eeuwig in een lage fase hangen door stalling */
-  if (g.beurt >= 5 && (b.fase || 1) < 2) b.gevoed = Math.max(b.gevoed || 0, COPYCAT_F2);
-  if (g.beurt >= 10 && (b.fase || 1) < 3) b.gevoed = Math.max(b.gevoed || 0, COPYCAT_F3);
-  checkCopycatFase(b, g);
-}
-
-/* anti-softlock: je houdt altijd minstens één speelbare kaart in de hand */
-function copycatAntiSoftlock(g) {
-  const b = copycatBaas(g); if (!b || g.copycatGebroken) return;
-  const speelbaar = g.hand.some(c => {
-    const d = kdef(c); if (!d || d.type === 'vloek') return false;
-    return (kval(c, 'dmg') || 0) > 0 || d.type === 'vaardigheid' || d.type === 'kracht';
-  });
-  if (speelbaar) return;
-  /* GEEN kaart uit zijn arsenaal trekken (dat zou win-back zijn) — enkel een echt vangnet
-     zodat je niet vastloopt: herschud je afleg, of geef energie als zelfs dat leeg is. */
-  if (g.afleg.length || g.trek.length) {
-    /* SAMENVOEGEN, niet overschrijven: de check hierboven kijkt enkel naar de hand,
-       dus g.trek kan nog kaarten bevatten — die zouden anders stil verdwijnen. Ook als
-       g.afleg leeg is maar g.trek nog kaarten heeft, trekken we (geen gratis energie). */
-    g.trek = schud(g.afleg.concat(g.trek)); g.afleg = []; trekKaarten(1);
-    melding('↩️ Je herschikt wat je nog hebt.');
-  } else {
-    g.energie += 1;   /* echt niks meer om te trekken → dan pas het energie-vangnet */
-  }
-}
-
-/* de bazenbalk-indicator: het gestolen arsenaal (vervangt de oude aegis-badge) */
-function copycatBalk(b) {
-  if (S.gevecht && S.gevecht.copycatGebroken) {
-    return `<div class="bb-aegis bb-gebroken" data-tip="De kopieermachine is gebroken — trouw was niet te indexeren.">🎭 machine gebroken</div>`;
-  }
-  const arsenaal = (b.gestolen || []);
-  const namen = arsenaal.map(s => s.naam).join(', ');
-  /* mobiel: alleen het aantal (de volle lijst maakte een brede sliert dwars door
-     de prins — playtest); de namen verhuizen daar naar de tik-tooltip */
-  const inline = (!window.mobiel && arsenaal.length) ? ` (${namen})` : '';
-  const tipNamen = (window.mobiel && arsenaal.length) ? ` Nu in zijn greep: ${namen}.` : '';
-  return `<div class="bb-aegis" data-tip="Geroofd arsenaal: kaarten die de Erfprins uit je dek griste. Aanvallen speelt hij opgewaardeerd terug en verbrandt ze dan; de rest stuurt hij uitgeput naar je trek. Overleef tot zijn stapel op is (fase ${b.fase || 1}).${tipNamen}">🎭 Geroofd · ${arsenaal.length}${inline}</div>`;
-}
-
 /* de strook onder de bazenbalk: het BELEID van dit moment (tarief, open dossier, klok,
    kiezers). De pillen op de figuren dragen de getallen; deze strook draagt de regels.
    Eén regel, met ellipsis op mobiel (zelfde patroon als de Copycat-arsenaalpil). */
@@ -8908,8 +9051,8 @@ async function eindBeurt() {
   /* DE ROOF — vangnet: eindigde je je eerste beurt zonder de Erfprins te raken, dan rooft hij
      nu alsnog (zelfde cinematic) vóór hij je kaarten begint te spelen. try/catch: een fout in
      de cinematic mag de beurt niet bevriezen (g.bezig staat hier al op true). */
-  if (!g.roofGedaan && copycatBaas(g) && !g.copycatGebroken) {
-    try { await copycatDeRoof(g); }
+  if (!g.roofGedaan && copycatBaas(g) && !copycatGebroken(g)) {
+    try { await copycatDeRoof(g, true); }
     catch (e) { console.error(e); }
     if (gestopt()) { g.bezig = false; return; }
   }
@@ -9235,7 +9378,7 @@ async function gevechtGewonnen() {
     /* B0.4: het SLOTWOORD - mag na g.voorbij en veegt het bord (sinds v121 nooit getoond).
        F1: eerst de bannerrij leeg en de staande banner weg, anders houdt de sluis het tegen. */
     bannerRuim();
-    baasSpreekt(g.copycatGebroken && _du.doodGebroken ? _du.doodGebroken : _du.dood, 2600, { slot: true });
+    baasSpreekt(copycatGebroken(g) && _du.doodGebroken ? _du.doodGebroken : _du.dood, 2600, { slot: true });
     const flits = document.createElement('div');
     flits.className = 'baas-doodflits';
     $('#scherm-gevecht').appendChild(flits);

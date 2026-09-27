@@ -2533,6 +2533,23 @@ body.lite .intent-decreet { animation: none; }
   background: rgba(28, 20, 46, .68);
   white-space: nowrap;
 }
+/* B3 — DE ERFPRINS: zijn eigen zetten. De ROOF is een aankondiging (vet, amethist); zijn buit
+   bekijken doet geen schade (het hof-violet); een vloek in zijn plan bijt HÉM (donkerrood). */
+.intent-roof {
+  color: #f3d2ff; border-color: rgba(200, 120, 255, .75);
+  background: rgba(40, 12, 56, .76);
+  font-weight: 700; letter-spacing: .03em; white-space: nowrap;
+}
+.intent-buit {
+  color: #cfc0f2; border-color: rgba(150, 120, 220, .55);
+  background: rgba(28, 20, 46, .68);
+  white-space: nowrap;
+}
+.intent-vuil {
+  color: #ffb6b6; border-color: rgba(150, 30, 50, .85);
+  background: rgba(26, 4, 10, .8);
+  white-space: nowrap;
+}
 
 /* hp-balken */
 .hp-balk {
@@ -4295,6 +4312,12 @@ body.lite #baas-balk .bb-beurt { transition: none; }
 #baas-balk[data-baas="de_erfprins"] .bb-vul { background: linear-gradient(180deg, #cfa3ff, #7a32d6); }
 #baas-balk[data-baas="de_erfprins"] .bb-balk.bb-woede .bb-vul { background: linear-gradient(180deg, #ff8ce0, #b22f9e); }
 #baas-balk[data-baas="de_erfprins"] .bb-balk.bb-woede { border-color: rgba(220, 110, 200, .9); }
+/* B3: de streep op zijn balk — onder de helft (ERF.fase3Hp) gaat hij naar fase 3. De plaats
+   (left) zet renderGevecht uit ERF, zodat de streep nooit iets anders zegt dan de regel. */
+.bb-inkeping {
+  position: absolute; top: -4px; bottom: -4px; width: 3px; margin-left: -1px; z-index: 3;
+  background: #f0c0ff; box-shadow: 0 0 6px #c050ff; pointer-events: none;
+}
 @keyframes woedeBalk {
   0%, 100% { box-shadow: inset 0 3px 8px rgba(0, 0, 0, .85), 0 0 10px rgba(232, 93, 117, .4); }
   50% { box-shadow: inset 0 3px 8px rgba(0, 0, 0, .85), 0 0 24px rgba(232, 93, 117, .85); }

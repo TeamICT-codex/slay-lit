@@ -1326,7 +1326,11 @@ const VIJANDEN = {
     }
   },
   de_erfprins: {
-    naam: 'De Erfprins', art: '🤴', hp: [180, 180], baas: true, copycat: true, gifkaats: 0.5,   /* HP terug van 210→180: tegen een gehalveerd dek (Roof-rework) is 210 te veel om te grinden; tunebaar */
+    /* B3 (De Roof, eerlijk): het getal hieronder is alleen de startwaarde, gelijk aan ERF.hp;
+       game.js overschrijft het meteen met ERF.hp (data.js laadt eerder). ERF in game.js is de
+       bron van waarheid — balanceer daar, niet hier. Geen gifkaats meer: hij rooft je gifkaarten
+       al en speelt ze zelf terug (ERF.gifMult). */
+    naam: 'De Erfprins', art: '🤴', hp: [190, 190], baas: true, copycat: true,
     titel: 'Erfgenaam zonder verdienste',
     kies: (v, beurt) => copycatKies(v, beurt)
   },
