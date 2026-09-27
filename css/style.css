@@ -5569,6 +5569,13 @@ img { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -we
 .inv-kaarthouder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
 .inv-kaarthouder .bik-kaart.inv-klap { animation: invKlap .5s cubic-bezier(.2, 1.3, .4, 1) .22s backwards; }
 @keyframes invKlap { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+/* B3 · B1.5 — DE CLIMAX IN BEELD: op het moment dat de ruggen samenklappen tot zijn kaart,
+   wijken de act-titel, de beattekst en de tik-hint, en centreert de kaart op het SCHERM in
+   plaats van op het podium van 150 px (800x360: de kaart stak 27 px boven het scherm uit en de
+   titel lag over haar kop). Zelfde maat als de snelle speelkaart-reveal, die al paste. */
+.baas-intro-inventaris .inv-wrap:has(.inv-klap) > :is(small, .inv-tekst, .morf-hint) { display: none; }
+.baas-intro-inventaris .inv-podium:has(.inv-klap) { height: auto; min-height: 0; }
+.baas-intro-inventaris .inv-kaarthouder:has(.inv-klap) { position: relative; inset: auto; }
 .inv-tekst {
   min-height: 3.4em; max-width: min(88vw, 560px); text-align: center;
   font-family: 'Alegreya', serif; font-size: clamp(1rem, 2.6vw, 1.2rem); line-height: 1.5;
