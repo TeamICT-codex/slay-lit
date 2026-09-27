@@ -5923,9 +5923,12 @@ function intentTekst(v) {
     if (verborgen) return `<span class="intent intent-factuur" data-tip="${it.naam}: hij stuurt een rekening - te donker om het bedrag te lezen">🧾 ?</span>`;
     const gF = S.gevecht;
     let bed = dicktatorFactuurBedrag(gF, it);
-    if ((v.status.zwak || 0) > 0) bed = Math.floor(bed * 0.75);
-    if ((sp().status.kwetsbaar || 0) > 0) bed = Math.floor(bed * 1.5);
-    bed = glasDmg(bed);
+    const ruw = bed;   /* de rekensom zelf, vóór Zwak / Kwetsbaar / Glazen Zielen */
+    const mods = [];
+    if ((v.status.zwak || 0) > 0) { bed = Math.floor(bed * 0.75); mods.push('Zwak op hem: ×0,75'); }
+    if ((sp().status.kwetsbaar || 0) > 0) { bed = Math.floor(bed * 1.5); mods.push('Kwetsbaar op jou: ×1,5'); }
+    const voorGlas = bed; bed = glasDmg(bed);
+    if (bed !== voorGlas) mods.push('Glazen Zielen: ×1,5');
     /* v109: de pil rekent met de BELASTE posten (rauwe teller min de vrijstelling), exact
        zoals dicktatorFactuurBedrag - anders liegt de rekensom zodra vrij > 0. */
     const rauw = (gF && gF.posten) || 0;
@@ -5938,9 +5941,12 @@ function intentTekst(v) {
     const vrijTip = vrij > 0 ? ` De eerste ${vrij} posten zijn vrijgesteld (standaardprocedure): van uw ${rauw} post${rauw === 1 ? '' : 'en'} ${posten === 0 ? 'is er nog geen belast' : (posten === 1 ? 'is er 1 belast' : 'zijn er ' + posten + ' belast')}.` : '';
     /* laptop: de hele rekensom; mobiel alleen het bedrag (een tik op de pil is daar een
        doelwitklik, dus de formule staat in de eenmalige melding en in de Codex - v105) */
-    const som = window.mobiel ? `🧾 ${bed}` : `🧾 ${basis} + ${tarief}×${posten} = ${bed}`;
+    /* Finale B4b (beeldcontrole): verandert Zwak, Kwetsbaar of Glazen Zielen het bedrag, dan zegt
+       de som dat ("6 + 3×0 = 6 → 4") - vroeger stond er "6 + 3×0 = 4": juist bedrag, foute rekensom. */
+    const som = window.mobiel ? `🧾 ${bed}` : `🧾 ${basis} + ${tarief}×${posten} = ${ruw}${bed !== ruw ? ' → ' + bed : ''}`;
+    const modTip = bed !== ruw ? ` (${mods.join(', ')}): ${bed}` : '';
     const aanloopTip = it.aanloop ? ' De aanloop naar HET ONTSLAG.' : '';
-    return `<span class="intent intent-factuur" data-tip="${it.naam}: ${basis} basis + ${tarief} per post × ${posten} post${posten === 1 ? '' : 'en'} = ${bed} schade. Elke gespeelde kaart is een post: gratis = ${DICK.POSTEN.gratis}, 1 energie = ${DICK.POSTEN.een}, 2+ = aftrekbaar.${vrijTip}${aanloopTip}">${som}</span>`;
+    return `<span class="intent intent-factuur" data-tip="${it.naam}: ${basis} basis + ${tarief} per post × ${posten} post${posten === 1 ? '' : 'en'} = ${ruw}${modTip} schade. Elke gespeelde kaart is een post: gratis = ${DICK.POSTEN.gratis}, 1 energie = ${DICK.POSTEN.een}, 2+ = aftrekbaar.${vrijTip}${aanloopTip}">${som}</span>`;
   }
   /* HET HOF (v109): een zet zonder schade die wel iets doet (delegeren, laten innen, de
      zitting, de betekening, de peiling). Nooit in de default-tak - die zegt 'verzwakt jou'. */
@@ -6158,10 +6164,16 @@ function renderGevecht() {
     }
     d.wrap.classList.toggle('doelbaar', doelbaar);
     d.intent.innerHTML = v.dood ? '' : intentTekst(v);
-    d.hpV.style.width = Math.max(0, v.hp / v.maxHp * 100) + '%';
-    d.hpT.textContent = `${v.hp}/${v.maxHp}`;
+    /* Finale B4b (beeldcontrole): de eigen HP-balk van de baas (laptop) volgt dezelfde vries als
+       de bazenbalk (_bbToon). Sinds de val van de herverkiezing niet meer onder het doek ligt,
+       stond hier "101/240" leesbaar terwijl de bazenbalk 0/240 zei - de herrijzenis 2 s te vroeg
+       verklapt. Zolang hij dood op zijn knieën ligt (_herkozenToon === false) ook geen chips:
+       zijn Kracht komt bij DE STEMMING, zichtbaar op de kiezers, en staat er als hij opstaat. */
+    const hpToon = v._bbToon != null ? v._bbToon : v.hp;
+    d.hpV.style.width = Math.max(0, hpToon / v.maxHp * 100) + '%';
+    d.hpT.textContent = `${hpToon}/${v.maxHp}`;
     zetBlokSchild(d.blok, v.blok);
-    d.badges.innerHTML = statusBadges(v);
+    d.badges.innerHTML = (v.herrezen && v._herkozenToon === false) ? '' : statusBadges(v);
   });
   _rijMaat();   /* B2.2: #vijanden-rij[data-n] = de kolommen die er staan */
 
@@ -9237,6 +9249,7 @@ function dicktatorBalk(b) {
   const D = ((UITSPRAKEN._dicktator || {}).duiding) || {};
   const delen = [];
   const tips = [];
+  let sep = ' · ';   /* B4b: IV op de telefoon = twee regels (zie hieronder) */
   if (b._geschorst && !b.vorm2) {
     delen.push('⚖️ GESCHORST');
     tips.push(dicktatorGeschorstTip(b));
@@ -9247,8 +9260,17 @@ function dicktatorBalk(b) {
     if (b._mandaat) delen.push('⚖ IV · HET MANDAAT');
     const klok = dicktatorKlok(b);
     const bedrag = dicktatorOntslagBedrag(b);
-    delen.push('⏳ ' + (klok === 0 ? 'ONTSLAG NU' : 'ONTSLAG over ' + klok));
-    delen.push('ONTSLAG ' + bedrag);
+    if (mob) {
+      /* Finale B4b (beeldcontrole): op de telefoon twee korte regels, rechts onder het hart. In
+         één regel ("⚖ IV · HET MANDAAT · ⏳ ONTSLAG over 1 · ONTSLAG 21", ~310 px) lag de strook in
+         IV over de statuschips en de schouder van de baas, die alleen staat en dus op volle maat
+         (B2.2). De volle zin staat in de tip. */
+      delen.push('⏳ ' + (klok === 0 ? 'NU' : 'over ' + klok) + ' · ONTSLAG ' + bedrag);
+      sep = '<br>';
+    } else {
+      delen.push('⏳ ' + (klok === 0 ? 'ONTSLAG NU' : 'ONTSLAG over ' + klok));
+      delen.push('ONTSLAG ' + bedrag);
+    }
     tips.push('HET MANDAAT: om de twee beurten HET ONTSLAG (' + (DICK.ONTSLAG || []).join(' → ') + ', plus zijn Kracht), ertussen een aanloop: DE FACTUUR of de DONDERREDE.'
       + (D.mandaat ? ' ' + dickTekst(D.mandaat) : ''));
   } else {
@@ -9276,7 +9298,7 @@ function dicktatorBalk(b) {
     }
   }
   if (!delen.length) return '';
-  return `<div class="bb-aegis bb-proces" data-tip="${escSyn(tips.join(' '))}">${delen.join(' · ')}</div>`;
+  return `<div class="bb-aegis bb-proces${sep === '<br>' ? ' bb-twee' : ''}" data-tip="${escSyn(tips.join(' '))}">${delen.join(sep)}</div>`;
 }
 
 /* B2 — ÉÉN BANNERWACHTRIJ. baasFaseMoment had geen wachtrij: twee aanroepen binnen 2,4 s

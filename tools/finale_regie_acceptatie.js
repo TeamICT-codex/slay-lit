@@ -270,6 +270,24 @@ async function datan(browser, fk) {
     t(IV.kiezersZonderWeg === 0 && IV.kolZicht === 1 && IV.n === '1', `B2.2 ${vp.naam} IV: 2,5 s na de herverkiezing geen gevluchte kiezer zonder .lijk-weg (${IV.kiezersZonderWeg}), ${IV.kolZicht} zichtbare kolom, data-n ${IV.n}`);
     if (!vp.staand) t(IV.verh >= 1.5, `B2.2 ${vp.naam} IV: de baas alleen is ${IV.verh}x de held (>= 1,5; II: ${II.verh}x)`);
     else t(IV.baasOnder <= IV.heldOnder + 4, `B2.2 ${vp.naam} IV (staand): de baas zweeft niet boven zijn plek (onderkant ${IV.baasOnder}, held ${IV.heldOnder})`);
+    /* B4b (beeldcontrole): in IV staat de baas alleen en op volle maat; de strook "⚖ IV · HET MANDAAT
+       · ⏳ ONTSLAG over 1 · ONTSLAG 21" lag in één regel over zijn statuschips en zijn schouder. Op de
+       telefoon nu twee korte regels (.bb-twee): 0 px2 met de chips (5 statussen) en met zijn lijf. */
+    if (!vp.staand) {
+      const sk = await page.evaluate(() => {
+        const g = S.gevecht, b = g.vijanden.find(v => v.id === 'de_dicktator');
+        b.status = Object.assign({}, b.status, { zwak: 2, kwetsbaar: 2, gif: 6, kracht: 1, doornen: 2 });
+        renderGevecht();
+        const wrap = GDOM.vijanden[g.vijanden.indexOf(b)].wrap;
+        const st = document.querySelector('#baas-balk .bb-proces');
+        const s = st && __FR.zicht(st) ? __FR.R(st) : null;
+        const chips = [...wrap.querySelectorAll('.blok-status > *')].filter(__FR.zicht).map(__FR.R);
+        const art = __FR.R(wrap.querySelector('.vijand-art'));
+        return { s, tekst: st ? st.innerText.replace(/\n/g, ' / ') : '', twee: !!(st && st.classList.contains('bb-twee')), chips: Math.round(chips.reduce((a, c) => a + __FR.snij(c, s), 0)), art: Math.round(__FR.snij(art, s)), n: chips.length, W: innerWidth };
+      });
+      await shot(page, `${vp.naam}_datan_IV_strook`);
+      t(!!sk.s && sk.twee && sk.chips === 0 && sk.art === 0 && sk.s.l >= 0 && sk.s.r <= sk.W, `B2.2 ${vp.naam} IV: de strook ("${sk.tekst}", twee regels: ${sk.twee}) raakt de ${sk.n} chips van de baas ${sk.chips} px2 en zijn lijf ${sk.art} px2 (0)`);
+    }
   } catch (e) { t(false, `B2.2 ${vp.naam}: fout in de meting: ${e.message}`); }
   t(...fouten(page, vp));
   await ctx.close();
@@ -319,7 +337,16 @@ async function tweedeDood(browser, fk) {
   try {
     await startProces(page, { netVoor: 4 });
     await page.evaluate(() => _devKlapNu(DEV_KLAP));
-    await slaap(5600); await wachtRust(page, 500, 20000);
+    /* B4b (beeldcontrole): tijdens de val (hier 1,0 s na de klap, vóór de herrijzenis op 2,3 s)
+       verklapt niets dat hij opstaat: de bazenbalk EN zijn eigen HP-balk zeggen 0, en onder hem
+       staan geen chips (zijn Kracht komt bij DE STEMMING, op de kiezers) */
+    await slaap(1000);
+    const vr = await page.evaluate(() => {
+      const g = S.gevecht, b = g.vijanden.find(v => v.id === 'de_dicktator'), w = GDOM.vijanden[g.vijanden.indexOf(b)].wrap;
+      return { bb: (document.querySelector('#baas-balk .bb-tekst') || {}).textContent || '', eigen: (w.querySelector('.hp-tekst') || {}).textContent || '', chips: w.querySelectorAll('.blok-status > *').length, hp: b.hp };
+    });
+    t(/^0\//.test(vr.bb) && /^0\//.test(vr.eigen) && vr.chips === 0 && vr.hp > 0, `B2.4 ${vp.naam}: in de val verklapt niets de herrijzenis (bazenbalk "${vr.bb}", eigen HP-balk "${vr.eigen}", ${vr.chips} chips; echt ${vr.hp} HP)`);
+    await slaap(4600); await wachtRust(page, 500, 20000);
     const her = await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); return !!(b && b.herrezen && b.vorm2); });
     t(her, `B2.4 ${vp.naam}: de herverkiezing viel (vorm 2)`);
     await page.evaluate(() => { document.querySelectorAll('#meldingen .toast').forEach(t => t.remove()); _spraakStop(); });
@@ -433,6 +460,21 @@ async function factuurPose(browser, fk) {
     await slaap(5200); await wachtRust(page, 500, 20000);
     const pil = await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); return b && b.intent ? b.intent.type + ':' + b.intent.naam : '-'; });
     t(/^factuur/.test(pil), `R2 ${vp.naam}: de eerste zet van IV is een factuur (${pil})`);
+    /* R2b (B4b, beeldcontrole): met Zwak op hem liegt de rekensom niet - "6 + 3×0 = 6 → 4", nooit
+       "6 + 3×0 = 4". De pil toont de som, dan de pijl naar wat er echt valt; de tip noemt het ook. */
+    const zw = await page.evaluate(() => {
+      const g = S.gevecht, b = g.vijanden.find(v => v.id === 'de_dicktator');
+      const oud = Object.assign({}, b.status), oudP = g.posten, oudS = Object.assign({}, g.speler.status);
+      b.status.zwak = 2; g.posten = 3; g.speler.status.kwetsbaar = 0; renderGevecht();
+      const pil = [...GDOM.vijanden[g.vijanden.indexOf(b)].wrap.querySelectorAll('.intent-factuur')][0];
+      const tekst = pil ? pil.textContent.trim() : '', tip = pil ? pil.dataset.tip || '' : '';
+      const echt = intentVerwachteSchade(b);
+      b.status = oud; g.posten = oudP; g.speler.status = oudS; renderGevecht();
+      return { tekst, tip, echt };
+    });
+    const mz = zw.tekst.match(/(\d+) \+ (\d+)×(\d+) = (\d+) → (\d+)/);
+    const somOk = !!mz && +mz[4] === +mz[1] + (+mz[2]) * (+mz[3]) && +mz[5] === Math.floor(+mz[4] * 0.75) && +mz[5] === zw.echt;
+    t(somOk && zw.tip.includes('Zwak') && zw.tip.includes(': ' + zw.echt + ' schade'), `R2b ${vp.naam}: met Zwak op hem klopt de rekensom op de pil ("${zw.tekst}", echt ${zw.echt}; tip "…${zw.tip.slice(0, 90)}…")`);
     const r = await page.evaluate(async () => {
       const g = S.gevecht, b = g.vijanden.find(v => v.id === 'de_dicktator');
       const img = () => { const k = GDOM.vijanden[g.vijanden.indexOf(b)]; const im = k && k.wrap.querySelector('.vijand-art img'); const s = im ? im.getAttribute('src') || '' : ''; const m = s.match(/de_dicktator(?:_([a-z_]+))?\./); return m ? (m[1] || 'idle') : '?'; };

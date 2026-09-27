@@ -344,6 +344,10 @@ body[data-modus="mobiel"] #baas-balk .bb-aegis {
   max-width: 44vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   font-size: .72rem; padding: 2px 8px;
 }
+/* Finale B4b: IV · HET MANDAAT staat op de telefoon in twee korte regels (dicktatorBalk zet een
+   <br> en .bb-twee): in één regel lag de strook over de statuschips en de schouder van de baas,
+   die in IV alleen staat en dus op volle maat (B2.2). */
+body[data-modus="mobiel"] #baas-balk .bb-aegis.bb-twee { line-height: 1.3; padding: 3px 8px; }
 /* DE ROOF-overlay op de krappe liggende hoogte: kop compacter, kaarten kleiner,
    safe-area-padding — samen met justify-content:safe center (style.css) blijft
    de titel altijd in beeld en scrollt de rest netjes (playtest: kapte raar af) */
@@ -1942,7 +1946,9 @@ body[data-modus="mobiel"] .decreet-keuze-kaart .decreet-kies { min-width: 0; wid
   body[data-modus="mobiel"] .decreet-keuze-binnen { gap: 6px; padding: 4px 10px; }
   body[data-modus="mobiel"] .decreet-keuze-binnen .vloek-reveal-kop { font-size: 1.1rem; }
   body[data-modus="mobiel"] .decreet-keuze-binnen .decreet-shortlist { display: none; }   /* de kop zegt het al; elke regel telt op 360px */
-  body[data-modus="mobiel"] .decreet-keuze-rij { gap: 28px; }
+  /* Finale B4b (beeldcontrole): het zegel van de kaart (📜 n) steekt ~14px boven de kaart uit en
+     sneed op 846x381 in de kop ("kies wat je afschrijft"); de rij zakt daarom 10px */
+  body[data-modus="mobiel"] .decreet-keuze-rij { gap: 28px; margin-top: 10px; }
   /* liggend: de knop NAAST de kaart (tweekolommer-patroon v94), anders valt hij onder de vouw */
   body[data-modus="mobiel"] .decreet-keuze-kaart { flex-direction: row; align-items: center; gap: 10px; }
   body[data-modus="mobiel"] .decreet-keuze-kaart .kaart.groot { width: min(24vw, 42vh, 150px); }
