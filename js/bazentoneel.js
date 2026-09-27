@@ -321,13 +321,13 @@ function bannerFit(el) {
   for (const [maat, b] of volg) {
     zet(maat, b);
     const k = kost();
-    if (k === 0 && maat === 0 && b == null) { el.dataset.fit = '0/std'; return; }
+    if (k === 0 && maat === 0 && b == null) { el._fit = '0/std'; return; }   /* een JS-eigenschap: de DOM van een banner blijft ongewijzigd (B2) */
     const hoog = Math.max(...[...el.children].map(c => rect(c).bottom)) - Math.min(...[...el.children].map(c => rect(c).top));
     const score = k * 1000 + hoog + maat * 20;
     if (!best || score < best.score) best = { score, k, maat, b };
   }
   zet(best.maat, best.b);
-  el.dataset.fit = `${best.maat}/${best.b == null ? 'std' : Math.floor(best.b)}${best.k ? '/k' + best.k : ''}`;
+  el._fit = `${best.maat}/${best.b == null ? 'std' : Math.floor(best.b)}${best.k ? '/k' + best.k : ''}`;
 }
 
 /* ---------- --bb-onder: de onderrand van de bazenbalk als CSS-variabele ----------

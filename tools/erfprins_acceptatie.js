@@ -254,7 +254,7 @@ const HELPER = `(() => {
     const kol = b ? kolom(b) : null;
     const pillen = kol ? [...kol.querySelectorAll('.intent')].filter(zicht).map(R) : [];
     return { n: fl.length, baas: pct(bf, fl), held: pct(held, fl), uit: fl.filter(r => r.l < -0.5 || r.r > W + 0.5 || r.t < -0.5 || r.b > H + 0.5).length,
-      titel: (document.querySelector('.baas-flits h2') || {}).textContent || '', pil: som(lijnen, pillen), pilTekst: pillen.length, fit: (document.querySelector('.baas-flits') || { dataset: {} }).dataset.fit || '' };
+      titel: (document.querySelector('.baas-flits h2') || {}).textContent || '', pil: som(lijnen, pillen), pilTekst: pillen.length, fit: (document.querySelector('.baas-flits') || {})._fit || '' };
   }
   /* B3 F1: de toasts (#meldingen) tegen zijn HUD (bazenbalk, pil, Buit-pil), de hand en de held */
   async function toasts() {
