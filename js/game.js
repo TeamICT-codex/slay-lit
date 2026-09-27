@@ -5070,6 +5070,12 @@ function startGevecht(samenstelling, soort, rij, opts) {
   gevechtTikAf = Tikker.abonneer(gevechtTik);
 
   Klank.muziek(soort === 'baas' ? 'baas' : (soort === 'elite' || soort === 'episch' ? 'elite' : 'gevecht'));
+  /* De Erfprins-ontmoeting telt VÓÓR het scherm wisselt: toonScherm('gevecht') -> evalueerDraaiBlok
+     -> misschienBaasIntro speelt de intro meteen (op laptop altijd, op de telefoon zodra hij ligt),
+     en die leest de teller. Stond deze regel erna (tot B3), dan kreeg je tweede ontmoeting opnieuw
+     de volle Inventaris-intro en liep het orakel één regel achter. Niet daily-gated: scherfvondsten
+     tellen óók in een daily (ze banken bij het einde), dus de orakel-escalatie loopt consistent mee. */
+  if (soort === 'baas' && g.vijanden.some(v => v.id === 'de_erfprins')) { Codex.erfprinsOntmoetingen = (Codex.erfprinsOntmoetingen || 0) + 1; bewaarCodex(); }
   toonScherm('gevecht');
   if (typeof wisselInzage === 'function') wisselInzage(false);   /* v104: nooit met een 14%-hand een nieuw gevecht in */
   zetLichtVisueel();
@@ -5078,12 +5084,9 @@ function startGevecht(samenstelling, soort, rij, opts) {
     INST.inzageHintGezien = true; bewaarInst();
     setTimeout(() => melding('👁 Nieuw: het oog links geeft inzage in alle statussen. Een figuur vasthouden werkt ook — kort.'), 1400);
   }
-  /* Het Metgezel-Mysterie: de Erfprins-ontmoeting telt mee (cross-run escalatie)
-     en levert gegarandeerd de baas-scherf — zo is zelfs een verloren run progressie. */
+  /* De Erfprins levert gegarandeerd de baas-scherf — zo is zelfs een verloren run progressie
+     (de ontmoetingsteller telde hierboven al mee, vóór de intro). */
   if (soort === 'baas' && g.vijanden.some(v => v.id === 'de_erfprins')) {
-    /* teller NIET daily-gated: scherfvondsten tellen óók in een daily (ze banken bij het
-       einde), dus de orakel-escalatie loopt consistent mee. */
-    Codex.erfprinsOntmoetingen = (Codex.erfprinsOntmoetingen || 0) + 1; bewaarCodex();
     const sid = vindScherf('baas'); if (sid) { g.baasScherf = sid; g.baasScherfKop = '🜂 UIT DE NALATENSCHAP VAN DE ERFPRINS'; }   /* in je gedragen tas (bankt bij einde/Drempel); de weighty reveal volgt bij de overwinning (botst niet met de baas-intro) */
     /* DE ROOF gebeurt NIET meer hier — ze wordt nu cinematisch getriggerd door je eerste aanval
        (copycatNaSchade → speelKaart → copycatDeRoof), met een vangnet bovenin eindBeurt. */
@@ -5357,8 +5360,9 @@ function toonBaasIntro(g) {
   }
   /* B3 · B1.7 — de scherven-nudge SOLO, geteld zoals de Drempeltafel telt: de scherven die je
      draagt (drie, van welk maaksel ook, kopen een plaats; de baas-scherf die hij net stil liet
-     vallen telt niet, die ken je nog niet). Twee = nerveus, drie = "rijp". */
-  if (!metgezellenAan() && b.id === 'de_erfprins' && UITSPRAKEN._erfprins.nudgeSolo) {
+     vallen telt niet, die ken je nog niet). Twee = nerveus, drie = "rijp". Niet op de dagelijkse
+     afdaling: daar staat de tafel uit (en de scherf-reveal belooft haar daar ook niet). */
+  if (!metgezellenAan() && !S.daily && b.id === 'de_erfprins' && UITSPRAKEN._erfprins.nudgeSolo) {
     const aantal = erfNudgeScherven(g);
     if (aantal >= 2) {
       const fluister = aantal >= 3 ? UITSPRAKEN._erfprins.nudgeSolo.rijp : UITSPRAKEN._erfprins.nudgeSolo.twee;
