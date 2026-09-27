@@ -2339,12 +2339,12 @@
         root.dataset.losgelaten = '1';
         const r = reeks([
           { doe: scheur, ms: zacht ? 250 : 480 },
-          { doe: valFoto, ms: zacht ? 450 : 1100 },
+          { doe: valFoto, ms: zacht ? 450 : 1000 },
           /* fixer R5 F1: het hek open, de stoel rolt de foto achterna de lift in, het hek dicht */
-          { doe: () => { lift.classList.add('open'); klank('sfx', 'schaarhek'); }, ms: zacht ? 300 : 450 },
-          { doe: () => rolStoel(true), ms: zacht ? 600 : 1450 },
-          { doe: () => { lift.classList.remove('open'); lift.classList.add('dicht'); klank('sfx', 'grendel'); root.dataset.ingestapt = '1'; }, ms: zacht ? 400 : 600 },
-          { doe: () => { laag.appendChild(el('p', 'gs-slotzin', K.slot)); }, ms: zacht ? 1400 : 1650 }
+          { doe: () => { lift.classList.add('open'); klank('sfx', 'schaarhek'); }, ms: zacht ? 300 : 400 },
+          { doe: () => rolStoel(true), ms: zacht ? 600 : 1400 },
+          { doe: () => { lift.classList.remove('open'); lift.classList.add('dicht'); klank('sfx', 'grendel'); root.dataset.ingestapt = '1'; }, ms: zacht ? 400 : 500 },
+          { doe: () => { laag.appendChild(el('p', 'gs-slotzin', K.slot)); }, ms: zacht ? 1400 : 1500 }
         ], () => render());
         spoel = null;
         spoelNa(r.spoel, 350, () => !r.af);
@@ -2972,6 +2972,27 @@
       toonHint('val');
     }
 
+    /* FIXER R5 F1 — de fps-bewaker van de Afgrond (zoals die van de val): de zes rimpels zijn grote, doorzichtige
+       lagen die elk beeld opnieuw geschaald worden. Zonder GPU (headless, een zwakke laptop) kostten ze de helft
+       van de beelden (de review: 31-44 beelden/s op 1440x900). Twee seconden na elkaar onder 45 beelden/s → de
+       rimpels staan stil (.afg-stil: animation-play-state paused; ze blijven zichtbaar, als stille kringen). */
+    function bewaakAfgrond(decor) {
+      if (rustig() || typeof requestAnimationFrame !== 'function') return;
+      let n = 0, t0 = 0, traag = 0;
+      const stap = nu => {
+        if (!actief || !decor.isConnected || decor.classList.contains('afg-stil')) return;
+        if (!t0) t0 = nu;
+        n++;
+        if (nu - t0 >= 1000) {
+          const f = n * 1000 / (nu - t0);
+          if (f < 45) { if (++traag >= 2) { decor.classList.add('afg-stil'); decor.dataset.fps = String(Math.round(f)); return; } } else traag = 0;
+          n = 0; t0 = nu;
+        }
+        requestAnimationFrame(stap);
+      };
+      requestAnimationFrame(stap);
+    }
+
     /* ═══ DE AFGROND = DE HELDKEUZE ═══
        Drie maskers rond het kooltje, van onderen belicht in de kleur van hun held.
        De eerste tik (of hover/toetsfocus) pelt het masker af tot de held — naam,
@@ -2991,6 +3012,7 @@
       decor.appendChild(art(b.afgrondArt, '', 'afg-art'));
       for (let n = 0; n < 6; n++) { const r = el('div', 'afg-rimpel'); r.style.setProperty('--ri', n); decor.appendChild(r); }
       decor.appendChild(el('div', 'afg-ember'));
+      bewaakAfgrond(decor);
       vak.appendChild(decor);
 
       const stage = el('div', 'afg-stage');

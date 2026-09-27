@@ -13,6 +13,10 @@
 // met dezelfde (getypte) seed krijgt de kamer van haar seed, niet de slijm van de echo (8H). Op 1440x900
 // (2D en 3D), 1366x768, 800x360 en 846x381 (touch) en 412x915 (touch, achter het draai-blok),
 // natuurlijk, doortikkend, met een kaart spelen, herladen; met contactvellen (CDP-screencast).
+// FIXER R5 F1: de echo alleen na een landing van deze versie (contract.echoOpen, 8A; 8V: een contract uit
+// v130-v135 zonder markering krijgt hem niet alsnog), de zin ná het branden en nooit over de intentie van de
+// slijm, het papier geeft 5 fakkel terug (toetsEcho), de jeugddroom als tekst in de DICKtator-regel (8J), en
+// de Codex laadt alleen proloog/data.js (deel 5).
 //
 // Draaien (vanuit de scratchpad met playwright + pngjs in node_modules):
 //   NODE_PATH="$PWD/node_modules" SLAYIT_WORKTREE="...\SLAY-IT-proloog" \
@@ -74,7 +78,7 @@ async function open(browser, vp, opties) {
       window.AudioContext = W; window.webkitAudioContext = W;
     }
   });
-  const page = await ctx.newPage(); page.__f = []; page.__nav = 0; page.__proloogReq = 0;
+  const page = await ctx.newPage(); page.__f = []; page.__nav = 0; page.__proloogReq = 0; page.__proloogBestanden = [];
   page.on('pageerror', e => page.__f.push(e.message));
   page.on('console', m => { if (m.type() === 'error' && !/rest\/v1|Failed to load resource|supabase/i.test(m.text())) page.__f.push('console: ' + m.text()); });
   page.on('framenavigated', f => { if (f === page.mainFrame()) page.__nav++; });
@@ -84,7 +88,9 @@ async function open(browser, vp, opties) {
     if (u.host !== HOST) return route.abort();
     const rel = decodeURIComponent(u.pathname).replace(/^\/+/, '') || 'index.html';
     if (/^proloog\/.+\.js$/.test(rel)) {
-      page.__proloogReq++;
+      page.__proloogReq++; page.__proloogBestanden.push(rel);
+      /* fixer R5 F1: de Codex leest de hoofdstuknamen uit proloog/data.js; met echteData krijgt ze de echte */
+      if (opties.echteData && rel === 'proloog/data.js') return route.fulfill({ status: 200, contentType: 'text/javascript', body: fs.readFileSync(path.join(WT, 'proloog', 'data.js')) });
       if (opties.laadFout && rel === 'proloog/proloog.js') return route.fulfill({ status: 404, body: 'weg' });
       if (rel === 'proloog/proloog.js') return route.fulfill({ status: 200, contentType: 'text/javascript', body: STUB });
       return route.fulfill({ status: 200, contentType: 'text/javascript', body: '/* stub: ' + rel + ' */' });
@@ -193,9 +199,9 @@ const PL_HAND = (() => {
    een vel stond, de spraakplaten en -bellen, en op vraag (samplen) de animaties van de landing en de echo:
    de langste actieve duur per animatie of overgang. */
 const ECHO_METER = `(${function () {
-  const E = window.__e = { vel: [], plaat: [], spraak: [], anim: {}, samplenLanding: false, samplenGevecht: false, eersteBeeld: null, zichtbaarVanaf: null, velEerst: null, velLaatst: null, velMax: 0, fakkelPuls: null, toasts: [], zinBedekt: 0 };
+  const E = window.__e = { vel: [], plaat: [], spraak: [], anim: {}, samplenLanding: false, samplenGevecht: false, eersteBeeld: null, zichtbaarVanaf: null, velEerst: null, velLaatst: null, velMax: 0, fakkelPuls: null, toasts: [], zinBedekt: 0, zinOverIntent: 0, zinIntentGezien: 0 };
   /* per gevecht opnieuw meten (twee gevechten in één pagina: de daily, dan een gewone run) */
-  window.__eReset = () => Object.assign(E, { vel: [], plaat: [], spraak: [], eersteBeeld: null, zichtbaarVanaf: null, velEerst: null, velLaatst: null, velMax: 0, fakkelPuls: null, toasts: [], zinBedekt: 0 });
+  window.__eReset = () => Object.assign(E, { vel: [], plaat: [], spraak: [], eersteBeeld: null, zichtbaarVanaf: null, velEerst: null, velLaatst: null, velMax: 0, fakkelPuls: null, toasts: [], zinBedekt: 0, zinOverIntent: 0, zinIntentGezien: 0 });
   const nu = () => Math.round(performance.now());
   const BINNEN = '#proloog-sluier, .kaart-kantoorvel, .baas-spraak.pl-echo-zin';
   const IDS = ['scherm-kaart', 'topbalk', 'kaart-held', 'tb-fakkel', 'licht-vignet', 'toneel-doek'];
@@ -216,7 +222,7 @@ const ECHO_METER = `(${function () {
   function lus() {
     const b = document.body;
     if (b && b.dataset.scherm === 'gevecht') {
-      if (!E.eersteBeeld) E.eersteBeeld = { t: nu(), kaarten: document.querySelectorAll('#hand .kaart').length, metVel: document.querySelectorAll('#hand .kaart > .kaart-kantoorvel').length };
+      if (!E.eersteBeeld) E.eersteBeeld = { t: nu(), kaarten: document.querySelectorAll('#hand .kaart').length, metVel: document.querySelectorAll('#hand .kaart > .kaart-kantoorvel').length, fakkel: (typeof S !== 'undefined' && S) ? S.fakkel : null };
       const db = document.getElementById('draai-blok');
       if (E.zichtbaarVanaf === null && !(db && db.classList.contains('toon'))) E.zichtbaarVanaf = nu();
     }
@@ -229,6 +235,13 @@ const ECHO_METER = `(${function () {
       document.querySelectorAll('#meldingen .toast').forEach(el => {
         const q = el.getBoundingClientRect();
         if (q.width && r.width && q.left < r.right && q.right > r.left && q.top < r.bottom && q.bottom > r.top && getComputedStyle(el).opacity > 0.1) E.zinBedekt++;
+      });
+      /* fixer R5 F1: ligt de zin over de intentie van een vijand (de pil '⚔ 3' boven de slijm)? */
+      document.querySelectorAll('#scherm-gevecht .vijand .intent').forEach(el => {
+        const q = el.getBoundingClientRect();
+        if (!q.width || getComputedStyle(el).opacity < 0.1) return;
+        E.zinIntentGezien++;
+        if (r.width && q.left < r.right && q.right > r.left && q.top < r.bottom && q.bottom > r.top) E.zinOverIntent++;
       });
     }
     const f = document.getElementById('tb-fakkel');
@@ -273,7 +286,8 @@ const ECHO_STAND = () => {
     contractRuw: localStorage.getItem('slayit_proloog'), contract: c,
     vel: E.vel || [], plaat: E.plaat || [], spraak: E.spraak || [], anim: E.anim || {},
     eersteBeeld: E.eersteBeeld || null, zichtbaarVanaf: E.zichtbaarVanaf, velEerst: E.velEerst, velLaatst: E.velLaatst, velMax: E.velMax || 0,
-    fakkelPuls: E.fakkelPuls, toasts: E.toasts || [], zinBedekt: E.zinBedekt || 0,
+    fakkelPuls: E.fakkelPuls, toasts: E.toasts || [], zinBedekt: E.zinBedekt || 0, zinOverIntent: E.zinOverIntent || 0, zinIntentGezien: E.zinIntentGezien || 0,
+    fakkel: ok ? S.fakkel : null,
     inzageHint: typeof INST !== 'undefined' ? INST.inzageHintGezien : null, inzageHintOpslag: (() => { try { return !!JSON.parse(localStorage.getItem('slayit_inst') || '{}').inzageHintGezien; } catch (e) { return null; } })(),
     velNu: document.querySelectorAll('.kaart-kantoorvel').length,
     acN: window.__acN, scrollH: document.documentElement.scrollHeight, innerH: innerHeight,
@@ -364,6 +378,11 @@ function toetsEcho(s, o) {
   if (zin[0]) t(o.rustig ? zin[0].anim === 'plEchoZin' : zin[0].anim === 'spraakKoning', `${L}: de spraakplaat ${o.rustig ? 'rustig: een korte inkomst' : 'met haar gewone plaatanimatie'} (${zin[0].anim}, ${zin[0].duur})`);
   t(!s.spraak.length, `${L}: de slijm blubt niet door de zin heen (spraakbellen: ${s.spraak.length ? s.spraak.map(x => x.tekst).join(' | ') : 'geen'})`);
   t(s.zinBedekt === 0, `${L}: geen melding over de zin (${s.zinBedekt} beelden bedekt; meldingen in het gevecht: ${s.toasts.length ? s.toasts.map(x => x.tekst.slice(0, 40)).join(' | ') : 'geen'})`);
+  /* fixer R5 F1: de zin ligt niet over de intentie van de slijm (op 800x360 lag 'een' 3,6 s over '⚔ 3'), en komt ná het branden */
+  t(s.zinOverIntent === 0 && s.zinIntentGezien > 0, `${L}: de zin ligt in geen enkel beeld over de intentie van de slijm (${s.zinOverIntent} van ${s.zinIntentGezien} gemeten beelden)`);
+  t(zinNa !== null && zinNa >= 1300 && zinNa <= 1800, `${L}: de zin komt ná het branden, op ${zinNa} ms (1,3-1,8 s; was ±1,0 s)`);
+  /* fixer R5 F1: het opgebrande papier geeft de 5 🔥 van de eerste knoop terug (de puls beloofde warmte) */
+  t(eb.fakkel !== null && s.fakkel === eb.fakkel + 5, `${L}: het opgebrande papier voedt de fakkel echt: 🔥 ${eb.fakkel} → ${s.fakkel} (+5)`);
   const c = s.contract || {};
   t(c.echo === 1 && c.echoSeed === s.seed && (!o.voor || zonderEcho(s.contractRuw) === zonderEcho(o.voor)),
     `${L}: contract.echo ${o.voorEcho === undefined ? '0' : o.voorEcho} → ${c.echo}, echoSeed "${c.echoSeed}" = de run "${s.seed}", de rest van het contract byte-gelijk`);
@@ -401,7 +420,7 @@ async function deelEcho(browser) {
     const sch = await landOpKaart(page, a.vp, { held: a.held });
     const voor = await page.evaluate(() => localStorage.getItem('slayit_proloog'));
     const cv = JSON.parse(voor || '{}');
-    t(sch === 'kaart' && cv.echo === 0 && cv.echoSeed === undefined, `${L}: geland op "${sch}", contract.echo ${cv.echo} (nog geen echoSeed)`);
+    t(sch === 'kaart' && cv.echo === 0 && cv.echoSeed === undefined && cv.echoOpen === 1, `${L}: geland op "${sch}", contract.echo ${cv.echo} (nog geen echoSeed), echoOpen ${cv.echoOpen} (fixer R5 F1: de landing zet hem)`);
     if (a.dek) await page.evaluate(ids => { S.dek = ids.map(id => nieuweKaart(id)); saveSpel(); }, a.dek);
     let film = a.draai ? null : await echoFilm(page, a.vp);
     const w = await naarEersteKamer(page, a.vp);
@@ -565,7 +584,7 @@ async function deelEcho(browser) {
   if (stuk('8E')) {
     const L = '8E laptop-2d de daily';
     const vp = F.laptop2d;
-    const c0 = JSON.stringify({ v: 2, jeugddroom: 'astronaut', uitweg: 'geduwd', held: 'thoverk', masker: 'vlucht', glimlachen: 3, fotoKantoor: false, zelfGestempeld: true, wachtToon: -7, echo: 0 });
+    const c0 = JSON.stringify({ v: 2, jeugddroom: 'astronaut', uitweg: 'geduwd', held: 'thoverk', masker: 'vlucht', glimlachen: 3, fotoKantoor: false, zelfGestempeld: true, wachtToon: -7, echo: 0, echoOpen: 1 });   /* echoOpen: een landing van deze versie (fixer R5 F1) */
     const { ctx, page } = await echoOpen(browser, vp, { opslag: { slayit_proloog_klaar: '1', slayit_proloog: c0 } });
     await page.evaluate(() => startDaily());
     await slaap(1200);
@@ -690,6 +709,48 @@ async function deelEcho(browser) {
       fouten(L, page);
       await ctx.close();
     }
+  }
+
+  /* ---- 8V · fixer R5 F1: wie de proloog in v130-v135 uitspeelde (een contract met echo:0 maar zonder echoOpen), krijgt
+     de echo niet alsnog in zijn volgende run — ook niet als hij er sindsdien twaalf speelde. Het contract blijft onaangeroerd. ---- */
+  if (stuk('8V')) for (const v of [{ n: 'veteraan (Codex.runs 12)', codex: { runs: 12 } }, { n: 'uitgespeeld in v134, nog geen run', codex: null }]) {
+    const L = `8V laptop-2d ${v.n}`;
+    const vp = F.laptop2d;
+    const c0 = JSON.stringify({ v: 2, jeugddroom: 'kok', uitweg: 'geduwd', held: 'slachter', masker: 'woede', glimlachen: 5, fotoKantoor: false, zelfGestempeld: true, wachtToon: -7, echo: 0 });
+    const opsl = { slayit_proloog_klaar: '1', slayit_proloog: c0 };
+    if (v.codex) opsl.slayit_codex = JSON.stringify(v.codex);
+    const { ctx, page } = await echoOpen(browser, vp, { opslag: opsl });
+    await page.evaluate(() => { toonHeldKeuze(); kiesHeldEcht('slachter'); });
+    await slaap(1200);
+    await naarEersteKamer(page, vp);
+    await slaap(3000);
+    const s = await echoStand(page);
+    t(s.scherm === 'gevecht' && s.vel.length === 0 && !s.plaat.some(p => p.tekst === ECHO_ZIN) && s.contractRuw === c0,
+      `${L}: geen kantoorvel (${s.vel.length}), geen zin, contract byte-gelijk (echo ${s.contract.echo}, geen echoOpen) — de eerste kamer is gewoon ${JSON.stringify(s.vijanden)}`);
+    fouten(L, page);
+    await ctx.close();
+  }
+
+  /* ---- 8J · fixer R5 F1: de getypte jeugddroom komt als TEKST in de DICKtator-regel (de spraakplaat zet innerHTML) ---- */
+  if (stuk('8J')) {
+    const L = '8J laptop-2d de jeugddroom als tekst';
+    const vp = F.laptop2d;
+    const game = fs.readFileSync(path.join(WT, 'js', 'game.js'), 'utf8');
+    const m = game.match(/baasSpreekt\(`(„Uw jeugddroom — ‚\$\{[^}]+\}'\. Voorziening getroffen\. AFGESCHREVEN\.")`/);
+    t(!!m && /escSyn\(droom\)/.test(m[1]), `${L}: game.js citeert de droom via escSyn (${m ? m[1] : 'regel niet gevonden'})`);
+    const { ctx, page } = await echoOpen(browser, vp);
+    const r = await page.evaluate(sjabloon => {
+      nieuwSpel('slachter', 'DROOM-1', 0); renderKaartScherm();
+      kiesNodeEcht(beschikbareNodes()[0]);
+      const droom = '<b>x</b> & <3 dieren';
+      const tekst = new Function('droom', 'escSyn', 'return `' + sjabloon + '`;')(droom, escSyn);
+      baasSpreekt(tekst, 1500);
+      const p = [...document.querySelectorAll('#scherm-gevecht > .baas-spraak')].pop();
+      return { tekst: p ? p.textContent : null, b: p ? p.querySelectorAll('b').length : -1 };
+    }, m ? m[1] : '');
+    t(r.b === 0 && /‚<b>x<\/b> & <3 dieren'/.test(r.tekst || ''), `${L}: de droom '<b>x</b> & <3 dieren' staat er letterlijk ("${r.tekst}"), geen <b>-element (${r.b})`);
+    fouten(L, page);
+    await ctx.close();
   }
 
   /* ---- 8S · statisch ---- */
@@ -962,12 +1023,15 @@ async function deelEcho(browser) {
   }
 
   {
-    const { ctx, page } = await open(browser, VPS[0], { opslag: { slaylit_proloog_v3: JSON.stringify({ scene: 2, checkpoint: 'start', choices: {}, gezien: [0, 2] }) } });
+    const { ctx, page } = await open(browser, VPS[0], { echteData: true, opslag: { slaylit_proloog_v3: JSON.stringify({ scene: 2, checkpoint: 'start', choices: {}, gezien: [0, 2] }) } });
+    page.__proloogBestanden = [];
     await page.evaluate(() => toonCodex()); await slaap(200);
     const voorLaden = await page.evaluate(() => [...document.querySelectorAll('#codex-inhoud .pl-hfst')].map(b => b.dataset.plHoofdstuk).join(','));
     await slaap(1200);
     const naLaden = await page.evaluate(() => [...document.querySelectorAll('#codex-inhoud .pl-hfst')].map(b => b.dataset.plHoofdstuk + '=' + b.textContent.trim()).join(' · '));
     t(voorLaden === '0,2' && /^0=1 · Maandag, 06:42 · 2=3 · Het Glimlachquotum$/.test(naLaden), `Codex (half gespeeld, gezien [0,2]): vóór het laden ${voorLaden}, daarna "${naLaden}"`);
+    /* fixer R5 F1: de Codex laadt alleen proloog/data.js (de namen), niet de hele proloog (±574 KB); die pas bij de klik */
+    t(JSON.stringify(page.__proloogBestanden) === '["proloog/data.js"]', `Codex: alleen proloog/data.js geladen (${JSON.stringify(page.__proloogBestanden)}), niet proloog.js, audio.js of val.js`);
     t(page.__f.length === 0, `Codex half gespeeld: geen paginafouten` + (page.__f.length ? ' — ' + page.__f[0] : ''));
     await ctx.close();
   }
