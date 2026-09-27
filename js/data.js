@@ -1870,14 +1870,23 @@ const UITSPRAKEN = {
       '„Hoe beter jij speelt, hoe sterker ík word... maar wat die poort wakker maakt als je haar vóédt — dát kan ik nooit kopiëren."',
     ],
     /* DE NISSEN DICHT: het orakel zolang de metgezellen geparkeerd zijn — voor IEDEREEN (regels 1
-       en 3 ongewijzigd; 2 en 4 beloofden een breker die er niet is). De Erfprins-ronde mag deze
-       regels vervangen door een telegraaf van zijn eigen mechaniek. */
+       en 3 ongewijzigd; 2 en 4 beloofden een breker die er niet is). B3 · B1.7: regel 4 wijst nu
+       naar de Drempeltafel (P_plaatsing_regie_plan.md §4 B1.7 — een voorstel, de tekst is van
+       Thomas): wat je aan die tafel inzet, is het enige wat hij niet kan roven. */
     orakelSolo: [
       '„Ik hóéf niks zelf te maken — ik kijk gewoon af."',
       '„Alles wat jij ooit goed deed, heb ik al gezien. Ik wacht gewoon tot je het opnieuw doet."',
       '„Wat rááp je toch allemaal op daar beneden? Scherven? Die passen heus nergens op. Weggooien."',
-      '„Hoe beter jij speelt, hoe sterker ík word. Zo werkt een nalatenschap."',
+      '„Hoe beter jij speelt, hoe sterker ík word... maar wat jij aan die tafel dúrft in te zetten — dát kan ik nooit kopiëren."',
     ],
+    /* B3 · B1.7 — de scherven-nudge, solo: hij ziet de scherven die je DRAAGT (de baas-scherf die
+       hij zelf net stil liet vallen telt niet, die ken je nog niet) en wordt nerveus, want drie
+       ervan — van welk maaksel ook — kopen een plaats aan de Drempeltafel (wat de tafel telt,
+       drempeltafel.js dtNissenHtml). Hij noemt nooit een poort of een bondgenoot. */
+    nudgeSolo: {
+      twee: '„Je sleept daar iets mee waar een tafel op wacht. Gooi. Het. Weg."',
+      rijp: '„Drie scherven?! Wie heeft je verteld dat je daarmee aan tafel mag?! Die tafel had DICHT gemoeten."'
+    },
     /* grief-haak: ná Drops' offer claimt de Erfprins de overwinning — tot Drops de Witte terugkeert
        (met de metgezellen geparkeerd onbereikbaar) */
     dossier: '„Ik heb je hond geïndexeerd. Dossier gesloten."',

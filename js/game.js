@@ -5355,6 +5355,16 @@ function toonBaasIntro(g) {
       setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(fluister, 3200, { vervalt: 2500 }); }, 9200);   /* B0.4: flavor vervalt op de sluis */
     }
   }
+  /* B3 · B1.7 — de scherven-nudge SOLO, geteld zoals de Drempeltafel telt: de scherven die je
+     draagt (drie, van welk maaksel ook, kopen een plaats; de baas-scherf die hij net stil liet
+     vallen telt niet, die ken je nog niet). Twee = nerveus, drie = "rijp". */
+  if (!metgezellenAan() && b.id === 'de_erfprins' && UITSPRAKEN._erfprins.nudgeSolo) {
+    const aantal = erfNudgeScherven(g);
+    if (aantal >= 2) {
+      const fluister = aantal >= 3 ? UITSPRAKEN._erfprins.nudgeSolo.rijp : UITSPRAKEN._erfprins.nudgeSolo.twee;
+      setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(fluister, 3200, { vervalt: 2500 }); }, 9200);   /* B0.4: flavor vervalt op de sluis */
+    }
+  }
   /* GRIEF: heb je Drops geofferd maar is de Witte nog niet terug? De Erfprins claimt de
      overwinning — de wond die de reünie later heelt (zie DROPS-DE-WITTE.md). */
   if (metgezellenAan() && b.id === 'de_erfprins' && Array.isArray(Codex.gevallen) && Codex.gevallen.includes('drops')
@@ -7555,6 +7565,14 @@ function erfDoekRondPrins(ov, v) {
     vi.classList.add('wijst');
   }
   ov.dataset.fit = `${f.c}x${f.rijen}@${f.w}`;
+}
+/* B1.7: hoeveel scherven hij je ziet dragen — wat de Drempeltafel telt (gedragen(): drie, van
+   welk maaksel ook, kopen een plaats), zonder de baas-scherf die hij zelf net stil in je tas
+   liet vallen (die ken je pas bij de kill-reveal) */
+function erfNudgeScherven(g) {
+  const tas = gedragen().slice();
+  if (g && g.baasScherf) { const i = tas.indexOf(g.baasScherf); if (i >= 0) tas.splice(i, 1); }
+  return tas.length;
 }
 /* de vinger ÓP een kaart van de waaier (40 % van haar hoogte); zonder gat (geen rect) erboven */
 function erfVingerOp(ov, vinger, kEl) {
