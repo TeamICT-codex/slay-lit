@@ -212,7 +212,9 @@ const tussen = (log, a, b2) => log.filter(r => r.t >= a && r.t <= b2);
   const stemT = [...new Set(stemmen.map(r => r.t))];
   t(stemmen.length > 0 && stemT[0] >= 550 && stemT[stemT.length - 1] <= 600 + 200 * 3 + 950,
     `stem-cijfers zichtbaar van t=${stemT[0]} tot t=${stemT[stemT.length - 1]}ms (venster 600 + 200*n); eerste tekst: "${stemmen.length ? stemmen[0].fx : '-'}"`);
-  t(stemmen.length > 0 && /\+2 Kracht/.test(stemmen[0].fx), `elke kiezer: +2 Kracht ("${stemmen.length ? stemmen[0].fx : '-'}")`);
+  /* review F9 / R3: het getal per stem komt uit DICK.krachtPerKiezer (R3 zette het op 1), nooit letterlijk */
+  const KPK = await page.evaluate(() => DICK.krachtPerKiezer);
+  t(stemmen.length > 0 && stemmen[0].fx.indexOf('+' + KPK + ' Kracht') >= 0, `elke kiezer: +${KPK} Kracht (DICK.krachtPerKiezer): "${stemmen.length ? stemmen[0].fx : '-'}"`);
   const herkozenSrc = L3.filter(r => /_herkozen\./.test(r.src));
   t(herkozenSrc.length > 0 && herkozenSrc[0].t >= 2250, `img.src bevat "_herkozen" vanaf t=${herkozenSrc.length ? herkozenSrc[0].t : 'nooit'}ms: "${herkozenSrc.length ? herkozenSrc[0].src : '-'}"`);
   const hervEerst = L3.find(r => /herverkozen/.test(r.baasKlassen));
