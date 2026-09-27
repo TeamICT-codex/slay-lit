@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v135'; // v135: HET BAZENTONEEL - dertien plaatsingsregels voor alle bazen: geen zwevende figuren door statuschips, geen tekst over de figuren, een stem en een slotwoord per baas, de baaspil nooit in de topbalk, een baas telegrafeert ook in het donker, signatuurposes en een kaderfit in 3D, de verslagen baas blijft liggen
+const CACHE = 'slayit-v136'; // v136: ECHO EN QA (proloog ronde 5, de laatste) - na de proloog is het eerste gevecht een solo Groene Slijm die zegt 'Fijn dat je er bent', de eerste hand komt binnen als brandende kantoorvellen, de outro zegt 'U STAPTE IN' en in beide routes rolt de stoel de lift in
 const BESTANDEN = [
   '.',
   'css/style.css',
