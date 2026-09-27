@@ -20,3 +20,7 @@ assets-bron/
 # het design-system blijft lokaal (de proloog-art is sinds de vanilla-herbouw
 # gewone gedeployde WebP in assets/proloog/; de PNG-bronnen zitten in assets-bron/)
 design-system/
+
+# uitvoer van de meetharnassen (tools/baas-meting/*_meting.js): ruwe gevechtsdata, groot;
+# zet MEET_UIT naar de scratchpad. Het harnas zelf hoort wel in de repo.
+tools/baas-meting/*.json
