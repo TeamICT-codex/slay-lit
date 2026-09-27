@@ -1239,6 +1239,13 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      (+ metgezel) honderden px gaten tussen held en vijanden → beide randen klipten,
      terwijl de figuren samen ruim passen. Nu netjes gecentreerd, held links/vijand rechts. */
   body[data-modus="mobiel"] #strijdveld { padding: 4px 12px 4px max(22px, env(safe-area-inset-left)); align-items: flex-end; justify-content: center; gap: clamp(14px, 5vw, 48px); min-height: 0; }   /* links 22px: het blok-schild stak 3-10px buiten beeld (v95) */
+  /* B3 · B1.1 — EEN EIGEN PODIUM voor een baas die ALLEEN staat (de Erfprins, de Slijmkoning
+     vóór hij splijt, de DICKtator vóór zijn hof): held en baas krijgen elk hun helft van het
+     toneel. Met de gewone gap stonden ze als een kluitje in het midden (800x360: 71 px tussen
+     held en prins, en 158 px leeg rechts van hem tot het hart); dat lege gat is nu de strook
+     voor zijn chipkolom (B0.8). Zodra er een tweede vijand naast hem staat, geldt de gewone gap
+     weer. Plan en meting: P_plaatsing_regie_plan.md §4 B1.1. */
+  body[data-modus="mobiel"] #scherm-gevecht.baas-actief #strijdveld:has(#vijanden-rij > .vijand.is-baas:only-child) { gap: clamp(40px, 15vw, 150px); }
   /* de brede basis-min-widths resetten (anders vreet de spelerzone ~170px en
      worden 3 vijanden samen ~444px → de rechtse liep van het scherm) */
   body[data-modus="mobiel"] #speler-zone { min-width: 0; }
