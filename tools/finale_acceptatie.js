@@ -869,8 +869,10 @@ const sonde = page => page.evaluate(() => {
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
 
-  /* ================= 16 · DE TELLER OP DRIE FORMATEN ================= */
-  for (const vp of [{ w: 1440, h: 900, naam: 'laptop 1440×900' }, { w: 800, h: 360, mobiel: true, naam: 'mobiel 800×360' }, { w: 412, h: 915, mobiel: true, naam: 'mobiel 412×915' }]) {
+  /* ================= 16 · DE TELLER OP VIJF FORMATEN ================= */
+  /* Finale B4b (afwerkplan §7 stap 5): ook 1366×768 en 846×381, en de teller tegenover 'Beurt N' in
+     de bazenbalk (main B2 · B0.2, .bb-beurt) en de baaspil - 0 snijdende rechthoeken. */
+  for (const vp of [{ w: 1440, h: 900, naam: 'laptop 1440×900' }, { w: 1366, h: 768, naam: 'laptop 1366×768' }, { w: 846, h: 381, mobiel: true, naam: 'mobiel 846×381' }, { w: 800, h: 360, mobiel: true, naam: 'mobiel 800×360' }, { w: 412, h: 915, mobiel: true, naam: 'mobiel 412×915' }]) {
     kop('16 · de teller en de inkeping (' + vp.naam + ')');
     ({ ctx, page } = await open(browser, vp));
     await startProces(page);
@@ -883,15 +885,22 @@ const sonde = page => page.evaluate(() => {
       if (tekstEl && tekstEl.firstChild) { const rg = document.createRange(); rg.selectNodeContents(tekstEl); const x = rg.getBoundingClientRect(); tekst = { l: x.left, r: x.right, t: x.top, b: x.bottom }; }
       const ov = (a, b) => !!(a && b) && !(a.r <= b.l || b.r <= a.l || a.b <= b.t || b.b <= a.t);
       const z = r('#baas-balk .bb-zitting'), balk = r('#baas-balk .bb-balk'), label = r('#beurt-label'), strook = r('#baas-balk .bb-proces');
+      const zicht = e => { for (let q = e; q && q !== document.body; q = q.parentElement) { const c = getComputedStyle(q); if (c.display === 'none' || c.visibility === 'hidden' || +c.opacity < 0.05) return false; } return true; };
+      const beurtEl = document.querySelector('#baas-balk .bb-beurt');
+      const beurt = beurtEl && zicht(beurtEl) ? r('#baas-balk .bb-beurt') : null;
+      const b0 = dicktatorBaas(S.gevecht), pilEl = actorEl(b0) && actorEl(b0).querySelector('.intent');
+      const pil = pilEl && zicht(pilEl) ? (() => { const x = pilEl.getBoundingClientRect(); return { l: x.left, r: x.right, t: x.top, b: x.bottom }; })() : null;
       const W = innerWidth, H = innerHeight;
       return {
         z, W, H, tekstZ: ov(z, tekst), labelZ: ov(z, label), strookZ: ov(z, strook), inBalk: !!(z && balk && z.l >= balk.l - 1 && z.r <= balk.r + 1),
+        beurtZ: ov(z, beurt), pilZ: ov(z, pil), beurtStrook: ov(beurt, strook), pilStrook: ov(pil, strook), pilBeurt: ov(pil, beurt),
         binnen: !!(z && z.l >= 0 && z.t >= 0 && z.r <= W && z.b <= H), tekst: (document.querySelector('#baas-balk .bb-zitting') || {}).textContent || '',
         kerf: r('#baas-balk .bb-vloer'), links: !!(z && tekst && z.r <= tekst.l + 1)
       };
     });
     t(geo.z && geo.binnen, `de teller staat binnen ${geo.W}×${geo.H}: "${geo.tekst}" (${geo.z && Math.round(geo.z.w)}×${geo.z && Math.round(geo.z.h)} op ${geo.z && Math.round(geo.z.l)},${geo.z && Math.round(geo.z.t)})`);
     t(!geo.tekstZ && !geo.labelZ && !geo.strookZ, `geen overlap met het HP-getal (${geo.tekstZ}), #beurt-label (${geo.labelZ}) of de strook (${geo.strookZ})`);
+    t(!geo.beurtZ && !geo.pilZ && !geo.beurtStrook && !geo.pilStrook && !geo.pilBeurt, `B4b: 0 snijdende rechthoeken tussen de teller, 'Beurt N' (.bb-beurt), de strook en de baaspil (teller~beurt ${geo.beurtZ}, teller~pil ${geo.pilZ}, beurt~strook ${geo.beurtStrook}, pil~strook ${geo.pilStrook}, pil~beurt ${geo.pilBeurt})`);
     if (vp.mobiel) t(/^⚖\d+$/.test(geo.tekst) && geo.links && !geo.kerf, `mobiel: "${geo.tekst}" links van het HP-getal, geen inkeping (${!!geo.kerf})`);
     else t(geo.inBalk && !!geo.kerf, `laptop: de teller in de HP-balk (${geo.inBalk}) en de inkeping staat (${!!geo.kerf})`);
     await page.screenshot({ path: path.join(UIT, `zitting-${vp.w}x${vp.h}.png`) }).catch(() => {});
@@ -1167,10 +1176,13 @@ const sonde = page => page.evaluate(() => {
     const fx = [...document.querySelectorAll('.fx-nummer')].map(e => e.textContent);
     return { voor, na: g.aangezegd.size, fx };
   });
-  await slaap(2600);
+  /* 5 s: valt de ouverture-banner "I · DE AANKLACHT" (5,6 s na de intro) er net over, dan pauzeert
+     de regel achter de banner (de tekstsluis) en komt hij daarna - hij verdwijnt niet */
+  await slaap(5000);
   let rij20 = await stopOp(page);
   t(o20b.voor === 2 && o20b.na === 0 && o20b.fx.some(x => /📜 geen decreet/.test(x)), `het dossier (${o20b.voor} → ${o20b.na}) en een 📜-fx op de baas (${o20b.fx.join(', ')})`);
-  t(inBeeld(rij20, TX.griffier).length * 50 >= 1000, `de regel "${kern(TX.griffier)}…" staat ${inBeeld(rij20, TX.griffier).length * 50} ms in beeld (>= 1,0 s)`);
+  const gb = inBeeld(rij20, TX.griffier);
+  t(gb.length * 50 >= 1000 && gb.every(x => x.doek <= 0.1 && !x.titel), `de regel "${kern(TX.griffier)}…" staat ${gb.length * 50} ms in beeld (>= 1,0 s), nooit onder een titel, banner of het doek`);
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
 
   kop('20c · A6 · de griffier sterft IN DEZELFDE KLAP als de doorbraak: de regie veegt het bord, de regel blijft (één keer)');
