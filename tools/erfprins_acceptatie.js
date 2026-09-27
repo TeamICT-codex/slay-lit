@@ -1376,7 +1376,7 @@ async function catalogusInPagina(arg) {
       await speelKaart(slag, v); await wachtTot(() => g.beurt > beurt || g.voorbij, 8000); await vrij(g);
       const roof = banners.find(b => b[0] === 'DE ROOF');
       cat('banner DE ROOF (te mager)', roof ? roof[1] : '-');
-      t(/te mager om te plunderen/.test(tip) && /je beurt stopt meteen/.test(tip) && roof && roof[1] === '🎭 „Te mager om te plunderen… voor nu.” Je beurt is om.' && g.beurt === beurt + 1 && (v.gestolen || []).length === 0,
+      t(/te mager om te plunderen/.test(tip) && /stopt je beurt meteen/.test(tip) && roof && roof[1] === '🎭 „Te mager om te plunderen… voor nu.” Je beurt is om.' && g.beurt === beurt + 1 && (v.gestolen || []).length === 0,
         `te mager (F1): de tip zegt "je beurt stopt meteen", de banner "Je beurt is om." (${roof && roof[1]}), en je beurt stopte (${beurt} -> ${g.beurt}), niets geroofd`);
     }
     /* ---------- C · ELKE SOORT: pip, tip, stempel, ondertitel, uitvoering en retour ---------- */

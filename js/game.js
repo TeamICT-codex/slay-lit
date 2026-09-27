@@ -11762,7 +11762,7 @@ function devErfprins(sterkte, held) {
   const b = erfDevAankomst(h, st);
   if (!S || S.held !== h) nieuwSpel(h);
   S._devRun = true;   /* DEV-TAINT: een gesmede kaart uit deze sprong wordt nooit een erfstuk */
-  S.gevecht = null; S.act = 2; S.fakkel = fakkelMax(); S.pos = null; S.ascensie = 0; S.daily = false; S.dagwet = null;
+  S.gevecht = null; S.act = 2; S.fakkel = fakkelMax(); S.pos = null; S.ascensie = 0;   /* een daily en zijn dagwet blijven wat ze waren */
   delete S.beloning; delete S.winkel; delete S.huidigEvent;
   S.maxHp = b.hp; S.hp = Math.max(1, Math.round(b.hp * 0.85));
   S.relikwieen = b.relikwieen.slice();
