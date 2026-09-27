@@ -174,7 +174,9 @@ function analyseer(resultaten, variant) {
   return { tekst: regels.join('\n'), gehaald: alles, tekort, oordeel };
 }
 
-if (process.argv[2] === '--analyse') {
+/* als module (require) doet het harnas niets zelf: tools/erfprins_acceptatie.js hergebruikt de dekken,
+   de beleidsregels en één gevecht (module.exports onderaan) */
+if (require.main === module && process.argv[2] === '--analyse') {
   /* meerdere uitvoerbestanden = gepoold (bv. twee bevestigingsblokken met verse seeds) */
   const bestanden = process.argv.slice(3).filter(a => /\.json$/i.test(a));
   const variant = process.argv.slice(3).find(a => !/\.json$/i.test(a));
@@ -837,4 +839,5 @@ async function main() {
   if (fouten.length) console.log('PAGINAFOUTEN:', [...new Set(fouten)].slice(0, 8));
   for (const v of VARS) { console.log(`\n=== variant ${v} ===`); console.log(analyseer(resultaten, v).tekst); }
 }
-main().catch(e => { console.error(e); process.exit(1); });
+module.exports = { tafelBuild, installeer, eenGevecht, maakPagina, analyseer, DOEL, D_BUILDS, TAFEL };
+if (require.main === module) main().catch(e => { console.error(e); process.exit(1); });

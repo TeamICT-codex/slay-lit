@@ -65,6 +65,41 @@ function heldChipsWijken() {
   if (Math.abs(wijk - oud) >= 1) hs.style.setProperty('--wijk', Math.round(wijk) + 'px');
 }
 
+/* ---------- B3 × B0.8 × B0.9 — een brede baaspil opzij wordt compact en krijgt een tweede rij ----------
+   De Erfprins plant in fase 3 tot drie kaarten (ERF.plan), elk met een eigen pip ("🎭 12+19🩸":
+   het blokbare en het onblokbare deel), en zijn pil opzij werd zo 310-340 px breed. Links naast
+   zijn hoofd liep ze dan over de chips van de held, ook als die zo ver mogelijk weken (de klem
+   hierboven): 800x360, drie pips en drie tot zes statussen op de held, 612-2 903 px2 (B3,
+   integratie). Past de pil op haar natuurlijke breedte (één rij, gewone pips) niet naast de
+   chips op hun uiterste plek, dan krijgt de kolom .pil-krap: kleinere pips die rechts uitgelijnd
+   naar een tweede rij mogen breken, niet breder dan de ruimte tot die chips (--pil-max, css C2).
+   De tweede rij hangt dan in het gat tussen held en baas (B1.1), rechts van het hoofd van de
+   held. Alleen bij twee of meer pips: één pip wijkt al via heldChipsWijken(). De maat wordt
+   zonder .pil-krap gemeten (synchroon, dus zonder een verfbeurt ertussen), zodat de klasse
+   niet heen en weer springt. */
+function pilKrap() {
+  const hs = document.querySelector('#speler-zone .blok-status');
+  const chips = hs ? [...hs.children] : [];
+  let crMin = null, band = null;
+  if (chips.length) {
+    const c = hs.getBoundingClientRect(), oud = parseFloat(hs.style.getPropertyValue('--wijk')) || 0;
+    const cr0 = Math.max(...chips.map(e => e.getBoundingClientRect().right)) + oud;   /* de chips zonder wijk */
+    crMin = cr0 - Math.max(0, c.left + oud - 44);                                     /* ... en zo ver als ze kunnen wijken */
+    band = { t: c.top, b: c.bottom };
+  }
+  document.querySelectorAll('#vijanden-rij .vijand.is-baas').forEach(w => {
+    const rij = w.querySelector('.intent-rij'); if (!rij) return;
+    let krap = false, max = 0;
+    if (crMin != null && w.classList.contains('pil-zij') && rij.querySelectorAll('.intent').length >= 2) {
+      w.classList.remove('pil-krap');   /* de natuurlijke maat */
+      const r = rij.getBoundingClientRect();
+      if (band.t < r.bottom + 4 && band.b > r.top - 4 && r.left - 6 < crMin) { krap = true; max = Math.floor(r.right - crMin - 6); }
+    }
+    w.classList.toggle('pil-krap', krap);
+    if (krap) rij.style.setProperty('--pil-max', Math.max(96, max) + 'px'); else rij.style.removeProperty('--pil-max');
+  });
+}
+
 /* ---------- B0.5 — de spraakplaat nooit over de spreker: een berekende vrije zone ----------
    De plaat hangt in de bovenband (mobiel onder de topbalk, laptop onder de bazenbalk: css).
    Horizontaal kiest spraakZone() een VRIJE zone naast de spreker. De spreker is de baas
@@ -214,11 +249,22 @@ function spraakZone(el) {
    over het hoofd van de held (10,9% van zijn silhouet). Na het tonen meten we of titel of
    ondertitel de figuur van de held raakt (zijn art heeft bovenaan maar 1-2% lucht, dus de
    doos volstaat); zo ja, een maat kleiner (.bf-klein), en zo nodig nog een (.bf-kleinst).
-   Een korte banner links van de held blijft op volle maat. */
+   Een korte banner links van de held blijft op volle maat.
+   B3 (integratie): ook op laptop. De fase-3-banner van de Erfprins ("HET IS ALLEMAAL VAN MIJ",
+   met de ondertitel die zegt hoeveel kaarten hij vanaf dan speelt) brak op 1366x768 in 2D naar
+   vier regels en lag op 26 % van de held. In 3D is de held een sprite: zijn doos komt dan uit
+   Vista.schermPos (de breedte zoals erfPlaatsSpeelKaart ze neemt). */
 function bannerFit(el) {
-  if (!el || document.body.dataset.modus !== 'mobiel' || innerHeight > innerWidth) return;
-  const hf = document.getElementById('speler-figuur'); if (!hf) return;
-  const h = hf.getBoundingClientRect();
+  if (!el || innerHeight > innerWidth) return;
+  let h = null;
+  const sc = document.getElementById('scherm-gevecht');
+  if (sc && sc.classList.contains('d3-actief') && window.Vista && Vista.schermPos && typeof S !== 'undefined' && S && S.gevecht) {
+    const p = Vista.schermPos(S.gevecht.speler);
+    if (p) { const hh = p.voetY - p.topY; h = { left: p.x - hh * 0.3, right: p.x + hh * 0.3, top: p.topY, bottom: p.voetY }; }
+  } else {
+    const hf = document.getElementById('speler-figuur'); if (hf) h = hf.getBoundingClientRect();
+  }
+  if (!h) return;
   const raakt = () => [...el.children].some(c => {
     const q = c.getBoundingClientRect();
     return q.bottom > h.top - 2 && q.top < h.bottom && q.right > h.left && q.left < h.right;
@@ -350,7 +396,7 @@ function kaderNaOverloop() {
    dus wat aan hun positie hangt, volgt hier mee. Buiten het gevecht doet de lus niets. */
 function toneelWacht() {
   if (typeof S === 'undefined' || !S || !S.gevecht || document.body.dataset.scherm !== 'gevecht') return;
-  if (document.body.dataset.modus === 'mobiel') { zetPilZij(); heldChipsWijken(); }
+  if (document.body.dataset.modus === 'mobiel') { zetPilZij(); pilKrap(); heldChipsWijken(); }
   /* een staande spraakplaat volgt de zone mee (het hof komt op, de pil wisselt) */
   document.querySelectorAll('.baas-spraak').forEach(spraakZone);
 }

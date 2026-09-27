@@ -7441,7 +7441,7 @@ function copycatNoodrantsoenVuurt(doel) {
        anders blijft het lijk grijs-gezakt staan (review 27 aug) */
     if (elD && elD.isConnected) elD.classList.remove('plagiaat-zakt');
     if (S.gevecht !== g2 || g2.voorbij) return;
-    baasFaseMoment('HET NOODRANTSOEN', `🗞️ Hij verscheurt ${buit.length} van je kaarten en staat op met ${doel.hp} HP.`);
+    baasFaseMoment('HET NOODRANTSOEN', `🗞️ Hij verscheurt ${buit.length} van je kaarten en staat op met ${nr.hp} HP.`);   /* het getal van het opstaan zelf (♥+N), niet wat er 950 ms later nog over is */
     baasSpreekt(UITSPRAKEN._erfprins.plagiaat);
     if (window.Vista) Vista.pose(doel, 'cast', 2.2);
     pose2D(doel, 'cast', 2.2);
@@ -8087,14 +8087,20 @@ function copycatBalk(b) {
 function copycatRoofPil(v) {
   const g = S.gevecht;
   const n = g ? Math.max(0, Math.min((g.trek || []).length - ERF.roofRest, copycatRoofWil(g))) : 0;
+  /* B3 (integratie): is je trekstapel te dun voor de volle helft, dan zegt de tip dat ook */
+  const kaarten = `${n} kaart${n === 1 ? '' : 'en'}`;
+  const wat = (!g || n >= copycatRoofWil(g)) ? `de helft van je dek: ${kaarten}` : `${kaarten} (de helft van je dek, maar er blijven er altijd ${ERF.roofRest} in je trekstapel)`;
   const tip = n > 0
-    ? `DE ROOF: Junior wacht op je eerste klap. Raak je hem, dan wordt hij woedend en pakt hij de helft van je dek: ${n} kaart${n === 1 ? '' : 'en'}, ad random, allemaal uit je trekstapel. Je beurt stopt meteen: speel eerst wat je nog wilt spelen (je hand en wat je al speelde, steelt hij niet). Val je niet aan, dan rooft hij op het einde van je beurt. Daarna bekijkt hij eerst zijn buit: die beurt geen schade.`
+    ? `DE ROOF: Junior wacht op je eerste klap. Raak je hem, dan wordt hij woedend en pakt hij ${wat}, ad random, allemaal uit je trekstapel. Je beurt stopt meteen: speel eerst wat je nog wilt spelen (je hand en wat je al speelde, steelt hij niet). Val je niet aan, dan rooft hij op het einde van je beurt. Daarna bekijkt hij eerst zijn buit: die beurt geen schade.`
     : 'DE ROOF: Junior wacht op je eerste klap. Je trekstapel is te mager om te plunderen: raak je hem, dan wordt hij woedend, maar hij pakt (nog) niets.';
   return `<span class="intent intent-roof" data-tip="${tip}">🎭 ${window.mobiel ? 'ROOF' : 'ROOF bij je 1e klap'}</span>`;
 }
 function copycatNaroofPil(v) {
   const n = copycatNaroofAantal(S.gevecht);
-  return `<span class="intent intent-steel" data-tip="NAROOF: zijn buit is op. Hij grist ${n} kaart${n === 1 ? '' : 'en'} uit je trekstapel (de helft), ad random — geen schade deze beurt. Een vloek die hij meeneemt, bijt hem later.">👀 naroof</span>`;
+  /* B3 (integratie): "(de helft)" alleen als het de helft is — er blijven er altijd ERF.roofRest liggen */
+  const trekN = ((S.gevecht && S.gevecht.trek) || []).length;
+  const helft = n >= Math.ceil(trekN * ERF.naroofDeel) ? '(de helft)' : `(de helft, maar er blijven er altijd ${ERF.roofRest} liggen)`;
+  return `<span class="intent intent-steel" data-tip="NAROOF: zijn buit is op. Hij grist ${n} kaart${n === 1 ? '' : 'en'} uit je trekstapel ${helft}, ad random — geen schade deze beurt. Een vloek die hij meeneemt, bijt hem later.">👀 naroof</span>`;
 }
 function copycatPlanPillen(v, it) {
   const pillen = erfEffecten(v, it.plan).map(e => {

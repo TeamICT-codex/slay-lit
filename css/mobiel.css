@@ -1439,6 +1439,11 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      zijn hoofd, naar de held gekeerd. Geen klif meer op 400px hoogte en de baas hoeft niet
      te krimpen. Gemeten pil ~ topbalk: 800x360 2 993 px2 -> 0, 846x381 1 548 -> 0. */
   body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-baas.pil-zij .intent-rij { position: absolute; top: 6px; right: calc(100% - 8px); left: auto; z-index: 4; min-height: 0; flex-wrap: nowrap; justify-content: flex-end; width: max-content; }
+  /* B3 × B0.8 — een brede pil opzij (de Erfprins in fase 3: drie pips) die ook dan nog over de
+     chips van de held zou vallen: kleinere pips, rechts uitgelijnd, en een tweede rij in het gat
+     tussen held en baas; nooit breder dan de ruimte tot die chips (pilKrap() in js/bazentoneel.js). */
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-baas.pil-zij.pil-krap .intent-rij { flex-wrap: wrap; max-width: var(--pil-max, 200px); gap: 3px; font-size: .9rem; }
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-baas.pil-zij.pil-krap .intent { padding: 3px 7px; gap: 2px; }
 
   /* B0.13 — EEN FASEBANNER DEKT DE FIGUREN NIET. De banner staat LINKS in de bovenband,
      onder de topbalk, boven het hoofd van de held, maximaal 44vw breed (hij houdt op vóór
