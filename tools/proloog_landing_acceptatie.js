@@ -77,6 +77,7 @@ async function open(browser, vp, opties) {
   page.on('pageerror', e => page.__f.push(e.message));
   page.on('console', m => { if (m.type() === 'error' && !/rest\/v1|Failed to load resource|supabase/i.test(m.text())) page.__f.push('console: ' + m.text()); });
   page.on('framenavigated', f => { if (f === page.mainFrame()) page.__nav++; });
+  page.on('crash', () => { page.__f.push('de renderer crashte'); console.log('   (de renderer crashte — ' + vp.w + 'x' + vp.h + ')'); });   /* R5: een gesloten pagina moet een reden hebben */
   await ctx.route('**/*', route => {
     const u = new URL(route.request().url());
     if (u.host !== HOST) return route.abort();
