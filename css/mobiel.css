@@ -354,6 +354,9 @@ body[data-modus="mobiel"] .rs-stempel { font-size: .82rem; padding: 2px 9px 3px;
 body[data-modus="mobiel"] .roof-hint { bottom: max(6px, env(safe-area-inset-bottom)); }
 body[data-modus="mobiel"] .roof-kaart { width: clamp(64px, 12vw, 84px); padding: 5px 4px; }   /* v89: 62px-tegels kapten elke kaartnaam af */
 body[data-modus="mobiel"] .roof-waaier { gap: 6px; }
+/* B3 · B1.3: met de prins in beeld (de waaier naast hem, de tegelmaat uit de JS) een compactere kop */
+body[data-modus="mobiel"] .roof-overlay.met-prins { gap: 6px; }
+body[data-modus="mobiel"] .roof-overlay.met-prins .roof-kop { font-size: clamp(.95rem, 3vw, 1.3rem); }
 /* instellingen-paneel niet breder dan een smalle telefoon (min-width:340px lekte rechts eruit) */
 body[data-modus="mobiel"] .inst-paneel { min-width: 0; width: min(340px, 92vw); padding: 18px 16px; }
 /* v95: de raakzone-regels van het instellingenpaneel (v89) stonden in het gedeelde spoor en

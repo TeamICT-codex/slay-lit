@@ -1706,6 +1706,27 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
 .roof-kaart.buit-vuil .rk-naam { color: #ffb6c4; }
 /* B3: tik om over te slaan (vanaf de tweede ontmoeting), onderaan het doek */
 .roof-hint { position: absolute; left: 0; right: 0; bottom: max(10px, 2vh); text-align: center; pointer-events: none; }
+/* B3 · B1.3 — DE PRINS IN BEELD tijdens de Roof en de buit-beat (erfDoekRondPrins in js/game.js).
+   Het doek zit op een pseudo-laag met een GAT rond hem (--gat, uit zijn rect), zodat de vieze
+   vinger niet mee gemaskeerd wordt; kop en waaier staan in de vrije zone (padding uit de JS) en
+   de tegelmaat volgt uit het aantal kaarten (--rk-w, --rk-gap, --waaier-b). */
+.roof-overlay.met-prins { align-items: flex-start; justify-content: flex-start; background: none; overflow: visible; }
+.roof-overlay.met-prins::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(70, 24, 86, .5), transparent 62%), linear-gradient(rgba(8, 4, 12, .93), rgba(8, 4, 12, .96));
+  -webkit-mask-image: var(--gat); mask-image: var(--gat);
+}
+.roof-overlay.met-prins .roof-kop { align-self: flex-start; text-align: left; max-width: var(--vrij-b, 60vw); }
+.roof-overlay.met-prins .roof-waaier { width: var(--waaier-b); max-width: none; justify-content: flex-start; gap: var(--rk-gap, 8px); }
+.roof-overlay.met-prins .roof-kaart { width: var(--rk-w) !important; padding: 4px 4px 5px !important; gap: 2px; }
+.roof-overlay.met-prins .roof-kaart .rk-naam { font-size: clamp(.56rem, calc(var(--rk-w) * .13), .8rem); min-height: 2.2em; }
+.roof-overlay.met-prins .vieze-vinger { transform: translate(-50%, -50%) rotate(8deg); }
+.roof-overlay.met-prins .vieze-vinger.tik { transform: translate(-50%, -38%) rotate(8deg) scale(1.12); }
+/* een fasebanner (WOEDE vlak vóór de Roof, DE ROOF vlak vóór de buit-beat) die nog onder het open
+   doek staat, schemerde door het gat over zijn lijf (staand: midden op hem). Hij stond toen al
+   >= 1,25 s (WOEDE) / 1,5 s (DE ROOF) in beeld; onder het doek zwijgt hij. Bij het sluiten van het
+   doek (.sluit) mag de volgende banner (DE ROOF) meteen gezien worden. */
+body:has(.roof-overlay.met-prins.open:not(.sluit)) .baas-flits { visibility: hidden; }
 /* ---------- HET SLACHTBLOK: de smeedkamer (hergebruikt het roof-overlay-doek) ---------- */
 .slachtblok-overlay { background: radial-gradient(ellipse at center bottom, rgba(70, 18, 8, .94), rgba(8, 4, 4, .988)); }
 .slachtblok-overlay .roof-kop { color: #ffd7c2; text-shadow: 0 2px 14px rgba(226, 84, 44, .85); }

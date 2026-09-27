@@ -7468,6 +7468,104 @@ function erfOverslaan(ov) {
 }
 
 /* ============================================================================
+   DE REGIE — de prins staat erbij op zijn eigen momenten (B3 · P_plaatsing_regie_plan.md §4
+   B1.3 en B1.4). Vroeger lag het Roof-doek over het hele scherm en de waaier recht over hem
+   (800x360: 86 % van zijn silhouet onder de tegels, twee tegels buiten beeld), en landde de
+   grote teruggespeelde kaart midden op zijn lijf, met de kop boven het scherm. Nu:
+   - het doek krijgt een GAT rond hem (een masker op een pseudo-laag; de vinger valt erbuiten);
+   - kop en waaier vullen de VRIJE ZONE: liggend en op laptop links van hem, staand erboven;
+   - de tegelmaat volgt uit het aantal kaarten (de kolommen x rijen met de grootste tegel), zodat
+     ook 22 kaarten op 800x360 passen, zonder scroll en zonder hem te raken;
+   - de vieze vinger vertrekt bij zijn hand en landt ÓP de gekozen kaart (erboven viel hij over
+     de kop);
+   - de grote kaart vertrekt bij hem en landt naast hem (liggend in het gat tussen held en prins,
+     staand boven beiden), met de kop in beeld en nooit over de bazenbalk.
+   Alles hangt aan zijn rect (2D: de art-doos, 3D: Vista.schermPos), niet aan de mechaniek, en
+   zonder rect (scherm weg) blijft het oude volle doek staan: niets breekt.
+   ============================================================================ */
+function erfPrinsRect(v) {
+  if (!v || !S.gevecht) return null;
+  const sc = $('#scherm-gevecht');
+  if (sc && sc.classList.contains('d3-actief') && window.Vista && Vista.schermPos) {
+    const p = Vista.schermPos(v);
+    if (p) { const h = p.voetY - p.topY; return { l: p.x - h * 0.36, r: p.x + h * 0.36, t: p.topY, b: p.voetY }; }
+  }
+  const w = actorEl(v), a = w && w.querySelector('.vijand-art');
+  if (!a) return null;
+  const q = a.getBoundingClientRect();
+  return q.width > 0 ? { l: q.left, r: q.right, t: q.top, b: q.bottom } : null;
+}
+/* de tegelmaat voor N kaarten in een vak van Wf x Hf: de kolommen x rijen met de grootste tegel
+   (max 90 px op mobiel, 100 op laptop, min 38). extra = hoeveel een echte tegel hoger is dan de
+   schatting (naam over twee regels, het getal van de buit-beat). */
+function erfWaaierFit(N, Wf, Hf, mob, extra) {
+  const g = mob ? 6 : 10, naamH = mob ? 22 : 26, padV = 11 + (extra || 0), maxW = mob ? 90 : 100;
+  let best = null;
+  for (let c = 1; c <= N; c++) {
+    const rijen = Math.ceil(N / c);
+    const wW = (Wf - g * (c - 1)) / c;
+    const hRij = (Hf - g * (rijen - 1)) / rijen;
+    const wH = (hRij - naamH - padV) / 0.667 + 8;
+    const w = Math.min(wW, wH, maxW);
+    if (!best || w > best.w + 0.01) best = { c, rijen, w, g, naamH, padV };
+  }
+  best.w = Math.max(38, Math.floor(best.w));
+  best.tegelH = 0.667 * (best.w - 8) + best.naamH + best.padV;
+  return best;
+}
+/* het doek met een gat rond de prins: de Roof en de buit-beat (zelfde layout) */
+function erfDoekRondPrins(ov, v) {
+  const r = erfPrinsRect(v); if (!r) return;
+  const W = innerWidth, H = innerHeight, mob = document.body.dataset.modus === 'mobiel', staand = H > W;
+  const pad = mob ? 12 : Math.round(W * 0.03);
+  const hint = ov.querySelector('.roof-hint');
+  const hintH = (hint && !staand) ? hint.offsetHeight + 6 : 0;   /* liggend staat de tik-hint ÍN de vrije zone, onder de waaier */
+  const vz = !staand ? { l: pad, t: pad, r: Math.max(pad + 220, r.l - (r.r - r.l) * 0.08), b: H - pad - hintH }
+                     : { l: pad, t: pad, r: W - pad, b: Math.max(pad + 220, r.t - 6) };
+  ov.classList.add('met-prins');
+  ov.style.setProperty('--vrij-b', (vz.r - vz.l) + 'px');
+  const kop = ov.querySelector('.roof-kop');
+  const kopH = kop ? kop.getBoundingClientRect().height : 40;
+  const gapV = parseFloat(getComputedStyle(ov).rowGap) || 8;
+  const N = ov.querySelectorAll('.roof-kaart').length || 1;
+  const Wf = vz.r - vz.l, Hf = vz.b - vz.t - kopH - gapV;
+  const zet = f => {
+    ov.style.setProperty('--rk-w', f.w + 'px'); ov.style.setProperty('--rk-gap', f.g + 'px');
+    ov.style.setProperty('--waaier-b', (f.c * f.w + f.g * (f.c - 1)) + 'px');
+  };
+  let f = erfWaaierFit(N, Wf, Hf, mob); zet(f);
+  /* tweede pas: een echte tegel meten en opnieuw inpassen */
+  const t0 = ov.querySelector('.roof-kaart');
+  if (t0) { const extra = Math.max(0, t0.offsetHeight - f.tegelH); if (extra > 1) { f = erfWaaierFit(N, Wf, Hf, mob, extra); zet(f); } }
+  const waaierB = f.c * f.w + f.g * (f.c - 1);
+  const inhoudH = kopH + gapV + f.rijen * f.tegelH + (f.rijen - 1) * f.g;
+  const top = Math.max(vz.t, vz.t + (vz.b - vz.t - inhoudH) / 2);
+  const breed = Math.max(waaierB, kop ? Math.min(kop.scrollWidth, Wf) : 0);
+  const links = vz.l + Math.max(0, (Wf - breed) / 2);
+  ov.style.padding = Math.round(top) + 'px 0 0 ' + Math.round(links) + 'px';
+  const cx = (r.l + r.r) / 2, cy = (r.t + r.b) / 2, rx = (r.r - r.l) * 0.66, ry = (r.b - r.t) * 0.62;
+  ov.style.setProperty('--gat', `radial-gradient(ellipse ${rx}px ${ry}px at ${cx}px ${cy}px, transparent 70%, #000 100%)`);
+  if (hint && !staand) { hint.style.left = vz.l + 'px'; hint.style.right = 'auto'; hint.style.width = Wf + 'px'; }
+  /* de vinger vertrekt bij zíjn hand */
+  const vi = ov.querySelector('.vieze-vinger');
+  if (vi) {
+    vi.style.transition = 'none';
+    vi.style.left = (r.l + (r.r - r.l) * 0.22) + 'px'; vi.style.top = (r.t + (r.b - r.t) * 0.52) + 'px';
+    void vi.offsetWidth; vi.style.transition = '';
+    vi.classList.add('wijst');
+  }
+  ov.dataset.fit = `${f.c}x${f.rijen}@${f.w}`;
+}
+/* de vinger ÓP een kaart van de waaier (40 % van haar hoogte); zonder gat (geen rect) erboven */
+function erfVingerOp(ov, vinger, kEl) {
+  const kr = kEl.getBoundingClientRect();
+  vinger.style.left = (kr.left + kr.width / 2) + 'px';
+  /* bij kleine tegels (22 kaarten op 800x360) zakt hij zo ver dat hij (ook met de tik-schaal) niet
+     boven de tegel uitsteekt, want daar ligt de kop */
+  vinger.style.top = (ov.classList.contains('met-prins') ? kr.top + Math.max(kr.height * 0.40, vinger.offsetHeight * 0.5) : kr.top - 4) + 'px';
+  vinger.classList.add('wijst');
+}
+/* ============================================================================
    DE ROOF — je EERSTE klap die hem raakt: hij ontsteekt in woede (= fase 2), je dek OPENT
    zich en de vieze vinger plukt er ad random de helft uit, allemaal uit je TREKSTAPEL (je hand
    en wat je al speelde, blijven van jou). Daarna stopt je beurt (Thomas' keuze van 30 jun,
@@ -7533,6 +7631,7 @@ async function copycatRoofCutscene(g, v, wil, viaEindBeurt) {
     waaier.appendChild(k);
   });
   if (typeof verfraaiKaartIconen === 'function') verfraaiKaartIconen(waaier);   /* echte kaart-art laden i.p.v. de emoji-terugval */
+  erfDoekRondPrins(ov, v);   /* B1.3: hij blijft in beeld, de waaier ligt naast hem */
   await slaap(40);
   ov.classList.add('open');
   Klank.sfx('kaart');
@@ -7542,10 +7641,7 @@ async function copycatRoofCutscene(g, v, wil, viaEindBeurt) {
     const kEl = waaier.querySelector(`.roof-kaart[data-idx="${idx}"]`);
     if (!kEl) continue;
     if (sk.weg) { kEl.classList.add('weg'); continue; }   /* overgeslagen: de rest van de worp in één keer */
-    const kr = kEl.getBoundingClientRect();
-    vinger.style.left = (kr.left + kr.width / 2) + 'px';
-    vinger.style.top = (kr.top - 4) + 'px';
-    vinger.classList.add('wijst');
+    erfVingerOp(ov, vinger, kEl);
     kEl.classList.add('gekozen');
     /* Thomas' tegenzet, zichtbaar op het moment van de diefstal: deze gaat hem bijten */
     if (trek[idx] && kdef(trek[idx]).type === 'vloek') kEl.classList.add('buit-vuil');
@@ -7589,7 +7685,8 @@ async function copycatBekijktBuit(v, g) {
   const ov = document.createElement('div');
   ov.className = 'roof-overlay buit-overlay';
   ov.innerHTML = `<div class="roof-kop">🧐 ZIJN BUIT · ${buit.length} KAART${buit.length === 1 ? '' : 'EN'}<small>${regel}</small></div>
-    <div class="roof-waaier"></div>`;
+    <div class="roof-waaier"></div>
+    <div class="vieze-vinger">🫳</div>`;
   document.body.appendChild(ov);
   const sk = erfOverslaan(ov);
   const waaier = ov.querySelector('.roof-waaier');
@@ -7606,12 +7703,26 @@ async function copycatBekijktBuit(v, g) {
     waaier.appendChild(k);
   });
   if (typeof verfraaiKaartIconen === 'function') verfraaiKaartIconen(waaier);
+  erfDoekRondPrins(ov, v);   /* B1.3: dezelfde layout als de Roof — hij staat erbij met jouw kaarten als pokerhand */
   await slaap(40);
   ov.classList.add('open');
   if (window.Vista) Vista.pose(v, 'cast', 1.6);
   pose2D(v, 'cast', 1.6);
   Klank.sfx('kaart');
-  await sk.wacht(ERF.buitMs);
+  /* "Deze eerst.": de vieze vinger tikt de kaart aan die hij straks als eerste speelt (puur beeld) */
+  const vinger = ov.querySelector('.vieze-vinger'), eersteEl = waaier.querySelector('.roof-kaart.gekozen');
+  const vingerMs = (vinger && eersteEl) ? 900 : 0;
+  if (vingerMs) {
+    await sk.wacht(420);
+    if (eersteEl.isConnected) {
+      erfVingerOp(ov, vinger, eersteEl);
+      await sk.wacht(340);
+      vinger.classList.add('tik'); Klank.sfx('klik');
+      await sk.wacht(140);
+      vinger.classList.remove('tik');
+    }
+  }
+  await sk.wacht(Math.max(0, ERF.buitMs - vingerMs));
   ov.classList.add('sluit');
   await sk.wacht(520);
   ov.remove();
