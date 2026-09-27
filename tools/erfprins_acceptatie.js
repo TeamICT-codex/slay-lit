@@ -362,6 +362,22 @@ async function regie(browser, fk) {
   t(na.every(m => m.buitNamen.every(n => m.aegisTip.includes(n))), `B1.6 ${vp.naam}: de tip noemt elke geroofde kaart (${na.map(m => m.buitNamen.length).join('/')} namen)`);
   t(na.every(m => m.aegisChips === 0 && m.beurtBots === 0), `B1.6 ${vp.naam}: de Buit-pil niet over zijn chipkolom (${na.map(m => m.aegisChips).join('/')} px2, vijf statussen) en 'Beurt N' botst nergens (${na.map(m => m.beurtBots).join('/')})`);
   t(na.every(m => m.pilHeld === 0 && m.pilTop === 0 && m.pilHeldChips === 0), `W7 ${vp.naam}: zijn breedste pil ("${na[na.length - 1].pilTekst}") niet op de held (${na.map(m => m.pilHeld).join('/')} %), zijn chips of de topbalk`);
+  /* --- W12: een aangetaste kaart in je hand verliest niet méér van haar tekst dan dezelfde kaart gewoon --- */
+  const w12 = await page.evaluate(async () => {
+    const g = S.gevecht; const oud = g.hand;
+    const ids = ['schildmuur', 'in_drievoud', 'offervlam', 'zuivering', 'duisterklauw', 'metaalhuid', 'demonenvorm'].filter(id => KAARTEN[id]).slice(0, 5);
+    const meet = async aangetast => {
+      g.hand = ids.map(id => { const c = nieuweKaart(id); if (aangetast) { c.aangetast = true; c.uitputtend = true; } return c; });
+      renderGevecht(); await new Promise(r => setTimeout(r, 80));
+      return g.hand.map(c => { const el = document.querySelector(`#hand .kaart[data-uid="${c.uid}"] .kaart-tekst`); return el ? el.scrollHeight - el.clientHeight : null; });
+    };
+    const gewoon = await meet(false), aangetast = await meet(true);
+    g.hand = oud; renderGevecht();
+    return { ids, gewoon, aangetast };
+  });
+  const erger = w12.ids.filter((id, i) => w12.gewoon[i] != null && w12.aangetast[i] != null && w12.aangetast[i] > w12.gewoon[i] + 1);
+  if (vp.mobiel) t(w12.gewoon.every(x => x != null) && erger.length === 0, `W12 ${vp.naam}: een aangetaste handkaart verliest niet meer tekst dan de gewone (${w12.ids.map((id, i) => id + ' ' + w12.gewoon[i] + '->' + w12.aangetast[i]).join(', ')} px overloop)`);
+  else t(true, `W12 ${vp.naam} (ter info): overloop van de handtekst gewoon -> aangetast: ${w12.ids.map((id, i) => id + ' ' + w12.gewoon[i] + '->' + w12.aangetast[i]).join(', ')} px`);
   fouten(page, t, vp, 'rust en Buit-pil');
   /* --- de Roof (B1.3): echte trekstapel, 6 en 22 kaarten; op Thomas' toestel en 3D ook in het donker --- */
   const donker = ['M800', 'M846', 'L1440d3'].includes(fk);

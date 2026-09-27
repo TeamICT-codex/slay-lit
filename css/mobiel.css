@@ -1021,6 +1021,11 @@ body[data-modus="mobiel"] #hand .kaart .kaart-tekst {
   -webkit-mask-image: linear-gradient(to bottom, #000 74%, transparent);
   mask-image: linear-gradient(to bottom, #000 74%, transparent);
 }
+/* B3 (jury W12): op de kleine rustende kaart duwde "🩸 Eenmalig." het effect van een door de
+   Erfprins aangetaste kaart uit beeld (de tekst van ~80 % van de handkaarten past hier al niet
+   helemaal). Daar zeggen de 🩸-badge (met tip), de donkere plaat en de +1 op de kostbol het al;
+   de aangetikte kaart (.voorbeeld) toont de volle tekst, mét de regel. */
+body[data-modus="mobiel"] #hand .kaart:not(.voorbeeld) .kt-aangetast { display: none; }
 body[data-modus="mobiel"] #hand .kaart.voorbeeld {
   width: 172px; height: auto; min-height: 186px; z-index: 100;
   box-shadow: 0 18px 42px rgba(0, 0, 0, .88), 0 0 26px var(--kgloed, rgba(255, 156, 63, .34));
@@ -1253,12 +1258,14 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      terwijl de figuren samen ruim passen. Nu netjes gecentreerd, held links/vijand rechts. */
   body[data-modus="mobiel"] #strijdveld { padding: 4px 12px 4px max(22px, env(safe-area-inset-left)); align-items: flex-end; justify-content: center; gap: clamp(14px, 5vw, 48px); min-height: 0; }   /* links 22px: het blok-schild stak 3-10px buiten beeld (v95) */
   /* B3 · B1.1 — EEN EIGEN PODIUM voor een baas die ALLEEN staat (de Erfprins, de Slijmkoning
-     vóór hij splijt, de DICKtator vóór zijn hof): held en baas krijgen elk hun helft van het
-     toneel. Met de gewone gap stonden ze als een kluitje in het midden (800x360: 71 px tussen
-     held en prins, en 158 px leeg rechts van hem tot het hart); dat lege gat is nu de strook
-     voor zijn chipkolom (B0.8). Zodra er een tweede vijand naast hem staat, geldt de gewone gap
-     weer. Plan en meting: P_plaatsing_regie_plan.md §4 B1.1. */
-  body[data-modus="mobiel"] #scherm-gevecht.baas-actief #strijdveld:has(#vijanden-rij > .vijand.is-baas:only-child) { gap: clamp(40px, 15vw, 150px); }
+     vóór hij splijt): held en baas krijgen elk hun helft van het toneel. Met de gewone gap
+     stonden ze als een kluitje in het midden (800x360: 71 px tussen held en prins, en 158 px
+     leeg rechts van hem tot het hart); dat lege gat is nu de strook voor zijn chipkolom (B0.8).
+     Zodra er een tweede vijand naast hem staat, geldt de gewone gap weer. Plan en meting:
+     P_plaatsing_regie_plan.md §4 B1.1. NIET voor de DICKtator (vóór zijn hof): zijn introregel
+     vond dan nergens een schone plek meer en lag op 846x381 over de chips van de held (525 px2,
+     B0.5) - zijn toneel is van de finale (B4). */
+  body[data-modus="mobiel"] #scherm-gevecht.baas-actief #strijdveld:has(#vijanden-rij > .vijand.is-baas:only-child:not([data-vijand="de_dicktator"])) { gap: clamp(40px, 15vw, 150px); }
   /* de brede basis-min-widths resetten (anders vreet de spelerzone ~170px en
      worden 3 vijanden samen ~444px → de rechtse liep van het scherm) */
   body[data-modus="mobiel"] #speler-zone { min-width: 0; }

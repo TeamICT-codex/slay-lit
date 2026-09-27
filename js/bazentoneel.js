@@ -163,9 +163,16 @@ function spraakZone(el) {
     return spreker ? k : k + Math.max(0, regels() - 2) * 3000;
   };
   const zA2 = [L, art.l - 12];
+  /* B3 — de strook LINKS VAN DE CHIPS VAN DE HELD (zijn chipblok staat boven zijn hoofd, B0.8).
+     Een baas die alleen staat, krijgt liggend een eigen podium (B1.1): hij schuift naar rechts en
+     de strook tussen hem en het hart (zB) wordt te smal (846x381: 104 px), zodat de plaat links
+     over de bovenste chiprij van de held viel (514-526 px2). Deze kandidaat komt als laatste: hij
+     wint alleen als alle andere iets raken, en dan in twee smalle regels naast de chips. */
+  const heldChipsL = Math.min(...[...document.querySelectorAll('#speler-zone .blok-status > *')].map(c => c.getBoundingClientRect()).filter(q => q.width > 0).map(q => q.left));
+  const zH = isFinite(heldChipsL) ? [L, Math.min(links - 12, heldChipsL - 8)] : zA;
   const volg = [];
-  /* kant: L (links van de spreker, A en A2) of R (rechts, B) */
-  for (const [z, kant] of [bB >= 200 ? [zB, 'R'] : (bA >= bB ? [zA, 'L'] : [zB, 'R']), [zA2, 'L'], bA >= bB ? [zA, 'L'] : [zB, 'R'], [zB, 'R'], [zA, 'L']]) {
+  /* kant: L (links van de spreker, A, A2 en H) of R (rechts, B) */
+  for (const [z, kant] of [bB >= 200 ? [zB, 'R'] : (bA >= bB ? [zA, 'L'] : [zB, 'R']), [zA2, 'L'], bA >= bB ? [zA, 'L'] : [zB, 'R'], [zB, 'R'], [zA, 'L'], [zH, 'L']]) {
     if (z[1] - z[0] >= 110 && !volg.some(v => v.z[0] === z[0] && v.z[1] === z[1])) volg.push({ z, kant });
   }
   if (!volg.length) return;

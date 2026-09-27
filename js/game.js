@@ -5535,6 +5535,7 @@ function bouwGevechtDom(g) {
       + (VIJAND_ENTREE[v.id] ? ' entree-' + VIJAND_ENTREE[v.id] : '')   /* binnenkomst-variant (de .entree-trigger zet startGevecht/voegVijandToe erbij) */
       + (v.dood ? ' sterft lijk-weg' : '');   /* al gesneuvelde vijand blijft verborgen na een herbouw (voegVijandToe/reveal) — anders 'herrijst' hij zichtbaar; v114: en geeft meteen zijn kolom terug */
     wrap.dataset.i = i;
+    wrap.dataset.vijand = v.id;   /* B3: de css kan een baas herkennen (B1.1 geldt niet voor de DICKtator) */
     const art = (window.karakterSvg && karakterSvg(v.id))
       || `${v.art}${def.baas ? '<span class="kroon">👑</span>' : ''}`;
     wrap.innerHTML = `
@@ -10163,10 +10164,12 @@ function kaartHtml(c, klikbaar) {
   </div>`;
 }
 /* de regeltekst van een kaart; een door de Erfprins aangetaste kaart zegt het vóóraan (op een
-   kleine handkaart valt het einde van de tekst weg) — de +1 staat al op de kostbol */
+   kleine handkaart valt het einde van de tekst weg) — de +1 staat al op de kostbol, en 'aangetast'
+   zeggen de 🩸-badge (met tip), de donkere plaat en de melding bij de retour. B3 (jury W12): kort,
+   want op de telefoon duwde "Aangetast, eenmalig." het effect van 10 kaarten uit beeld. */
 function kaartTekstHtml(c) {
   const t = kdef(c).tekst(c);
-  return c.aangetast ? `<b class="kt-aangetast">🩸 Aangetast, eenmalig.</b> ${t}` : t;
+  return c.aangetast ? `<b class="kt-aangetast">🩸 Eenmalig.</b> ${t}` : t;
 }
 
 /* kaartkeuze met booster-onthulling en inspectie-zoom:
