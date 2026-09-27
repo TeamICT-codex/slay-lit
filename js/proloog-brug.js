@@ -9,7 +9,7 @@
 
    DE INTERFACE MET DE PROLOOG-KANT (proloog/proloog.js):
    - window.Proloog = { start(opts), stop(), slaOver(), get actief }.
-     opts = { host, herbeleef, hoofdstuk, klaar(uitkomst), over() }.
+     opts = { host, herbeleef, hoofdstuk, klaar(uitkomst), over(), css } (css: fixer R5 F1).
    - uitkomst = { held (game-id), masker, kooltje: { x, y } (viewport), contract }.
      klaar() komt op plan-T 1,5 s: het zwart met één ademend kooltje. Vanaf daar
      neemt deze brug het beeld over (de sluier gaat in hetzelfde frame dicht,
@@ -85,7 +85,7 @@
   function schermMuziek(naam) {
     return (typeof SCHERM_MUZIEK !== 'undefined' && SCHERM_MUZIEK[naam]) || null;
   }
-  function heldGeldig(id) { return typeof id === 'string' && typeof SPELERS !== 'undefined' && !!SPELERS[id]; }
+  function heldGeldig(id) { return typeof id === 'string' && typeof SPELERS !== 'undefined' && !!SPELERS && Object.prototype.hasOwnProperty.call(SPELERS, id) && !!SPELERS[id]; }   /* fixer R5 F1: eigen sleutels ('constructor' brak kiesHeldEcht) */
   /* een hoofdstuk: een scène-index (0, 1, …) of een fase-id van de proloog ('factuur', 'val', …) */
   function geldigHoofdstuk(h) {
     if (Number.isInteger(h) && h >= 0 && h < 40) return h;
@@ -126,14 +126,50 @@
   /* ============================================================
      LADEN (lui, gememoiseerd)
      ============================================================ */
-  let _laden = null;
+  let _laden = null, _data = null, _cssTekst = null;
+  /* één script (async=false: de volgorde van invoegen = de volgorde van uitvoeren) */
+  function laadScript(src) {
+    return new Promise((ok, nee) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.async = false;
+      s.dataset.proloog = '1';
+      s.onload = () => ok();
+      s.onerror = () => nee(new Error('laden mislukt: ' + src));
+      document.body.appendChild(s);
+    });
+  }
+  /* FIXER R5 F1: de Codex heeft alleen de zeven hoofdstuknamen nodig. Die staan in proloog/data.js (24 KB);
+     de hele proloog (proloog.js, de css, de klank, de val en twee fonts: ±574 KB) laadt pas bij de klik op
+     een hoofdstuk (herbeleefProloog → startProloog → laadProloog). */
+  function laadProloogData() {
+    if (window.SLAYLIT_PROLOOG) return Promise.resolve(window.SLAYLIT_PROLOOG);
+    if (_data) return _data;
+    _data = laadScript(BRONNEN[0]).then(() => {
+      if (!window.SLAYLIT_PROLOOG) throw new Error('SLAYLIT_PROLOOG ontbreekt na het laden');
+      return window.SLAYLIT_PROLOOG;
+    });
+    _data.catch(() => { _data = null; });
+    return _data;
+  }
   function laadProloog() {
     if (window.Proloog && typeof window.Proloog.start === 'function') return Promise.resolve(window.Proloog);
     if (_laden) return _laden;
-    /* de CSS laadt de proloog zelf in haar shadow root; hier alleen alvast de HTTP-cache
-       warm (geen <link rel=preload>: die klaagt in de console als de speler niet start),
-       zodat het eerste beeld na het zwarte doek meteen gestyled is (integratie R1) */
-    try { if (window.fetch) fetch('proloog/proloog.css', { credentials: 'same-origin' }).catch(() => { /* de proloog wacht zelf max 2,5 s */ }); } catch (e) { /* geen fetch */ }
+    /* De css: FIXER R5 F1 — één keer ophalen en als tekst aan de proloog geven (Proloog.start({ css }): een
+       <style> in de shadow root). Vroeger zette deze fetch alleen 'de HTTP-cache warm' en laadde de <link> in
+       de shadow root hem opnieuw; onder de service worker (code network-first, cache:'reload') kwam hij zo twee
+       keer over het net (149 KB). Mislukt of hangt de fetch (> 2,5 s), dan laadt de <link> hem zelf, zoals
+       vroeger. (Geen <link rel=preload>: die klaagt in de console als de speler niet start.) */
+    let css = Promise.resolve();
+    try {
+      if (window.fetch && !_cssTekst) {
+        css = fetch('proloog/proloog.css', { credentials: 'same-origin' })
+          .then(r => (r.ok ? r.text() : null))
+          .then(t => { if (typeof t === 'string' && t.length > 1000) _cssTekst = t; })
+          .catch(() => { /* de <link> als terugval */ });
+      }
+    } catch (e) { /* geen fetch */ }
+    const cssKlaar = Promise.race([css, new Promise(r => setTimeout(r, 2500))]);
     /* F1: ook de fonts van de proloog (assets/fonts/fonts.css). De browser haalt een font pas
        op als er tekst in staat; zonder dit flitst de CRT-letter op het eerste beeld nog even
        in Courier (de game zelf gebruikt VT323 en Special Elite nergens vóór de proloog) */
@@ -141,7 +177,7 @@
       if (document.fonts && document.fonts.load) ['16px "VT323"', '16px "Special Elite"'].forEach(f => { document.fonts.load(f).catch(() => { /* terugvalfont */ }); });
     } catch (e) { /* geen FontFace-API */ }
     _laden = new Promise((ok, nee) => {
-      let geladen = 0, af = false;
+      let af = false;
       const klaar = fout => {
         if (af) return;
         af = true; clearTimeout(wacht);
@@ -150,15 +186,13 @@
         else nee(new Error('window.Proloog ontbreekt na het laden'));
       };
       const wacht = setTimeout(() => klaar(new Error('de proloog laadt te traag')), LAAD_GEDULD);
-      BRONNEN.forEach(src => {
-        const s = document.createElement('script');
-        s.src = src;
-        s.async = false;   /* volgorde bewaren: data → audio → val → proloog */
-        s.dataset.proloog = '1';
-        s.onload = () => { if (++geladen === BRONNEN.length) klaar(null); };
-        s.onerror = () => klaar(new Error('laden mislukt: ' + src));
-        document.body.appendChild(s);
-      });
+      /* data.js kan er al zijn (of onderweg) via de Codex: dan niet opnieuw. Volgorde bewaren:
+         data → audio → val → proloog (async=false) */
+      const eerst = window.SLAYLIT_PROLOOG ? Promise.resolve() : (_data ? _data.catch(() => null) : Promise.resolve());
+      eerst
+        .then(() => Promise.all((window.SLAYLIT_PROLOOG ? BRONNEN.slice(1) : BRONNEN).map(laadScript)))
+        .then(() => cssKlaar)
+        .then(() => klaar(null), klaar);
     });
     /* mislukt? Dan mag een volgende poging het opnieuw proberen (bv. weer online) */
     _laden.catch(() => {
@@ -249,6 +283,7 @@
         host,
         herbeleef,
         hoofdstuk,
+        css: _cssTekst,   /* fixer R5 F1: de css als tekst (null → de proloog laadt hem zelf met een <link>) */
         klaar: uitkomst => {
           if (afgehandeld) return;
           afgehandeld = true;
@@ -428,7 +463,7 @@
   function landingNaProloog(uitkomst) {
     const u = (uitkomst && typeof uitkomst === 'object') ? uitkomst : {};
     let held = heldGeldig(u.held) ? u.held : null;
-    if (!held && typeof u.masker === 'string' && MASKER_HELD[u.masker]) held = MASKER_HELD[u.masker];
+    if (!held && typeof u.masker === 'string' && Object.prototype.hasOwnProperty.call(MASKER_HELD, u.masker)) held = MASKER_HELD[u.masker];
     if (!held) held = 'slachter';
     /* vangnet: de proloog schrijft het contract zelf, stapsgewijs. Ontbreekt het toch,
        dan bewaren we het meegegeven contract (anders valt de jeugddroom later stil weg). */
@@ -436,6 +471,7 @@
       try { schrijf(SLEUTEL.contract, JSON.stringify(u.contract)); } catch (e) { /* stil */ }
     }
     schrijf(SLEUTEL.klaar, '1');   /* vanaf nu: 'Nieuw avontuur' = de heldkeuze */
+    markeerEchoOpen();             /* fixer R5 F1: alleen wie de proloog NU uitspeelt, krijgt de echo */
     voorlaadKantoor();             /* R5: de kantoorkaarten voor de echo in de eerste kamer, al tijdens de landing */
     speelLanding(u.kooltje, held, {});
   }
@@ -748,6 +784,10 @@
     if (kR.bottom - boven <= sR.height - 16) delta = (boven + kR.bottom) / 2 - (sR.top + sR.height / 2);
     else delta = bR.bottom - (sR.bottom - Math.max(16, sR.height * 0.06));
     scroller.scrollTop = Math.max(0, scroller.scrollTop + delta);
+    /* fixer R5 F1 (toegankelijkheid): op laptop staat de focus op 'Speel als …' — de ene klik die nog rest
+       (Enter kiest). Niet op een telefoon: daar opent een focus soms het klavier of een focusring. Tijdens de
+       landing vangt de sluier Enter zelf op (skipHaken), dus die kiest nog niet. */
+    if (document.body.dataset.modus !== 'mobiel') { try { knop.focus({ preventScroll: true }); } catch (e) { /* geen focus */ } }
   }
 
   /* ============================================================
@@ -761,7 +801,7 @@
     /* R3: dezelfde namen als HOOFDSTUKKEN in proloog/data.js (0 inklokken, 1 de CRT, 2 het bureau);
        fixer R3 F1: 1 heet 'De CRT degausst' (niet de naam van het Codex-blok zelf) */
     overzicht: 'Maandag, 06:42', boot: 'De CRT degausst', kantoor: 'Het Glimlachquotum',
-    gesprek: 'Het Functioneringsgesprek', breekpunt: 'De Eindafrekening', afdaling: 'De Afgrond'
+    gesprek: 'Het Functioneringsgesprek', breekpunt: 'De Eindafrekening'   /* fixer R5 F1: 'afdaling' weg (die scene bestaat sinds R1 niet meer) */
   };
   function gezienHoofdstukken() {
     const d = leesJson(SLEUTEL.save);
@@ -817,7 +857,8 @@
     setTimeout(() => {
       const houder = $id('codex-pl-hfst');
       vulHoofdstukken(houder);
-      laadProloog().then(() => vulHoofdstukken(houder)).catch(() => { /* de terugvallijst blijft staan */ });
+      /* fixer R5 F1: alleen data.js (de namen), niet de hele proloog; die laadt pas bij de klik */
+      laadProloogData().then(() => vulHoofdstukken(houder)).catch(() => { /* de terugvallijst blijft staan */ });
     }, 0);
     return `
     <h3 class="codex-kop">📼 Een Productief Leven™</h3>
@@ -881,8 +922,10 @@
        S.echoKamer in de save van die run onthouden haar, zodat een herlaad midden in dat eerste
        gevecht wéér de Groene Slijm geeft (dezelfde kamer), maar zonder vellen en zonder zin. Een
        nieuwe run met dezelfde (getypte) seed krijgt gewoon de kamer van haar seed.
-     - Alleen na een landing ('slayit_proloog_klaar', een contract v:2), in Act 1, rij 0, het
-       eerste gevecht van de run; nooit in de daily. Herbeleven start geen run en raakt dus niets.
+     - Alleen na een landing ('slayit_proloog_klaar', een contract v:2 met echoOpen:1 — fixer R5 F1: die
+       markering zet de landing zelf, zodat wie de proloog in v130-v135 uitspeelde de echo niet alsnog
+       krijgt), in Act 1, rij 0, het eerste gevecht van de run; nooit in de daily. Herbeleven start geen
+       run en raakt dus niets.
      - Geen gedwongen wacht: een tik laat de vellen meteen opbranden (en speelt gewoon door), een
        toets haalt ze weg. Reduced motion en lite: een stil vel dat in 600 ms wegvloeit (geen
        animatie langer dan 800 ms), ook de spraakplaat.
@@ -892,7 +935,10 @@
   const ECHO = {
     vijanden: ['groene_slijm'],
     zin: 'Fijn dat je er bent. Ik hou je een plekje warm.',
-    zinNa: 1000, zinDuur: 3600,                  /* ms na het begin in beeld: de spraakplaat (baasSpreekt) */
+    zinNa: 1450, zinDuur: 3600,                  /* ms na het begin in beeld: de spraakplaat (baasSpreekt). Fixer R5 F1: 1450
+                                                    (was 1000) — ná het branden, zodat de blik van de kaarten naar de
+                                                    slijm gaat in plaats van drie dingen tegelijk */
+    fakkel: 5,                                   /* fixer R5 F1: het opgebrande papier geeft de 5 🔥 van de eerste knoop terug */
     brand: 450, brandNaBlok: 250,                /* de kaartflip (.45 s) landt eerst; na het draai-blok liggen ze er al */
     brandStap: 40, brandDuur: 760,               /* van links naar rechts, elk vel 0,76 s */
     rustVast: 500, rustVloei: 600,               /* reduced motion / lite: een stil vel, dan een overvloeier */
@@ -968,6 +1014,19 @@
     c.echo = n;
     schrijf(SLEUTEL.contract, JSON.stringify(c));
   }
+  /* FIXER R5 F1 — de echo is voor 'de eerste run na een uitgespeelde proloog'. Sinds R1 schrijft de proloog
+     echo:0 in elk contract (contractBasis), dus ook wie hem in v130-v135 uitspeelde en sindsdien twaalf runs
+     speelde, had echo:0 — en kreeg de echo in zijn eerstvolgende run na de update. De landing (landingNaProloog,
+     nooit bij herbeleven of de DEV-landing) zet daarom echoOpen:1; proloogEcho speelt alleen met die markering.
+     Een contract zonder markering telt als gezien, zonder dat we het aanraken. echoOpen blijft staan nadat de
+     echo speelde (echo 1 beslist dan). Wie de verrassing toch voor bestaande spelers wil (optie A van de
+     review): laat in proloogEcho de eis c.echoOpen === 1 vallen. */
+  function markeerEchoOpen() {
+    const c = leesJson(SLEUTEL.contract);
+    if (!c || typeof c !== 'object' || c.v !== 2 || c.echo !== 0 || c.echoOpen === 1) return;
+    c.echoOpen = 1;
+    schrijf(SLEUTEL.contract, JSON.stringify(c));
+  }
 
   /* DE HAAK (bovenaan startGevecht in game.js) */
   function proloogEcho(samenstelling, soort, rij) {
@@ -981,7 +1040,7 @@
       const c = leesJson(SLEUTEL.contract);
       if (!c || typeof c !== 'object' || c.v !== 2) return null;
       const seed = typeof S.seed === 'string' ? S.seed : '';
-      if (c.echo === 0) {
+      if (c.echo === 0 && c.echoOpen === 1) {   /* fixer R5 F1: alleen na een landing van deze versie (markeerEchoOpen) */
         if (c.echoSeed !== seed) { c.echoSeed = seed; schrijf(SLEUTEL.contract, JSON.stringify(c)); }
         markeerEchoRun();
         echoKlaarzetten(false);
@@ -1093,13 +1152,18 @@
       vel.classList.add('brandt');
       if (!zacht || i === 0) E.klanken.push(setTimeout(() => sfx('knisper'), wacht));
     });
-    /* het opgebrande papier voedt je fakkel: één warme puls op de fakkelchip (zoals na de landing) */
-    if (!zacht) eT(() => {
+    /* het opgebrande papier voedt je fakkel: +5 🔥 en (niet op het rustige pad) één warme puls op de fakkelchip,
+       zoals na de landing. Fixer R5 F1: de puls beloofde warmte, maar de chip bleef op 75 staan (80 min de 5 van
+       de eerste knoop); nu komen die 5 terug. Een herlaad midden in het gevecht laadt de save van vóór de kamer
+       (75) en speelt geen echo meer: dan ook geen +5. */
+    eT(() => {
+      if (!echoGeldig()) return;
+      try { if (typeof zetFakkel === 'function') zetFakkel(ECHO.fakkel); } catch (e) { /* dan alleen de puls */ }
       const chip = $id('tb-fakkel');
-      if (!chip || !echoGeldig()) return;
+      if (zacht || !chip) return;
       chip.classList.remove('pl-fakkel-vol'); void chip.offsetWidth; chip.classList.add('pl-fakkel-vol');
       setTimeout(() => chip.classList.remove('pl-fakkel-vol'), 900);
-    }, start + (E.vellen.length - 1) * ECHO.brandStap + ECHO.brandDuur - 120);
+    }, zacht ? ECHO.rustVast + ECHO.rustVloei : start + (E.vellen.length - 1) * ECHO.brandStap + ECHO.brandDuur - 120);
     eT(echoOpruim, ECHO.weg);
     /* doortikken: een tik laat opbranden (en valt gewoon door naar het spel), een toets ruimt op.
        Een klik op een kaart haalt haar vel meteen weg: de wegvliegende kopie (vliegKaart) mag er

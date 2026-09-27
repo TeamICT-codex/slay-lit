@@ -7766,7 +7766,7 @@ function dicktatorRegieProces(b, g, op, U, D) {
 
   /* t=4000 - NAKLANK, bewust BUITEN de ceremonie: je speelt al terwijl hij nog napraat */
   const droom = jeugddroomTekst();
-  if (droom) op(4000, () => baasSpreekt(`„Uw jeugddroom — ‚${droom}'. Voorziening getroffen. AFGESCHREVEN."`, 3200));
+  if (droom) op(4000, () => baasSpreekt(`„Uw jeugddroom — ‚${escSyn(droom)}'. Voorziening getroffen. AFGESCHREVEN."`, 3200));   /* proloog R5 F1: vrije spelersinvoer, en de spraakplaat zet innerHTML ('<3 dieren' brak de regel) */
 
   op(4200, () => _regieOpruim(b));
 }

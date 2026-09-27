@@ -1681,6 +1681,10 @@ body[data-modus="mobiel"] .pl-kooltje::after { inset: -6px; }
 body[data-modus="mobiel"] .drank-leeg { min-height: 38px; padding: 0 5px; gap: 6px; }
 /* de fakkelvonk van de landing: op de telefoon 8 px (laptop 11 px, style.css) */
 body[data-modus="mobiel"] .pl-fakkelvonk { width: 8px; height: 8px; margin: -4px 0 0 -4px; }
+/* R5 F1: de zin van de echo ('Fijn dat je er bent. …') hangt vlak onder de topbalk en iets kleiner: op 800x360 lag
+   'een' 3,6 s over de intentie van de Groene Slijm ('⚔ 3'), net in het gevecht waar je die leert lezen */
+body[data-modus="mobiel"] .baas-spraak.pl-echo-zin { top: calc(var(--tbh, 40px) + 2px + var(--sat, 0px)); }
+body[data-modus="mobiel"] .baas-spraak.pl-echo-zin span { font-size: clamp(.95rem, 2.5vw, 1.4rem); padding: 4px 14px; letter-spacing: 2px; }
 
 /* ============================================================
    G. DE DREMPELTAFEL (v128) — het gokritueel aan de Drempel (Act 1 → 2)

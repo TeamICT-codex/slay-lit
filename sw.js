@@ -68,7 +68,6 @@ const ZWAAR = [
   'assets/proloog/foto-kind.webp',
   'assets/proloog/bart_blinker2.webp',
   'assets/proloog/junior.webp',
-  'assets/proloog/baas-terminal.webp',
   'assets/proloog/kaart-glimlach.webp',
   'assets/proloog/kaart-mailtje.webp',
   'assets/proloog/kaart-koffie.webp',
@@ -77,8 +76,8 @@ const ZWAAR = [
   'assets/proloog/de-afgrond.webp',
   'assets/proloog/masker-woede.webp',
   'assets/proloog/masker-gif.webp',
-  'assets/proloog/masker-vlucht.webp',
-  'assets/proloog/slijmklerk.webp'
+  'assets/proloog/masker-vlucht.webp'
+  /* proloog R5 F1: baas-terminal.webp en slijmklerk.webp eruit - nergens gebruikt (214 KB per install) */
 ];
 /* NB: een versiebump laat 'activate' de oude cache wissen (één keer art-her-download).
    Bewust hier: de gsm bleef op een oude build hangen omdat de oude shell in de cache
