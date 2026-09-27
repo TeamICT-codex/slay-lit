@@ -1691,7 +1691,7 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
 .roof-overlay.open .roof-kaart { transform: translateY(0) scale(1); opacity: 1; }
 .roof-kaart .rk-art { width: 100%; aspect-ratio: 3 / 2; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: clamp(1.3rem, 3.3vw, 1.9rem); line-height: 1; background: #0d0a14; }
 .roof-kaart .rk-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.roof-kaart .rk-naam { font-size: clamp(.7rem, 1.6vw, .8rem); color: var(--perkament); text-align: center; line-height: 1.12; max-width: 100%; overflow-wrap: anywhere; word-break: normal; min-height: 2.3em; }   /* v95: twee regels gereserveerd → rustige rij */
+.roof-kaart .rk-naam { font-size: clamp(.7rem, 1.6vw, .8rem); color: var(--perkament); text-align: center; line-height: 1.12; max-width: 100%; overflow-wrap: normal; word-break: normal; hyphens: auto; min-height: 2.3em; }   /* v95: twee regels gereserveerd → rustige rij. B3 F1: nooit midden in een woord ("Verdedigi-ng"); een te lang woord krimpt (erfNaamFit) */
 .roof-kaart.gekozen { border-color: rgba(255, 90, 70, .95); box-shadow: 0 0 22px rgba(255, 80, 40, .9); transform: translateY(-10px) scale(1.12); z-index: 2; }
 .roof-kaart.verbrandt { animation: roofVerbrand .58s ease forwards; }
 @keyframes roofVerbrand {
@@ -1727,6 +1727,10 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
    >= 1,25 s (WOEDE) / 1,5 s (DE ROOF) in beeld; onder het doek zwijgt hij. Bij het sluiten van het
    doek (.sluit) mag de volgende banner (DE ROOF) meteen gezien worden. */
 body:has(.roof-overlay.met-prins.open:not(.sluit)) .baas-flits { visibility: hidden; }
+/* B3 F1: de HUD van de held (zijn levensbalk en zijn chips) scheen in de buit-beat door de tegels en
+   over de ondertitel (846x381: "60/70" en een Kracht-chip); zolang het doek open is, zwijgt ze */
+body:has(.roof-overlay.met-prins.open:not(.sluit)) #speler-zone .speler-hp,
+body:has(.roof-overlay.met-prins.open:not(.sluit)) #speler-zone .blok-status { opacity: 0 !important; transition: opacity .2s; }
 /* ---------- HET SLACHTBLOK: de smeedkamer (hergebruikt het roof-overlay-doek) ---------- */
 .slachtblok-overlay { background: radial-gradient(ellipse at center bottom, rgba(70, 18, 8, .94), rgba(8, 4, 4, .988)); }
 .slachtblok-overlay .roof-kop { color: #ffd7c2; text-shadow: 0 2px 14px rgba(226, 84, 44, .85); }

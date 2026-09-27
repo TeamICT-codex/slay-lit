@@ -7578,10 +7578,15 @@ function erfPrinsRect(v) {
   return q.width > 0 ? { l: q.left, r: q.right, t: q.top, b: q.bottom } : null;
 }
 /* de tegelmaat voor N kaarten in een vak van Wf x Hf: de kolommen x rijen met de grootste tegel
-   (max 90 px op mobiel, 100 op laptop, min 38). extra = hoeveel een echte tegel hoger is dan de
-   schatting (naam over twee regels, het getal van de buit-beat). */
+   (max 90 px op mobiel, 140 op laptop). extra = hoeveel een echte tegel hoger is dan de schatting
+   (naam over twee regels, het getal van de buit-beat).
+   B3 F1: (1) bij een gelijke tegelmaat wint de opstelling met de minste rijen: op laptop haalden
+   3 kolommen al het plafond, en stond je geopende dek (14 kaarten, 1440x900) als een smal strookje
+   links, met ±340 px leegte tot de prins; nu een brede waaier van grotere tegels. (2) De tegel mag
+   onder 38 px (tot 30) als het vak anders overloopt: een dek van 40 (35 tegels op 800x360) lag met
+   twee tegels op zijn silhouet. */
 function erfWaaierFit(N, Wf, Hf, mob, extra) {
-  const g = mob ? 6 : 10, naamH = mob ? 22 : 26, padV = 11 + (extra || 0), maxW = mob ? 90 : 100;
+  const g = mob ? 6 : 10, naamH = mob ? 22 : 26, padV = 11 + (extra || 0), maxW = mob ? 90 : 140;
   let best = null;
   for (let c = 1; c <= N; c++) {
     const rijen = Math.ceil(N / c);
@@ -7589,11 +7594,23 @@ function erfWaaierFit(N, Wf, Hf, mob, extra) {
     const hRij = (Hf - g * (rijen - 1)) / rijen;
     const wH = (hRij - naamH - padV) / 0.667 + 8;
     const w = Math.min(wW, wH, maxW);
-    if (!best || w > best.w + 0.01) best = { c, rijen, w, g, naamH, padV };
+    if (!best || w > best.w + 0.01 || (Math.abs(w - best.w) <= 0.01 && rijen < best.rijen)) best = { c, rijen, w, g, naamH, padV };
   }
-  best.w = Math.max(38, Math.floor(best.w));
+  /* nooit breder dan het vak: onder 38 px krimpt ook de naam (css, calc op --rk-w) */
+  const pastW = Math.floor((Wf - best.g * (best.c - 1)) / best.c);
+  best.w = Math.max(30, Math.min(Math.max(38, Math.floor(best.w)), pastW));
   best.tegelH = 0.667 * (best.w - 8) + best.naamH + best.padV;
   return best;
+}
+/* B3 F1: een kaartnaam breekt nooit midden in een woord ("Verdedigi-ng"): de css breekt alleen
+   tussen woorden (of met een echt afbreekstreepje, hyphens: auto), en een woord dat dan nog
+   uitsteekt, krijgt een kleinere letter tot het past */
+function erfNaamFit(ov) {
+  for (const el of ov.querySelectorAll('.rk-naam')) {
+    el.style.fontSize = '';
+    let fs = parseFloat(getComputedStyle(el).fontSize) || 10, i = 0;
+    while (el.scrollWidth > el.clientWidth + 1 && fs > 6.5 && i++ < 12) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
+  }
 }
 /* het doek met een gat rond de prins: de Roof en de buit-beat (zelfde layout) */
 function erfDoekRondPrins(ov, v) {
@@ -7602,7 +7619,9 @@ function erfDoekRondPrins(ov, v) {
   const pad = mob ? 12 : Math.round(W * 0.03);
   const hint = ov.querySelector('.roof-hint');
   const hintH = (hint && !staand) ? hint.offsetHeight + 6 : 0;   /* liggend staat de tik-hint ÍN de vrije zone, onder de waaier */
-  const vz = !staand ? { l: pad, t: pad, r: Math.max(pad + 220, r.l - (r.r - r.l) * 0.08), b: H - pad - hintH }
+  /* B3 F1: 14 % van zijn breedte lucht (was 8 %): de grotere laptop-tegels raakten in 3D zijn mantel,
+     die buiten de geschatte doos uit Vista.schermPos valt */
+  const vz = !staand ? { l: pad, t: pad, r: Math.max(pad + 220, r.l - (r.r - r.l) * 0.14), b: H - pad - hintH }
                      : { l: pad, t: pad, r: W - pad, b: Math.max(pad + 220, r.t - 6) };
   ov.classList.add('met-prins');
   ov.style.setProperty('--vrij-b', (vz.r - vz.l) + 'px');
@@ -7616,9 +7635,17 @@ function erfDoekRondPrins(ov, v) {
     ov.style.setProperty('--waaier-b', (f.c * f.w + f.g * (f.c - 1)) + 'px');
   };
   let f = erfWaaierFit(N, Wf, Hf, mob); zet(f);
-  /* tweede pas: een echte tegel meten en opnieuw inpassen */
-  const t0 = ov.querySelector('.roof-kaart');
-  if (t0) { const extra = Math.max(0, t0.offsetHeight - f.tegelH); if (extra > 1) { f = erfWaaierFit(N, Wf, Hf, mob, extra); zet(f); } }
+  /* volgende passen: de HOOGSTE echte tegel meten en opnieuw inpassen, tot het stilvalt. B3 F1: de
+     eerste tegel alleen was te kort gemeten ("Vlammende Hartstocht 💪+1" naast "Zware Klap ⚔️ 20
+     (12 door)" op twee regels): in de buit-beat met 16-20 kaarten viel op 800x360 de derde rij
+     onder de rand */
+  for (let pas = 0; pas < 3; pas++) {
+    erfNaamFit(ov);
+    const hMax = Math.max(0, ...[...ov.querySelectorAll('.roof-kaart')].map(t => t.offsetHeight));
+    const extra = Math.max(0, hMax - (f.tegelH - (f.padV - 11)));
+    if (Math.abs(extra - (f.padV - 11)) <= 1) break;
+    f = erfWaaierFit(N, Wf, Hf, mob, extra); zet(f);
+  }
   const waaierB = f.c * f.w + f.g * (f.c - 1);
   const inhoudH = kopH + gapV + f.rijen * f.tegelH + (f.rijen - 1) * f.g;
   const top = Math.max(vz.t, vz.t + (vz.b - vz.t - inhoudH) / 2);
