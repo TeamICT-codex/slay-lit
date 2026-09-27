@@ -5130,31 +5130,9 @@ body[data-modus="laptop"] .baas-flits > * { max-width: 40vw; }
   opacity: 0;
 }
 #licht-vignet.flikker::after { animation: vignetFlikker 3.2s ease-in-out infinite; }
-/* B5 (Finale B4 stap 3) - HET PROCES IS OPENBAAR: in de finale krijgt het vignet een zacht
-   rechthoekig GAT waar de bazenbalk staat (JS meet de balk en zet --gat-x/-y/-w/-h, zie
-   _procesVignetGat), zodat de teller van DE ZITTING LOOPT nooit onder de duisternis valt - ook
-   niet in DE TIRADE (.82) of bij een gedoofde fakkel. De zaal zelf blijft donker. Drie lagen:
-   de gewone verticale uitmaskering MIN (de horizontale band ∩ de verticale band van het gat).
-   De -webkit-variant eerst; de standaard (subtract/intersect/add) wint waar hij bestaat. */
-body[data-scherm="gevecht"] #licht-vignet.proces-open {
-  --gat-rand: 18px;
-  -webkit-mask-image:
-    linear-gradient(to bottom, #000 0, #000 60%, rgba(0, 0, 0, .35) 80%, transparent 94%),
-    linear-gradient(to right, transparent 0, #000 var(--gat-rand), #000 calc(100% - var(--gat-rand)), transparent 100%),
-    linear-gradient(to bottom, transparent 0, #000 var(--gat-rand), #000 calc(100% - var(--gat-rand)), transparent 100%);
-  mask-image:
-    linear-gradient(to bottom, #000 0, #000 60%, rgba(0, 0, 0, .35) 80%, transparent 94%),
-    linear-gradient(to right, transparent 0, #000 var(--gat-rand), #000 calc(100% - var(--gat-rand)), transparent 100%),
-    linear-gradient(to bottom, transparent 0, #000 var(--gat-rand), #000 calc(100% - var(--gat-rand)), transparent 100%);
-  -webkit-mask-size: 100% 100%, var(--gat-w, 0px) var(--gat-h, 0px), var(--gat-w, 0px) var(--gat-h, 0px);
-  mask-size: 100% 100%, var(--gat-w, 0px) var(--gat-h, 0px), var(--gat-w, 0px) var(--gat-h, 0px);
-  -webkit-mask-position: 0 0, var(--gat-x, 0px) var(--gat-y, 0px), var(--gat-x, 0px) var(--gat-y, 0px);
-  mask-position: 0 0, var(--gat-x, 0px) var(--gat-y, 0px), var(--gat-x, 0px) var(--gat-y, 0px);
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-composite: source-out, source-in, source-over;
-  mask-composite: subtract, intersect, add;
-}
+/* B5 (Finale B4 stap 3) had hier een GAT in het fakkelvignet waar de bazenbalk stond, zodat de
+   teller van DE ZITTING LOOPT niet onder de duisternis viel. Sinds de merge met main (Finale B4b)
+   is #baas-balk HUD (B2 · B0.10: body-kind op z44, boven het vignet op z40) - het gat is weg. */
 @keyframes vignetFlikker {
   0%, 100% { opacity: 0; }
   16% { opacity: .34; }

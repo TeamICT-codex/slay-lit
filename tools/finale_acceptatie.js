@@ -816,19 +816,19 @@ const sonde = page => page.evaluate(() => {
   t(gifIII.h && naGif.hp === 1 && !naGif.herrezen && gifIII.hVoor - naGif.hHp === gifIII.tik - 4, `gif ${gifIII.tik} in de vijandbeurt vanaf 5 HP: de baas op ${naGif.hp} (geen herverkiezing), ${gifIII.h} vangt ${gifIII.hVoor - naGif.hHp} (= ${gifIII.tik} − 4)`);
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
 
-  /* B5: HET PROCES IS OPENBAAR - de teller valt niet onder de duisternis (het gat in het vignet),
-     ook niet in DE TIRADE bij een gedoofde fakkel. Gemeten op de schermafdruk (pngjs, optioneel). */
-  kop('15c · B5: de teller bij fakkel 0 in DE TIRADE (het gat in het fakkelvignet)');
+  /* B5: HET PROCES IS OPENBAAR - de teller valt niet onder de duisternis (de bazenbalk boven het
+     vignet), ook niet in DE TIRADE bij een gedoofde fakkel. Gemeten op de schermafdruk (pngjs, optioneel). */
+  kop('15c · B5: de teller bij fakkel 0 in DE TIRADE (de bazenbalk boven het fakkelvignet)');
+  /* Finale B4b: sinds de merge staat de bazenbalk als HUD BOVEN het vignet (main B2 · B0.10:
+     body-kind, z44 boven z40) en is het gat in het vignet weg - één regel. Deze controle toetst
+     die stapeling en (hieronder) dezelfde helderheid als vroeger. */
   const gat = await page.evaluate(() => {
     S.fakkel = 0; zetLichtVisueel(); renderGevecht();
     const vig = document.getElementById('licht-vignet'), bb = document.getElementById('baas-balk');
-    const cs = getComputedStyle(vig), r = bb.getBoundingClientRect();
-    const px = k => parseFloat(vig.style.getPropertyValue(k));
-    const g = { x: px('--gat-x'), y: px('--gat-y'), w: px('--gat-w'), h: px('--gat-h') };
-    return { klasse: vig.classList.contains('proces-open'), tirade: document.body.classList.contains('tirade'), licht: lichtNiveau(), lagen: (cs.maskImage || cs.webkitMaskImage || '').split('linear-gradient').length - 1,
-      dekt: g.x <= r.left && g.y <= r.top && g.x + g.w >= r.right && g.y + g.h >= r.bottom, opac: parseFloat(cs.opacity) };
+    const z = e => parseInt(getComputedStyle(e).zIndex, 10) || 0;
+    return { ouder: bb.parentElement === document.body && vig.parentElement === document.body, zBB: z(bb), zVig: z(vig), tirade: document.body.classList.contains('tirade'), licht: lichtNiveau(), opac: parseFloat(getComputedStyle(vig).opacity), oudGat: vig.classList.contains('proces-open') };
   });
-  t(gat.klasse && gat.lagen === 3 && gat.dekt && gat.licht === 'gedoofd', `het vignet draagt het gat (klasse ${gat.klasse}, ${gat.lagen} maskerlagen, dekt de bazenbalk ${gat.dekt}); fakkel gedoofd, tirade ${gat.tirade}, vignet ${gat.opac}`);
+  t(gat.ouder && gat.zBB > gat.zVig && !gat.oudGat && gat.licht === 'gedoofd', `de bazenbalk ligt boven het fakkelvignet (beide body-kind: ${gat.ouder}; z ${gat.zBB} > ${gat.zVig}; geen gat meer: ${!gat.oudGat}); fakkel gedoofd, tirade ${gat.tirade}, vignet ${gat.opac}`);
   let PNGm = null; try { PNGm = require('pngjs').PNG; } catch (e) { /* zonder pngjs: alleen de geometrie hierboven */ }
   if (PNGm) {
     await slaap(1400);   /* het vignet schuift in 1,2 s naar zijn donkerte */
@@ -837,12 +837,8 @@ const sonde = page => page.evaluate(() => {
     if (!clipT) t(false, 'de teller bij fakkel 0 in de tirade: er staat geen teller (dus ook geen helderheid)');
     else {
     const met = p90(await page.screenshot({ clip: clipT }));
-    await page.evaluate(() => document.getElementById('licht-vignet').classList.remove('proces-open'));
-    await slaap(150);
-    const zonder = p90(await page.screenshot({ clip: clipT }));
-    await page.evaluate(() => renderGevecht());   /* het gat komt terug */
     await page.screenshot({ path: path.join(UIT, 'zitting-fakkel0-1440x900.png') }).catch(() => {});
-    t(met >= 150 && met >= zonder, `de teller bij fakkel 0 in de tirade: helderheid (p90) ${met} met het gat, ${zonder} zonder (doel ≥ 150; mobiel rechtsboven is het verschil het grootst, zie de beeldcontrole)`);
+    t(met >= 150, `de teller bij fakkel 0 in de tirade: helderheid (p90) ${met} (doel ≥ 150; de balk ligt boven het vignet)`);
     }
   } else console.log('   (pngjs ontbreekt: de helderheidsmeting van 15c overgeslagen)');
   /* de telegraaf: geen '?' of '❓' op de pillen van de baas en het hof, hoe donker ook */

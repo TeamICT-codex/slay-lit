@@ -4975,9 +4975,6 @@ function opSchermDraai() {
   zetToneelSchaal();
   if (document.body.dataset.scherm === 'gevecht') {
     plaatsGevechtsplaat(); zetVoetschaduwen();
-    /* B5: het gat in het fakkelvignet volgt de bazenbalk ook na een draai of resize */
-    const bbD = $('#baas-balk'), gD = (typeof S !== 'undefined' && S) ? S.gevecht : null;
-    if (bbD && gD) _procesVignetGat(bbD, dicktatorBaas(gD));
   }
   /* afdaalkaart herschalen bij draaien: de zoom hangt aan de schermbreedte, en
      zonder hertekenen blijft 'ie stale → te klein (na portret→liggend) of
@@ -6047,14 +6044,14 @@ function renderGevecht() {
            dezelfde vries als de pips (hij zou de nieuwe scène anders vóór de banner verklappen). */
         _bbZitting(bb, b);
       }
-      /* B5 - het proces is openbaar: de bazenbalk van de finale valt niet onder het fakkelvignet */
-      _procesVignetGat(bb, b);
+      /* B5 - het proces is openbaar: de bazenbalk (met de teller) valt niet onder het fakkelvignet.
+         Sinds de merge met main (B4b) doet B2 · B0.10 dat voor elke baas: #baas-balk is een body-kind
+         op z44, boven het vignet (z40). Het gat in het vignet (_procesVignetGat, B4 stap 3) is weg. */
     } else {
       bb.style.display = 'none';
       bb.dataset.baas = '';
       bb.dataset.vorm = '';
       _bbExtraSig = null;
-      _procesVignetGat(bb, null);
     }
   }
 
@@ -9196,27 +9193,10 @@ function _bbZitting(bb, b) {
   kerf.dataset.tip = tel.tip;
 }
 /* B5 - HET PROCES IS OPENBAAR: de telegraaf en de teller van de finale vallen nooit onder de
-   duisternis. De pillen regelt intentTekst; de bazenbalk staat in #scherm-gevecht (stapel-
-   context z1) en het fakkelvignet is een body-kind op z40 - geen z-index haalt hem erboven.
-   Daarom krijgt het vignet een GAT waar de bazenbalk staat (mask-composite, style.css): de zaal
-   blijft donker (fakkel, DE TIRADE), de balk met zijn teller niet. Laptop en mobiel staan elk
-   anders (top-midden / rechtsboven): het gat volgt de GEMETEN rechthoek, niet een aanname. */
-function _procesVignetGat(bb, b) {
-  const vig = document.getElementById('licht-vignet');
-  if (!vig) return;
-  const aan = !!(b && b.id === 'de_dicktator' && bb && bb.style.display !== 'none');
-  if (!aan) {
-    if (vig.classList.contains('proces-open')) vig.classList.remove('proces-open');
-    return;
-  }
-  const r = bb.getBoundingClientRect();
-  if (!r.width || !r.height) return;
-  const m = 18;   /* rand rond de balk: de gloed en de tekstschaduw vallen er ook in */
-  const zet = (k, v) => { const s = Math.round(v) + 'px'; if (vig.style.getPropertyValue(k) !== s) vig.style.setProperty(k, s); };
-  zet('--gat-x', r.left - m); zet('--gat-y', r.top - m);
-  zet('--gat-w', r.width + 2 * m); zet('--gat-h', r.height + 2 * m);
-  if (!vig.classList.contains('proces-open')) vig.classList.add('proces-open');
-}
+   duisternis. De pillen regelt intentTekst (B0.11 + A5). De bazenbalk stond in B4 stap 3 nog in
+   #scherm-gevecht (stapelcontext z1), onder het fakkelvignet (body-kind, z40); daarom kreeg het
+   vignet toen een gat waar de balk stond. Sinds de merge met main (Finale B4b) is de balk HUD
+   (B2 · B0.10: body-kind op z44, voor elke baas) en is dat gat weg: één regel, niet twee. */
 /* GESCHORST (het scèneslot, review F10): de scène IS uit. Eerlijk over het hof: vangt het de
    klap (DICK.hofVangt en er leeft een hoveling), dan zegt de tekst dat; anders dat het hof
    gewoon kwetsbaar blijft. De vloer van DE ZITTING LOOPT heeft zijn eigen tekst (de teller). */
