@@ -5289,7 +5289,9 @@ function toonBaasIntro(g) {
        is de duiding van scène I: het ene nieuwe systeem, in één zin. */
     setTimeout(() => {
       const Dd = (UITSPRAKEN._dicktator || {}).duiding || {};
-      if (S.gevecht === g && !g.voorbij) baasFaseMoment('I · DE AANKLACHT', Dd.aanklacht || '„De zitting is geopend."');
+      /* B4 stap 3 (nevenvondst beeldcontrole): viel scène I al binnen die 5,6 s (een openingsklap
+         van 80+), dan zou deze banner ná de regie van II over scène II liggen - dan zwijgt hij */
+      if (S.gevecht === g && !g.voorbij && (b.fase || 1) === 1 && !b.vorm2) baasFaseMoment('I · DE AANKLACHT', Dd.aanklacht || '„De zitting is geopend."');
     }, 5600);
     return;
   }
