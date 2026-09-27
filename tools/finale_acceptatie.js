@@ -26,6 +26,9 @@
      T1, T1b en de vangrail; 17d de INVORDERING die niet op het bord stond; 17e LAAT INNEN zonder
      deurwaarder = DE FACTUUR, hetzelfde bedrag) · 18 A4 (de griffier sterft niet aan een vangst; de rest valt op de
      volgende hoveling of vervalt; het Galgentouw) · 19 de ouverture wijkt voor de regie van II.
+   Sinds B4b (27 sep 2026): 20 A6 - het decreet vervalt ZICHTBAAR (de doorbraak vóór de zitting, de
+     dode griffier, beide in één klap, geen regel zonder dossier, de melding zonder baasspraak, 846x381).
+     De regie zelf (B2.1-B2.4 en de restpunten van het bazentoneel) staat in finale_regie_acceptatie.js.
    Review F9: de suite leest elk balansgetal uit DICK (R3 draait aan die knoppen).
 
    GEEN dev-server en NOOIT poort 4173: een verzonnen host (localhost:4198) wordt vanaf
@@ -545,11 +548,14 @@ const sonde = page => page.evaluate(() => {
   t(z10.naam === 'DE AANZEGGING' && d10.n === 2 && /griffier/.test((await sonde(page)).hof), `I: de aanzegging roept de griffier en zet een dossier (${d10.n} kaarten)`);
   const gd = await page.evaluate(() => {
     const g = S.gevecht; document.querySelectorAll('#meldingen .toast').forEach(e => e.remove());
+    /* A6 (B4b): de melding is een regel door de tekstsluis geworden (de toast alleen zonder baasspraak) */
+    const gesproken = []; const oud = window.baasSpreekt; window.baasSpreekt = function (tx) { gesproken.push(String(tx)); return oud.apply(this, arguments); };
     verliesHp(hofLid(g, 'de_griffier'), 999, sp()); renderGevecht();
-    return { n: g.aangezegd.size, zegels: S.dek.filter(c => kaartAangezegd(c)).length, toast: [...document.querySelectorAll('#meldingen .toast')].map(e => e.textContent).join(' | '), dood: !hofLid(g, 'de_griffier') };
+    window.baasSpreekt = oud;
+    return { n: g.aangezegd.size, zegels: S.dek.filter(c => kaartAangezegd(c)).length, toast: [...document.querySelectorAll('#meldingen .toast')].map(e => e.textContent).join(' | '), regel: gesproken.join(' | '), dood: !hofLid(g, 'de_griffier') };
   });
   d10 = await dossierStand(page);
-  t(gd.dood && gd.n === 0 && gd.zegels === 0 && !/📜/.test(d10.strook) && /griffier is dood/.test(gd.toast), `de griffier sterft → het dossier verdwijnt meteen (${gd.n} kaarten, ${gd.zegels} zegels, strook "${d10.strook}"), één melding: "${gd.toast}"`);
+  t(gd.dood && gd.n === 0 && gd.zegels === 0 && !/📜/.test(d10.strook) && /Geen griffier, geen decreet/.test(gd.regel) && !/griffier/i.test(gd.toast), `de griffier sterft → het dossier verdwijnt meteen (${gd.n} kaarten, ${gd.zegels} zegels, strook "${d10.strook}"), één regel door de tekstsluis: "${gd.regel}" (toast: "${gd.toast}")`);
   await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, 999, sp()); checkBaasFase(); renderGevecht(); });
   await wachtVrij(page);
   const zet10 = [];
@@ -912,6 +918,12 @@ const sonde = page => page.evaluate(() => {
       renderGevecht();
       const verwacht = g.vijanden.filter(x => !x.dood).reduce((s, x) => s + intentVerwachteSchade(x), 0);
       window.__uitgevoerd = [];
+      window.__gesproken = [];
+      if (!window.__wrapSpraak) {   /* A6 (B4b): wat de baas zegt (de tekstsluis), naast de toasts */
+        window.__wrapSpraak = true;
+        const oudS = window.baasSpreekt;
+        window.baasSpreekt = function (tx) { window.__gesproken.push(String(tx)); return oudS.apply(this, arguments); };
+      }
       if (!window.__wrapAanval) {
         window.__wrapAanval = true;
         const oud = window.vijandAanval;
@@ -928,7 +940,8 @@ const sonde = page => page.evaluate(() => {
       return {
         sHp: S.hp, dek: S.dek.length, dec: b.decreten || 0, pil: b.intent ? b.intent.naam : '-', uit: window.__uitgevoerd || [],
         gr: gr ? { hp: gr.hp, dood: !!gr.dood } : null, dw: dw ? { hp: dw.hp, dood: !!dw.dood } : null,
-        toasts: [...document.querySelectorAll('#meldingen .toast')].map(e => e.textContent).join(' | ')
+        toasts: [...document.querySelectorAll('#meldingen .toast')].map(e => e.textContent).join(' | '),
+        gesproken: (window.__gesproken || []).join(' | ')
       };
     });
     return { voor, na, verloren: voor.sHp - na.sHp, uitTekst: na.uit.map(x => x.wie.replace(/^de_/, '') + ':' + x.pil + ' ' + x.basis).join(', ') || 'geen klap' };
@@ -984,7 +997,7 @@ const sonde = page => page.evaluate(() => {
     const r = await vijandbeurt(page, 'b.status.gif = 4;');
     t(r.voor.pil === 'HET DECREET' && r.verloren === r.voor.verwacht && !r.na.uit.some(x => x.wie === 'de_dicktator'), `de pil zei "${r.voor.pil}" (${r.voor.verwacht}); de griffier stierf vóór de zet (${JSON.stringify(r.na.gr)}); je verloor ${r.verloren} (${r.uitTekst})`);
     t(r.na.gr && r.na.gr.dood && r.na.dek === r.voor.dek && r.na.dec === r.voor.dec, `zonder griffier geen decreet - en geen kaart: dek ${r.voor.dek} → ${r.na.dek}, decreten ${r.voor.dec} → ${r.na.dec}`);
-    t(/Zonder griffier geen decreet/.test(r.na.toasts), `een melding zegt het: "${r.na.toasts}"`);
+    t(/Geen griffier, geen decreet/.test(r.na.gesproken), `een regel door de tekstsluis zegt het (A6): "${r.na.gesproken}"`);
     const verder = await vijandbeurt(page);
     t(verder.verloren === verder.voor.verwacht, `de volgende zet staat gewoon op de pil ("${verder.voor.pil}": ${verder.verloren} = ${verder.voor.verwacht})`);
   } else t(false, 'opzet 17c mislukt: ' + JSON.stringify(st17));
@@ -1093,6 +1106,140 @@ const sonde = page => page.evaluate(() => {
   t(ouv && o19.scene === 2 && o19.meteen === 0 && later19.every(x => x.aanklacht === 0), `de banner stond (${ouv}); na de klap (scène ${o19.scene}): AANKLACHT meteen ${o19.meteen}, na 0,3 / 1,0 / 1,5 s ${later19.map(x => x.aanklacht).join(' / ')}`);
   t(later19.some(x => x.factuur), `de regie van II speelt wel ("II · DE FACTUUR" in beeld: ${later19.map(x => x.factuur).join(' / ')})`);
   await page.screenshot({ path: path.join(UIT, 'ouverture-1440x900.png') }).catch(() => {});
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  /* ================= 20 · A6 · HET DECREET VERVALT, EN JE ZIET HET ================= */
+  /* Architectbeslissing A6 (27 sep 2026): het decreet is een dreiging die je met agressie voorkomt
+     (door de drempel breken vóór de zitting, of de griffier doden). Dat vervallen is ZICHTBAAR: één
+     korte regel door de tekstsluis (na de scènetitel, nooit onder een banner of het toneeldoek), een
+     📜-fx op de baas als het in jouw beurt gebeurt, de tip van HERSCHIKT DE ZAAL, en zonder
+     baasspraak een melding. Geen regel als er niets verviel. Geen getal verandert. */
+  const TX = await (async () => { const { ctx: c0, page: p0 } = await open(browser, { w: 1440, h: 900 }); const u = await p0.evaluate(() => ({ vervalt: UITSPRAKEN._dicktator.decreetVervalt, griffier: UITSPRAKEN._dicktator.geenGriffier, fase2: UITSPRAKEN._dicktator.fase2 })); await c0.close(); return u; })();
+  const kern = s => String(s || '').replace(/[„"“”]/g, '').trim().slice(0, 22);
+  /* de opname: per 50 ms welke spraakplaat in beeld is, en wat erover ligt */
+  const neemOp = page => page.evaluate(() => {
+    const r = window.__rec20 = { rij: [], t0: performance.now() };
+    const d = document.getElementById('toneel-doek');
+    r.iv = setInterval(() => {
+      const sp = [...document.querySelectorAll('.baas-spraak')].filter(e => +getComputedStyle(e).opacity > 0.2).map(e => e.textContent.replace(/[„"“”]/g, '').trim());
+      r.rij.push({ t: Math.round(performance.now() - r.t0), sp, doek: +getComputedStyle(d).opacity, titel: !!document.querySelector('.vonnis, .baas-flits') });
+    }, 50);
+  });
+  const stopOp = page => page.evaluate(() => { clearInterval(window.__rec20.iv); return window.__rec20.rij; });
+  const inBeeld = (rij, tekst) => rij.filter(x => x.sp.some(s => s.startsWith(kern(tekst))));
+  const eerst = (rij, tekst) => { const z = inBeeld(rij, tekst); return z.length ? z[0].t : null; };
+
+  kop('20a · A6 · je breekt in I door de drempel vóór de zitting: "het decreet vervalt", na de titel, nooit onder het doek');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page);
+  await beurt(page, 0);   /* DE AANZEGGING: de griffier en een dossier */
+  let st20 = await page.evaluate(() => ({ dossier: S.gevecht.aangezegd.size, griffier: !!hofLid(S.gevecht, 'de_griffier') }));
+  if (st20.dossier === 2 && st20.griffier) {
+    await neemOp(page);
+    const o20 = await page.evaluate(() => {
+      DICK.tempo = 1;   /* de regie op spelsnelheid, zoals de speler hem ziet */
+      const g = S.gevecht, b = dicktatorBaas(g);
+      verliesHp(b, b.hp - dicktatorDrempel(b, 2), sp()); checkBaasFase(); renderGevecht();   /* precies tot op de drempel: de griffier leeft */
+      const tip = (b.intent && b.intent.tip) || '';
+      return { scene: dicktatorScene(b), pil: b.intent ? b.intent.naam : '-', tip, dossier: g.aangezegd.size };
+    });
+    await slaap(7600);
+    const rij = await stopOp(page);
+    const zicht = inBeeld(rij, TX.vervalt);
+    const ms = zicht.length * 50;
+    t(o20.scene === 2 && o20.pil === 'HERSCHIKT DE ZAAL' && o20.dossier === 0 && /vervallen/.test(o20.tip), `de doorbraak: scène ${o20.scene}, pil "${o20.pil}", dossier ${o20.dossier}, de tip zegt het ("${o20.tip.slice(-70)}")`);
+    t(ms >= 1000, `de regel "${kern(TX.vervalt)}…" staat ${ms} ms in beeld (>= 1,0 s, vanaf ${eerst(rij, TX.vervalt)} ms)`);
+    t(zicht.every(x => x.doek <= 0.1 && !x.titel), `nooit onder het toneeldoek of een titel/banner (diepste doek ${zicht.length ? Math.max(...zicht.map(x => x.doek)).toFixed(2) : '-'}, titel ${zicht.some(x => x.titel)})`);
+    const vf = eerst(rij, TX.vervalt), ff = eerst(rij, TX.fase2);
+    t(vf != null && (ff == null || vf < ff), `de eerste regel na de titel: vervalt op ${vf} ms, zijn reactie ("${kern(TX.fase2)}…") op ${ff} ms`);
+    t(inBeeld(rij, TX.griffier).length === 0, 'geen tweede, verkeerde regel ("geen griffier")');
+    await page.screenshot({ path: path.join(UIT, 'a6-doorbraak-1440x900.png') }).catch(() => {});
+  } else t(false, 'opzet 20a mislukt: ' + JSON.stringify(st20));
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+
+  kop('20b · A6 · je doodt de griffier met een open dossier: "geen griffier, geen decreet" + 📜 op de baas');
+  await startProces(page);
+  await beurt(page, 0);
+  await neemOp(page);
+  const o20b = await page.evaluate(() => {
+    DICK.tempo = 1;
+    const g = S.gevecht, b = dicktatorBaas(g);
+    document.querySelectorAll('.fx-nummer').forEach(e => e.remove());
+    const voor = g.aangezegd.size;
+    verliesHp(hofLid(g, 'de_griffier'), 999, sp()); renderGevecht();
+    const fx = [...document.querySelectorAll('.fx-nummer')].map(e => e.textContent);
+    return { voor, na: g.aangezegd.size, fx };
+  });
+  await slaap(2600);
+  let rij20 = await stopOp(page);
+  t(o20b.voor === 2 && o20b.na === 0 && o20b.fx.some(x => /📜 geen decreet/.test(x)), `het dossier (${o20b.voor} → ${o20b.na}) en een 📜-fx op de baas (${o20b.fx.join(', ')})`);
+  t(inBeeld(rij20, TX.griffier).length * 50 >= 1000, `de regel "${kern(TX.griffier)}…" staat ${inBeeld(rij20, TX.griffier).length * 50} ms in beeld (>= 1,0 s)`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+
+  kop('20c · A6 · de griffier sterft IN DEZELFDE KLAP als de doorbraak: de regie veegt het bord, de regel blijft (één keer)');
+  await startProces(page);
+  await beurt(page, 0);
+  await neemOp(page);
+  await page.evaluate(() => {
+    DICK.tempo = 1;
+    const g = S.gevecht, b = dicktatorBaas(g);
+    verliesHp(hofLid(g, 'de_griffier'), 999, sp());                        /* een AoE: eerst de griffier ... */
+    verliesHp(b, b.hp - dicktatorDrempel(b, 2), sp()); checkBaasFase(); renderGevecht();   /* ... dan de baas door de drempel */
+  });
+  await slaap(7600);
+  rij20 = await stopOp(page);
+  const gz = inBeeld(rij20, TX.griffier), vz = inBeeld(rij20, TX.vervalt);
+  t(gz.length * 50 >= 1000 && vz.length === 0, `één regel: "${kern(TX.griffier)}…" ${gz.length * 50} ms (>= 1,0 s), "${kern(TX.vervalt)}…" ${vz.length * 50} ms (0)`);
+  t(gz.every(x => x.doek <= 0.1 && !x.titel), `ook die regel nooit onder het doek of de titel (diepste doek ${gz.length ? Math.max(...gz.map(x => x.doek)).toFixed(2) : '-'})`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+
+  kop('20d · A6 · geen dossier, dan vervalt er niets: geen regel (een doorbraak vóór de aanzegging)');
+  await startProces(page);
+  await neemOp(page);
+  const o20d = await page.evaluate(() => {
+    DICK.tempo = 1;
+    const g = S.gevecht, b = dicktatorBaas(g);
+    const voor = g.aangezegd ? g.aangezegd.size : 0;
+    verliesHp(b, b.hp - dicktatorDrempel(b, 2), sp()); checkBaasFase(); renderGevecht();
+    return { voor, scene: dicktatorScene(b), tip: (b.intent && b.intent.tip) || '' };
+  });
+  await slaap(7000);
+  rij20 = await stopOp(page);
+  t(o20d.voor === 0 && o20d.scene === 2 && !/vervallen/.test(o20d.tip) && inBeeld(rij20, TX.vervalt).length === 0 && inBeeld(rij20, TX.griffier).length === 0,
+    `zonder dossier: scène ${o20d.scene}, geen "vervalt"-regel (${inBeeld(rij20, TX.vervalt).length}), en de tip zwijgt erover`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+
+  kop('20e · A6 · zonder baasspraak (INST.spraak uit): een melding, niets stil');
+  await startProces(page);
+  await beurt(page, 0);
+  const o20e = await page.evaluate(() => {
+    INST.spraak = false;
+    const g = S.gevecht; document.querySelectorAll('#meldingen .toast').forEach(e => e.remove());
+    verliesHp(hofLid(g, 'de_griffier'), 999, sp()); renderGevecht();
+    const toast = [...document.querySelectorAll('#meldingen .toast')].map(e => e.textContent).join(' | ');
+    INST.spraak = true;
+    return { toast };
+  });
+  t(/griffier is dood/.test(o20e.toast) && /geen decreet/.test(o20e.toast), `de melding: "${o20e.toast}"`);
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  /* 20f · op Thomas' toestel (846x381): de regel in beeld, binnen het scherm, niet over de baas of de held */
+  kop('20f · A6 · 846x381: de doorbraakregel staat in beeld, binnen het scherm');
+  ({ ctx, page } = await open(browser, { w: 846, h: 381, mobiel: true }));
+  await startProces(page);
+  await beurt(page, 0);
+  await neemOp(page);
+  await page.evaluate(() => { DICK.tempo = 1; const b = dicktatorBaas(S.gevecht); verliesHp(b, b.hp - dicktatorDrempel(b, 2), sp()); checkBaasFase(); renderGevecht(); });
+  let f20 = null;
+  for (let i = 0; i < 90 && !f20; i++) {
+    f20 = await page.evaluate(k => { const e = [...document.querySelectorAll('.baas-spraak')].find(x => +getComputedStyle(x).opacity > 0.6 && x.textContent.replace(/[„"“”]/g, '').trim().startsWith(k)); if (!e) return null; const r = e.querySelector('span').getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom, W: innerWidth, H: innerHeight }; }, kern(TX.vervalt));
+    if (!f20) await slaap(100);
+  }
+  if (f20) await page.screenshot({ path: path.join(UIT, 'a6-doorbraak-846x381.png') }).catch(() => {});
+  await stopOp(page);
+  t(!!f20 && f20.l >= 0 && f20.r <= f20.W && f20.t >= 0 && f20.b <= f20.H, `846x381: de regel staat binnen het scherm (${f20 ? Math.round(f20.l) + '..' + Math.round(f20.r) + ' x ' + Math.round(f20.t) + '..' + Math.round(f20.b) : 'nooit gezien'})`);
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
 

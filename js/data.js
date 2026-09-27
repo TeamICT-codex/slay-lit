@@ -1824,6 +1824,11 @@ const UITSPRAKEN = {
     decreetGekozen: '„Uw keuze. Uw verantwoordelijkheid. Mijn handtekening."',
     decreetZelf: '„U speelde ze niet eens. Dan beslis ík."',
     decreetKeuze: '„Het is niet mijn beslissing. Het is uw gebruik."',
+    /* A6 (architectbeslissing B4b): het decreet is een dreiging die je met agressie voorkomt - en
+       dan ZIE je dat het vervalt (game.js dicktatorDecreetVervalt, via de tekstsluis) */
+    decreetVervalt: '„Het decreet vervalt. De zaal wordt herschikt."',     /* je brak door de drempel vóór de zitting */
+    geenGriffier: '„Geen griffier, geen decreet. Het dossier is gesloten."',   /* de griffier sterft met een open dossier */
+    geenDossier: '„Geen dossier, geen decreet. De zitting gaat voorbij."',     /* de zitting zonder dossier (vangrail) */
     /* de nieuwe zetten */
     herschikt: '„Orde in de zaal. De zitting wordt hervat."',                 /* HERSCHIKT DE ZAAL */
     vonnis: '„Het dossier is gesloten. Het vonnis niet."',                    /* HET VONNIS */

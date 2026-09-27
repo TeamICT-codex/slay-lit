@@ -8095,6 +8095,12 @@ function dicktatorOvergang(b, g, nieuw, oud) {
      meer vóór de banner valt (op de stand van VÓÓR de klap, zie verliesHp). */
   b._bbToon = (b._hpVoorKlap != null ? Math.max(b.hp, b._hpVoorKlap) : b.hp);
   b.herschik = true;
+  /* A6: stond er een dossier open (de zitting kwam nog), dan VERVALT het decreet - door jouw
+     doorbraak. De regel valt na de scènetitel (tekstsluis), vóór de eigen regieregels; de pil
+     HERSCHIKT DE ZAAL zegt het ook in haar tip (b._decreetVervallen, gewist door HERSCHIKT). */
+  const vervalt = (g.aangezegd && g.aangezegd.size) ? 'doorbraak' : (g._vervaltTik || null);
+  g._vervaltRegel = vervalt;          /* de regie spreekt hem op haar beat na de titel */
+  b._decreetVervallen = vervalt;      /* 'doorbraak' | 'griffier' | null */
   dicktatorSluitDossier(b, g);   /* elke scènewissel sluit het dossier (review F3 + F5) */
   /* review B4a: de ouverture-banner "I · DE AANKLACHT" die nog in beeld staat (de klap viel
      tijdens de banner), gaat op t=0 weg - nooit twee scènetitels tegelijk */
@@ -8156,6 +8162,9 @@ function dicktatorRegieProces(b, g, op, U, D) {
   });
 
   op(1820, () => _oprijzen(b, null, null, 320));  /* en hij zakt terug op zijn eigen maat */
+  /* A6: brak je door vóór de zitting, dan VERVALT het decreet - als eerste regel na de titel
+     (de tekstsluis houdt hem tegen tot de titel weg is), vóór zijn reactie hieronder */
+  op(2150, () => { if (g._vervaltRegel) { _decreetRegel(g._vervaltRegel); g._vervaltRegel = null; } });
   /* de duur past in het GAT naar de volgende tekstbeat (2200 -> 4000 = 1800). v121-fix: de
      FIFO-wachtrij kapt niets af, dus een te lange regel schuift de volgende van zijn beat. */
   op(2200, () => baasSpreekt(U.fase2, 1700));
@@ -8252,6 +8261,8 @@ function dicktatorRegieTirade(b, g, op, U, D) {
   });
 
   op(2020, () => _oprijzen(b, null, null, 320));             /* terug op zijn eigen maat na de uithaal */
+  /* A6: een open dossier van II VERVALT (je brak door vóór de zitting): de eerste regel na de titel */
+  op(2050, () => { if (g._vervaltRegel) { _decreetRegel(g._vervaltRegel); g._vervaltRegel = null; } });
   /* kort, hard, ná het beeld. De duur past in het GAT naar fase3 (2100 -> 3400 = 1300):
      de FIFO-wachtrij kapt niets af, en met 1700 begon fase3 pas op 3842 en griffier-
      Ontslag[1] op 6444 - ruim 0,8s voorbij hun beat (v121-fix). */
@@ -8802,10 +8813,40 @@ function dicktatorSluitDossier(b, g) {
 function dicktatorGriffierDood() {
   const g = S.gevecht; if (!g || g.voorbij) return;
   if (g.aangezegd && g.aangezegd.size) {
-    dicktatorSluitDossier(dicktatorBaas(g), g);
-    melding('📜 De griffier is dood: het dossier is gesloten, er valt geen decreet meer.');
+    const b = dicktatorBaas(g);
+    dicktatorSluitDossier(b, g);
+    dicktatorDecreetVervalt(b, g, 'griffier');
   }
   dicktatorHersync(true);
+}
+/* A6 (architectbeslissing B4b, 27 sep 2026) — HET DECREET VERVALT, EN JE ZIET HET. Het decreet
+   is een dreiging die je met agressie voorkomt: door de drempel breken vóór de zitting, of de
+   griffier doden. Dat mag geen stille verdwijning zijn (een 📜 in de strook die zomaar weg is).
+   Eén regel, kort en eerlijk, door de TEKSTSLUIS: hij wacht op de scènetitel, de banner en het
+   toneeldoek, en staat dus nooit eronder. Plus een 📜-fx op de baas als het in jouw beurt
+   gebeurt (de pil slaat daar om). Zonder baasspraak (INST.spraak uit) een melding.
+   reden: 'doorbraak' (de overgang sluit een open dossier) | 'griffier' (hij stierf met een
+   open dossier) | 'dossier' (de zitting zonder dossier, de vangrail).
+   Bij een OVERGANG spreekt de regie de regel zelf, op haar eigen beat na de scènetitel
+   (dicktatorRegieProces/-Tirade lezen g._vervaltRegel). Sterft de griffier in dezelfde klap
+   waarmee je door de drempel breekt (een AoE), dan veegt de regie het spraakbord eerst
+   (_spraakStop): g._vervaltTik onthoudt de regel voor die ene tik, zodat de overgang hem
+   overneemt. Geen getal, geen mechaniek. */
+function dicktatorDecreetVervalt(b, g, reden) {
+  if (!g) return;
+  if (reden !== 'doorbraak' && b && !b.dood) fxNummer(actorEl(b), '📜 geen decreet', 'fx-blok');
+  g._vervaltTik = reden;
+  setTimeout(() => { if (g._vervaltTik === reden) g._vervaltTik = null; }, 0);
+  _decreetRegel(reden);
+}
+function _decreetRegel(reden) {
+  const U = UITSPRAKEN._dicktator || {};
+  const regel = reden === 'doorbraak' ? U.decreetVervalt : (reden === 'griffier' ? U.geenGriffier : U.geenDossier);
+  if (INST.spraak === false || !regel) {
+    melding(reden === 'doorbraak' ? '📜 Het decreet vervalt: je brak door vóór de zitting. De zaal wordt herschikt.'
+      : (reden === 'griffier' ? '📜 De griffier is dood: het dossier is gesloten, er valt geen decreet meer.'
+        : '📜 Geen dossier, geen decreet: de zitting gaat voorbij.'));
+  } else baasSpreekt(regel, 1800);
 }
 /* de zitting van deze scène is gehouden - welke vorm ze ook kreeg. Het dossier sluit. */
 function dicktatorZittingGehouden(v, g, scene) {
@@ -8819,8 +8860,8 @@ function dicktatorZittingGehouden(v, g, scene) {
 function dicktatorZittingZonderDecreet(v, g) {
   const griffier = !!(g && hofLid(g, 'de_griffier'));
   dicktatorSluitDossier(v, g);
-  fxNummer(actorEl(v), '📜 geen decreet', 'fx-blok');
-  melding(griffier ? '📜 Geen dossier, geen decreet: de zitting gaat voorbij.' : '📜 Zonder griffier geen decreet: de zitting gaat voorbij.');
+  /* A6: dezelfde regel als elk vervallen decreet (de 📜-fx zit erin), door de tekstsluis */
+  dicktatorDecreetVervalt(v, g, griffier ? 'dossier' : 'griffier');
   renderGevecht();
 }
 
@@ -8877,9 +8918,11 @@ function dicktatorKies(v, beurt) {
   /* na elke overgang: HERSCHIKT DE ZAAL - de overgang herschrijft je lopende beurt niet */
   if (v.herschik) return {
     naam: 'HERSCHIKT DE ZAAL', type: 'hof', icoon: '🪑', kort: 'herschikt',
-    tip: 'het hof neemt zijn plaats in — deze beurt geen schade. De nieuwe scène begint daarna.',
+    tip: 'het hof neemt zijn plaats in — deze beurt geen schade. De nieuwe scène begint daarna.'
+      + (v._decreetVervallen ? ' Het decreet van de vorige scène is vervallen: ' + (v._decreetVervallen === 'griffier' ? 'de griffier is dood.' : 'je brak door vóór de zitting.') : ''),   /* A6 */
     doe: vv => {
       vv.herschik = false;
+      vv._decreetVervallen = null;
       vv.minVrij = false;                          /* DEV-SHORTCUT (minVrij): een DEV-landing geldt maar voor één scène */
       vv.sceneStart = (vv.beurtTeller || 0) + 1;   /* eindBeurt hoogt de teller hierna op: de volgende zet is slot 1 */
       baasSpreekt(UITSPRAKEN._dicktator.herschikt);
