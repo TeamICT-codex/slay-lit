@@ -357,6 +357,16 @@ body[data-modus="mobiel"] .roof-waaier { gap: 6px; }
 /* B3 · B1.3: met de prins in beeld (de waaier naast hem, de tegelmaat uit de JS) een compactere kop */
 body[data-modus="mobiel"] .roof-overlay.met-prins { gap: 6px; }
 body[data-modus="mobiel"] .roof-overlay.met-prins .roof-kop { font-size: clamp(.95rem, 3vw, 1.3rem); }
+/* B3 · B1.4: de grote teruggespeelde kaart liggend kleiner, zodat ze met kop, stempel en
+   ondertitel tussen de topbalk en de hand past, naast de prins (de JS schaalt nooit onder 0,92) */
+@media (orientation: landscape) and (max-height: 600px) {
+  body[data-modus="mobiel"] .roof-speel-kaart { gap: 4px; }
+  body[data-modus="mobiel"] .roof-speel-kaart .kaart.groot.kaart-focus { width: clamp(126px, 36vmin, 296px) !important; height: clamp(178px, 51vmin, 418px) !important; }
+  body[data-modus="mobiel"] .roof-speel-kaart .kaart-focus .kaart-icoon img { width: clamp(92px, 26vmin, 218px); }
+  body[data-modus="mobiel"] .roof-speel-kaart .kaart-focus .kaart-tekst { font-size: clamp(.68rem, 2.1vmin, 1.06rem); }
+  body[data-modus="mobiel"] .roof-speel-kaart .rs-kop { font-size: clamp(.9rem, 2.6vw, 1.3rem); }
+  body[data-modus="mobiel"] .roof-speel-kaart .rs-sub { font-size: clamp(.8rem, 2.2vw, 1.05rem); }
+}
 /* instellingen-paneel niet breder dan een smalle telefoon (min-width:340px lekte rechts eruit) */
 body[data-modus="mobiel"] .inst-paneel { min-width: 0; width: min(340px, 92vw); padding: 18px 16px; }
 /* v95: de raakzone-regels van het instellingenpaneel (v89) stonden in het gedeelde spoor en

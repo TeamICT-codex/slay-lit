@@ -7565,6 +7565,60 @@ function erfVingerOp(ov, vinger, kEl) {
   vinger.style.top = (ov.classList.contains('met-prins') ? kr.top + Math.max(kr.height * 0.40, vinger.offsetHeight * 0.5) : kr.top - 4) + 'px';
   vinger.classList.add('wijst');
 }
+/* de grote teruggespeelde kaart: vertrekt bij hem (--dx/--dy, schaal .3) en landt naast hem.
+   Liggend in het gat tussen held en prins (de held mag deels achter de kaart: het is zijn beurt
+   niet), staand boven beide figuren. De bovengrens is de topbalk en op laptop de onderrand van de
+   bazenbalk; het geheel schaalt tot het tussen die grens en de hand past, maar nooit kleiner dan
+   0,72 (laptop) of 0,92 (mobiel), zodat de kaarttekst en de stempel leesbaar blijven. */
+function erfPlaatsSpeelKaart(wrap, v) {
+  const g = S.gevecht; if (!g || !wrap) return;
+  const pr = erfPrinsRect(v); if (!pr) return;
+  const sc = $('#scherm-gevecht');
+  let hr = null;
+  if (sc && sc.classList.contains('d3-actief') && window.Vista && Vista.schermPos) {
+    const p = Vista.schermPos(g.speler);
+    if (p) { const h = p.voetY - p.topY; hr = { l: p.x - h * 0.3, r: p.x + h * 0.3, t: p.topY }; }
+  } else {
+    const hf = $('#speler-figuur');
+    if (hf) { const q = hf.getBoundingClientRect(); hr = { l: q.left + q.width * 0.16, r: q.right - q.width * 0.16, t: q.top }; }
+  }
+  const mob = document.body.dataset.modus === 'mobiel';
+  const W = innerWidth, H = innerHeight;
+  const tb = $('#topbalk'); let top = tb ? tb.getBoundingClientRect().bottom : 40;
+  const bb = $('#baas-balk');
+  if (!mob && bb && getComputedStyle(bb).display !== 'none') top = Math.max(top, bb.getBoundingClientRect().bottom);
+  const handT = Math.min(H, ...[...document.querySelectorAll('#hand .kaart')].map(e => e.getBoundingClientRect().top));
+  const kaart = wrap.querySelector('.kaart-focus') || wrap, kopEl = wrap.querySelector('.rs-kop');
+  const h0 = wrap.offsetHeight, staand = H > W;
+  /* staand is de kaart zelf groot (64vmin): daar mag ze verder krimpen, tot ze boven de figuren past */
+  const ruimte = staand ? Math.min(pr.t, hr ? hr.t : pr.t) - 8 - top - 4 : handT - top - 8;
+  const s = Math.max(!mob ? 0.72 : (staand ? 0.6 : 0.92), Math.min(1, ruimte / h0));
+  wrap.style.setProperty('--rs-s', s.toFixed(3));
+  const kw = kaart.offsetWidth * s, w = wrap.offsetWidth * s, h = h0 * s;
+  const kopW = kopEl ? kopEl.offsetWidth * s : kw, kopH = kopEl ? kopEl.offsetHeight * s : 0;
+  const prL = pr.l + (pr.r - pr.l) * 0.10;
+  let x, y;
+  if (staand) {
+    x = W / 2; y = Math.max(top + 4 + h / 2, Math.min(pr.t, hr ? hr.t : pr.t) - 8 - h / 2);
+  } else {
+    /* de kaart én haar kop blijven links van zijn silhouet */
+    const breedst = Math.max(kw, kopW);
+    x = hr ? (hr.r + prL) / 2 : prL - breedst / 2 - 8;
+    x = Math.min(x, prL - 6 - breedst / 2);
+    y = Math.min(H - h / 2 - 2, Math.max(top + 4 + h / 2, (top + H) / 2 - 24));
+    /* zijn pil (die liggend naast zijn hoofd kan hangen, B0.9) blijft leesbaar: de kop schuift eronder */
+    const pillen = [...((actorEl(v) || document.body).querySelectorAll('.intent'))].map(e => e.getBoundingClientRect()).filter(q => q.width > 0);
+    for (const p of pillen) {
+      const kl = x - kopW / 2, kr = x + kopW / 2, kt = y - h / 2;
+      if (p.right > kl && p.left < kr && p.bottom > kt && p.top < kt + kopH) y = Math.min(H - h / 2 - 2, p.bottom + 4 + h / 2);
+    }
+  }
+  x = Math.max(w / 2 + 6, Math.min(W - w / 2 - 6, x));
+  wrap.style.left = x + 'px'; wrap.style.top = y + 'px';
+  wrap.style.setProperty('--dx', ((pr.l + pr.r) / 2 - x) + 'px');
+  wrap.style.setProperty('--dy', ((pr.t + pr.b) / 2 - y) + 'px');
+}
+
 /* ============================================================================
    DE ROOF — je EERSTE klap die hem raakt: hij ontsteekt in woede (= fase 2), je dek OPENT
    zich en de vieze vinger plukt er ad random de helft uit, allemaal uit je TREKSTAPEL (je hand
@@ -7732,7 +7786,7 @@ async function copycatBekijktBuit(v, g) {
 /* één geroofde kaart groot in beeld terwijl hij 'm speelt (slam-in + hold). JOUW kaart, maar
    getemperd: ZIJN getal staat erop als stempel ("KOPIE · Junior — 22"), met de ondertitel
    uit dezelfde bron als de pil. */
-async function copycatToonGespeeld(k, s, e) {
+async function copycatToonGespeeld(k, s, e, v) {
   const c = nieuweKaart(k.id); c.up = !!(s && s.up);
   const t = erfTekst(e || { k, soort: 'niks' });
   const wrap = document.createElement('div');
@@ -7744,6 +7798,7 @@ async function copycatToonGespeeld(k, s, e) {
     <div class="rs-sub">${t.sub}</div>`;
   document.body.appendChild(wrap);
   if (typeof verfraaiKaartIconen === 'function') verfraaiKaartIconen(wrap);
+  erfPlaatsSpeelKaart(wrap, v || copycatBaas(S.gevecht));   /* B1.4: naast hem, niet op hem */
   Klank.sfx('debuff');
   void wrap.offsetWidth;
   wrap.classList.add('in');
@@ -7785,7 +7840,7 @@ async function copycatSpeelTerug(v, g, plan) {
     }
     /* 1 — de kaart groot in beeld, met zijn stempel */
     const e0 = erfEffect(v, k, 0);
-    const wrap = await copycatToonGespeeld(k, s, e0);
+    const wrap = await copycatToonGespeeld(k, s, e0, v);
     if (S.gevecht !== g || g.voorbij || v.dood) { wrap.remove(); return; }
     /* 2 — het effect landt: exact wat de stempel en de pil zeiden */
     const e = erfEffect(v, k, 0);
