@@ -631,6 +631,66 @@ async function deelEcho(browser) {
     await ctx.close();
   }
 
+  /* ---- 8H · dezelfde seed opnieuw (integrator R5): een NIEUWE run met de seed van de echo-run krijgt de
+     kamer van die seed, niet de Groene Slijm van de echo — ook niet meteen erna, en ook niet na een herlaad.
+     Alleen een herlaad van de echo-run zelf geeft dezelfde kamer terug (8C). ---- */
+  if (stuk('8H')) {
+    const L = '8H laptop-2d dezelfde seed opnieuw';
+    const vp = F.laptop2d;
+    const nieuweRun = (page, seed, held) => page.evaluate(([sd, h]) => {
+      if (S && S.gevecht) { stopGevechtLus(); S.gevecht = null; }
+      toonHeldKeuze();
+      const inv = document.getElementById('seed-invoer'); if (inv) inv.value = sd;   /* een getypte seed */
+      kiesHeldEcht(h);
+      return S.seed;
+    }, [seed, held]);
+    const eersteKamer = page => page.evaluate(() => { kiesNodeEcht(beschikbareNodes()[0]); return S.gevecht ? S.gevecht.vijanden.map(v => v.id) : null; });
+    /* de controle: een speler zonder proloog — welke eerste kamer geeft de seed van zichzelf? (een seed
+       waarvan dat géén solo Groene Slijm is, anders meet dit niets) */
+    const k = await open(browser, vp);
+    let Y = null, K = null;
+    for (const kand of ['ECHO-1', 'ECHO-2', 'ECHO-3', 'ECHO-4', 'ECHO-5', 'ECHO-6', 'ECHO-7', 'ECHO-8']) {
+      const sd = await nieuweRun(k.page, kand, 'slachter');
+      const v = await eersteKamer(k.page);
+      if (sd === kand && v && JSON.stringify(v) !== '["groene_slijm"]') { Y = kand; K = v; break; }
+    }
+    fouten(L + ' (controle zonder proloog)', k.page);
+    await k.ctx.close();
+    t(!!(Y && K), `${L}: controle zonder proloog: de seed "${Y}" geeft als eerste kamer ${JSON.stringify(K)}`);
+    if (Y && K) {
+      const { ctx, page } = await echoOpen(browser, vp);
+      await landOpKaart(page, vp, { held: 'slachter' });
+      const c0 = await page.evaluate(() => localStorage.getItem('slayit_proloog'));
+      await nieuweRun(page, Y, 'slachter');   /* de eerste run na de proloog, met de getypte seed */
+      await page.evaluate(() => window.__eReset());
+      await eersteKamer(page);
+      await slaap(3000);
+      const s1 = await echoStand(page);
+      toetsEcho(s1, { L: `${L} → de echo-run ${Y}`, voor: c0, minDuur: 1100 });
+      const c1 = s1.contractRuw;
+      /* meteen een nieuwe run met DEZELFDE seed, nog midden in het eerste gevecht van de echo-run */
+      await nieuweRun(page, Y, 'slachter');
+      await page.evaluate(() => window.__eReset());
+      const v2 = await eersteKamer(page);
+      await slaap(2500);
+      let s = await echoStand(page);
+      t(JSON.stringify(v2) === JSON.stringify(K) && s.vel.length === 0 && !s.plaat.some(p => p.tekst === ECHO_ZIN) && s.contractRuw === c1,
+        `${L}: een nieuwe run met dezelfde seed "${s.seed}": de eerste kamer is ${JSON.stringify(v2)}, zoals zonder proloog (${JSON.stringify(K)}); geen kantoorvel (${s.vel.length}), geen zin, contract byte-gelijk`);
+      /* herladen in die kamer (Doorgaan): nog altijd de kamer van de seed */
+      await page.reload({ waitUntil: 'load' });
+      await slaap(900);
+      await page.evaluate(() => doorgaan());
+      await slaap(700);
+      const v3 = await eersteKamer(page);
+      await slaap(1500);
+      s = await echoStand(page);
+      t(JSON.stringify(v3) === JSON.stringify(K) && s.vel.length === 0 && s.contractRuw === c1,
+        `${L}: herladen in die kamer (Doorgaan): opnieuw ${JSON.stringify(v3)}, geen kantoorvel (${s.vel.length}), contract byte-gelijk`);
+      fouten(L, page);
+      await ctx.close();
+    }
+  }
+
   /* ---- 8S · statisch ---- */
   if (stuk('8S')) {
     const game = fs.readFileSync(path.join(WT, 'js', 'game.js'), 'utf8');

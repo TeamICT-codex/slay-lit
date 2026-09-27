@@ -877,9 +877,10 @@
      van het spel: "Fijn dat je er bent. Ik hou je een plekje warm." — het rijm op B.A.A.S. aan het
      begin van het gesprek ("Fijn dat u er bent."), maar nu in de je-vorm.
      - EENMALIG: contract.echo gaat van 0 naar 1 op het moment dat de echo IN BEELD begint (niet
-       eerder: wie achter het draai-blok herlaadt, krijgt hem nog). contract.echoSeed onthoudt de
-       run, zodat een herlaad midden in dat eerste gevecht wéér de Groene Slijm geeft (dezelfde
-       kamer), maar zonder vellen en zonder zin.
+       eerder: wie achter het draai-blok herlaadt, krijgt hem nog). contract.echoSeed en de markering
+       S.echoKamer in de save van die run onthouden haar, zodat een herlaad midden in dat eerste
+       gevecht wéér de Groene Slijm geeft (dezelfde kamer), maar zonder vellen en zonder zin. Een
+       nieuwe run met dezelfde (getypte) seed krijgt gewoon de kamer van haar seed.
      - Alleen na een landing ('slayit_proloog_klaar', een contract v:2), in Act 1, rij 0, het
        eerste gevecht van de run; nooit in de daily. Herbeleven start geen run en raakt dus niets.
      - Geen gedwongen wacht: een tik laat de vellen meteen opbranden (en speelt gewoon door), een
@@ -982,13 +983,30 @@
       const seed = typeof S.seed === 'string' ? S.seed : '';
       if (c.echo === 0) {
         if (c.echoSeed !== seed) { c.echoSeed = seed; schrijf(SLEUTEL.contract, JSON.stringify(c)); }
+        markeerEchoRun();
         echoKlaarzetten(false);
         return ECHO.vijanden.slice();
       }
-      /* een herlaad midden in het eerste gevecht: dezelfde kamer, zonder echo */
-      if (c.echo === 1 && seed && c.echoSeed === seed) return ECHO.vijanden.slice();
+      /* een herlaad midden in het eerste gevecht: dezelfde kamer, zonder echo — alleen in DEZE run (de
+         markering in haar save), niet in een nieuwe run die toevallig dezelfde (getypte) seed draagt:
+         die krijgt gewoon de kamer van haar seed (integrator R5; tools/proloog_landing_acceptatie.js 8H) */
+      if (c.echo === 1 && seed && c.echoSeed === seed && S.echoKamer === 1) return ECHO.vijanden.slice();
     } catch (e) { if (window.console) console.warn('[proloog] echo', e); }
     return null;
+  }
+  /* de echo-run onthoudt zelf dat haar eerste kamer de echo was: op S (elke latere saveSpel neemt het
+     mee) én meteen in haar save — die dateert van vóór de kamer (saveSpel bewaart geen gevecht), dus
+     een herlaad laadt precies die save. Alleen het veld erbij: pos, fakkel en de rest blijven van toen. */
+  function markeerEchoRun() {
+    S.echoKamer = 1;
+    try {
+      const sl = typeof SAVE_SLEUTEL === 'string' ? SAVE_SLEUTEL : 'slayit_save_v1';
+      const sv = JSON.parse(localStorage.getItem(sl) || 'null');
+      if (sv && typeof sv === 'object' && sv.seed === S.seed && !sv.daily && sv.echoKamer !== 1) {
+        sv.echoKamer = 1;
+        localStorage.setItem(sl, JSON.stringify(sv));
+      }
+    } catch (e) { /* zonder save: een herlaad geeft dan de kamer van de seed, niet erger */ }
   }
 
   /* nog in startGevecht: de slijm krijgt geen eigen openingswoord (de 'Blub... blub...' op 700 ms,
