@@ -662,7 +662,12 @@ const Vista = (() => {
 
       /* state-afbeelding kiezen (alleen aanwezig als de maker hem leverde) */
       let st = 'idle';
+      /* Finale B4b (restpunt bazentoneel): een lopende SIGNATUURPOSE wint van de uitval. DE FACTUUR
+         vraagt 'factuur' aan en valt meteen uit (Vista.aanval); die uitval toonde 'attack' en de
+         signatuur kwam pas na 0,4 s, voor een paar frames. De uitval zelf (de beweging) blijft. */
+      const sigLoopt = a.pose && SIGNATUUR.has(a.pose) && a.poseTot && tijd < a.poseTot && a.stateTex[a.pose];
       if (a.flits > 0.35) st = 'hit';
+      else if (sigLoopt) st = a.pose;
       else if (a.uitval && a.uitval.t < 0.7) st = 'attack';
       else if (a.poseTot && tijd < a.poseTot && a.pose) st = a.pose;
       else if (actor.status && (actor.status.gif || 0) > 0) st = 'poison';

@@ -2731,8 +2731,17 @@ function baasSpreekt(tekst, duurMs, opts) {
    .roof-overlay is alleen De Roof zelf: de Drempeltafel (.dt-overlay) en het Slachtblok
    (.slachtblok-overlay) lenen dezelfde klasse, en een open tafel hield zo de doodregel van
    de volgende baas tegen. */
-const _SPRAAK_SLUIS = '.vonnis, .baas-flits, #baas-intro, .roof-overlay:not(.dt-overlay, .slachtblok-overlay), .roof-speel-kaart, .decreet-overlay';
-function _spraakGesloten() { return !!document.querySelector(_SPRAAK_SLUIS); }
+const _SPRAAK_SLUIS = '.vonnis, .baas-flits, #baas-intro, .roof-overlay:not(.dt-overlay, .slachtblok-overlay), .roof-speel-kaart, .decreet-overlay, #toneel-doek.aan';
+/* Finale B4b (restpunt bazentoneel): ook het TONEELDOEK sluit de sluis. De spraakplaat woont in
+   #scherm-gevecht (stapelcontext z1), het doek is een body-kind op z45: een regel onder het doek
+   was bij .80 nog 20 % helder - „De stemmen worden geteld…" stond zo onleesbaar in de
+   herverkiezing. Een regel start pas als het doek weg én uitgedoofd is (de fade-out telt mee);
+   een plaat die al staat, pauzeert zolang het doek ligt (css: dezelfde lijst). */
+function _doekDicht() {
+  const d = document.getElementById('toneel-doek');
+  return !!d && (d.classList.contains('aan') || +getComputedStyle(d).opacity > 0.08);
+}
+function _spraakGesloten() { return !!document.querySelector(_SPRAAK_SLUIS) || (!!(S && S.gevecht) && _doekDicht()); }
 /* HET TONEEL NEEMT HET OVER. v121-fix: de wachtrij houdt netjes één plaat tegelijk, maar
    een GEWONE baasregel die net vóór de fasegrens viel (standaardduur 3200ms) kon de eerste
    regieregel tot 3,2s van zijn beat wegduwen. Elke regie wist daarom eerst het bord: de
@@ -3362,7 +3371,13 @@ function vijandAanval(v, basis, gedwongenDoel, opts = {}) {
   basis = opts.vast ? basis : actDmg(basis);   /* latere acts: hardere klappen (zelfde bron als de telegraaf) */
   const doel = (gedwongenDoel && !gedwongenDoel.dood) ? gedwongenDoel : kiesAanvalDoel(v);
   if (window.Vista) Vista.aanval(v, sp());   /* visueel altijd richting het heldenvak (de metgezel staat ernaast) */
-  pose2D(v, 'attack', 0.5);
+  /* Finale B4b (restpunt bazentoneel): opts.pose = een SIGNATUURPOSE voor deze klap (DE FACTUUR:
+     'factuur'). Vroeger zette de vijandbeurt pose2D(v, 'factuur') en overschreef deze regel hem
+     in hetzelfde frame met 'attack'. Heeft de figuur die pose niet (de deurwaarder), dan
+     gewoon 'attack'. In 3D wint een lopende signatuurpose van de uitval (scene3d.js). */
+  const sigId = opts.pose ? v.id + '_' + opts.pose : null;
+  const sig = sigId && typeof artBestaat === 'function' && artBestaat('karakters', window.artTerugval ? artTerugval(sigId) : sigId) ? opts.pose : null;
+  pose2D(v, sig || 'attack', sig ? 0.9 : 0.5);
   /* 2D-lunge: de vijand schiet even naar de speler toe (naar links) */
   if (!d3Actief()) {
     const evf = pose2DArtEl(v);
@@ -8334,8 +8349,12 @@ function dicktatorHerverkiezing(g, doel) {
   Klank.sfx('hamer'); Klank.sfx('dood');
   Klank.duck(0.85, 2.2); Klank.muziek('stil');
 
-  /* t=200 - DE VAL: hij zakt op zijn knieën en blijft liggen tot de herrijzenis */
-  op(200, () => { pose2D(doel, 'death', 2.4); if (window.Vista && Vista.pose) Vista.pose(doel, 'death', 2.4); _regieKlasse(doel, 'knielt', 0); toneelDoek(0.80, 500); });
+  /* t=200 - DE VAL: hij zakt op zijn knieën en blijft liggen tot de herrijzenis.
+     Finale B4b (restpunt bazentoneel): GEEN doek meer op de val. Het doek (.80) lag over de hele
+     stemming, en de spraakplaat woont onder het doek: „De stemmen worden geteld…" was 20 %
+     helder, en de kiezers die goud oplichten (de enige beat die de kernmechaniek toont) ook.
+     De regie wacht nu: val, stemming en vlucht in het licht, het doek valt één keer, op 1900. */
+  op(200, () => { pose2D(doel, 'death', 2.4); if (window.Vista && Vista.pose) Vista.pose(doel, 'death', 2.4); _regieKlasse(doel, 'knielt', 0); });
 
   /* t=600 - DE STEMMING, hoveling per hoveling (200ms uit elkaar): de enige beat die de
      kernmechaniek ZICHTBAAR maakt. Het bedrag komt uit DICK, nooit hardgecodeerd. */
@@ -8345,7 +8364,9 @@ function dicktatorHerverkiezing(g, doel) {
     fxNummer(xe, i < doel._kiezers ? '🗳️ +' + DICK.krachtPerKiezer + ' Kracht' : '🗳️ stem genoteerd', 'fx-buff');
     Klank.sfx('goud');
   }));
-  if (kiezers.length) op(900, () => baasSpreekt(U.stemming, 900));
+  /* 700-1600: de regel valt meteen na de eerste stem en is weg vóór het doek (1900) - een regel
+     onder het doek wacht in de tekstsluis, en daarna hoort hij niet meer bij zijn beat */
+  if (kiezers.length) op(700, () => baasSpreekt(U.stemming, 900));
 
   /* t=1500 - ze vluchten van het toneel onder betaald applaus */
   op(1500, () => {
@@ -9420,9 +9441,9 @@ async function eindBeurt() {
         const bedrag = factuur ? dicktatorFactuurBedrag(g, it) : it.dmg;
         const slagen = factuur ? 1 : (it.hits || 1);
         const gericht = it.doelMetgezel ? gMet() : null;   /* bv. de Erfprins die Drops wegwuift */
-        if (factuur) pose2D(v, 'factuur', 0.6);
         for (let h = 0; h < slagen; h++) {
-          vijandAanval(v, bedrag, gericht, { vast: factuur || !!it.vast, geenKracht: factuur });
+          /* B4b: de factuurpose via de klap zelf (opts.pose), anders overschreef 'attack' hem meteen */
+          vijandAanval(v, bedrag, gericht, { vast: factuur || !!it.vast, geenKracht: factuur, pose: factuur ? 'factuur' : null });
           renderGevecht();
           if (gestopt()) return;
           if (v.dood) break;                 /* doodgegaan aan Doornen mid-reeks → stop de reeks */
