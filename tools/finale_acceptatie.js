@@ -1002,7 +1002,9 @@ const sonde = page => page.evaluate(() => {
     const r = await vijandbeurt(page, 'b.status.gif = 4;');
     t(r.voor.pil === 'HET DECREET' && r.verloren === r.voor.verwacht && !r.na.uit.some(x => x.wie === 'de_dicktator'), `de pil zei "${r.voor.pil}" (${r.voor.verwacht}); de griffier stierf vóór de zet (${JSON.stringify(r.na.gr)}); je verloor ${r.verloren} (${r.uitTekst})`);
     t(r.na.gr && r.na.gr.dood && r.na.dek === r.voor.dek && r.na.dec === r.voor.dec, `zonder griffier geen decreet - en geen kaart: dek ${r.voor.dek} → ${r.na.dek}, decreten ${r.voor.dec} → ${r.na.dec}`);
-    t(/Geen griffier, geen decreet/.test(r.na.gesproken), `een regel door de tekstsluis zegt het (A6): "${r.na.gesproken}"`);
+    /* B4b: precies één keer - de dood van de griffier zegt het, de zitting erna niet nog eens */
+    const nGg = (r.na.gesproken.match(/Geen griffier, geen decreet/g) || []).length;
+    t(nGg === 1, `een regel door de tekstsluis zegt het (A6), precies één keer (${nGg}x): "${r.na.gesproken}"`);
     const verder = await vijandbeurt(page);
     t(verder.verloren === verder.voor.verwacht, `de volgende zet staat gewoon op de pil ("${verder.voor.pil}": ${verder.verloren} = ${verder.voor.verwacht})`);
   } else t(false, 'opzet 17c mislukt: ' + JSON.stringify(st17));

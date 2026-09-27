@@ -8853,6 +8853,7 @@ function dicktatorGriffierDood() {
     const b = dicktatorBaas(g);
     dicktatorSluitDossier(b, g);
     dicktatorDecreetVervalt(b, g, 'griffier');
+    g._geenGriffierGezegd = true;   /* A6: de zitting zonder griffier hierna zegt het niet nog eens */
   }
   dicktatorHersync(true);
 }
@@ -8897,8 +8898,12 @@ function dicktatorZittingGehouden(v, g, scene) {
 function dicktatorZittingZonderDecreet(v, g) {
   const griffier = !!(g && hofLid(g, 'de_griffier'));
   dicktatorSluitDossier(v, g);
-  /* A6: dezelfde regel als elk vervallen decreet (de 📜-fx zit erin), door de tekstsluis */
-  dicktatorDecreetVervalt(v, g, griffier ? 'dossier' : 'griffier');
+  /* A6: dezelfde regel als elk vervallen decreet (de 📜-fx zit erin), door de tekstsluis.
+     Finale B4b: stierf de griffier in deze vijandbeurt met een open dossier (vóór de zet van de
+     baas), dan zei dicktatorGriffierDood het al - hier dan alleen de 📜-fx op de zet zelf, niet
+     twee keer dezelfde regel na elkaar (3,6 s „Geen griffier, geen decreet." in blok 17c). */
+  if (!griffier && g && g._geenGriffierGezegd) { if (!v.dood) fxNummer(actorEl(v), '📜 geen decreet', 'fx-blok'); }
+  else dicktatorDecreetVervalt(v, g, griffier ? 'dossier' : 'griffier');
   renderGevecht();
 }
 
