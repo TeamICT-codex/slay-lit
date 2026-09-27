@@ -7445,8 +7445,12 @@ const DICK = {
      altijd uit DICK (dicktatorMinZetten / dicktatorZittingNog), nooit "een cyclus" (review
      F11). Per scène; een ontbrekende sleutel of 0 = geen minimum. B4 stap 3 (afwerkplan
      §9A): 2 / 2 / 2 - in IV valt hij zo pas na zijn eerste ONTSLAG. De vloer is ZICHTBAAR:
-     de teller op de bazenbalk (dicktatorZittingTeller) en de inkeping op de HP-balk. */
-  minZetten: { 2: 2, 3: 2, 4: 2 },
+     de teller op de bazenbalk (dicktatorZittingTeller) en de inkeping op de HP-balk.
+     R3 (B4 stap 4): II op 3. Met 2 / 2 / 2 is 10 rondes het minimum van het hele stuk
+     (I 2 + II 3 + III 3 + IV 2), en de Slachter speelde precies dat minimum (mediaan 10, doel
+     11-14). Eén zet meer in II - DE FACTUUR, de scène van de rekening - geeft 11 / 12 / 12 en
+     houdt de helden binnen 3 pp (III op 3 liet de Gifmagiër zakken, meer HP niet genoeg). */
+  minZetten: { 2: 3, 3: 2, 4: 2 },
   /* HET HOF VANGT DE KLAP (B4 stap 3, afwerkplan §9A): wat het scèneslot of de vloer van een
      klap op hem wegknipt, valt niet in de leegte maar op zijn eerste levende hoveling (van
      links naar rechts, dicktatorHofVanger), met de fx '⚖️ vangt n' op die hoveling. Eén regel
