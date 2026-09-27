@@ -22,8 +22,9 @@
      teller, de inkeping, de vangst met zijn fx op de hoveling, GESCHORST alleen bij het slot, gif
      in de vloer, IV met zijn teken, de teller en de telegraaf nooit onder de duisternis) ·
      16 de teller op drie formaten.
-   Sinds de review van B4a (27 sep 2026): 17 de telegraaf liegt niet in zijn eigen beurt (vondst 1:
-     T1, T1b en de vangrail) · 18 A4 (de griffier sterft niet aan een vangst; de rest valt op de
+   Sinds de review van B4a (27 sep 2026): 17 de telegraaf liegt niet in de vijandbeurt (vondst 1:
+     T1, T1b en de vangrail; 17d de INVORDERING die niet op het bord stond; 17e LAAT INNEN zonder
+     deurwaarder = DE FACTUUR, hetzelfde bedrag) · 18 A4 (de griffier sterft niet aan een vangst; de rest valt op de
      volgende hoveling of vervalt; het Galgentouw) · 19 de ouverture wijkt voor de regie van II.
    Review F9: de suite leest elk balansgetal uit DICK (R3 draait aan die knoppen).
 
@@ -972,6 +973,43 @@ const sonde = page => page.evaluate(() => {
     const verder = await vijandbeurt(page);
     t(verder.verloren === verder.voor.verwacht, `de volgende zet staat gewoon op de pil ("${verder.voor.pil}": ${verder.verloren} = ${verder.voor.verwacht})`);
   } else t(false, 'opzet 17c mislukt: ' + JSON.stringify(st17));
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  /* dezelfde leugen, andere figuur (gevonden met de leugendetector van het harnas, B4a): de griffier
+     sterft aan zijn EIGEN gif, tussen de baas (die al LAAT INNEN koos) en de deurwaarder. De
+     hersync gaf de deurwaarder toen meteen DE INVORDERING - en die inde hij in dezelfde vijandbeurt,
+     zonder dat ze op het bord stond. Nu blijft de pil staan van wie nog moet handelen. */
+  kop('17d · de griffier sterft aan zijn eigen gif vóór de deurwaarder handelt: geen INVORDERING die niet op het bord stond');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page);
+  await vijandbeurt(page);   /* DE AANZEGGING roept de griffier */
+  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, b.hp - dicktatorDrempel(b, 2), sp()); checkBaasFase(); renderGevecht(); });
+  await wachtVrij(page, 30000);
+  await vijandbeurt(page);   /* HERSCHIKT DE ZAAL: de deurwaarder treedt aan */
+  st17 = await page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g), dw = hofLid(g, 'de_deurwaarder'); return { pil: b.intent.naam, dw: dw ? dw.intent.naam : null, griffier: !!hofLid(g, 'de_griffier') }; });
+  if (st17.pil === 'KARAKTERMOORD' && st17.dw && st17.griffier) {
+    const r = await vijandbeurt(page, "const gr = hofLid(g, 'de_griffier'); gr.hp = 3; gr.status.gif = 10; gr.blok = 0;");
+    const na17d = await page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g), dw = hofLid(g, 'de_deurwaarder'); return { pil: b.intent.naam, dw: dw ? dw.intent.naam : null }; });
+    t(r.verloren === r.voor.verwacht && !r.na.uit.some(x => x.wie === 'de_deurwaarder') && r.na.gr && r.na.gr.dood, `het bord zei ${r.voor.verwacht} ("${r.voor.pil}" + "${st17.dw}"); de griffier stierf aan zijn gif; je verloor ${r.verloren} (${r.uitTekst})`);
+    t(na17d.pil === 'LAAT INNEN' && na17d.dw === 'DE INVORDERING', `daarna staat de rekening gewoon op het bord: baas "${na17d.pil}", deurwaarder "${na17d.dw}"`);
+  } else t(false, 'opzet 17d mislukt: ' + JSON.stringify(st17));
+  t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
+  await ctx.close();
+
+  /* de ene uitzondering: LAAT INNEN zonder levende deurwaarder wordt DE FACTUUR uit de hand van de
+     baas - hetzelfde bedrag, dat al op het bord stond (T2 van de review, in III) */
+  kop('17e · de deurwaarder sterft aan de vangst van de gif-tik van de baas vóór LAAT INNEN: de baas int zelf, hetzelfde bedrag');
+  ({ ctx, page } = await open(browser, { w: 1440, h: 900 }));
+  await startProces(page, { hof: true });
+  await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); b.hp = dicktatorDrempel(b, 3) + 1; renderGevecht(); verliesHp(b, 1, sp()); checkBaasFase(); renderGevecht(); });
+  await wachtVrij(page, 30000);
+  await vijandbeurt(page); await vijandbeurt(page);   /* HERSCHIKT, KARAKTERMOORD */
+  st17 = await page.evaluate(() => { const g = S.gevecht, b = dicktatorBaas(g); return { pil: b.intent.naam, vloer: dicktatorVloer(b), vanger: ((typeof dicktatorHofVanger === 'function' && dicktatorHofVanger(g, b)) || {}).id || null }; });
+  if (st17.pil === 'LAAT INNEN' && st17.vloer && st17.vanger === 'de_deurwaarder') {
+    const r = await vijandbeurt(page, "b.hp = 1; b.status.gif = 20; const dw = hofLid(g, 'de_deurwaarder'); dw.hp = 4; dw.blok = 0;");
+    t(r.verloren === r.voor.verwacht && r.na.uit.some(x => x.wie === 'de_dicktator' && x.pil === 'DE FACTUUR'), `het bord zei ${r.voor.verwacht} (LAAT INNEN + DE INVORDERING + applaus); de deurwaarder stierf aan de vangst; je verloor ${r.verloren} (${r.uitTekst})`);
+  } else t(false, 'opzet 17e mislukt: ' + JSON.stringify(st17));
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
 

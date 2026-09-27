@@ -8531,12 +8531,22 @@ function dicktatorRoepDeurwaarder(b, g) {
 
 /* de intent-hersync: na een fase-overgang, een dode hoveling of een oproep liegt een
    pil anders een hele beurt (de deurwaarder valt weg → de baas-pil moet omslaan van
-   "🪑 laat innen" naar "🧾 …"). ookBaas=false laat de baas met rust. */
+   "🪑 laat innen" naar "🧾 …"). ookBaas=false laat de baas met rust.
+   Review B4a, vondst 1: IN DE VIJANDBEURT (g._vijandBeurt) blijft de pil staan van wie nog moet
+   handelen (niet in g._gehandeld) - dat is de pil die je aan het einde van je beurt las. Vroeger
+   werd HET DECREET zo stil EIGENHANDIG VONNIS (de griffier stierf in de gif-tik van de baas), en
+   kreeg een deurwaarder die nog moest handelen midden in de vijandbeurt een INVORDERING die niet
+   op het bord stond (de griffier stierf aan zijn eigen gif, tussen de baas en de deurwaarder).
+   Eén uitzondering: LAAT INNEN zonder levende deurwaarder wordt DE FACTUUR - hetzelfde bedrag,
+   dat al op het bord stond (op de pil van de deurwaarder), nu uit de hand van de baas. */
 function dicktatorHersync(ookBaas) {
   const g = S.gevecht; if (!g || g.voorbij) return;
   const b = dicktatorBaas(g);
-  if (ookBaas && b && !b.dood) b.intent = VIJANDEN[b.id].kies(b, b.beurtTeller || 0);
-  g.vijanden.forEach(x => { if (x.hof && !x.dood) x.intent = hofIntent(x, x.beurtTeller || 0); });
+  const wacht = x => !!(g._vijandBeurt && g._gehandeld && !g._gehandeld.has(x));
+  if (ookBaas && b && !b.dood && (!wacht(b) || (b.intent && b.intent.laatInnen && !hofLid(g, 'de_deurwaarder')))) {
+    b.intent = VIJANDEN[b.id].kies(b, b.beurtTeller || 0);
+  }
+  g.vijanden.forEach(x => { if (x.hof && !x.dood && !wacht(x)) x.intent = hofIntent(x, x.beurtTeller || 0); });
   renderGevecht();
 }
 
@@ -8623,22 +8633,19 @@ function dicktatorSluitDossier(b, g) {
    dus ook geen dossier. Een open dossier sluit meteen, met één melding; de zitting-pil slaat
    om naar EIGENHANDIG VONNIS (de hersync). Zijn executie in de Tirade loopt buiten verliesHp
    (geen bijDood); daar sluit de scènewissel het dossier al.
-   Review B4a, vondst 1: sterft hij terwijl de baas AAN ZET is (g._aanZet, tussen zijn gif-tik
-   en zijn zet), dan kiest de baas NIET opnieuw - de pil die je las is zijn zet. Stond daar HET
-   DECREET, dan wordt het een zitting zonder decreet (dicktatorZittingZonderDecreet): geen
-   schade, geen kaart. Vroeger werd het hier stil EIGENHANDIG VONNIS (13 niet-getelegrafeerde
-   schade). Sinds A4 sterft de griffier niet meer aan een vangst; dit blijft de vangrail. */
-function dicktatorBaasAanZet(g) {
-  const b = g ? dicktatorBaas(g) : null;
-  return !!(b && g._aanZet === b);
-}
+   Review B4a, vondst 1: sterft hij in de vijandbeurt vóór de baas gehandeld heeft (bv. aan de
+   vangst van zijn gif-tik), dan kiest de baas NIET opnieuw - dicktatorHersync laat de pil van wie
+   nog moet handelen staan. Stond daar HET DECREET, dan wordt het een zitting zonder decreet
+   (dicktatorZittingZonderDecreet): geen schade, geen kaart. Vroeger werd het hier stil
+   EIGENHANDIG VONNIS (13 niet-getelegrafeerde schade). Sinds A4 sterft de griffier niet meer
+   aan een vangst; dit blijft de vangrail. */
 function dicktatorGriffierDood() {
   const g = S.gevecht; if (!g || g.voorbij) return;
   if (g.aangezegd && g.aangezegd.size) {
     dicktatorSluitDossier(dicktatorBaas(g), g);
     melding('📜 De griffier is dood: het dossier is gesloten, er valt geen decreet meer.');
   }
-  dicktatorHersync(!dicktatorBaasAanZet(g));
+  dicktatorHersync(true);
 }
 /* de zitting van deze scène is gehouden - welke vorm ze ook kreeg. Het dossier sluit. */
 function dicktatorZittingGehouden(v, g, scene) {
@@ -9140,6 +9147,12 @@ async function eindBeurt() {
   await slaap(350);
   if (gestopt()) return;
 
+  /* DE VIJANDBEURT LOOPT (review B4a, vondst 1): wie in deze vijandbeurt al gehandeld heeft
+     (g._gehandeld). Een hersync (dicktatorHersync, na een dode hoveling) herschrijft nooit de pil
+     van wie nog moet handelen - dat is precies de pil die je aan het einde van je beurt las. Wie
+     gehandeld heeft, kiest aan het einde van zijn eigen beurt al de pil van de volgende. */
+  g._vijandBeurt = true;
+  g._gehandeld = new Set();
   try {
   /* SNAPSHOT van de vijandlijst: intents als 'Doorslaan'/'Gieten' spawnen mid-lus een
      nieuwe vijand (voegVijandToe pusht op g.vijanden) en een live for-of zou die
@@ -9147,12 +9160,7 @@ async function eindBeurt() {
      snapshot staat hij één volle spelersbeurt met zichtbare intentie klaar. */
   for (const v of [...g.vijanden]) {
     g.herrijzenisNu = false;   /* v109: de knip geldt per reeks, niet voor de hele vijandbeurt */
-    g._aanZet = null;
     if (v.dood || gestopt()) continue;
-    /* AAN ZET (review B4a, vondst 1): van zijn gif-tik tot zijn zet gelezen is. Wat in dat venster
-       sterft (bv. een hoveling die zijn gif-tik vangt), mag de pil die je las niet herschrijven -
-       dicktatorGriffierDood leest dit. */
-    g._aanZet = v;
     v.blok = 0;
     const wasHerrezen = !!v.herrezen;   /* HET PROCES: valt de herverkiezing op zijn eigen gif-tik? */
 
@@ -9210,7 +9218,7 @@ async function eindBeurt() {
     if (gestopt()) return;
 
     const it = v.intent;
-    g._aanZet = null;   /* zijn zet is gelezen: vanaf hier mag een hersync de pil van de VOLGENDE beurt zetten */
+    g._gehandeld.add(v);   /* zijn zet is gelezen: vanaf hier mag een hersync de pil van zijn VOLGENDE beurt zetten */
     if (it) {
       if (it.type === 'aanval' || it.type === 'factuur') {
         /* v109: een factuur is een klap, vast en zonder Kracht; het bedrag komt uit dezelfde
@@ -9259,7 +9267,8 @@ async function eindBeurt() {
     console.error('Fout tijdens de vijandbeurt — beurt veilig teruggeven i.p.v. bevriezen:', e);
     if (gestopt()) return;
   }
-  g._aanZet = null;   /* ook na een 'continue' (de herverkiezing op zijn gif-tik, een gif-dood) of een throw */
+  g._vijandBeurt = false;   /* ook na een 'continue' (de herverkiezing op zijn gif-tik, een gif-dood) of een throw */
+  g._gehandeld = null;
 
   if (alleVijanden().length === 0) { gevechtGewonnen(); return; }
   beginSpelerBeurt();
