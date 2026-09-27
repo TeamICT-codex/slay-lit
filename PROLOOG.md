@@ -255,7 +255,8 @@ op de fakkelchip. Dan zegt de slijm, één keer, op de spraakplaat van het spel:
   spelen kan meteen. Staat het gevecht achter het draai-blok (telefoon staand), dan liggen de vellen stil
   tot het gevecht in beeld is.
 - **Herladen** midden in dat eerste gevecht geeft dezelfde kamer (wéér de Groene Slijm), zonder vellen en
-  zonder zin.
+  zonder zin. Een **nieuwe run met dezelfde (getypte) seed** krijgt gewoon de kamer van haar seed: de
+  seed blijft eerlijk.
 - De slijm blubt die eerste beurt niet door zijn zin heen, en de eenmalige inzage-hint van het eerste
   mobiele gevecht schuift door naar het tweede gevecht (hij lag over de zin).
 - `assets/proloog/slijmklerk.webp` (het oude prototype) is een volle scène, frontaal en zonder poses —
@@ -300,7 +301,9 @@ staan; er is geen herlaad en toestel-terug brengt je niet terug in de proloog.
 { v: 2, jeugddroom, uitweg: 'sprong'|'geduwd', held (game-id), masker: 'woede'|'gif'|'vlucht',
   glimlachen, fotoKantoor, zelfGestempeld, wachtToon: -7, echo: 0|1, echoSeed }
 ```
-`echoSeed` (R5) onthoudt de run waarin de echo speelde (voor de herlaad in de eerste kamer).
+`echoSeed` (R5) onthoudt de run waarin de echo speelde; samen met de markering `echoKamer: 1` in de save
+van die run (`slayit_save_v1`) geeft een herlaad in de eerste kamer dezelfde kamer terug — alleen in
+díé run, niet in een nieuwe run met dezelfde seed.
 Waar het terugkomt:
 - **De Afgrond**: de Kolendruïde zegt je jeugddroom.
 - **De Eindafrekening**: je glimlachen, de foto, je droom, zelf of machinaal afgestempeld.
@@ -368,8 +371,8 @@ gesprek heeft eigen layouts voor staand, breed, smal-breed (700-1080 px) en kort
   Volledig ±40 min (1617 controles).
 - `tools/proloog_landing_acceptatie.js` — de game-kant met een stub-proloog: de landing, de gate, de
   poorten, herbeleven, de Codex (filter 'landing'), en (filter 'echo', deel 8) de echo op zes formaten
-  met contactvellen, doortikken, een kaart spelen, herladen, herbeleven, de daily, reduced motion, lite
-  en de DEV-landing (330 controles, ±6 min).
+  met contactvellen, doortikken, een kaart spelen, herladen, herbeleven, de daily, reduced motion, lite,
+  de DEV-landing en dezelfde seed opnieuw (346 controles, ±7 min).
 - Beide bedienen de worktree vanaf schijf (`route.fulfill`, geen server) en tonen elke gemeten waarde.
 
 ### DEV
