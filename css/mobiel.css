@@ -349,6 +349,9 @@ body[data-modus="mobiel"] .roof-overlay {
 }
 body[data-modus="mobiel"] .roof-kop { font-size: clamp(1.05rem, 3.4vw, 1.5rem); gap: 3px; }
 body[data-modus="mobiel"] .roof-kop small { font-size: clamp(.72rem, 1.9vw, .85rem); }
+/* B3: de KOPIE-stempel op de grote teruggespeelde kaart past op de smallere telefoonkaart */
+body[data-modus="mobiel"] .rs-stempel { font-size: .82rem; padding: 2px 9px 3px; border-width: 2px; bottom: 15%; }
+body[data-modus="mobiel"] .roof-hint { bottom: max(6px, env(safe-area-inset-bottom)); }
 body[data-modus="mobiel"] .roof-kaart { width: clamp(64px, 12vw, 84px); padding: 5px 4px; }   /* v89: 62px-tegels kapten elke kaartnaam af */
 body[data-modus="mobiel"] .roof-waaier { gap: 6px; }
 /* instellingen-paneel niet breder dan een smalle telefoon (min-width:340px lekte rechts eruit) */

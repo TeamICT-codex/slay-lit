@@ -75,7 +75,7 @@ beslissen (Drops/Copycat-breker — zie `.claude/notities/metgezel_impact.md`) e
 
 | Beslissing | Dials (klaar, alleen draaien) |
 |---|---|
-| Erfprins "zeer moeilijk maar nét winbaar solo"? | `COPYCAT_CAP_DMG` (20/30/40), HP 180 (data.js), herroof-drempel, `ROOF_KAART_MS` |
+| Erfprins "zeer moeilijk maar nét winbaar solo"? (B3, De Roof eerlijk) | alles in het blok `ERF` (js/game.js, de sectie DE ERFPRINS — de bron van waarheid, zoals `DICK`): de VORM van zijn klap (`treffers`, `onblokbaar`), het Spiegelrecht per soort (`spiegel.kracht/doornen/klieren/zwak`), `driftbui`, `gifMult`, `cap`/`toeslag`, het noodrantsoen (`rantsoenPerKaart`/`rantsoenMax`/`rantsoenWist`), `plan` per fase. HP helpt niet (gemeten). Meten met `tools/baas-meting/erfprins_meting.js` |
 | Heal-na-elk-gevecht te mild? (tot +17 HP/gevecht) | de heal-hook in `gevechtGewonnen` (opties: <50%-HP-gate / halveren / enkel na elite+) |
 | Slijmkoning-intro-pacing | `STAP` (nu 3900 ms per stadium) |
 | Gifmagiër (co-)sterkste held | pas ná playtest; zo ja: tempo-hefboom (gifflits 0→1), niet de gif-getallen |

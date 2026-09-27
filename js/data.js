@@ -1001,7 +1001,7 @@ const STATUSINFO = {
   laatstevonk: { naam: 'De Laatste Vonk', icoon: '✨', goed: true, uitleg: 'Krijgt aan het einde van elke beurt zoveel licht.' },
   sporenkring: { naam: 'Sporenkring', icoon: '🍄', goed: true,  uitleg: 'Geeft aan het begin van elke beurt alle vijanden zoveel Zwak.' },
   duivelhart:  { naam: 'Duivelhart',  icoon: '🌳', goed: true,  uitleg: 'Geeft aan het begin van elke beurt zoveel Kracht, maar verbrandt evenveel licht.' },
-  gifklieren:  { naam: 'Gifklieren',  icoon: '🧫', goed: true,  uitleg: 'Geeft aan het begin van elke beurt alle vijanden zoveel Gif.' },
+  gifklieren:  { naam: 'Gifklieren',  icoon: '🧫', goed: true,  uitleg: 'Geeft aan het begin van elke beurt de tegenstanders zoveel Gif.' },
   energiekern: { naam: 'Energiekern', icoon: '🔋', goed: true,  uitleg: 'Geeft elke beurt zoveel extra Energie.' },
   ritueel:     { naam: 'Ritueel',     icoon: '🕯️', goed: true,  uitleg: 'Krijgt aan het begin van elke beurt zoveel Kracht.' },
   etterende:   { naam: 'Etterende Wonden', icoon: '🩹', goed: true, uitleg: 'Aanvallen geven zoveel Gif aan het doelwit.' },
@@ -1286,14 +1286,13 @@ const VIJANDEN = {
       return { naam: 'Verdikken', type: 'blok', blok: 16, doe: () => geefStatus(v, 'kracht', 2) };
     }
   },
-  /* Act 2-baas — THE COPYCAT (de Erfprins, het zoontje van de baas). Hij maakt
-     NOOIT iets zelf: hij STEELT je kaarten (uit de gevecht-kopie van je trek/afleg
-     — S.dek blijft heilig), kaatst ze opgewaardeerd terug, en GROEIT (v.gevoed)
-     naarmate jij optimaler speelt (de DICKtator-foreshadow). Geen eigen arsenaal:
-     zonder gestolen kaarten is z'n enige zet pathetisch zwak. De volledige mechaniek
-     (state, stelen, plagiaat, voeding, fases, mercy, het offer-breekpunt) leeft in
-     game.js — zie copycatKies() en de copycat*-helpers. Drops (METGEZELLEN.drops
-     rol:'breker') breekt de machine bij je first-clear: trouw is niet te indexeren. */
+  /* Act 2-baas — THE COPYCAT (de Erfprins, het zoontje van de baas). Hij maakt NOOIT iets
+     zelf: bij je eerste klap rooft hij ad random de helft van je dek uit je trekstapel (per
+     gevecht — S.dek blijft heilig) en speelt die kaarten beurt na beurt terug, met een
+     toeslag per kaartsoort; jouw Kracht, Doornen en Gifklieren worden de zijne (het
+     Spiegelrecht). Is zijn buit op, dan grist hij opnieuw; is ook je trekstapel te dun, dan
+     belt hij Pappie of schreeuwt hij zelf (een kleine klap: jouw kans). De volledige
+     mechaniek leeft in game.js, met alle getallen in ERF (de sectie DE ERFPRINS). */
   /* ====== ZWARTE ZIEL — corruptie die gif verzwelgt (counter op de Gifmagiër) ======
      zwarteZiel:'verminder' (gewone) = halve gif-tik · 'absorbeer' (elite) = gif HEELT het
      wezen · 'counter' (boss-tier) = kaatst gif terug. De Zielslantaarn-relikwie breekt dit.
@@ -1736,7 +1735,7 @@ const GIFHINTS = {
   de_uitgewiste:  '⬛ De Uitgewiste haalt je gif half door — alsof het er nooit was.',
   de_verzwolgene: '🌑 De Verzwolgene vérzwelgt je gif en HEELT ervan — niet vergiftigen!',
   spiegelwachter: '🪞 De Spiegelwachter weerkaatst een deel van je gif terug op JOU.',
-  de_erfprins:    '🪞 De Erfprins kopieert de helft van je gif terug op JOU.',
+  /* (de Erfprins kaatst geen gif meer: hij rooft je gifkaarten en speelt ze terug — dat staat op zijn pil) */
   paddenstoelman: '🍄 De Paddenstoelman is gif-immuun — de sporen gedijen júist op je gif.',
   de_inktvlek:    '🩸 De Inktvlek vat geen gif — hier helpt enkel directe schade.'
 };
@@ -1844,12 +1843,19 @@ const UITSPRAKEN = {
     }
   },
   /* De Erfprins = THE COPYCAT: nepo-baby die nooit iets zelf maakte. Eerst pappies
-     geld, nu steelt hij jóuw kaarten. Hij verafschuwt Drops — trouw kan hij niet kopiëren. */
+     geld, nu steelt hij jóuw kaarten. Deadpan, Vlaams, de verwende zoon van de baas. */
   _erfprins: {
     intro:  '„EINDELIJK — IEMAND OM VAN AF TE KIJKEN."',
     woede:  '„Au — je SLÁÁT me?! Onbeschofte parvenu. Goed dan."',
     roof:   '„Laat eens zien wat je hébt... GEEF HIER. Het wordt nú MÍJN werk."',
-    fase2:  '„Wéét je wel wie mijn váder is?! Ik hóéf niks zelf te maken."',
+    /* de buit-beat (zijn eerste beurt na de Roof), één per ontmoeting in de rij */
+    buit: [
+      '„Kijk eens wat ik allemaal heb. Allemaal van mij. Deze eerst.”',
+      '„Wéét je wel wie mijn váder is? Ik hóéf niks zelf te maken. Deze eerst.”',
+      '„Ik heb er een systeem voor. Het systeem is: ik neem het. Deze eerst.”'
+    ],
+    retour: '„Hier. Terug. Ik heb hem verbeterd.”',
+    vloek:  '„Bah. Wat is dít? Dat staat niet in mijn catalogus.”',
     fase3:  '„ALLES wat jij kan, kan ik óók — ik kopieer het gewoon!"',
     dood:   '„Maar... ik kopieerde alles... waarom verlies ík...?"',
     doodGebroken: '„Trouw... dát stond niet in mijn catalogus... dát kon ik niet kopiëren..."',
@@ -1875,7 +1881,7 @@ const UITSPRAKEN = {
     /* grief-haak: ná Drops' offer claimt de Erfprins de overwinning — tot Drops de Witte terugkeert
        (met de metgezellen geparkeerd onbereikbaar) */
     dossier: '„Ik heb je hond geïndexeerd. Dossier gesloten."',
-    /* DE PLAGIAATFASE: zijn weigering om te sterven zolang jouw werk in zijn handen is */
+    /* HET NOODRANTSOEN: hij valt, verscheurt wat van jouw werk naast zijn plan ligt, en staat op */
     plagiaat: '„Wegwerpwerk? WEGWERPWERK?! Jouw leven is mijn NOODRANTSOEN."',
   }
 };
@@ -1973,7 +1979,7 @@ const BESTIARIUM = {
   de_archivaris: { act: 2, soort: 'Elite', lore: 'Een gehulde archivaris-inquisiteur met een geketend grootboek en een mantel van dossiers. Hij vergeet niets, vergeeft niets, en zet elke beurt een nieuwe rode zegel bij — zijn macht stapelt en stapelt.', notitie: 'Hoe langer hij leeft, hoe harder hij slaat. Sla snel toe.' },
   de_drempelwachter: { act: 2, soort: 'Wachter', lore: 'Niet alles wat je met scherven wekt, is je gunstig gezind. Voed je de drempel, dan krijgt hij een gezicht: as, oude vlam, en de rotsvaste overtuiging dat jíj de leugen bent die moet worden tegengehouden. Aan tafel is hij hoffelijk — daarachter niet meer.', notitie: 'De bankhouder int zelf. Om de derde beurt komt het Drempelvuur; tel mee en blok op de maat.' },
   het_origineel: { act: 2, soort: 'Episch', lore: 'Het ene ware origineel waarvan heel het Archief zijn bleke kopieën aftrekt — en het houdt vol dat JIJ de namaak bent. Het straalt warm goud-karmozijn in een wereld van koud grijs, en kaatst je eigen klap terug als een vergeelde echo.', notitie: 'Het weerkaatst je sterkste klap. Verdeel je schade i.p.v. alles in één slag.' },
-  de_erfprins: { act: 2, soort: 'Baas', lore: 'De onverdiende erfgenaam van het Archief: een verwend jong dat zelf nooit iets maakte en nu je halve dek rooft om je ermee af te maken. Zonder iets om na te apen is hij niets — mét jouw werk is hij dodelijk.', notitie: 'Hij steelt je beste kaarten. Laat hem níéts overhouden: zolang jouw werk in zijn handen is, weigert hij te vallen.' },   /* v128: de metgezel-zin is geschrapt — met de metgezellen geparkeerd bestaat die breker niet meer (ontgrendelMetgezel heeft geen schrijver), en het Bestiarium wees hem nog aan als DE tip. Zodra de nieuwe Copycat-breker beslist is (drempeltafel_plan.md §2.11), komt hier zijn zin. Sinds DE NISSEN DICHT: zie M_metgezel_parkering_plan.md §2.7 */
+  de_erfprins: { act: 2, soort: 'Baas', lore: 'De onverdiende erfgenaam van het Archief: een verwend jong dat zelf nooit iets maakte en nu je halve dek rooft om je ermee af te maken. Zonder iets om na te apen is hij niets — mét jouw werk is hij dodelijk.', notitie: 'Je eerste klap sluit je beurt en kost je de helft van je dek — speel eerst de rest. Wat hij terugspeelt, staat op zijn pil; jouw Kracht en Doornen worden de zijne. Een vloek laat zich niet kopiëren. En tel zijn noodrantsoen: zolang hij naast zijn plan schoon werk heeft, staat hij één keer op.' },   /* v128: de metgezel-zin is geschrapt — met de metgezellen geparkeerd bestaat die breker niet meer (ontgrendelMetgezel heeft geen schrijver), en het Bestiarium wees hem nog aan als DE tip. Zodra de nieuwe Copycat-breker beslist is (drempeltafel_plan.md §2.11), komt hier zijn zin. Sinds DE NISSEN DICHT: zie M_metgezel_parkering_plan.md §2.7 */
   /* Act 3 — het Slachtblok */
   de_omroeper: { act: 3, soort: 'Meeloper', lore: 'Zijn rechterarm vergroeide tot een bronzen roeptoeter en zijn eigen stem is hij al jaren kwijt. Wat eruit galmt is de wil van de heerser — hard genoeg om de rest driester te maken.', notitie: 'Zijn Afkondiging buft het hele hof. Snoer hem vroeg de mond.' },
   het_klapvee: { act: 3, soort: 'Meeloper', lore: 'Tientallen handen en identieke glimlachjes, opgestapeld tot één wezen zonder hoofd. Het klapt omdat de rest klapt. Alleen is het zielig; in massa is het dodelijk.', notitie: 'Klapt harder per levende bondgenoot. Dun eerst de kudde uit.' },

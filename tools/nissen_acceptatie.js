@@ -910,6 +910,10 @@ async function stap(page, scen, naam, uitzondering) {   /* uitzondering: de ene 
           S.gevecht = null; S.act = 2; S.fakkel = fakkelMax(); S.pos = null;
           S.maxHp = sterk ? 260 : 90; S.hp = sterk ? 260 : 80; S.dranken = sterk ? ['heeldrank', 'heeldrank', 'heeldrank'] : ['heeldrank'];
           let v = 0; while (S.dek.length < 18 && v++ < 40) S.dek.push(nieuweKaart(kiesUit(heldPool())));
+          /* B3 (De Roof, eerlijk): tegen de nieuwe Erfprins helpt HP niet — een sterke run is een
+             sterk DEK. Met alleen 260 HP en een willekeurig pooldek verbruikte deze domme bot al
+             zijn aanvallen (aangetast = eenmalig) en haalde hij hem nooit meer onder nul. */
+          if (sterk) ['genadeslag', 'zware_klap', 'zware_klap', 'uithaal'].forEach(id => { const c = nieuweKaart(id); c.up = true; S.dek.push(c); });
           S.kaart = genereerKaart();
           startGevecht(['de_erfprins'], 'baas', 15);
           const g = S.gevecht;
