@@ -221,7 +221,24 @@ const HELPER = `(() => {
     const teksten = ['#baas-intro small', '.inv-tekst', '#baas-intro .morf-hint'].map(s => een(s)).filter(Boolean);
     return { klap, klapBinnen: !!klap && klap.t >= -0.5 && klap.b <= H + 0.5 && klap.l >= -0.5 && klap.r <= W + 0.5, tekstOpKlap: som(klap ? [klap] : [], teksten) };
   }
-  window.__EA = { rust, roof, speel, speelRecorder, inv };
+  /* de vinger per frame volgen, van de eerste gekozen kaart tot die verbrandt (tijdecht, ook onder
+     last): landt hij ÓP de kaart, en raakt hij ooit de kop? */
+  async function vingerVolg(max) {
+    const t0 = performance.now();
+    let kEl = null;
+    while (!(kEl = document.querySelector('.roof-overlay .roof-kaart.gekozen')) && performance.now() - t0 < (max || 9000)) await new Promise(r => setTimeout(r, 20));
+    if (!kEl) return { geen: true };
+    let op = false, kop = 0; const t1 = performance.now();
+    while (kEl.isConnected && !kEl.classList.contains('verbrandt') && performance.now() - t1 < 2000) {
+      const ov = document.querySelector('.roof-overlay'); const vi = ov && ov.querySelector('.vieze-vinger.wijst');
+      const v = R(vi), k = R(kEl), kp = R(ov && ov.querySelector('.roof-kop'));
+      if (v && k) { const cx = (v.l + v.r) / 2, cy = (v.t + v.b) / 2; if (cx >= k.l && cx <= k.r && cy >= k.t && cy <= k.b) op = true; }
+      kop = Math.max(kop, snij(v, kp));
+      await new Promise(r => requestAnimationFrame(r));
+    }
+    return { op, kop };
+  }
+  window.__EA = { rust, roof, speel, speelRecorder, inv, vingerVolg };
 })();`;
 
 /* ---------- pagina openen en de Erfprins zetten ---------- */
@@ -395,9 +412,9 @@ async function regie(browser, fk) {
       if (N > 0) { const bron = S.dek.slice(); g.trek = Array.from({ length: N }, (_, i) => { const c = Object.assign({}, bron[i % bron.length]); c.uid = 800000 + i; return c; }); }
       window.__roof = copycatDeRoof(g);
     }, N);
-    await wacht(page, () => !!document.querySelector('.roof-overlay.open .vieze-vinger.wijst') && !!document.querySelector('.roof-kaart.gekozen'), 9000);
-    await slaap(380);
+    const vin = await page.evaluate(() => __EA.vingerVolg(9000));
     const m = await page.evaluate(() => __EA.roof());
+    m.vingerInKaart = vin.op; m.vingerKop = vin.kop;
     const lumRoof = await lum(page, kern(r0.baasSil));
     const zichtR = (lumRust && lumRoof) ? +(lumRoof / Math.max(1, lumRust)).toFixed(2) : null;
     const wat = `de Roof ${N ? N + ' kaarten' : 'echte trekstapel (' + m.kaartenN + ')'}${f !== 'max' ? ', fakkel 0 + vier statussen' : ''}`;
@@ -413,8 +430,10 @@ async function regie(browser, fk) {
     const it = await page.evaluate(() => { const v = S.gevecht.vijanden[0]; return v.intent && v.intent.type; });
     await page.evaluate(() => { const v = S.gevecht.vijanden[0]; if (v.intent && v.intent.doe) window.__buit = v.intent.doe(v); });
     await wacht(page, () => !!document.querySelector('.roof-overlay.buit-overlay.open'), 4000);
-    await slaap(1150);   /* de vinger tikt zijn eerste kaart aan (420 + 320 ms transitie) */
-    const bu = await page.evaluate(() => __EA.roof());
+    /* de vinger tikt zijn eerste kaart aan (na 420 ms + 320 ms transitie; onder last later): wacht
+       tot hij staat (of tot de beat bijna om is, 2,1 s), dan meten */
+    const t0b = Date.now(); let bu = null;
+    while (Date.now() - t0b < 2100) { bu = await page.evaluate(() => __EA.roof()); if (bu.vingerInKaart && Date.now() - t0b >= 800) break; await slaap(80); }
     const lumBuit = await lum(page, kern(r0.baasSil));
     const zichtB = (lumRust && lumBuit) ? +(lumBuit / Math.max(1, lumRust)).toFixed(2) : null;
     await shot(page, `${vp.naam}_buit`);
