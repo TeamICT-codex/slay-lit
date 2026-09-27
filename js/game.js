@@ -6118,12 +6118,14 @@ function renderGevecht() {
        de claqueur op en werden de kiezers in dat frame onzichtbaar (display:none) - precies
        tijdens DE STEMMING, de enige beat die de kernmechaniek zichtbaar maakt. De vlag
        staat daarom op de VIJAND, niet op de DOM; zelfde patroon als de fase-klassen hieronder. */
-    if (g.ceremonie && v._kiezer) {
+    /* Finale B4b: v._kolomWeg = de regie heeft de kolom zelf opgeruimd (de gevluchte kiezers onder
+       het doek van de herverkiezing, zie dicktatorHerverkiezing t=2250) - dan is de afgang voorbij. */
+    if (g.ceremonie && v._kiezer && !v._kolomWeg) {
       d.wrap.classList.add('kiezer');
       if (v._kiezerWeg) d.wrap.classList.add('exit', 'sterft', 'vlucht');   /* de vlucht is al begonnen: die stand hoort te blijven */
       else d.wrap.classList.remove('sterft');                               /* hij stemt nog - zichtbaar dus */
     }
-    const exitBezig = !!g.ceremonie && (d.wrap.classList.contains('exit') || d.wrap.classList.contains('geveld')
+    const exitBezig = !!g.ceremonie && !v._kolomWeg && (d.wrap.classList.contains('exit') || d.wrap.classList.contains('geveld')
       || d.wrap.classList.contains('vlucht') || d.wrap.classList.contains('kiezer'));
     const wasDood = d.wrap.classList.contains('sterft');
     /* B2 · B0.7: verliesHp zet .sterft zelf al op de wrap, vóór deze render - voor een baas
@@ -8434,9 +8436,19 @@ function dicktatorHerverkiezing(g, doel) {
     toneelDoek(0.92, 300);
     if (window.Vista && Vista.zetLicht) Vista.zetLicht(0.08);
   });
-
   /* t=2300 - DE HERRIJZENIS: de gouden inslag, hij staat op in zijn herkozen gedaante */
   op(2300, () => {
+    /* Finale B4b (B2.2 + B0.5): de gevluchte kiezers geven hun kolom terug nog ONDER HET DOEK (.92),
+       op het moment dat hij opstaat - zo rijst hij meteen op de maat van IV (alleen = volle maat,
+       #vijanden-rij[data-n]). Vroeger kwam hun kolom pas 750 ms na het einde van de ceremonie (4400)
+       vrij, midden in „HET VOLK heeft gesproken…": de baas groeide dan van de hofmaat naar volle
+       maat, raakte de staande plaat en die sprong 393 px naar de andere kant (846x381). Tijdens de
+       stemming en de vlucht (600-1900) blijven ze staan (v121, bugfix A4). */
+    kiezers.forEach(x => {
+      x._kolomWeg = true;
+      const xe = actorEl(x); if (xe) xe.classList.add('sterft', 'lijk-weg');
+    });
+    if (kiezers.length) _rijMaat();
     const sc = $('#scherm-gevecht');
     if (sc) { sc.classList.add('goud-flits'); setTimeout(() => sc.classList.remove('goud-flits'), dtempo(900)); }
     toneelDoek(0.35, 400);
