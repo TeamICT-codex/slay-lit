@@ -170,7 +170,7 @@ window.SLAYLIT_PROLOOG = (function () {
       titel: 'Het Functioneringsgesprek',
       beurt: 'Functioneringsgesprek · beurt {n}',
       start: { welzijn: 40, energie: 3 },
-      facturabiliteit: 78,
+      facturabiliteit: 98,   // fixer R5 F1: de terugval (herbeleven vanaf hier); anders begint de chip op de meter van het kantoor (78 + 5 × 4 = 98 na het quotum)
       held: { naam: 'Medewerker 0042', welzijn: 'WELZIJN', nr: '0042' },
       // art: optioneel (assets/proloog/PROMPTS.txt, baas_kast): zonder plaat tekent de css de beige kast met het groene oog
       baas: { naam: 'B.A.A.S.', waarde: 'AANDEELHOUDERSWAARDE', oneindig: '∞', fact: 'FACT.', art: artAls('baas_kast') },
@@ -207,12 +207,16 @@ window.SLAYLIT_PROLOOG = (function () {
       // de zwevende getallen (zoals de schade in het spel): een mailtje laat ∞ niet zakken
       fx: { mailtje: '+6 % FACTURABILITEIT', verantwoord: '+5 % FACTURABILITEIT', blok: '+{n} BLOK', geblokt: 'GEBLOKT', energie: '+{n} ⚡', diefstal: '−1 ⚡' },
       foto: { src: SLOTS.foto.src, stip: 'niet-factureerbaar' },
-      // de uitweg van wie springt: drie je-regels met een Ken Burns, dan 'Laat los'
-      kijk: { regels: ['Daar ben je.', 'Het sterretje brandt nog in je hand.', 'Dat licht was nooit te koop.'], cta: 'Laat los', slot: 'Wat je vasthield, is niet meer van hen.' },
+      // de uitweg van wie springt: twee je-regels met een Ken Burns, dan 'Laat los'
+      kijk: { regels: ['Daar ben je.', 'Het sterretje brandt nog in je hand.'], cta: 'Laat los', slot: 'Wat je vasthield, is niet meer van hen.' },
       // fixer R4 F1 + slot R4 (keuze 3): 'Niemand duwt je — je kiest zelf.' las op een dak, na 'Laat los', te dicht
       // bij de zelfdodingslezing; 'Het licht gaat je voor.' ook ('voorgaan' = een eufemisme voor sterven). Nu over
       // het bedrijf, niet over vallen: wat je vasthield (de foto, het licht) is niet meer van hén. De foto valt
-      // de schacht in en wacht in de val naast de knop −∞; het rijmt op 'LOSGELATEN.' en 'U had al losgelaten.'.
+      // de schacht in en wacht in de val naast de knop −∞.
+      // Fixer R5 F1 (keuze 3): daarna gaat het hek open en rolt je lege stoel met de badge de lift in, het warme
+      // licht van de foto achterna (de spiegel van 'geduwd', zonder B.A.A.S.); het hek valt dicht vóór de slotzin.
+      // Zo zie je 0042 instappen, nooit iets anders. 'Dat licht was nooit te koop.' is weg: twee moraalregels na
+      // elkaar ('tell, not show'); het sterretje in je hand draagt het beeld al.
       lift: { bord: 'DAK' },
       krant: 'FUNCTIONERINGSGESPREK  -  UW WELZIJN IS ONZE KPI  -  ',   // de lichtkrant van de zeppelin (pixelfont)
     },
@@ -247,7 +251,7 @@ window.SLAYLIT_PROLOOG = (function () {
         tekenregel: 'Handtekening medewerker:',
         pen: 'Teken',                       // de lege pen (geduwd): alleen een groef
         geduwd: 'Uw handtekening is niet vereist. Wij hadden hem al.',
-        sprong: 'U tekende niet. U had al losgelaten.',
+        sprong: 'U tekende niet. U had uw handen vol.',   // fixer R5 F1: niet 'U had al losgelaten.' ('loslaten' is ook een eufemisme voor sterven); je hield de foto vast
         wachtMs: 6000,
       },
       // IN DE WACHT (R2): de goederenlift daalt door de etages van de outro (proloog/val.js).
@@ -259,7 +263,7 @@ window.SLAYLIT_PROLOOG = (function () {
         krant: ['Blijf even aan de lijn.', 'Uw oproep is belangrijk voor ons.'],   // de lichtkrant, om beurten
         zeppelin: 'UW WELZIJN IS ONZE KPI  -  ',                     // op de romp, boven het dak
         verbinding: 'VERBINDING VERBROKEN',   // de meter-LED op 80 %: de ENIGE keer in de hele proloog
-        vloer: 'De vloer is een veronderstelling. U had het moeten nalezen.',
+        vloer: 'De vloer is een veronderstelling. Je had het moeten nalezen.',   // fixer R5 F1: je, niet u — ze komt 1,3 s na VERBINDING VERBROKEN
         slot: 'Voor het eerst in vijfentwintig jaar wordt er niets gefactureerd.',
         // de bordjes op de etages
         deur: 'J. DEVROE', kast: ['VOORZIENING', 'GETROFFEN'], cubicle: '7', friet: 'FRIET', poster: 'GLIMLACH!',
@@ -322,7 +326,7 @@ window.SLAYLIT_PROLOOG = (function () {
     const droom = typeof jeugddroom === 'string' ? jeugddroom.trim() : '';
     let aanloop = typeof z.aanloop === 'string' ? z.aanloop : '';
     if (aanloop.indexOf('{jeugddroom}') !== -1) {
-      aanloop = droom ? aanloop.replace('{jeugddroom}', droom) : (z.aanloopZonder || aanloop.replace('{jeugddroom}', 'iets'));
+      aanloop = droom ? aanloop.replace('{jeugddroom}', () => droom) : (z.aanloopZonder || aanloop.replace('{jeugddroom}', 'iets'));   /* een functie: een '$&' in de droom blijft letterlijk (fixer R5 F1) */
     }
     return (aanloop ? aanloop + ' ' : '') + z.kern;
   }

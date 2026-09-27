@@ -48,8 +48,11 @@
        het canvas, anker 'knop'), druk() (de knop is ingedrukt), kooltje() → { x, y, maat }
        in viewport-px (zoals de Afgrond haar kooltje doorgeeft), stop(), get t, get lite }
      voorbak(tekst)                   bakt de statische beelden en de lucht alvast (idle)
-   Duur onaangeraakt: 12,6 s tot de Afgrond (geduwd: B.A.A.S. drukt op 12,08 s, de
-   Afgrond volgt na de drukanimatie van proloog.js). */
+   Duur onaangeraakt: 14,0 s tot de Afgrond (geduwd: B.A.A.S. drukt op 13,5 s, de
+   Afgrond volgt na de drukanimatie van proloog.js). Fixer R5 F1: B.A.A.S. drukte op 12,08 s,
+   0,4 s nadat de slotzin volledig stond — het emotionele slot las je amper. Nu staat hij
+   ≥ 1,8 s volledig; op het rustige pad (reduced motion, lite) staat hij er in één keer (geen
+   typen) en drukt B.A.A.S. op hetzelfde moment als op het natuurlijke pad. */
 (function () {
   'use strict';
 
@@ -91,7 +94,8 @@
     verbinding: 7.45, kijk: 1.0, oranje: 8.2, ledUit: 8.55, ledWeg: 8.8, /* het laatste gekochte licht; kijk = minimale kijktijd van VERBROKEN bij doortikken */
     vloer: 8.6, vloerTekst: 8.75, vloerTekstWeg: 10.4,        /* de vloer: factuurvellen (0042 staat dan al in zijn eigen gloed) */
     stilte: 8.95, stilteMs: 1500,                             /* 1,5 s stilte (de vellen mogen nog uitklinken) */
-    kooltje: 10.45, slot: 10.6, fotoIn: 10.6, knop: 11.2, baas: 12.08, einde: 12.6
+    kooltje: 10.45, slot: 10.6, fotoIn: 10.6, knop: 11.2, baas: 13.5, einde: 14.02,
+    slotCps: 60   /* de slotzin typt 60 tekens/s: 66 tekens, volledig op ±11,7 s → nog ≥ 1,8 s tot B.A.A.S. drukt (fixer R5 F1) */
   };
   /* één tik = één stap: naar de volgende mijlpaal (vertrek, elke etage, VERBINDING, LED uit, kooltje, knop) */
   const MIJLPALEN = [VERTREK, ...CENTRUM.slice(1, 7), TL.verbinding, TL.ledUit, TL.kooltje, TL.knop];
@@ -455,7 +459,7 @@
     const KRANT = [hoofd(TX.wacht || 'Een ogenblikje. Ik zet u even in de wacht.'),
       ...((Array.isArray(TX.krant) && TX.krant.length >= 2) ? TX.krant : ['Blijf even aan de lijn.', 'Uw oproep is belangrijk voor ons.']).map(hoofd)];
     const VERBINDING = hoofd(TX.verbinding || 'VERBINDING VERBROKEN');
-    const VLOER = hoofd(TX.vloer || 'De vloer is een veronderstelling. U had het moeten nalezen.');
+    const VLOER = hoofd(TX.vloer || 'De vloer is een veronderstelling. Je had het moeten nalezen.');
     const SLOT = hoofd(TX.slot || 'Voor het eerst in vijfentwintig jaar wordt er niets gefactureerd.');
 
     /* ---------- DOM: het canvas (op zijn eigen resolutie, de browser schaalt op), de
@@ -687,7 +691,7 @@
         const a = klem(Math.min((t - TL.vloerTekst) / 0.25, (TL.vloerTekstWeg - t) / 0.35), 0, 1);
         onderschrift(VLOER, '#cfc0a0', a, 999);
       }
-      if (t >= TL.slot && ik < 1) onderschrift(SLOT, '#ffd9a0', 1 - ik, Math.floor((t - TL.slot) * 60));
+      if (t >= TL.slot && ik < 1) onderschrift(SLOT, '#ffd9a0', 1 - ik, rustig ? 999 : Math.floor((t - TL.slot) * TL.slotCps));   /* rustig: in één keer */
       if (rustig && dEcht < 7.2 && t > VERTREK) {   /* rustig: de etage wisselt in een korte dip naar zwart */
         const fr = dEcht - Math.floor(dEcht), a = klem(1 - Math.abs(fr - 0.5) * 3.2, 0, 1);
         if (a > 0.01) {
