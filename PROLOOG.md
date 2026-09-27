@@ -365,11 +365,11 @@ gesprek heeft eigen layouts voor staand, breed, smal-breed (700-1080 px) en kort
 - `tools/proloog_acceptatie.js` — de échte proloog, van 'Nieuw avontuur' tot de landing en (deel 17
   'echo') de eerste kamer; per deel te filteren (hoofd, skip, herbeleef, wipe, poort, stub, rustig,
   glimlach, lite, val, outro, kantoor, breek, gesprek, integratie, fixer, afrekening, echo, statisch).
-  Volledig ±37 min.
+  Volledig ±40 min (1617 controles).
 - `tools/proloog_landing_acceptatie.js` — de game-kant met een stub-proloog: de landing, de gate, de
   poorten, herbeleven, de Codex (filter 'landing'), en (filter 'echo', deel 8) de echo op zes formaten
   met contactvellen, doortikken, een kaart spelen, herladen, herbeleven, de daily, reduced motion, lite
-  en de DEV-landing.
+  en de DEV-landing (330 controles, ±6 min).
 - Beide bedienen de worktree vanaf schijf (`route.fulfill`, geen server) en tonen elke gemeten waarde.
 
 ### DEV

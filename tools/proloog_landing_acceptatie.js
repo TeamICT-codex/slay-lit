@@ -299,7 +299,7 @@ function contactvel(frames, t0Wand, bestand) {
   /* per moment het eerste beeld dat de browser op of na dat moment tekende */
   const kies = CONTACT_MS.map(o => frames.find(f => f.ts * 1000 >= t0Wand + o) || frames[frames.length - 1]);
   const beelden = kies.map(f => PNG.sync.read(Buffer.from(f.data, 'base64')));
-  const w = beelden[0].width, h = beelden[0].height, K = 4, R = 3, G = 4;
+  const w = Math.max(...beelden.map(b => b.width)), h = Math.max(...beelden.map(b => b.height)), K = 4, R = 3, G = 4;
   const vel = new PNG({ width: K * w + (K + 1) * G, height: R * h + (R + 1) * G });
   for (let i = 0; i < vel.data.length; i += 4) { vel.data[i] = 20; vel.data[i + 1] = 16; vel.data[i + 2] = 24; vel.data[i + 3] = 255; }
   beelden.forEach((b, i) => {
@@ -411,7 +411,7 @@ async function deelEcho(browser) {
       const b = await echoStand(page);
       t(b.draai && b.velNu >= 5 && b.brandt === 0 && b.contract.echo === 0 && b.contract.echoSeed === b.seed && b.zichtbaarVanaf === null && !b.plaat.length,
         `${L}: achter het draai-blok liggen de ${b.velNu} vellen stil (brandt ${b.brandt}), contract.echo nog ${b.contract.echo} (echoSeed "${b.contract.echoSeed}" = de run), geen zin`);
-      film = await echoFilm(page, a.vp);
+      film = await echoFilm(page, { w: a.vp.h, h: a.vp.w });   /* gefilmd op de maat van het gedraaide toestel */
       /* het toestel draait (headless kan een schermvullend venster niet van maat veranderen: eerst uit fullscreen) */
       await page.evaluate(() => (document.fullscreenElement && document.exitFullscreen) ? document.exitFullscreen().catch(() => {}) : null);
       await slaap(150);
