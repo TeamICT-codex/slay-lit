@@ -479,7 +479,7 @@ async function regie(browser, fk, BANNERS) {
     /* fase 2 (1 kaart) en fase 3 (3 kaarten) uit zijn echte buit, plus de LANGSTE stempels: Zware Klap+ en Kolenstempel+
        in fase 3 ("KOPIE · Junior — 10+16🩸", "… — 💪+1 🌵+1"), zodat de breedte niet van de worp afhangt */
     for (const [fase, lang] of [[2, false], [3, false], [3, true]]) {
-      await page.evaluate(([fase, lang]) => { const g = S.gevecht; const v = g.vijanden[0]; g.roofBeurt = false; S.hp = S.maxHp; /* drie klappen na elkaar: de held mag niet sterven */ v.gestolen = (v.gestolen || []).filter(s => s.soort !== 'vloek'); v.fase = fase; v.copyKracht = ERF.toeslag[fase]; v.hp = Math.max(v.hp, 60); if (fase === 3) v.plagN = 1;
+      await page.evaluate(([fase, lang]) => { const g = S.gevecht; const v = g.vijanden[0]; g.roofBeurt = false; S.maxHp = Math.max(S.maxHp, 400); S.hp = S.maxHp; /* drie klappen na elkaar (in het donker, Kwetsbaar): de held mag niet sterven */ v.gestolen = (v.gestolen || []).filter(s => s.soort !== 'vloek'); v.fase = fase; v.copyKracht = ERF.toeslag[fase]; v.hp = Math.max(v.hp, 60); if (fase === 3) v.plagN = 1;
         if (lang) { v.plagN = 0; v.gestolen = ['zware_klap', 'kolenstempel'].map(id => { const c = nieuweKaart(id); c.up = true; return erfBuitKaart(c); }).concat(v.gestolen); }
         v.intent = VIJANDEN[v.id].kies(v, v.beurtTeller); renderGevecht(); }, [fase, lang]);
       await slaap(250);
