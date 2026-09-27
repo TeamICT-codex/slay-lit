@@ -7403,26 +7403,26 @@ const DICK = {
   drempels: [2 / 3, 1 / 3],
   vorm2Pct: 0.42,                           /* DE HERVERKIEZING: ~100 HP bij 240 */
   /* I · DE AANKLACHT */
-  AANZEGGING: 10, VONNISSLAG: 13,
+  AANZEGGING: 11, VONNISSLAG: 14,
   /* de zitting: HET VONNIS = tweede zitting in dezelfde scène of geen dossier;
      EIGENHANDIG = de griffier leeft niet (de beloning: lichter, en géén decreet) */
-  VONNIS: 16, EIGENHANDIG: 12,
+  VONNIS: 17, EIGENHANDIG: 13,
   /* II/III · de vloeken-as: KARAKTERMOORD + KM_PER_VLOEK per vloek in het gevecht, geen cap.
      Teksten noemen deze getallen nooit letterlijk: {KM}/{V} via dickTekst (review F9). */
-  KARAKTERMOORD: 10, KM_PER_VLOEK: 3,
-  EXECUTIE: 20,
+  KARAKTERMOORD: 11, KM_PER_VLOEK: 1,
+  EXECUTIE: 21,
   APPLAUS: 5,
   /* IV · HET MANDAAT: cyclus van twee (AANLOOP → HET ONTSLAG). Het Ontslag loopt op;
      voorbij het einde van de lijst blijft het laatste bedrag staan. */
-  ONTSLAG: [20, 30, 40], DONDERREDE: 14,
+  ONTSLAG: [21, 32, 42], DONDERREDE: 15,
   /* DE FACTUUR per scène: basis + tarief x belaste posten. Pas vanaf II, zonder hoftoeslag
      en zonder indexering. vrij = DE VRIJSTELLING (eerste N posten per beurt gratis), op 0. */
-  FACTUUR: { basis2: 5, tarief2: 3, basis3: 7, tarief3: 4, basis4: 7, tarief4: 4, vrij: 0 },
+  FACTUUR: { basis2: 5, tarief2: 2, basis3: 6, tarief3: 3, basis4: 6, tarief4: 3, vrij: 0 },
   POSTEN: { gratis: 2, een: 1 },   /* gewicht per gespeelde kaart: 0 energie = 2 posten, 1 = 1, 2+ = 0 */
   decreetCap: 2,          /* harde grens: één per scène (I en II), nooit meer dan 2 per gevecht */
   speelbaarGuard: 6,      /* onder 7 speelbare kaarten geen decreet meer (dan HET VONNIS) */
   lasterCap: 2, dekMinLaster: 16,
-  kiezersCap: 3, krachtPerKiezer: 2,
+  kiezersCap: 3, krachtPerKiezer: 1,
   /* DE ZITTING LOOPT (R3): elke scène na een overgang duurt minstens N = minZetten[scène] van
      zijn eigen zetten (HERSCHIKT niet meegeteld). N is een eigen knop, los van de lengte van
      zijn cyclus (3 zetten in I-III, 2 in IV): met N = 2 speelt II of III niet elke zet. Tot
