@@ -29,6 +29,7 @@ patcht, devOutro bij de outro — plus index.html en de twee CSS-sporen.
 | `DICK.tempo` (ceremonieschaal voor het meetharnas) | `js/game.js`, `const DICK` | Mag blijven staan (hij is 1 in het spel — alleen `devInstZet`/`devInstWis` en de bootregel van het dev-blok raakten hem aan, en die gaan mee weg). Zet hem niet in een instellingenmenu |
 | De haak op het versielabel | zit IN het dev-blok (`devVersieHaak`, `DEV_LANGEDRUK_MS`, `DEV_TIKKEN`, `DEV_TIKVENSTER`) | Verdwijnt vanzelf met het blok. Controleer daarna dat `#inst-versie` in `index.html:229` geen listeners meer krijgt — het label zelf blijft (v116) |
 | De acceptatiesuite van het menu | `tools/devmenu_acceptatie.js` | Mag blijven (tools/ gaat niet mee in de shell), maar hij faalt na het wissen — schrap hem samen met het blok |
+| B2 HET BAZENTONEEL: de testhaak `Vista.poseNu` (welke pose-textuur een acteur nu toont) | `js/scene3d.js` — `function poseNu` (`DEV-SHORTCUT (testhaak)`), de regel `a.poseNu = …` in de framelus en `poseNu` in het `return`-object | Mag blijven (onschuldige getter, het spel roept hem niet aan). Wis je hem, dan faalt de B0.6-sectie van `tools/bazentoneel_acceptatie.js`; die suite gebruikt verder de bestaande dev-bazen (`devSlijmkoning`, `devErfprins`, `devDicktator`) en gaat dus samen met het dev-blok |
 
 **Waarom kritisch:** alles staat op `window`, dus elke speler kan via de console
 `devSprongAct2()` aanroepen of — erger — de logo-klik per ongeluk raken. Op mobiel opent

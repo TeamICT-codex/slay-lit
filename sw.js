@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v134'; // v134: GESPREK EN AFREKENING (proloog ronde 4) - het Functioneringsgesprek als beige kopie van het gevechtstoneel op het dak, de foto die je vasthoudt tot je loslaat, en de Eindafrekening als matrixprinter met je eigen cijfers, de vastloper, het ontslagbesluit en de lege pen
+const CACHE = 'slayit-v135'; // v135: HET BAZENTONEEL - dertien plaatsingsregels voor alle bazen: geen zwevende figuren door statuschips, geen tekst over de figuren, een stem en een slotwoord per baas, de baaspil nooit in de topbalk, een baas telegrafeert ook in het donker, signatuurposes en een kaderfit in 3D, de verslagen baas blijft liggen
 const BESTANDEN = [
   '.',
   'css/style.css',
@@ -20,6 +20,7 @@ const BESTANDEN = [
   'js/game.js',
   'js/proloog-brug.js',     // proloog R1: de naad (laadt ná game.js; haalt proloog/*.js lui binnen)
   'js/drempeltafel.js',     // v128: DE DREMPELTAFEL (laadt ná game.js)
+  'js/bazentoneel.js',      // B2: HET BAZENTONEEL (laadt ná game.js)
   'js/wereld-terrein.js',
   'js/wereld.js',
   'assets/fonts/fonts.css',

@@ -2700,11 +2700,32 @@ function spreek(actor, pool, kans) {
    De remove-timer loopt nu ook door dtempo, en --spraak-duur voedt de CSS-animatie,
    anders lopen JS en CSS bij DICK.tempo != 1 uit elkaar. */
 let _spraakRij = [], _spraakBezig = false, _spraakT = null;
-function baasSpreekt(tekst, duurMs) {
+/* B2 · B0.4 — opts: { slot, vervalt }.
+   - slot: het SLOTWOORD (de doodregel). Mag nog na g.voorbij, en veegt het bord: een gewone
+     regel die nog stond, zou hem anders voorbij het einde van het gevecht wegduwen.
+   - vervalt (ms): flavor (orakel, scherven-nudge) die langer dan dit op de sluis moet
+     wachten, vervalt - liever niets dan mosterd na de maaltijd. De termijn telt alleen de
+     tijd dat de regel VOORAAN staat en de sluis dicht is (wacht, in _spraakVolgende), niet
+     de tijd achter een andere plaat. */
+function baasSpreekt(tekst, duurMs, opts) {
   if (INST.spraak === false || !tekst) return;
-  _spraakRij.push({ tekst, duur: duurMs || 3200 });
+  const o = opts || {};
+  if (o.slot) _spraakStop();
+  _spraakRij.push({ tekst, duur: duurMs || 3200, wacht: 0, sluisT: null, vervalt: o.vervalt || 0, slot: !!o.slot });
   _spraakVolgende();
 }
+/* B2 · B0.4 — DE TEKSTSLUIS: één regel voor álle baasspraak. Zolang er een scènetitel
+   (.vonnis - een BODY-kind, dus documentbreed zoeken), een fasebanner, de intro, De Roof,
+   de speelkaart van de Erfprins of het decreet staat, start er geen nieuwe plaat, en een
+   plaat die al stond PAUZEERT (css: body:has(...) .baas-spraak - onzichtbaar, animatie
+   stil; hier: de klok stil). Gemeten in de finale-overgangen: 250-1053 ms plaat-over-titel
+   in 10 van de 14 -> 0 ms, en elke regel daarna nog volledig leesbaar.
+   Dezelfde lijst staat in css/style.css bij .baas-spraak: pas ze samen aan.
+   .roof-overlay is alleen De Roof zelf: de Drempeltafel (.dt-overlay) en het Slachtblok
+   (.slachtblok-overlay) lenen dezelfde klasse, en een open tafel hield zo de doodregel van
+   de volgende baas tegen. */
+const _SPRAAK_SLUIS = '.vonnis, .baas-flits, #baas-intro, .roof-overlay:not(.dt-overlay, .slachtblok-overlay), .roof-speel-kaart, .decreet-overlay';
+function _spraakGesloten() { return !!document.querySelector(_SPRAAK_SLUIS); }
 /* HET TONEEL NEEMT HET OVER. v121-fix: de wachtrij houdt netjes één plaat tegelijk, maar
    een GEWONE baasregel die net vóór de fasegrens viel (standaardduur 3200ms) kon de eerste
    regieregel tot 3,2s van zijn beat wegduwen. Elke regie wist daarom eerst het bord: de
@@ -2718,17 +2739,57 @@ function _spraakStop() {
 function _spraakVolgende() {
   if (_spraakBezig || !_spraakRij.length) return;
   const sc = $('#scherm-gevecht');
-  if (!sc || !S.gevecht || S.gevecht.voorbij) { _spraakRij.length = 0; return; }
+  if (!sc || !S.gevecht) { _spraakRij.length = 0; return; }
+  /* na g.voorbij praat alleen het slotwoord nog. Vóór B2 (sinds v121, 483f1dd) wiste deze
+     guard ÉLKE regel, ook de doodregel die gevechtGewonnen pas na g.voorbij aanvraagt: de
+     laatste woorden van elke baas werden nooit getoond (0 van 21 gemeten doodreeksen). */
+  if (S.gevecht.voorbij) {
+    for (let i = _spraakRij.length - 1; i >= 0; i--) if (!_spraakRij[i].slot) _spraakRij.splice(i, 1);
+    if (!_spraakRij.length) return;
+  }
+  /* wachten mag, maar niet eindeloos: flavor vervalt na zijn eigen termijn, elke andere
+     regel na 10 s (een laag die ooit zou blijven hangen, mag niet alle baasspraak stilleggen).
+     B2 F1: de termijn telt alleen de tijd dat de regel VOORAAN staat en de sluis DICHT is.
+     Vroeger telde hij vanaf de aanvraag, ook achter een andere plaat: het orakel bij de
+     eerste ontmoeting met de Erfprins (aangevraagd op +5,2 s, achter de introregel die pas op
+     ~+5,1 s uit de sluis kwam) wachtte zo altijd > 2,5 s en verviel altijd (0 van 4 in beeld).
+     En een regel die achter drie platen van 3,2 s stond, verviel na 10 s zonder ooit te wachten. */
+  const verlopen = it => !it.slot && it.wacht > (it.vervalt || 10000);
+  if (_spraakGesloten()) {
+    const kop = _spraakRij[0], nu = Date.now();
+    if (kop.sluisT != null) kop.wacht += nu - kop.sluisT;
+    kop.sluisT = nu;
+    if (verlopen(kop)) { _spraakRij.shift(); _spraakVolgende(); return; }
+    clearTimeout(_spraakT); _spraakT = setTimeout(_spraakVolgende, 120); return;
+  }
   const item = _spraakRij.shift();
   const d = dtempo(item.duur);
   _spraakBezig = true;
   const el = document.createElement('div');
   el.className = 'baas-spraak';
+  /* B0.4: een eigen stem per baas - de kleur komt uit css (.baas-spraak[data-baas]) */
+  const bbS = $('#baas-balk');
+  if (bbS && bbS.dataset.baas) el.dataset.baas = bbS.dataset.baas;
   el.style.setProperty('--spraak-duur', d + 'ms');
   el.innerHTML = `<span>${item.tekst}</span>`;
   sc.appendChild(el);
+  if (typeof spraakZone === 'function') spraakZone(el);   /* B0.5: in een vrije zone naast de spreker (js/bazentoneel.js) */
   clearTimeout(_spraakT);
-  _spraakT = setTimeout(() => { el.remove(); _spraakBezig = false; _spraakVolgende(); }, d);
+  /* de klok loopt alleen terwijl de sluis open is: een onderbroken plaat brandde vroeger
+     onzichtbaar op achter de titel ("U bent ONTSLAGEN." nog 86 ms leesbaar op 1366x768) */
+  /* Een plaat die langer dan 6 s moet wachten (De Roof, een decreetkeuze), komt niet meer
+     terug: haar regel hoorde bij een moment dat voorbij is. Titels en banners duren korter. */
+  let rest = d, vorig = Date.now(), gepauzeerd = 0;
+  const tik = () => {
+    const nu = Date.now();
+    if (!_spraakGesloten()) rest -= nu - vorig;
+    else gepauzeerd += nu - vorig;
+    vorig = nu;
+    if (gepauzeerd > 6000 && !item.slot) rest = 0;
+    if (rest <= 0 || !el.isConnected) { el.remove(); _spraakBezig = false; _spraakVolgende(); }
+    else _spraakT = setTimeout(tik, Math.min(120, rest));
+  };
+  _spraakT = setTimeout(tik, Math.min(120, d));
 }
 /* het juiste baas-script (per baas een eigen stem) */
 function baasUitspraken(id) {
@@ -2814,11 +2875,19 @@ function pose2DArtEl(actor) {
   return (i >= 0 && GDOM.vijanden[i]) ? GDOM.vijanden[i].wrap.querySelector('.vijand-art') : null;
 }
 const pose2DTimers = new WeakMap();
+const POSES_SIGNATUUR_BAAS = ['plagiaat', 'plagiaat_variant', 'decreet', 'factuur', 'herkozen'];   /* B2 · B0.6 (idem scene3d.js) */
 function pose2D(actor, state, duur) {
   /* de METGEZEL heeft géén Vista-sprite — zijn DOM-figuur (.metgezel-art) ís het beeld,
      óók in 3D. Zonder deze uitzondering waren al zijn poses (incl. de Laatste Sprong-
      offer-cinematic) onzichtbaar zodra het 3D-toneel draaide. */
-  if (!actor || (d3Actief() && !actor.isMetgezel) || !window.laadKarakterAfbeelding) return;
+  /* B2 · B0.6: in 3D stopte pose2D hier stil - de gewone poses krijgt Vista via een eigen
+     aanroep naast pose2D, maar de SIGNATUURPOSES van de bazen hadden er geen (De Roof: de
+     prins speelde jouw kaart in rust). Eén regel hier i.p.v. een fix per aanroep. */
+  if (actor && d3Actief() && !actor.isMetgezel) {
+    if (window.Vista && Vista.pose && POSES_SIGNATUUR_BAAS.includes(state)) Vista.pose(actor, state, duur || 0.8);
+    return;
+  }
+  if (!actor || !window.laadKarakterAfbeelding) return;
   const el = pose2DArtEl(actor); if (!el) return;
   const basis = actor.isSpeler ? huidigeHeld().art
     : (actor.isMetgezel ? METGEZELLEN[actor.id].art : actor.id);
@@ -4079,9 +4148,10 @@ function _plaatLayoutBox(el) {
   /* cs.top/cs.left zijn relatief aan het CONTAINING BLOCK, en dat is voor een
      position:fixed element niet altijd de viewport: zodra een voorouder een
      transform/filter/perspective/contain draagt wordt DIE het containing block.
-     #scherm-gevecht doet dat elke keer dat .beef of .slowmo draait, en dan is de
-     kale cs.top 52px mis - terwijl _voetlijnVan() via _layoutOnder() wél in de
-     geschudde frame meet. De oorsprong van het containing block moet er dus bij. */
+     #scherm-gevecht deed dat vóór B2 (B0.3) elke keer dat .beef of .slowmo draaide,
+     en dan is de kale cs.top 52px mis - terwijl _voetlijnVan() via _layoutOnder() wél
+     in de geschudde frame meet. Sinds B2 schudden alleen de toneellagen; dit blijft
+     het vangnet voor elke toekomstige laag die het scherm toch transformeert. */
   const o = _cbOorsprong(el);
   return {
     top: isFinite(top) ? o.top + top : r.top,
@@ -5208,7 +5278,7 @@ function toonErfprinsInventaris(g, b, el) {
     Klank.sfx('zwareklap');
     setTimeout(() => { if (el.isConnected) { Klank.sfx('dood'); schudScherm(); } }, 480);
     timers.push(setTimeout(() => { if (S && S.gevecht === g && !g.voorbij) baasSpreekt(baasUitspraken(b.id).intro); }, 1600));
-    timers.push(setTimeout(() => { if (S && S.gevecht === g && !g.voorbij && UITSPRAKEN._erfprins.orakel) baasSpreekt(UITSPRAKEN._erfprins.orakel[0]); }, 5200));
+    timers.push(setTimeout(() => { if (S && S.gevecht === g && !g.voorbij && UITSPRAKEN._erfprins.orakel) baasSpreekt(UITSPRAKEN._erfprins.orakel[0], 3200, { vervalt: 2500 }); }, 5200));   /* B0.4: flavor vervalt op de sluis */
     timers.push(setTimeout(() => { el.classList.add('weg'); setTimeout(() => el.remove(), 500); }, 4600));
   };
   beats.forEach((bt, i) => timers.push(setTimeout(() => { if (!el._klaar) toonBeat(i); }, 140 + i * STAP)));
@@ -5310,7 +5380,7 @@ function toonBaasIntro(g) {
   if (b.id === 'de_erfprins' && UITSPRAKEN._erfprins.orakel && (!metgezellenAan() || !isOntgrendeld('drops'))) {
     const ork = (!metgezellenAan() && UITSPRAKEN._erfprins.orakelSolo) || UITSPRAKEN._erfprins.orakel;
     const idx = Math.max(0, Math.min((Codex.erfprinsOntmoetingen || 1) - 1, ork.length - 1));
-    setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(ork[idx]); }, 6400);
+    setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(ork[idx], 3200, { vervalt: 2500 }); }, 6400);   /* B0.4: flavor vervalt op de sluis */
   }
   /* scherven-nudge op ÉCHTE voortgang: draagt de speler ≥2 passende scherven, dan verraadt
      de Erfprins nerveus dat ze sámen ergens op passen (reverse psychology — de Drempel).
@@ -5326,7 +5396,7 @@ function toonBaasIntro(g) {
       const fluister = rijp
         ? '„Drie die pássen?! Wie heeft je dat verteld?! Die poort had DICHT gemoeten."'
         : '„Je sleept daar iets mee dat op iets anders past. Gooi. Het. Weg."';
-      setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(fluister); }, 9200);
+      setTimeout(() => { if (S.gevecht === g && !g.voorbij) baasSpreekt(fluister, 3200, { vervalt: 2500 }); }, 9200);   /* B0.4: flavor vervalt op de sluis */
     }
   }
   /* GRIEF: heb je Drops geofferd maar is de Witte nog niet terug? De Erfprins claimt de
@@ -5351,15 +5421,21 @@ function gevechtTik(dt) {
   /* veilige lijn: naam/hp/statussen mogen nooit de handzone in zakken.
      Afgeleid van de werkelijke onderbalk-hoogte (235px desktop = 252 zoals
      voorheen; 270px telefoon → klopt mee) i.p.v. een vaste 252. */
-  const lijn = window.innerHeight - ((GDOM.onderbalkH || 235) + 17);
+  /* B2 · B0.12: in een BAASGEVECHT is de veilige lijn de bovenrand van de kaarten zelf (de
+     namen zijn daar weg, css), en blijft de pil onder de HUD (topbalk of bazenbalk): een
+     hoge baas duwt zijn labelkolom dan niet meer in de bazenbalk. vrijeBovenrand() is een
+     gecachte maat (js/bazentoneel.js), dus hier geen layout per frame. */
+  const baasKader = !!(g.soort === 'baas' && typeof vrijeBovenrand === 'function');
+  const lijn = window.innerHeight - ((GDOM.onderbalkH || 235) + (baasKader ? -25 : 17));
+  const vrijBoven = baasKader ? vrijeBovenrand() : -Infinity;
   g.vijanden.forEach((v, i) => {
     const d = GDOM.vijanden[i];
     const p = Vista.schermPos(v);
     if (!d || !p) return;
-    const top = p.topY - 34;
+    const top = Math.max(p.topY - 34, vrijBoven);
     d.wrap.style.left = p.x + 'px';
     d.wrap.style.top = top + 'px';
-    const spacerH = Math.max(0, p.voetY - p.topY);
+    const spacerH = Math.max(0, p.voetY - (top + 34));
     const maxSpacer = Math.max(36, lijn - top - (d.infoH || 130));
     d.spacer.style.height = Math.min(spacerH, maxSpacer) + 'px';
   });
@@ -5718,7 +5794,12 @@ function intentTekst(v) {
   /* de Fluisterende Schedel ziet wat jij niet ziet; Drops de Witte is je levende licht
      (ook blind zie je elke intent zolang hij leeft) */
   const witLeeft = !!(gMet() && !gMet().dood && gMet().id === 'drops_wit');
-  const niveau = (witLeeft || heeftRelikwie('fluisterende_schedel')) ? 'helder' : lichtNiveau();
+  /* B2 · B0.11 (beslissing Thomas): een BAAS telegrafeert altijd, ook bij fakkel 0. Een
+     bazengevecht is de toets van je build: De Roof, de plagiaatzet en de Factuur zijn beurten
+     waarop je moet kunnen reageren - blind worden ze onzichtbare regels (❓ bij de Erfprins,
+     screenshot 14 sep). Gewone vijanden (ook het hof) blijven in het donker. */
+  const isBaas = !!(VIJANDEN[v.id] && VIJANDEN[v.id].baas);
+  const niveau = (witLeeft || heeftRelikwie('fluisterende_schedel') || isBaas) ? 'helder' : lichtNiveau();
   if (niveau === 'gedoofd') {
     return `<span class="intent intent-duister" data-tip="Het is te donker om de bedoeling te zien">❓</span>`;
   }
@@ -5931,12 +6012,20 @@ function renderGevecht() {
     const exitBezig = !!g.ceremonie && (d.wrap.classList.contains('exit') || d.wrap.classList.contains('geveld')
       || d.wrap.classList.contains('vlucht') || d.wrap.classList.contains('kiezer'));
     const wasDood = d.wrap.classList.contains('sterft');
+    /* B2 · B0.7: verliesHp zet .sterft zelf al op de wrap, vóór deze render - voor een baas
+       telt daarom ook 'dood maar nog geen kolomtimer' (anders kwam zijn kolom nooit vrij). */
+    const isBaas = !!(VIJANDEN[v.id] && VIJANDEN[v.id].baas);
     if (!exitBezig) d.wrap.classList.toggle('sterft', v.dood);
-    if (!v.dood) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); }
-    else if (exitBezig) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); }
-    else if (!wasDood) {
+    if (!v.dood) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); d._lijkT = null; }
+    else if (exitBezig) { d.wrap.classList.remove('lijk-weg'); clearTimeout(d._lijkT); d._lijkT = null; }
+    else if (!wasDood || (isBaas && !d._lijkT && !d.wrap.classList.contains('lijk-weg'))) {
       clearTimeout(d._lijkT);
-      d._lijkT = setTimeout(() => { if (v.dood) d.wrap.classList.add('lijk-weg'); }, dtempo(750));
+      /* B2 · B0.7: een verslagen BAAS blijft liggen tot het scherm wisselt (css: .is-baas.sterft
+         in 2D). Alleen als het gevecht DOORGAAT (de Slijmkoning met zijn splitsingen), geeft hij
+         zijn kolom terug - pas na 2,4 s, na zijn val. Gewone vijanden: ongewijzigd. */
+      d._lijkT = setTimeout(() => {
+        if (v.dood && !(isBaas && S.gevecht && S.gevecht.voorbij)) d.wrap.classList.add('lijk-weg');
+      }, dtempo(isBaas ? 2400 : 750));
     }
     /* v121: de fase-klassen van de DICKtator worden AFGEDWONGEN, net als .sterft.
        bouwGevechtDom() doet rij.innerHTML = '' en wist elke handmatig gezette klasse -
@@ -6006,11 +6095,31 @@ function renderGevecht() {
   /* LEES-fase: pas NA alle DOM-schrijfacties de hoogtes meten — zo dwingt de
      infoblok-/onderbalk-meting hoogstens één layout-flush af i.p.v. een reflow
      per vijand. infoH voedt de 2D-spacer-klem (gelezen in positioneerActors). */
+  /* B2 F1 · B0.12: een chiprij die naar ONDER overloopt (laptop: de vaste rij van 30px, B0.1)
+     telt mee in de stapel - anders hielden de spacer-klem van gevechtTik en kaderFit3D in 3D
+     alleen de eerste rij boven de kaarten (1366-3D, held met 6-7 statussen: 874-1 933 px2
+     chips achter de hand). Het kader (kaderFit3D, js/bazentoneel.js) rekent met de HOOGSTE
+     stapel van dit gevecht (infoHMax, bijgehouden op de figuur zelf): groeit die met een
+     chiprij, dan past het kader één keer opnieuw; krimpt hij, dan blijft het staan - anders
+     pompte de camera elke beurt mee met een Zwak dat komt en gaat. */
+  const overloop = w => { const b = w.querySelector('.blok-status'); return b ? Math.max(0, b.scrollHeight - b.clientHeight) : 0; };
+  let groei = false;
+  const stapel = (actor, d, ov) => {
+    /* slot B2 (verificatie): de overloop telt alleen in een BAASgevecht, waar het 3D-kader hem volgt. In een
+       gewoon 3D-gevecht zonder kaderfit tilde hij de labelstapel hoger op het lijf van de held (1366-3D, held
+       met 7 statussen: eigen label 34 → 45 %). */
+    if (g.soort !== 'baas') ov = 0;
+    d.infoH = d.wrap.offsetHeight - d.spacer.offsetHeight + ov;
+    if (ov > (actor._ovMax || 0)) { if (actor._ovMax != null) groei = true; actor._ovMax = ov; }
+    else if (actor._ovMax == null) actor._ovMax = ov;
+    d.infoHMax = d.infoH - ov + actor._ovMax;
+  };
   g.vijanden.forEach((v, i) => {
     const d = GDOM.vijanden[i];
-    if (d) d.infoH = d.wrap.offsetHeight - d.spacer.offsetHeight;
+    if (d) stapel(v, d, v.dood ? 0 : overloop(d.wrap));
   });
-  ds.infoH = ds.wrap.offsetHeight - ds.spacer.offsetHeight;
+  stapel(g.speler, ds, overloop(ds.wrap));
+  if (groei && typeof kaderNaOverloop === 'function') kaderNaOverloop();
   const ob = $('#onderbalk');
   if (ob) GDOM.onderbalkH = ob.offsetHeight;
 
@@ -6021,6 +6130,17 @@ function renderGevecht() {
   $('#stapel-afleg').innerHTML = `🗂️ ${g.afleg.length}`;
   $('#knop-eindbeurt').disabled = g.bezig || !!g.ceremonie;
   $('#beurt-label').textContent = 'Beurt ' + (g.beurt + 1);
+  /* B2 · B0.2: in een baasgevecht staat 'Beurt N' IN de bazenbalk, achter de fase-pips
+     (#beurt-label is daar verborgen). Het label hing met een vaste marge van 102px onder
+     de balk en botste met alles wat daar groeit (Geroofd-pil, beleidsstrook): 20 van de
+     30 gemeten staten per laptopformaat. Het label wordt hier aangemaakt (niet in de
+     balksjabloon), zodat die sjabloon voor de andere lijnen ongewijzigd blijft. */
+  const bbFases = $('#baas-balk .bb-fases');
+  if (bbFases) {
+    let bbBeurt = bbFases.querySelector('.bb-beurt');
+    if (!bbBeurt) { bbBeurt = document.createElement('span'); bbBeurt.className = 'bb-beurt'; bbFases.appendChild(bbBeurt); }
+    bbBeurt.textContent = 'Beurt ' + (g.beurt + 1);
+  }
   renderTopbalk();
 }
 
@@ -8693,15 +8813,60 @@ function dicktatorBalk(b) {
   return `<div class="bb-aegis bb-proces" data-tip="${tip}">${delen.join(' · ')}</div>`;
 }
 
+/* B2 — ÉÉN BANNERWACHTRIJ. baasFaseMoment had geen wachtrij: twee aanroepen binnen 2,4 s
+   lagen over elkaar (DE ROOF en PAPPIE KIJKT TOE, gezien in de O1-hermeting), en elke
+   aanroep schudde het scherm opnieuw. Nu staat er één banner tegelijk. Komt er een bij
+   terwijl er een staat, dan houdt die staande nog zijn minimale leestijd (1,4 s), dooft kort
+   uit (.bf-weg) en pas dan komt de volgende, met zijn eigen schok en klank. Een banner die
+   nog wachtte op een gevecht dat intussen voorbij is, vervalt. De DOM van een banner en de
+   signatuur (titel, sub) blijven ongewijzigd: 21 aanroepers. */
+const BANNER_MS = 2400, BANNER_LEES_MS = 1400, BANNER_UIT_MS = 180;
+let _bannerRij = [], _banner = null;
 function baasFaseMoment(titel, sub) {
+  _bannerRij.push({ titel, sub, g: S && S.gevecht });
+  if (_banner && _banner.el.isConnected) {
+    if (_banner.dooft) return;   /* hij gaat al weg; de volgende komt vanzelf */
+    clearTimeout(_banner.t);
+    _banner.t = setTimeout(_bannerDoof, Math.max(0, dtempo(BANNER_LEES_MS) - (performance.now() - _banner.t0)));
+    return;
+  }
+  _bannerVolgende();
+}
+function _bannerDoof() {
+  const b = _banner; if (!b) return _bannerVolgende();
+  if (!_bannerRij.length || !b.el.isConnected) return _bannerVolgende();
+  b.dooft = true;
+  b.el.classList.add('bf-weg');
+  b.t = setTimeout(_bannerVolgende, dtempo(BANNER_UIT_MS));
+}
+/* B2 F1: de overwinning ruimt het toneel voor het slotwoord - de rij leeg en een staande
+   banner meteen weg (de doodsflits van gevechtGewonnen valt op hetzelfde moment en dekt de
+   knip; een uitdoving van 180 ms kostte het slotwoord 0,3 s van zijn ~1,4 s). Zonder dit
+   speelde een banner uit de rij (SPLIJT -> KONINKLIJKE WOEDE, of DE PLAGIAATFASE vlak voor
+   de genadeklap) nog 1,3-3,9 s na de kill, met schok en klank, en hield de sluis het
+   slotwoord zo lang tegen dat het nooit kwam. */
+function bannerRuim() {
+  _bannerRij.length = 0;
+  _bannerVolgende();   /* haalt de staande weg en vindt niets meer */
+}
+function _bannerVolgende() {
+  if (_banner) { clearTimeout(_banner.t); _banner.el.remove(); _banner = null; }
+  /* een banner voor een ander gevecht, of voor een gevecht dat intussen gewonnen is, vervalt */
+  const geldig = it => it.g === (S && S.gevecht) && !(it.g && it.g.voorbij);
+  let item = _bannerRij.shift();
+  while (item && !geldig(item)) item = _bannerRij.shift();
+  const sc = $('#scherm-gevecht');
+  if (!item || !sc) return;
   schudScherm();
   Klank.sfx('zwareklap');
   setTimeout(() => Klank.sfx('debuff'), 350);
   const el = document.createElement('div');
   el.className = 'baas-flits';
-  el.innerHTML = `<h2>${titel}</h2><span>${sub}</span>`;
-  $('#scherm-gevecht').appendChild(el);
-  setTimeout(() => el.remove(), 2400);
+  el.innerHTML = `<h2>${item.titel}</h2><span>${item.sub}</span>`;
+  sc.appendChild(el);
+  if (typeof bannerFit === 'function') bannerFit(el);   /* B0.13: boven het hoofd van de held (js/bazentoneel.js) */
+  /* wacht er nog een, dan krijgt ook deze alleen zijn leestijd */
+  _banner = { el, t0: performance.now(), t: _bannerRij.length ? setTimeout(_bannerDoof, dtempo(BANNER_LEES_MS)) : setTimeout(_bannerVolgende, BANNER_MS) };
 }
 
 /* vijand toevoegen midden in het gevecht (de splijtende koning) */
@@ -9071,7 +9236,10 @@ async function gevechtGewonnen() {
     /* de doodsklap van een baas verdient een flits en een stilte */
     const verslagenBaas = huidigeBaas().naam;
     const _du = baasUitspraken(huidigeBaas().id);
-    baasSpreekt(g.copycatGebroken && _du.doodGebroken ? _du.doodGebroken : _du.dood);
+    /* B0.4: het SLOTWOORD - mag na g.voorbij en veegt het bord (sinds v121 nooit getoond).
+       F1: eerst de bannerrij leeg en de staande banner weg, anders houdt de sluis het tegen. */
+    bannerRuim();
+    baasSpreekt(g.copycatGebroken && _du.doodGebroken ? _du.doodGebroken : _du.dood, 2600, { slot: true });
     const flits = document.createElement('div');
     flits.className = 'baas-doodflits';
     $('#scherm-gevecht').appendChild(flits);
