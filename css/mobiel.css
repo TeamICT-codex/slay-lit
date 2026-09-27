@@ -1171,6 +1171,17 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .is-baas .intent {
     max-width: 118px; overflow: hidden; text-overflow: ellipsis; padding: 3px 7px;
   }
+  /* Finale B4b · B2.2 (beeldcontrole 412x915) - DE BAAS MET ÉÉN HOVELING. De DICKtator en de
+     griffier (I), of de baas en de laatste hoveling (II/III na een dode), pasten staand niet
+     naast elkaar (148 + 104 px in 266 px): de rij wrapte naar twee regels en liep omhoog tot
+     onder de bazenbalk - de baaspil 792 px2 over de strook - en de chipkolom van de baas lag
+     over de pil van de hoveling. Met het hof krimpen ze staand ook met twee kolommen tot de
+     hofmaat, naast elkaar op één regel ("de baas krimpt als het moet"). Alleen de maat en de
+     rij, niet de pilklem van hierboven: de volle naam van de hoveling past. Alleen het hof
+     (.is-hof): de Slijmkoning en andere bazen ongewijzigd. */
+  body[data-modus="mobiel"] #vijanden-rij[data-n="2"]:has(.is-hof) { max-width: min(72vw, 320px); gap: 8px 6px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n="2"]:has(.is-hof) .vijand:not(.is-baas) .vijand-art { width: 76px; height: 76px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n="2"]:has(.is-hof) .is-baas .vijand-art { width: 104px; height: 104px; }
   body[data-modus="mobiel"] #vijanden-rij .blok-status { width: 0; min-width: 100%; max-width: none; }
   body[data-modus="mobiel"] .vijand { min-width: 0; padding: 4px; }
   body[data-modus="mobiel"] .vijand-art { width: 104px; height: 104px; }
