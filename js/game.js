@@ -6032,16 +6032,9 @@ function statusBadges(actor) {
      heeft zijn eigen teller op de bazenbalk en zegt nooit dat de scène voorbij is. */
   const geschorst = (actor && actor._geschorst && !actor.vorm2 && actor.id === 'de_dicktator')
     ? `<span class="status s-goed status-geschorst" data-tip="${escSyn(dicktatorGeschorstTip(actor))}">⚖️<b>GESCHORST</b></span>` : '';
-  /* Finale B4b F1 (review, hoog): HIJ HOUDT STAND op de TELEFOON als chip op de figuur, naast zijn
-     andere statussen ("🔒 nog 2"; een tik toont de tip). Daar was de regel alleen een teken van 10 px
-     naast het hart: de baas stond rondes op 81 of 1 HP met ☠️199 op zijn chip, en niets zei waarom.
-     Laptop: de teller en de inkeping op de bazenbalk (_bbZitting), geen chip. Niet samen met
-     GESCHORST (dan doet toch niets hem schade; de chip komt bij je volgende beurt), en onder dezelfde
-     vries als de bazenbalk (_bbToon): hij verklapt de nieuwe scène niet vóór de titel. */
-  const standTel = (actor && window.mobiel && actor.id === 'de_dicktator' && !actor._geschorst && !actor.dood && actor._bbToon == null) ? dicktatorZittingTeller(actor) : null;
-  const stand = standTel
-    ? `<span class="status s-goed status-stand${standTel.wacht ? ' wacht' : ''}" data-tip="${escSyn(standTel.tip)}">🔒<b>${escSyn(standTel.chip)}</b></span>` : '';
-  return geschorst + stand + Object.entries(actor.status)
+  /* (Finale B4b F1: HIJ HOUDT STAND op de telefoon staat NIET in deze chipkolom - een zesde chip liep
+     daar achter de hand (B0.8) - maar als label op zijn eigen HP-balk onder de voeten: _standLabel.) */
+  return geschorst + Object.entries(actor.status)
     .filter(([k, n]) => n > 0 && STATUSINFO[k])
     .map(([k, n]) => {
       const i = STATUSINFO[k];
@@ -6058,6 +6051,29 @@ function _rijMaat() {
   const rij = document.getElementById('vijanden-rij'); if (!rij) return;
   const n = String(rij.querySelectorAll(':scope > .vijand:not(.lijk-weg)').length);
   if (rij.dataset.n !== n) rij.dataset.n = n;
+}
+/* Finale B4b F1 (review, hoog) — HIJ HOUDT STAND OP DE TELEFOON, OP DE FIGUUR. Daar was de regel alleen
+   een teken van 10 px naast het hart: de baas stond rondes op 81 of 1 HP met ☠️199 op zijn chip, en
+   niets zei waarom. Nu staat onder zijn voeten, op zijn eigen HP-balk (die op het hart-spoor leeg is:
+   het getal staat bij het hart), een label "🔒 nog 2" (in IV "🔒 tot ONTSLAG", gedimd "🔒 3 zetten"
+   zolang HERSCHIKT op de pil staat); een tik toont de tip. Niet in de chipkolom naast zijn romp (B0.8):
+   met vijf statussen liep een zesde chip daar achter de hand (gemeten 253-952 px2 op 800x360 en
+   846x381) en in IV onder de bazenbalk. Laptop: de teller en de inkeping op de bazenbalk
+   (_bbZitting), geen label. Niet naast GESCHORST (dan doet toch niets hem schade) en onder dezelfde
+   vries als de bazenbalk (_bbToon): het verklapt de nieuwe scène niet vóór de titel.
+   Geeft true als het label staat (dan schrijft renderGevecht het HP-getal niet). */
+function _standLabel(v, el) {
+  if (!el) return false;
+  const tel = (window.mobiel && v && v.id === 'de_dicktator' && !v._geschorst && !v.dood && v._bbToon == null) ? dicktatorZittingTeller(v) : null;
+  if (!tel) {
+    if (el.classList.contains('stand')) { el.classList.remove('stand', 'wacht'); el.removeAttribute('data-tip'); }
+    return false;
+  }
+  el.textContent = '🔒 ' + tel.chip;
+  el.dataset.tip = tel.tip;
+  el.classList.add('stand');
+  el.classList.toggle('wacht', tel.wacht);
+  return true;
 }
 /* gerichte update: muteert alleen wat veranderd is */
 let _bbExtraSig = null;   /* dirty-guard voor de bazenbalk-extra (arsenaal-/copycat-strook) */
@@ -6224,7 +6240,7 @@ function renderGevecht() {
        zijn Kracht komt bij DE STEMMING, zichtbaar op de kiezers, en staat er als hij opstaat. */
     const hpToon = v._bbToon != null ? v._bbToon : v.hp;
     d.hpV.style.width = Math.max(0, hpToon / v.maxHp * 100) + '%';
-    d.hpT.textContent = `${hpToon}/${v.maxHp}`;
+    if (!_standLabel(v, d.hpT)) d.hpT.textContent = `${hpToon}/${v.maxHp}`;
     zetBlokSchild(d.blok, v.blok);
     d.badges.innerHTML = (v.herrezen && v._herkozenToon === false) ? '' : statusBadges(v);
   });
@@ -7839,7 +7855,7 @@ function dicktatorZittingTotOntslag(b) {
   return !!(b && b.vorm2 && nog > 0 && ((b.v2Zet || 0) + nog) % 2 === 0);
 }
 /* DE TELLER VAN DE LENGTEREGEL (B4 stap 3, review F10): wat de speler over de vloer moet weten, in
-   één object - voor de bazenbalk (laptop: tekst + inkeping, mobiel: "🔒2" naast het hart en een chip
+   één object - voor de bazenbalk (laptop: tekst + inkeping, mobiel: "🔒2" naast het hart en een label
    op de figuur), de melding en de suite. null = geen vloer. Eerlijk: "vangt zijn hof" alleen als er
    een hoveling leeft.
    Finale B4b F1 (review, hoog): de regel heet HIJ HOUDT STAND, met het slotje 🔒 van de inkeping.
@@ -9336,7 +9352,7 @@ function copycatBalk(b) {
 /* DE TELLER VAN DE LENGTEREGEL op de bazenbalk (B4 stap 3, afwerkplan §9A, review F10; sinds
    Finale B4b F1 heet hij HIJ HOUDT STAND): laptop "🔒 HIJ HOUDT STAND · nog 2 zetten" rechts in de
    HP-balk + een inkeping met slotje op de vloer ("tot hier"); mobiel "🔒2" naast het hart (de
-   inkeping bestaat daar niet: mobiel.css) en een chip op de figuur (statusBadges). In IV zegt hij
+   inkeping bestaat daar niet: mobiel.css) en een label op zijn HP-balk (_standLabel). In IV zegt hij
    "🔒 valt na zijn ONTSLAG" als de regel met zijn Ontslag afloopt. Bewust NIET in de beleidsstrook
    (die botst al met #beurt-label en de pil, E §10). Alleen DOM schrijven als de inhoud wijzigt
    (zelfde dirty-guard-idee als _bbExtraSig).

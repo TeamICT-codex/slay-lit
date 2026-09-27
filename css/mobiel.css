@@ -291,11 +291,19 @@ body[data-modus="mobiel"] #baas-balk .bb-balk .bb-zitting {
 }
 body[data-modus="mobiel"] #baas-balk .bb-balk .bb-zitting.bb-zitting-wacht { opacity: .65; }
 body[data-modus="mobiel"] #baas-balk .bb-balk .bb-vloer { display: none !important; }
-/* de chip van HIJ HOUDT STAND op de figuur van de baas (game.js statusBadges, alleen mobiel): in het
-   goud van de teller; gedimd zolang HERSCHIKT DE ZAAL op de pil staat (de telling begint daarna) */
-body[data-modus="mobiel"] .status.status-stand { color: #ffe2a0; border-color: rgba(214, 168, 74, .85); background: rgba(40, 22, 8, .9); letter-spacing: .02em; }
-body[data-modus="mobiel"] .status.status-stand b { font-size: .8em; margin-left: 3px; white-space: nowrap; }
-body[data-modus="mobiel"] .status.status-stand.wacht { opacity: .7; }
+/* HIJ HOUDT STAND op de figuur van de baas (game.js _standLabel, alleen mobiel): een label op zijn eigen
+   HP-balk onder de voeten - die balk is op het hart-spoor leeg (het HP-getal staat bij het hart, zie
+   "baasgevecht (élke oriëntatie)" verderop), dus het label wint van die verberging. In het goud van de
+   teller; gedimd zolang HERSCHIKT DE ZAAL op de pil staat (de telling begint daarna). Niet in de
+   chipkolom naast zijn romp: een zesde chip liep daar achter de hand (B0.8). Een tik toont de tip. */
+body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk .hp-tekst.stand {
+  display: block; inset: auto; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 4;
+  white-space: nowrap; padding: 1px 9px; border-radius: 10px; pointer-events: auto; cursor: help;
+  font-family: 'Pirata One', serif; font-size: .92rem; font-weight: 400; line-height: 1.2; letter-spacing: .02em;
+  color: #ffe2a0; background: rgba(40, 22, 8, .9); border: 1px solid rgba(214, 168, 74, .85);
+  text-shadow: 0 1px 2px #000; box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
+}
+body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk .hp-tekst.stand.wacht { opacity: .7; }
 /* Finale B4b F1 (review, middel): de toasts in een baasgevecht onder de bazenbalk (game.js
    _meldingPlek, gemeten; de balk staat hier zelf rechtsboven), smal en klein: ze blijven rechts, naast
    de figuur in het midden, en liggen niet meer over het hart, de teller of de strook. */

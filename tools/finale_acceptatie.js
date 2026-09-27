@@ -30,7 +30,7 @@
      dode griffier, beide in één klap, geen regel zonder dossier, de melding zonder baasspraak, 846x381).
      De regie zelf (B2.1-B2.4 en de restpunten van het bazentoneel) staat in finale_regie_acceptatie.js.
    Sinds B4b F1 (review van B4b, 27 sep 2026): 21 de review-fixes - a één naam per ding (HIJ HOUDT STAND 🔒,
-     "zitting" = de decreetbeurt, ⚖ = het hof dat ingrijpt), b de chip op de telefoon en de melding per
+     "zitting" = de decreetbeurt, ⚖ = het hof dat ingrijpt), b het label op de telefoon en de melding per
      scène, c de teller van IV op de telefoon, d het Ontslag in de strook = de pil, e de toasts (de aanzegging
      één keer, de tekstsluis, onder de bazenbalk, de laster na de reveal), f de titelduren, g de griffier die
      al dood is, h het toetsenbord in het keuzescherm, i de herverkiezing op je Doornen, j de lage.
@@ -1281,12 +1281,12 @@ const sonde = page => page.evaluate(() => {
   });
   const recLees = page => page.evaluate(() => window.__f1);
   const chip21 = page => page.evaluate(() => {
-    const b = dicktatorBaas(S.gevecht), el = actorEl(b), c = el && el.querySelector('.status-stand');
+    const b = dicktatorBaas(S.gevecht), el = actorEl(b), c = el && el.querySelector('.hp-balk .hp-tekst.stand');
     const z = document.querySelector('#baas-balk .bb-zitting');
     const r = c ? c.getBoundingClientRect() : null;
     const tel = dicktatorZittingTeller(b);
     return {
-      chip: c ? c.textContent : null, tip: c ? (c.dataset.tip || '') : '', wacht: c ? c.classList.contains('wacht') : null, verwacht: tel && !b._geschorst ? '🔒' + tel.chip : null,
+      chip: c ? c.textContent : null, tip: c ? (c.dataset.tip || '') : '', wacht: c ? c.classList.contains('wacht') : null, verwacht: tel && !b._geschorst ? '🔒 ' + tel.chip : null,
       teller: z && !z.hidden ? z.textContent : null, binnen: !!(r && r.width && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight),
       geschorst: !!b._geschorst, nog: dicktatorZittingNog(b), herschik: !!b.herschik
     };
@@ -1322,21 +1322,21 @@ const sonde = page => page.evaluate(() => {
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
 
-  kop('21b · F1 (hoog) · 846x381: HIJ HOUDT STAND als chip op de baas ("🔒 nog N", een tik toont de tip), de melding één keer per scène, het HP-getal van het hof');
+  kop('21b · F1 (hoog) · 846x381: HIJ HOUDT STAND als label op de baas ("🔒 nog N" op zijn HP-balk, een tik toont de tip), de melding één keer per scène, het HP-getal van het hof');
   ({ ctx, page } = await open(browser, { w: 846, h: 381, mobiel: true }));
   await startProces(page);
   await beurt(page, 0);   /* DE AANZEGGING: de griffier */
   await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, b.hp - dicktatorDrempel(b, 2), sp()); checkBaasFase(); renderGevecht(); });
   await wachtVrij(page);
   let c21 = await chip21(page);
-  t(c21.geschorst && c21.herschik && c21.chip === null && c21.teller === '🔒' + c21.nog, `na de overgang (GESCHORST, HERSCHIKT op de pil): geen chip naast GESCHORST, naast het hart "${c21.teller}"`);
+  t(c21.geschorst && c21.herschik && c21.chip === null && c21.teller === '🔒' + c21.nog, `na de overgang (GESCHORST, HERSCHIKT op de pil): geen label naast GESCHORST, naast het hart "${c21.teller}"`);
   await beurt(page, 0);   /* HERSCHIKT DE ZAAL */
   c21 = await chip21(page);
-  t(c21.chip === '🔒nog ' + c21.nog && c21.chip === c21.verwacht && /HIJ HOUDT STAND/.test(c21.tip) && c21.binnen && !c21.wacht, `na HERSCHIKT: de chip "${c21.chip}" op de baas, binnen het scherm, met de tip ("${c21.tip.slice(0, 60)}…")`);
-  const tik21 = await page.evaluate(() => { const c = actorEl(dicktatorBaas(S.gevecht)).querySelector('.status-stand'); if (!c) return null; const r = c.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+  t(c21.chip === '🔒 nog ' + c21.nog && c21.chip === c21.verwacht && /HIJ HOUDT STAND/.test(c21.tip) && c21.binnen && !c21.wacht, `na HERSCHIKT: het label "${c21.chip}" op de baas (zijn HP-balk onder de voeten), binnen het scherm, met de tip ("${c21.tip.slice(0, 60)}…")`);
+  const tik21 = await page.evaluate(() => { const c = actorEl(dicktatorBaas(S.gevecht)).querySelector('.hp-balk .hp-tekst.stand'); if (!c) return null; const r = c.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
   if (tik21) { await page.touchscreen.tap(tik21.x, tik21.y); await slaap(300); }
   const tt21 = await page.evaluate(() => { const tip = document.getElementById('tooltip'); return tip ? { d: getComputedStyle(tip).display, tekst: tip.textContent || '' } : { d: '-', tekst: '' }; });
-  t(!!tik21 && tt21.d === 'block' && /HIJ HOUDT STAND/.test(tt21.tekst), `een tik op de chip toont de tip (${tt21.d}: "${tt21.tekst.slice(0, 50)}…")`);
+  t(!!tik21 && tt21.d === 'block' && /HIJ HOUDT STAND/.test(tt21.tekst), `een tik op het label toont de tip (${tt21.d}: "${tt21.tekst.slice(0, 50)}…")`);
   await page.evaluate(() => { const tip = document.getElementById('tooltip'); if (tip) tip.style.display = 'none'; });
   await page.evaluate(() => { document.querySelectorAll('#meldingen .toast').forEach(e => e.remove()); const b = dicktatorBaas(S.gevecht); verliesHp(b, 200, sp()); renderGevecht(); });
   const m1_21 = await toasts21(page);
@@ -1363,7 +1363,7 @@ const sonde = page => page.evaluate(() => {
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
 
-  kop('21c · F1 (middel) · 846x381: in IV telt de teller echt af ("🔒2" → "🔒1" na de AANLOOP), de chip zegt "tot ONTSLAG"');
+  kop('21c · F1 (middel) · 846x381: in IV telt de teller echt af ("🔒2" → "🔒1" na de AANLOOP), het label zegt "tot ONTSLAG"');
   ({ ctx, page } = await open(browser, { w: 846, h: 381, mobiel: true }));
   await startProces(page, { tirade: true });
   await page.evaluate(() => { const b = dicktatorBaas(S.gevecht); verliesHp(b, b.hp, sp()); checkBaasFase(); renderGevecht(); });
@@ -1377,7 +1377,7 @@ const sonde = page => page.evaluate(() => {
   await beurt(page, 0);
   const e21 = await lees21('na HET ONTSLAG');
   t(a21.nog === N4_21 && a21.teller === '🔒' + N4_21 && b21.nog === N4_21 - 1 && b21.teller === '🔒' + (N4_21 - 1) && e21.teller === null, `de teller naast het hart telt af: ${iv21.join(' ; ')}`);
-  t(a21.chip === a21.verwacht && b21.chip === b21.verwacht && e21.chip === null && (N4_21 !== 2 || (a21.chip === '🔒tot ONTSLAG' && b21.chip === '🔒tot ONTSLAG')), `de chip op de baas: "${a21.chip}" → "${b21.chip}" → ${e21.chip}`);
+  t(a21.chip === a21.verwacht && b21.chip === b21.verwacht && e21.chip === null && (N4_21 !== 2 || (a21.chip === '🔒 tot ONTSLAG' && b21.chip === '🔒 tot ONTSLAG')), `het label op de baas: "${a21.chip}" → "${b21.chip}" → ${e21.chip}`);
   t(page.__f.length === 0, `geen JS-fouten (${JSON.stringify(page.__f.slice(0, 3))})`);
   await ctx.close();
 
@@ -1510,8 +1510,12 @@ const sonde = page => page.evaluate(() => {
       for (const k of pad.split(' ').map(x => x === '→' ? 'ArrowRight' : x)) await page.keyboard.press(k);
       const ring2 = await page.evaluate(() => { const e = document.querySelector('.decreet-kies.toets-focus'); return e ? e.dataset.decreet : null; });
       await page.keyboard.press('Enter');
+      /* de reveal duurt op tempo 0.1 maar ~0,4 s: de kop meteen lezen */
+      let kop21h = '';
+      for (let i = 0; i < 40 && !kop21h; i++) { kop21h = await page.evaluate(() => (document.querySelector('.decreet-overlay:not(.decreet-keuze-overlay) .decreet-shortlist') || {}).textContent || ''); if (!kop21h) await slaap(15); }
       await slaap(400);
-      const na2 = await page.evaluate(voor => { const nu = new Set(S.dek.map(c => c.uid)); return { weg: voor.filter(u => !nu.has(u)), open: !!document.querySelector('.decreet-keuze-overlay'), kop: (document.querySelector('.decreet-overlay:not(.decreet-keuze-overlay) .decreet-shortlist') || {}).textContent || '' }; }, dekVoor);
+      const na2 = await page.evaluate(voor => { const nu = new Set(S.dek.map(c => c.uid)); return { weg: voor.filter(u => !nu.has(u)), open: !!document.querySelector('.decreet-keuze-overlay') }; }, dekVoor);
+      na2.kop = kop21h;
       t(ring2 === 'B' && !na2.open && na2.weg.length === 1 && na2.weg[0] === getoond.B && /U KOOS/.test(na2.kop), `${pad}: de ring op ${ring2}, Enter schrapt B (weg ${JSON.stringify(na2.weg)}, getoond B ${getoond.B}): "${na2.kop.trim().slice(0, 44)}"`);
       await wachtVrij(page, 20000);
     }
