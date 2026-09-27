@@ -20,7 +20,14 @@ Overzicht:
   collega_marleen.png   R3     1024x1024 vierkant  NEE (vol)    naamkop/hoofd boven de wand, scène 2     silhouet + warme bureaulamp/vest
   collega_rudi.png      R3     1024x1024 vierkant  NEE (vol)    naamkop/hoofd boven de wand, scène 2     silhouet + archiefdoos/bril
   collega_karel.png     R3     1024x1024 vierkant  NEE (vol)    de stem uit cubicle 7, scène 2           alleen zijn tl-buis en zijn stem
-  medewerker_0042.png   R4     1024x1024 vierkant  JA (cut-out) het Functioneringsgesprek (beige toneel) SVG-silhouet
+  medewerker_0042.png   R4     1024x1024 vierkant  JA (cut-out) (geparkeerd: zie de noot hieronder)    SVG-silhouet
+  baas_kast.png         R4     1024x1024 vierkant  JA (cut-out) B.A.A.S. als vijand in het gesprek       de beige css-kast met het groene oog
+
+Noot proloog R4 (het Functioneringsgesprek): 0042 staat in het gesprek als NAAMKAART op een lege
+bureaustoel (de badge aan een rood koord, met de pasfoto als je die nam) — de stoel rolt bij 'geduwd'
+de lift in. Een volle figuur past daar niet meer; medewerker_0042 is dus geparkeerd tot een ronde hem
+opvraagt (bv. een outro-epiloog). Niet genereren 'voor de volledigheid'. B.A.A.S. is in het gesprek
+de vijand rechts, onder zijn intentiepil: baas_kast (optioneel) vervangt dan de css-kast.
 
 Werkwijze per blok:
   1. Kopieer het volledige blok (alles tussen twee kopregels).
@@ -84,3 +91,12 @@ Single full-body character, standing, three-quarter side view, facing RIGHT. Lit
 Subject: Employee 0042, an exhausted office worker in his mid-forties who has worked here for twenty-five years: the SAME man as in the three mask portraits of this prologue, with short dark-brown hair neatly side-parted, tired grey-blue eyes and a lean face with deep lines around the mouth. A crumpled manila-beige long-sleeved shirt, a narrow dark-brown tie, grey trousers a little too short, scuffed brown office shoes. A laminated ID badge hangs on a lanyard around his neck (leave the badge itself blank; the game adds the number). His smile has rusted in place: the mouth smiles on quota, the eyes do not. One hand rests protectively over his left breast pocket, and through the fabric a tiny, warm ember-orange glow seeps out: the only warm light on him. Unique silhouette element: the hand guarding the breast pocket and the hanging badge. Colour accent: the faint ember glow in the pocket. The single blood-red accent: the faded red lanyard.
 
 Painted 198X illustration style only. No text, no letters, no numbers, no logos, no watermark, no modern technology (no flat screens, no smartphones, no laptops), no cartoon style, no glamour, no bright saturated colours. Isolated on a fully transparent background with crisp coloured edges, NO white glow, bloom or haze around the figure. No ground, no shadow, no frame, no UI, no background elements. The figure fills about 85% of a square 1024x1024 canvas, feet near the bottom edge.
+
+======================== baas_kast.png ========================
+Painterly, filmic 198X corporate illustration, hand-painted with soft visible brushwork, like a faded Kodachrome film still that has been yellowing in a filing cabinet for years. Muted, desaturated nicotine-yellow palette: manila beige, tobacco-brown wood, sickly green-white fluorescent light that flatters no one, a warm amber CRT glow, and exactly one blood-red accent. Fine film grain, soft focus, deadpan and quietly oppressive. NOT photorealistic, not a clean photograph, no glossy 3D render.
+
+Single standing figure, three-quarter side view, facing LEFT (it is the opponent: it stands on the right and looks towards the employee on the left). Lit from above by cold, beige-green fluorescent light, with its own green phosphor glow from the front.
+
+Subject: B.A.A.S., the company's all-knowing mainframe, as a single free-standing cabinet about the height of a man: a tall, slightly rounded 1980s computer cabinet in yellowed beige plastic and steel, a row of small amber and green indicator lamps along the top, two big reel-to-reel tape spools in the lower half, heavy grey cables coiling out of its base and across the floor like roots. In the upper middle sits one large ROUND cathode-ray screen like an unblinking eye: green phosphor, a fine square grid, and a single bright square pupil in the centre, glowing softly onto the cabinet around it. It looks polite, patient and utterly in charge. Unique silhouette element: the tall rectangular cabinet with the big round screen-eye and the thin antenna on top. Colour accent: the cold green phosphor of the eye. The single blood-red accent: a small red warning lamp on the tip of the antenna.
+
+Painted 198X illustration style only. No text, no letters, no numbers, no logos, no watermark, no modern technology (no flat screens, no smartphones, no laptops), no cartoon style, no glamour, no bright saturated colours. Isolated on a fully transparent background with crisp coloured edges, NO white glow, bloom or haze around the figure (the green glow stays on the screen and the cabinet). No ground, no shadow, no frame, no UI, no background elements. The cabinet fills about 85% of a square 1024x1024 canvas, its base near the bottom edge.

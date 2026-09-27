@@ -17,6 +17,28 @@ const Vista = (() => {
      en gevechten zónder plaat zien er exact uit als in v115. */
   const KIJK_Y = 1.8;
   let kijkY = KIJK_Y;
+  /* B2 · B0.12 — HET KADER VAN EEN BAASGEVECHT. De vaste camera (fov 50, KIJK_Y) liet op
+     1366x768 de labels tot 45% over het eigen lijf van de baas lopen en zijn pil in de
+     bazenbalk. kaderFit3D() (js/bazentoneel.js) zoekt per scherm de kleinste fov (>= 50)
+     waarbij de kruin van de hoogste figuur onder de HUD blijft en de voetlijn op de
+     labelstapel valt, en zet die hier. null = de gewone camera. De stand overleeft een
+     gevechtStart (een nieuwkomer), zodat het toneel dan niet verspringt. */
+  let kaderOverride = null;
+  function zetKader(k) {
+    kaderOverride = k || null;
+    if (!camera) return;
+    camera.fov = (k && k.fov) || 50;
+    camera.updateProjectionMatrix();
+    kijkY = (k && k.kijkY != null) ? k.kijkY : KIJK_Y;
+    camera.lookAt(0, kijkY, 0);
+    camera.updateMatrixWorld(true);
+  }
+  function kaderStand() { return { fov: camera ? camera.fov : null, kijkY, eigen: !!kaderOverride }; }
+  /* B2 · B0.6: de naam van de textuur die een acteur NU toont ('idle' in rust) - zo zijn ook
+     poses zonder eigen voetmarge toetsbaar (decreet, factuur).
+     DEV-SHORTCUT (testhaak): het spel roept poseNu niet aan, tools/bazentoneel_acceptatie.js
+     wel (zie RELEASE-CHECKLIST.md §1.1). */
+  function poseNu(actor) { const a = acteurs.get(actor); return a ? (a.poseNu || 'idle') : null; }
   /* De vloer van het toneel: elke acteur staat met zijn GETEKENDE voeten op deze
      wereldhoogte (zie voetmarge() en maakActeur). Dat is meteen de bron van
      voetlijnY() — de lijn waar plaatsGevechtsplaat() de geschilderde vloerrand
@@ -376,6 +398,10 @@ const Vista = (() => {
       const states = ['attack', 'hit', 'death', 'poison', 'gif', 'block', 'victory', 'cast', 'wounded'];   /* 'gif' = eenmalige immuun/kaats-reactiepose (los van 'poison' = aanhoudende vergiftigde stand) */
       /* signature-kaarten hebben een eigen pose (alleen helden) */
       if (sleutel.isSpeler) states.push('beulswerk', 'moederslang', 'flame');
+      /* B2 · B0.6: de signatuurposes van de bazen (plagiaat, decreet, factuur, herkozen) ook in 3D -
+         zonder deze tak laadde Vista ze nooit en bleef de sprite in rust. Poses zonder art vallen
+         stil weg (het art-manifest kent ze niet). */
+      else states.push('plagiaat', 'plagiaat_variant', 'decreet', 'factuur', 'herkozen');
       states.forEach(st => {
         laadKarakterAfbeelding(artId + '_' + st, img => {
           if (!img || !sprite.parent) return;
@@ -429,8 +455,9 @@ const Vista = (() => {
     if (stof) stof.visible = !eigenAchtergrond;   /* stof hoort bij de procedurele zaal; achter een geschilderde plaat weg (+ spaart de per-frame update-lus) */
     renderer.setClearColor(0x0d0a12, eigenAchtergrond ? 0 : 1);
     /* v116: de camera staat vast (KIJK_Y). De plaat komt naar de figuren toe —
-       plaatsGevechtsplaat() zet haar vloerrand op Vista.voetlijnY(). */
-    kijkY = KIJK_Y;
+       plaatsGevechtsplaat() zet haar vloerrand op Vista.voetlijnY().
+       B2 · B0.12: behalve als een baasgevecht zijn eigen kader kreeg (zetKader). */
+    kijkY = (kaderOverride && kaderOverride.kijkY != null) ? kaderOverride.kijkY : KIJK_Y;
     maakActeur(g.speler, g.heldArt || 'speler', { teken: '🤺', spiegel: true }, -3.7, 0.4, 2.5);
     /* enkel LEVENDE vijanden als sprite opbouwen: dode blijven in g.vijanden staan (v.dood=true,
        voor de sterft-fade), maar een herbouw (voegVijandToe — Doorslag-kopie / Mal-gietsel) mag een
@@ -446,6 +473,9 @@ const Vista = (() => {
       maakActeur(v, v.id, { teken: def.art, spiegel: false }, x, z, schaal);
     });
     actief = true;
+    /* B2 · B0.12: het toneel staat - het bazentoneel (js/bazentoneel.js) past het kader aan
+       (start, nieuwkomer, de 3D-knop: alle drie de aanroepers lopen hierlangs) */
+    window.dispatchEvent(new CustomEvent('vista:gevechtstart'));
   }
 
   function gevechtEind() {
@@ -483,9 +513,20 @@ const Vista = (() => {
   }
 
   /* tijdelijke pose tonen (block/victory/cast) als die afbeelding bestaat */
+  /* B2 F1 · B0.6 — de signatuurposes van de bazen in de ECHTE flow. Twee regels:
+     - een lopende signatuurpose wint van een generieke 'cast' die in hetzelfde moment komt.
+       Het decreet en de herverkiezing roepen na pose2D(v, 'decreet'/'herkozen') meteen
+       Vista.pose(v, 'cast') aan; die overschreef de signatuur in hetzelfde frame, en de
+       textuur 'decreet'/'herkozen' kwam in 3D nooit (gemeten met poseNu: alleen 'cast');
+     - een signatuurpose zonder eigen art zet niets: de gifkaats van een gewone vijand (De
+       Spiegelwachter) vroeg 'plagiaat' aan, toonde niets en onderdrukte 0,7 s zijn hit- of
+       gifreactie. */
+  const SIGNATUUR = new Set(['plagiaat', 'plagiaat_variant', 'decreet', 'factuur', 'herkozen']);
   function pose(actor, naam, duur) {
     const a = acteurs.get(actor);
     if (!a) return;
+    if (SIGNATUUR.has(naam) && !a.stateTex[naam]) return;
+    if (naam === 'cast' && SIGNATUUR.has(a.pose) && a.poseTot && tijd < a.poseTot) return;
     a.pose = naam;
     a.poseTot = tijd + (duur || 0.8);
   }
@@ -616,6 +657,7 @@ const Vista = (() => {
          art ook echt geladen is telt — anders zou de quad schuiven zonder dat het
          beeld verandert. */
       zetVoetAnker(a, (st !== 'idle' && a.stateTex[st]) ? poseMarge(a, st) : a.margeBasis);
+      a.poseNu = (st !== 'idle' && a.stateTex[st]) ? st : 'idle';   /* B2 · B0.6: meetbaar via Vista.poseNu */
 
       if (st !== 'idle' && a.stateTex[st]) {
         if (a.mat.map !== a.stateTex[st]) a.mat.map = a.stateTex[st];
@@ -875,6 +917,8 @@ const Vista = (() => {
   return {
     beschikbaar, start, gevechtStart, gevechtEind, raak, aanval, sterf, pose, tik, schermPos, resize, zwaai, zetLicht, schud,
     voetlijnY, voetlijnInfo, voetMeting,
+    zetKader, kaderStand,   /* B2 · B0.12 */
+    poseNu,                 /* B2 · B0.6 */
     get actief() { return actief; },
     get klaar() { return klaar; }
   };

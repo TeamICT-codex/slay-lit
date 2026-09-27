@@ -921,6 +921,160 @@ window.SLAYLIT_AUDIO = (function () {
     return true;
   }
 
+  /* —— R4 · het gesprek, de uitweg en de afrekening ——
+     Zelfde regels als R3: eenmalige klanken zwijgen (false) als de context niet kan klinken, elke
+     envelop-GainNode krijgt vooraf zijn beginwaarde, en niets is luider dan de ontslagstempel. De
+     kaarten, het blok, de klap en de bol gebruiken de ECHTE klanken van het spel (Klank.sfx: kaart,
+     blok, klap, trek, klik, energie, debuff, fout): het gesprek klinkt zoals het gevecht straks. */
+  // printer: één regel dot-matrix. De naalden ratelen (ruis, gehakt op ±118 Hz), de wagenmotor bromt
+  // mee, en op het einde de regelopvoer (drie tandjes) en de terugloop. arg: duur (s) en traag (de
+  // jeugddroomregel: de naalden hameren trager, de motor zakt — hij moet er moeite voor doen)
+  // fixer R4 F1: één printkop. Elke regel loopt over een eigen bus; een nieuwe regel (of de vastloper) kapt de
+  // vorige af in 25 ms. Een tik maakt de regel meteen af en print de volgende: het geratel van de oude regel
+  // (tot 2,4 s voor de jeugddroom) liep anders door en stapelde onder de nieuwe.
+  let printerBus = null;
+  function kapPrinter(t) {
+    const b = printerBus; printerBus = null;
+    if (!b) return;
+    try { const g = b.gain; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(0, t + 0.025); } catch (e) {}
+    setTimeout(() => { try { b.disconnect(); } catch (e) {} }, 3000);
+  }
+  function printer(duur, traag) {
+    if (!speelt()) return false; const t = now();
+    kapPrinter(t);
+    const bus = ctx.createGain(); bus.gain.value = 1; bus.connect(master); printerBus = bus;
+    const d = Math.max(0.04, Math.min(2.6, Number(duur) || 0.3));
+    const n = ctx.createBufferSource(); n.buffer = ruisBuf(); n.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = traag ? 2300 : 2900; bp.Q.value = 2.2;
+    const hak = ctx.createGain(); hak.gain.value = 0.5;
+    const lfo = ctx.createOscillator(); lfo.type = 'square'; lfo.frequency.value = traag ? 62 : 118;
+    const lg = ctx.createGain(); lg.gain.value = 0.5; lfo.connect(lg); lg.connect(hak.gain);
+    const env = ctx.createGain(); env.gain.value = 0;
+    env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(0.075, t + 0.01);
+    env.gain.setValueAtTime(0.075, t + Math.max(0.012, d - 0.02)); env.gain.linearRampToValueAtTime(0, t + d);
+    n.connect(bp); bp.connect(hak); hak.connect(env); env.connect(bus);
+    const m = ctx.createOscillator(); m.type = 'sawtooth'; m.frequency.value = traag ? 72 : 96;
+    const ml = ctx.createBiquadFilter(); ml.type = 'lowpass'; ml.frequency.value = 360;
+    const mg = ctx.createGain(); mg.gain.value = 0; mg.gain.setValueAtTime(0, t); mg.gain.linearRampToValueAtTime(0.02, t + 0.03);
+    mg.gain.setValueAtTime(0.02, t + d); mg.gain.linearRampToValueAtTime(0, t + d + 0.05);
+    m.connect(ml); ml.connect(mg); mg.connect(bus);
+    [n, lfo, m].forEach(x => { x.start(t); x.stop(t + d + 0.08); });
+    if (d >= 0.1) {
+      for (let i = 0; i < 3; i++) stoot(t + d + 0.02 + i * 0.022, 0.012, 'bandpass', 1500 + i * 120, 6, 0.04, bus);
+      stoot(t + d + 0.1, 0.05, 'lowpass', 700, 0.7, 0.03, bus);
+    }
+    return true;
+  }
+  // vastloper: de printer loopt vast op 'IN BESL'. De naalden haperen, de motor kreunt en zakt, de kop
+  // slaat vast (een kleine dreun, familie van de stempel), en twee foutpiepjes
+  function vastloper() {
+    if (!speelt()) return false; const t = now();
+    kapPrinter(t);   /* fixer R4 F1: de naalden staan stil */
+    for (let i = 0, x = t; i < 9; i++) { stoot(x, 0.02, 'bandpass', 2600 + Math.random() * 600, 3, 0.06 * (1 - i / 10)); x += 0.03 + Math.random() * 0.035; }
+    const o = ctx.createOscillator(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(92, t + 0.18); o.frequency.linearRampToValueAtTime(56, t + 0.7);
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = 1.2;
+    const g = ctx.createGain(); g.gain.value = 0;
+    g.gain.setValueAtTime(0, t + 0.18); g.gain.linearRampToValueAtTime(0.05, t + 0.26); g.gain.setValueAtTime(0.05, t + 0.62); g.gain.linearRampToValueAtTime(0, t + 0.72);
+    const tr = ctx.createOscillator(); tr.frequency.value = 23;
+    const tg = ctx.createGain(); tg.gain.value = 0.03; tr.connect(tg); tg.connect(g.gain);
+    o.connect(bp); bp.connect(g); g.connect(master);
+    o.start(t + 0.18); o.stop(t + 0.75); tr.start(t + 0.18); tr.stop(t + 0.75);
+    dreun(t + 0.72, 0.18);
+    stoot(t + 0.72, 0.03, 'highpass', 2400, 0.7, 0.08);
+    piep(t + 0.9, 2093, 0.07, 'square', 0.02);
+    piep(t + 1.04, 2093, 0.07, 'square', 0.02);
+    return true;
+  }
+  // stoel: je bureaustoel rolt over het dak naar de open lift — wieltjes over de voegen, een piepend
+  // wieltje, de drempel van de lift. Geen val, geen wind (keuze 3): alleen een stoel die rolt
+  function stoel() {
+    if (!speelt()) return false; const t = now(), d = 1.35;
+    const n = ctx.createBufferSource(); n.buffer = ruisBuf(); n.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.8;
+    bp.frequency.setValueAtTime(420, t); bp.frequency.linearRampToValueAtTime(260, t + d);
+    const g = ctx.createGain(); g.gain.value = 0;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.09, t + 0.15); g.gain.setValueAtTime(0.09, t + d - 0.3); g.gain.linearRampToValueAtTime(0, t + d);
+    const w = ctx.createOscillator(); w.frequency.value = 7;
+    const wg = ctx.createGain(); wg.gain.value = 0.03; w.connect(wg); wg.connect(g.gain);
+    n.connect(bp); bp.connect(g); g.connect(master);
+    n.start(t, Math.random() * 0.4); n.stop(t + d + 0.05); w.start(t); w.stop(t + d);
+    piep(t + 0.35, 1850, 0.12, 'sine', 0.012, null, 2150, 0.02);
+    piep(t + 0.9, 1700, 0.1, 'sine', 0.01, null, 1950, 0.02);
+    stoot(t + d - 0.05, 0.04, 'bandpass', 900, 2, 0.06);
+    piep(t + d - 0.05, 140, 0.08, 'sine', 0.08, null, 80, 0.003);
+    return true;
+  }
+  // papierscheur: de rode stippellijn scheurt over het hele scherm — vezeltjes die na elkaar knappen,
+  // steeds sneller, en dan los
+  function papierscheur() {
+    if (!speelt()) return false; const t = now(), d = 0.5;
+    const n = ctx.createBufferSource(); n.buffer = ruisBuf();
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.9;
+    bp.frequency.setValueAtTime(1600, t); bp.frequency.linearRampToValueAtTime(3400, t + d);
+    const g = ctx.createGain(); g.gain.value = 0;
+    g.gain.setValueAtTime(0, t);
+    for (let x = t; x < t + d - 0.03;) {
+      const s = 0.018 + Math.random() * 0.02 * (1 - (x - t) / d);
+      g.gain.setValueAtTime(0.16 * (0.5 + Math.random() * 0.5), x); g.gain.setValueAtTime(0.03, x + s * 0.6);
+      x += s;
+    }
+    g.gain.setValueAtTime(0.2, t + d - 0.02); g.gain.exponentialRampToValueAtTime(0.0005, t + d + 0.08);
+    n.connect(bp); bp.connect(g); g.connect(master);
+    n.start(t, Math.random() * 0.4); n.stop(t + d + 0.1);
+    return true;
+  }
+  // fotoValt: de foto valt gloeiend de liftschacht in — het warme akkoord (A majeur, de foto) zakt
+  // zacht weg, met het fladderen van papier. Bewust geen whoosh: de foto valt, de mens niet
+  function fotoValt() {
+    if (!speelt()) return false; const t = now(), d = 1.3;
+    [440, 554.37, 659.25].forEach((f, i) => {
+      const o = ctx.createOscillator(); o.type = 'triangle';
+      o.frequency.setValueAtTime(f, t + i * 0.05); o.frequency.exponentialRampToValueAtTime(f * 0.7, t + d);
+      const g = ctx.createGain(); g.gain.value = 0;
+      g.gain.setValueAtTime(0, t + i * 0.05); g.gain.linearRampToValueAtTime(0.035, t + i * 0.05 + 0.12); g.gain.exponentialRampToValueAtTime(0.0005, t + d);
+      o.connect(g); g.connect(master); o.start(t + i * 0.05); o.stop(t + d + 0.05);
+    });
+    const n = ctx.createBufferSource(); n.buffer = ruisBuf(); n.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 3;
+    const g = ctx.createGain(); g.gain.value = 0; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.025, t + 0.2); g.gain.linearRampToValueAtTime(0, t + 0.9);
+    const w = ctx.createOscillator(); w.frequency.value = 9;
+    const wg = ctx.createGain(); wg.gain.value = 0.02; w.connect(wg); wg.connect(g.gain);
+    n.connect(bp); bp.connect(g); g.connect(master);
+    n.start(t, Math.random() * 0.4); n.stop(t + 1); w.start(t); w.stop(t + 1);
+    return true;
+  }
+  // optimalisatie: de OPTIMALISATIERONDE vuurt — een koude zaag die zakt, twee bevestigingspiepjes
+  // van het systeem, en een relais dat valt (daarna doven de lichten: tlDooft)
+  function optimalisatie() {
+    if (!speelt()) return false; const t = now();
+    const o = ctx.createOscillator(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(880, t); o.frequency.exponentialRampToValueAtTime(110, t + 0.7);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(3000, t); lp.frequency.exponentialRampToValueAtTime(400, t + 0.7);
+    const g = ctx.createGain(); g.gain.value = 0;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.05, t + 0.04); g.gain.setValueAtTime(0.05, t + 0.55); g.gain.linearRampToValueAtTime(0, t + 0.72);
+    o.connect(lp); lp.connect(g); g.connect(master); o.start(t); o.stop(t + 0.75);
+    piep(t, 1760, 0.18, 'square', 0.012);
+    piep(t + 0.2, 1318.5, 0.18, 'square', 0.012);
+    stoot(t + 0.72, 0.01, 'highpass', 3000, 0.7, 0.12);
+    piep(t + 0.72, 120, 0.09, 'sine', 0.12, null, 55, 0.003);
+    return true;
+  }
+  // groef: de lege pen over het papier — droog krassen zonder inkt
+  function groef() {
+    if (!speelt()) return false; const t = now(), d = 0.55;
+    const n = ctx.createBufferSource(); n.buffer = ruisBuf(); n.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 3200; bp.Q.value = 1.6;
+    const g = ctx.createGain(); g.gain.value = 0;
+    g.gain.setValueAtTime(0, t);
+    for (let x = t; x < t + d;) { const s = 0.04 + Math.random() * 0.05; g.gain.linearRampToValueAtTime(0.03 + Math.random() * 0.025, x + s * 0.4); g.gain.linearRampToValueAtTime(0.006, x + s); x += s; }
+    g.gain.linearRampToValueAtTime(0, t + d + 0.03);
+    n.connect(bp); bp.connect(g); g.connect(master);
+    n.start(t, Math.random() * 0.4); n.stop(t + d + 0.06);
+    return true;
+  }
+
   /* —— de lussen —— */
   /* de druppels op het glas: 6,37 s, vooraf berekend en naadloos in een lus (modulo) */
   let druppelB = null, druppelCtx = null;
@@ -1166,6 +1320,8 @@ window.SLAYLIT_AUDIO = (function () {
     /* R3 */
     tlStarter, tlAan, tlBank, prikklok, glimlach, naald, scheur, gemarkeerd, stempelZelf,
     stempelMachine, buizenpost, tlKlakUit, tlDooft, liftDing, toets, degauss,
+    /* R4 */
+    printer, vastloper, stoel, papierscheur, fotoValt, optimalisatie, groef,
     regen, kantoor, maat, tel,
     get licht() { return lichtFactor(); },          /* 0..1: hoeveel gekocht licht er brandt */
     get glimlachLaatst() { return glimLaatst; },     /* 'zuiver' | 'vies' | null: de laatste glimlach */
@@ -1214,6 +1370,15 @@ window.SLAYLIT_AUDIO = (function () {
      liftDing(v)        v = 2 | 3 | 4 | 'DAK': de liftbel stijgt, op het DAK ding-dong
      toets              een zachte klik op een kantoorknop
      degauss            (extra) de CRT ontmagnetiseert: BWOMM
+   R4 · het gesprek, de uitweg en de afrekening:
+     printer(duur, traag) één regel dot-matrix (de naalden, de motor, de regelopvoer); traag = de jeugddroom
+     vastloper          de printer loopt vast (hapert, kreunt, de kop slaat vast, twee foutpiepjes)
+     stoel              je bureaustoel rolt over het dak de lift in (geduwd)
+     papierscheur       de rode stippellijn scheurt over het hele scherm (sprong)
+     fotoValt           de foto valt gloeiend de liftschacht in: het warme akkoord zakt weg
+     optimalisatie      de OPTIMALISATIERONDE vuurt (een koude zaag, een relais)
+     groef              de lege pen: krassen zonder inkt
+   (de kaarten, het blok, de klap en de bol van het gesprek gebruiken Klank.sfx van het spel zelf)
    plus de lussen en de maat:
      regen(aan)         true/false · regen op glas, heel zacht
      kantoor(aan, opts) true/false · de kantoorzoem (ventilatie + tl-brom, zo vol als er
@@ -1237,7 +1402,9 @@ window.ProloogKlank = (function () {
     'ding', 'tik', 'type', 'glitch', 'stamp', 'warm', 'powerOn', 'plunge', 'beat',
     /* R3 */
     'tlStarter', 'tlAan', 'tlBank', 'prikklok', 'glimlach', 'naald', 'scheur', 'gemarkeerd', 'stempelZelf',
-    'stempelMachine', 'buizenpost', 'tlKlakUit', 'tlDooft', 'liftDing', 'toets', 'degauss'];
+    'stempelMachine', 'buizenpost', 'tlKlakUit', 'tlDooft', 'liftDing', 'toets', 'degauss',
+    /* R4 */
+    'printer', 'vastloper', 'stoel', 'papierscheur', 'fotoValt', 'optimalisatie', 'groef'];
   /* sleutels zonder hoofdletters en leestekens: 'tl-sterft', 'tl_sterft' en 'tlSterft'
      zijn dezelfde; plus synoniemen, en de gebeurtenisnamen van proloog/val.js (hek,
      bliksem, krant, etage, tl, verbinding, vloer, kooltje, knop, baasDrukt) klinken
@@ -1254,7 +1421,11 @@ window.ProloogKlank = (function () {
     nietfactureerbaar: 'gemarkeerd', snit: 'gemarkeerd',
     handstempel: 'stempelZelf', zelfstempel: 'stempelZelf', afstempelen: 'stempelZelf', zelfgestempeld: 'stempelZelf',
     machinestempel: 'stempelMachine', karel: 'tlKlakUit', klakuit: 'tlKlakUit',
-    dooft: 'tlDooft', liftomhoog: 'liftDing', kantoorknop: 'toets', crt: 'degauss' };
+    dooft: 'tlDooft', liftomhoog: 'liftDing', kantoorknop: 'toets', crt: 'degauss',
+    /* R4: de woorden van het plan */
+    printergeratel: 'printer', matrixprinter: 'printer', kettingvel: 'printer', vastlopen: 'vastloper',
+    bureaustoel: 'stoel', stippellijn: 'papierscheur', scheurlijn: 'papierscheur', laatlos: 'papierscheur',
+    liftschacht: 'fotoValt', optimalisatieronde: 'optimalisatie', legepen: 'groef', pen: 'groef' };
   EIGEN.forEach(n => { ALIAS[n.toLowerCase()] = n; });
   const eigenVan = sleutel => Object.prototype.hasOwnProperty.call(ALIAS, sleutel) ? ALIAS[sleutel] : null;
   function sfx(naam, ...args) {

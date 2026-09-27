@@ -1043,7 +1043,9 @@ const Outro = (() => {
     catch (e) { return {}; }
   }
 
-  /* DE SPRONG — de val uit de proloog, nu vrijwillig. En zacht. */
+  /* DE AFDALING AAN VALSCHERMEN — vrijwillig, en zacht. Geen echo van de proloog: daar springt
+     of valt niemand (keuze 3; de intro zegt 'U STAPTE IN', nooit 'U SPRONG'). De interne naam
+     'sprong' (contract.uitweg) ziet de speler nergens. */
   function startVal() {
     staat = 'val'; valT = 0; valPuin = []; valStap = -1; valZak = 0; partikels = [];
     if (window.Klank && Klank.muziek) { try { Klank.muziek('outro_slot'); } catch (e) {} }
@@ -4240,7 +4242,7 @@ const Outro = (() => {
       { t: 2.0, txt: '"IK HAAL U UIT DE WACHT."', kleur: '#79c045' },
       { t: 3.4, txt: '"UW EXITGESPREK STAAT GEPLAND: HEDEN. (0U06)"', kleur: '#79c045' },
       ...(proloog.uitweg === 'sprong'
-        ? [{ t: 4.4, txt: '"DOSSIER HEROPEND: U SPRONG. CORRECTIE AANVAARD."', kleur: '#79c045' }]
+        ? [{ t: 4.4, txt: '"DOSSIER HEROPEND: U STAPTE IN. CORRECTIE AANVAARD."', kleur: '#79c045' }]   /* proloog R5 F1 (keuze 3): nooit 'U SPRONG' — het dak eindigt met je stoel die de lift in rolt, achter de foto aan. Max. 53 tekens (320 px / 6) */
         : proloog.uitweg === 'geduwd'
         ? [{ t: 4.4, txt: '"DOSSIER HEROPEND: U WERD GEDUWD. DAT WISTEN WE."', kleur: '#79c045' }]
         : []),

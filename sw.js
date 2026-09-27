@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v133'; // v133: DE NISSEN DICHT - de metgezellen volledig geparkeerd (vlag METGEZELLEN_AAN uit): ook een Codex met ontwaakte metgezellen speelt solo, een lopende run met een metgezel krijgt een afscheidsregel, de scherven hebben eigen tafelteksten en het orakel spreekt solo
+const CACHE = 'slayit-v136'; // v136: ECHO EN QA (proloog ronde 5, de laatste) - na de proloog is het eerste gevecht een solo Groene Slijm die zegt 'Fijn dat je er bent', de eerste hand komt binnen als brandende kantoorvellen, de outro zegt 'U STAPTE IN' en in beide routes rolt de stoel de lift in
 const BESTANDEN = [
   '.',
   'css/style.css',
@@ -20,6 +20,7 @@ const BESTANDEN = [
   'js/game.js',
   'js/proloog-brug.js',     // proloog R1: de naad (laadt ná game.js; haalt proloog/*.js lui binnen)
   'js/drempeltafel.js',     // v128: DE DREMPELTAFEL (laadt ná game.js)
+  'js/bazentoneel.js',      // B2: HET BAZENTONEEL (laadt ná game.js)
   'js/wereld-terrein.js',
   'js/wereld.js',
   'assets/fonts/fonts.css',
@@ -68,7 +69,6 @@ const ZWAAR = [
   'assets/proloog/foto-kind.webp',
   'assets/proloog/bart_blinker2.webp',
   'assets/proloog/junior.webp',
-  'assets/proloog/baas-terminal.webp',
   'assets/proloog/kaart-glimlach.webp',
   'assets/proloog/kaart-mailtje.webp',
   'assets/proloog/kaart-koffie.webp',
@@ -77,8 +77,8 @@ const ZWAAR = [
   'assets/proloog/de-afgrond.webp',
   'assets/proloog/masker-woede.webp',
   'assets/proloog/masker-gif.webp',
-  'assets/proloog/masker-vlucht.webp',
-  'assets/proloog/slijmklerk.webp'
+  'assets/proloog/masker-vlucht.webp'
+  /* proloog R5 F1: baas-terminal.webp en slijmklerk.webp eruit - nergens gebruikt (214 KB per install) */
 ];
 /* NB: een versiebump laat 'activate' de oude cache wissen (één keer art-her-download).
    Bewust hier: de gsm bleef op een oude build hangen omdat de oude shell in de cache

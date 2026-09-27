@@ -268,6 +268,7 @@ body[data-modus="mobiel"] #baas-balk .bb-naam { font-size: .9rem; line-height: 1
 body[data-modus="mobiel"] #baas-balk .bb-titel { display: none; }
 body[data-modus="mobiel"] #baas-balk .bb-fases { justify-content: flex-end; margin-top: 4px; gap: 5px; }
 body[data-modus="mobiel"] #baas-balk .bb-pip { width: 8px; height: 8px; }
+body[data-modus="mobiel"] #baas-balk .bb-beurt { display: none; }   /* B2 · B0.2: mobiel toont geen beurtnummer (ook #beurt-label niet, sinds 13 jun) */
 /* de balk → hart-gauge (fractie links, hart rechts) */
 body[data-modus="mobiel"] #baas-balk .bb-balk {
   width: auto; height: auto; background: none; border: none; box-shadow: none; border-radius: 0;
@@ -299,6 +300,9 @@ body[data-modus="mobiel"] #baas-balk .bb-balk.bb-woede::before {
   background: linear-gradient(to top, #ff6a4a 0 calc(var(--hp, 100) * 1%), #2b1420 calc(var(--hp, 100) * 1%) 100%);
   filter: drop-shadow(0 0 7px rgba(255, 90, 60, .7));
 }
+/* B2 · B0.10: geen woedeBalk-puls op het hart. Die animeert box-shadow (met een donkere
+   inset) en tekende zo een doos van ±315x42px over het hart (F V4); het hart kleurt zelf al. */
+body[data-modus="mobiel"] #baas-balk .bb-balk.bb-woede { animation: none; }
 /* De Erfprins (Copycat): geen slijmgroen maar koningspaars/amethist — regaal +
    de magenta steel-aura uit z'n art. Woede → heet magenta i.p.v. rood-oranje. */
 body[data-modus="mobiel"] #baas-balk[data-baas="de_erfprins"] .bb-balk::before {
@@ -1372,6 +1376,75 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] .intent-rij { font-size: 1.12em; }
 }
 
+/* ---------- C2. HET BAZENTONEEL (B2), liggend ----------
+   Generieke regels voor elke baas (Slijmkoning, Erfprins, DICKtator), gemeten op 800x360
+   en 846x381 (Thomas' toestel), solo, met 0-5 statussen op held en baas, fakkel 100 en 0. */
+@media (orientation: landscape) and (max-height: 600px) {
+  /* B0.8 — STATUSCHIPS NIET ACHTER DE HAND. De kortere onderbalk laat de figurenrij zakken,
+     en de chiprij onder de voeten viel achter de kaartwaaier (topui_onderzoek 6 sep: 9 van
+     de 9 chips bedekt; per chip gemeten 17 058 px2 op 800x360). Nu hangt de chiprij van de
+     baas als KOLOM RECHTS naast zijn romp (het spiegelbeeld van de pil links, B0.9) en die
+     van de held BOVEN zijn hoofd. De oude plek blijft als lege voetstrook van 24px staan
+     (::after), zodat de voetlijn geen pixel verschuift. top 20 / gap 2: met 34 / 3 raakte
+     de vijfde chip van de baas de rechterkaart. */
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-baas .blok-status { position: absolute; top: 20px; left: calc(100% - 6px); flex-direction: column; flex-wrap: nowrap; align-items: flex-start; width: max-content; max-width: none; min-width: 0; height: auto; min-height: 0; gap: 2px; z-index: 3; }
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-baas::after { content: ''; display: block; height: 24px; flex: none; }
+  /* staat er iemand naast hem (het hof van de DICKtator, de splitsing van de Slijmkoning),
+     dan krijgt die chipkolom een eigen strook: zonder deze marge lag ze over de pil en het
+     lijf van de eerste hoveling (846x381, bedrijf II: '📋 dossier' half bedekt) */
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-baas:not(:last-child):has(.blok-status > *) { margin-right: 46px; }
+  body[data-modus="mobiel"] #scherm-gevecht #speler-zone { position: relative; }
+  /* --wijk: de chipblok schuift naar links voor een baaspil die opzij hangt (B0.9), en naar
+     rechts als hij links uit beeld of onder de inzage-knop zou vallen (x < 44, bij 3-4
+     vijanden staat de held tegen de rand) - heldChipsWijken() in js/bazentoneel.js.
+     B2 F1: tussen de topbalk en het hoofd van de held passen maar twee rijen (34px per rij).
+     Met 3 per rij liep de derde rij vanaf 7 statussen de topbalk in (934-1 602 px2, over HP
+     en fakkel), op elke baas en in gewone gevechten. Nu wordt de rij alleen breder als het
+     moet: tot 6 chips 3 per rij (200px, zoals voorheen: smal genoeg om naast een pil te
+     passen), vanaf 7 vier, vanaf 9 vijf, vanaf 11 zes - altijd twee rijen. */
+  body[data-modus="mobiel"] #scherm-gevecht #speler-zone .blok-status { position: absolute; left: 50%; bottom: calc(100% - 6px); translate: calc(-50% - var(--wijk, 0px)) 0; width: max-content; max-width: 200px; height: auto; min-height: 0; flex-wrap: wrap-reverse; justify-content: center; z-index: 3; }
+  body[data-modus="mobiel"] #scherm-gevecht #speler-zone .blok-status:has(> :nth-child(7)) { max-width: 256px; }
+  body[data-modus="mobiel"] #scherm-gevecht #speler-zone .blok-status:has(> :nth-child(9)) { max-width: 318px; }
+  body[data-modus="mobiel"] #scherm-gevecht #speler-zone .blok-status:has(> :nth-child(11)) { max-width: 380px; }
+  body[data-modus="mobiel"] #scherm-gevecht #speler-zone::after { content: ''; display: block; height: 24px; flex: none; }
+
+  /* B0.9 — DE BAASPIL NOOIT IN DE TOPBALK. De pil blijft boven het hoofd; alleen als ze
+     daar in de topbalk zou vallen (zetPilZij() in js/bazentoneel.js meet dat), gaat ze LINKS naast
+     zijn hoofd, naar de held gekeerd. Geen klif meer op 400px hoogte en de baas hoeft niet
+     te krimpen. Gemeten pil ~ topbalk: 800x360 2 993 px2 -> 0, 846x381 1 548 -> 0. */
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-baas.pil-zij .intent-rij { position: absolute; top: 6px; right: calc(100% - 8px); left: auto; z-index: 4; min-height: 0; flex-wrap: nowrap; justify-content: flex-end; width: max-content; }
+
+  /* B0.13 — EEN FASEBANNER DEKT DE FIGUREN NIET. De banner staat LINKS in de bovenband,
+     onder de topbalk, boven het hoofd van de held, maximaal 44vw breed (hij houdt op vóór
+     de pil van een solo-baas), met een licht verloop i.p.v. een doek over het hele scherm.
+     Gemeten (woede-beat): banner ~ held 86,7% -> 0,7% en ~ prins 54,4% -> 0 op 800x360.
+     Tijdens de banner zakken de chips van de held (boven zijn hoofd, B0.8) naar .12: een
+     banner heeft geen dekkende plaat zoals de spraak, en anders liepen tekst en chips door
+     elkaar (DE ROOF: 12 320 px2 op 800x360). */
+  body[data-modus="mobiel"] .baas-flits { justify-content: flex-start; align-items: flex-start; text-align: left; padding: calc(var(--tbh, 40px) + var(--sat) + 4px) 0 0 4vw; gap: 2px; background: linear-gradient(180deg, rgba(10, 6, 14, .78), rgba(10, 6, 14, .45) 30%, transparent 48%); }
+  body[data-modus="mobiel"] .baas-flits > * { max-width: 44vw; }
+  body[data-modus="mobiel"]:has(.baas-flits) #speler-zone .blok-status { opacity: .12; transition: opacity .2s; }
+  body[data-modus="mobiel"] .baas-flits h2 { font-size: clamp(1.3rem, 4.4vw, 2rem); }
+  body[data-modus="mobiel"] .baas-flits span { font-size: clamp(.8rem, 2.4vw, 1.05rem); }
+  /* een lange ondertitel (DE ROOF op 800x360, elke banner op 740x360) wrapte naar twee
+     regels en zakte tot op het hoofd van de held (banner ~ held 8,8-10,9%). bannerFit()
+     (js/bazentoneel.js) meet dat na het tonen en zet dan .bf-klein, zo nodig .bf-kleinst. */
+  body[data-modus="mobiel"] .baas-flits.bf-klein h2 { font-size: clamp(1.15rem, 3.4vw, 1.5rem); }
+  body[data-modus="mobiel"] .baas-flits.bf-klein span { font-size: .8rem; line-height: 1.2; }
+  body[data-modus="mobiel"] .baas-flits.bf-kleinst span { font-size: .72rem; }
+
+  /* B0.5 — DE SPRAAKPLAAT IN EEN VRIJE ZONE. Direct onder de topbalk (var(--sat), niet
+     env(top): de v97-regel), horizontaal in de zone die spraakZone() berekent (naast de
+     baas en zijn pil, nooit erover). In een smalle zone (< 340px) een kleiner lettertype,
+     zodat de plaat twee regels blijft en boven het hoofd van de held. */
+  body[data-modus="mobiel"] .baas-spraak { top: calc(var(--tbh, 40px) + var(--sat) + 4px); }
+  body[data-modus="mobiel"] .baas-spraak span { font-size: clamp(.85rem, 2.3vw, 1.2rem); letter-spacing: 1.5px; padding: 5px 12px; }
+  body[data-modus="mobiel"] .baas-spraak.smal span { font-size: .8rem; letter-spacing: .8px; padding: 4px 9px; line-height: 1.25; }
+  /* .krap: alleen als geen enkele zone schoon is met .smal (800x360 na de herverkiezing:
+     de brede pil '🗳️ DE REDE' en de lange beleidsstrook laten 158px links over) */
+  body[data-modus="mobiel"] .baas-spraak.smal.krap span { font-size: .72rem; letter-spacing: .4px; padding: 3px 8px; line-height: 1.15; }
+}
+
 /* ---------- D. liggend gevecht op een KORTE telefoon (≤440px hoog) ----------
    De figuurmaten zelf schalen al mee via clamp(min,vh,max) hierboven; hier enkel
    de onderbalk wat korter zodat het strijdveld hoger wordt en de figuren (flex-end)
@@ -1690,6 +1763,16 @@ body[data-modus="mobiel"] .pl-kooltje::after { inset: -6px; }
 body[data-modus="mobiel"] .drank-leeg { min-height: 38px; padding: 0 5px; gap: 6px; }
 /* de fakkelvonk van de landing: op de telefoon 8 px (laptop 11 px, style.css) */
 body[data-modus="mobiel"] .pl-fakkelvonk { width: 8px; height: 8px; margin: -4px 0 0 -4px; }
+/* R5 F1: de zin van de echo ('Fijn dat je er bent. …') hangt vlak onder de topbalk en iets kleiner: op 800x360 lag
+   'een' 3,6 s over de intentie van de Groene Slijm ('⚔ 3'), net in het gevecht waar je die leert lezen */
+body[data-modus="mobiel"] .baas-spraak.pl-echo-zin { top: calc(var(--tbh, 40px) + 2px + var(--sat, 0px)); }
+body[data-modus="mobiel"] .baas-spraak.pl-echo-zin span { font-size: clamp(.85rem, 2.3vw, 1.3rem); line-height: 1.15; padding: 4px 14px; letter-spacing: 2px; }
+/* korte telefoons (≤ 340 px hoog): de intentie staat daar vlak onder de topbalk — de zin schuift naar de kant
+   van de held (links; de vijanden en hun intentie staan rechts) en mag over twee regels lopen */
+@media (orientation: landscape) and (max-height: 340px) {
+  body[data-modus="mobiel"] .baas-spraak.pl-echo-zin { left: 26%; max-width: 46vw; }
+  body[data-modus="mobiel"] .baas-spraak.pl-echo-zin span { font-size: clamp(.8rem, 2.2vw, 1.1rem); padding: 3px 12px; text-wrap: balance; }
+}
 
 /* ============================================================
    G. DE DREMPELTAFEL (v128) — het gokritueel aan de Drempel (Act 1 → 2)
