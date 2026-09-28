@@ -3151,7 +3151,6 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
 #meldingen.bij-baas { right: auto; align-items: flex-start; gap: 6px; }
 #meldingen.bij-baas[data-zone="kolom"] { top: auto; left: var(--meld-l, 14px); bottom: var(--meld-onder, 180px); max-width: var(--meld-b, 220px); }
 #meldingen.bij-baas .toast { font-size: .92rem; line-height: 1.25; padding: 7px 16px; border-radius: 16px; }
-.toast { font-size: .92rem; line-height: 1.25; padding: 7px 16px; border-radius: 16px; }
 .toast {
   background: rgba(20, 14, 28, .95);
   border: 1px solid var(--ember);
