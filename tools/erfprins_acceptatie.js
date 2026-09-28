@@ -1867,6 +1867,51 @@ async function kopChips(browser, fk) {
   return { kop: `(F2) de kop van de teruggespeelde kaart tegen de chips van de held · ${vp.naam}`, regels: R };
 }
 
+/* 7c · de retourregel ('🩸 … aangetast terug in je aflegstapel') hoort bij ZIJN beurt: daar staat hij
+   >= 1 s, bij de start van jouw beurt vervalt hij (hij lag er nog 1-1,5 s over je nieuwe hand en
+   Einde beurt), en over het doodsscherm komt hij nooit (je Gif velt je bij de start van je beurt) */
+async function retourRegel(browser, fk) {
+  const R = []; const t = (g, s) => R.push([!!g, s]);
+  const { ctx, page, vp } = await open(browser, fk);
+  const uit = [];
+  for (const [ids, dood] of [[['zware_klap', 'slag'], false], [['zware_klap', 'slag', 'dubbelslag'], false], [['slag', 'slag'], true]]) {
+    await startErf(page);
+    const r = await page.evaluate(async ([ids, dood]) => {
+      const g = S.gevecht; const v = g.vijanden.find(x => x.id === 'de_erfprins');
+      g.roofGedaan = true; g.roofBeurt = false; v.fase = ids.length > 2 ? 3 : 2; v.copyKracht = ERF.toeslag[v.fase]; v.plagN = 1; v.plagiaat = false;
+      v.gestolen = ids.map(id => erfBuitKaart(nieuweKaart(id))).concat(['verdediging', 'verdediging', 'bastvel'].map(id => erfBuitKaart(nieuweKaart(id))));
+      v.intent = VIJANDEN[v.id].kies(v, v.beurtTeller); renderGevecht();
+      S.maxHp = Math.max(S.maxHp, 400); S.hp = S.maxHp; g.speler.blok = 0; g.speler.status = dood ? { gif: 99 } : {};
+      const t0 = performance.now(), T = () => performance.now() - t0;
+      let begin = null, gemaakt = null, laatst = null, opEinde = 0, wegBijBegin = null;
+      const oB = window.beginSpelerBeurt;
+      window.beginSpelerBeurt = function () { if (dood) S.hp = 50; const x = oB.apply(this, arguments); begin = T(); const el = document.querySelector('.erf-retour'); wegBijBegin = !el || el.classList.contains('weg'); return x; };
+      let loop = true;
+      (async () => { while (loop) {
+        const el = document.querySelector('.erf-retour');
+        const zicht = !!el && +getComputedStyle(el).opacity > 0.05;
+        if (el && gemaakt == null) gemaakt = T();
+        if (zicht) { laatst = T(); if (document.body.dataset.scherm === 'einde') opEinde++; }
+        await new Promise(x => requestAnimationFrame(x));
+      } })();
+      const p = eindBeurt();
+      const t1 = performance.now();
+      while (performance.now() - t1 < 15000 && !(begin != null && performance.now() - t0 - begin > 1500 && (!dood || document.body.dataset.scherm === 'einde'))) await new Promise(x => setTimeout(x, 100));
+      loop = false; try { await p; } catch (e) { }
+      window.beginSpelerBeurt = oB;
+      return { dood, plan: ids.length, inZijnBeurt: begin != null && gemaakt != null ? Math.round(begin - gemaakt) : null, naBegin: begin != null && laatst != null ? Math.round(laatst - begin) : null, wegBijBegin, opEinde, einde: document.body.dataset.scherm === 'einde' };
+    }, [ids, dood]);
+    uit.push(r);
+  }
+  const lv = uit.filter(r => !r.dood), d = uit.find(r => r.dood);
+  t(lv.every(r => r.inZijnBeurt != null && r.inZijnBeurt >= 1000), `F2 ${vp.naam}: de retourregel staat in ZIJN beurt ${lv.map(r => r.inZijnBeurt).join('/')} ms in beeld (>= 1 000; plannen van ${lv.map(r => r.plan).join('/')} kaarten)`);
+  t(lv.every(r => r.wegBijBegin && r.naBegin != null && r.naBegin <= 300), `F2 ${vp.naam}: bij de start van jouw beurt vervalt hij (dooft meteen: ${lv.map(r => r.wegBijBegin).join('/')}; nog ${lv.map(r => r.naBegin).join('/')} ms zichtbaar, <= 300)`);
+  t(d && d.einde && d.opEinde === 0, `F2 ${vp.naam}: je Gif velt je bij de start van je beurt — de retourregel nooit over het doodsscherm (${d ? d.opEinde : '?'} frames; doodsscherm ${d ? d.einde : '?'})`);
+  fouten(page, t, vp, 'de retourregel');
+  await ctx.close();
+  return { kop: `(F2) de retourregel vervalt bij jouw beurt en je dood · ${vp.naam}`, regels: R };
+}
+
 (async () => {
   const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] });
   const FILTER = process.env.SLAYIT_TAKEN ? new RegExp(process.env.SLAYIT_TAKEN) : null;
@@ -1887,7 +1932,8 @@ async function kopChips(browser, fk) {
     ...[['M800', true], ['M800', false], ['L1440', true], ['L1440d3', false]].map(([fk, klap]) => ['orakel ' + fk, () => orakelTijd(browser, fk, klap)]),
     /* F2: de restfix van de verificatie */
     ...['M800', 'M846'].map(fk => ['noodrantsoen ' + fk, () => nrBanner(browser, fk)]),
-    ...['M800', 'M846', 'L1366d3'].map(fk => ['kopchips ' + fk, () => kopChips(browser, fk)])
+    ...['M800', 'M846', 'L1366d3'].map(fk => ['kopchips ' + fk, () => kopChips(browser, fk)]),
+    ...['M846', 'L1440'].map(fk => ['retour ' + fk, () => retourRegel(browser, fk)])
   ].filter(([n]) => !FILTER || FILTER.test(n)).map(([, f]) => f);
   const uit = new Array(taken.length); let i = 0;
   await Promise.all(Array.from({ length: PAR }, async () => {

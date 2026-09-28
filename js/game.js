@@ -8079,7 +8079,7 @@ async function copycatSpeelTerug(v, g, plan) {
     Klank.sfx('debuff');
     await slaap(560);
   }
-  if (retour.length && S.gevecht === g && !g.voorbij) erfRetourRegel(retour);
+  const retourEl = (retour.length && S.gevecht === g && !g.voorbij) ? erfRetourRegel(retour) : null;
   if (opgestaan()) fxNummer(actorEl(v), 'opstaan was zijn zet', 'fx-genees');
   else if (gespeeld >= 2 && !g.copycatDubbelGezien) {
     /* B3 (integratie): de banner telt wat hij écht speelde — ERF.plan kan in fase 3 drie kaarten
@@ -8090,14 +8090,20 @@ async function copycatSpeelTerug(v, g, plan) {
     else baasFaseMoment(`${gespeeld} TEGELIJK`, '„Allemaal tegelijk. Allemaal van JOU.”');
   }
   renderGevecht();
+  /* B3 F2: de retourregel hoort bij ZIJN beurt - bij de start van de jouwe vervalt hij (erfRetourWeg),
+     want daar lag hij nog 1-1,5 s over je nieuwe hand en Einde beurt. Zijn leestijd krijgt hij dus
+     hier: samen met de rust op het einde van de vijandbeurt (380 ms) ~1,3 s in beeld. */
+  if (retourEl && S.gevecht === g && !g.voorbij) await slaap(ERF_RETOUR_LEES_MS);
 }
 
 /* ÉÉN REGEL PER BEURT voor wat hij aangetast teruggeeft (B3 F1), boven je aflegstapel, waar de
-   kaarten net naartoe vlogen — geen toast (die lag op de telefoon over zijn hart en zijn pil). */
+   kaarten net naartoe vlogen — geen toast (die lag op de telefoon over zijn hart en zijn pil).
+   Geeft de regel terug (null als er geen aflegstapel in beeld is). */
+const ERF_RETOUR_LEES_MS = 900;   /* regie, geen balans: zijn leestijd in de vijandbeurt */
 function erfRetourRegel(namen) {
   const st = $('#stapel-afleg');
   const q = st && st.getBoundingClientRect();
-  if (!q || !q.width || !namen.length) return;
+  if (!q || !q.width || !namen.length) return null;
   const n = namen.length;
   const el = document.createElement('div');
   el.className = 'erf-retour';
@@ -8106,6 +8112,17 @@ function erfRetourRegel(namen) {
   el.style.bottom = Math.round(innerHeight - q.top + 6) + 'px';
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 2700);
+  return el;
+}
+/* B3 F2: de retourregel vervalt bij de start van jouw beurt (beginSpelerBeurt) en bij je dood
+   (nederlaag): hij dooft kort uit (css .weg), of meteen weg. */
+function erfRetourWeg(meteen) {
+  document.querySelectorAll('.erf-retour').forEach(el => {
+    if (meteen) { el.remove(); return; }
+    if (el.classList.contains('weg')) return;
+    el.classList.add('weg');
+    setTimeout(() => el.remove(), 200);
+  });
 }
 
 /* gedeelde graai: verplaats `aantal` kaarten ad random uit je trekstapel naar zijn buit (laat
@@ -9771,6 +9788,7 @@ async function eindBeurt() {
 function beginSpelerBeurt() {
   const g = S.gevecht;
   if (!g || g.voorbij) return;
+  erfRetourWeg();   /* B3 F2: de retourregel van de Erfprins hoort bij zijn beurt, niet over je nieuwe hand */
   /* v121: EERST vrijgeven, DAN checken. Stond de vrijgave zestien regels lager (bij de
      rest van de beurt-reset), dan hief deze functie een ceremonie die checkBaasFase hier
      net startte in dezelfde tick weer op - precies wat er gebeurt als gif- of doorn-
@@ -10080,6 +10098,7 @@ async function gevechtGewonnen() {
 function nederlaag(reden) {
   const g = S.gevecht;
   if (!g || g.voorbij) return;
+  erfRetourWeg();   /* B3 F2: niet over het doodsscherm */
   g.voorbij = true;
   g.bezig = true;
   if (S.checkpoint) delete S.checkpoint;   /* v108 */

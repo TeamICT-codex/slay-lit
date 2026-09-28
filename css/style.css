@@ -2502,6 +2502,9 @@ body.lite .roof-speel-kaart.ontploft { transition: opacity .3s ease; transform: 
   82% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-6px); }
 }
+/* B3 F2: bij de start van jouw beurt (en bij je dood) vervalt hij - kort uitdoven (erfRetourWeg) */
+.erf-retour.weg { animation: erfRetourWeg .18s ease forwards; }
+@keyframes erfRetourWeg { from { opacity: 1; } to { opacity: 0; transform: translateY(-6px); } }
 /* B3 F1 — HET NOODRANTSOEN verscheurt een kaart uit zijn buit: het getal scheurt zelf (geen 🗞️).
    De tekst staat twee keer op een pseudo-laag (data-t), elk de helft langs een kartelrand. */
 .fx-nummer.fx-scheur { color: transparent; text-shadow: none; white-space: nowrap; }
