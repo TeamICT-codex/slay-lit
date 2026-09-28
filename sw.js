@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v136'; // v136: ECHO EN QA (proloog ronde 5, de laatste) - na de proloog is het eerste gevecht een solo Groene Slijm die zegt 'Fijn dat je er bent', de eerste hand komt binnen als brandende kantoorvellen, de outro zegt 'U STAPTE IN' en in beide routes rolt de stoel de lift in
+const CACHE = 'slayit-v137'; // v137: DE FINALE (B4) - HET PROCES van de DICKtator als vier scènes: de lengteregel heet HIJ HOUDT STAND (slotje, ook op de telefoon), het hof vangt de klap, een vervallen decreet zegt waarom ('U brak door vóór de zitting?'), de herverkiezing en de titels blijven langer leesbaar, het decreet-keuzescherm werkt met het toetsenbord, toasts niet meer over de bazenbalk
 const BESTANDEN = [
   '.',
   'css/style.css',
