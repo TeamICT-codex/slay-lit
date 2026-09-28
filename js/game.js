@@ -7760,7 +7760,7 @@ function erfPlaatsSpeelKaart(wrap, v) {
        B3 F1: is er onder zijn pil geen plek (800x360, fase 3: de pil op twee rijen), dan schuift de
        kaart naar links tot de kop naast de pil staat; de held mag er deels achter.
        B3 F2: ook de CHIPS VAN DE HELD (boven zijn hoofd, B0.8) blijven leesbaar: de kop raakte op
-       846x381 zijn Kracht-chip (fase 2, vier tot zes statussen: 72-131 px2; op 800x360 idem). Eén
+       846x381 zijn Kracht-chip (fase 2, vier tot zes statussen: 72-297 px2; op 800x360 idem). Eén
        zoektocht over de plekken die een hindernis vrijmaken (onder een pil of chip, links van een
        pil, rechts van een chip - nooit voorbij de grens naast zijn silhouet), met de klem op het
        scherm er al in (die zette de kop op 800x360 terug over zijn pil). Van de schone plekken wint
@@ -8120,10 +8120,9 @@ function erfRetourRegel(namen) {
   return el;
 }
 /* B3 F2: de retourregel vervalt bij de start van jouw beurt (beginSpelerBeurt) en bij je dood
-   (nederlaag): hij dooft kort uit (css .weg), of meteen weg. */
-function erfRetourWeg(meteen) {
+   (nederlaag): hij dooft kort uit (css .weg, 0,18 s) en is dan weg. */
+function erfRetourWeg() {
   document.querySelectorAll('.erf-retour').forEach(el => {
-    if (meteen) { el.remove(); return; }
     if (el.classList.contains('weg')) return;
     el.classList.add('weg');
     setTimeout(() => el.remove(), 200);

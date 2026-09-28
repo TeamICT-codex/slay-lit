@@ -289,6 +289,11 @@ function bannerFit(el) {
   const rect = e => e.getBoundingClientRect();
   const pillen = _baasPillen();
   el._pillen = pillen;   /* de pil zoals deze fit ze zag (bannerVolgt) */
+  _bannerVolgLus(el);
+  /* B3 F2: een zone van PIL_ZWIEP px rond zijn pil telt ook, lichter (20 i.p.v. 100): de pil zwiept met
+     zijn pose mee (het opstaan uit het noodrantsoen, 800x360: 9 px), en een regel die tot op 10 px
+     naast haar eindigde, raakte haar dan even */
+  const rondom = pillen.map(p => ({ left: p.left - PIL_ZWIEP, right: p.right + PIL_ZWIEP, top: p.top - 2, bottom: p.bottom + 2 }));
   /* de chips van de held tellen alleen waar ze tijdens een banner niet dimmen (laptop); op mobiel
      zakken ze naar .12 (css), en de computed opacity helpt hier niet: de overgang loopt nog */
   const chipsEl = document.body.dataset.modus === 'mobiel' ? null : document.querySelector('#speler-zone .blok-status');
@@ -301,7 +306,10 @@ function bannerFit(el) {
   });
   const kost = () => {
     let k = raaktHeld() ? 1000 : 0;
-    for (const q of regels()) { for (const p of pillen) if (snijdt(q, p)) k += 100; for (const c of chips) if (snijdt(q, c)) k += 10; }
+    for (const q of regels()) {
+      pillen.forEach((p, i) => { if (snijdt(q, p)) k += 100; else if (snijdt(q, rondom[i])) k += 20; });
+      for (const c of chips) if (snijdt(q, c)) k += 10;
+    }
     return k;
   };
   if (!pillen.length && !chips.length) {   /* het oude pad: alleen de held */
@@ -311,8 +319,9 @@ function bannerFit(el) {
   }
   const L = Math.min(...[...el.children].map(c => rect(c).left));
   const std = Math.max(...[...el.children].map(c => rect(c).width), parseFloat(getComputedStyle(el.children[0]).maxWidth) || 0);   /* de css-kolom (44vw / 40vw): nooit breder */
-  const hind = pillen.concat(chips).filter(p => p.top < h.top);   /* wat boven zijn hoofd in de band hangt */
-  const totPil = hind.length ? Math.min(...hind.map(p => p.left)) - 10 - L : null;
+  /* wat boven zijn hoofd in de band hangt, met de afstand die de kolom ervan houdt */
+  const hind = pillen.map(p => [p, PIL_ZWIEP + 2]).concat(chips.map(c => [c, 10])).filter(([p]) => p.top < h.top);
+  const totPil = hind.length ? Math.min(...hind.map(([p, m]) => p.left - m)) - L : null;
   const totHeld = Math.min(totPil == null ? Infinity : totPil, h.left - 10 - L);
   const breedtes = [null, totPil, totHeld].filter((b, i, a) => b == null || (b >= 110 && b < std - 1 && a.indexOf(b) === i));
   const zet = (maat, b) => {
@@ -344,18 +353,31 @@ function bannerFit(el) {
    zijn schijndood liet de art zakken, dus hing de pil boven zijn hoofd toen de banner kwam, en zodra
    hij opstond zette zetPilZij haar links naast zijn hoofd, midden in de ondertitel (900-2 100 px2,
    ~2 s lang). Een nieuwe pose of een nieuwe pip doet hetzelfde. De toneelwacht roept dit elke tik,
-   direct na zetPilZij (dus in dezelfde taak, zonder verfbeurt ertussen): is de pil verhuisd (meer
-   dan 6 px - de ademende art beweegt haar een paar pixels) en raakt een tekstregel haar nu, dan
-   past de banner opnieuw. Schuift ze weg, dan blijft hij staan: geen sprong voor niets. */
-function bannerVolgt() {
-  const el = document.querySelector('#scherm-gevecht > .baas-flits:not(.bf-weg)');
-  if (!el || !el._pillen || innerHeight > innerWidth) return;
+   direct na zetPilZij (dus in dezelfde taak, zonder verfbeurt ertussen), en zolang een banner staat
+   ook elk frame (vóór de verfbeurt: een renderGevecht tussen twee tikken in wacht niet 150 ms): is de
+   pil verhuisd (meer dan 6 px - de ademende art beweegt haar een paar pixels) en raakt een tekstregel
+   haar nu, dan past de banner opnieuw. Schuift ze weg, dan blijft hij staan: geen sprong voor niets. */
+const PIL_ZWIEP = 12;   /* px: zoveel zwiept de pil van een baas met zijn pose mee (bannerFit houdt die afstand) */
+function bannerVolgt(el) {
+  el = el || document.querySelector('#scherm-gevecht > .baas-flits:not(.bf-weg)');
+  if (!el || !el.isConnected || el.classList.contains('bf-weg') || !el._pillen || innerHeight > innerWidth) return;
   const nu = _baasPillen(), oud = el._pillen;
   const zelfde = nu.length === oud.length && nu.every((q, i) => Math.abs(q.left - oud[i].left) <= 6 && Math.abs(q.top - oud[i].top) <= 6
     && Math.abs(q.right - oud[i].right) <= 6 && Math.abs(q.bottom - oud[i].bottom) <= 6);
   if (zelfde) return;
   if (_bannerRegels(el).some(q => nu.some(p => _snijdt(q, p)))) bannerFit(el);
   else el._pillen = nu;
+}
+/* één lus per banner, zolang hij staat (hij stopt vanzelf als de banner uitdooft of weg is) */
+function _bannerVolgLus(el) {
+  if (el._volgLus) return;
+  el._volgLus = true;
+  const tik = () => {
+    if (!el.isConnected || el.classList.contains('bf-weg')) return;
+    try { bannerVolgt(el); } catch (e) { }
+    requestAnimationFrame(tik);
+  };
+  requestAnimationFrame(tik);
 }
 
 /* ---------- --bb-onder: de onderrand van de bazenbalk als CSS-variabele ----------
