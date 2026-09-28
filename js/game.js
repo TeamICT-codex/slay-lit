@@ -7756,13 +7756,35 @@ function erfPlaatsSpeelKaart(wrap, v) {
     x = hr ? (hr.r + prL) / 2 : prL - breedst / 2 - 8;
     x = Math.min(x, prL - 6 - breedst / 2);
     y = Math.min(H - h / 2 - 2, Math.max(top + 4 + h / 2, (top + H) / 2 - 24));
-    /* zijn pil (die liggend naast zijn hoofd kan hangen, B0.9) blijft leesbaar: de kop schuift eronder */
-    const pillen = [...((actorEl(v) || document.body).querySelectorAll('.intent'))].map(e => e.getBoundingClientRect()).filter(q => q.width > 0);
-    const raakt = p => { const kl = x - kopW / 2, kr = x + kopW / 2, kt = y - h / 2; return p.right > kl && p.left < kr && p.bottom > kt && p.top < kt + kopH; };
-    for (const p of pillen) if (raakt(p)) y = Math.min(H - h / 2 - 2, p.bottom + 4 + h / 2);
-    /* B3 F1: is er onder zijn pil geen plek (800x360, fase 3: de pil op twee rijen), dan schuift de
-       kaart naar links tot de kop naast de pil staat; de held mag er deels achter */
-    for (const p of pillen) if (raakt(p)) x = Math.min(x, p.left - 6 - kopW / 2);
+    /* zijn pil (die liggend naast zijn hoofd kan hangen, B0.9) blijft leesbaar: de kop schuift eronder.
+       B3 F1: is er onder zijn pil geen plek (800x360, fase 3: de pil op twee rijen), dan schuift de
+       kaart naar links tot de kop naast de pil staat; de held mag er deels achter.
+       B3 F2: ook de CHIPS VAN DE HELD (boven zijn hoofd, B0.8) blijven leesbaar: de kop raakte op
+       846x381 zijn Kracht-chip (fase 2, vier tot zes statussen: 72-131 px2; op 800x360 idem). Eén
+       zoektocht over de plekken die een hindernis vrijmaken (onder een pil of chip, links van een
+       pil, rechts van een chip - nooit voorbij de grens naast zijn silhouet), met de klem op het
+       scherm er al in (die zette de kop op 800x360 terug over zijn pil). Van de schone plekken wint
+       de kleinste verschuiving; is er geen, dan die met de minste overlap. */
+    const rect = e => e.getBoundingClientRect();
+    const pillen = [...((actorEl(v) || document.body).querySelectorAll('.intent'))].map(rect).filter(q => q.width > 0);
+    const chips = [...document.querySelectorAll('#speler-zone .blok-status > *')].map(rect).filter(q => q.width > 0);
+    const hind = pillen.concat(chips);
+    const xMax = prL - 6 - breedst / 2;
+    const klemX = cx => Math.max(w / 2 + 6, Math.min(W - w / 2 - 6, Math.min(xMax, cx)));
+    const klemY = cy => Math.min(H - h / 2 - 2, Math.max(top + 4 + h / 2, cy));
+    const overlap = (cx, cy) => {
+      const kl = cx - kopW / 2, kr = cx + kopW / 2, kt = cy - h / 2, kb = kt + kopH;
+      return hind.reduce((s, p) => s + Math.max(0, Math.min(p.right, kr) - Math.max(p.left, kl)) * Math.max(0, Math.min(p.bottom, kb) - Math.max(p.top, kt)), 0);
+    };
+    const x0 = klemX(x), y0 = y;
+    const xs = [x0, ...pillen.map(p => p.left - 6 - kopW / 2), ...chips.map(c => c.right + 6 + kopW / 2)].map(klemX);
+    const ys = [y0, ...hind.map(p => p.bottom + 4 + h / 2)].map(klemY);
+    let best = null;
+    for (const cx of xs) for (const cy of ys) {
+      const k = overlap(cx, cy), d = Math.abs(cx - x0) + Math.abs(cy - y0);
+      if (!best || k < best.k || (k === best.k && d < best.d)) best = { x: cx, y: cy, k, d };
+    }
+    x = best.x; y = best.y;
   }
   x = Math.max(w / 2 + 6, Math.min(W - w / 2 - 6, x));
   wrap.style.left = x + 'px'; wrap.style.top = y + 'px';

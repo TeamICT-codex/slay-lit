@@ -2433,9 +2433,13 @@ body.lite .pb-skelet, body.lite .pb-lijst .pb-rij.pb-skelet:nth-child(odd) { bac
    B3 · B1.4: de kaart vertrekt BIJ HEM (--dx/--dy, uit zijn rect) en landt naast hem op de plek
    die erfPlaatsSpeelKaart (js/game.js) uitrekent; --rs-s schaalt het geheel tot het tussen de
    topbalk/bazenbalk en de hand past (nooit onder 0,72 laptop / 0,92 mobiel). Zonder die plaatsing
-   (geen rect) blijft ze midden in beeld, zoals vroeger. */
+   (geen rect) blijft ze midden in beeld, zoals vroeger.
+   B3 F2: een vaste breedte (max-content) - anders hing de maat af van de plek (een fixed blok krimpt
+   tot de ruimte rechts van 'left'): erfPlaatsSpeelKaart mat haar op left 50 % en zette ze dan links
+   of rechts, waarna de ondertitel anders brak en de kop tot 44 px van de berekende plek viel (800x360). */
 .roof-speel-kaart {
   position: fixed; left: 50%; top: 46%; z-index: 712; pointer-events: none;
+  width: max-content; max-width: calc(100vw - 12px);
   transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px))) scale(.3); opacity: 0;
   display: flex; flex-direction: column; align-items: center; gap: 10px;
   transition: transform .42s cubic-bezier(.2, 1.3, .4, 1), opacity .3s ease, filter .5s ease;

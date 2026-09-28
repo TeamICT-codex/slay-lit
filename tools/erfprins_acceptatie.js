@@ -199,6 +199,7 @@ const HELPER = `(() => {
     return {
       schaal: +(getComputedStyle(wrap).getPropertyValue('--rs-s') || 1), kaartBaas: pct(bf, [kaart]),
       kopBB: bb ? snij(kop, bb) : 0, kopTop: tb ? snij(kop, tb) : 0, kopPil: som(kop ? [kop] : [], pillen), kopBinnen: binnen(kop), stempelBinnen: binnen(stempel),
+      kopChips: som(kop ? [kop] : [], alle('#speler-zone .blok-status > *')),   /* B3 F2: ook de chips van de held */
       stempelInKaart: (stempel && kaart) ? (stempel.l >= kaart.l - 14 && stempel.r <= kaart.r + 14 && stempel.t >= kaart.t && stempel.b <= kaart.b) : null,
       stempelTekst: (wrap.querySelector('.rs-stempel') || {}).textContent || ''
     };
@@ -514,6 +515,9 @@ async function regie(browser, fk, BANNERS) {
       t(ms.length >= 1, `B1.4 ${vp.naam}${dk} ${fz}: ${ms.length} grote kaart(en) gemeten`);
       if (!vp.staand) t(ms.every(m => m.kaartBaas <= 2), `B1.4 ${vp.naam}${dk} ${fz}: de kaart naast hem (${ms.map(m => m.kaartBaas).join('/')} % van zijn silhouet, <= 2)`);
       t(ms.every(m => m.kopBinnen && m.kopBB === 0 && m.kopTop === 0 && m.kopPil === 0), `B1.4 ${vp.naam}${dk} ${fz}: de kop in beeld (${ms.map(m => m.kopBinnen).join('/')}), niet over de bazenbalk (${ms.map(m => m.kopBB).join('/')}), de topbalk (${ms.map(m => m.kopTop).join('/')}) of zijn pil (${ms.map(m => m.kopPil).join('/')})`);
+      /* B3 F2: liggend ook niet over de chips van de held (staand hangt de kaart boven beide figuren: ter info) */
+      if (!vp.staand) t(ms.every(m => m.kopChips === 0), `B1.4 ${vp.naam}${dk} ${fz} (F2): de kop niet over de chips van de held (${ms.map(m => m.kopChips).join('/')} px2)`);
+      else t(true, `B1.4 ${vp.naam}${dk} ${fz} (F2, ter info): de kop over de chips van de held ${ms.map(m => m.kopChips).join('/')} px2`);
       t(ms.every(m => m.schaal >= min - 0.001 && m.stempelInKaart && m.stempelBinnen), `B1.4 ${vp.naam}${dk} ${fz}: schaal ${ms.map(m => m.schaal).join('/')} (>= ${min}), de stempel op de kaart ("${ms.map(m => m.stempelTekst).join('" / "')}")`);
       await slaap(300);
     }
@@ -1829,6 +1833,40 @@ async function nrBanner(browser, fk) {
   return { kop: `(F2) HET NOODRANTSOEN in jouw beurt, per frame tegen zijn pil · ${vp.naam}`, regels: R };
 }
 
+/* 7b · de kop 'HIJ SPEELT JOUW KAART' raakt zijn pil noch de chips van de held (846x381: de Kracht-chip,
+   72-131 px2 in fase 2 met vier tot zes statussen), in fase 2, 3 en met de langste stempels */
+async function kopChips(browser, fk) {
+  const R = []; const t = (g, s) => R.push([!!g, s]);
+  const { ctx, page, vp } = await open(browser, fk);
+  await startErf(page);
+  const HELD = { een: { kracht: 2 }, vier: STATUS.vier.held, vijf: STATUS.vijf.held, zes: Object.assign({ metaalhuid: 2 }, STATUS.vijf.held) };
+  const uit = [];
+  for (const st of Object.keys(HELD)) for (const [fase, lang, baasSt] of [[2, false, false], [3, false, false], [3, true, false], [3, true, true]]) {
+    await page.evaluate(([held, baas, fase, lang]) => {
+      const g = S.gevecht; const v = g.vijanden[0];
+      g.roofBeurt = false; g.roofGedaan = true; S.maxHp = Math.max(S.maxHp, 400); S.hp = S.maxHp;
+      v.fase = fase; v.copyKracht = ERF.toeslag[fase]; v.hp = Math.max(v.hp, 60); v.plagN = fase === 3 ? 1 : 0; v.plagiaat = false;
+      v.gestolen = (lang ? ['zware_klap', 'kolenstempel'] : ['slag']).map(id => { const c = nieuweKaart(id); c.up = lang; return erfBuitKaart(c); }).concat(['verdediging', 'verdediging'].map(id => erfBuitKaart(nieuweKaart(id))));
+      g.speler.status = Object.assign({}, held); v.status = Object.assign({}, baas);
+      v.intent = VIJANDEN[v.id].kies(v, v.beurtTeller); renderGevecht();
+    }, [HELD[st], baasSt ? STATUS.vijf.baas : {}, fase, lang]);
+    await slaap(vp.mobiel ? 350 : 450);
+    await page.evaluate(() => { __EA.speelRecorder(); const v = S.gevecht.vijanden[0]; S.gevecht.vijandAanZet = true; if (v.intent && v.intent.doe) window.__zet = v.intent.doe(v); });
+    await wacht(page, () => (window.__speelMetingen || []).length > 0, 5000);
+    const m = (await page.evaluate(() => window.__speelMetingen || []))[0];
+    if (st === 'vijf' && fase === 2) await shot(page, `${vp.naam}_kop_chips_vijf_f2`);
+    await page.evaluate(async () => { try { await window.__zet; } catch (e) { } S.gevecht.vijandAanZet = false; });
+    uit.push([`${st}/f${fase}${lang ? 'L' : ''}${baasSt ? '+b5' : ''}`, m]);
+    await slaap(250);
+  }
+  const lijst = f => uit.map(([n, m]) => `${n} ${m ? f(m) : '?'}`).join(' · ');
+  t(uit.every(([, m]) => m && m.kopChips === 0 && m.kopPil === 0 && m.kopBinnen && m.kopTop === 0 && m.kopBB === 0), `F2 ${vp.naam}: de kop 'HIJ SPEELT JOUW KAART' niet op de chips van de held / zijn pil (px2), in beeld: ${lijst(m => m.kopChips + '/' + m.kopPil + (m.kopBinnen ? '' : ' UIT'))}`);
+  t(uit.every(([, m]) => m && m.kaartBaas <= 2 && m.stempelInKaart && m.stempelBinnen), `F2 ${vp.naam}: de kaart blijft naast hem (${lijst(m => m.kaartBaas + '%')}) met de stempel op de kaart`);
+  fouten(page, t, vp, 'de kop tegen de chips');
+  await ctx.close();
+  return { kop: `(F2) de kop van de teruggespeelde kaart tegen de chips van de held · ${vp.naam}`, regels: R };
+}
+
 (async () => {
   const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] });
   const FILTER = process.env.SLAYIT_TAKEN ? new RegExp(process.env.SLAYIT_TAKEN) : null;
@@ -1848,7 +1886,8 @@ async function nrBanner(browser, fk) {
     ['catalogus', () => catalogus(browser, A.vechtTeksten)],
     ...[['M800', true], ['M800', false], ['L1440', true], ['L1440d3', false]].map(([fk, klap]) => ['orakel ' + fk, () => orakelTijd(browser, fk, klap)]),
     /* F2: de restfix van de verificatie */
-    ...['M800', 'M846'].map(fk => ['noodrantsoen ' + fk, () => nrBanner(browser, fk)])
+    ...['M800', 'M846'].map(fk => ['noodrantsoen ' + fk, () => nrBanner(browser, fk)]),
+    ...['M800', 'M846', 'L1366d3'].map(fk => ['kopchips ' + fk, () => kopChips(browser, fk)])
   ].filter(([n]) => !FILTER || FILTER.test(n)).map(([, f]) => f);
   const uit = new Array(taken.length); let i = 0;
   await Promise.all(Array.from({ length: PAR }, async () => {
