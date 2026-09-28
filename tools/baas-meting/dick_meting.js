@@ -89,6 +89,12 @@
      MEET_METGEZEL=drops (alleen de terugkeer van de metgezellen)
      MEET_GEMNORM=1 (de gemiddelde builds volgens GEM_NORM: max-HP = basis + 14, geen defensief
        run-relikwie; zonder de vlag de oude gemiddelde builds van E en F)
+     MEET_RELIEK=<id>[,-<id>…] (relikwie-balans, 28 sep: voeg die relikwieën toe aan ELKE build, na de
+       gemiddeld-norm en de populatie; '-id' haalt er een weg)
+     MEET_RELIEK_VAR=<json-bestand {naam:{reliek:{<id>:{…RELIEK…}},plus:[…],min:[…]}}> (relikwie-varianten:
+       elke job draait voor 'basis' en voor elke variant op dezelfde seed; veld rv, cel + ' {naam}'; de
+       analysescripts van meetlib lezen alleen rv 'basis'). Handleiding, telling per gevecht (veld rt) en
+       voorbeelden: tools/baas-meting/reliek_meet.js; analyse: python tools/baas-meting/reliek_winst.py <json>
    Uitvoer:<werkboom>/.claude/notities/baas-meting/uit/<label>.json (gitignored, niet gedeployd;
    of MEET_UIT=<pad>) + een samenvatting op de console. Analyse: python tools/baas-meting/doeltabel.py
    <json> (alle doelen in één tabel), populatie.py, breekpunt.py, oorzaak.py, stilstand.py,
@@ -133,6 +139,12 @@ const POP_VAR = lijst('MEET_POP_VAR', ['minDef', 'plusDef', 'laster']);
 const BREEK = lijst('MEET_BREEK', []).map(parseFloat).filter(x => x > 0);
 const BREEK_ST = lijst('MEET_BREEK_ST', ['gemiddeld', 'sterk']);
 const DMGX = process.env.MEET_DMGX ? parseFloat(process.env.MEET_DMGX) : 1;
+/* RELIEK (relikwie-balans, 28 sep): MEET_RELIEK op elke build, MEET_RELIEK_VAR = de relikwie-varianten
+   (zie tools/baas-meting/reliek_meet.js). RV = de variantnamen; 'basis' draait altijd mee. */
+const RELIEKM = require('./reliek_meet.js');
+const RELIEK_OPT = RELIEKM.leesReliek(process.env);
+const RV_DEF = Object.assign({ basis: { reliek: {}, plus: [], min: [] } }, RELIEK_OPT.varianten);
+const RV = ['basis'].concat(Object.keys(RELIEK_OPT.varianten).filter(n => n !== 'basis'));
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff', '.txt': 'text/plain; charset=utf-8', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav' };
 
 /* ============================================================
@@ -283,7 +295,13 @@ const BAZEN = {
 };
 
 /* ---------- de jobs ---------- */
+/* RELIEK: elke job voor elke relikwie-variant, naast elkaar (zelfde seed = gepaard); met alleen 'basis'
+   blijven de jobs exact die van vroeger (zelfde volgorde, zelfde cel) */
 function maakJobs() {
+  return maakJobsBasis().flatMap(j => RV.map(rv => Object.assign({}, j, { rv, reliek: RV_DEF[rv].reliek || {},
+    cel: j.cel + (rv === 'basis' ? '' : ' {' + rv + '}') })));
+}
+function maakJobsBasis() {
   const jobs = [];
   const fakkel = (process.env.MEET_FAKKEL != null && process.env.MEET_FAKKEL !== '') ? parseInt(process.env.MEET_FAKKEL, 10) : null;
   const seed = i => 'M23-' + (SEEDBASE + i);
@@ -466,6 +484,9 @@ async function eenGevecht({ build, job }) {
   if (S && S.gevecht) { try { S.gevecht.voorbij = true; stopGevechtLus(); } catch (e) {} }
   /* de DICK-waarden van DEZE job: de basis (spelcode + MEET_DICK) terug, dan zijn drukfactor */
   if (typeof window.__zetDick === 'function') window.__zetDick(job.dmgx || 1);
+  /* RELIEK (relikwie-balans): de standaard uit game.js terug + de knoppen van deze relikwie-variant */
+  if (typeof window.__zetReliek === 'function') window.__zetReliek(job.reliek || {});
+  else if (job.reliek && Object.keys(job.reliek).length) throw new Error('RELIEK-knoppen, maar installeerReliek draait niet in deze pagina');
   nieuwSpel(build.held, job.seed);
   S.gevecht = null; S.act = bz.act; S.fakkel = (job.fakkel != null ? job.fakkel : fakkelMax()); S.pos = null; S.ascensie = 0; S.daily = false; S.dagwet = null;
   delete S.beloning; delete S.winkel; delete S.huidigEvent;
@@ -516,6 +537,7 @@ async function eenGevecht({ build, job }) {
   S.kaart = genereerKaart();
   const hpStart = S.hp, dekStart = S.dek.length;
   const T = window.__T = { bron: {}, bronBd: {}, inBd: {}, uitBd: {}, uitBaas: 0, uitHof: 0, uitSoort: {}, rawIn: 0, geblokt: 0, metgezelVing: 0, decreten: [], rondeIn: 0, _zelf: false, _bewaar: null, kaartBaas: {}, kaartHof: {} };
+  if (typeof window.__reliekStart === 'function') window.__reliekStart();   /* RELIEK: de telling van dit gevecht */
   startGevecht([job.baas], 'baas', bz.rij);
   const g = S.gevecht;
   const gMetStart = g && g.metgezel ? g.metgezel.id : null;   /* DE NISSEN DICHT: solo wordt GEMETEN, niet aangenomen (M-plan §6) */
@@ -916,9 +938,10 @@ async function eenGevecht({ build, job }) {
     log: rondes, slotWeg: T.slotWeg || 0, slotWegBd: T.slotWegBd || {}, slotHits: T.slotHits || 0, slotNul: T.slotNul || 0,
     capWeg: T.capWeg || 0, capWegBd: T.capWegBd || {}, capHits: T.capHits || 0, spill: T.spill || 0, fakkel: S.fakkel, metgezel: build.metgezel || null,
     baasSoort: T.baasSoort || {}, kaartBaas: T.kaartBaas || {}, kaartHof: T.kaartHof || {}, tafel: build.tafel || [],
-    relikwieen: S.relikwieen.slice(), dekN: dekStart
+    relikwieen: S.relikwieen.slice(), dekN: dekStart,
+    rv: job.rv || 'basis', rt: typeof window.__reliekLees === 'function' ? window.__reliekLees() : null
   };
-  window.__T = null;
+  window.__T = null; window.__RT = null;
   try { g.voorbij = true; stopGevechtLus(); } catch (e) {}
   S.gevecht = null;
   document.querySelectorAll('.overlay, #baas-intro, .baas-flits, .baas-spraak, .vloek-reveal-overlay, .decreet-overlay, #scherm-einde .einde, #gevecht-achtergrond-2, .vonnis').forEach(n => { try { n.remove(); } catch (e) {} });
@@ -974,6 +997,7 @@ async function maakPagina(browser, fouten) {
   }, (() => { const v = process.env.MEET_CAP; return /^\s*\{/.test(v) ? JSON.parse(v) : parseInt(v, 10); })());
   if (process.env.MEET_BOTBLIND === '1') await page.evaluate(() => { window.__botBlind = true; });
   await page.evaluate(installeer);
+  await page.evaluate(RELIEKM.installeerReliek);   /* RELIEK: doorzichtige wikkels + __zetReliek (reliek_meet.js) */
   if (process.env.MEET_DICK) await page.evaluate(over => {
     const meng = (doel, bron) => { for (const k of Object.keys(bron)) {
       if (bron[k] && typeof bron[k] === 'object' && !Array.isArray(bron[k]) && doel[k] && typeof doel[k] === 'object') meng(doel[k], bron[k]);
@@ -1043,6 +1067,9 @@ async function main() {
   const basisHp = await paginas[0].evaluate(() => Object.fromEntries(Object.entries(SPELERS).map(([k, v]) => [k, v.hp])));
   const relBestaat = await paginas[0].evaluate(ids => ids.filter(id => !RELIKWIEEN[id]), [].concat(DEF_RELIKWIEEN, Object.values(STARTREL)));
   if (relBestaat.length) throw new Error('onbekende relikwieën in DEF_RELIKWIEEN/STARTREL: ' + relBestaat.join(', '));
+  const relOnb = await paginas[0].evaluate(ids => ids.filter(id => !RELIKWIEEN[id]), RELIEKM.alleIds(RELIEK_OPT));
+  if (relOnb.length) throw new Error('onbekende relikwieën in MEET_RELIEK/MEET_RELIEK_VAR: ' + relOnb.join(', '));
+  const reliekStd = await paginas[0].evaluate(() => window.__RELIEK_STD || null);
   /* de ruwe build van een cel: 'dev:<id>' = DEV_BUILDS uit game.js, een andere sterkte-naam = die build */
   const ruweBuild = (held, st) => {
     let b = BUILDS[held][st];
@@ -1082,8 +1109,8 @@ async function main() {
     return b;
   };
   const cacheB = {};
-  const buildVan = (held, st, pv = 'basis') => {
-    const sleutel = held + '/' + st + '/' + pv;
+  const buildVan = (held, st, pv = 'basis', rv = 'basis') => {
+    const sleutel = held + '/' + st + '/' + pv + '/' + rv;
     if (cacheB[sleutel]) return cacheB[sleutel];
     const basis = ruweBuild(held, st);
     if (st === 'sterk') toetsNorm(held, basis);
@@ -1125,13 +1152,19 @@ async function main() {
         basis.label = (basis.label || '') + ' [ablatie]';
       }
     }
-    return (cacheB[sleutel] = variant(held, basis, pv));
+    /* RELIEK: eerst MEET_RELIEK (elke build), dan de plus/min van de relikwie-variant - ná de gemiddeld-norm
+       en de populatie, zodat een defensief relikwie dat de norm wegneemt er via MEET_RELIEK wél bij kan */
+    const b = variant(held, basis, pv);
+    const rvd = RV_DEF[rv] || RV_DEF.basis;
+    const rel = RELIEKM.pasToe(RELIEKM.pasToe(b.relikwieen, RELIEK_OPT.glob.plus, RELIEK_OPT.glob.min), rvd.plus, rvd.min);
+    if (rel.join() === (b.relikwieen || []).join()) return (cacheB[sleutel] = b);
+    return (cacheB[sleutel] = Object.assign(JSON.parse(JSON.stringify(b)), { relikwieen: rel, label: (b.label || '') + ' [relikwieën ' + rel.join('+') + ']' }));
   };
   const jobs = maakJobs();
   /* elke build één keer vooraf opbouwen: een norm- of variantfout breekt de meting vóór de eerste job */
-  for (const j of jobs) buildVan(j.held, j.st, j.pv);
+  for (const j of jobs) buildVan(j.held, j.st, j.pv, j.rv);
   console.log(`HET PROCES-meting '${LABEL}' · ${versie} · ${jobs.length} gevechten · ${WERKERS} werkers · ${N} seeds per cel · seeds ${SEEDBASE}-${SEEDBASE + N - 1}` +
-    ` · ${MEET_METGEZEL ? 'MET metgezel ' + MEET_METGEZEL : 'SOLO'}${GEMNORM ? ' · gemiddeld-norm' : ''}${POP ? ' · populatie ' + POP_VAR.join('/') + ' op ' + POP_ST.join('/') : ''}${BREEK.length ? ' · breekpuntzwaai x' + BREEK.join('/') : ''}${DMGX !== 1 ? ' · druk x' + DMGX : ''}`);
+    ` · ${MEET_METGEZEL ? 'MET metgezel ' + MEET_METGEZEL : 'SOLO'}${GEMNORM ? ' · gemiddeld-norm' : ''}${POP ? ' · populatie ' + POP_VAR.join('/') + ' op ' + POP_ST.join('/') : ''}${BREEK.length ? ' · breekpuntzwaai x' + BREEK.join('/') : ''}${DMGX !== 1 ? ' · druk x' + DMGX : ''}${RELIEKM.omschrijf(RELIEK_OPT)}`);
   const resultaten = [];
   let volgende = 0, klaar = 0, soloFout = 0;
   /* [planner F] VEERKRACHT: sterft de browser (parallelle sessies ruimen soms chrome-processen
@@ -1146,9 +1179,9 @@ async function main() {
     let page = page0;
     while (volgende < jobs.length) {
       const job = jobs[volgende++];
-      const build = buildVan(job.held, job.st, job.pv);
+      const build = buildVan(job.held, job.st, job.pv, job.rv);
       /* een mislukte job draagt zijn celvelden mee, zodat de analyse hem als FOUT telt en niet stil laat vallen */
-      const kaal = fout => ({ cel: job.cel, seed: job.seed, held: job.held, st: job.st, pv: job.pv, dmgx: job.dmgx, beleid: job.beleid, baas: job.baas, hpPct: job.hpPct, fout });
+      const kaal = fout => ({ cel: job.cel, seed: job.seed, held: job.held, st: job.st, pv: job.pv, dmgx: job.dmgx, beleid: job.beleid, baas: job.baas, hpPct: job.hpPct, rv: job.rv || 'basis', fout });
       let r = null;
       for (let poging = 0; poging < 5 && !r; poging++) {
         try { r = await page.evaluate(eenGevecht, { build, job }); }
@@ -1173,12 +1206,13 @@ async function main() {
   try { await browser.close(); } catch (e) {}
   /* de builds in de uitvoer: sleutel held/st of held/st#pv (dezelfde vorm als de cel) */
   const builds = {};
-  for (const k of Object.keys(cacheB)) { const [h, st, pv] = k.split('/'); builds[h + '/' + st + (pv === 'basis' ? '' : '#' + pv)] = cacheB[k]; }
+  for (const k of Object.keys(cacheB)) { const [h, st, pv, rv] = k.split('/'); builds[h + '/' + st + (pv === 'basis' ? '' : '#' + pv) + (!rv || rv === 'basis' ? '' : ' {' + rv + '}')] = cacheB[k]; }
   /* standaard NIET naast het script (tools/ wordt gedeployd): in de gitignored notitiemap */
   const uitPad = process.env.MEET_UIT || path.join(WORTEL, '.claude', 'notities', 'baas-meting', 'uit', LABEL + '.json');
   fs.mkdirSync(path.dirname(uitPad), { recursive: true });
   const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => /^MEET_/.test(k)));
-  fs.writeFileSync(uitPad, JSON.stringify({ meta: { label: LABEL, versie, datum: new Date().toISOString(), seeds: N, seedbase: SEEDBASE, beleid: BELEID, solo: !MEET_METGEZEL, env, dick, duurS: Math.round((Date.now() - t0) / 1000), paginafouten: [...new Set(fouten)].slice(0, 20), soloFout }, builds, resultaten }, null, 1));
+  fs.writeFileSync(uitPad, JSON.stringify({ meta: { label: LABEL, versie, datum: new Date().toISOString(), seeds: N, seedbase: SEEDBASE, beleid: BELEID, solo: !MEET_METGEZEL, env, dick, duurS: Math.round((Date.now() - t0) / 1000), paginafouten: [...new Set(fouten)].slice(0, 20), soloFout,
+    reliek: { std: reliekStd, globaal: RELIEK_OPT.glob, varianten: RV.map(v => ({ naam: v, def: RV_DEF[v] })) } }, builds, resultaten }, null, 1));
   console.log(`klaar in ${((Date.now() - t0) / 1000).toFixed(0)} s → ${uitPad}`);
   const nFout = resultaten.filter(r => r.fout).length;
   console.log(`${resultaten.length} gevechten, ${nFout} fout, ${resultaten.filter(r => r.timeout).length} time-out, ${[...new Set(fouten)].length} verschillende paginafouten`);

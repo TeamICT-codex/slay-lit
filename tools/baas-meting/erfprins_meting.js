@@ -43,6 +43,11 @@
        B3 F1, de keuzevragen (bazen_plan.md §5): {"G25":{"knoppen":{"gifMult":2.5}}}, {"T2":{"knoppen":{"treffers":2,"onblokbaar":0.3}}},
        {"P30":{"knoppen":{"doorPlafond":0.3}}} (plafond op het onblokbare deel per beurt), {"LH0":{"knoppen":{"leeghalen":0}}};
        gemeten op MEET_SEEDBASE=95000, 96 seeds, bewust/schild/slim/nietslaan
+     MEET_RELIEK=<id>[,-<id>…]   (relikwie-balans, 28 sep) voeg die relikwieën toe aan ELKE build ('-id' haalt er een weg)
+     MEET_RELIEK_VAR=<json-bestand {naam:{reliek:{<id>:{…RELIEK…}},plus:[…],min:[…]}}>   relikwie-varianten op dezelfde
+       seeds; ze komen in dezelfde varianten-pool als MEET_VARIANTEN (een variant mag ook knoppen/mods dragen) en zonder
+       MEET_VAR draait 'basis' + elke variant uit het bestand. Handleiding, telling per gevecht (veld rt) en voorbeelden:
+       tools/baas-meting/reliek_meet.js; analyse (gepaard, winstwinst per relikwie): python tools/baas-meting/reliek_winst.py
      MEET_SEEDBASE=70000 (seeds 'ERF-<base+i>')   MEET_HP=0.85   MEET_WERKERS=8   MEET_RECYCLE=40
      MEET_UIT=<pad> (standaard: <label>.json naast dit script)
      MEET_TUSSEN=1000 (tussenstand elke zoveel gevechten)   MEET_HERVAT=1 (ga verder op de tussenstand in MEET_UIT)
@@ -208,7 +213,6 @@ const lijst = (env, std) => (process.env[env] ? process.env[env].split(',').map(
 const HELDEN = lijst('MEET_HELDEN', ['slachter', 'gifmagier', 'thoverk']);
 const STERKTES = lijst('MEET_STERKTES', ['matig', 'gemiddeld', 'sterk', 'kroon']);
 const BELEID = lijst('MEET_BELEID', ['naief', 'bewust', 'schild', 'slim', 'nietslaan']);
-const VARS = lijst('MEET_VAR', ['basis']);
 const WERKERS = parseInt(process.env.MEET_WERKERS || '8', 10);
 const HPPCT = parseFloat(process.env.MEET_HP || '0.85');
 const SEEDBASE = parseInt(process.env.MEET_SEEDBASE || '70000', 10);
@@ -216,6 +220,15 @@ const RECYCLE = parseInt(process.env.MEET_RECYCLE || '40', 10);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff', '.txt': 'text/plain; charset=utf-8', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav', '.glb': 'model/gltf-binary' };
 const VARIANTEN = Object.assign({ basis: { knoppen: {} } },
   (() => { if (!process.env.MEET_VARIANTEN) return {}; return JSON.parse(fs.readFileSync(process.env.MEET_VARIANTEN, 'utf8')); })());
+/* RELIEK (relikwie-balans, 28 sep): MEET_RELIEK (op elke build) en MEET_RELIEK_VAR (varianten in dezelfde pool);
+   zie tools/baas-meting/reliek_meet.js */
+const RELIEKM = require('./reliek_meet.js');
+const RELIEK_OPT = RELIEKM.leesReliek(process.env);
+for (const [naam, v] of Object.entries(RELIEK_OPT.varianten)) {
+  if (naam !== 'basis' && VARIANTEN[naam]) throw new Error(`variant '${naam}' staat in MEET_VARIANTEN én in MEET_RELIEK_VAR`);
+  VARIANTEN[naam] = Object.assign({ knoppen: {} }, v);
+}
+const VARS = lijst('MEET_VAR', ['basis'].concat(Object.keys(RELIEK_OPT.varianten).filter(n => n !== 'basis')));
 
 /* ============================================================
    DE ACT 2-AANKOMSTDEKKEN (onderzoeker D, O1 §7.1) — alleen kaarten met act <= 2
@@ -289,8 +302,11 @@ function maakJobs() {
   const jobs = [];
   for (const variant of VARS) for (const held of HELDEN) for (const st of STERKTES) for (const beleid of BELEID) for (let i = 0; i < N; i++) {
     const vdef = VARIANTEN[variant]; if (!vdef) throw new Error('onbekende variant ' + variant);
+    /* RELIEK: eerst MEET_RELIEK (elke build), dan de plus/min van deze variant */
+    const build = tafelBuild(held, st);
+    build.relikwieen = RELIEKM.pasToe(RELIEKM.pasToe(build.relikwieen, RELIEK_OPT.glob.plus, RELIEK_OPT.glob.min), vdef.plus, vdef.min);
     jobs.push({ cel: `${variant}/${beleid}/${held}/${st}`, variant, held, st, beleid, hpPct: HPPCT, seed: 'ERF-' + (SEEDBASE + i),
-      knoppen: vdef.knoppen || {}, mods: vdef.mods || [], build: tafelBuild(held, st) });
+      knoppen: vdef.knoppen || {}, mods: vdef.mods || [], reliek: vdef.reliek || {}, build });
   }
   return jobs;
 }
@@ -454,6 +470,9 @@ async function eenGevecht({ job }) {
     else ERF[k] = v;
   }
   VIJANDEN.de_erfprins.hp = [ERF.hp, ERF.hp];
+  /* RELIEK (relikwie-balans): de standaard uit game.js terug + de knoppen van deze variant */
+  if (typeof window.__zetReliek === 'function') window.__zetReliek(job.reliek || {});
+  else if (job.reliek && Object.keys(job.reliek).length) throw new Error('RELIEK-knoppen, maar installeerReliek draait niet in deze pagina');
 
   nieuwSpel(build.held, job.seed);
   S.gevecht = null; S.act = 2; S.fakkel = fakkelMax(); S.pos = null; S.ascensie = 0; S.daily = false; S.dagwet = null;
@@ -477,6 +496,7 @@ async function eenGevecht({ job }) {
   const T = window.__T = { bron: {}, uit: {}, geblokt: 0, roof: null, naroof: [], nr: null, backfire: [], fases: [], spiegel: [], drift: 0, krachtDeel: 0, blokVoorHem: 0,
     gifOpJou: { plagiaat: 0, klieren: 0, ander: 0 }, plagiaatBeurten: 0, plagiaatKaarten: 0, rPlag: 0, rGif: 0,
     _zelf: false, _inBeurtStart: false, doodsBron: null, wissels: [], pilChecks: [], metgezelGezien: false };
+  if (typeof window.__reliekStart === 'function') window.__reliekStart();   /* RELIEK: de telling van dit gevecht */
   startGevecht(['de_erfprins'], 'baas', 15);
   const g = S.gevecht;
   const soloOk = !(typeof gMet === 'function' && gMet()) && !g.metgezel;
@@ -752,9 +772,9 @@ async function eenGevecht({ job }) {
     krachtDeel: T.krachtDeel, spiegelSchade, gifOpJou: T.gifOpJou, blokVoorHem: T.blokVoorHem,
     plagiaatBeurten: T.plagiaatBeurten, plagiaatKaarten: T.plagiaatKaarten, stik: g._stikTeller || 0,
     wissels: T.wissels, pilChecks: T.pilChecks, metgezelGezien: T.metgezelGezien,
-    log: rondes
+    log: rondes, rt: typeof window.__reliekLees === 'function' ? window.__reliekLees() : null
   };
-  window.__T = null;
+  window.__T = null; window.__RT = null;
   try { g.voorbij = true; stopGevechtLus(); } catch (e) {}
   S.gevecht = null;
   document.querySelectorAll('.overlay, #baas-intro, .baas-flits, .baas-spraak, .roof-overlay, .roof-speel-kaart, .steel-vlieger, #scherm-einde .einde').forEach(n => { try { n.remove(); } catch (e) {} });
@@ -782,6 +802,7 @@ async function maakPagina(browser, fouten) {
   await page.waitForFunction(() => typeof startGevecht === 'function' && typeof nieuwSpel === 'function' && typeof KAARTEN !== 'undefined' && typeof ERF === 'object');
   await page.waitForTimeout(300);
   await page.evaluate(installeer);
+  await page.evaluate(RELIEKM.installeerReliek);   /* RELIEK: doorzichtige wikkels + __zetReliek (reliek_meet.js) */
   return page;
 }
 
@@ -807,16 +828,22 @@ async function main() {
   const TUSSEN = parseInt(process.env.MEET_TUSSEN || '1000', 10);
   const browser = await chromium.launch({ headless: true });
   const versie = (fs.readFileSync(path.join(WORTEL, 'sw.js'), 'utf8').match(/const CACHE = '([^']+)'/) || [])[1] || '?';
-  console.log(`ERFPRINS-meting '${LABEL}' · ${versie} · ${jobs.length} gevechten · ${WERKERS} werkers · ${N} seeds/cel · seeds ERF-${SEEDBASE}.. · varianten ${VARS.join(',')}`);
+  console.log(`ERFPRINS-meting '${LABEL}' · ${versie} · ${jobs.length} gevechten · ${WERKERS} werkers · ${N} seeds/cel · seeds ERF-${SEEDBASE}.. · varianten ${VARS.join(',')}${RELIEKM.omschrijf(RELIEK_OPT)}`);
   const builds = {};
   for (const h of HELDEN) for (const st of STERKTES) builds[h + '/' + st] = tafelBuild(h, st);
-  let volgende = 0, klaar = 0, erf = null;
+  let volgende = 0, klaar = 0, erf = null, reliekStd = null, relOk = false;
   const bewaar = onvolledig => fs.writeFileSync(uitPad, JSON.stringify({ meta: { label: LABEL, versie, datum: new Date().toISOString(), seeds: N, seedbase: SEEDBASE, hpPct: HPPCT, beleid: BELEID, sterktes: STERKTES,
-    erf, varianten: VARS.map(v => ({ naam: v, def: VARIANTEN[v] })), duurS: Math.round((Date.now() - t0) / 1000), onvolledig: !!onvolledig, paginafouten: [...new Set(fouten)].slice(0, 20) }, builds, resultaten }));
+    erf, reliek: { std: reliekStd, globaal: RELIEK_OPT.glob }, varianten: VARS.map(v => ({ naam: v, def: VARIANTEN[v] })), duurS: Math.round((Date.now() - t0) / 1000), onvolledig: !!onvolledig, paginafouten: [...new Set(fouten)].slice(0, 20) }, builds, resultaten }));
   const werkers = [];
   for (let w = 0; w < WERKERS; w++) werkers.push((async () => {
     let page = await maakPagina(browser, fouten), gedaan = 0;
     if (!erf) erf = await page.evaluate(() => JSON.parse(JSON.stringify(ERF)));
+    if (!relOk) {   /* RELIEK: elk genoemd relikwie moet bestaan (geen stille tikfout) */
+      relOk = true;
+      reliekStd = await page.evaluate(() => window.__RELIEK_STD || null);
+      const onb = await page.evaluate(ids => ids.filter(id => typeof RELIKWIEEN === 'undefined' || !RELIKWIEEN[id]), RELIEKM.alleIds(RELIEK_OPT));
+      if (onb.length) { console.error('onbekende relikwieën in MEET_RELIEK/MEET_RELIEK_VAR: ' + onb.join(', ')); process.exit(2); }
+    }
     while (volgende < jobs.length) {
       const job = jobs[volgende++];
       let r;

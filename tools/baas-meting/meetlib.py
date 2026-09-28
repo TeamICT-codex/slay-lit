@@ -25,7 +25,9 @@ def laad(p):
 
 
 def is_basis(r):
-    return (r.get('pv') or 'basis') == 'basis' and abs(float(r.get('dmgx') or 1) - 1.0) < 1e-9
+    # relikwie-balans (28 sep): een relikwie-variant (veld rv, MEET_RELIEK_VAR) is geen basis; reliek_winst.py leest ze
+    return ((r.get('pv') or 'basis') == 'basis' and abs(float(r.get('dmgx') or 1) - 1.0) < 1e-9
+            and (r.get('rv') or 'basis') == 'basis')
 
 
 def dick_rs(d, pop=False, fouten=False):
@@ -34,7 +36,7 @@ def dick_rs(d, pop=False, fouten=False):
     if not pop:
         rs = [r for r in rs if is_basis(r)]
     else:
-        rs = [r for r in rs if abs(float(r.get('dmgx') or 1) - 1.0) < 1e-9]
+        rs = [r for r in rs if abs(float(r.get('dmgx') or 1) - 1.0) < 1e-9 and (r.get('rv') or 'basis') == 'basis']
     if not fouten:
         rs = [r for r in rs if not r.get('fout')]
     return rs
