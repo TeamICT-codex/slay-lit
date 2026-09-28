@@ -2321,6 +2321,27 @@ function d3Actief() { return $('#scherm-gevecht').classList.contains('d3-actief'
    het noodpad: daar raakt een toast de spraakplaat, net als op main.) #meldingen.bij-baas +
    data-zone; de css per spoor (style.css / mobiel.css). Buiten een baasgevecht blijft #meldingen
    zoals in de css. */
+/* B3 merge (beeldcontrole): de hand zoals ze LANDT. Een kaart die nog binnenkomt (.nieuw: de
+   kaartflip begint op scale .7) meet smaller dan waar ze neerkomt. Een toast bij de start van je
+   beurt kreeg zo een te brede kolom en lag 17-33 px over je linkse kaart (DICKtator IV, 846x381
+   en 800x360: de hand begon bij het meten op 240 en 233 px, geland op 223 en 200 px). Zo'n kaart
+   meten we op het einde van haar animatie (Web Animations: even naar het eind en in dezelfde taak
+   terug, er wordt niets tussen geverfd); een kaart die wegvalt (.weg-kaart) telt niet mee. */
+function _handLinksGeland() {
+  const kaarten = [...document.querySelectorAll('#hand .kaart:not(.weg-kaart)')];
+  const terug = [];
+  for (const e of kaarten) {
+    if (!e.classList.contains('nieuw') || typeof e.getAnimations !== 'function') continue;
+    for (const a of e.getAnimations()) {
+      const eind = a.effect && a.effect.getComputedTiming ? a.effect.getComputedTiming().endTime : null;
+      if (eind == null || !isFinite(eind) || a.currentTime == null || a.currentTime >= eind) continue;
+      terug.push([a, a.currentTime]); a.currentTime = eind;
+    }
+  }
+  const links = kaarten.map(e => e.getBoundingClientRect()).filter(q => q.width > 0).map(q => q.left);
+  for (const [a, t] of terug) a.currentTime = t;
+  return links;
+}
 function meldingenPlek() {
   const m = $('#meldingen'); if (!m) return;
   const sc = $('#scherm-gevecht'), bbEl = $('#baas-balk');
@@ -2343,7 +2364,7 @@ function meldingenPlek() {
     const p = Vista.schermPos(S.gevecht.speler);
     if (p) heldL.push(p.x - (p.voetY - p.topY) * 0.36);
   }
-  const handL = Math.min(innerWidth, ...[...document.querySelectorAll('#hand .kaart')].map(e => e.getBoundingClientRect()).filter(q => q.width > 0).map(q => q.left));
+  const handL = Math.min(innerWidth, ..._handLinksGeland());
   const onder = Math.min(innerHeight - 8, ...[orb, trek].filter(Boolean).map(q => q.top - 8));
   const links = Math.max(10, oog ? oog.left + 26 : 10);   /* naast het zichtbare lipje (22px) van de inzage-knop */
   const rechts = Math.min(handL, ...heldL) - 10;
@@ -7113,6 +7134,9 @@ function renderHand() {
     const levend = [...houder.children].filter(k => !k.classList.contains('weg-kaart'));
     if (levend[i] !== el) houder.insertBefore(el, levend[i] || null);
   });
+  /* B3 merge: staat er een toast in de kolom van een baasgevecht (meldingenPlek) en groeit je hand
+     (een getrokken kaart), dan meet de kolom opnieuw - zij hield alleen afstand van de hand van toen */
+  if (document.querySelector('#meldingen.bij-baas[data-zone="kolom"] .toast')) meldingenPlek();
 }
 
 /* kaart vliegt naar zijn doelwit */
