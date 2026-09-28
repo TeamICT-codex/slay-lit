@@ -1912,6 +1912,54 @@ async function retourRegel(browser, fk) {
   return { kop: `(F2) de retourregel vervalt bij jouw beurt en je dood · ${vp.naam}`, regels: R };
 }
 
+/* 7d · de echte Roof (je eerste klap, en het vangnet op het einde van je beurt): nooit een banner
+   zichtbaar terwijl een doek (de Roof of de buit-beat) nog zichtbaar is — DE ROOF stond 0,35-0,4 s
+   onder de verdwijnende kop 'DE ERFPRINS OPENT JE DEK' — en DE ROOF daarna >= 1,2 s schoon te lezen */
+async function roofDoek(browser, fk) {
+  const R = []; const t = (g, s) => R.push([!!g, s]);
+  const { ctx, page, vp } = await open(browser, fk);
+  const uit = [];
+  for (const [klap, tik] of [[true, false], [false, false], [true, true]]) {
+    await startErf(page);
+    const r = await page.evaluate(async ([klap, tik]) => {
+      const g = S.gevecht; const v = g.vijanden.find(x => x.id === 'de_erfprins');
+      g.trek = g.trek.slice(0, Math.min(g.trek.length, 9)); renderGevecht();   /* een korte Roof (een handvol kaarten) */
+      const b0 = g.beurt;
+      const t0 = performance.now(), T = () => Math.round(performance.now() - t0);
+      const rec = []; let loop = true;
+      (async () => { while (loop) {
+        const doek = [...document.querySelectorAll('.roof-overlay.met-prins')].some(e => +getComputedStyle(e).opacity > 0.05);
+        const fl = [...document.querySelectorAll('.baas-flits')].filter(e => getComputedStyle(e).visibility === 'visible' && +getComputedStyle(e).opacity > 0.05).map(e => (e.querySelector('h2') || {}).textContent).join(',');
+        rec.push({ t: T(), doek, fl });
+        await new Promise(x => requestAnimationFrame(x));
+      } })();
+      let p;
+      if (klap) { const slag = nieuweKaart('slag'); g.hand.push(slag); g.energie = Math.max(g.energie, 3); renderGevecht(); p = speelKaart(slag, v); }
+      else p = eindBeurt();
+      if (tik) setTimeout(() => { const ov = document.querySelector('.roof-overlay'); if (ov) ov.click(); }, 1900);
+      const t1 = performance.now();
+      while (performance.now() - t1 < 30000 && !(g.roofGedaan && !g.bezig && !document.querySelector('.roof-overlay') && g.beurt > b0)) await new Promise(x => setTimeout(x, 100));
+      await new Promise(x => setTimeout(x, 800));
+      loop = false; try { await p; } catch (e) { }
+      let samen = 0, roofVrij = 0, gezien = false;
+      for (let i = 1; i < rec.length; i++) {
+        const dt = rec[i].t - rec[i - 1].t;
+        if (rec[i].doek && rec[i].fl) samen += dt;
+        if (!rec[i].doek && /DE ROOF/.test(rec[i].fl)) { roofVrij += dt; gezien = true; }
+      }
+      return { samen, roofVrij, gezien, buit: (v.gestolen || []).length, beurt: g.beurt - b0 };
+    }, [klap, tik]);
+    uit.push([klap ? (tik ? 'klap + tik' : 'klap') : 'vangnet', r]);
+    await slaap(300);
+  }
+  t(uit.every(([, r]) => r.gezien && r.buit > 0 && r.beurt === 1), `F2 ${vp.naam}: de echte Roof liep, en daarna zijn buit-beat tot jij weer aan zet was (${uit.map(([n, r]) => `${n}: ${r.buit} geroofd, ${r.beurt} beurt verder`).join(' · ')})`);
+  t(uit.every(([, r]) => r.samen === 0), `F2 ${vp.naam}: nooit een banner zichtbaar onder een zichtbaar doek (${uit.map(([n, r]) => `${n} ${r.samen} ms`).join(' · ')})`);
+  t(uit.every(([, r]) => r.roofVrij >= 1200), `F2 ${vp.naam}: DE ROOF schoon te lezen vóór de buit-beat (${uit.map(([n, r]) => `${n} ${r.roofVrij} ms`).join(' · ')}, >= 1 200)`);
+  fouten(page, t, vp, 'de Roof en zijn banner');
+  await ctx.close();
+  return { kop: `(F2) DE ROOF pas als het doek dicht is · ${vp.naam}`, regels: R };
+}
+
 (async () => {
   const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] });
   const FILTER = process.env.SLAYIT_TAKEN ? new RegExp(process.env.SLAYIT_TAKEN) : null;
@@ -1933,7 +1981,8 @@ async function retourRegel(browser, fk) {
     /* F2: de restfix van de verificatie */
     ...['M800', 'M846'].map(fk => ['noodrantsoen ' + fk, () => nrBanner(browser, fk)]),
     ...['M800', 'M846', 'L1366d3'].map(fk => ['kopchips ' + fk, () => kopChips(browser, fk)]),
-    ...['M846', 'L1440'].map(fk => ['retour ' + fk, () => retourRegel(browser, fk)])
+    ...['M846', 'L1440'].map(fk => ['retour ' + fk, () => retourRegel(browser, fk)]),
+    ...['M846', 'L1440d3'].map(fk => ['roofdoek ' + fk, () => roofDoek(browser, fk)])
   ].filter(([n]) => !FILTER || FILTER.test(n)).map(([, f]) => f);
   const uit = new Array(taken.length); let i = 0;
   await Promise.all(Array.from({ length: PAR }, async () => {

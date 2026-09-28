@@ -1725,9 +1725,11 @@ body.lite .mg-flits, body.lite .mg-entree { animation-duration: .8s; }
 .roof-overlay.met-prins .vieze-vinger.tik { transform: translate(-50%, -38%) rotate(8deg) scale(1.12); }
 /* een fasebanner (WOEDE vlak vóór de Roof, DE ROOF vlak vóór de buit-beat) die nog onder het open
    doek staat, schemerde door het gat over zijn lijf (staand: midden op hem). Hij stond toen al
-   >= 1,25 s (WOEDE) / 1,5 s (DE ROOF) in beeld; onder het doek zwijgt hij. Bij het sluiten van het
-   doek (.sluit) mag de volgende banner (DE ROOF) meteen gezien worden. */
-body:has(.roof-overlay.met-prins.open:not(.sluit)) .baas-flits { visibility: hidden; }
+   >= 1,25 s (WOEDE) / 1,5 s (DE ROOF) in beeld; onder het doek zwijgt hij.
+   B3 F2: ook terwijl het doek uitdooft (.sluit): DE ROOF stond daar 0,6 s onder de verdwijnende kop
+   (tekst op tekst). copycatRoofCutscene zet hem nu pas als het doek weg is; deze regel houdt ook een
+   banner die nog staat als de buit-beat sluit (na een tik om over te slaan) tot het doek weg is. */
+body:has(.roof-overlay.met-prins.open) .baas-flits { visibility: hidden; }
 /* B3 F1: de HUD van de held (zijn levensbalk en zijn chips) scheen in de buit-beat door de tegels en
    over de ondertitel (846x381: "60/70" en een Kracht-chip); zolang het doek open is, zwijgt ze */
 body:has(.roof-overlay.met-prins.open:not(.sluit)) #speler-zone .speler-hp,

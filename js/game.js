@@ -7896,10 +7896,15 @@ async function copycatRoofCutscene(g, v, wil, viaEindBeurt) {
   });
   v.totaalGeroofd = (v.totaalGeroofd || 0) + teRoven.length;
   ov.classList.add('sluit');
-  baasFaseMoment('DE ROOF', `🎭 ${teRoven.length} van je ${S.dek.length} kaarten uit je trekstapel — voor dit gevecht MÍJN werk.${viaEindBeurt ? '' : ' Je beurt is om.'}`);
-  Klank.sfx('zwareklap');
+  /* B3 F2: de banner wacht tot het doek dicht is. Hij kwam met .sluit, en tijdens de 0,6 s dat het
+     doek uitdoofde stond zijn titel onder de verdwijnende kop 'DE ERFPRINS OPENT JE DEK' (tekst op
+     tekst). Nu: eerst het doek weg, dan de banner (met zijn eigen klap en schok), en dan zijn
+     leestijd vóór de buit-beat het doek weer opent - dezelfde 1,5 s die hij vroeger had, nu schoon. */
   await slaap(720);
   ov.remove();
+  if (S.gevecht !== g || g.voorbij) return;
+  baasFaseMoment('DE ROOF', `🎭 ${teRoven.length} van je ${S.dek.length} kaarten uit je trekstapel — voor dit gevecht MÍJN werk.${viaEindBeurt ? '' : ' Je beurt is om.'}`);
+  await slaap(720);
 }
 
 /* DE BUIT-BEAT — zijn eerste beurt na de Roof. Geen schade: hij waaiert JOUW kaarten open als
