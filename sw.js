@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v137'; // v137: DE FINALE (B4) - HET PROCES van de DICKtator als vier scènes: de lengteregel heet HIJ HOUDT STAND (slotje, ook op de telefoon), het hof vangt de klap, een vervallen decreet zegt waarom ('U brak door vóór de zitting?'), de herverkiezing en de titels blijven langer leesbaar, het decreet-keuzescherm werkt met het toetsenbord, toasts niet meer over de bazenbalk
+const CACHE = 'slayit-v138'; // v138: DE ROOF, EERLIJK (B3) - de Erfprins herbouwd: hij rooft ad random de helft van je trekstapel (voor dit gevecht), speelt je kaarten groot terug met een KOPIE-stempel, spiegelt je Kracht/Doornen/Gifklieren, staat op uit zijn noodrantsoen (de pil zegt altijd wat er landt), de vloek bijt hem groot in beeld, een klap = een HP-verlies (de Feniksveer redt je weer), eigen regie op telefoon en laptop; toasts in elk baasgevecht in een kolom linksonder
 const BESTANDEN = [
   '.',
   'css/style.css',
