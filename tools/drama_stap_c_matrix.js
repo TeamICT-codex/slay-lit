@@ -55,6 +55,7 @@ const REST = `window.__rest = function () {
     if (l.classList.contains('plaat-vast')) vast.push(id + '=' + (getComputedStyle(l).scale || '(geen)'));
   });
   const sp = [...document.querySelectorAll('.baas-spraak')];
+  window.__spraakMerk = sp;   /* Finale B4b: de nameting volgt DEZE platen (zie na), niet elke plaat die er dan staat */
   const b = g && g.vijanden.find(v => v.id === 'de_dicktator');
   return {
     vonnis: document.querySelectorAll('.vonnis').length,
@@ -166,7 +167,7 @@ const SCENARIOS = [
   { n: '5 · mobiel staand', mobiel: true, w: 390, h: 844 },
   { n: '6 · mobiel liggend <=600px', mobiel: true, w: 800, h: 360 },
   { n: '7 · DICK.tempo = 0.02 (balansharnas)', tempo: 0.02 },
-  { n: '8 · fase-skip >66% -> <33% (bedrijf II overgeslagen)', soort: 'skip' },
+  { n: '8 · één klap van >66% naar <33% (het scèneslot)', soort: 'skip' },
   { n: '9 · fasegrens tijdens de VIJANDBEURT (gif)', soort: 'gif' },
   { n: '10 · hof al vol (dicktatorRoep geeft null)', soort: 'hofvol' }
 ];
@@ -231,7 +232,12 @@ async function draai(browser, s) {
     rest.wachtteOpRegie = wacht;
     if (rest.spraak > 0) {
       await slaap(Math.round(rest.spraakDuur) + 400);
-      const nog = await page.evaluate(() => document.querySelectorAll('.baas-spraak').length);
+      /* Finale B4b: tel of DEZELFDE platen er nog staan. De wachtrij (B2 · B0.4) zet de volgende
+         regel meteen na de vorige: telde je elke .baas-spraak, dan las je na II -> III de volgende
+         regel („Ik heb die man nooit gekend.", 2600 ms) als een plaat die haar duur overleefde -
+         zodra de tekstsluis de keten ~100 ms later liet vallen (hij wacht nu ook op het uitdoven
+         van het toneeldoek) en de meting net vóór het einde van „IK BEN HET SLACHTBLOK…" viel. */
+      const nog = await page.evaluate(() => (window.__spraakMerk || []).filter(e => e.isConnected).length);
       rest.spraakNa = nog;
     } else { rest.spraakNa = 0; }
     return rest;
@@ -242,9 +248,10 @@ async function draai(browser, s) {
   const stappen = [];
   if (s.soort === 'skip') {
     await opzet(); await kijk();
-    // één klap van boven 66% naar onder 33%: dicktatorFase geeft direct 3 terug
-    await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.hp = Math.floor(b.maxHp * 0.20); checkBaasFase(); });
-    stappen.push({ naam: 'I -> III (skip)', rest: await na(6400) });
+    // finale (sep 2026): één klap van boven 66% naar onder 33% langs het normale schadepad -
+    // het SCÈNESLOT legt hem op de drempel van II; het oude vangnet (II overgeslagen) is weg
+    await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); verliesHp(b, b.hp - Math.floor(b.maxHp * 0.20), sp()); checkBaasFase(); });
+    stappen.push({ naam: 'I -> II (sceneslot)', rest: await na(5200) });
   } else if (s.soort === 'gif') {
     await opzet(); await kijk();
     // de fasegrens valt tijdens de VIJANDBEURT: gif tikt af in de beurtwissel, niet in speelKaart
@@ -267,13 +274,13 @@ async function draai(browser, s) {
   } else {
     await opzet(); await kijk();
     await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.hp = Math.floor(b.maxHp * 0.50); checkBaasFase(); });
-    stappen.push({ naam: 'I -> II · HET PROCES', rest: await na(5200) });
+    stappen.push({ naam: 'I -> II · DE FACTUUR', rest: await na(5200) });
     await opzet(); await kijk();
     await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 2; b.hp = Math.floor(b.maxHp * 0.30); checkBaasFase(); });
     stappen.push({ naam: 'II -> III · DE TIRADE', rest: await na(6400) });
     await opzet(); await kijk();
-    await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; verliesHp(b, 30); });
-    stappen.push({ naam: 'IV · DE HERVERKIEZING', rest: await na(8200) });
+    await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; b.minVrij = true; /* B4 stap 3: de sprong landt na de zitting van III (DE ZITTING LOOPT houdt hem anders op 1 HP) */ verliesHp(b, 30); });
+    stappen.push({ naam: 'DE HERVERKIEZING', rest: await na(8200) });
   }
   await page.screenshot({ path: path.join(UIT, 'c3-' + s.n.split(' ')[0] + '.png') });
   await ctx.close();
@@ -365,8 +372,8 @@ async function draai(browser, s) {
   });
 
   // scenario-eigen controles
-  const skip = alles['8 · fase-skip >66% -> <33% (bedrijf II overgeslagen)'].stappen[0].rest;
-  t(skip.fase === 3 && skip.bedrijf === '3', `8 · het vangnet: fase ${skip.fase}, data-bedrijf "${skip.bedrijf}", body.tirade=${skip.tirade} (bedrijf II is overgeslagen, de zaal staat NIET meer op DE ZITTING)`);
+  const skip = alles['8 · één klap van >66% naar <33% (het scèneslot)'].stappen[0].rest;
+  t(skip.fase === 2 && skip.bedrijf === '2' && !skip.tirade && skip.hp === 160, `8 · het scèneslot: hp ${skip.hp}, fase ${skip.fase}, data-bedrijf "${skip.bedrijf}", body.tirade=${skip.tirade} (niets overgeslagen: hij landt op de drempel van II)`);
   const gif = alles['9 · fasegrens tijdens de VIJANDBEURT (gif)'].stappen[0].rest;
   t(gif.fase >= 2 && !gif.ceremonie, `9 · gif tijdens de vijandbeurt: fase ${gif.fase}, hp ${gif.hp}, ceremonie na afloop ${gif.ceremonie}, bedrijf "${gif.bedrijf}" (A6: beginSpelerBeurt heft de verse ceremonie niet meer in dezelfde tick op)`);
   const hv = alles['10 · hof al vol (dicktatorRoep geeft null)'];

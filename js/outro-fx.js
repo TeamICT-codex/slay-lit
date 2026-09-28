@@ -856,11 +856,14 @@ const OutroFX = (() => {
   /* de maskerzinnen — EÉN bron voor de Afgrond van de proloog (aanloop + kern,
      proloog/data.js maskerZin()) en de reünie in de outro (alleen de kern, in het
      pixelfont). Sleutel = game-held-id. {jeugddroom} vult de proloog in; zonder
-     droom geldt aanloopZonder. Wijzig hier, nergens anders. */
+     droom geldt aanloopZonder. Wijzig hier, nergens anders.
+     Proloog R5 F1: de droom is vrije tekst uit formulier Z-8 ('Wat wou u worden toen u acht
+     was?'), geen beroep: 'Ik wou zeeën bevaren worden.' brak. Nu een citaat dat elk antwoord
+     aankan en naar de vraag verwijst; de Afgrond zet de hele zin tussen “…”, dus hier ‚…’. */
   const MASKERZINNEN = {
     slachter:  { aanloop: 'Genoeg geglimlacht.', kern: 'Nu is het hún beurt.' },
     gifmagier: { aanloop: '', kern: 'We passen ons aan. Zoals altijd.' },
-    thoverk:   { aanloop: 'Ik wou {jeugddroom} worden.', aanloopZonder: 'Ik wou ooit iets worden.', kern: 'Ik heb het licht nog.' }
+    thoverk:   { aanloop: 'Ik was acht: ‚{jeugddroom}’.', aanloopZonder: 'Ik wou ooit iets worden.', kern: 'Ik heb het licht nog.' }
   };
   /* de kern in het pixelfont (hoofdletters, zonder accenten: het font kent geen Ú) */
   const pixelVeilig = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();

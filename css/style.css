@@ -1806,6 +1806,30 @@ body:has(.roof-overlay.met-prins.open:not(.sluit)) #speler-zone .blok-status { o
 }
 .decreet-kaartwrap.verbrandt { filter: brightness(2.4) saturate(1.7) sepia(.6); transform: scale(.82) rotate(3deg); opacity: 0; }
 body.lite .decreet-stempel { animation: none; opacity: 1; transform: translate(-50%, -50%) rotate(-14deg) scale(1); }
+/* HET DECREET ALS KEUZE (finale §4): twee kaarten groot naast elkaar, elk met zijn eigen
+   knop. Dezelfde visuele taal als de reveal (doek, kop, shortlistregel); de mobiele maten
+   staan in mobiel.css (body[data-modus="mobiel"]). */
+/* een DICHT doek (doeken-patroon v89): hier moet je lezen en kiezen, het gevecht mag er niet doorheen schijnen */
+.decreet-overlay.decreet-keuze-overlay { background: radial-gradient(circle at 50% 45%, rgba(120, 24, 14, .42), transparent 62%), linear-gradient(rgba(10, 4, 4, .94), rgba(10, 4, 4, .94)); }
+body:has(.decreet-keuze-overlay) #meldingen { visibility: hidden; }   /* geen toasts over de keuze */
+.decreet-keuze-binnen { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding: 20px; max-width: 96vw; }
+.decreet-keuze-rij { display: flex; gap: 44px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+.decreet-keuze-kaart { display: flex; flex-direction: column; align-items: center; gap: 14px; cursor: pointer; }
+.decreet-keuze-kaart .kaart.groot { width: 212px; height: 292px; padding: 10px 12px; }
+.decreet-keuze-kaart .kaart-naam { font-size: 1.3rem; }
+.decreet-keuze-kaart .kaart.groot .kaart-icoon img { width: 182px; height: 102px; }
+.decreet-keuze-kaart .kaart-tekst { font-size: .98rem; line-height: 1.35; }
+.decreet-keuze-kaart .kaart-kost { width: 38px; height: 38px; font-size: 1.4rem; }
+.decreet-keuze-kaart .decreet-kies { min-width: 180px; max-width: 240px; white-space: normal; margin-top: 0; font-size: 1.05rem; padding: 10px 18px; }
+body[data-modus="laptop"] .decreet-keuze-kaart:hover .kaart.groot { box-shadow: 0 0 0 3px #e23c2c, 0 0 26px rgba(226, 60, 44, .55); }
+/* Finale B4b F1 (review P10): het keuzescherm met het toetsenbord. De focus staat bij het openen op A
+   (dicktatorKeuze) zonder dat dat een keuze is: geen eigen browserring, alleen de gouden ring van de
+   toetsenrouter (.knop-groot.toets-focus) toont wat Enter schrapt - en dan ook de kaart erboven. */
+.decreet-keuze-kaart .decreet-kies:focus { outline: none; }
+.decreet-keuze-kaart:has(.decreet-kies.toets-focus) .kaart.groot { box-shadow: 0 0 0 3px var(--goud), 0 0 26px rgba(255, 210, 90, .5); }
+/* de GESCHORST-chip van het scèneslot: dezelfde chip als de statussen, in het rood van de griffie */
+.status.status-geschorst { color: #ffd7a0; border-color: rgba(226, 60, 44, .8); background: rgba(60, 8, 18, .86); letter-spacing: .04em; }
+.status.status-geschorst b { font-size: .72em; margin-left: 3px; }
 
 /* ---------- smeedkamer 2.0: werkbank + live preview ---------- */
 .sb-werkbank { display: flex; gap: clamp(12px, 3vw, 30px); align-items: center; justify-content: center; flex-wrap: wrap; max-width: min(96vw, 1120px); }   /* 900px dwong preview+modules ALTIJD onder elkaar → SMEED onder de vouw (debug-sweep) */
@@ -3102,6 +3126,9 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
 .fx-genees { color: var(--gifgroen); }
 .fx-buff { color: var(--goud); font-size: 1.3rem; }
 .fx-debuff { color: var(--paars); font-size: 1.3rem; }
+/* HET HOF VANGT DE KLAP (Finale B4 stap 3): het getal staat op de hoveling die vangt, in het
+   goud van de zitting - een grote klap op de DICKtator verdwijnt nooit stil */
+.fx-vang { color: #ffd27a; font-size: 1.5rem; }
 @keyframes fxstijg {
   0% { transform: translateY(0) scale(.6); opacity: 0; }
   15% { transform: translateY(-8px) scale(1.15); opacity: 1; }
@@ -3115,9 +3142,16 @@ body.statuskijk #tb-dranken { opacity: .15; pointer-events: none; }
   display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
   pointer-events: none;
 }
-/* B3 F1: in een baasgevecht op laptop staan de toasts linksboven, naast de bazenbalk (meldingenPlek) */
-#meldingen.meld-bb { right: auto; left: 14px; max-width: var(--meld-b, 360px); align-items: flex-start; }
-#meldingen.meld-bb .toast { line-height: 1.25; }
+/* ÉÉN REGEL VOOR DE TOASTS IN EEN BAASGEVECHT (samenvoeging B3 x finale B4b, 28 sep 2026; de meting
+   staat bij meldingenPlek in js/game.js): voor elke baas aan de kant van de held, nooit op de HUD van
+   de baas (bazenbalk, strook, teller, pil), een figuur of de spraakplaat. Liggend - laptop en telefoon
+   - een kolom linksonder ('kolom'): boven je trekstapel en de energie-orb, links van de held en de
+   hand; meldingenPlek meet de rand (--meld-l), de bodem (--meld-onder) en de breedte (--meld-b).
+   Staand op de telefoon: css/mobiel.css. */
+#meldingen.bij-baas { right: auto; align-items: flex-start; gap: 6px; }
+#meldingen.bij-baas[data-zone="kolom"] { top: auto; left: var(--meld-l, 14px); bottom: var(--meld-onder, 180px); max-width: var(--meld-b, 220px); }
+#meldingen.bij-baas .toast { font-size: .92rem; line-height: 1.25; padding: 7px 16px; border-radius: 16px; }
+.toast { font-size: .92rem; line-height: 1.25; padding: 7px 16px; border-radius: 16px; }
 .toast {
   background: rgba(20, 14, 28, .95);
   border: 1px solid var(--ember);
@@ -4322,8 +4356,10 @@ body.lite .kv-geest { animation: none; opacity: .45; }
 .baas-spraak[data-baas="de_dicktator"] span { color: #ffd98a; border-color: rgba(255, 200, 96, .38); background: rgba(20, 10, 4, .86); text-shadow: 0 0 22px rgba(230, 140, 40, .55), 0 4px 12px #000, 0 0 6px #000; }
 /* B2 · B0.4 — DE TEKSTSLUIS: staat er een titel, banner of cinematic, dan PAUZEERT de plaat
    (onzichtbaar, animatie stil; de klok in _spraakVolgende staat dan ook stil). Dezelfde
-   lijst als _SPRAAK_SLUIS in js/game.js - pas ze samen aan. */
-body:has(.vonnis, .baas-flits, #baas-intro, .roof-overlay:not(.dt-overlay, .slachtblok-overlay), .roof-speel-kaart, .decreet-overlay) .baas-spraak { opacity: 0 !important; animation-play-state: paused !important; }
+   lijst als _SPRAAK_SLUIS in js/game.js - pas ze samen aan.
+   Finale B4b: ook het toneeldoek (#toneel-doek.aan, en .dooft zolang het uitdooft) - een plaat
+   onder het doek was onleesbaar. */
+body:has(.vonnis, .baas-flits, #baas-intro, .roof-overlay:not(.dt-overlay, .slachtblok-overlay), .roof-speel-kaart, .decreet-overlay, #toneel-doek.aan, #toneel-doek.dooft) .baas-spraak { opacity: 0 !important; animation-play-state: paused !important; }
 /* v95: op laptop hangt de plaat ONDER de bazenbalk — die is daar breed en eindigt op
    134-168px (Erfprins met arsenaalpil); de v89-plaat op 12% dekte HP-balk + fase-pips af.
    Op mobiel is de bazenbalk een compact hart rechtsboven, daar blijft de plaat waar hij staat.
@@ -4455,6 +4491,32 @@ body.lite #baas-balk .bb-beurt { transition: none; }
 #baas-balk[data-vorm="2"] .bb-balk.bb-woede { border-color: rgba(255, 200, 90, .9); }
 /* de beleidsstrook van HET PROCES: zelfde pil-vorm als de Copycat-arsenaalpil */
 .bb-proces { color: #ffdf9a; border-color: rgba(214, 168, 74, .5); }
+/* HIJ HOUDT STAND (Finale B4 stap 3, afwerkplan §9A; tot Finale B4b F1 "DE ZITTING LOOPT" met ⚖): de
+   teller RECHTS IN de HP-balk ("🔒 HIJ HOUDT STAND · nog 2 zetten", in IV "🔒 valt na zijn ONTSLAG")
+   en de inkeping met hetzelfde slotje op de vloer ("tot hier"). Bewust niet in de beleidsstrook (die botst
+   al met #beurt-label en de pil). De teller is aanraakbaar voor zijn uitleg (data-tip), net als
+   de beleidspil. Mobiel: "⚖2" naast het hart, zonder inkeping (mobiel.css). */
+#baas-balk .bb-zitting {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%); z-index: 2;
+  font-family: 'Alegreya', serif; font-size: .7rem; font-weight: 700; letter-spacing: .05em;
+  line-height: 14px; padding: 0 7px; border-radius: 7px; white-space: nowrap;
+  color: #ffe2a0; background: rgba(24, 10, 14, .84); border: 1px solid rgba(214, 168, 74, .75);
+  text-shadow: 0 1px 2px #000;
+  pointer-events: auto; cursor: help;
+}
+#baas-balk .bb-zitting.bb-zitting-ontslag { color: #ffd24a; border-color: rgba(255, 210, 74, .9); }
+/* Finale B4b F1: zolang HERSCHIKT DE ZAAL op de pil staat, telt de regel nog niet ("3 zetten", gedimd) */
+#baas-balk .bb-zitting.bb-zitting-wacht { opacity: .7; }
+#baas-balk .bb-vloer {
+  position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1px; z-index: 1;
+  background: #ffd27a; box-shadow: 0 0 6px rgba(255, 210, 122, .95);
+  font-style: normal; pointer-events: none;
+}
+#baas-balk .bb-vloer::after {
+  content: '🔒'; position: absolute; left: 5px; top: 50%; transform: translateY(-50%);
+  font-size: 10px; line-height: 1; filter: drop-shadow(0 1px 1px #000);
+}
+#baas-balk .bb-zitting[hidden], #baas-balk .bb-vloer[hidden] { display: none !important; }
 
 /* DE HERVERKIEZING: de gouden flits over het hele slagveld op het moment dat het
    volk (zijn eigen hof) op hem stemt. */
@@ -5221,6 +5283,9 @@ body[data-modus="laptop"] .baas-flits.bf-kleinst span { font-size: .85rem; }
   opacity: 0;
 }
 #licht-vignet.flikker::after { animation: vignetFlikker 3.2s ease-in-out infinite; }
+/* B5 (Finale B4 stap 3) had hier een GAT in het fakkelvignet waar de bazenbalk stond, zodat de
+   teller van DE ZITTING LOOPT niet onder de duisternis viel. Sinds de merge met main (Finale B4b)
+   is #baas-balk HUD (B2 · B0.10: body-kind op z44, boven het vignet op z40) - het gat is weg. */
 @keyframes vignetFlikker {
   0%, 100% { opacity: 0; }
   16% { opacity: .34; }
@@ -6463,11 +6528,121 @@ body.pl-landt.pl-onthul #kaart-vlak .knoop:not(.kan) { animation: plOpkomen .8s 
   to   { box-shadow: 0 0 0 1px rgba(255, 156, 63, .8), 0 0 56px rgba(255, 140, 50, .55); }
 }
 
+/* ============================================================
+   R5 · DE ECHO IN DE EERSTE KAMER (plan par. 2 scène 9) — js/proloog-brug.js (proloogEcho)
+   De eerste hand van het eerste gevecht na de proloog komt binnen als de beige kantoorkaarten van
+   het Functioneringsgesprek (de .gs-kaart uit proloog/proloog.css, hier op de maat van #hand), die
+   van onderen wegbranden tot je echte kaarten. Het vel is een KIND van de handkaart: bijwerkKaartEl
+   herschrijft de className van de kaart, niet haar kinderen. Eigen kv-klassen (geen .kaart-naam of
+   .kaart-kost: de game zoekt die met querySelector). Maten in cqw: het vel volgt de kaart (138 px op
+   laptop, 120/104 op mobiel, de opgetilde voorbeeldkaart). Het branden: een masker van 2x de hoogte
+   schuift omhoog (mask-position), de gloeiende rand (.kv-rand) schuift in dezelfde maat mee
+   (background-position) — zelfde duur, zelfde curve, dus altijd op de brandlijn.
+   ============================================================ */
+.kaart-kantoorvel {
+  position: absolute; inset: -2px;          /* over de rand (2 px) van de echte kaart */
+  z-index: 6; pointer-events: none;
+  border-radius: 11px;
+  transform: translateZ(3px);               /* .kaart is preserve-3d: vóór het kaartvlak, ook tijdens de kaartflip */
+  container-type: size;
+}
+.kaart-kantoorvel[data-kantoor="mailtje"]     { --kv-rand: #b8394f; }
+.kaart-kantoorvel[data-kantoor="glimlach"]    { --kv-rand: #5f86a6; }
+.kaart-kantoorvel[data-kantoor="koffie"]      { --kv-rand: #6f8f5a; }
+.kaart-kantoorvel[data-kantoor="overuren"]    { --kv-rand: #d9772a; }
+.kaart-kantoorvel[data-kantoor="verantwoord"] { --kv-rand: #6d665a; }
+.kaart-kantoorvel .kv-papier {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 3px; gap: 2cqw;
+  padding: 8px 8px 6px; padding: 6.5cqw 6cqw 5cqw;
+  border-radius: inherit; overflow: hidden;
+  background: linear-gradient(160deg, rgba(255, 255, 255, .3), transparent 40%), linear-gradient(180deg, #efe6cc, #d4c49c);
+  border: 2px solid var(--kv-rand, #8a7a55);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .25), inset 0 -18px 24px -18px rgba(120, 70, 20, .35);
+  color: #2b2114; text-align: center;
+  /* het masker (2x de hoogte): bovenaan het vel, onderaan niets, ertussen een gerafelde brandlijn
+     (een svg met preserveAspectRatio none, zodat hij de maat van elk vel volgt) */
+  -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 200' preserveAspectRatio='none'><path d='M0 0H100V101.4C96 102.9 93 100.6 89 101.8S82 103.1 77 101.2 70 100.3 64 102.2 57 103.2 52 101 45 100.2 40 101.9 33 103 27 101.4 19 100.4 14 102.1 6 102.8 0 101.1Z'/></svg>");
+          mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 200' preserveAspectRatio='none'><path d='M0 0H100V101.4C96 102.9 93 100.6 89 101.8S82 103.1 77 101.2 70 100.3 64 102.2 57 103.2 52 101 45 100.2 40 101.9 33 103 27 101.4 19 100.4 14 102.1 6 102.8 0 101.1Z'/></svg>");
+  -webkit-mask-size: 100% 200%; mask-size: 100% 200%;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: 0 0; mask-position: 0 0;
+}
+.kaart-kantoorvel .kv-naam {
+  flex: none; max-width: 100%; padding-top: 1px;
+  font-family: 'Pirata One', 'Pirata Fallback', serif;
+  font-size: 15px; font-size: 11.2cqw; line-height: 1.05; color: #2b2114;
+  overflow-wrap: normal; hyphens: auto; -webkit-hyphens: auto;
+}
+.kaart-kantoorvel .kv-art {
+  flex: none; width: 84%; height: 60px; height: 42cqw;
+  border-radius: 5px; border: 1px solid rgba(0, 0, 0, .45);
+  background: #cbbd97 center 32% / cover no-repeat;
+}
+.kaart-kantoorvel .kv-tekst {
+  flex: 1 1 auto; min-height: 0; overflow: hidden;
+  font-family: 'Alegreya', Georgia, serif; font-size: 11px; font-size: 8.4cqw; line-height: 1.15; color: #3d3020;
+}
+.kaart-kantoorvel .kv-type {
+  flex: none; font-family: 'Special Elite', 'Courier New', monospace;
+  font-size: 8px; font-size: 6cqw; line-height: 1; letter-spacing: .12em; color: rgba(43, 33, 20, .6);
+}
+/* de kostbol van het kantoor ligt precies over die van de echte kaart (.kaart-kost: 32 px op -10/-10) */
+.kaart-kantoorvel .kv-kost {
+  position: absolute; top: -8px; left: -8px; z-index: 2;
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Pirata One', serif; font-size: 1.2rem; color: #fff;
+  background: radial-gradient(circle at 35% 30%, #ffd24a, #c87b1b);
+  border: 2px solid #5a3413; box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
+}
+/* de brandlijn: verkoold papier erboven, een oranje gloed, een witgloeiende kern en een gloed op de echte
+   kaart eronder — dezelfde gerafelde lijn als het masker, op dezelfde 2x-hoogte; plus drie vonkjes */
+.kaart-kantoorvel .kv-rand {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+  background:
+    radial-gradient(circle at 21% 49.4%, #fff1c9 0 1.2px, rgba(255, 170, 70, .7) 2px, transparent 3.5px),
+    radial-gradient(circle at 56% 48.7%, #ffe2a8 0 1px, rgba(255, 150, 55, .6) 1.8px, transparent 3px),
+    radial-gradient(circle at 84% 49.1%, #fff1c9 0 1.3px, rgba(255, 160, 60, .7) 2.2px, transparent 3.6px),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 200' preserveAspectRatio='none'><g fill='none'><path vector-effect='non-scaling-stroke' transform='translate(0 -2.4)' stroke='%23361508' stroke-opacity='.5' stroke-width='11' d='M100 101.4C96 102.9 93 100.6 89 101.8S82 103.1 77 101.2 70 100.3 64 102.2 57 103.2 52 101 45 100.2 40 101.9 33 103 27 101.4 19 100.4 14 102.1 6 102.8 0 101.1'/><path vector-effect='non-scaling-stroke' transform='translate(0 1.6)' stroke='%23ff7a22' stroke-opacity='.3' stroke-width='8' d='M100 101.4C96 102.9 93 100.6 89 101.8S82 103.1 77 101.2 70 100.3 64 102.2 57 103.2 52 101 45 100.2 40 101.9 33 103 27 101.4 19 100.4 14 102.1 6 102.8 0 101.1'/><path vector-effect='non-scaling-stroke' stroke='%23ff9a3c' stroke-opacity='.9' stroke-width='3.6' d='M100 101.4C96 102.9 93 100.6 89 101.8S82 103.1 77 101.2 70 100.3 64 102.2 57 103.2 52 101 45 100.2 40 101.9 33 103 27 101.4 19 100.4 14 102.1 6 102.8 0 101.1'/><path vector-effect='non-scaling-stroke' stroke='%23fff1c9' stroke-width='1.4' d='M100 101.4C96 102.9 93 100.6 89 101.8S82 103.1 77 101.2 70 100.3 64 102.2 57 103.2 52 101 45 100.2 40 101.9 33 103 27 101.4 19 100.4 14 102.1 6 102.8 0 101.1'/></g></svg>");
+  background-size: 100% 200%; background-repeat: no-repeat; background-position: 0 0;
+}
+.kaart-kantoorvel.brandt .kv-papier { animation: kvBrand var(--kv-duur, 760ms) cubic-bezier(.42, 0, .58, 1) var(--kv-wacht, 0ms) both; }
+.kaart-kantoorvel.brandt .kv-rand   { animation: kvRand var(--kv-duur, 760ms) cubic-bezier(.42, 0, .58, 1) var(--kv-wacht, 0ms) both; }
+.kaart-kantoorvel.brandt .kv-kost   { animation: kvKost var(--kv-duur, 760ms) linear var(--kv-wacht, 0ms) both; }
+@keyframes kvBrand {
+  from { -webkit-mask-position: 0 0; mask-position: 0 0; }
+  to   { -webkit-mask-position: 0 104%; mask-position: 0 104%; }   /* de golf reikt tot 103/200: 104 % = niets blijft staan */
+}
+@keyframes kvRand {
+  0%   { opacity: 0; background-position: 0 0; }
+  6%, 90% { opacity: 1; }
+  100% { opacity: 0; background-position: 0 104%; }
+}
+@keyframes kvKost { 0%, 80% { opacity: 1; } 100% { opacity: 0; transform: scale(.7); } }
+/* reduced motion / lite (de brug zet .rustig): geen brandlijn, een stil vel dat in 600 ms wegvloeit */
+.kaart-kantoorvel.rustig .kv-papier { -webkit-mask-image: none; mask-image: none; }
+.kaart-kantoorvel.rustig .kv-rand { display: none; }
+.kaart-kantoorvel.rustig.brandt .kv-papier,
+.kaart-kantoorvel.rustig.brandt .kv-kost { animation: kvVloei var(--kv-duur, 600ms) ease var(--kv-wacht, 0ms) both; }
+@keyframes kvVloei { to { opacity: 0; } }
+/* de zin van de slijm staat op de spraakplaat van het spel (.baas-spraak); rustig zonder haar lange
+   plaatanimatie (3,6 s), alleen een korte inkomst */
+body.lite .baas-spraak.pl-echo-zin { animation: plEchoZin .3s ease both; }
+@keyframes plEchoZin { from { opacity: 0; } }
+/* rustig ook het fakkelvignet: de landing en de eerste kamer wisselen allebei van scherm, en dan vloeit
+   het vignet (zetLichtVisueel) in 1,2 s naar zijn nieuwe stand — reduced motion en lite: hoogstens 800 ms.
+   Niet in de tirade van de DICKtator (die heeft haar eigen .5 s). */
+body.lite:not(.tirade) #licht-vignet { transition-duration: .8s; }
+
 /* lite / reduced motion: de brug kiest dan zelf het rustige pad (geen schaal, geen vonken);
    hier alleen de lussen die dan nog zouden bewegen */
 body.lite .pl-kooltje::after, body.lite .held-kaart.voorkeur { animation: none !important; }
 @media (prefers-reduced-motion: reduce) {
   .pl-kooltje::after, .held-kaart.voorkeur { animation: none !important; }
+  .baas-spraak.pl-echo-zin { animation: plEchoZin .3s ease both; }
+  body:not(.tirade) #licht-vignet { transition-duration: .8s; }
   body.pl-dooft #scherm-titel .titel-groot { animation: none !important; opacity: 0; transition: opacity .3s ease; }
   .held-kaart.voorkeur { box-shadow: 0 0 0 1px rgba(255, 156, 63, .7), 0 0 40px rgba(255, 140, 50, .45); }
 }

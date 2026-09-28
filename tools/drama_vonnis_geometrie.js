@@ -155,12 +155,12 @@ const OVERGANGEN = [
   // wachttijden: ná de stempel. De titel animeert van scale(5) naar 1 over duur*0,125
   // (= 300ms bij duur 2400), dus een meting op de beat zelf meet de INSLAG en niet de
   // stand. II valt op t=900, III op t=1000, IV op t=3600.
-  { sleutel: 'II', naam: 'II · HET PROCES', wacht: 1400,
+  { sleutel: 'II', naam: 'II · DE FACTUUR', wacht: 1400,
     trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.hp = Math.floor(b.maxHp * 0.50); checkBaasFase(); } },
   { sleutel: 'III', naam: 'III · DE TIRADE', wacht: 1400,
     trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 2; b.hp = Math.floor(b.maxHp * 0.30); checkBaasFase(); } },
-  { sleutel: 'IV', naam: 'IV · DE HERVERKIEZING', wacht: 4000,
-    trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; verliesHp(b, 30); } }
+  { sleutel: 'IV', naam: 'DE HERVERKIEZING', wacht: 3400,
+    trigger: () => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; b.minVrij = true; /* B4 stap 3: de sprong landt na de zitting van III (DE ZITTING LOOPT houdt hem anders op 1 HP) */ verliesHp(b, 30); } }
 ];
 
 async function draaiViewport(browser, vp) {
@@ -262,15 +262,15 @@ async function draaiViewport(browser, vp) {
 
   // bedrijf V — geen kaartje meer, wel de aankomstpuls op de strook
   await opzet();
-  await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; verliesHp(b, 30); });
-  await slaap(7000);
+  await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; b.minVrij = true; /* B4 stap 3: de sprong landt na de zitting van III (DE ZITTING LOOPT houdt hem anders op 1 HP) */ verliesHp(b, 30); });
+  await slaap(4900);   /* finale: het strooklabel komt op t=4600, de puls duurt 1400 ms */
   const m = await page.evaluate(() => window.__mandaat());
   await page.screenshot({ path: path.join(UIT, 'geo_' + vp.n.replace(/[^a-z0-9]+/gi, '-') + '_V.png') });
   console.log('  V · HET MANDAAT  (t=7000ms)');
   console.log('    kaartje in beeld: ' + m.erIsEenKaartje + ' | strookklasse "' + m.klasse + '" | animatie=' + m.animatie + ' scale=' + m.scale);
   console.log('    label "' + m.label + '" op=' + m.op);
   t(!m.erIsEenKaartje, 'V · geen eigen vonnis-kaartje meer in beeld');
-  t(/V · HET MANDAAT/.test(m.label) || /V . HET MANDAAT/.test(m.label), 'V · het strooklabel draagt "⚖ V · HET MANDAAT": "' + m.label + '"');
+  t(/IV . HET MANDAAT/.test(m.label), 'IV · het strooklabel draagt "⚖ IV · HET MANDAAT": "' + m.label + '"');
   t(m.op > 0.9, 'V · de strook is weer volledig zichtbaar (op=' + m.op + ')');
   // de puls zelf werd tot de eindpolish alleen GEPRINT: een regressie waarbij .mandaat-aan
   // nooit meer op de strook landt of de animation-name op 'none' valt, hield deze sonde

@@ -68,7 +68,7 @@ async function spoor(browser, sp) {
   await page.evaluate(() => { DICK.tempo = 1; dicktatorRoep('de_griffier'); dicktatorRoep('de_deurwaarder'); }); await slaap(900);
 
   // --- de herverkiezing, en een meting MIDDEN in de ceremonie ---
-  await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; verliesHp(b, 30); });
+  await page.evaluate(() => { const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; b.minVrij = true; /* B4 stap 3: de sprong landt na de zitting van III (DE ZITTING LOOPT houdt hem anders op 1 HP) */ verliesHp(b, 30); });
   await slaap(1500);
   const mid = await page.evaluate(() => {
     const pil = document.querySelector('#baas-balk .bb-aegis');
@@ -87,8 +87,9 @@ async function spoor(browser, sp) {
   console.log('  TIJDENS de ceremonie: body.ceremonie=' + mid.ceremonie + '  pil pointer-events=' + mid.pilPe
     + ' strook-opacity=' + mid.pilOp + '  #beurt-label opacity=' + mid.beurtOp + ' (display ' + mid.beurtDisplay + ')  intent opacity=' + mid.intentOp);
   t(mid.ceremonie, 'de ceremonie loopt op t=1500');
-  t(mid.pilPe === 'none', 'tijdens de ceremonie vangt de onzichtbare pil geen tip (pointer-events=' + mid.pilPe + ')');
-  t(parseFloat(mid.pilOp) < 0.05, 'tijdens de ceremonie is de strook weg (opacity=' + mid.pilOp + ')');
+  /* finale (sep 2026): in scène I zonder open dossier heeft de strook niets te tonen (finale §5) - geen pil is dan ook 'geen tip onder het doek' */
+  t(mid.pilPe === 'none' || mid.pilPe === '(geen pil)', 'tijdens de ceremonie vangt de onzichtbare pil geen tip (pointer-events=' + mid.pilPe + ')');
+  t(mid.pilPe === '(geen pil)' || parseFloat(mid.pilOp) < 0.05, 'tijdens de ceremonie is de strook weg (opacity=' + mid.pilOp + ')');
   t(mid.beurtDisplay === 'none' || parseFloat(mid.beurtOp) < 0.05, '#beurt-label staat niet in de titelband (opacity=' + mid.beurtOp + ', display=' + mid.beurtDisplay + ')');
 
   // --- ná de regie: is de tip bereikbaar? ---
@@ -112,8 +113,8 @@ async function spoor(browser, sp) {
   console.log('  IN RUSTSTAND (t=9000): pil "' + rust.label + '"');
   console.log('    pointer-events=' + rust.pe + '  strook-opacity=' + rust.op + '  elementFromPoint(' + rust.x + ',' + rust.y + ') = ' + rust.raak);
   t(rust.pil, 'de beleidspil staat in beeld');
-  t(/V . HET MANDAAT/.test(rust.label), 'de pil draagt het label V · HET MANDAAT: "' + rust.label + '"');
-  t(/Hij int nu zelf/.test(rust.tip), 'de data-tip draagt de duiding "Hij int nu zelf. De opzegtermijn loopt."');
+  t(/IV . HET MANDAAT/.test(rust.label), 'de pil draagt het label IV · HET MANDAAT: "' + rust.label + '"');
+  t(/hou blok over/.test(rust.tip), 'de data-tip draagt de duiding van IV (Finale B4b F1: "Om de twee beurten HET ONTSLAG ... Hij valt pas na zijn eerste ONTSLAG: hou blok over.")');
   t(rust.pe === 'auto', 'pointer-events van de pil = auto (gemeten "' + rust.pe + '")');
   t(rust.raakIsPil, 'elementFromPoint op het midden van de pil levert de pil zelf (gemeten ' + rust.raak + ')');
 
@@ -125,7 +126,7 @@ async function spoor(browser, sp) {
     return { display: tip ? getComputedStyle(tip).display : '(geen tooltip)', tekst: tip ? (tip.textContent || '') : '' };
   });
   console.log('    muis-hover -> #tooltip display=' + muis.display + '  "' + muis.tekst.slice(0, 150) + '..."');
-  t(muis.display === 'block' && /Hij int nu zelf/.test(muis.tekst), 'muis-hover toont de tip MET de duiding');
+  t(muis.display === 'block' && /hou blok over/.test(muis.tekst), 'muis-hover toont de tip MET de duiding');
   if (UIT) await page.screenshot({ path: path.join(UIT, 'tip_' + sp.n.replace(/[^a-z0-9]+/gi, '-') + '_muis.png') });
 
   if (sp.mobiel) {
@@ -136,7 +137,7 @@ async function spoor(browser, sp) {
       return { display: tip ? getComputedStyle(tip).display : '(geen tooltip)', tekst: tip ? (tip.textContent || '') : '' };
     });
     console.log('    vinger-tik -> #tooltip display=' + tik.display + '  "' + tik.tekst.slice(0, 150) + '..."');
-    t(tik.display === 'block' && /Hij int nu zelf/.test(tik.tekst), 'een tik met de vinger toont dezelfde tip');
+    t(tik.display === 'block' && /hou blok over/.test(tik.tekst), 'een tik met de vinger toont dezelfde tip');
     if (UIT) await page.screenshot({ path: path.join(UIT, 'tip_' + sp.n.replace(/[^a-z0-9]+/gi, '-') + '_tik.png') });
   }
 

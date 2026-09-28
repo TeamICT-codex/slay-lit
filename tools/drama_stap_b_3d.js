@@ -104,7 +104,7 @@ const bij = (log, ms) => log.reduce((a, r) => Math.abs(r.t - ms) < Math.abs(a.t 
   t(L1.some(r => r.flits > 0), `de tik-flits verschijnt (max ${Math.max(...L1.map(r => r.flits))} tegelijk)`);
   t(L1.some(r => r.hitstop), `.hitstop staat aan in 3D (${L1.filter(r => r.hitstop).length} samples)`);
   const von1 = L1.find(r => r.vonnis);
-  t(!!von1 && /HET PROCES/.test(von1.vonnis || ''), `het vonnis landt: "${von1 ? von1.vonnis : '-'}" op t=${von1 ? von1.t : '-'}ms`);
+  t(!!von1 && /DE FACTUUR/.test(von1.vonnis || ''), `het vonnis landt: "${von1 ? von1.vonnis : '-'}" op t=${von1 ? von1.t : '-'}ms`);
   t(bij(L1, 3000).eindDisabled === true && bij(L1, 3800).eindDisabled === false, `invoerknip in 3D: disabled op t=${bij(L1, 3000).t}ms = ${bij(L1, 3000).eindDisabled}, op t=${bij(L1, 3800).t}ms = ${bij(L1, 3800).eindDisabled}`);
   const tintNa = L1[L1.length - 1];
   t(tintNa.bedrijf === '2' && tintNa.tintOp > 0.5, `#arena-tint brandt boven het canvas: data-bedrijf="${tintNa.bedrijf}", opacity ${tintNa.tintOp}`);
@@ -130,7 +130,7 @@ const bij = (log, ms) => log.reduce((a, r) => Math.abs(r.t - ms) < Math.abs(a.t 
   /* ============================ B3 in 3D ============================ */
   console.log('\n== B3 · DE HERVERKIEZING op het 3D-toneel ==');
   await page.evaluate(() => { window.__tel.raak = 0; window.__tel.schud = 0; window.__tel.pose = 0; window.__tel.licht = []; });
-  await page.evaluate(sampler("(function(){ const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.hp = 6; verliesHp(b, 30); })();"));
+  await page.evaluate(sampler("(function(){ const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.hp = 6; b.minVrij = true; /* B4 stap 3: de sprong landt na de zitting van III (DE ZITTING LOOPT houdt hem anders op 1 HP) */ verliesHp(b, 30); })();"));
   await slaap(8200);
   await page.evaluate(() => window.__stop());
   const L3 = await page.evaluate(() => window.__log);
@@ -139,15 +139,15 @@ const bij = (log, ms) => log.reduce((a, r) => Math.abs(r.t - ms) < Math.abs(a.t 
   t(Math.abs(doekMax3.doekOp - 0.92) < 0.04, `de black-out haalt ${doekMax3.doekOp.toFixed(2)} op t=${doekMax3.t}ms`);
   t(T3.licht.includes(0.08), `Vista.zetLicht(0.08) valt tijdens de black-out; hele reeks: [${T3.licht.join(', ')}]`);
   t(T3.licht.length >= 2 && T3.licht[T3.licht.length - 1] > 0.08, `het toneellicht komt daarna terug op de fakkelstand: ${T3.licht[T3.licht.length - 1]}`);
-  t(bij(L3, 3000).hpVar === '0', `de bazenbalk bevriest op --hp "${bij(L3, 3000).hpVar}" op t=${bij(L3, 3000).t}ms`);
+  t(bij(L3, 2000).hpVar === '0', `de bazenbalk bevriest op --hp "${bij(L3, 2000).hpVar}" op t=${bij(L3, 2000).t}ms (finale: vrij op 2500)`);
   /* v121 (P1): geen vijfde kaartje meer; het strooklabel zelf komt aan met een gouden puls */
   const von5 = L3.find(r => r.vonnis && /MANDAAT/.test(r.vonnis));
   t(!von5, `geen vijfde vonnis-kaartje meer${von5 ? `: "${von5.vonnis}" op t=${von5.t}ms` : ' (0 samples met een MANDAAT-kaartje)'}`);
   const puls5 = L3.filter(r => r.bbExtraPuls);
   const label5 = L3.find(r => /MANDAAT/.test(r.bbExtra));
-  t(puls5.length > 0 && puls5[0].t >= 6750 && !!label5,
+  t(puls5.length > 0 && puls5[0].t >= 4550 && !!label5,
     `de aankomstpuls staat ook in 3D: .mandaat-aan van t=${puls5.length ? puls5[0].t : 'nooit'} tot t=${puls5.length ? puls5[puls5.length - 1].t : '-'}ms (${puls5.length} samples), label vanaf t=${label5 ? label5.t : 'nooit'}ms`);
-  t(bij(L3, 5400).eindDisabled === true && bij(L3, 5800).eindDisabled === false, `invoerknip: t=${bij(L3, 5400).t}ms disabled=${bij(L3, 5400).eindDisabled}, t=${bij(L3, 5800).t}ms disabled=${bij(L3, 5800).eindDisabled}`);
+  t(bij(L3, 4200).eindDisabled === true && bij(L3, 4700).eindDisabled === false, `invoerknip (finale: vrij op 4400): t=${bij(L3, 4200).t}ms disabled=${bij(L3, 4200).eindDisabled}, t=${bij(L3, 4700).t}ms disabled=${bij(L3, 4700).eindDisabled}`);
   const eind3 = L3[L3.length - 1];
   t(eind3.bedrijf === '4' && eind3.herrezen, `na afloop: data-bedrijf="${eind3.bedrijf}", herrezen=${eind3.herrezen}, hp=${eind3.hp}`);
   await page.screenshot({ path: path.join(UIT, 'b3-3d.png') });

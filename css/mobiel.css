@@ -220,11 +220,15 @@ body[data-modus="mobiel"] #tb-scherven, body[data-modus="mobiel"] #tb-metgezel {
 }
 /* toasts onder de (nu variabele) topbalk — ze overlapten 'm met een notch */
 body[data-modus="mobiel"] #meldingen { top: calc(var(--tbh, 40px) + var(--sat) + 8px); }
-/* B3 F1: in een baasgevecht (liggend) staan de toasts linksonder, boven trekstapel en orb, links van
-   held en hand (meldingenPlek in js/game.js meet de kolom); rechtsboven lagen ze over het hart van
-   de baas, zijn pil en zijn Buit-pil */
-body[data-modus="mobiel"] #meldingen.meld-baas { top: auto; right: auto; left: var(--meld-l, 12px); bottom: var(--meld-onder, 80px); max-width: var(--meld-b, 180px); align-items: flex-start; gap: 5px; }
-body[data-modus="mobiel"] #meldingen.meld-baas .toast { font-size: .76rem; line-height: 1.2; padding: 4px 10px; border-radius: 12px; }
+/* ÉÉN REGEL VOOR DE TOASTS IN EEN BAASGEVECHT (samenvoeging B3 x finale B4b, 28 sep 2026; zie
+   meldingenPlek in js/game.js en css/style.css): liggend dezelfde kolom linksonder als op laptop,
+   boven trekstapel en orb, links van held en hand (de geometrie staat in style.css); hier alleen
+   kleiner. Staand ('staand'): links onder de topbalk, over de lege achtergrond - de bazenbalk
+   staat daar rechts en de vijandenrij er vlak onder (onder de balk raakte een toast de pil van de
+   baas). */
+body[data-modus="mobiel"] #meldingen.bij-baas { gap: 5px; }
+body[data-modus="mobiel"] #meldingen.bij-baas[data-zone="staand"] { left: calc(8px + env(safe-area-inset-left)); max-width: 52vw; }
+body[data-modus="mobiel"] #meldingen.bij-baas .toast { font-size: .76rem; line-height: 1.2; padding: 4px 10px; border-radius: 12px; }
 
 /* schermen sluiten aan op de compacte balk; het gevecht gaat tot de rand */
 /* topbalkhoogte: de var(--tbh, 40px)-fallback IS de basiswaarde (liggend één rij);
@@ -284,6 +288,31 @@ body[data-modus="mobiel"] #baas-balk .bb-balk .bb-tekst {
   order: 1; position: static; font-family: 'Pirata One', serif; font-size: .95rem;
   color: var(--perkament); text-shadow: 0 1px 3px #000; padding: 0;
 }
+/* HIJ HOUDT STAND (Finale B4 stap 3; tot Finale B4b F1 "DE ZITTING LOOPT" met ⚖): op het hart-spoor
+   "🔒2" LINKS van het HP-getal (in de flexrij: teller · getal · hart); de inkeping op de balk bestaat
+   hier niet (er is geen balk). De volle zin staat in de data-tip: een tik op de teller toont hem.
+   Sinds Finale B4b F1 draagt de figuur zelf ook een chip ("🔒 nog 2", hieronder): het teken naast het
+   hart alleen was te klein om de baas op 1 HP met ☠️199 te verklaren. */
+body[data-modus="mobiel"] #baas-balk .bb-balk .bb-zitting {
+  order: 0; position: static; transform: none; flex: none;
+  font-family: 'Pirata One', serif; font-size: .9rem; font-weight: 400; letter-spacing: 0;
+  line-height: 1.15; padding: 1px 7px; border-radius: 9px;
+}
+body[data-modus="mobiel"] #baas-balk .bb-balk .bb-zitting.bb-zitting-wacht { opacity: .65; }
+body[data-modus="mobiel"] #baas-balk .bb-balk .bb-vloer { display: none !important; }
+/* HIJ HOUDT STAND op de figuur van de baas (game.js _standLabel, alleen mobiel): een label op zijn eigen
+   HP-balk onder de voeten - die balk is op het hart-spoor leeg (het HP-getal staat bij het hart, zie
+   "baasgevecht (élke oriëntatie)" verderop), dus het label wint van die verberging. In het goud van de
+   teller; gedimd zolang HERSCHIKT DE ZAAL op de pil staat (de telling begint daarna). Niet in de
+   chipkolom naast zijn romp: een zesde chip liep daar achter de hand (B0.8). Een tik toont de tip. */
+body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk .hp-tekst.stand {
+  display: block; inset: auto; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 4;
+  white-space: nowrap; padding: 1px 9px; border-radius: 10px; pointer-events: auto; cursor: help;
+  font-family: 'Pirata One', serif; font-size: .92rem; font-weight: 400; line-height: 1.2; letter-spacing: .02em;
+  color: #ffe2a0; background: rgba(40, 22, 8, .9); border: 1px solid rgba(214, 168, 74, .85);
+  text-shadow: 0 1px 2px #000; box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
+}
+body[data-modus="mobiel"] #scherm-gevecht.baas-actief .is-baas .hp-balk .hp-tekst.stand.wacht { opacity: .7; }
 body[data-modus="mobiel"] #baas-balk .bb-balk::before {
   content: ''; order: 2; flex: none; width: 46px; height: 42px;
   background: linear-gradient(to top, #6bdb4d 0 calc(var(--hp, 100) * 1%), #2b1420 calc(var(--hp, 100) * 1%) 100%);
@@ -345,6 +374,10 @@ body[data-modus="mobiel"] #baas-balk .bb-aegis {
   max-width: 44vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   font-size: .72rem; padding: 2px 8px;
 }
+/* Finale B4b: IV · HET MANDAAT staat op de telefoon in twee korte regels (dicktatorBalk zet een
+   <br> en .bb-twee): in één regel lag de strook over de statuschips en de schouder van de baas,
+   die in IV alleen staat en dus op volle maat (B2.2). */
+body[data-modus="mobiel"] #baas-balk .bb-aegis.bb-twee { line-height: 1.3; padding: 3px 8px; }
 /* DE ROOF-overlay op de krappe liggende hoogte: kop compacter, kaarten kleiner,
    safe-area-padding — samen met justify-content:safe center (style.css) blijft
    de titel altijd in beeld en scrollt de rest netjes (playtest: kapte raar af) */
@@ -437,6 +470,11 @@ body[data-modus="mobiel"] #scherm-gevecht .vijand.vijand-klein .vijand-art { sca
    HP-GETAL wijkt op mobiel — de vulbalk toont de verhouding, tik-op-figuur geeft het exacte getal.
    Vijand-namen blijven dus zichtbaar (≠ de held, die helemaal weg is). Laptop ongemoeid. */
 body[data-modus="mobiel"] #scherm-gevecht .vijand .hp-tekst { display: none; }
+/* Finale B4b F1 (review, laag): in de finale wél het HP-getal van het HOF op zijn balk. In een
+   baasgevecht ligt er geen naam op de balk (hierboven: verborgen), dus het getal past; zonder waren
+   griffier, deurwaarder en claqueur naamloze figuren met een kale balk, terwijl juist de keuzes van de
+   finale aan hun HP hangen (de griffier doden vóór de zitting, de zaal ruimen vóór de herverkiezing). */
+body[data-modus="mobiel"] #scherm-gevecht.baas-actief .vijand.is-hof .hp-tekst { display: flex; font-size: .68rem; }
 body[data-modus="mobiel"] #scherm-gevecht .vijand-naam {
   position: relative; z-index: 3; margin: 0 0 -21px; pointer-events: none;
   /* leesbaarheidspas (playtest aug 2026): .62rem mat 9,9px — onder elk leesbaar
@@ -1176,12 +1214,14 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] #vijanden-rij { gap: 8px 10px; flex-wrap: wrap; justify-content: center; max-width: min(68vw, 300px); }
   /* v104 (meting 4 sep): met 3-4 vijanden werd de rij 600-800px hoog (1 vijand per rij, kolommen tot 188px
      door de chip-max-width) en liep vijand 0 BOVEN het scherm uit (art op y-245). Kleinere figuren vanaf
-     3 vijanden + chips die de kolom niet meer oprekken → 2 per rij, alles in beeld. */
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas):not(.is-episch) .vijand-art { width: 76px; height: 76px; }
+     3 vijanden + chips die de kolom niet meer oprekken → 2 per rij, alles in beeld.
+     Finale B4b · B2.2: "vanaf 3" telt #vijanden-rij[data-n] (de kolommen zonder .lijk-weg),
+     niet meer :has(.vijand:nth-child(3)) - weggeruimde lijken tellen niet. */
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .vijand:not(.is-baas):not(.is-episch) .vijand-art { width: 76px; height: 76px; }
   /* v109: met het hof erbij (baas + 3) krimpt ook de baas, en klemt de intent-pil op de
      kolombreedte - anders loopt de rij op 412px een paar pixels over de rechterrand. */
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .is-baas .vijand-art { width: 104px; height: 104px; }
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas) .intent {
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .is-baas .vijand-art { width: 104px; height: 104px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .vijand:not(.is-baas) .intent {
     max-width: 88px; overflow: hidden; text-overflow: ellipsis; padding: 3px 7px;
   }
   /* v109-fix — DE BAAS MOET IN BEELD BLIJVEN. Gemeten met baas + hof:
@@ -1196,10 +1236,21 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
      kleinere figuren vanaf 3 stuks: alles past weer op twee/drie regels binnen beeld
      (gemeten 412: rij 245..617 · 360: rij 130..502, pil vrij). Dit gold ook vóór v109
      (Slijmkoning + 3 gespleten slijmen), maar met een vast hof is het structureel. */
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) { max-width: min(72vw, 320px); gap: 8px 6px; }
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .is-baas .intent {
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) { max-width: min(72vw, 320px); gap: 8px 6px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .is-baas .intent {
     max-width: 118px; overflow: hidden; text-overflow: ellipsis; padding: 3px 7px;
   }
+  /* Finale B4b · B2.2 (beeldcontrole 412x915) - DE BAAS MET ÉÉN HOVELING. De DICKtator en de
+     griffier (I), of de baas en de laatste hoveling (II/III na een dode), pasten staand niet
+     naast elkaar (148 + 104 px in 266 px): de rij wrapte naar twee regels en liep omhoog tot
+     onder de bazenbalk - de baaspil 792 px2 over de strook - en de chipkolom van de baas lag
+     over de pil van de hoveling. Met het hof krimpen ze staand ook met twee kolommen tot de
+     hofmaat, naast elkaar op één regel ("de baas krimpt als het moet"). Alleen de maat en de
+     rij, niet de pilklem van hierboven: de volle naam van de hoveling past. Alleen het hof
+     (.is-hof): de Slijmkoning en andere bazen ongewijzigd. */
+  body[data-modus="mobiel"] #vijanden-rij[data-n="2"]:has(.is-hof) { max-width: min(72vw, 320px); gap: 8px 6px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n="2"]:has(.is-hof) .vijand:not(.is-baas) .vijand-art { width: 76px; height: 76px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n="2"]:has(.is-hof) .is-baas .vijand-art { width: 104px; height: 104px; }
   body[data-modus="mobiel"] #vijanden-rij .blok-status { width: 0; min-width: 100%; max-width: none; }
   body[data-modus="mobiel"] .vijand { min-width: 0; padding: 4px; }
   body[data-modus="mobiel"] .vijand-art { width: 104px; height: 104px; }
@@ -1252,15 +1303,15 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
    de volledige intent-naam en het hp-getal staan in de tik-tooltip. Op 412 px is dit
    niet nodig (die matrix was al groen), dus de regels stoppen bij 389 px. */
 @media (orientation: portrait) and (max-width: 389px) {
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand { padding: 4px 2px; }
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .is-baas .vijand-art { width: 96px; height: 96px; }
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .is-baas .intent { max-width: 82px; }
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas) .intent { max-width: 80px; }
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas) .hp-balk { width: 68px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .vijand { padding: 4px 2px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .is-baas .vijand-art { width: 96px; height: 96px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .is-baas .intent { max-width: 82px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .vijand:not(.is-baas) .intent { max-width: 80px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .vijand:not(.is-baas) .hp-balk { width: 68px; }
   /* krappere pil-padding en een tikje kleinere letter: zo blijft er méér van de
      intent-naam leesbaar binnen dezelfde kolombreedte (de volledige naam staat in
      de tik-tooltip). */
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .intent { padding: 4px 6px; font-size: .78rem; gap: 2px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .intent { padding: 4px 6px; font-size: .78rem; gap: 2px; }
 }
 
 /* ---------- C. liggend gevecht (telefoon, korte hoogte) ----------
@@ -1326,25 +1377,31 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] .is-baas .vijand-art { width: clamp(120px, 42vh, 210px); height: clamp(120px, 42vh, 210px); }
   body[data-modus="mobiel"] #vijanden-rij { gap: 10px; flex-wrap: nowrap; max-width: none; }
   /* v109: het hof van HET PROCES zet baas + 3 hovelingen naast elkaar. Liggend is de rij
-     nowrap ZONDER krimp (de portret-regel op :has(nth-child(3)) geldt hier niet), dus op
-     667x375 liep 157px baas + 3x98px over de rand. Vanaf 3 figuren krimpen ze allebei. */
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas):not(.is-episch) .vijand-art {
+     nowrap ZONDER krimp (de portret-regel geldt hier niet), dus op 667x375 liep 157px baas +
+     3x98px over de rand. Vanaf 3 figuren krimpen ze allebei.
+     Finale B4b · B2.2: "3 figuren" = data-n, de kolommen die er STAAN (renderGevecht,
+     _rijMaat); vroeger :has(.vijand:nth-child(3)), dat ook de weggeruimde lijken telde - in
+     IV stond de baas dan alleen, maar op hofmaat (1,32x de held i.p.v. 1,65x). */
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .vijand:not(.is-baas):not(.is-episch) .vijand-art {
     width: clamp(64px, 20vh, 96px); height: clamp(64px, 20vh, 96px);
   }
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .is-baas .vijand-art {
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .is-baas .vijand-art {
     width: clamp(110px, 34vh, 170px); height: clamp(110px, 34vh, 170px);
   }
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) { gap: 6px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) { gap: 6px; }
   /* de INTENT-PIL is de brede boosdoener, niet de figuur: 'inventaris'/'betekening' maakte
-     de kolom 155px terwijl de hp-balk 84px is. Vanaf 3 figuren klemt de pil op de balkbreedte
-     (de volledige naam blijft in de tik-tooltip staan). */
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas) .intent {
-    max-width: 88px; overflow: hidden; text-overflow: ellipsis; padding: 3px 7px;
+     de kolom 155px terwijl de hp-balk 84px is. Vanaf 3 figuren klemde de pil daarom op de
+     balkbreedte - met een ellipsis, en dan las je op 800x360 '📋 dos…' en '🧮 inven…'.
+     Finale B4b · B2.3 (P_plaatsing_regie_plan §5): geen klem en geen ellipsis meer, wel een
+     kleinere letter en een krappere pil; zo past de volle naam in de kolom en snijdt geen pil
+     een andere pil of de bazenbalk (gemeten in tools/finale_regie_acceptatie.js, II en III). */
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .vijand:not(.is-baas) .intent {
+    max-width: none; overflow: visible; text-overflow: clip; padding: 3px 6px; font-size: .78rem;
   }
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas) .intent-rij { max-width: 92px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .vijand:not(.is-baas) .intent-rij { max-width: none; }
   /* en de hp-balk is de tweede breedte-driver (84px); met vier figuren naast elkaar mag ze
      smaller - de naam staat er toch op en het getal zit in de tik-tooltip. */
-  body[data-modus="mobiel"] #vijanden-rij:has(.vijand:nth-child(3)) .vijand:not(.is-baas) .hp-balk { width: 66px; }
+  body[data-modus="mobiel"] #vijanden-rij[data-n]:not([data-n="1"], [data-n="2"]) .vijand:not(.is-baas) .hp-balk { width: 66px; }
   /* (baas: eigen HP-balk wegwerken staat nu onvoorwaardelijk in sectie A, zodat
      het óók in portret-baasgevechten geldt — niet enkel liggend.) */
 
@@ -1435,8 +1492,30 @@ body[data-modus="mobiel"] .inst-mobiel { display: flex; }
   body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-baas::after { content: ''; display: block; height: 24px; flex: none; }
   /* staat er iemand naast hem (het hof van de DICKtator, de splitsing van de Slijmkoning),
      dan krijgt die chipkolom een eigen strook: zonder deze marge lag ze over de pil en het
-     lijf van de eerste hoveling (846x381, bedrijf II: '📋 dossier' half bedekt) */
-  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-baas:not(:last-child):has(.blok-status > *) { margin-right: 46px; }
+     lijf van de eerste hoveling (846x381, bedrijf II: '📋 dossier' half bedekt).
+     Finale B4b · B2.2: "iemand" = een kolom die er staat (zonder .lijk-weg); de gevluchte
+     kiezers van IV staan er niet meer en duwden hem 23 px uit het midden. */
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-baas:has(~ .vijand:not(.lijk-weg)):has(.blok-status > *) { margin-right: 46px; }
+  /* Finale B4b (restpunt bazentoneel) — DE CHIPS VAN HET HOF NIET ACHTER DE HAND. Een hoveling
+     droeg zijn chips nog onder de voeten: drie per rij, dus met 4-5 statussen twee rijen, en al
+     de eerste rij lag in de kaartwaaier (800x360: 6 410-9 614 px2, 846x381: 6 342-9 308). Die
+     rijen maakten zijn kolom bovendien 188 px breed, zodat de deurwaarder onder de bazenbalk
+     schoof. Nu dezelfde regel als de baas (B0.8), één maat kleiner: compacte chips in een smal
+     ROOSTER RECHTS naast de hoveling (vier onder elkaar, de vijfde in een tweede kolom), met de
+     onderkant op de hoogte van zijn HP-balk - nooit lager dan de hand, en laag genoeg om onder de
+     bazenbalk rechtsboven te blijven. De lege voetstrook van 24px (::after) houdt de voetlijn.
+     Zijn eigen strook (margin-right): de LAATSTE hoveling krijgt er 30px bij, want met de rij
+     gecentreerd trekt dat de hele rij naar links - anders schoof de pil van de deurwaarder op
+     800x360 onder de bazenbalk (9 px). Alleen het hof (.is-hof, js/game.js bouwGevechtDom):
+     gewone vijanden ongewijzigd. */
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-hof .blok-status { position: absolute; bottom: 24px; left: calc(100% - 8px); display: grid; grid-auto-flow: column; grid-template-rows: repeat(4, auto); justify-items: start; align-content: end; width: max-content; max-width: none; min-width: 0; height: auto; min-height: 0; gap: 2px 3px; z-index: 3; }
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-hof .blok-status .status { padding: 0 5px; font-size: .74rem; line-height: 1.15; gap: 2px; border-width: 1px; }
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-hof .blok-status .status b { font-size: .72rem; }
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-hof::after { content: ''; display: block; height: 24px; flex: none; }
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-hof:has(.blok-status > *) { margin-right: 32px; }
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-hof:has(.blok-status > :nth-child(5)) { margin-right: 68px; }
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-hof:not(:has(~ .vijand:not(.lijk-weg))):has(.blok-status > *) { margin-right: 62px; }
+  body[data-modus="mobiel"] #scherm-gevecht #vijanden-rij .vijand.is-hof:not(:has(~ .vijand:not(.lijk-weg))):has(.blok-status > :nth-child(5)) { margin-right: 98px; }
   body[data-modus="mobiel"] #scherm-gevecht #speler-zone { position: relative; }
   /* --wijk: de chipblok schuift naar links voor een baaspil die opzij hangt (B0.9), en naar
      rechts als hij links uit beeld of onder de inzage-knop zou vallen (x < 44, bij 3-4
@@ -1814,6 +1893,16 @@ body[data-modus="mobiel"] .pl-kooltje::after { inset: -6px; }
 body[data-modus="mobiel"] .drank-leeg { min-height: 38px; padding: 0 5px; gap: 6px; }
 /* de fakkelvonk van de landing: op de telefoon 8 px (laptop 11 px, style.css) */
 body[data-modus="mobiel"] .pl-fakkelvonk { width: 8px; height: 8px; margin: -4px 0 0 -4px; }
+/* R5 F1: de zin van de echo ('Fijn dat je er bent. …') hangt vlak onder de topbalk en iets kleiner: op 800x360 lag
+   'een' 3,6 s over de intentie van de Groene Slijm ('⚔ 3'), net in het gevecht waar je die leert lezen */
+body[data-modus="mobiel"] .baas-spraak.pl-echo-zin { top: calc(var(--tbh, 40px) + 2px + var(--sat, 0px)); }
+body[data-modus="mobiel"] .baas-spraak.pl-echo-zin span { font-size: clamp(.85rem, 2.3vw, 1.3rem); line-height: 1.15; padding: 4px 14px; letter-spacing: 2px; }
+/* korte telefoons (≤ 340 px hoog): de intentie staat daar vlak onder de topbalk — de zin schuift naar de kant
+   van de held (links; de vijanden en hun intentie staan rechts) en mag over twee regels lopen */
+@media (orientation: landscape) and (max-height: 340px) {
+  body[data-modus="mobiel"] .baas-spraak.pl-echo-zin { left: 26%; max-width: 46vw; }
+  body[data-modus="mobiel"] .baas-spraak.pl-echo-zin span { font-size: clamp(.8rem, 2.2vw, 1.1rem); padding: 3px 12px; text-wrap: balance; }
+}
 
 /* ============================================================
    G. DE DREMPELTAFEL (v128) — het gokritueel aan de Drempel (Act 1 → 2)
@@ -1934,4 +2023,31 @@ body[data-modus="mobiel"] .dt-overlay .sb-balk { background: linear-gradient(0de
   body[data-modus="mobiel"] .dt-enc-stat { min-width: 84px; padding: 8px 10px; }
   body[data-modus="mobiel"] .dt-nis-kolom, body[data-modus="mobiel"] .dt-scherf-kolom { flex: 1 1 100%; max-width: none; }
   body[data-modus="mobiel"] .dt-stop-lang { display: none; }   /* de uitleg staat in de tafelvoet */
+}
+
+/* ---- HET DECREET ALS KEUZE (finale R2): het keuzescherm op het mobiele spoor ----
+   De laptopmaat (212x292 per kaart) past nergens: liggend (360-440px hoog) moeten kop, twee
+   kaarten en twee knoppen samen op het scherm, staand twee kaarten naast elkaar op 360-412px.
+   Kaarten nooit op een vaste hoogte (tekst mag niet afkappen), geen hover-lift op touch. */
+body[data-modus="mobiel"] .decreet-keuze-binnen { margin: auto; gap: 8px; padding: 8px 10px; }
+body[data-modus="mobiel"] .decreet-keuze-rij { gap: 18px; flex-wrap: nowrap; }
+body[data-modus="mobiel"] .decreet-keuze-kaart { gap: 8px; }
+body[data-modus="mobiel"] .decreet-keuze-kaart .kaart.groot { width: min(44vw, 170px); height: auto; min-height: 0; padding: 7px 8px; }
+body[data-modus="mobiel"] .decreet-keuze-kaart .kaart.groot .kaart-icoon img { width: 100%; height: auto; aspect-ratio: 134 / 74; }
+body[data-modus="mobiel"] .decreet-keuze-kaart .kaart-naam { font-size: .95rem; }
+body[data-modus="mobiel"] .decreet-keuze-kaart .kaart-tekst { font-size: .8rem; line-height: 1.28; }
+body[data-modus="mobiel"] .decreet-keuze-kaart .kaart-kost { width: 30px; height: 30px; font-size: 1.1rem; }
+body[data-modus="mobiel"] .decreet-keuze-kaart .decreet-kies { min-width: 0; width: 100%; min-height: 44px; font-size: .9rem; padding: 8px 10px; }
+@media (orientation: landscape) and (max-height: 600px) {
+  body[data-modus="mobiel"] .decreet-keuze-binnen { gap: 6px; padding: 4px 10px; }
+  body[data-modus="mobiel"] .decreet-keuze-binnen .vloek-reveal-kop { font-size: 1.1rem; }
+  body[data-modus="mobiel"] .decreet-keuze-binnen .decreet-shortlist { display: none; }   /* de kop zegt het al; elke regel telt op 360px */
+  /* Finale B4b (beeldcontrole): het zegel van de kaart (📜 n) steekt ~14px boven de kaart uit en
+     sneed op 846x381 in de kop ("kies wat je afschrijft"); de rij zakt daarom 10px */
+  body[data-modus="mobiel"] .decreet-keuze-rij { gap: 28px; margin-top: 10px; }
+  /* liggend: de knop NAAST de kaart (tweekolommer-patroon v94), anders valt hij onder de vouw */
+  body[data-modus="mobiel"] .decreet-keuze-kaart { flex-direction: row; align-items: center; gap: 10px; }
+  body[data-modus="mobiel"] .decreet-keuze-kaart .kaart.groot { width: min(24vw, 42vh, 150px); }
+  body[data-modus="mobiel"] .decreet-keuze-kaart .kaart-tekst { font-size: .74rem; }
+  body[data-modus="mobiel"] .decreet-keuze-kaart .decreet-kies { width: 118px; }
 }

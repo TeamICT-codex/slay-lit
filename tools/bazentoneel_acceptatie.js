@@ -623,7 +623,9 @@ async function dood(browser, fk) {
         }
         await page.evaluate(() => { document.querySelectorAll('#meldingen .toast').forEach(t => t.remove()); _spraakStop(); });
         await page.evaluate(REC);
-        await page.evaluate(() => { const g = S.gevecht; const b = g.vijanden.find(v => v.id === 'de_dicktator'); g.vijanden.filter(v => v !== b && !v.dood).forEach(v => { v.dood = true; }); verliesHp(b, b.hp + 5, sp()); renderGevecht(); if (b.dood && !g.voorbij) gevechtGewonnen(); });
+        /* Finale B4b: in IV houdt DE ZITTING LOOPT hem op 1 HP tot na zijn eerste Ontslag; de
+           DEV-vlag minVrij zet die vloer uit (zoals de drama-suites), zodat de klap de tweede dood is */
+        await page.evaluate(() => { const g = S.gevecht; const b = g.vijanden.find(v => v.id === 'de_dicktator'); b.minVrij = true; g.vijanden.filter(v => v !== b && !v.dood).forEach(v => { v.dood = true; }); verliesHp(b, b.hp + 5, sp()); renderGevecht(); if (b.dood && !g.voorbij) gevechtGewonnen(); });
       } else {
         await startBaas(page, baas);
         await page.evaluate(REC);
@@ -923,7 +925,8 @@ async function driedee(browser, fk) {
   return { kop: `3D: signatuurposes en de camera · ${vp.naam}`, regels: R };
 }
 
-/* 6 · de HUD buiten het gevecht, in de tirade, en het hof in het donker (B0.10, B0.11) */
+/* 6 · de HUD buiten het gevecht, in de tirade, de telegraaf van het hof (A5) en van gewone
+   vijanden in het donker (B0.10, B0.11) */
 async function hudEnHof(browser, fk) {
   const R = []; const t = (g, s) => R.push([!!g, s]);
   const { ctx, page, vp } = await open(browser, fk);
@@ -935,13 +938,22 @@ async function hudEnHof(browser, fk) {
   t(tir.ouder === 'BODY', `B0.10 ${vp.naam}: #baas-balk is een body-kind (${tir.ouder})`);
   if (lum != null) t(lum >= 150, `B0.10 ${vp.naam}: bazenbalk in de tirade (body.tirade: ${tir.tirade}) p98 ${lum} (>= 150)`);
   await shot(page, `${vp.naam}_tirade`);
-  /* het hof blijft in het donker, de baas niet */
+  /* B0.11 + A5/B5 (samengevoegd bij Finale B4b): de baas telegrafeert altijd, en in de finale
+     ook zijn HOF ("het proces is openbaar", architectbeslissing A5 - het hof bestaat alleen in
+     de finale). Gewone vijanden blijven in het donker: dat toetst het gewone gevecht hieronder. */
   await page.evaluate(() => { DEV_BUILDS.slachter_mid.metgezel = null; devDicktator('slachter_mid', { hof: true }); });
   await slaap(800); await page.evaluate(() => { const b = document.getElementById('baas-intro'); if (b) b.click(); });
   await wachtRust(page, 9000, 45000);
   await zetFakkel(page, 0);
   const hof = await page.evaluate(() => S.gevecht.vijanden.filter(v => !v.dood).map(v => ({ id: v.id, baas: !!VIJANDEN[v.id].baas, pil: intentTekst(v).replace(/<[^>]+>/g, '').trim() })));
-  t(hof.filter(h => h.baas).every(h => !/❓/.test(h.pil)) && hof.filter(h => !h.baas).every(h => /❓/.test(h.pil)), `B0.11 ${vp.naam}: bij fakkel 0 telegrafeert de baas ("${(hof.find(h => h.baas) || {}).pil}"), het hof niet (${hof.filter(h => !h.baas).map(h => h.pil).join(', ')})`);
+  t(hof.some(h => !h.baas) && hof.every(h => !/❓/.test(h.pil)), `B0.11 + A5 ${vp.naam}: bij fakkel 0 telegrafeert de baas ("${(hof.find(h => h.baas) || {}).pil}") én zijn hof (${hof.filter(h => !h.baas).map(h => h.pil).join(', ')})`);
+  const gewoon = await page.evaluate(() => {
+    stopGevechtLus(); S.gevecht = null;
+    startGevecht(['grotrat', 'grotrat'], 'gevecht', 1);
+    S.fakkel = 0; try { zetLichtVisueel(); } catch (e) { } renderGevecht();
+    return S.gevecht.vijanden.filter(v => !v.dood).map(v => intentTekst(v).replace(/<[^>]+>/g, '').trim());
+  });
+  t(gewoon.length > 0 && gewoon.every(p => /❓/.test(p)), `B0.11 ${vp.naam}: in een gewoon gevecht blijven gewone vijanden bij fakkel 0 in het donker (${gewoon.join(', ')})`);
   /* buiten het gevecht bestaat de balk niet */
   await page.evaluate(() => { stopGevechtLus(); S.gevecht = null; toonScherm('kaart'); try { renderKaartScherm(); } catch (e) { } });
   await slaap(300);
@@ -949,7 +961,7 @@ async function hudEnHof(browser, fk) {
   t(weg === 'none', `B0.10 ${vp.naam}: buiten het gevecht is #baas-balk weg (display ${weg})`);
   t(page.__f.length === 0, `${vp.naam}: geen paginafouten` + (page.__f.length ? ' — ' + page.__f.slice(0, 3).join(' | ') : ''));
   await ctx.close();
-  return { kop: `HUD in de tirade en buiten het gevecht, het hof in het donker · ${vp.naam}`, regels: R };
+  return { kop: `HUD in de tirade en buiten het gevecht, de telegraaf in het donker (hof, gewone vijanden) · ${vp.naam}`, regels: R };
 }
 
 /* 7 · de intent-assert (jury W3): elke intent-soort heeft een eigen tak in intentTekst */

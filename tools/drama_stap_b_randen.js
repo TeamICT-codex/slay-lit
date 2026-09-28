@@ -64,7 +64,7 @@ const STAND = `(function(){
   for (const [naam, trig] of [
     ['I->II', "const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.hp = Math.floor(b.maxHp * 0.50); checkBaasFase();"],
     ['II->III', "const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 2; b.hp = Math.floor(b.maxHp * 0.30); checkBaasFase();"],
-    ['IV', "const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; verliesHp(b, 30);"]
+    ['IV', "const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; b.minVrij = true; /* B4 stap 3: de sprong landt na de zitting van III (DE ZITTING LOOPT houdt hem anders op 1 HP) */ verliesHp(b, 30);"]
   ]) {
     await opzet();
     await page.evaluate(`(function(){ DICK.tempo = 0.02; ${trig} })()`);

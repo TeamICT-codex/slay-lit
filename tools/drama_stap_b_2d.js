@@ -108,7 +108,7 @@ const tussen = (log, a, b2) => log.filter(r => r.t >= a && r.t <= b2);
   };
 
   /* ============================ B1 · I -> II ============================ */
-  console.log('\n== B1 · I->II · HET PROCES (4200 ms, invoer dicht 0-3600) ==');
+  console.log('\n== B1 · I->II · DE FACTUUR (4200 ms, invoer dicht 0-3600) ==');
   await opzet();
   await page.evaluate(sampler("(function(){ const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.hp = Math.floor(b.maxHp * 0.50); checkBaasFase(); })();"));
   await slaap(5200);
@@ -126,7 +126,7 @@ const tussen = (log, a, b2) => log.filter(r => r.t >= a && r.t <= b2);
   const pip2Knapt = L1.find(r => r.pipKnapt[1]);
   t(!!pip2Knapt, `pip 2 krijgt .knapt op t=${pip2Knapt ? pip2Knapt.t : 'nooit'}ms`);
   const von1 = L1.find(r => r.vonnis);
-  t(!!von1 && /II · HET PROCES/.test(von1.vonnis || ''), `vonnis verschijnt op t=${von1 ? von1.t : '-'}ms: "${von1 ? von1.vonnis : '-'}"`);
+  t(!!von1 && /II · DE FACTUUR/.test(von1.vonnis || ''), `vonnis verschijnt op t=${von1 ? von1.t : '-'}ms: "${von1 ? von1.vonnis : '-'}"`);
   t(!!von1 && (von1.vonnisSub || '').length > 20, `B5 · duiding onder de titel: "${von1 ? (von1.vonnisSub || '').slice(0, 64) : '-'}..." (${von1 ? (von1.vonnisSub || '').length : 0} tekens)`);
   const doekMax1 = L1.reduce((a, r) => r.doekOp > a.doekOp ? r : a, L1[0]);
   t(Math.abs(doekMax1.doekOp - 0.55) < 0.06, `diepste doek in I->II: ${doekMax1.doekOp.toFixed(2)} op t=${doekMax1.t}ms (verwacht .55)`);
@@ -177,81 +177,95 @@ const tussen = (log, a, b2) => log.filter(r => r.t >= a && r.t <= b2);
   const von2 = L2.find(r => r.vonnis);
   t(!!von2 && /III · DE TIRADE/.test(von2.vonnis || '') && (von2.vonnisSub || '').length > 20,
     `vonnis "${von2 ? von2.vonnis : '-'}" op t=${von2 ? von2.t : '-'}ms met duiding "${von2 ? (von2.vonnisSub || '').slice(0, 56) : '-'}..."`);
+  /* finale (sep 2026): de executie maakt hem niet meer 'driester' (Kracht komt alleen nog van
+     de kiezers); in de plaats: de deurwaarder staat na de oproep van t=4200 op het toneel */
   const driester = L2.filter(r => /driester/.test(r.fx));
-  t(driester.length > 0 && driester[0].t >= 2850, `het 'driester'-cijfer valt op t=${driester.length ? driester[0].t : 'nooit'}ms (uit de executieklap op 1700 getrokken naar 2900)`);
+  t(driester.length === 0, `geen 'driester'-cijfer meer bij de executie (${driester.length} samples)`);
+  const dwNa = bij(L2, 4600);
+  t(/de_deurwaarder/.test(dwNa.levend), `de deurwaarder staat in III op het toneel: levend op t=${dwNa.t}ms "${dwNa.levend}"`);
   const doekMax2 = L2.reduce((a, r) => r.doekOp > a.doekOp ? r : a, L2[0]);
   t(Math.abs(doekMax2.doekOp - 0.70) < 0.06, `diepste doek in II->III: ${doekMax2.doekOp.toFixed(2)} op t=${doekMax2.t}ms (verwacht .70)`);
   await page.screenshot({ path: path.join(UIT, 'b2-na.png') });
 
-  /* ============================ B3 · IV ============================ */
-  console.log('\n== B3 · IV · DE HERVERKIEZING (7200 ms, invoer dicht 0-5600) ==');
+  /* ============================ B3 · DE HERVERKIEZING ============================ */
+  /* finale (sep 2026): het scharnier is ingekort tot ~5 s (invoer dicht 0-4400), de balk komt
+     vrij op 2500, de herrijzenis op 2300, en IV · HET MANDAAT komt als strooklabel op 4600. */
+  console.log('\n== B3 · DE HERVERKIEZING (~5000 ms, invoer dicht 0-4400) ==');
   await opzet();
-  await page.evaluate(sampler("(function(){ const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; verliesHp(b, 30); })();"));
-  await slaap(8200);
+  await page.evaluate(sampler("(function(){ const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.fase = 3; b.hp = 6; b.minVrij = true; /* B4 stap 3: de sprong landt na de zitting van III (DE ZITTING LOOPT houdt hem anders op 1 HP) */ verliesHp(b, 30); })();"));
+  await slaap(6200);
   await page.evaluate(() => window.__stop());
   const L3 = await page.evaluate(() => window.__log);
   const SFX = await page.evaluate(() => window.__sfx);
   fs.writeFileSync(path.join(UIT, 'b3-log.json'), JSON.stringify(L3, null, 1));
 
   const b3_0 = L3[0];   // de eerste tik draait NA de trigger: dit is het frame van de klap zelf
-  t(b3_0.herrezen && b3_0.hp === 96 && b3_0.vorm2 && b3_0.fase === 3,
-    `mechaniek op t=${b3_0.t}ms ONGEWIJZIGD: herrezen=${b3_0.herrezen}, hp=${b3_0.hp}/240 (40%), vorm2=${b3_0.vorm2}, fase=${b3_0.fase}`);
-  const b3_3000 = bij(L3, 3000);
-  t(b3_3000.hpVar === '0', `--hp op t=${b3_3000.t}ms: "${b3_3000.hpVar}" (bb-vul breedte "${b3_3000.bbVul}") - de balk verklapt de herrijzenis niet`);
+  const HV = Math.ceil(240 * 0.42);
+  t(b3_0.herrezen && b3_0.hp === HV && b3_0.vorm2 && b3_0.fase === 3,
+    `mechaniek op t=${b3_0.t}ms: herrezen=${b3_0.herrezen}, hp=${b3_0.hp}/240 (vorm2Pct .42 = ${HV}), vorm2=${b3_0.vorm2}, fase=${b3_0.fase}`);
+  const b3_2000 = bij(L3, 2000);
+  t(b3_2000.hpVar === '0', `--hp op t=${b3_2000.t}ms: "${b3_2000.hpVar}" (bb-vul breedte "${b3_2000.bbVul}") - de balk verklapt de herrijzenis niet`);
   const hpVrij = L3.find(r => r.hpVar !== '0');
-  t(!!hpVrij && hpVrij.t >= 3350, `--hp komt vrij op t=${hpVrij ? hpVrij.t : 'nooit'}ms -> "${hpVrij ? hpVrij.hpVar : '-'}" (beat 3400)`);
+  t(!!hpVrij && hpVrij.t >= 2450, `--hp komt vrij op t=${hpVrij ? hpVrij.t : 'nooit'}ms -> "${hpVrij ? hpVrij.hpVar : '-'}" (beat 2500)`);
   const BILJET = String.fromCodePoint(0x1F5F3);
   const stemmen = L3.filter(r => r.fx.indexOf(BILJET) >= 0);
   const stemT = [...new Set(stemmen.map(r => r.t))];
-  t(stemmen.length > 0 && stemT[0] >= 850 && stemT[stemT.length - 1] <= 900 + 260 * 3 + 950,
-    `stem-cijfers zichtbaar van t=${stemT[0]} tot t=${stemT[stemT.length - 1]}ms (venster 900 + 260*n); eerste tekst: "${stemmen[0].fx}"`);
+  t(stemmen.length > 0 && stemT[0] >= 550 && stemT[stemT.length - 1] <= 600 + 200 * 3 + 950,
+    `stem-cijfers zichtbaar van t=${stemT[0]} tot t=${stemT[stemT.length - 1]}ms (venster 600 + 200*n); eerste tekst: "${stemmen.length ? stemmen[0].fx : '-'}"`);
+  /* review F9 / R3: het getal per stem komt uit DICK.krachtPerKiezer (R3 zette het op 1), nooit letterlijk */
+  const KPK = await page.evaluate(() => DICK.krachtPerKiezer);
+  t(stemmen.length > 0 && stemmen[0].fx.indexOf('+' + KPK + ' Kracht') >= 0, `elke kiezer: +${KPK} Kracht (DICK.krachtPerKiezer): "${stemmen.length ? stemmen[0].fx : '-'}"`);
   const herkozenSrc = L3.filter(r => /_herkozen\./.test(r.src));
-  t(herkozenSrc.length > 0 && herkozenSrc[0].t >= 3150, `img.src bevat "_herkozen" vanaf t=${herkozenSrc.length ? herkozenSrc[0].t : 'nooit'}ms: "${herkozenSrc.length ? herkozenSrc[0].src : '-'}"`);
+  t(herkozenSrc.length > 0 && herkozenSrc[0].t >= 2250, `img.src bevat "_herkozen" vanaf t=${herkozenSrc.length ? herkozenSrc[0].t : 'nooit'}ms: "${herkozenSrc.length ? herkozenSrc[0].src : '-'}"`);
   const hervEerst = L3.find(r => /herverkozen/.test(r.baasKlassen));
-  t(!!hervEerst && hervEerst.t >= 3150, `.herverkozen (scale 1.12 + gouden gloed) pas vanaf t=${hervEerst ? hervEerst.t : 'nooit'}ms - niet over zijn eigen lijk op t=0`);
-  const b3_5400 = bij(L3, 5400), b3_5800 = bij(L3, 5800);
-  t(b3_5400.eindDisabled === true, `invoer dicht op t=${b3_5400.t}ms: disabled=${b3_5400.eindDisabled}`);
-  t(b3_5800.eindDisabled === false, `invoer vrij op t=${b3_5800.t}ms: disabled=${b3_5800.eindDisabled}`);
+  t(!!hervEerst && hervEerst.t >= 2250, `.herverkozen (scale 1.12 + gouden gloed) pas vanaf t=${hervEerst ? hervEerst.t : 'nooit'}ms - niet over zijn eigen lijk op t=0`);
+  const b3_4200 = bij(L3, 4200), b3_4700 = bij(L3, 4700);
+  t(b3_4200.eindDisabled === true, `invoer dicht op t=${b3_4200.t}ms: disabled=${b3_4200.eindDisabled}`);
+  t(b3_4700.eindDisabled === false, `invoer vrij op t=${b3_4700.t}ms: disabled=${b3_4700.eindDisabled}`);
   const doekMax3 = L3.reduce((a, r) => r.doekOp > a.doekOp ? r : a, L3[0]);
-  t(Math.abs(doekMax3.doekOp - 0.92) < 0.04, `diepste doek in IV: ${doekMax3.doekOp.toFixed(2)} op t=${doekMax3.t}ms (verwacht .92)`);
-  const stilte = tussen(L3, 2980, 3180);
-  t(stilte.length > 0 && stilte.every(r => r.doekOp >= 0.90), `de 600ms-stilte ligt in het zwart: doek ${Math.min(...stilte.map(r => r.doekOp)).toFixed(2)}-${Math.max(...stilte.map(r => r.doekOp)).toFixed(2)} over ${stilte.length} samples tussen t=2980-3180ms`);
+  t(Math.abs(doekMax3.doekOp - 0.92) < 0.04, `diepste doek in de herverkiezing: ${doekMax3.doekOp.toFixed(2)} op t=${doekMax3.t}ms (verwacht .92)`);
+  const stilte = tussen(L3, 2220, 2300);
+  t(stilte.length > 0 && stilte.every(r => r.doekOp >= 0.90), `de stilte ligt in het zwart: doek ${stilte.length ? Math.min(...stilte.map(r => r.doekOp)).toFixed(2) : '-'}-${stilte.length ? Math.max(...stilte.map(r => r.doekOp)).toFixed(2) : '-'} over ${stilte.length} samples tussen t=2220-2300ms`);
   const von4 = L3.find(r => r.vonnis && /HERVERKIEZING/.test(r.vonnis));
-  t(!!von4 && von4.t >= 3550 && (von4.vonnisSub || '').length > 20, `vonnis "${von4 ? von4.vonnis : '-'}" op t=${von4 ? von4.t : '-'}ms met duiding "${von4 ? (von4.vonnisSub || '').slice(0, 56) : '-'}..."`);
-  /* v121 (P1): V · HET MANDAAT heeft GEEN eigen kaartje meer - het strooklabel komt zelf
-     aan met een gouden puls + hamertik. Deze drie regels meten dat nieuwe gedrag. */
+  t(!!von4 && von4.t >= 2550 && (von4.vonnisSub || '').length > 20 && !/\{K\}/.test(von4.vonnisSub || ''), `vonnis "${von4 ? von4.vonnis : '-'}" op t=${von4 ? von4.t : '-'}ms met duiding "${von4 ? (von4.vonnisSub || '').slice(0, 56) : '-'}..."`);
+  /* IV · HET MANDAAT heeft GEEN eigen kaartje - het strooklabel komt zelf aan met een gouden
+     puls + hamertik (v121 P1, behouden in de finale). */
   const von5 = L3.find(r => r.vonnis && /MANDAAT/.test(r.vonnis));
-  t(!von5, `geen vijfde vonnis-kaartje meer${von5 ? `: "${von5.vonnis}" op t=${von5.t}ms` : ' (0 samples met een MANDAAT-kaartje)'}`);
-  const mandaatLabel = L3.find(r => /MANDAAT/.test(r.bbExtra));
-  t(!!mandaatLabel && mandaatLabel.t >= 6750, `permanent strooklabel in de bazenbalk vanaf t=${mandaatLabel ? mandaatLabel.t : 'nooit'}ms: "${mandaatLabel ? mandaatLabel.bbExtra.slice(0, 70) : '-'}"`);
+  t(!von5, `geen vonnis-kaartje voor het mandaat${von5 ? `: "${von5.vonnis}" op t=${von5.t}ms` : ' (0 samples met een MANDAAT-kaartje)'}`);
+  const mandaatLabel = L3.find(r => /IV · HET MANDAAT/.test(r.bbExtra));
+  t(!!mandaatLabel && mandaatLabel.t >= 4550, `permanent strooklabel in de bazenbalk vanaf t=${mandaatLabel ? mandaatLabel.t : 'nooit'}ms: "${mandaatLabel ? mandaatLabel.bbExtra.slice(0, 70) : '-'}"`);
   const puls = L3.filter(r => r.bbExtraPuls);
   const pulsAnim = L3.find(r => r.bbExtraPuls && r.bbExtraAnim !== 'none');
-  t(puls.length > 0 && puls[0].t >= 6750 && !!pulsAnim,
+  t(puls.length > 0 && puls[0].t >= 4550 && !!pulsAnim,
     `de gouden aankomstpuls op de strook: klasse .mandaat-aan van t=${puls.length ? puls[0].t : '-'} tot t=${puls.length ? puls[puls.length - 1].t : '-'}ms (${puls.length} samples), animation-name "${pulsAnim ? pulsAnim.bbExtraAnim : '-'}"`);
-  const hamer5 = (SFX || []).filter(s => s.n === 'hamer' && s.t >= 6700 && s.t <= 7100);
+  const hamer5 = (SFX || []).filter(s => s.n === 'hamer' && s.t >= 4500 && s.t <= 4900);
   t(hamer5.length === 1, `één hamertik bij het mandaat: ${hamer5.length}x op t=[${hamer5.map(s => s.t).join(', ')}]ms`);
-  const doek5 = bij(L3, 6900);
+  const doek5 = bij(L3, 4750);
   t(doek5.doekOp < 0.05 && !doek5.bodyCeremonie, `geen doek en geen ceremonie op t=${doek5.t}ms: doek=${doek5.doekOp.toFixed(2)}, body.ceremonie=${doek5.bodyCeremonie}`);
   const kroon = L3.find(r => r.pipAan[3]);
-  t(!!kroon && kroon.t >= 3350, `de KROON-pip knapt aan op t=${kroon ? kroon.t : 'nooit'}ms (beat 3400)`);
+  t(!!kroon && kroon.t >= 2450, `de KROON-pip knapt aan op t=${kroon ? kroon.t : 'nooit'}ms (beat 2500)`);
   const b3_eind = L3[L3.length - 1];
   t(b3_eind.bedrijf === '4', `data-bedrijf op t=${b3_eind.t}ms: "${b3_eind.bedrijf}"`);
   t(/herverkiezing/i.test(b3_eind.achtergrond), `de zaal is gewisseld naar "${b3_eind.achtergrond}"`);
   await page.screenshot({ path: path.join(UIT, 'b3-na.png') });
 
-  /* ============================ B4 · fase-skip ============================ */
-  console.log('\n== B4 · fase-skip-vangnet (240 -> 60 in een klap) ==');
+  /* ============================ B4 · het scèneslot ============================ */
+  /* finale (sep 2026): het oude fase-skip-vangnet (240 -> 60 in één klap = bedrijf II
+     overgeslagen, harde plaatwissel) bestaat niet meer: het SCÈNESLOT legt hem op de drempel
+     van II. Deze test vervangt de B4-meting: dezelfde klap, maar nu landt hij in II. */
+  console.log('\n== B4 · het scèneslot (240 -> 60 in een klap stopt op 160) ==');
   await opzet();
-  await page.evaluate(sampler("(function(){ const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.hp = 240; b.fase = 1; b.hp = 60; checkBaasFase(); })();"));
-  await slaap(4000);
+  await page.evaluate(sampler("(function(){ const b = S.gevecht.vijanden.find(v => v.id === 'de_dicktator'); b.hp = 240; b.fase = 1; b._geschorst = false; verliesHp(b, 180, sp()); checkBaasFase(); })();"));
+  await slaap(4600);
   await page.evaluate(() => window.__stop());
   const L4 = await page.evaluate(() => window.__log);
   fs.writeFileSync(path.join(UIT, 'b4-log.json'), JSON.stringify(L4, null, 1));
-  const b4_200 = bij(L4, 200), b4_3000 = bij(L4, 3000);
-  t(/FINALE 2 verschuiving/.test(b4_200.achtergrond), `op t=${b4_200.t}ms staat de overgeslagen zaal er al HARD op: "${b4_200.achtergrond}"`);
-  t(b4_3000.bedrijf === '3', `op t=${b4_3000.t}ms draagt het scherm de bedrijf-3-tint: data-bedrijf="${b4_3000.bedrijf}"`);
+  const b4_0 = L4[0], b4_eind = L4[L4.length - 1];
+  t(b4_0.hp === 160 && b4_0.fase === 2, `de klap van 180 stopt op de drempel: hp ${b4_0.hp}, fase ${b4_0.fase}`);
+  t(b4_eind.bedrijf === '2' && b4_eind.fase === 2, `na de regie draagt het scherm de tint van II: data-bedrijf="${b4_eind.bedrijf}", fase ${b4_eind.fase}`);
   const von4b = L4.find(r => r.vonnis);
-  t(!!von4b && /TIRADE/.test(von4b.vonnis || ''), `het enige vonnis is "${von4b ? von4b.vonnis : '-'}" op t=${von4b ? von4b.t : '-'}ms (geen banner II erbij)`);
+  t(!!von4b && /II · DE FACTUUR/.test(von4b.vonnis || ''), `het enige vonnis is "${von4b ? von4b.vonnis : '-'}" op t=${von4b ? von4b.t : '-'}ms (geen TIRADE: niets overgeslagen)`);
+  t(L4.every(r => !/TIRADE/.test(r.vonnis || '')) && L4.every(r => !r.tirade), 'geen enkel sample van DE TIRADE (body.tirade of banner)');
   await page.screenshot({ path: path.join(UIT, 'b4-na.png') });
 
   /* ============================ opruim ============================ */

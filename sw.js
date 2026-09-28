@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v135'; // v135: HET BAZENTONEEL - dertien plaatsingsregels voor alle bazen: geen zwevende figuren door statuschips, geen tekst over de figuren, een stem en een slotwoord per baas, de baaspil nooit in de topbalk, een baas telegrafeert ook in het donker, signatuurposes en een kaderfit in 3D, de verslagen baas blijft liggen
+const CACHE = 'slayit-v137'; // v137: DE FINALE (B4) - HET PROCES van de DICKtator als vier scènes: de lengteregel heet HIJ HOUDT STAND (slotje, ook op de telefoon), het hof vangt de klap, een vervallen decreet zegt waarom ('U brak door vóór de zitting?'), de herverkiezing en de titels blijven langer leesbaar, het decreet-keuzescherm werkt met het toetsenbord, toasts niet meer over de bazenbalk
 const BESTANDEN = [
   '.',
   'css/style.css',
@@ -69,7 +69,6 @@ const ZWAAR = [
   'assets/proloog/foto-kind.webp',
   'assets/proloog/bart_blinker2.webp',
   'assets/proloog/junior.webp',
-  'assets/proloog/baas-terminal.webp',
   'assets/proloog/kaart-glimlach.webp',
   'assets/proloog/kaart-mailtje.webp',
   'assets/proloog/kaart-koffie.webp',
@@ -78,8 +77,8 @@ const ZWAAR = [
   'assets/proloog/de-afgrond.webp',
   'assets/proloog/masker-woede.webp',
   'assets/proloog/masker-gif.webp',
-  'assets/proloog/masker-vlucht.webp',
-  'assets/proloog/slijmklerk.webp'
+  'assets/proloog/masker-vlucht.webp'
+  /* proloog R5 F1: baas-terminal.webp en slijmklerk.webp eruit - nergens gebruikt (214 KB per install) */
 ];
 /* NB: een versiebump laat 'activate' de oude cache wissen (één keer art-her-download).
    Bewust hier: de gsm bleef op een oude build hangen omdat de oude shell in de cache
