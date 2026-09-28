@@ -16,7 +16,8 @@ pt = defaultdict(lambda: defaultdict(lambda: [0, 0]))
 for p in [a for a in sys.argv[1:] if not a.startswith('--')]:
     d = laad(p)
     for r in d['resultaten']:
-        if r.get('baas') != 'de_dicktator' or r.get('fout') or r.get('hpPct') != 0.62 or (r.get('pv') or 'basis') != 'basis':
+        if r.get('baas') != 'de_dicktator' or r.get('fout') or r.get('hpPct') != 0.62 or (r.get('pv') or 'basis') != 'basis' \
+                or (r.get('rv') or 'basis') != 'basis':   # relikwie-balans: alleen de basis, geen relikwie-variant (MEET_RELIEK_VAR)
             continue
         f = round(float(r.get('dmgx') or 1), 3)
         c = pt[(r['held'], r['st'])][f]

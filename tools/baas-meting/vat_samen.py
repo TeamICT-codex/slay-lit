@@ -9,7 +9,8 @@ for r in d['resultaten']:
     if r.get('baas') != 'de_dicktator':
         continue
     # sinds v4 (Finale B4): alleen de basisbuilds op druk x1, zonder foute jobs (zie meetlib.py)
-    if (r.get('pv') or 'basis') != 'basis' or float(r.get('dmgx') or 1) != 1.0 or r.get('fout'):
+    # relikwie-balans (28 sep): ook geen relikwie-variant (veld rv, MEET_RELIEK_VAR)
+    if (r.get('pv') or 'basis') != 'basis' or float(r.get('dmgx') or 1) != 1.0 or r.get('fout') or (r.get('rv') or 'basis') != 'basis':
         continue
     cel[(r['held'], r['st'], r.get('hpPct'))].append(r)
 
