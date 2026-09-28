@@ -1775,6 +1775,60 @@ async function orakelTijd(browser, fk, klap) {
   return { kop: `Het orakel en de woede-banner (B1.7) · ${vp.naam} · ${klap ? 'klap op 6 s' : 'geen klap'}`, regels: R };
 }
 
+/* ============================================================
+   7 · (F2) DE RESTFIX VAN DE VERIFICATIE — telkens het echte moment, per frame gevolgd
+   ============================================================ */
+/* 7a · HET NOODRANTSOEN in JOUW beurt (je kaart velt hem): geen tekstregel van de banner op zijn pil,
+   in geen enkel frame. Op zijn telefoon liet de schijndood de art zakken, dus hing de pil boven zijn
+   hoofd toen de banner kwam; zodra hij opstond zette zetPilZij haar links naast zijn hoofd, midden in
+   de ondertitel (846x381: 900-2 100 px2, ~2 s). Vijf runs: fase 2 en 3, andere plannen en statussen. */
+async function nrBanner(browser, fk) {
+  const R = []; const t = (g, s) => R.push([!!g, s]);
+  const { ctx, page, vp } = await open(browser, fk);
+  const uit = [];
+  for (let run = 0; run < 5; run++) {
+    await startErf(page);
+    const r = await page.evaluate(async run => {
+      const g = S.gevecht; const v = g.vijanden.find(x => x.id === 'de_erfprins');
+      g.roofGedaan = true; g.roofBeurt = false; v.fase = 2 + (run % 2); v.copyKracht = ERF.toeslag[v.fase]; v.plagN = run % 3; v.plagiaat = false;
+      v.gestolen = ['zware_klap', 'slag', 'slag', 'verdediging', 'verdediging', 'knal', 'dubbelslag', 'bastvel'].map(id => erfBuitKaart(nieuweKaart(id)));
+      g.speler.status = [{ kracht: 2 }, { kracht: 2, zwak: 1, kwetsbaar: 1, gif: 3 }, {}, { kracht: 2, zwak: 1, kwetsbaar: 1, gif: 3, doornen: 2 }, { kracht: 1, doornen: 1 }][run];
+      v.status = run === 4 ? { gif: 4, kracht: 1 } : {}; v.blok = 0; v.hp = 3;
+      v.intent = VIJANDEN[v.id].kies(v, v.beurtTeller); renderGevecht();
+      const slag = nieuweKaart('slag'); g.hand.push(slag); g.energie = Math.max(g.energie, 3); renderGevecht();
+      await new Promise(x => setTimeout(x, 400));
+      const R = e => { const q = e.getBoundingClientRect(); return { l: q.left, t: q.top, r: q.right, b: q.bottom }; };
+      const snij = (a, b) => { const w = Math.min(a.r, b.r) - Math.max(a.l, b.l), h = Math.min(a.b, b.b) - Math.max(a.t, b.t); return (w > 0 && h > 0) ? Math.round(w * h) : 0; };
+      const regels = el => { const o = []; const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) { const rg = document.createRange(); rg.selectNodeContents(n); for (const q of rg.getClientRects()) if (q.width > 0) o.push({ l: q.left, t: q.top, r: q.right, b: q.bottom }); } return o; };
+      const kol = () => GDOM.vijanden[g.vijanden.indexOf(v)].wrap;
+      let frames = 0, fout = 0, max = 0, zij = 0; const fits = new Set(); let loop = true;
+      (async () => { while (loop) {
+        const fl = [...document.querySelectorAll('.baas-flits')].find(e => (e.querySelector('h2') || {}).textContent === 'HET NOODRANTSOEN');
+        if (fl && +getComputedStyle(fl).opacity > 0.05) {
+          frames++; fits.add(fl._fit || '?');
+          const pillen = [...kol().querySelectorAll('.intent')].map(R).filter(q => q.r > q.l);
+          const ov = [...fl.querySelectorAll('h2, span')].flatMap(regels).reduce((s, a) => s + pillen.reduce((u, b) => u + snij(a, b), 0), 0);
+          if (ov > 0) { fout++; max = Math.max(max, ov); }
+          if (kol().classList.contains('pil-zij')) zij++;
+        }
+        await new Promise(x => requestAnimationFrame(x));
+      } })();
+      const p = speelKaart(slag, v);
+      await new Promise(x => setTimeout(x, 4200));
+      loop = false; try { await p; } catch (e) { }
+      return { frames, fout, max, zij, fits: [...fits].join(' '), opgestaan: !!v.plagiaat && !v.dood, fase: v.fase };
+    }, run);
+    uit.push(r);
+    if (run === 0) await shot(page, `${vp.naam}_noodrantsoen_jouw_beurt`);
+    await slaap(400);
+  }
+  t(uit.every(r => r.opgestaan && r.frames >= 20), `F2 ${vp.naam}: vijf keer het echte noodrantsoen in jouw beurt, hij staat op en de banner staat in beeld (${uit.map(r => r.frames).join('/')} frames)`);
+  t(uit.every(r => r.fout === 0), `F2 ${vp.naam}: HET NOODRANTSOEN nooit op zijn pil — frames met een tekstregel op zijn pil ${uit.map(r => r.fout).join('/')} (max ${Math.max(...uit.map(r => r.max))} px2; pil opzij in ${uit.map(r => r.zij).join('/')} frames; fit ${uit.map(r => r.fits).join(' | ')})`);
+  fouten(page, t, vp, 'het noodrantsoen');
+  await ctx.close();
+  return { kop: `(F2) HET NOODRANTSOEN in jouw beurt, per frame tegen zijn pil · ${vp.naam}`, regels: R };
+}
+
 (async () => {
   const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] });
   const FILTER = process.env.SLAYIT_TAKEN ? new RegExp(process.env.SLAYIT_TAKEN) : null;
@@ -1792,7 +1846,9 @@ async function orakelTijd(browser, fk, klap) {
     ['tekst', () => tekst(browser)],
     ...['M800', 'M846'].map(fk => ['intro ' + fk, () => introKaart(browser, fk)]),
     ['catalogus', () => catalogus(browser, A.vechtTeksten)],
-    ...[['M800', true], ['M800', false], ['L1440', true], ['L1440d3', false]].map(([fk, klap]) => ['orakel ' + fk, () => orakelTijd(browser, fk, klap)])
+    ...[['M800', true], ['M800', false], ['L1440', true], ['L1440d3', false]].map(([fk, klap]) => ['orakel ' + fk, () => orakelTijd(browser, fk, klap)]),
+    /* F2: de restfix van de verificatie */
+    ...['M800', 'M846'].map(fk => ['noodrantsoen ' + fk, () => nrBanner(browser, fk)])
   ].filter(([n]) => !FILTER || FILTER.test(n)).map(([, f]) => f);
   const uit = new Array(taken.length); let i = 0;
   await Promise.all(Array.from({ length: PAR }, async () => {

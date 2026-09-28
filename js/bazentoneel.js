@@ -259,9 +259,24 @@ function spraakZone(el) {
    (pil-zij) in dezelfde bovenband: WOEDE, DE ROOF, fase 3, het noodrantsoen en de naroof liepen er
    per tekstregel 500-2 200 px2 overheen (846x381), ook in JOUW beurt, net als je hem moet lezen.
    De banner krijgt dan eerst een smallere kolom (tot vóór de pil, zo nodig tot vóór de held) en
-   een kleinere letter; van de plekken waar geen tekstregel iets raakt, wint de laagste banner. */
+   een kleinere letter; van de plekken waar geen tekstregel iets raakt, wint de laagste banner.
+   B3 F2: eerst de pil op haar EINDPLEK (zetPilZij, pilKrap en de wijkende chips, die anders pas bij
+   de volgende tik van de toneelwacht lopen) en pas dan meten; en verhuist ze nog terwijl de banner
+   staat, dan past bannerVolgt() hem opnieuw (zie daar). */
+const _baasPillen = () => [...document.querySelectorAll('#vijanden-rij .vijand.is-baas .intent-rij .intent')].map(e => e.getBoundingClientRect()).filter(q => q.width > 0);
+const _snijdt = (q, r) => q.bottom > r.top && q.top < r.bottom && q.right > r.left && q.left < r.right;
+/* de tekstregels van een banner (een regel is korter dan zijn blok): Range per tekstknoop */
+function _bannerRegels(el) {
+  const uit = [];
+  for (const c of el.children) {
+    const w = document.createTreeWalker(c, NodeFilter.SHOW_TEXT); let n;
+    while ((n = w.nextNode())) { const rg = document.createRange(); rg.selectNodeContents(n); for (const q of rg.getClientRects()) if (q.width > 0) uit.push(q); }
+  }
+  return uit;
+}
 function bannerFit(el) {
   if (!el || innerHeight > innerWidth) return;
+  if (document.body.dataset.modus === 'mobiel') { zetPilZij(); pilKrap(); heldChipsWijken(); }
   let h = null;
   const sc = document.getElementById('scherm-gevecht');
   if (sc && sc.classList.contains('d3-actief') && window.Vista && Vista.schermPos && typeof S !== 'undefined' && S && S.gevecht) {
@@ -272,21 +287,14 @@ function bannerFit(el) {
   }
   if (!h) return;
   const rect = e => e.getBoundingClientRect();
-  const pillen = [...document.querySelectorAll('#vijanden-rij .vijand.is-baas .intent-rij .intent')].map(rect).filter(q => q.width > 0);
+  const pillen = _baasPillen();
+  el._pillen = pillen;   /* de pil zoals deze fit ze zag (bannerVolgt) */
   /* de chips van de held tellen alleen waar ze tijdens een banner niet dimmen (laptop); op mobiel
      zakken ze naar .12 (css), en de computed opacity helpt hier niet: de overgang loopt nog */
   const chipsEl = document.body.dataset.modus === 'mobiel' ? null : document.querySelector('#speler-zone .blok-status');
   const chips = chipsEl ? [...chipsEl.children].map(rect).filter(q => q.width > 0) : [];
-  const snijdt = (q, r) => q.bottom > r.top && q.top < r.bottom && q.right > r.left && q.left < r.right;
-  /* de tekstregels zelf (een regel is korter dan zijn blok): Range per tekstknoop */
-  const regels = () => {
-    const uit = [];
-    for (const c of el.children) {
-      const w = document.createTreeWalker(c, NodeFilter.SHOW_TEXT); let n;
-      while ((n = w.nextNode())) { const rg = document.createRange(); rg.selectNodeContents(n); for (const q of rg.getClientRects()) if (q.width > 0) uit.push(q); }
-    }
-    return uit;
-  };
+  const snijdt = _snijdt;
+  const regels = () => _bannerRegels(el);
   const raaktHeld = () => [...el.children].some(c => {
     const q = rect(c);
     return q.bottom > h.top - 2 && q.top < h.bottom && q.right > h.left && q.left < h.right;
@@ -328,6 +336,26 @@ function bannerFit(el) {
   }
   zet(best.maat, best.b);
   el._fit = `${best.maat}/${best.b == null ? 'std' : Math.floor(best.b)}${best.k ? '/k' + best.k : ''}`;
+}
+
+/* ---------- B3 F2 — een staande banner volgt de pil van de baas ----------
+   bannerFit meet de pil op het moment dat de banner komt. Verhuist ze daarna, dan liep de banner
+   er de rest van zijn tijd overheen: HET NOODRANTSOEN in jouw beurt op zijn telefoon (846x381) -
+   zijn schijndood liet de art zakken, dus hing de pil boven zijn hoofd toen de banner kwam, en zodra
+   hij opstond zette zetPilZij haar links naast zijn hoofd, midden in de ondertitel (900-2 100 px2,
+   ~2 s lang). Een nieuwe pose of een nieuwe pip doet hetzelfde. De toneelwacht roept dit elke tik,
+   direct na zetPilZij (dus in dezelfde taak, zonder verfbeurt ertussen): is de pil verhuisd (meer
+   dan 6 px - de ademende art beweegt haar een paar pixels) en raakt een tekstregel haar nu, dan
+   past de banner opnieuw. Schuift ze weg, dan blijft hij staan: geen sprong voor niets. */
+function bannerVolgt() {
+  const el = document.querySelector('#scherm-gevecht > .baas-flits:not(.bf-weg)');
+  if (!el || !el._pillen || innerHeight > innerWidth) return;
+  const nu = _baasPillen(), oud = el._pillen;
+  const zelfde = nu.length === oud.length && nu.every((q, i) => Math.abs(q.left - oud[i].left) <= 6 && Math.abs(q.top - oud[i].top) <= 6
+    && Math.abs(q.right - oud[i].right) <= 6 && Math.abs(q.bottom - oud[i].bottom) <= 6);
+  if (zelfde) return;
+  if (_bannerRegels(el).some(q => nu.some(p => _snijdt(q, p)))) bannerFit(el);
+  else el._pillen = nu;
 }
 
 /* ---------- --bb-onder: de onderrand van de bazenbalk als CSS-variabele ----------
@@ -454,6 +482,7 @@ function kaderNaOverloop() {
 function toneelWacht() {
   if (typeof S === 'undefined' || !S || !S.gevecht || document.body.dataset.scherm !== 'gevecht') return;
   if (document.body.dataset.modus === 'mobiel') { zetPilZij(); pilKrap(); heldChipsWijken(); }
+  bannerVolgt();   /* B3 F2: een staande banner volgt een pil die verhuisde */
   /* een staande spraakplaat volgt de zone mee (het hof komt op, de pil wisselt) */
   document.querySelectorAll('.baas-spraak').forEach(spraakZone);
 }
