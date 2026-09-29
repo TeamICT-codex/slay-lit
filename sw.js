@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v138'; // v138: DE ROOF, EERLIJK (B3) - de Erfprins herbouwd: hij rooft ad random de helft van je trekstapel (voor dit gevecht), speelt je kaarten groot terug met een KOPIE-stempel, spiegelt je Kracht/Doornen/Gifklieren, staat op uit zijn noodrantsoen (de pil zegt altijd wat er landt), de vloek bijt hem groot in beeld, een klap = een HP-verlies (de Feniksveer redt je weer), eigen regie op telefoon en laptop; toasts in elk baasgevecht in een kolom linksonder
+const CACHE = 'slayit-v139'; // v139: DE RELIKWIE-BALANS - de Dossierklem 'begin elk gevecht met 1 Metaalhuid' (stapelde tot 3/6/9... Blok per beurt), de Kroon van Sintels, het Energiekristal en de Schaduwkroon +1 Energie in je eerste 3 beurten, de Mosamulet 3 Blok in je eerste 3 beurten, de Index-kaart 1 Blok op je eerste aanval per beurt; wat 'aan het begin van je beurt' belooft vuurt ook in beurt 1; het Houten Been niet meer in de winkel, de Bottenfluit wist geen Zwak meer
 const BESTANDEN = [
   '.',
   'css/style.css',
