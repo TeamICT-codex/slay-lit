@@ -2258,7 +2258,8 @@ function drankSlots() { return heeftRelikwie('veldfles') ? 4 : 3; }   /* basis 3
    eindbaas: de bron van waarheid voor de GETALLEN en de VORM van de relikwieën die de inventaris
    (.claude/notities/relikwie/inventaris.md) als verdacht aanwees. De relikwie-code in startGevecht,
    beginSpelerBeurt, doeSchade en speelKaart leest deze knoppen via de functies hieronder.
-   STANDAARD = EXACT het gedrag van v138 (bewezen met gepaarde harnasruns vóór/na: dezelfde gevechten).
+   STANDAARD = de balans van v139 (relikwie-balans, 29 sep 2026: gemeten tegen de Erfprins en de finale,
+   .claude/notities/relikwie/voorstel_v2.md). De knoppen zelf zijn bewezen identiek aan v138 met de oude waarden.
    De meetharnassen (tools/baas-meting/dick_meting.js en erfprins_meting.js: MEET_RELIEK en
    MEET_RELIEK_VAR) zetten per variant andere waarden; ze wijzigen geen spelcode.
    Wie hier een getal of een vorm verandert, verandert ook de speler-tekst in data.js (RELIKWIEEN):
@@ -2267,9 +2268,9 @@ function drankSlots() { return heeftRelikwie('veldfles') ? 4 : 3; }   /* basis 3
      vanaf = de eerste beurt waarop het vuurt (1 = je eerste beurt, die startGevecht opzet: g.beurt 0)
      tot   = de laatste beurt waarop het vuurt (0 = tot het einde van het gevecht)
      elke  = om de hoeveel beurten (1 = elke beurt; 2 = beurt vanaf, vanaf + 2, ...)
-   LET OP (inventaris): 'vanaf: 2' IS het gedrag van v138 voor de relikwieën die in beginSpelerBeurt
-   staan (de Mosamulet, de Dossierklem, de Inktpot): je eerste beurt zet startGevecht op, dus daar
-   vuurden ze nooit, ook al zegt hun tekst 'aan het begin van je beurt'.
+   DE BEURT-1-REGEL (v139): elk relikwie dat 'aan het begin van je beurt' belooft, vuurt ook in je EERSTE
+   beurt (die zet startGevecht op, niet beginSpelerBeurt). Tot v138 vuurden de Mosamulet, de Dossierklem,
+   de Inktpot, de Hartsteen, de Mottenkroon en het Volkslied pas vanaf je tweede beurt.
    ============================================================ */
 const RELIEK = {
   /* De Dossierklem (ongewoon): 'Aan het begin van je beurt krijg je 3 Metaalhuid'. Metaalhuid geeft aan
@@ -2278,15 +2279,19 @@ const RELIEK = {
                      gaf in dit gevecht (0 = geen plafond);
      vorm 'start'  = eenmalig n Metaalhuid bij de start van het gevecht (vanaf/tot/elke/max tellen niet);
      vorm 'blok'   = n Blok op elke vurende beurt (de oude 'vaste +4 Blok' van ACT2-PROMPTBIB.md). */
-  dossierklem: { vorm: 'stapel', n: 3, max: 0, vanaf: 2, tot: 0, elke: 1 },
-  /* De Mosamulet (zeldzaam): 'Aan het begin van je beurt: 3 Blok'. */
-  mosamulet: { n: 3, vanaf: 2, tot: 0, elke: 1 },
+  dossierklem: { vorm: 'start', n: 1, max: 0, vanaf: 1, tot: 0, elke: 1 },   /* v139: 'Begin elk gevecht met 1 Metaalhuid' (was: +3 per beurt, stapelend) */
+  /* De Mosamulet (zeldzaam): 'Je eerste 3 beurten: 3 Blok aan het begin van de beurt' (v139; was elke beurt). */
+  mosamulet: { n: 3, vanaf: 1, tot: 3, elke: 1 },
   /* De Kroon van Sintels (episch, ook sport II van de Drempeltafel): 'Brandt je fakkel helder: +1 Energie
      elke beurt' (de voorwaarde toetst de beller). trek = zoveel kaarten MINDER op elke vurende beurt. */
-  kroon_van_sintels: { n: 1, vanaf: 1, tot: 0, elke: 1, trek: 0 },
+  kroon_van_sintels: { n: 1, vanaf: 1, tot: 3, elke: 1, trek: 0 },   /* v139: je eerste 3 beurten (was elke beurt) */
   /* Het Energiekristal (episch): 'Krijg elke beurt 1 extra Energie', zonder voorwaarde (bij een heldere
      fakkel dus exact de Kroon). Dezelfde vorm. */
-  energiekristal: { n: 1, vanaf: 1, tot: 0, elke: 1, trek: 0 },
+  energiekristal: { n: 1, vanaf: 1, tot: 3, elke: 1, trek: 0 },   /* v139: je eerste 3 beurten (was elke beurt) */
+  /* De Schaduwkroon (zeldzaam): 'Is je fakkel duister of gedoofd: +1 Energie in je eerste 3 beurten' (v139).
+     Een duistere fakkel kost in een baasgevecht niets (een baas toont zijn intentie altijd): elke beurt was
+     hij daar even sterk als de Kroon (finale +36,6 pp). De voorwaarde toetst de beller. */
+  schaduwkroon: { n: 1, vanaf: 1, tot: 3, elke: 1 },
   /* De Oorlogstrommel (zeldzaam): 'Trek elke beurt 1 extra kaart'. */
   oorlogstrommel: { n: 1, vanaf: 1, tot: 0, elke: 1 },
   /* De Carbon-afdruk (zeldzaam): bij ELKE treffer van een levende vijand op jou (ook een volledig
@@ -2298,11 +2303,11 @@ const RELIEK = {
   /* De Bodemloze Inktpot (ongewoon): 'Aan het begin van je beurt krijgt elke al-vergiftigde vijand 1 Gif
      erbij', via geefGif (de Smaragden Ring telt er nog 1 bij). ring = false: de ring telt niet mee voor
      de inkt; plafond = alleen een vijand met minder dan zoveel Gif krijgt inkt (0 = geen plafond). */
-  inktpot: { n: 1, ring: true, plafond: 0, vanaf: 2, tot: 0, elke: 1 },
-  /* De Verloren Index-kaart (ongewoon): n Geïndexeerd bij de start van het gevecht (elke aanval die je
-     speelt: zoveel Blok); perBeurt = hoogstens zoveel Blok per beurt uit het deel van de index-kaart
-     (0 = geen plafond; het deel van de kaart Geïndexeerd telt nooit mee in dat plafond). */
-  indexkaart: { n: 1, perBeurt: 0 },
+  inktpot: { n: 1, ring: true, plafond: 0, vanaf: 1, tot: 0, elke: 1 },   /* v139: de beurt-1-regel (was vanaf: 2) */
+  /* De Verloren Index-kaart (ongewoon), v139: 'Je eerste aanval elke beurt geeft je 1 Blok' = eersteAanval.
+     Geen status meer (de chip Geïndexeerd beloofde Blok per aanval). De oude vorm blijft meetbaar: n =
+     zoveel Geïndexeerd bij de start (elke aanval: zoveel Blok), perBeurt = een plafond per beurt op dat deel. */
+  indexkaart: { n: 0, perBeurt: 0, eersteAanval: 1 },
   /* Het Stempelkussen (gewoon): je eerste aanval van een vurende beurt stempelt n Kwetsbaar op het doel. */
   stempelkussen: { n: 1, vanaf: 1, tot: 0, elke: 1 }
 };
@@ -5307,12 +5312,12 @@ function startGevecht(samenstelling, soort, rij, opts) {
     const st = g.vijanden.slice().sort((a, b) => b.hp - a.hp)[0];
     if (st) { st.status.kwetsbaar = (st.status.kwetsbaar || 0) + 2; st.status.zwak = (st.status.zwak || 0) + 1; }
   }
-  if (heeftRelikwie('indexkaart')) g.speler.status.geindexeerd = (g.speler.status.geindexeerd || 0) + RELIEK.indexkaart.n;   /* elke aanval → 1 Blok (RELIEK) */
-  if (heeftRelikwie('bottenfluit')) g.vijanden.forEach(v => v.status.zwak = 1);
+  if (heeftRelikwie('indexkaart') && RELIEK.indexkaart.n > 0) g.speler.status.geindexeerd = (g.speler.status.geindexeerd || 0) + RELIEK.indexkaart.n;   /* de oude vorm (RELIEK; v139: n = 0, zie eersteAanval in speelKaart) */
+  if (heeftRelikwie('bottenfluit')) g.vijanden.forEach(v => v.status.zwak = Math.max(v.status.zwak || 0, 1));   /* v139: minstens 1 - wiste de Zwak van het Rode Lint en de Kop van Jut */
   if (heeftRelikwie('energiekristal')) g.energie += reliekEnergie('energiekristal', g);   /* RELIEK */
   /* de kronen tellen ook al in de allereerste beurt mee */
   const lichtStart = lichtNiveau();
-  if (heeftRelikwie('schaduwkroon') && ['duister', 'gedoofd'].includes(lichtStart)) g.energie += 1;
+  if (heeftRelikwie('schaduwkroon') && ['duister', 'gedoofd'].includes(lichtStart)) g.energie += reliekEnergie('schaduwkroon', g);   /* RELIEK (v139) */
   if (heeftRelikwie('kroon_van_sintels') && lichtStart === 'helder') g.energie += reliekEnergie('kroon_van_sintels', g);   /* RELIEK */
   if (heeftRelikwie('houten_been')) { g.speler.status.doornen = (g.speler.status.doornen || 0) + 1; g.speler.blok += 4; }   /* +1 Doornen én +4 Blok bij start — direct (geen geefBlok: DOM bestaat nog niet) */
   if (heeftRelikwie('duivelboomtak')) g.speler.status.kracht = (g.speler.status.kracht || 0) + 2;
@@ -5321,10 +5326,13 @@ function startGevecht(samenstelling, soort, rij, opts) {
   if (heeftRelikwie('slangenamulet')) g.vijanden.forEach(v => geefGif(v, 1));
   /* RELIEK (relikwie-balans): de 'aan het begin van je beurt'-relikwieën op je EERSTE beurt. Standaard
      (vanaf: 2, het gedrag van v138) vuurt hier niets: hun code staat in beginSpelerBeurt, en dat zet je
-     eerste beurt niet op. Een variant met vanaf: 1 (of de Dossierklem in de vorm 'start') vuurt hier. */
+     eerste beurt niet op. Een variant met vanaf: 1 (of de Dossierklem in de vorm 'start') vuurt hier.
+     v139: de beurt-1-regel - Mosamulet, Dossierklem en Inktpot vuren hier (vanaf: 1), de Hartsteen hieronder,
+     de Mottenkroon en het Volkslied bij de eerste trek. */
   if (heeftRelikwie('mosamulet') && reliekVuurt('mosamulet', g)) reliekBlok(g.speler, RELIEK.mosamulet.n, 'mosamulet', true);
   if (heeftRelikwie('dossierklem')) reliekDossierklem(g, g.speler, true);
   if (heeftRelikwie('inktpot') && reliekVuurt('inktpot', g)) reliekInktpot();
+  if (heeftRelikwie('hartsteen')) S.hp = Math.min(S.maxHp, S.hp + 1);   /* v139: de beurt-1-regel (direct: de DOM bestaat nog niet) */
   /* gedoofde fakkel: vijanden feller, maar de buit is groter */
   g.gedoofd = lichtNiveau() === 'gedoofd';
   if (g.gedoofd) g.vijanden.forEach(v => v.status.kracht = (v.status.kracht || 0) + 1);
@@ -5339,8 +5347,14 @@ function startGevecht(samenstelling, soort, rij, opts) {
   let eersteTrek = 5;
   if (heeftRelikwie('klavertje')) eersteTrek += 2;
   eersteTrek += reliekExtraTrek(g, lichtStart);   /* RELIEK: de Oorlogstrommel (+1) en de prijs van een energierelikwie */
+  if (heeftRelikwie('mottenkroon') && lichtStart === 'helder') eersteTrek += 1;   /* v139: de beurt-1-regel */
   /* doorslagpapier trekt niet meer extra — het kopieert nu je eerste kaart (zie speelKaart) */
   trekKaarten(eersteTrek);
+  /* v139: de beurt-1-regel - het Volkslied telt ook de vloeken in je eerste hand */
+  if (heeftRelikwie('het_volkslied') && g.hand.filter(c => kdef(c).type === 'vloek').length >= 2) {
+    g.energie += 1;
+    fxNummer($('#speler-zone'), '🎺 +1 energie', 'fx-buff');
+  }
 
   g.vijanden.forEach(v => v.intent = VIJANDEN[v.id].kies(v, 0));
   S.stats.gevechten++;
@@ -7442,6 +7456,7 @@ async function speelKaart(c, doel) {
       if (stempelDoel) { geefStatus(stempelDoel, 'kwetsbaar', RELIEK.stempelkussen.n); fxNummer(actorEl(stempelDoel), '🟥 Kwetsbaar', 'fx-debuff'); }
     }
     if ((sp().status.geindexeerd || 0) > 0) reliekIndexBlok(g);   /* RELIEK: de Index-kaart */
+    if (g.aanvalDezeBeurt === 1 && heeftRelikwie('indexkaart') && RELIEK.indexkaart.eersteAanval > 0) geefBlok(sp(), RELIEK.indexkaart.eersteAanval);   /* v139: je eerste aanval elke beurt geeft Blok */
     if (c.id !== 'doorslag_kaart' && (sp().status.doorslag || 0) > 0) {
       const doel2 = (doel && doel.dood) ? alleVijanden()[0] : doel;   /* doel net gedood? mik op een levend */
       /* laatste vijand net geveld? dan is er niets meer om de recast op te mikken →
@@ -10726,7 +10741,7 @@ function beginSpelerBeurt() {
   }
   if (heeftRelikwie('mosamulet') && reliekVuurt('mosamulet', g)) reliekBlok(s, RELIEK.mosamulet.n, 'mosamulet');   /* RELIEK */
   /* Act 2 — Het Archief (elk uniek) */
-  if (heeftRelikwie('dossierklem')) reliekDossierklem(g, s, false);   /* groeiende Blok i.p.v. vaste +4 (RELIEK) */
+  if (heeftRelikwie('dossierklem')) reliekDossierklem(g, s, false);   /* RELIEK (v139: de vorm 'start' vuurt enkel in startGevecht) */
   /* Carbon-afdruk is nu reactief (zie doeSchade), geen start-van-beurt-blok meer */
   if (heeftRelikwie('inktpot') && reliekVuurt('inktpot', g)) reliekInktpot();   /* inkt verspreidt zich (RELIEK) */
   /* het Houten Been geeft zijn +4 Blok nu bij gevechtsstart (zie startGevecht), niet hier —
@@ -10752,7 +10767,7 @@ function beginSpelerBeurt() {
   const lichtNu = lichtNiveau();
   g.energie = g.maxEnergie + (s.status.energiekern || 0) + (s.status.innerlijkvuur || 0)
     + (heeftRelikwie('energiekristal') ? reliekEnergie('energiekristal', g) : 0)
-    + (heeftRelikwie('schaduwkroon') && ['duister', 'gedoofd'].includes(lichtNu) ? 1 : 0)
+    + (heeftRelikwie('schaduwkroon') && ['duister', 'gedoofd'].includes(lichtNu) ? reliekEnergie('schaduwkroon', g) : 0)
     + (heeftRelikwie('kroon_van_sintels') && lichtNu === 'helder' ? reliekEnergie('kroon_van_sintels', g) : 0)
     + (g.bewaardeEnergie || 0);
   if (g.bewaardeEnergie) {
