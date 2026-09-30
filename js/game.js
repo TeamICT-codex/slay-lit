@@ -2299,7 +2299,7 @@ const RELIEK = {
      jou (die blijven het hele gevecht, dus elke volgende treffer kaatst meer terug); max = plafond op de
      Doornen die de afdruk zelf gaf in dit gevecht (0 = geen); alleenHp = alleen een treffer die je echt
      HP kost (door je Blok heen) telt. */
-  carbon_afdruk: { terug: 2, doornen: 1, max: 0, alleenHp: false },
+  carbon_afdruk: { terug: 3, doornen: 0, max: 0, alleenHp: false },   /* v140: vast 3 terug, geen Doornen meer (was 2 terug + 1 Doornen, stapelend) */
   /* De Bodemloze Inktpot (ongewoon): 'Aan het begin van je beurt krijgt elke al-vergiftigde vijand 1 Gif
      erbij', via geefGif (de Smaragden Ring telt er nog 1 bij). ring = false: de ring telt niet mee voor
      de inkt; plafond = alleen een vijand met minder dan zoveel Gif krijgt inkt (0 = geen plafond). */
@@ -3698,10 +3698,10 @@ function doeSchade(doel, dmg, bron, opts) {
     verliesHp(bron, doel.status.doornen);
   }
   /* Carbon-afdruk: word je als speler door een vijand geraakt, dan sla je een afdruk —
-     2 extra Doornen-schade terug én je doornen-laag dijt uit (+1). Reactief & uniek.
+     de aanvaller krijgt RELIEK.carbon_afdruk.terug schade terug (v140: vast 3, geen Doornen meer). Reactief & uniek.
      (verliesHp ≠ doeSchade → geen recursie via deze haak.) */
   if (doel.isSpeler && bron && !bron.isSpeler && !bron.isMetgezel && !bron.dood && heeftRelikwie('carbon_afdruk')) {
-    reliekCarbon(doel, bron, rest + door);   /* RELIEK: 2 terug, +1 Doornen */
+    reliekCarbon(doel, bron, rest + door);   /* RELIEK: 3 terug (v140) */
   }
   return rest + door;
 }
@@ -8721,19 +8721,28 @@ const DICK = {
   /* de scènedrempels als fractie van de max-HP: II begint op 160/240, III op 80/240 */
   drempels: [2 / 3, 1 / 3],
   vorm2Pct: 0.42,                           /* DE HERVERKIEZING: ~100 HP bij 240 */
+  /* DE IJKING OP EEN ECHTE RUN (v140, de finale-klif, 30 sep 2026): elke klap van baas en hof hieronder
+     staat op x1,075 van B4 (afgerond zoals __zetDick in tools/baas-meting/dick_meting.js). De finale is
+     een HP-klif: ze duurt ~13 rondes en alles is blokbaar, dus elke HP-buffer telt (het gewone Anker
+     +15 pp). Ze was geijkt op een gemiddelde build ZONDER verdedigend relikwie, terwijl echte runs er
+     een of twee dragen - daardoor was ze in de praktijk te makkelijk. Nu geijkt op de gemiddelde build
+     MET één (de Mosamulet, zoals de sterke norm). 'Hij wankelt' (zijn klappen halveren op zijn vloer)
+     is gemeten en geschrapt: de buffers wogen niet minder en de Gifmagiër liep 25-28 pp uit.
+     B4: AANZEGGING 11, VONNISSLAG 14, VONNIS 17, EIGENHANDIG 13, KARAKTERMOORD 11 (+1 per vloek),
+     EXECUTIE 21, APPLAUS 5, ONTSLAG 21/32/42, DONDERREDE 15, FACTUUR 5+2 / 6+3 / 6+3. */
   /* I · DE AANKLACHT */
-  AANZEGGING: 11, VONNISSLAG: 14,
+  AANZEGGING: 12, VONNISSLAG: 15,
   /* de zitting: HET VONNIS = tweede zitting in dezelfde scène of geen dossier;
      EIGENHANDIG = de griffier leeft niet (de beloning: lichter, en géén decreet) */
-  VONNIS: 17, EIGENHANDIG: 13,
+  VONNIS: 18, EIGENHANDIG: 14,
   /* II/III · de vloeken-as: KARAKTERMOORD + KM_PER_VLOEK per vloek in het gevecht, geen cap.
      Teksten noemen deze getallen nooit letterlijk: {KM}/{V} via dickTekst (review F9). */
-  KARAKTERMOORD: 11, KM_PER_VLOEK: 1,
-  EXECUTIE: 21,
+  KARAKTERMOORD: 12, KM_PER_VLOEK: 1,
+  EXECUTIE: 23,
   APPLAUS: 5,
   /* IV · HET MANDAAT: cyclus van twee (AANLOOP → HET ONTSLAG). Het Ontslag loopt op;
      voorbij het einde van de lijst blijft het laatste bedrag staan. */
-  ONTSLAG: [21, 32, 42], DONDERREDE: 15,
+  ONTSLAG: [23, 34, 45], DONDERREDE: 16,
   /* DE FACTUUR per scène: basis + tarief x belaste posten. Pas vanaf II, zonder hoftoeslag
      en zonder indexering. vrij = DE VRIJSTELLING (eerste N posten per beurt gratis), op 0. */
   FACTUUR: { basis2: 5, tarief2: 2, basis3: 6, tarief3: 3, basis4: 6, tarief4: 3, vrij: 0 },

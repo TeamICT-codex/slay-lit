@@ -87,8 +87,9 @@
      MEET_CAP=45 of '{"2":45,...}' (verkenning: plafond per ronde)   MEET_SPILL=1 (probe: het hof vangt)
      MEET_TAFEL=kroon,zeldzaam,verlies [MEET_TAFEL_ST=gemiddeld,sterk]   MEET_ABL='{"thoverk/sterk":{...}}'
      MEET_METGEZEL=drops (alleen de terugkeer van de metgezellen)
-     MEET_GEMNORM=1 (de gemiddelde builds volgens GEM_NORM: max-HP = basis + 14, geen defensief
-       run-relikwie; zonder de vlag de oude gemiddelde builds van E en F)
+     MEET_GEMNORM=1 (de gemiddelde builds volgens GEM_NORM: max-HP = basis + 14 en sinds v140 precies één
+       defensief run-relikwie, de Mosamulet; MEET_GEMNORM=kaal = de norm van B4 zonder; zonder de vlag de
+       oude gemiddelde builds van E en F)
      MEET_RELIEK=<id>[,-<id>…] (relikwie-balans, 28 sep: voeg die relikwieën toe aan ELKE build, na de
        gemiddeld-norm en de populatie; '-id' haalt er een weg)
      MEET_RELIEK_VAR=<json-bestand {naam:{reliek:{<id>:{…RELIEK…}},plus:[…],min:[…]}}> (relikwie-varianten:
@@ -177,9 +178,12 @@ const STERK_NORM = { hpPlus: 18, relikwieen: 6, defensief: ['mosamulet'], kaarte
    dus dat buildverschil verschijnt als heldspreiding (meting_finale_R3.md §11: 32 pp → 15 pp op EV2s).
    Met de vlag krijgt elke gemiddelde build max-HP = basis + 14 (Sla 84, Gif 76, Kol 80) en geen
    defensief run-relikwie; dek, upgrades, laster en Slachtblok blijven. Zonder de vlag blijven de oude
-   builds staan (het ijkpunt van F's EV2s en van de nulmeting). */
-const GEMNORM = process.env.MEET_GEMNORM === '1';
-const GEM_NORM = { hpPlus: 14 };
+   builds staan (het ijkpunt van F's EV2s en van de nulmeting).
+   v140 (de finale-klif, 30 sep 2026): de norm draagt nu precies ÉÉN defensief run-relikwie, de Mosamulet
+   (zoals STERK_NORM): de finale is een HP-klif en echte runs dragen er een of twee, dus een norm zonder
+   maakte de finale op papier moeilijker dan in het spel. MEET_GEMNORM=kaal meet de norm van B4 nog. */
+const GEMNORM = process.env.MEET_GEMNORM === '1' || process.env.MEET_GEMNORM === 'kaal';
+const GEM_NORM = { hpPlus: 14, defensief: process.env.MEET_GEMNORM === 'kaal' ? [] : ['mosamulet'] };
 const BUILDS = {
   slachter: {
     sterk: {
@@ -1114,12 +1118,13 @@ async function main() {
     if (cacheB[sleutel]) return cacheB[sleutel];
     const basis = ruweBuild(held, st);
     if (st === 'sterk') toetsNorm(held, basis);
-    /* GEM_NORM (MEET_GEMNORM=1): zelfde max-HP-opbouw en geen defensief run-relikwie voor elke held */
+    /* GEM_NORM (MEET_GEMNORM=1): zelfde max-HP-opbouw en hetzelfde ene defensieve run-relikwie voor elke held */
     if (st === 'gemiddeld' && GEMNORM) {
       basis.hp = basisHp[held] + GEM_NORM.hpPlus;
       const weg = basis.relikwieen.filter(r => r !== STARTREL[held] && DEF_RELIKWIEEN.includes(r));
       basis.relikwieen = basis.relikwieen.filter(r => !weg.includes(r));
-      basis.label = (basis.label || '') + ` [gemiddeld-norm: ${basis.hp} HP${weg.length ? ', −' + weg.join('/') : ''}]`;
+      for (const d of GEM_NORM.defensief) if (!basis.relikwieen.includes(d)) basis.relikwieen.push(d);
+      basis.label = (basis.label || '') + ` [gemiddeld-norm: ${basis.hp} HP${weg.length ? ', −' + weg.join('/') : ''}${GEM_NORM.defensief.length ? ', +' + GEM_NORM.defensief.join('/') : ''}]`;
     }
     const sm = (SMEED[held] || {})[st === 'sterk_oud' ? 'sterk' : st];
     if (sm && sm.length) { basis.smeed = sm; basis.label = (basis.label || '') + ' + ' + sm.length + ' Slachtblok'; }

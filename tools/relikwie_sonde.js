@@ -1,4 +1,4 @@
-/* RELIKWIE-SONDE v139: speelt elk aangepast relikwie in een echt gevecht na (via de echte beurtwissel,
+/* RELIKWIE-SONDE v139 (+ de Carbon-afdruk, v140): speelt elk aangepast relikwie in een echt gevecht na (via de echte beurtwissel,
    eindBeurt -> vijandbeurt -> beginSpelerBeurt) en toetst zijn effect per beurt tegen de nieuwe tekst.
    Gebruik (vanuit de scratchpad): NODE_PATH=<scratchpad>/node_modules SLAYIT_WORKTREE='<pad>' node relikwie_sonde.js */
 const { chromium } = require('playwright');
@@ -113,6 +113,19 @@ const t = (c, m) => { if (c) { ok++; console.log('   ok   ' + m); } else { fout+
   console.log('\n== de Bottenfluit + het Rode Lint ==');
   await start(['rode_lint', 'bottenfluit'], 100); const bf = await staat();
   t(Math.max(...bf.zwak) >= 2, `het Rode Lint houdt zijn 2 Zwak: Zwak per vijand ${bf.zwak.join('/')}`);
+
+  console.log('\n== de Carbon-afdruk (v140: vast 3 terug, geen Doornen) ==');
+  await start(['carbon_afdruk'], 100);
+  const cb = await page.evaluate(() => {
+    const g = S.gevecht; const v = alleVijanden()[0]; const uit = [];
+    for (let i = 0; i < 2; i++) {
+      g.speler.blok = 0; const vv = v.hp;
+      doeSchade(g.speler, 4, v);
+      uit.push(vv - v.hp);
+    }
+    return { terug: uit, doornen: g.speler.status.doornen || 0 };
+  });
+  t(cb.terug.every(n => n === 3) && cb.doornen === 0, `twee treffers: ${cb.terug.join('/')} terug, Doornen ${cb.doornen}`);
 
   console.log('\n== het Houten Been niet in de pools ==');
   const hb = await page.evaluate(() => ({ start: !!RELIKWIEEN.houten_been.start, inPool: Object.keys(RELIKWIEEN).filter(r => !RELIKWIEEN[r].start).includes('houten_been') }));
