@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v139'; // v139: DE RELIKWIE-BALANS - de Dossierklem 'begin elk gevecht met 1 Metaalhuid' (stapelde tot 3/6/9... Blok per beurt), de Kroon van Sintels, het Energiekristal en de Schaduwkroon +1 Energie in je eerste 3 beurten, de Mosamulet 3 Blok in je eerste 3 beurten, de Index-kaart 1 Blok op je eerste aanval per beurt; wat 'aan het begin van je beurt' belooft vuurt ook in beurt 1; het Houten Been niet meer in de winkel, de Bottenfluit wist geen Zwak meer
+const CACHE = 'slayit-v140'; // v140: DE FINALE-KLIF - de finale geijkt op een run met één verdedigend relikwie: elke klap van de DICKtator en zijn hof x1,075 (AANZEGGING 12, VONNISSLAG 15, VONNIS 18, EIGENHANDIG 14, KARAKTERMOORD 12, EXECUTIE 23, ONTSLAG 23/34/45, DONDERREDE 16); gemiddeld met één verdedigend relikwie ~52 %, zonder ~38 %, met twee ~66 %; de Carbon-afdruk vast 3 terug, geen Doornen meer
 const BESTANDEN = [
   '.',
   'css/style.css',
