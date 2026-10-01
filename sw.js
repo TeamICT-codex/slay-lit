@@ -2,7 +2,7 @@
    Code (html/js/css): network-first — online krijg je altijd de nieuwste versie.
    Art (assets/): cache-first — afbeeldingen veranderen niet, dus herbezoeken
    laden vrijwel instant. Offline werkt alles vanuit de cache. */
-const CACHE = 'slayit-v140'; // v140: DE FINALE-KLIF - de finale geijkt op een run met één verdedigend relikwie: elke klap van de DICKtator en zijn hof x1,075 (AANZEGGING 12, VONNISSLAG 15, VONNIS 18, EIGENHANDIG 14, KARAKTERMOORD 12, EXECUTIE 23, ONTSLAG 23/34/45, DONDERREDE 16); gemiddeld met één verdedigend relikwie ~52 %, zonder ~38 %, met twee ~66 %; de Carbon-afdruk vast 3 terug, geen Doornen meer
+const CACHE = 'slayit-v141'; // v141: DE EINDBAAS OP EEN ECHTE RUN - de finale was geijkt op meetbuilds met 5 relikwieën; een echte run komt aan met 13-20 (mediaan 17) en ~90 % HP en won 72-89 %. Elke klap van de DICKtator en zijn hof x1,25 (AANZEGGING 15, VONNISSLAG 19, VONNIS 23, EIGENHANDIG 18, KARAKTERMOORD 15, EXECUTIE 29, APPLAUS 6, DONDERREDE 20, ONTSLAG 29/43/52, FACTUUR 6+2 / 8+4 / 8+4): een echte run wint nu 44-59 %, een sterke 70 %; DEV-menu: de builds 'echte run' (de standaard)
 const BESTANDEN = [
   '.',
   'css/style.css',
