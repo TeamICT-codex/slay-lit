@@ -65,7 +65,14 @@ def laad(bestanden):
 
 
 def cel(r):
-    return (r['_baas'], r['st'], r['beleid'], round(float(r.get('hpPct') or 0), 2), r.get('pv') or 'basis', float(r.get('dmgx') or 1))
+    # MEET_AANKOMST (30 sep 2026): aankomstruns dragen elk hun eigen aankomst-HP; ze vormen samen een cel (hp -1)
+    hp = -1 if r['st'] == 'aankomst' else round(float(r.get('hpPct') or 0), 2)
+    return (r['_baas'], r['st'], r['beleid'], hp, r.get('pv') or 'basis', float(r.get('dmgx') or 1))
+
+
+def paar(r):
+    # de sleutel van een gevecht binnen zijn cel: held en seed, en bij MEET_AANKOMST ook de run (aankRun)
+    return (r['held'], r['seed']) if r.get('aankRun') is None else (r['held'], r['seed'], r['aankRun'])
 
 
 def pct(a, n):
@@ -92,7 +99,7 @@ def main():
     dubbel = 0
     for r in rs:
         if r['_v'] == 'basis':
-            k = cel(r) + (r['held'], r['seed'])
+            k = cel(r) + paar(r)
             if k in basis:
                 dubbel += 1
             basis[k] = r
@@ -106,7 +113,7 @@ def main():
         for r in rs:
             if r['_v'] != v:
                 continue
-            b = basis.get(cel(r) + (r['held'], r['seed']))
+            b = basis.get(cel(r) + paar(r))
             if b is None:
                 continue
             paren[cel(r)].append((r['held'], r['seed'], b, r))
@@ -136,7 +143,7 @@ def main():
                 rb = statistics.median([b['rondes'] for _, b, _x in lst]); rv_ = statistics.median([x['rondes'] for _, _b, x in lst])
                 hb = statistics.mean([b['hpStart'] - b['hpOver'] for _, b, _x in lst]); hv = statistics.mean([x['hpStart'] - x['hpOver'] for _, _b, x in lst])
                 rt = rt_tekst([x.get('rt') for _, _b, x in lst])
-                naam = f"{BAAS.get(baas, baas)} · {st}{'' if hp in (0.62, 0.85) else '@' + str(int(hp * 100))}{'' if pv == 'basis' else '#' + pv}{'' if dmgx == 1 else ' x' + str(dmgx)} · {beleid}"
+                naam = f"{BAAS.get(baas, baas)} · {st}{'' if hp in (0.62, 0.85, -1) else '@' + str(int(hp * 100))}{'' if pv == 'basis' else '#' + pv}{'' if dmgx == 1 else ' x' + str(dmgx)} · {beleid}"
                 print(f"| {naam} | {HELD.get(held, held)} | {n} | {fmt(pct(wb, n))} → **{fmt(pct(wv, n))} %** | **{'+' if dpp >= 0 else ''}{fmt(dpp, 1)}** ± {fmt(marge_gepaard(ds), 0)} | +{gered} / −{verl} | {fmt(rb, 1)} → {fmt(rv_, 1)} | {fmt(hb)} → {fmt(hv)} | {rt} |")
                 for seed, b, x in lst:
                     d = (1 if x.get('gewonnen') else 0) - (1 if b.get('gewonnen') else 0)

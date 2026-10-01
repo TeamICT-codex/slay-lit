@@ -2895,7 +2895,7 @@ function zetFakkel(delta) {
     melding(teksten[na]);
     Klank.sfx(delta < 0 ? 'debuff' : 'buff');
     if (na === 'duister' && delta < 0 && inGevecht()) {
-      setTimeout(() => spreek(sp(), UITSPRAKEN._held.duister, 0.6), 500);
+      setTimeout(() => { if (inGevecht()) spreek(sp(), UITSPRAKEN._held.duister, 0.6); }, 500);   /* v141: het gevecht kan intussen voorbij zijn */
     }
     if (inGevecht()) renderGevecht(); /* intent-weergave kan veranderen */
   }
@@ -8721,31 +8721,46 @@ const DICK = {
   /* de scènedrempels als fractie van de max-HP: II begint op 160/240, III op 80/240 */
   drempels: [2 / 3, 1 / 3],
   vorm2Pct: 0.42,                           /* DE HERVERKIEZING: ~100 HP bij 240 */
-  /* DE IJKING OP EEN ECHTE RUN (v140, de finale-klif, 30 sep 2026): elke klap van baas en hof hieronder
-     staat op x1,075 van B4 (afgerond zoals __zetDick in tools/baas-meting/dick_meting.js). De finale is
-     een HP-klif: ze duurt ~13 rondes en alles is blokbaar, dus elke HP-buffer telt (het gewone Anker
-     +15 pp). Ze was geijkt op een gemiddelde build ZONDER verdedigend relikwie, terwijl echte runs er
-     een of twee dragen - daardoor was ze in de praktijk te makkelijk. Nu geijkt op de gemiddelde build
-     MET één (de Mosamulet, zoals de sterke norm). 'Hij wankelt' (zijn klappen halveren op zijn vloer)
-     is gemeten en geschrapt: de buffers wogen niet minder en de Gifmagiër liep 25-28 pp uit.
-     B4: AANZEGGING 11, VONNISSLAG 14, VONNIS 17, EIGENHANDIG 13, KARAKTERMOORD 11 (+1 per vloek),
-     EXECUTIE 21, APPLAUS 5, ONTSLAG 21/32/42, DONDERREDE 15, FACTUUR 5+2 / 6+3 / 6+3. */
+  /* DE IJKING OP ECHTE AANKOMSTBUILDS (v141, 1 okt 2026). Tot en met v140 was de finale geijkt op de DEV-builds
+     (DEV_BUILDS 'slachter_mid', "de MEDIAAN-speler": 5 relikwieën, 62 % HP) - nooit getoetst aan een echte run.
+     tools/baas-meting/aankomst.js speelt nu met de echte spelcode volledige runs (kamers, buit, winkel, rust,
+     events; de gevechten met de bot) en legt de aankomststaat vast. De bot overleeft zo'n run alleen als de
+     vijandelijke schade ONDERWEG op x0,35-0,65 staat (MEET_SCHADE: hij vecht de gewone gevechten slechter dan een
+     mens); in de finale geldt die knop nooit. De 287 overlevers (de ijkset, tools/baas-meting/ijkset_v141.json)
+     komen aan met 13-14 / 16-17 / 19-20 relikwieën (p10/p50/p90; 3-4 verdedigende), ~30 kaarten, ~3 upgrades en
+     88-92 % HP (rij 14 is altijd een rustplaats) - wat Thomas zei: "soms zelfs een 20-tal".
+     Gemeten op die builds, met drie dekken op dezelfde relikwieën/HP/dranken/fakkel: w = het dek zoals de walker
+     het bouwde (ondergrens: op zeldzaamheid gekozen), g = het gemiddelde normdek + de vloeken van de run
+     (bovengrens voor een gewone run), s = het sterke normdek + die vloeken (een sterke run):
+       v140 (x1,075 van B4):  w 72 %  g 86 %  s 89 %   <- te makkelijk voor een echte run
+       x1,2 van v140:         w 53 %  g 67 %  s 75 %
+       v141 = x1,25 van v140: w 44 %  g 59 %  s 70 %   <- hieronder (doel: gewone run 40-55 %, sterke run <= 80 %)
+       x1,3 van v140:         w 37 %  g 52 %  s 65 %   (één stap zwaarder: 16/20/23/18/16/30, APPLAUS 7, DONDERREDE 21,
+                                                         ONTSLAG 30/44/52, FACTUUR 7+2 / 8+4 / 8+4)
+     Elke klap van baas en hof staat dus op x1,25 van v140 (~x1,34 van B4), met drie uitzonderingen: KM_PER_VLOEK
+     blijft 1; het tarief van DE FACTUUR in II blijft 2 (2 -> 3 is +50 %) en gaat in III/IV van 3 naar 4; het derde
+     ONTSLAG staat op 52 en niet hoger (een Gifmagiër komt met 54-62 max-HP aan: 56+ velde hem uit volle HP).
+     75-85 % van de verliezen valt in IV (zoals op v140): het laatste bedrijf blijft het dodelijkste.
+     Verslag: .claude/notities/aankomst/plan.md. Hermeten: MEET_AANKOMST=tools/baas-meting/ijkset_v141.json
+     [MEET_AANKOMST_DEK=gemiddeld|sterk] node tools/baas-meting/dick_meting.js 1 <label>.
+     B4: AANZEGGING 11, VONNISSLAG 14, VONNIS 17, EIGENHANDIG 13, KARAKTERMOORD 11 (+1 per vloek), EXECUTIE 21,
+     APPLAUS 5, ONTSLAG 21/32/42, DONDERREDE 15, FACTUUR 5+2 / 6+3 / 6+3. v140: 12/15/18/14/12/23, 5, 23/34/45, 16. */
   /* I · DE AANKLACHT */
-  AANZEGGING: 12, VONNISSLAG: 15,
+  AANZEGGING: 15, VONNISSLAG: 19,
   /* de zitting: HET VONNIS = tweede zitting in dezelfde scène of geen dossier;
      EIGENHANDIG = de griffier leeft niet (de beloning: lichter, en géén decreet) */
-  VONNIS: 18, EIGENHANDIG: 14,
+  VONNIS: 23, EIGENHANDIG: 18,
   /* II/III · de vloeken-as: KARAKTERMOORD + KM_PER_VLOEK per vloek in het gevecht, geen cap.
      Teksten noemen deze getallen nooit letterlijk: {KM}/{V} via dickTekst (review F9). */
-  KARAKTERMOORD: 12, KM_PER_VLOEK: 1,
-  EXECUTIE: 23,
-  APPLAUS: 5,
+  KARAKTERMOORD: 15, KM_PER_VLOEK: 1,
+  EXECUTIE: 29,
+  APPLAUS: 6,
   /* IV · HET MANDAAT: cyclus van twee (AANLOOP → HET ONTSLAG). Het Ontslag loopt op;
      voorbij het einde van de lijst blijft het laatste bedrag staan. */
-  ONTSLAG: [23, 34, 45], DONDERREDE: 16,
+  ONTSLAG: [29, 43, 52], DONDERREDE: 20,
   /* DE FACTUUR per scène: basis + tarief x belaste posten. Pas vanaf II, zonder hoftoeslag
      en zonder indexering. vrij = DE VRIJSTELLING (eerste N posten per beurt gratis), op 0. */
-  FACTUUR: { basis2: 5, tarief2: 2, basis3: 6, tarief3: 3, basis4: 6, tarief4: 3, vrij: 0 },
+  FACTUUR: { basis2: 6, tarief2: 2, basis3: 8, tarief3: 4, basis4: 8, tarief4: 4, vrij: 0 },
   POSTEN: { gratis: 2, een: 1 },   /* gewicht per gespeelde kaart: 0 energie = 2 posten, 1 = 1, 2+ = 0 */
   decreetCap: 2,          /* harde grens: één per scène (I en II), nooit meer dan 2 per gevecht */
   speelbaarGuard: 6,      /* onder 7 speelbare kaarten geen decreet meer (dan HET VONNIS) */
@@ -12558,7 +12573,7 @@ function devInst() {
   try { rauw = JSON.parse(localStorage.getItem(DEV_SLEUTEL) || '{}') || {}; } catch (e) { rauw = {}; }
   const buildOk = rauw.build === 'choreo' || !!DEV_BUILDS[rauw.build];
   _devInst = {
-    build: buildOk ? rauw.build : 'slachter_mid',
+    build: buildOk ? rauw.build : 'slachter_run',   /* v141: de echte run is de standaard */
     tempo: DEV_TEMPOS.indexOf(+rauw.tempo) >= 0 ? +rauw.tempo : 1,
     /* B3 F1: het dek en de held van de Erfprins-sprong; een onbekende waarde valt terug */
     erfdek: ERF_DEV.sterktes.includes(rauw.erfdek) ? rauw.erfdek : 'gemiddeld',
@@ -12857,7 +12872,8 @@ function devDropsWis() {
   melding('⚡ DEV 5/5 — Drops-Codex GERESET (gevallen/mysterie/Witte/zaadje/offer weg).');
 }
 
-/* DEV-SHORTCUT: de vaste PLAYTEST-BUILDS — exact dezelfde als BUILDS in het meetharnas
+/* DEV-SHORTCUT: de vaste PLAYTEST-BUILDS. Sinds v141 eerst DE ECHTE RUN (slachter_run / gif_run / kol_run, onderaan):
+   wat een run echt bij zich heeft. De oude builds zijn exact dezelfde als BUILDS in het meetharnas
    (.claude/notities/baas-meting/dick_sim_proces.js), zodat de bot-meting en Thomas' hand-
    playtest over precies hetzelfde dek en dezelfde relikwieën praten. gif_opt_kristal staat
    bewust NIET in het menu (hij is een meetvariant van gif_opt), maar blijft hier staan voor
@@ -12894,6 +12910,31 @@ const DEV_BUILDS = {
     relikwieen: ['slangenamulet'], dranken: [], laster: 1, metgezel: null,
     dek: [['prik', 0], ['prik', 0], ['prik', 0], ['prik', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0],
           ['dodelijke_kus', 0], ['gifflits', 0], ['giftige_steek', 0], ['slangenbeet', 0], ['venijnregen', 0], ['sluiproute', 0], ['gifwolk', 0]]
+  },
+  /* DE ECHTE RUN (v141, 1 okt 2026): de mediaan-aankomst per held uit de ijkset (tools/baas-meting/ijkset_v141.json,
+     gemaakt met de run-walker aankomst.js: echte kamers, buit, winkel, rust en events). Dit is wat een run aan de
+     DICKtator draagt - de builds hierboven (5-6 relikwieën, 62 % HP) zijn veel dunner. hpPct en fakkel = de staat
+     bij aankomst (devDicktator leest ze; zonder die velden 62 % en een volle fakkel). De vloeken zitten in het dek. */
+  /* mediaan van 138 aankomsten: 17 relikwieën, dek 30, 3 upgrades, 1 vloeken, 98 % HP; deze run: A23-203010-S50 */
+  slachter_run: {
+    held: 'slachter', hp: 74, hpPct: 1, fakkel: 74, label: 'Slachter echte run (18 relikwieën, 30 kaarten)',
+    relikwieen: ['brandend_bloed', 'gloeiende_lantaarn', 'scherpe_dolk', 'fakkeljongleur', 'bottenfluit', 'propagandaposter', 'krachtsteen', 'het_grootboek', 'oorlogstrommel', 'vijzel_en_stamper', 'eeuwige_lont', 'energiekristal', 'de_gouden_handdruk', 'oorlogsbanier', 'zondebokvel', 'hartsteen', 'gebroken_zandloper', 'zielslantaarn'],
+    dranken: ['maxenzeelse_stoofpot', 'krachtelixer'], laster: 0, metgezel: null,
+    dek: [['slag', 0], ['slag', 0], ['slag', 0], ['slag', 1], ['slag', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['knal', 0], ['executie', 0], ['molensteen', 0], ['lichtdief', 0], ['vlammende_hartstocht', 0], ['vlammenkling', 0], ['ijzeren_golf', 0], ['bloedoffer', 0], ['vlammenkling', 0], ['executie', 0], ['executie', 0], ['ijzeren_golf', 0], ['uithaal', 1], ['vampiersbeet', 1], ['molensteen', 0], ['uithaal', 0], ['bloedoffer', 0], ['pijn', 0], ['adrenaline', 0], ['geindexeerd', 0], ['martelaarsbloed', 0]]
+  },
+  /* mediaan van 31 aankomsten: 16 relikwieën, dek 30, 3 upgrades, 1 vloeken, 90 % HP; deze run: A23-203015-S50 */
+  gif_run: {
+    held: 'gifmagier', hp: 62, hpPct: 0.887, fakkel: 14, label: 'Gifmagiër echte run (16 relikwieën, 30 kaarten)',
+    relikwieen: ['slangenamulet', 'fakkeljongleur', 'oorlogstrommel', 'de_gouden_handdruk', 'stalen_vuist', 'vonkenkluis', 'oorlogsbanier', 'verlopen_contract', 'zondebokvel', 'hartsteen', 'wetsteen', 'spaarvarken', 'klavertje', 'energiekristal', 'bloedrobijn', 'laatste_lucifer'],
+    dranken: ['maxenzeelse_stoofpot', 'ijzerdrank'], laster: 0, metgezel: null,
+    dek: [['prik', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['dodelijke_kus', 0], ['gifflits', 0], ['vlamschild', 0], ['giftand', 1], ['gifvlam', 0], ['schaduwdans', 0], ['vlamschild', 0], ['vlamschild', 0], ['bolwerk', 1], ['schildmuur', 0], ['giftand', 0], ['doornenhuid', 0], ['registerrot', 0], ['adrenaline', 0], ['zuivering', 0], ['gifvlam', 0], ['vlamschild', 0], ['verlammend_gif', 0], ['gifklieren', 0], ['gifklieren', 0], ['volkswoede', 0], ['giftand', 0], ['schaduwdans', 0], ['bolwerk', 0], ['registerrot', 0]]
+  },
+  /* mediaan van 118 aankomsten: 16 relikwieën, dek 30, 2 upgrades, 1 vloeken, 93 % HP; deze run: A23-204032-S35 */
+  kol_run: {
+    held: 'thoverk', hp: 70, hpPct: 0.886, fakkel: 51, label: 'Kolendruïde echte run (16 relikwieën, 30 kaarten)',
+    relikwieen: ['houten_been', 'oorkonde_van_verzet', 'brandmerkijzer', 'levenskruik', 'bronzen_schub', 'warme_mantel', 'dossierklem', 'gloeiende_lantaarn', 'zwarte_kaars', 'martelaarskroon', 'smaragden_ring', 'stempelkussen', 'doorslagpapier', 'fakkeljongleur', 'kop_van_jut', 'feniksveer'],
+    dranken: ['maxenzeelse_stoofpot', 'krachtelixer'], laster: 0, metgezel: null,
+    dek: [['takkenslag', 0], ['takkenslag', 0], ['takkenslag', 0], ['takkenslag', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['verdediging', 0], ['vonkenbeet', 0], ['stoofpotje', 0], ['paddenstoelenstoofpot', 1], ['sporenkring', 0], ['vlamstoot', 0], ['vlamschild', 0], ['wurgwortels', 1], ['lichtdief', 0], ['lichtdief', 0], ['asadem', 0], ['vlamstoot', 0], ['wortelgreep', 0], ['perkamentslag', 0], ['vlamschild', 0], ['eikenhuid', 0], ['kolenstempel', 0], ['vlamschild', 0], ['archiefstof', 0], ['schaduwsmet', 0], ['perkamentslag', 0], ['hart_van_de_duivelboom', 0], ['ontwijken', 0]]
   }
 };
 
@@ -13007,7 +13048,8 @@ function devDicktator(profiel = 'slachter_mid', opties = {}) {
     melding('⚡ DEV: HET PROCES — choreo-modus (150 HP, volle dranken). Alleen om de voorstelling te bekijken, niet om te balanceren.');
   } else {
     S.maxHp = b.hp;
-    S.hp = Math.round(b.hp * (opties.staart ? 0.40 : 0.62));   /* 'de staart': een uitgeklede staat */
+    S.hp = Math.round(b.hp * (opties.staart ? 0.40 : (b.hpPct != null ? b.hpPct : 0.62)));   /* 'de staart': een uitgeklede staat; hpPct: de aankomst-HP van een echte run */
+    if (b.fakkel != null) S.fakkel = Math.max(0, Math.min(fakkelMax(), b.fakkel));
     S.relikwieen = b.relikwieen.slice();
     S.dek = b.dek.map(([id, up]) => { const c = nieuweKaart(id); c.up = !!up; return c; });
     S.dranken = opties.staart ? [] : b.dranken.slice();
@@ -13168,8 +13210,11 @@ const DEV_MENU = [
       {
         soort: 'keuze', sleutel: 'build', label: 'Build',
         opties: [
-          { v: 'slachter_mid', label: 'Slachter mediaan', tip: 'De MEDIAAN-speler uit het meetharnas: 88 HP, 22 kaarten, 5 relikwieën. De standaard.' },
-          { v: 'gif_opt', label: 'Gifmagiër sterk', tip: 'De sterkste gemeten build: 74 HP, geoptimaliseerd gifdek, 6 relikwieën.' },
+          { v: 'slachter_run', label: 'Slachter echte run', tip: 'Een echte aankomst (de mediaan van 138 gespeelde runs): 18 relikwieën, 30 kaarten, volle HP. De standaard sinds v141 - hierop is de finale geijkt.' },
+          { v: 'gif_run', label: 'Gifmagiër echte run', tip: 'Een echte aankomst van de Gifmagiër: 16 relikwieën, 30 kaarten, 89 % HP, een bijna gedoofde fakkel.' },
+          { v: 'kol_run', label: 'Kolendruïde echte run', tip: 'Een echte aankomst van de Kolendruïde: 16 relikwieën, 30 kaarten, 89 % HP.' },
+          { v: 'slachter_mid', label: 'Slachter dun (oud)', tip: 'De oude meetbuild: 88 HP op 62 %, 22 kaarten, 5 relikwieën. Veel dunner dan een echte run: niet om de moeilijkheid te beoordelen.' },
+          { v: 'gif_opt', label: 'Gifmagiër sterk (oud)', tip: 'De oude sterke meetbuild: 74 HP op 62 %, geoptimaliseerd gifdek, 6 relikwieën.' },
           { v: 'gif_matig', label: 'Gifmagiër matig', tip: 'De build die NIET vermorzeld mag worden: 70 HP, 15 kaarten, 1 relikwie.' },
           { v: 'choreo', label: 'Choreo (kijkmodus)', tip: 'Het oude milde gedrag: 150 HP, volle dranken, willekeurig dek. Om de voorstelling te bekijken, niet om te balanceren.' }
         ]

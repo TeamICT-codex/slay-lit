@@ -320,7 +320,8 @@ const SONDE = () => {
   await dichtMenu();
 
   /* de onthouden keuze overleeft een herlaad */
-  await klik(1, 0, { pil: 2 }); await slaap(150); await dichtMenu();
+  /* v141: de pil op WAARDE zoeken, niet op plaats (de echte-run-builds staan nu vooraan) */
+  await klik(1, 0, { pil: proces.items[0].opties.findIndex(o => o.v === 'gif_matig') }); await slaap(150); await dichtMenu();
   await page.reload({ waitUntil: 'load' }); await slaap(900);
   const bewaard = await page.evaluate(() => ({ dev: localStorage.getItem('slayit_dev'), build: devInst().build, tempo: DICK.tempo }));
   t(bewaard.build === 'gif_matig', `de BUILD-keuze overleeft een herlaad: devInst().build = "${bewaard.build}" (slayit_dev ${bewaard.dev}), DICK.tempo = ${bewaard.tempo}`);
@@ -369,7 +370,7 @@ const SONDE = () => {
 
   /* \u23f3 IV \u00b7 Het Mandaat (de staart): herkozen met twee kiezers = 2 x DICK.krachtPerKiezer Kracht (de controle eist alleen Kracht > 0: geen balansgetal in de suite, review F9) */
   await klik(1, 6); await wachtGevecht(1200); await slaap(9000); s = await sonde();
-  t(s.baas.herrezen && s.baas.vorm2 && s.bedrijf === '4' && s.baas.kracht > 0 && s.hp === Math.round(88 * 0.40) && !s.ceremonie,
+  t(s.baas.herrezen && s.baas.vorm2 && s.bedrijf === '4' && s.baas.kracht > 0 && s.hp >= Math.round(s.maxHp * 0.40) && s.hp <= Math.round(s.maxHp * 0.40) + 3 && !s.ceremonie,   /* v141: 40 % van de standaardbuild (de echte run: een relikwie als de Hartsteen geneest bij de start nog 1-3 HP) */
     `\u23f3 IV \u00b7 Het Mandaat (de staart) \u2192 jij ${s.hp}/${s.maxHp} HP zonder dranken, baas ${s.baas.hp}/${s.baas.maxHp} herrezen ${s.baas.herrezen} vorm2 ${s.baas.vorm2} kracht ${s.baas.kracht}, data-bedrijf "${s.bedrijf}", ceremonie ${s.ceremonie}`);
 
   /* \u25b6\u25b6 de drie 'speel nu af'-knoppen */

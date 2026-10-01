@@ -9,12 +9,12 @@ gif%/doorn% = aandeel van gif en doornen in de schade op de baas."""
 import sys, os, statistics as st
 from collections import defaultdict, Counter
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from meetlib import laad, dick_rs, binnen_zonder_zelf
+from meetlib import laad, dick_rs, binnen_zonder_zelf, standaard_hp
 
 pop = '--pop' in sys.argv
 for p in [a for a in sys.argv[1:] if not a.startswith('--')]:
     d = laad(p)
-    rs = [r for r in dick_rs(d, pop=pop) if r.get('hpPct') == 0.62]
+    rs = [r for r in dick_rs(d, pop=pop) if standaard_hp(r)]
     cel = defaultdict(list)
     for r in rs:
         cel[(r['held'], r['st'])].append(r)

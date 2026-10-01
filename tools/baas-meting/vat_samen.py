@@ -12,7 +12,8 @@ for r in d['resultaten']:
     # relikwie-balans (28 sep): ook geen relikwie-variant (veld rv, MEET_RELIEK_VAR)
     if (r.get('pv') or 'basis') != 'basis' or float(r.get('dmgx') or 1) != 1.0 or r.get('fout') or (r.get('rv') or 'basis') != 'basis':
         continue
-    cel[(r['held'], r['st'], r.get('hpPct'))].append(r)
+    # MEET_AANKOMST (30 sep 2026): een aankomstrun draagt zijn eigen echte aankomst-HP; die runs vormen samen een cel
+    cel[(r['held'], r['st'], None if r['st'] == 'aankomst' else r.get('hpPct'))].append(r)
 
 def rondes_per_bd(rs):
     tel = defaultdict(list)
@@ -38,7 +39,7 @@ for k in sorted(cel):
     doods = Counter(r.get('doodsBron') or '?' for r in rs if r['dood'])
     tot = sum(v for b, v in bron.items() if not b.startswith('zelf')) or 1
     fact = sum(v for b, v in bron.items() if 'actuur' in b or 'nvordering' in b)
-    print(f"{k[0]:10} {k[1]:9} {int((k[2] or 0)*100):3}% {len(w):3}/{len(rs):<3} {st.median([r['rondes'] for r in rs]):6} "
+    print(f"{k[0]:10} {k[1]:9} {(f'{int((k[2] or 0)*100):3}%' if k[2] is not None else 'var ')} {len(w):3}/{len(rs):<3} {st.median([r['rondes'] for r in rs]):6} "
           f"{(st.median([r['hpOver'] for r in w]) if w else 0):6}  {rondes_per_bd(rs):20} "
           f"{sterf.get(1,0)}/{sterf.get(2,0)}/{sterf.get(3,0)}/{sterf.get(4,0):<9} {100*fact/tot:5.0f}   "
           f"{iv_w:3}/{len(iv):<4} {', '.join(f'{b} {n}' for b, n in doods.most_common(3))}")

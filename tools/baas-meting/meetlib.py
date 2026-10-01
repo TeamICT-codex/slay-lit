@@ -15,7 +15,7 @@ except Exception:
     pass
 
 HELD = {'slachter': 'Sla', 'gifmagier': 'Gif', 'thoverk': 'Kol'}
-ST = ['sterk', 'sterk_oud', 'gemiddeld', 'matig']
+ST = ['sterk', 'sterk_oud', 'gemiddeld', 'matig', 'aankomst']   # 'aankomst' = MEET_AANKOMST (30 sep 2026): de echte aankomstbuilds
 SCENE = ['', 'I', 'II', 'III', 'IV']
 
 
@@ -40,6 +40,17 @@ def dick_rs(d, pop=False, fouten=False):
     if not fouten:
         rs = [r for r in rs if not r.get('fout')]
     return rs
+
+
+def hp_cel(r):
+    """de aankomst-HP als celsleutel. Een aankomstrun (st 'aankomst', MEET_AANKOMST) draagt zijn EIGEN echte
+    aankomst-HP: die runs vormen samen een cel (sleutel None, tag leeg) in plaats van een cel per HP-waarde"""
+    return None if r.get('st') == 'aankomst' else r.get('hpPct')
+
+
+def standaard_hp(r):
+    """de standaardaankomst van een analyse: 62 %, of de echte aankomst-HP van een aankomstrun"""
+    return r.get('hpPct') == 0.62 or r.get('st') == 'aankomst'
 
 
 def tag(hp):

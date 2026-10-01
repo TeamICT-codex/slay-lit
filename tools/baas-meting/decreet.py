@@ -10,14 +10,14 @@ Gebruik: python tools/baas-meting/decreet.py <uit.json> [...]"""
 import sys, os, statistics as st
 from collections import defaultdict, Counter
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from meetlib import HELD, laad, dick_rs
+from meetlib import HELD, laad, dick_rs, standaard_hp
 
 KORT = {'HET DECREET': 'staat', 'HERSCHIKT DE ZAAL': 'ingehaald', 'EIGENHANDIG VONNIS': 'griffier dood'}
 
 cel = defaultdict(list)
 for p in sys.argv[1:]:
     for r in dick_rs(laad(p)):
-        if r.get('hpPct') != 0.62:
+        if not standaard_hp(r):
             continue
         cel[(r['held'], r['st'], '*')].append(r)
         cel[(r['held'], r['st'], r['beleid'])].append(r)

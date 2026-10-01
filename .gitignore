@@ -31,3 +31,5 @@ design-system/
 # uitvoer van de meetharnassen (tools/baas-meting/*_meting.js): ruwe gevechtsdata, groot;
 # zet MEET_UIT naar de scratchpad. Het harnas zelf hoort wel in de repo.
 tools/baas-meting/*.json
+# ... behalve DE IJKSET: de echte aankomstbuilds waarop de finale geijkt is (v141; MEET_AANKOMST=tools/baas-meting/ijkset_v141.json)
+!tools/baas-meting/ijkset_*.json

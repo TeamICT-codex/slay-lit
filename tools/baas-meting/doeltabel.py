@@ -11,7 +11,7 @@ IV gewonnen/gehaald en de sterfscène. Daaronder de doelen (afwerkplan §1, B1-B
 import sys, os, statistics as st
 from collections import defaultdict, Counter
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from meetlib import HELD, ST, SCENE, laad, dick_rs, tag, seeds, marge, binnen_zonder_zelf, factuur, stilstand
+from meetlib import HELD, ST, SCENE, laad, dick_rs, tag, seeds, marge, binnen_zonder_zelf, factuur, stilstand, hp_cel
 
 # Architectbeslissingen B4a (27 sep 2026): 'sterk <= 80 %' vervalt; sterk (norm) wint per held
 # MINSTENS sterk_boven pp meer dan gemiddeld EN HOOGSTENS sterk %. Gemiddeld = de gemiddeld-norm
@@ -66,7 +66,7 @@ def druk(p, pop=False, kort=False):
     nfout = len(alle) - len(rs)
     cel = defaultdict(list)
     for r in rs:
-        cel[(r['held'], r['st'], r['hpPct'])].append(r)
+        cel[(r['held'], r['st'], hp_cel(r))].append(r)
     res = {k: cel_stats(v) for k, v in cel.items()}
     mg = Counter(r.get('metgezel') or r.get('gMet') for r in rs)
     solo = all(not k for k in mg)

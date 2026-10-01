@@ -6,13 +6,13 @@ Gebruik: python tools/baas-meting/kaarten.py <uit.json> [...] [--pop]"""
 import sys, os, statistics as st
 from collections import defaultdict, Counter
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from meetlib import laad, dick_rs, binnen_zonder_zelf
+from meetlib import laad, dick_rs, binnen_zonder_zelf, standaard_hp
 
 pop = '--pop' in sys.argv
 cel = defaultdict(list)
 for p in [a for a in sys.argv[1:] if not a.startswith('--')]:
     for r in dick_rs(laad(p), pop=pop):
-        if r.get('hpPct') == 0.62:
+        if standaard_hp(r):
             cel[(r['held'], r['st'])].append(r)
 for k in sorted(cel):
     v = cel[k]

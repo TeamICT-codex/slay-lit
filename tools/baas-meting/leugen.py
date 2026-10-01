@@ -12,7 +12,7 @@ Per cel (basisbuilds, x1):
 import sys, os
 from collections import defaultdict
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from meetlib import HELD, laad, dick_rs, tag
+from meetlib import HELD, laad, dick_rs, tag, hp_cel
 
 for p in sys.argv[1:]:
     d = laad(p)
@@ -22,7 +22,7 @@ for p in sys.argv[1:]:
         continue
     cel = defaultdict(lambda: dict(n=0, leugen=0, verloren=0, boven=0, rondes=0, decreetpil=0))
     for r in rs:
-        c = cel[(r['held'], r['st'], r.get('hpPct'))]
+        c = cel[(r['held'], r['st'], hp_cel(r))]
         c['n'] += 1
         log = r.get('log') or []
         lg = [e for e in log if e.get('pilEind') == 'HET DECREET' and (e.get('inVijand') or 0) >= 10]

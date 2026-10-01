@@ -10,13 +10,13 @@ van twee builds is de druk die je nodig hebt om de ene evenveel te laten winnen 
 import sys, os
 from collections import defaultdict
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from meetlib import HELD, ST, laad
+from meetlib import HELD, ST, laad, standaard_hp
 
 pt = defaultdict(lambda: defaultdict(lambda: [0, 0]))
 for p in [a for a in sys.argv[1:] if not a.startswith('--')]:
     d = laad(p)
     for r in d['resultaten']:
-        if r.get('baas') != 'de_dicktator' or r.get('fout') or r.get('hpPct') != 0.62 or (r.get('pv') or 'basis') != 'basis' \
+        if r.get('baas') != 'de_dicktator' or r.get('fout') or not standaard_hp(r) or (r.get('pv') or 'basis') != 'basis' \
                 or (r.get('rv') or 'basis') != 'basis':   # relikwie-balans: alleen de basis, geen relikwie-variant (MEET_RELIEK_VAR)
             continue
         f = round(float(r.get('dmgx') or 1), 3)

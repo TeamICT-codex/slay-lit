@@ -8,13 +8,13 @@ breedte (max - min): hoe steil de klif rond deze build is (afwerkplan §3)."""
 import sys, os
 from collections import defaultdict
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from meetlib import HELD, ST, laad, dick_rs, seeds, marge
+from meetlib import HELD, ST, laad, dick_rs, seeds, marge, standaard_hp
 
 VAR = ['basis', 'minDef', 'plusDef', 'laster']
 
 for p in [a for a in sys.argv[1:] if not a.startswith('--')]:
     d = laad(p)
-    rs = [r for r in dick_rs(d, pop=True) if r.get('hpPct') == 0.62]
+    rs = [r for r in dick_rs(d, pop=True) if standaard_hp(r)]
     cel = defaultdict(lambda: defaultdict(list))
     for r in rs:
         cel[(r['held'], r['st'])][r.get('pv') or 'basis'].append(r)

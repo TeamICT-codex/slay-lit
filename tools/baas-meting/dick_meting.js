@@ -96,6 +96,37 @@
        elke job draait voor 'basis' en voor elke variant op dezelfde seed; veld rv, cel + ' {naam}'; de
        analysescripts van meetlib lezen alleen rv 'basis'). Handleiding, telling per gevecht (veld rt) en
        voorbeelden: tools/baas-meting/reliek_meet.js; analyse: python tools/baas-meting/reliek_winst.py <json>
+     MEET_AANKOMST=<aankomst-JSON van tools/baas-meting/aankomst.js> (30 sep 2026: DE AANKOMSTBUILDS. Alle
+       metingen t/m v140 draaiden op builds met 4-6 relikwieën, een echte run komt met 12-20 aan de eindbaas.
+       Elke run met aangekomen === true wordt een job met ZIJN build: held, max-HP, relikwieën, dek [[id, up]]
+       (de vloeken zitten er al in: laster 0), dranken, en zijn echte aankomst-HP (hp/maxHp) - tenzij
+       MEET_HPPCT=0.62 enz. Seed = de seed van de run; sterkte 'aankomst'; cel held/aankomst/beleid[~xF].
+       DE IJKSET (v141): MEET_AANKOMST=tools/baas-meting/ijkset_v141.json = 287 echte aankomstbuilds; dit is sinds v141 HET
+       ijkpunt van de finale (de normbuilds van MEET_GEMNORM dragen 5-6 relikwieen, een echte run 13-20).
+       MEET_AANKOMST_DEK=gemiddeld|sterk = de relikwieen/HP/dranken/fakkel van de run met het DEK van die normbuild +
+       de vloeken van de run (een bovengrens: de speler die beter kiest en vaker smeedt dan de walker).
+       Het seedaantal op de opdrachtregel telt hier niet: elke gekozen run is één gevecht per beleid (en per
+       drukfactor van MEET_BREEK). MEET_RELIEK en MEET_RELIEK_VAR werken mee; GEM_NORM, STERK_NORM, DEV_BUILDS,
+       MEET_85, MEET_POP, MEET_TAFEL, MEET_ABL, MEET_METGEZEL en de REF staan in deze modus UIT (de builds zijn
+       wat ze zijn). Opties: MEET_AANKOMST_FILTER=held:slachter,minRel:12 (sleutels held (a|b), minRel, maxRel,
+       minDek, maxDek); MEET_AANKOMST_SMEED=1 (de altaarkaart van SMEED[held].gemiddeld als die offers in het
+       dek zitten, anders zonder, met een log). Een run mag gesmede kaarten dragen als hij hun spec meegeeft
+       (veld gesmeed: {id: spec}). Extra uitvoer per gevecht: aankRun (index in runs[]), relN, dekN, upgrades,
+       vloeken, hpPct. Analyse: breekpunt.py, leugen.py, vat_samen.py en reliek_winst.py kennen de sterkte.
+       HERSTEL 30 sep (de aankomstbuild ONGEWIJZIGD doorgeven):
+       - DE FAKKEL: standaard de fakkel van de run min de kost van de baasnode (fakkelKost('baas', 15));
+         MEET_AANKOMST_FAKKEL=max (of 0) = fakkelMax/MEET_FAKKEL zoals de oude metingen (vergelijkbaarheid).
+         Per gevecht: fakkelStart en lichtStart.
+       - HET VONK-BRANDMERK: het dek mag [id, up, vonk] zijn (vonk = c.vonk van het Vonkaltaar); per
+         gevecht vonkN.
+       - DE DRANKEN: de run draagt elke soort drank mee; de bot drinkt ze met de drinkRest-regel van
+         speler_bot.js (baasgevecht: ronde 1 alles wat geen genezing is; daarna in nood; de Maxenzeelse
+         Stoofpot op de heeldrankdrempel). MEET_AANKOMST_DRANK=heel = alleen de heeldrank (de oude regel).
+         Per gevecht: drankSoort {id: n}.
+       - DE REDDING: een run van aankomst.js met MEET_REDDING (gered > 0, afgedwongen gevechten, of
+         aangekomenEcht false) is GEEN echte aankomst en wordt geweigerd, tenzij MEET_AANKOMST_REDDING=1;
+         dan krijgt zijn cel het merk '+gered' (held/aankomst+gered/beleid) en het resultaat gered/aankEcht.
+         Een bestand met meta.redding > 0 en runs zonder veld 'gered' wordt helemaal geweigerd.)
    Uitvoer:<werkboom>/.claude/notities/baas-meting/uit/<label>.json (gitignored, niet gedeployd;
    of MEET_UIT=<pad>) + een samenvatting op de console. Analyse: python tools/baas-meting/doeltabel.py
    <json> (alle doelen in één tabel), populatie.py, breekpunt.py, oorzaak.py, stilstand.py,
@@ -146,6 +177,56 @@ const RELIEKM = require('./reliek_meet.js');
 const RELIEK_OPT = RELIEKM.leesReliek(process.env);
 const RV_DEF = Object.assign({ basis: { reliek: {}, plus: [], min: [] } }, RELIEK_OPT.varianten);
 const RV = ['basis'].concat(Object.keys(RELIEK_OPT.varianten).filter(n => n !== 'basis'));
+/* DE AANKOMST (MEET_AANKOMST, 30 sep 2026; zie de kop): de runs van tools/baas-meting/aankomst.js die de
+   DICKtator haalden, elk met zijn eigen build. Zonder de variabele is AANKOMST null en verandert er niets. */
+const AANKOMST = process.env.MEET_AANKOMST ? leesAankomst(process.env.MEET_AANKOMST) : null;
+function leesAankomst(pad) {
+  let d;
+  try { d = JSON.parse(fs.readFileSync(pad, 'utf8').replace(/^﻿/, '')); }
+  catch (e) { throw new Error('MEET_AANKOMST: ' + pad + ' is geen leesbare JSON (' + e.message + ')'); }
+  if (!d || !Array.isArray(d.runs)) throw new Error('MEET_AANKOMST: ' + pad + ' heeft geen runs[]');
+  /* de dekvorm [[id, up, vonk]] (vonk optioneel); ook {id, up, vonk} of een kale id wordt aanvaard */
+  const kaart = x => Array.isArray(x) ? [String(x[0]), x[1] ? 1 : 0, parseInt(x[2], 10) || 0] : (x && typeof x === 'object' ? [String(x.id), x.up ? 1 : 0, parseInt(x.vonk, 10) || 0] : [String(x), 0, 0]);
+  /* DE REDDING (herstel 30 sep): een run die alleen met MEET_REDDING aankwam, was in het echt dood */
+  const redOk = process.env.MEET_AANKOMST_REDDING === '1';
+  const bronRedding = !!(d.meta && d.meta.redding > 0);
+  const isGered = r => (r.gered || 0) > 0 || (Array.isArray(r.afgedwongen) && r.afgedwongen.length > 0) || r.aangekomenEcht === false;
+  /* MEET_AANKOMST_FILTER=held:slachter|gifmagier,minRel:12,maxRel:20,minDek:20,maxDek:40 */
+  const filter = {};
+  for (const deel of lijst('MEET_AANKOMST_FILTER', [])) {
+    const [k, v] = deel.split(':').map(s => (s || '').trim());
+    if (k === 'held') filter.held = v.split('|').filter(Boolean);
+    else if (['minRel', 'maxRel', 'minDek', 'maxDek'].includes(k) && !isNaN(parseInt(v, 10))) filter[k] = parseInt(v, 10);
+    else throw new Error('MEET_AANKOMST_FILTER: onbekend deel "' + deel + '" (held:a|b, minRel, maxRel, minDek, maxDek)');
+  }
+  const aangekomen = [], weg = { nietAangekomen: 0, filter: 0, gered: 0 };
+  d.runs.forEach((r, i) => {
+    if (!r || r.aangekomen !== true) { weg.nietAangekomen++; return; }
+    if (bronRedding && r.gered == null && r.aangekomenEcht == null) throw new Error(`MEET_AANKOMST: ${pad} liep met MEET_REDDING ${d.meta.redding}, maar run ${i} zegt niet of hij gered werd (geen veld gered/aangekomenEcht): draai aankomst.js opnieuw`);
+    const gered = isGered(r);
+    if (gered && !redOk) { weg.gered++; return; }
+    for (const veld of ['held', 'seed', 'maxHp', 'relikwieen', 'dek']) if (r[veld] == null) throw new Error(`MEET_AANKOMST: run ${i} mist het veld ${veld}`);
+    const dek = r.dek.map(kaart), relN = r.relikwieen.length;
+    if ((filter.held && !filter.held.includes(r.held)) || (process.env.MEET_HELDEN && !HELDEN.includes(r.held))
+      || (filter.minRel != null && relN < filter.minRel) || (filter.maxRel != null && relN > filter.maxRel)
+      || (filter.minDek != null && dek.length < filter.minDek) || (filter.maxDek != null && dek.length > filter.maxDek)) { weg.filter++; return; }
+    const hpPct = (r.hp != null && r.maxHp > 0) ? r.hp / r.maxHp : (typeof r.hpPct === 'number' ? r.hpPct : null);
+    if (hpPct == null && !process.env.MEET_HPPCT) throw new Error(`MEET_AANKOMST: run ${i} heeft geen hp (of hpPct) en MEET_HPPCT staat niet`);
+    aangekomen.push({ i, held: r.held, seed: String(r.seed), maxHp: r.maxHp, hp: r.hp, hpPct, relikwieen: r.relikwieen.map(String), dek,
+      dranken: (r.dranken || []).map(String), fakkel: r.fakkel, gesmeed: r.gesmeed || null,
+      gered, reddingen: r.gered || 0, afgedwongen: Array.isArray(r.afgedwongen) ? r.afgedwongen.length : 0 });
+  });
+  /* de fakkel: standaard die van de run (herstel 30 sep); 'max' of '0' = fakkelMax/MEET_FAKKEL (de oude metingen) */
+  const fk = process.env.MEET_AANKOMST_FAKKEL;
+  if (fk != null && fk !== '' && !['1', '0', 'max', 'run'].includes(fk)) throw new Error('MEET_AANKOMST_FAKKEL moet run (standaard), max of 0 zijn, niet ' + fk);
+  const dk = process.env.MEET_AANKOMST_DRANK;
+  if (dk != null && dk !== '' && !['alle', 'heel'].includes(dk)) throw new Error('MEET_AANKOMST_DRANK moet alle (standaard) of heel zijn, niet ' + dk);
+  return { pad, meta: d.meta || null, totaal: d.runs.length, runs: aangekomen, weg, filter,
+    hpPct: process.env.MEET_HPPCT ? parseFloat(process.env.MEET_HPPCT) : null,
+    smeed: process.env.MEET_AANKOMST_SMEED === '1', fakkel: !(fk === 'max' || fk === '0'),
+    drank: dk === 'heel' ? 'heel' : 'alle', redding: redOk, bronRedding: d.meta ? (d.meta.redding || 0) : null,
+    gered: aangekomen.filter(r => r.gered).length };
+}
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff', '.txt': 'text/plain; charset=utf-8', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav' };
 
 /* ============================================================
@@ -309,6 +390,17 @@ function maakJobsBasis() {
   const jobs = [];
   const fakkel = (process.env.MEET_FAKKEL != null && process.env.MEET_FAKKEL !== '') ? parseInt(process.env.MEET_FAKKEL, 10) : null;
   const seed = i => 'M23-' + (SEEDBASE + i);
+  /* DE AANKOMST (MEET_AANKOMST): één job per aangekomen run x beleid (x drukfactor), op de seed van de run
+     en zijn aankomst-HP; geen 85 %-variant, geen populatie, geen referentie */
+  if (AANKOMST) {
+    for (const run of AANKOMST.runs) for (const beleid of BELEID) for (const f of (BREEK.length ? BREEK : [DMGX])) {
+      jobs.push({ cel: `${run.held}/aankomst${run.gered ? '+gered' : ''}/${beleid}${BREEK.length ? '~x' + f : ''}`, held: run.held, st: 'aankomst', pv: 'basis', dmgx: f, beleid,
+        hpPct: AANKOMST.hpPct != null ? AANKOMST.hpPct : run.hpPct, baas: 'de_dicktator', seed: run.seed, fakkel,
+        aank: run.i, fakkelAank: AANKOMST.fakkel && run.fakkel != null ? run.fakkel : null,
+        drankAlle: AANKOMST.drank === 'alle', gered: run.reddingen, afgedwongen: run.afgedwongen, aankEcht: !run.gered });
+    }
+    return jobs;
+  }
   /* DE BREEKPUNTZWAAI (MEET_BREEK): alleen de basisbuilds op 62 %, per drukfactor; niets anders */
   if (BREEK.length) {
     for (const held of HELDEN) for (const st of STERKTES.filter(s => BREEK_ST.includes(s))) for (const beleid of BELEID) for (const f of BREEK) for (let i = 0; i < N; i++) {
@@ -496,7 +588,12 @@ async function eenGevecht({ build, job }) {
   delete S.beloning; delete S.winkel; delete S.huidigEvent;
   S.maxHp = build.hp; S.hp = Math.round(build.hp * job.hpPct);
   S.relikwieen = build.relikwieen.slice();
-  S.dek = build.dek.map(([id, up]) => { const c = nieuweKaart(id); c.up = !!up; return c; });
+  /* DE AANKOMST: de gesmede kaarten die de run al droeg (veld gesmeed {id: spec}) eerst registreren */
+  const runGesmeed = build.gesmeedSpec || null;
+  if (runGesmeed) for (const [id, spec] of Object.entries(runGesmeed)) registreerGesmeed(id, spec);
+  if (job.fakkelAank != null) S.fakkel = Math.max(0, job.fakkelAank - Math.max(0, fakkelKost('baas', 15)));   /* de baasnode vreet ook licht */
+  S.dek = build.dek.map(([id, up, vonk]) => { const c = nieuweKaart(id); c.up = !!up; if (vonk) c.vonk = vonk; return c; });   /* vonk: DE AANKOMST (het Vonkaltaar) */
+  (build.vloekUit || []).forEach(id => { if (KAARTEN[id] && KAARTEN[id].type === 'vloek') S.dek.push(nieuweKaart(id)); });   /* MEET_AANKOMST_DEK: de vloeken van de run op het normdek */
   S.dranken = (build.dranken || []).slice();
   for (let i = 0; i < (build.laster || 0); i++) S.dek.push(nieuweKaart('laster'));
   /* alleen via MEET_METGEZEL (terugkeer): de geparkeerde metgezellen eerst aanzetten, anders weigert geefMetgezel stil */
@@ -506,6 +603,7 @@ async function eenGevecht({ build, job }) {
   /* ---- de Slachtblok-kaarten (zie de kop): budget nagerekend met de echte offerWaarde ---- */
   window.__smeedSpec = {};
   S.gesmeed = {};
+  if (runGesmeed) for (const [id, spec] of Object.entries(runGesmeed)) { if (!/^gesmeed_codex_/.test(id)) S.gesmeed[id] = spec; window.__smeedSpec[id] = spec; }
   (build.smeed || []).forEach((sm, i) => {
     const neem = ([id, up]) => {
       const c = S.dek.find(x => x.id === id && !!x.up === !!up);
@@ -518,7 +616,9 @@ async function eenGevecht({ build, job }) {
     const budget = sm.erfstuk ? 5 : offers.reduce((t, c) => t + offerWaarde(c), 0) + (sm.kost === 2 ? 2 : 0) - (sm.kost === 0 ? 3 : 0);
     const besteed = sm.modules.reduce((t, m) => t + m.p, 0);
     if (besteed > budget || sm.modules.length > 2) throw new Error('smeed: ' + sm.naam + ' kost ' + besteed + ' punten, budget ' + budget);
-    const id = sm.erfstuk ? 'gesmeed_codex_' + build.held : 'gesmeed_run_' + (900 + i);
+    let nr = 900 + i;
+    while (runGesmeed && runGesmeed['gesmeed_run_' + nr]) nr++;   /* DE AANKOMST: nooit een gesmede kaart van de run overschrijven */
+    const id = sm.erfstuk ? 'gesmeed_codex_' + build.held : 'gesmeed_run_' + nr;
     const spec = { naam: sm.naam, icoon: sm.icoon, kost: sm.kost, maker: build.held, modules: sm.modules.map(m => ({ m: m.m, p: m.p })), offers: offers.map(knaam), datum: 'meting' };
     registreerGesmeed(id, spec);
     if (!sm.erfstuk) S.gesmeed[id] = spec;
@@ -540,6 +640,11 @@ async function eenGevecht({ build, job }) {
   });
   S.kaart = genereerKaart();
   const hpStart = S.hp, dekStart = S.dek.length;
+  /* DE AANKOMST: wat de build bij de start van het gevecht droeg (alleen in die modus in de uitvoer) */
+  const aankStart = job.st === 'aankomst' ? { aankRun: job.aank, relN: S.relikwieen.length, upgrades: S.dek.filter(c => c.up).length,
+    vloeken: S.dek.filter(c => (kdef(c) || {}).type === 'vloek').length, gesmeedN: S.dek.filter(c => /^gesmeed/.test(c.id)).length,
+    vonkN: S.dek.filter(c => c.vonk).length, fakkelStart: S.fakkel, lichtStart: lichtNiveau(),
+    gered: job.gered || 0, afgedwongen: job.afgedwongen || 0, aankEcht: job.aankEcht !== false } : null;
   const T = window.__T = { bron: {}, bronBd: {}, inBd: {}, uitBd: {}, uitBaas: 0, uitHof: 0, uitSoort: {}, rawIn: 0, geblokt: 0, metgezelVing: 0, decreten: [], rondeIn: 0, _zelf: false, _bewaar: null, kaartBaas: {}, kaartHof: {} };
   if (typeof window.__reliekStart === 'function') window.__reliekStart();   /* RELIEK: de telling van dit gevecht */
   startGevecht([job.baas], 'baas', bz.rij);
@@ -864,6 +969,43 @@ async function eenGevecht({ build, job }) {
     if (!drempel) return false;
     try { gebruikDrank(i); T.drank = (T.drank || 0) + 1; return true; } catch (e) { return false; }
   };
+  /* DE AANKOMST (herstel 30 sep): een aankomstbuild draagt elke soort drank die de run raapte. Zonder
+     deze regel bleven ijzerdrank, duivelshars, vuurfles, ... dood gewicht tegen de DICKtator. KOPIE van
+     drinkEen/drinkRest uit speler_bot.js (walker-toevoeging; bij een wijziging daar hier natrekken):
+     de Maxenzeelse Stoofpot op de heeldrankdrempel; een baasgevecht is 'zwaar', dus in ronde 1 gaat
+     alles open wat geen genezing is (schade/gif op het doelwit van een aanval, kracht/energie/blok op
+     jezelf); daarna alleen in nood, blok eerst. Alleen met job.drankAlle: in de oude modus doet dit
+     niets (T.drankSoort blijft leeg en komt niet in de uitvoer). */
+  const HEEL_DR = ['heeldrank', 'maxenzeelse_stoofpot'];
+  T.drankSoort = {};
+  const drinkEen = id => {
+    const i = S.dranken.indexOf(id); if (i < 0 || g.ceremonie || g.bezig || g.voorbij) return false;
+    const def = DRANKEN[id]; if (!def) return false;
+    try {
+      if (def.doel === 'vijand') {
+        const levend = alleVijanden(); if (!levend.length) return false;
+        if (levend.length === 1) gebruikDrank(i);
+        else {
+          const doel = doelwitVoor({ id: 'slag', up: false }) || levend[0];
+          S.dranken.splice(i, 1); drinkEffect(id, doel); naActie();
+        }
+      } else gebruikDrank(i);
+      T.drank = (T.drank || 0) + 1; T.drankSoort[id] = (T.drankSoort[id] || 0) + 1; return true;
+    } catch (e) { return false; }
+  };
+  const inNood = () => Math.max(0, inkomend() - doorBlokNu() - (spl().blok || 0)) + doorBlokNu() >= S.hp;
+  const drinkRest = (ronde) => {
+    if (!job.drankAlle) return;
+    if (S.hp < S.maxHp * 0.35 && S.dranken.includes('maxenzeelse_stoofpot')) drinkEen('maxenzeelse_stoofpot');
+    const rest = S.dranken.filter(id => !HEEL_DR.includes(id));
+    if (!rest.length) return;
+    if (ronde === 1) { rest.forEach(drinkEen); return; }   /* de DICKtator is een baas: zwaar */
+    if (inNood()) {
+      const blokEerst = id => (['ijzerdrank', 'duivelshars'].includes(id) ? 0 : 1);
+      const volg = rest.slice().sort((a, b) => blokEerst(a) - blokEerst(b));
+      for (const id of volg) { drinkEen(id); if (!inNood()) break; }
+    }
+  };
 
   /* ---------------- DE LUS ---------------- */
   const rondes = []; let fout = null; let ronde = 0;
@@ -881,6 +1023,7 @@ async function eenGevecht({ build, job }) {
       const hofTxt = hof().map(x => x.id.replace(/^de_/, '').slice(0, 4) + ':' + ((x.intent && x.intent.naam) || '').slice(0, 8)).join(',');
       const inkNu = inkomend();
       drinkIndien(false);
+      drinkRest(ronde);   /* DE AANKOMST: de andere dranken (no-op zonder job.drankAlle) */
       /* Act 2-referentie: DE LAATSTE SPRONG van Drops (breekt de kopieermachine) zodra hij
          beschikbaar is - zonder dat is de Erfprins voor een bot niet eerlijk te meten */
       if (job.baas === 'de_erfprins' && gMet() && !gMet().dood && !g.copycatGebroken) {
@@ -906,6 +1049,7 @@ async function eenGevecht({ build, job }) {
       await vrij();
       if (g.voorbij || S.gevecht !== g) { rondes.push({ r: ronde, bd, hpVoor, hp: S.hp, in: T.rondeIn, intent, hof: hofTxt, ink: inkNu, k: kaarten, posten: g.posten || 0, bossHp: Math.max(0, (boss() || {}).hp || 0) }); break; }
       drinkIndien(true);
+      drinkRest(-1);   /* DE AANKOMST: alleen in nood (no-op zonder job.drankAlle) */
       const postenNu = g.posten || 0;
       /* [review B4a, vondst 1] de LEUGENDETECTOR: de pil van de baas en de getelegrafeerde schade aan
          het einde van jouw beurt, tegenover wat je in de vijandbeurt echt verloor (inVijand). Een
@@ -945,6 +1089,7 @@ async function eenGevecht({ build, job }) {
     relikwieen: S.relikwieen.slice(), dekN: dekStart,
     rv: job.rv || 'basis', rt: typeof window.__reliekLees === 'function' ? window.__reliekLees() : null
   };
+  if (aankStart) Object.assign(uit, aankStart, { drankSoort: T.drankSoort || {} });
   window.__T = null; window.__RT = null;
   try { g.voorbij = true; stopGevechtLus(); } catch (e) {}
   S.gevecht = null;
@@ -1065,7 +1210,7 @@ async function main() {
   const paginas = [];
   for (let i = 0; i < WERKERS; i++) paginas.push(await maakPagina(browser, fouten));
   /* DEV_BUILDS uit de pagina: de twee referentiebuilds blijven exact die van game.js */
-  const dev = await paginas[0].evaluate(() => JSON.parse(JSON.stringify(DEV_BUILDS)));
+  const dev = (AANKOMST && !process.env.MEET_AANKOMST_DEK) ? {} : await paginas[0].evaluate(() => JSON.parse(JSON.stringify(DEV_BUILDS)));   /* DE AANKOMST: geen DEV_BUILDS */
   const versie = (fs.readFileSync(path.join(WORTEL, 'sw.js'), 'utf8').match(/const CACHE = '([^']+)'/) || [])[1] || '?';
   const dick = await paginas[0].evaluate(() => JSON.parse(JSON.stringify(window.__dickBasis || DICK)));
   const basisHp = await paginas[0].evaluate(() => Object.fromEntries(Object.entries(SPELERS).map(([k, v]) => [k, v.hp])));
@@ -1073,6 +1218,20 @@ async function main() {
   if (relBestaat.length) throw new Error('onbekende relikwieën in DEF_RELIKWIEEN/STARTREL: ' + relBestaat.join(', '));
   const relOnb = await paginas[0].evaluate(ids => ids.filter(id => !RELIKWIEEN[id]), RELIEKM.alleIds(RELIEK_OPT));
   if (relOnb.length) throw new Error('onbekende relikwieën in MEET_RELIEK/MEET_RELIEK_VAR: ' + relOnb.join(', '));
+  /* DE AANKOMST: elke held, relikwie, kaart en drank van de runs moet in de spelcode bestaan (gesmede kaarten
+     alleen met hun spec in het veld gesmeed) - een onbekende id breekt de meting vóór de eerste job */
+  if (AANKOMST) {
+    if (!AANKOMST.runs.length) throw new Error(`MEET_AANKOMST: geen enkele run over (${AANKOMST.totaal} runs, ${AANKOMST.weg.nietAangekomen} niet aangekomen, ${AANKOMST.weg.gered} gered geweigerd (MEET_AANKOMST_REDDING=1 laat ze toe), ${AANKOMST.weg.filter} weggefilterd)`);
+    const onb = await paginas[0].evaluate(runs => runs.map(r => {
+      const f = [];
+      if (!SPELERS[r.held]) f.push('held ' + r.held);
+      r.relikwieen.filter(id => !RELIKWIEEN[id]).forEach(id => f.push('relikwie ' + id));
+      r.dranken.filter(id => !DRANKEN[id]).forEach(id => f.push('drank ' + id));
+      r.dek.filter(([id]) => !KAARTEN[id] && !(r.gesmeed && r.gesmeed[id])).forEach(([id]) => f.push('kaart ' + id));
+      return f.length ? `run ${r.i} (${r.held}, ${r.seed}): ${[...new Set(f)].join(', ')}` : null;
+    }).filter(Boolean), AANKOMST.runs);
+    if (onb.length) throw new Error('MEET_AANKOMST: onbekende ids\n  ' + onb.slice(0, 20).join('\n  '));
+  }
   const reliekStd = await paginas[0].evaluate(() => window.__RELIEK_STD || null);
   /* de ruwe build van een cel: 'dev:<id>' = DEV_BUILDS uit game.js, een andere sterkte-naam = die build */
   const ruweBuild = (held, st) => {
@@ -1165,11 +1324,56 @@ async function main() {
     if (rel.join() === (b.relikwieen || []).join()) return (cacheB[sleutel] = b);
     return (cacheB[sleutel] = Object.assign(JSON.parse(JSON.stringify(b)), { relikwieen: rel, label: (b.label || '') + ' [relikwieën ' + rel.join('+') + ']' }));
   };
+  /* DE AANKOMST: de build van één run, zoals hij aankwam. Geen GEM_NORM, geen STERK_NORM-toets, geen
+     DEV_BUILDS, geen populatie/tafel/ablatie/metgezel; alleen de altaarkaart (MEET_AANKOMST_SMEED=1) en
+     MEET_RELIEK/MEET_RELIEK_VAR. Laster 0: de vloeken van de run zitten al in zijn dek. */
+  const cacheA = {}, smeedWeg = [];
+  const runVan = {};
+  if (AANKOMST) AANKOMST.runs.forEach(r => { runVan[r.i] = r; });
+  const aankomstBuild = job => {
+    const sleutel = job.aank + '/' + (job.rv || 'basis');
+    if (cacheA[sleutel]) return cacheA[sleutel];
+    const run = runVan[job.aank];
+    const up = run.dek.filter(x => x[1]).length;
+    const b = { held: run.held, hp: run.maxHp, bron: 'aankomst', aankRun: run.i, seed: run.seed,
+      label: `aankomst run ${run.i} (${run.seed}): ${run.relikwieen.length} relikwieën, ${run.dek.length} kaarten, ${up} upgrades, ${run.hp != null ? run.hp : '?'}/${run.maxHp} HP`,
+      relikwieen: run.relikwieen.slice(), dek: run.dek.map(x => x.slice()), dranken: run.dranken.slice(), laster: 0, metgezel: null, smeed: [], tafel: [] };
+    if (run.gesmeed) b.gesmeedSpec = JSON.parse(JSON.stringify(run.gesmeed));
+    /* MEET_AANKOMST_DEK=gemiddeld|sterk (1 okt 2026): de relikwieen, HP, dranken en fakkel van de run, maar het DEK van de
+       oude normbuild van die held - een bovengrens voor een speler die beter kiest en vaker smeedt dan de walker
+       (zijn dekken: ~30 kaarten, 2-3 upgrades, 1-2 vloeken). */
+    if (process.env.MEET_AANKOMST_DEK) {
+      const nd = ruweBuild(run.held, process.env.MEET_AANKOMST_DEK);
+      b.dek = nd.dek.map(x => [x[0], x[1] ? 1 : 0, 0]); delete b.gesmeedSpec;
+      b.vloekUit = run.dek.map(x => x[0]);   /* de VLOEKEN van de run reizen mee (in de pagina op type gefilterd): KARAKTERMOORD telt ze */
+      b.label += ' [dek: ' + process.env.MEET_AANKOMST_DEK + '-norm, ' + b.dek.length + ' kaarten]';
+    }
+    if (AANKOMST.smeed) {
+      const sm = (SMEED[run.held] || {}).gemiddeld || [];
+      /* de offers moeten als multiset in het dek zitten (zelfde id én upgrade-stand) */
+      const rest = b.dek.map(x => x[0] + '/' + (x[1] ? 1 : 0));
+      const mist = [];
+      for (const s of sm) for (const o of (s.offers || []).concat(s.vervangt ? [s.vervangt] : [])) {
+        const k = o[0] + '/' + (o[1] ? 1 : 0), i = rest.indexOf(k);
+        if (i >= 0) rest.splice(i, 1); else mist.push(o[0] + (o[1] ? '+' : ''));
+      }
+      if (sm.length && !mist.length) { b.smeed = sm; b.label += ' + ' + sm.length + ' Slachtblok'; }
+      else if (sm.length && (job.rv || 'basis') === 'basis') { smeedWeg.push({ run: run.i, held: run.held, mist }); console.log(`  aankomst run ${run.i} (${run.held}): geen altaarkaart, ${mist.join(' + ')} zit niet in het dek`); }
+    }
+    const rvd = RV_DEF[job.rv] || RV_DEF.basis;
+    const rel = RELIEKM.pasToe(RELIEKM.pasToe(b.relikwieen, RELIEK_OPT.glob.plus, RELIEK_OPT.glob.min), rvd.plus, rvd.min);
+    if (rel.join() !== b.relikwieen.join()) { b.relikwieen = rel; b.label += ' [relikwieën ' + rel.join('+') + ']'; }
+    return (cacheA[sleutel] = b);
+  };
+  const bouw = j => (j.st === 'aankomst' ? aankomstBuild(j) : buildVan(j.held, j.st, j.pv, j.rv));
   const jobs = maakJobs();
   /* elke build één keer vooraf opbouwen: een norm- of variantfout breekt de meting vóór de eerste job */
-  for (const j of jobs) buildVan(j.held, j.st, j.pv, j.rv);
+  for (const j of jobs) bouw(j);
   console.log(`HET PROCES-meting '${LABEL}' · ${versie} · ${jobs.length} gevechten · ${WERKERS} werkers · ${N} seeds per cel · seeds ${SEEDBASE}-${SEEDBASE + N - 1}` +
     ` · ${MEET_METGEZEL ? 'MET metgezel ' + MEET_METGEZEL : 'SOLO'}${GEMNORM ? ' · gemiddeld-norm' : ''}${POP ? ' · populatie ' + POP_VAR.join('/') + ' op ' + POP_ST.join('/') : ''}${BREEK.length ? ' · breekpuntzwaai x' + BREEK.join('/') : ''}${DMGX !== 1 ? ' · druk x' + DMGX : ''}${RELIEKM.omschrijf(RELIEK_OPT)}`);
+  if (AANKOMST) console.log(`  AANKOMST: ${AANKOMST.runs.length} runs uit ${AANKOMST.pad} (${AANKOMST.totaal} in het bestand, ${AANKOMST.weg.nietAangekomen} niet aangekomen, ${AANKOMST.weg.gered} gered geweigerd, ${AANKOMST.weg.filter} weggefilterd)` +
+    ` · seed en build per run (het seedaantal ${N} telt niet) · HP ${AANKOMST.hpPct != null ? 'vast ' + AANKOMST.hpPct : 'van de run'}${AANKOMST.smeed ? ' · altaarkaart' : ''}${AANKOMST.fakkel ? ' · fakkel van de run' : ' · fakkel MAX (oude opzet)'} · dranken ${AANKOMST.drank}` +
+    `${AANKOMST.redding ? ' · LET OP: ' + AANKOMST.gered + ' GEREDDE runs toegelaten (cel +gered)' : ''}`);
   const resultaten = [];
   let volgende = 0, klaar = 0, soloFout = 0;
   /* [planner F] VEERKRACHT: sterft de browser (parallelle sessies ruimen soms chrome-processen
@@ -1184,9 +1388,9 @@ async function main() {
     let page = page0;
     while (volgende < jobs.length) {
       const job = jobs[volgende++];
-      const build = buildVan(job.held, job.st, job.pv, job.rv);
+      const build = bouw(job);
       /* een mislukte job draagt zijn celvelden mee, zodat de analyse hem als FOUT telt en niet stil laat vallen */
-      const kaal = fout => ({ cel: job.cel, seed: job.seed, held: job.held, st: job.st, pv: job.pv, dmgx: job.dmgx, beleid: job.beleid, baas: job.baas, hpPct: job.hpPct, rv: job.rv || 'basis', fout });
+      const kaal = fout => ({ cel: job.cel, seed: job.seed, held: job.held, st: job.st, pv: job.pv, dmgx: job.dmgx, beleid: job.beleid, baas: job.baas, hpPct: job.hpPct, rv: job.rv || 'basis', fout, ...(job.aank != null ? { aankRun: job.aank } : {}) });
       let r = null;
       for (let poging = 0; poging < 5 && !r; poging++) {
         try { r = await page.evaluate(eenGevecht, { build, job }); }
@@ -1212,12 +1416,17 @@ async function main() {
   /* de builds in de uitvoer: sleutel held/st of held/st#pv (dezelfde vorm als de cel) */
   const builds = {};
   for (const k of Object.keys(cacheB)) { const [h, st, pv, rv] = k.split('/'); builds[h + '/' + st + (pv === 'basis' ? '' : '#' + pv) + (!rv || rv === 'basis' ? '' : ' {' + rv + '}')] = cacheB[k]; }
+  /* DE AANKOMST: sleutel held/aankomst#r<index in runs[]> (+ ' {rv}') */
+  for (const k of Object.keys(cacheA)) { const [i, rv] = k.split('/'); builds[cacheA[k].held + '/aankomst#r' + i + (!rv || rv === 'basis' ? '' : ' {' + rv + '}')] = cacheA[k]; }
   /* standaard NIET naast het script (tools/ wordt gedeployd): in de gitignored notitiemap */
   const uitPad = process.env.MEET_UIT || path.join(WORTEL, '.claude', 'notities', 'baas-meting', 'uit', LABEL + '.json');
   fs.mkdirSync(path.dirname(uitPad), { recursive: true });
   const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => /^MEET_/.test(k)));
   fs.writeFileSync(uitPad, JSON.stringify({ meta: { label: LABEL, versie, datum: new Date().toISOString(), seeds: N, seedbase: SEEDBASE, beleid: BELEID, solo: !MEET_METGEZEL, env, dick, duurS: Math.round((Date.now() - t0) / 1000), paginafouten: [...new Set(fouten)].slice(0, 20), soloFout,
-    reliek: { std: reliekStd, globaal: RELIEK_OPT.glob, varianten: RV.map(v => ({ naam: v, def: RV_DEF[v] })) } }, builds, resultaten }, null, 1));
+    reliek: { std: reliekStd, globaal: RELIEK_OPT.glob, varianten: RV.map(v => ({ naam: v, def: RV_DEF[v] })) },
+    ...(AANKOMST ? { aankomst: { pad: AANKOMST.pad, bronMeta: AANKOMST.meta, totaal: AANKOMST.totaal, runs: AANKOMST.runs.length, weg: AANKOMST.weg, filter: AANKOMST.filter,
+      hpPct: AANKOMST.hpPct, smeed: AANKOMST.smeed, smeedWeg, fakkel: AANKOMST.fakkel ? 'run' : 'max', drank: AANKOMST.drank,
+      redding: AANKOMST.redding, bronRedding: AANKOMST.bronRedding, gered: AANKOMST.gered } } : {}) }, builds, resultaten }, null, 1));
   console.log(`klaar in ${((Date.now() - t0) / 1000).toFixed(0)} s → ${uitPad}`);
   const nFout = resultaten.filter(r => r.fout).length;
   console.log(`${resultaten.length} gevechten, ${nFout} fout, ${resultaten.filter(r => r.timeout).length} time-out, ${[...new Set(fouten)].length} verschillende paginafouten`);

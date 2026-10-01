@@ -12,7 +12,7 @@ sterfscène (zelfde berekening als doeltabel.py)."""
 import sys, os
 from collections import defaultdict
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from meetlib import HELD, SCENE, laad, dick_rs
+from meetlib import HELD, SCENE, laad, dick_rs, hp_cel
 from doeltabel import cel_stats, DOEL
 
 ORDE = ['sterk', 'sterk_oud', 'gemiddeld', 'matig']
@@ -25,7 +25,7 @@ def cellen(p, pop):
     rs = [r for r in alle if not r.get('fout')]
     cel = defaultdict(list)
     for r in rs:
-        cel[(r['held'], r['st'], r['hpPct'])].append(r)
+        cel[(r['held'], r['st'], hp_cel(r))].append(r)
     return d, rs, len(alle) - len(rs), {k: cel_stats(v) for k, v in cel.items()}
 
 
@@ -59,7 +59,7 @@ def vol(p, pop):
         s = res[k]
         rb = ' / '.join('-' if s['rb'][bd] is None else k1(s['rb'][bd]) for bd in (1, 2, 3, 4))
         sterf = ' '.join(f"{SCENE[b]}:{c}" for b, c in sorted(s['sterf'].items(), key=lambda x: (x[0] is None, x[0])) if isinstance(b, int) and 0 < b <= 4)
-        naam = f"{HELD[k[0]]} {k[1]}{'' if k[2] == 0.62 else ' @' + str(int(round(k[2] * 100)))}"
+        naam = f"{HELD[k[0]]} {k[1]}{'' if k[2] in (0.62, None) else ' @' + str(int(round(k[2] * 100)))}"
         print(f"| {naam} | {s['n']} ({s['s']}) | **{s['winst']:.0f} %** ± {s['marge']:.0f} | {k1(s['med'])} | {rb} | {s['fact']:.0f} | {s['weg']:.0f} | {s['spill']:.0f} | {k1(s['stil'])} | {s['ivw'][0]}/{s['ivw'][1]} | {sterf} |")
     gem, ster, mat = rij(res, 'gemiddeld'), rij(res, 'sterk'), rij(res, 'matig')
     ok = lambda b: 'ok' if b else '**nee**'
